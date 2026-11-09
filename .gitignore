@@ -1,0 +1,24 @@
+# --- Game data: NEVER commit the original game files ---
+/Pool of Radiance/
+/game/
+*.DAX
+*.dax
+*.OVR
+*.SAV
+*.ITM
+*.SPC
+SAVGAM*.DAT
+*.pdf
+
+# --- Godot ---
+.godot/
+.import/
+export_presets.cfg
+/build/
+*.translation
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

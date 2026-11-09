@@ -1,0 +1,4 @@
+# Keep text files LF across Windows and Linux (Godot's default).
+* text=auto eol=lf
+*.png binary
+*.svg text
