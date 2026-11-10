@@ -48,6 +48,12 @@ fights the first battle met on the way to the Slums orcs (13,1), lets party memb
 until monsters attack them, then steps the attacked one away (free attacks), logging and
 shooting every change of the right-hand panel.
 
+`./run.sh --py c3lab.py tactics` (LAB_OUT=..., SECS=90) walks toward the Slums kobolds (event 6),
+puts everyone on Quick and logs every screen: monster turns show "MOVE/ATTACK, MOVE LEFT = n"
+on each approach step, so step counts, diagonal steps (n drops by 1.5), targets and GUARDING
+can be compared with ours. Random encounters usually get in first, which serves as well.
+`./run.sh --py c3lab.py win` quick-fights the Slums orcs and captures the results and treasure.
+
 `run_godot.sh <quicksave.cfg> steps...` runs **our engine** on a second virtual display
 (1280×800) starting from a quick save file (`--save=`), with the same key/grab steps (or
 `--py script.py`). Example: a save at Slums 14,1 facing west, then `up wait=3 enter` walks

@@ -25,13 +25,15 @@ extends RefCounted
 ##   three cells at its back). A mover who falls stops where it is. (Checked in the lab:
 ##   an orc's free attack on Bakshi stepping away, "(FROM BEHIND)", after it had attacked
 ##   him that round.)
+## - Guarding: a combatant on guard attacks the first enemy that steps next to it, once,
+##   with the attacks it saved; guarding ends at its next turn.
 ## - At 0 HP or below a character drops (dying); a monster is killed.
 ## - The fight ends when one side has nobody standing. (QoL: when the last enemy falls the
 ##   battle ends at once; the original asks "Continue Battle?".)
 ## Every die roll goes through roll(), which uses a seedable generator and logs the roll, so
 ## a fight can be replayed and compared rule by rule.
 ##
-## Not yet: guarding, missiles, spells, morale and fleeing, surprise from the encounter,
+## Not yet: missiles, spells, morale and fleeing, surprise from the encounter,
 ## large monsters filling two cells.
 
 signal message(text: String)
@@ -63,6 +65,9 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["attacks"] = 0
 		c["acted"] = false
 		c["received"] = 0     # attacks received since its own turn (or last step)
+		c["guarding"] = false # guarding until its next turn
+		c["target"] = -1
+		c["pattern"] = 0      # the computer's movement pattern (see below)
 		c["turned"] = 0       # eighth-turns of those attacks, as the original counts them
 
 
@@ -136,6 +141,8 @@ func next_turn() -> int:
 		c.acted = true
 		c.received = 0
 		c.turned = 0
+		c.guarding = false
+		c.ai = false
 		return active
 	active = -1
 	return -1
@@ -207,7 +214,30 @@ func step(dir: int) -> String:
 	c.dir = dir
 	c.received = 0
 	c.turned = 0
+	guard_attacks(active)
+	if c.down:
+		c.moves = 0
+		c.attacks = 0
+		return "fell"
 	return "moved"
+
+
+## Enemies guarding next to combatant `i`'s new cell attack it (each once).
+func guard_attacks(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	for j in combatants.size():
+		var e: Dictionary = combatants[j]
+		if c.down:
+			return
+		if e.down or e.team == c.team or not e.guarding or not adjacent(e.cell, c.cell):
+			continue
+		e.guarding = false
+		if int(e.get("guard_attacks", 0)) <= 0:
+			continue
+		e.attacks = e.guard_attacks
+		e.guard_attacks = 0
+		attack(j, i)
+		e.attacks = 0
 
 
 ## Free attacks on combatant `i` as it leaves its cell for `to` (see the rules above).
@@ -286,52 +316,190 @@ func done() -> void:
 
 
 # --- Computer-controlled turns ----------------------------------------------------------
+# The original's computer-controlled turn (monsters, and party members on Quick), melee
+# only, as documented by Pilgrim's reconstruction of the engine:
+# - Each combatant keeps a movement pattern (1..6), rerolled at the start of its turn when it
+#   is 0 or 4, or on a 1 in 4: d8, then d2 + 4 (on 1-7) or d4 (on 8).
+# - Target: it keeps its target while that one is standing; otherwise it picks one at
+#   random among the enemies it has a line of sight to (walls block; figures don't), or
+#   among all enemies if it sees none. No target: it guards.
+# - Each action: a monster attacks a random adjacent enemy (its own target is ignored once
+#   adjacent, as in the original); a party member attacks its target if adjacent, else a
+#   random adjacent enemy. With no enemy adjacent it steps towards its target: the
+#   direction to the target turned by the pattern's offsets, the first of five that is free.
+#   A step needs more movement left than it costs (the computer never spends its last
+#   half-move). Stepping straight back counts as a failure, as does finding no step; after
+#   two failures it picks a new target, after three it stops. A step can draw free attacks.
+# - A combatant that cannot attack or move ends its turn guarding: the first enemy to step
+#   next to it before its next turn is attacked. An unarmoured magic-user guards rather
+#   than closing in.
+# - At most 20 tries per turn.
 
-func nearest_enemy(i: int) -> int:
+const PATTERN_TURNS := [[8, 7, 6, 1, 2, 8], [8, 1, 2, 7, 6, 7], [7, 1, 8, 6, 2, 1],
+	[1, 7, 8, 2, 6, 8], [8, 7, 6, 5, 4, 8], [8, 1, 2, 3, 4, 8], [8, 4, 6, 2, 8, 6]]
+const CLASS_MAGE := 5
+
+
+func _enemy_of(c: Dictionary, j: int) -> bool:
+	return j >= 0 and j < combatants.size() and not combatants[j].down and combatants[j].team != c.team
+
+
+## Line of sight between two cells: a straight line across the grid (the original's own
+## line walk: the longer axis steps every cell, the shorter one when the error builds up)
+## with no wall tile on it.
+func can_see(a: Vector2i, b: Vector2i) -> bool:
+	var dx := absi(b.x - a.x)
+	var dy := absi(b.y - a.y)
+	var sx := signi(b.x - a.x)
+	var sy := signi(b.y - a.y)
+	var cur := a
+	var err := 0
+	while true:
+		if not field.walkable(cur.x, cur.y):
+			return false
+		if cur == b:
+			return true
+		if dx >= dy:
+			cur.x += sx
+			err += dy * 2
+			if err >= dx:
+				cur.y += sy
+				err -= dx * 2
+		else:
+			cur.y += sy
+			err += dx * 2
+			if err >= dy:
+				cur.x += sx
+				err -= dy * 2
+	return false
+
+
+## Keeps the combatant's target if it still stands, else picks a new one (see above).
+func find_target(i: int) -> bool:
 	var c: Dictionary = combatants[i]
-	var best := -1
-	var best_d := 1 << 30
+	if _enemy_of(c, c.get("target", -1)):
+		return true
+	c.target = -1
+	var seen: Array[int] = []
+	var all: Array[int] = []
 	for j in combatants.size():
-		var o: Dictionary = combatants[j]
-		if o.down or o.team == c.team:
-			continue
-		var d: int = maxi(absi(o.cell.x - c.cell.x), absi(o.cell.y - c.cell.y))
-		if d < best_d:
-			best_d = d
-			best = j
-	return best
+		if _enemy_of(c, j):
+			all.append(j)
+			if can_see(c.cell, combatants[j].cell):
+				seen.append(j)
+	var pool := seen if not seen.is_empty() else all
+	if pool.is_empty():
+		return false
+	c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
+	return true
 
 
-## One action of a computer-controlled turn: attack an adjacent enemy, else step towards
-## the nearest. Returns false when the turn is over.
+## Ends combatant `i`'s turn on guard, keeping its unused attacks for a guard attack.
+func guard(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	c.moves = 0
+	c.guarding = true
+	c.guard_attacks = c.attacks
+	c.attacks = 0
+	message.emit("%s IS GUARDING" % c.who.name)
+
+
+func _ai_begin(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	c.ai = true
+	c.tries = 0
+	c.fails = 0
+	c.last_step = 8
+	var p: int = c.get("pattern", 0)
+	if p == 0 or p == 4 or roll(1, 4, "%s keeps its pattern?" % c.who.name) == 1:
+		var r := roll(1, 8, "%s pattern" % c.who.name)
+		p = roll(1, 2, "%s pattern" % c.who.name) + 4 if r != 8 else roll(1, 4, "%s pattern" % c.who.name)
+	c.pattern = p
+
+
+## Could the computer step in direction `dir`? It needs more movement left than the cost.
+func _can_step(c: Dictionary, dir: int) -> bool:
+	var to: Vector2i = c.cell + DIRS[dir]
+	if occupant(to) >= 0 or not field.walkable(to.x, to.y):
+		return false
+	var cost := 3 if dir % 2 == 1 else 2
+	return cost < c.moves
+
+
+## One step towards the target. Returns "moved", "retry" or "end".
+func _approach(i: int) -> String:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	if c.moves / 2 <= 0 or (m.class_id == CLASS_MAGE and m.armor == null):
+		guard(i)
+		return "end"
+	var base := dir_to(c.cell, combatants[c.target].cell)
+	var turns: Array = PATTERN_TURNS[c.pattern]
+	var k := 0
+	while k < 5 and not _can_step(c, (base + int(turns[k])) % 8):
+		k += 1
+	var dir := (base + int(turns[k])) % 8
+	if k == 5 or (dir + 4) % 8 == c.last_step:
+		c.fails += 1
+		c.pattern = c.pattern % 6 + 1
+		if c.fails > 1:
+			c.target = -1
+			if c.fails > 2:
+				c.moves = 0
+				return "retry"
+			if not find_target(i):
+				guard(i)
+				return "end"
+	if k == 5:
+		return "retry"
+	c.last_step = dir
+	var what := step(dir)
+	return "moved" if what == "moved" else "end"
+
+
+## One action of a computer-controlled turn. Returns false when the turn is over.
 func ai_act() -> bool:
 	if active < 0:
 		return false
 	var c: Dictionary = combatants[active]
-	var target := nearest_enemy(active)
-	if target < 0:
+	if c.down:
 		return false
-	var tc: Vector2i = combatants[target].cell
-	var d: int = maxi(absi(tc.x - c.cell.x), absi(tc.y - c.cell.y))
-	if d == 1:
+	if not c.get("ai", false):
+		_ai_begin(active)
+		if not find_target(active):
+			guard(active)
+			return false
+	while true:
+		c.tries += 1
+		if c.tries > 20 or c.down:
+			guard(active)
+			return false
+		var t: int = c.get("target", -1)
+		if not _enemy_of(c, t) or combatants[t].team == 0 or not adjacent(c.cell, combatants[t].cell):
+			t = -1
+		if t < 0:
+			var near: Array[int] = []
+			for j in combatants.size():
+				if _enemy_of(c, j) and adjacent(c.cell, combatants[j].cell):
+					near.append(j)
+			if near.is_empty():
+				if not find_target(active):
+					guard(active)
+					return false
+				var r := _approach(active)
+				if r == "moved":
+					return true
+				if r == "end":
+					return false
+				continue
+			t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
 		if c.attacks <= 0:
 			return false
-		attack(active, target)
-		return c.attacks > 0
-	# Step to the free neighbour that brings us closest (straight steps preferred).
-	var best_dir := -1
-	var best := d
-	for dir in [0, 2, 4, 6, 1, 3, 5, 7]:
-		var to: Vector2i = c.cell + DIRS[dir]
-		if occupant(to) >= 0 or not field.walkable(to.x, to.y):
-			continue
-		var cost := 3 if dir % 2 == 1 else 2
-		if cost > c.moves:
-			continue
-		var nd: int = maxi(absi(tc.x - to.x), absi(tc.y - to.y))
-		if nd < best:
-			best = nd
-			best_dir = dir
-	if best_dir < 0:
-		return false
-	return step(best_dir) == "moved"
+		c.target = t
+		attack(active, t)
+		c.moves = 0
+		if c.attacks <= 0 or not combatants[t].down:
+			c.attacks = 0
+			return false
+		return true
+	return false

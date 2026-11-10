@@ -26,13 +26,16 @@ def watch(tag, s=None):
         log(tag, "|", s["bottom"], "|", " / ".join(rows))
     return s, rows
 
-def to_fight():
+def to_fight(stand=(14, 1), face=3, through=()):
+    """Walk from save A to `stand`, turn to `face` (0-3 = NESW) and step forward. The route
+    avoids event squares except the events in `through`."""
     s = lab.boot("a")
     x, y = [int(v) for v in s["pos"].split()[0].split(",")]
     facing = "NESW".index(s["pos"].split()[1])
-    p = R.route((x, y), {(14, 1)}, set(range(1, 22)))
+    p = R.route((x, y), {stand}, set(range(1, 22)) - set(through))
     ks, f = R.keys(p, facing)
-    ks += {0: ["left"], 1: ["left", "left"], 2: ["right"], 3: []}[f] + ["up"]
+    turn = (face - f) % 4
+    ks += {0: [], 1: ["right"], 2: ["right", "right"], 3: ["left"]}[turn] + ["up"]
     for k in ks:
         key(k); time.sleep(0.5)
         s = status()
@@ -80,6 +83,61 @@ def away():
                 return
             key("d"); time.sleep(0.6); key("q"); time.sleep(0.6)
         time.sleep(0.25)
+
+def full(im):
+    return [text(im, r).rstrip() for r in range(25)]
+
+def watch_full(tag, s=None):
+    s = s or status()
+    rows = full(s["im"])
+    sig = tuple(rows)
+    if sig != last[0]:
+        last[0] = sig
+        shot(tag, s["im"])
+        log(tag, "||", " / ".join(r.strip(" ?\\") for r in rows if r.strip(" ?\\")))
+    return s, rows
+
+def win():
+    """Quick-fight the first battle on the way to the orcs; capture what follows a win."""
+    s, facing = to_fight()
+    t0 = time.time()
+    while time.time() - t0 < 125:
+        s, rows = watch_full("w")
+        b = s["bottom"]
+        if "CONTINUE BATTLE" in " ".join(rows):
+            key("n"); time.sleep(0.5)
+        elif b.startswith("MOVE VIEW"):
+            key("q"); time.sleep(0.4)
+        elif "PRESS" in b or "CONTINUE" in b:
+            time.sleep(1.0); watch_full("p"); key("enter")
+        elif b.startswith("VIEW") or "TAKE" in b or "POOL" in b:
+            watch_full("treasure")
+            for k in os.environ.get("AFTER", "v esc").split():
+                key(k); time.sleep(1.5); watch_full("after_" + k)
+            return
+        time.sleep(0.3)
+
+
+def tactics():
+    """Monster tactics: the feeding kobolds (Slums event 6, 15 kobolds and a leader) entered
+    from 6,0 facing east. Most kobolds start behind the front rank and must work their way
+    round to the party. Everyone on Quick; every screen logged. The route passes events 4
+    and 5 (room descriptions). STAND="x,y,facing" picks another approach."""
+    x, y, f = [int(v) for v in os.environ.get("STAND", "6,0,1").split(",")]
+    s, facing = to_fight((x, y), f, (4, 5))
+    t0 = time.time()
+    while time.time() - t0 < float(os.environ.get("SECS", "110")):
+        s, rows = watch_full("w")
+        b = s["bottom"]
+        if "CONTINUE BATTLE" in " ".join(rows):
+            key("n"); time.sleep(0.5)
+        elif b.startswith("MOVE VIEW"):
+            key("q"); time.sleep(0.3)
+        elif "PRESS" in b or b.startswith("VIEW") or "TAKE" in b:
+            watch_full("end")
+            return
+        time.sleep(0.15)
+
 
 if __name__ == "__main__":
     try:
