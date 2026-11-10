@@ -24,8 +24,9 @@ const SKY_INDOORS := 0x49FE
 const MOVEMENT_BLOCK := 0x6DC9  # 255 = the move is refused
 const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plain picture)
 const COMBAT_RESULT := 0x6DC7
+const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 
-enum State { IDLE, RUNNING, MENU, WAIT, DONE, NEW_ECL, ERROR }
+enum State { IDLE, RUNNING, MENU, WAIT, SHOP, DONE, NEW_ECL, ERROR }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -50,6 +51,9 @@ var notes: Array[String] = []    # things the engine would do but can't yet
 var new_ecl := -1                # block id requested by NEW_ECL
 var area_map := []               # last LOAD_AREA_MAP operands
 var area_deco := []              # last LOAD_AREA_DECO operands
+## Last TREASURE operands: coin amounts (copper, silver, electrum, gold, platinum),
+## gems, jewelry, item list id (ITEM block; 255 = none).
+var treasure := []
 var error := ""
 
 var _menu_dest := {}             # operand the menu choice is written to
@@ -106,6 +110,15 @@ func choose(index: int) -> State:
 	if menu.size() > 1:
 		_write(_menu_dest, index)
 	menu = []
+	state = State.RUNNING
+	return run()
+
+
+## Continues after the shop closes.
+func close_shop() -> State:
+	if state != State.SHOP:
+		return state
+	write_byte(SHOP_FLAG, 0)
 	state = State.RUNNING
 	return run()
 
@@ -329,13 +342,24 @@ func _exec(ins: Dictionary) -> void:
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
 		"COMBAT":
-			_note("combat")
-			write_byte(COMBAT_RESULT, 0)
+			if read_byte(SHOP_FLAG) == 1:
+				# Shops reuse the after-combat treasure screen: pause and let the caller
+				# open the shop with the TREASURE item list.
+				state = State.SHOP
+			else:
+				_note("combat")
+				if not treasure.is_empty():
+					_note("treasure")
+				write_byte(COMBAT_RESULT, 0)
+				treasure = []
 		"ENCOUNTER_MENU":
 			_note("encounter")
 			_write(a[3], 1)
 		"TREASURE":
-			_note("treasure")
+			treasure = []
+			for i in a.size():
+				treasure.append(_value(a[i]))
+
 		"LOAD_MON":
 			_note("monsters loaded")
 		"DAMAGE":

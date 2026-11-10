@@ -8,7 +8,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M1 — Data inventory, in progress.** Pictures (static and animated), area maps, game text and the first-person wall graphics decode; you can walk New Phlan in first person. Events, monsters, items and saves are next.
+**M1 done in practice; M3 started.** Pictures, maps, text, the first-person view and the event scripts decode; New Phlan is walkable with its events running (checked against the original). Shops and the starting party are in; monsters and combat are next.
 
 | # | Milestone | |
 |---|-----------|--|
@@ -31,7 +31,8 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
    - **Tab** cycles pictures → maps → walk.
    - Pictures: ←/→ step through every decoded picture, ↑/↓ jump between files.
    - Maps: ←/→ step through the 29 area maps; **Enter** walks the current map.
-   - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn.
+   - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night.
+   - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
 
 ## Layout
 

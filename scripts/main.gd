@@ -53,6 +53,10 @@ var _held_message := ""
 var _sprite_cache := {}             # "file:id" -> frames
 var _jump_next := false             # the next script move is a placement, not a walk
 
+# The party (the game's saved party A, CHRDATA1-6) and the shop overlay
+var _party: Array[PartyMember] = []
+var _shop: ShopScreen
+
 
 func _ready() -> void:
 	_goto = LineEdit.new()
@@ -81,6 +85,10 @@ func _ready() -> void:
 	_message.visible = false
 	add_child(_message)
 	_vm.write_byte(EclVM.CLOCK_HOUR, 0)   # a new game starts at 00:00
+	_shop = ShopScreen.new()
+	_shop.visible = false
+	_shop.closed.connect(_on_shop_closed)
+	add_child(_shop)
 	_timer = Timer.new()
 	_timer.one_shot = true
 	_timer.timeout.connect(_on_timer)
@@ -93,6 +101,10 @@ func _ready() -> void:
 			+ "or run with --game-path=\"<folder containing GEO1.DAX>\"."
 		)
 		return
+	for i in range(1, 7):
+		var m := PartyMember.load_files(_game_path.path_join("CHRDATA%d.SAV" % i), _game_path.path_join("CHRDATA%d.ITM" % i))
+		if m != null:
+			_party.append(m)
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		var dax := DaxFile.open(_game_path.path_join(file_name))
 		if dax == null:
@@ -121,7 +133,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _game_path == "" or not event.is_pressed():
+	if _game_path == "" or not event.is_pressed() or _shop.visible:
 		return
 	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
 		_mode = ((_mode + 1) % 3) as Mode
@@ -440,12 +452,43 @@ func _after_vm() -> void:
 			else:
 				_message.text += options
 			return
+		EclVM.State.SHOP:
+			_open_shop()
+			return
 		EclVM.State.NEW_ECL:
 			_enter_script(_vm_file, _vm.new_ecl)
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		_finish_move(_pending_move)
+
+
+## Opens the shop for the script's TREASURE item list (ITEM<n>.DAX block, shown in
+## reverse of stored order, as the original lists it).
+func _open_shop() -> void:
+	var list_id: int = _vm.treasure[_vm.treasure.size() - 1] if not _vm.treasure.is_empty() else 255
+	var items: Array[GameItem] = []
+	var order := [_vm_file]
+	for n in range(1, 9):
+		if n != _vm_file:
+			order.append(n)
+	for n in order:
+		var name := "ITEM%d.DAX" % n
+		if not _dax_cache.has(name):
+			_dax_cache[name] = DaxFile.open(_game_path.path_join(name))
+		var dax: DaxFile = _dax_cache[name]
+		if dax != null and dax.blocks.has(list_id):
+			items = GameItem.list_from(dax.blocks[list_id])
+			items.reverse()
+			break
+	_shop.open(items, _party)
+
+
+func _on_shop_closed() -> void:
+	_message.text = ""
+	_vm.close_shop()
+	_after_vm()
+	_show()
 
 
 ## Loads the event script for the current map (when it changes) and runs its init.
