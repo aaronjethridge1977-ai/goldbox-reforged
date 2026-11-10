@@ -5,7 +5,7 @@ extends Control
 ##   Maps         : Left/Right map, Enter to walk the map
 ##   Walk         : Up forward, Down back, Left/Right turn,
 ##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir",
-##                  E write the area's event script listing to captures/, N day/night,
+##                  E encamp (rest), F4 write the area's event script listing to captures/, N day/night,
 ##                  1-9 choose a menu item, Enter continue,
 ##                  V party character sheets, M monster sheets (every MONnCHA block),
 ##                  B test battle here (battlefield and placement; the area's set battles, PgUp/PgDn)
@@ -60,6 +60,10 @@ var _party: Array[PartyMember] = []
 var _shop: ShopScreen
 var _sheet: CharacterSheet
 var _treasure: TreasureScreen
+var _camp: CampScreen
+var _temple: TempleScreen
+const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
+const REST_PERCENT := 0x6DD3      # ... and the chance (d100) that rest is interrupted
 var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
 var _combat: CombatScreen
 var _types: ItemTypes
@@ -103,6 +107,16 @@ func _ready() -> void:
 	_treasure.visible = false
 	_treasure.closed.connect(_on_treasure_closed)
 	add_child(_treasure)
+	_camp = CampScreen.new()
+	_camp.visible = false
+	_camp.closed.connect(_on_camp_closed)
+	_camp.save_requested.connect(_quick_save)
+	_camp.interrupted.connect(_on_rest_interrupted)
+	add_child(_camp)
+	_temple = TempleScreen.new()
+	_temple.visible = false
+	_temple.closed.connect(_on_temple_closed)
+	add_child(_temple)
 	_combat = CombatScreen.new()
 	_combat.visible = false
 	_combat.finished.connect(_on_event_fight_finished)
@@ -173,7 +187,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
-			or _treasure.visible:
+			or _treasure.visible or _camp.visible or _temple.visible:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -234,6 +248,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_capture()
 			return
 		elif key == KEY_E:
+			_make_camp()
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_F4:
 			_dump_script()
 			return
 		elif key == KEY_G:
@@ -652,6 +670,11 @@ func _after_vm() -> void:
 		EclVM.State.SHOP:
 			_open_shop()
 			return
+		EclVM.State.TEMPLE:
+			for m in _party:
+				m.recalculate(_types)
+			_temple.open(_party)
+			return
 		EclVM.State.COMBAT:
 			_start_event_fight()
 			return
@@ -693,6 +716,49 @@ func _item_list(list_id: int) -> Array[GameItem]:
 		if it.name == "":
 			it.name = names.name_of(it)
 	return items
+
+
+## Encamp: the area's "on rest" script sets how often resting may be interrupted.
+func _make_camp() -> void:
+	if not _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+		_status.text = "Can't make camp in the middle of an event; finish it first."
+		return
+	_vm.write_byte(REST_PERIOD, 0)
+	_vm.write_byte(REST_PERCENT, 0)
+	if _vm.ecl != null:
+		_sync_position_to_vm(_facing)
+		_vm.clear_output()
+		_vm.start(2)
+	for m in _party:
+		m.recalculate(_types)
+	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
+
+
+func _on_temple_closed() -> void:
+	_message.text = ""
+	_vm.close_temple()
+	_after_vm()
+	_show()
+
+
+func _on_camp_closed() -> void:
+	_advance_clock(_camp.hours_passed)
+	_show()
+
+
+## Rest was interrupted: the area's "rest interrupted" script runs (usually an encounter).
+func _on_rest_interrupted() -> void:
+	_advance_clock(_camp.hours_passed)
+	if _vm.ecl != null:
+		_vm.clear_output()
+		_vm.start(3)
+		_after_vm()
+	_show()
+
+
+func _advance_clock(hours: int) -> void:
+	var h := (_vm.read_byte(EclVM.CLOCK_HOUR) + hours) % 24
+	_vm.write_byte(EclVM.CLOCK_HOUR, h)
 
 
 ## Runs the fight an event script asked for, then lets the script carry on. A COMBAT with
@@ -1000,5 +1066,5 @@ func _show() -> void:
 	var map: GeoMap = e.map
 	var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
 	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
-	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   F2 save  F3 load   N day/night  O outlines  C capture  G go to  E script   Tab pictures" % [
+	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
 		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127, "night" if night else "day", script_name]

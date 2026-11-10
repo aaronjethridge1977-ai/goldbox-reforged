@@ -25,8 +25,9 @@ const MOVEMENT_BLOCK := 0x6DC9  # 255 = the move is refused
 const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plain picture)
 const COMBAT_RESULT := 0x6DC7
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
+const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
 
-enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR }
+enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -115,6 +116,15 @@ func choose(index: int) -> State:
 	if menu.size() > 1:
 		_write(_menu_dest, index)
 	menu = []
+	state = State.RUNNING
+	return run()
+
+
+## Continues after the temple closes.
+func close_temple() -> State:
+	if state != State.TEMPLE:
+		return state
+	write_byte(TEMPLE_FLAG, 0)
 	state = State.RUNNING
 	return run()
 
@@ -364,7 +374,9 @@ func _exec(ins: Dictionary) -> void:
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
 		"COMBAT":
-			if read_byte(SHOP_FLAG) == 1:
+			if read_byte(TEMPLE_FLAG) == 1:
+				state = State.TEMPLE
+			elif read_byte(SHOP_FLAG) == 1:
 				# Shops reuse the after-combat treasure screen: pause and let the caller
 				# open the shop with the TREASURE item list.
 				state = State.SHOP
