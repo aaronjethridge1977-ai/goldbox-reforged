@@ -81,6 +81,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["attacks"] = 0
 		c["acted"] = false
 		c["received"] = 0     # attacks received since its own turn (or last step)
+		c["second"] = 0       # of this round's attacks, how many are the second kind (used first)
 		c["guarding"] = false # guarding until its next turn
 		c["bleeding"] = 0     # points past 0 while dying
 		c["target"] = -1
@@ -128,6 +129,8 @@ func start_round() -> void:
 		var m: PartyMember = c.who
 		c.moves = maxi(m.movement, 1) * 2
 		c.attacks = attacks_for(m)
+		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
+		c.attacks += c.second
 		c.acted = false
 		var d := roll(1, 6, "initiative %s" % m.name) + m.dex_missile_bonus()
 		d = maxi(d, 1)
@@ -362,7 +365,7 @@ func shoot(i: int, j: int) -> void:
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 		else:
-			var dice: Array = am.damage
+			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
 			message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
 			_hurt(j, dmg)
@@ -453,6 +456,8 @@ func choose_weapon(i: int) -> void:
 	m.recalculate(types)
 	if c.attacks > 0:
 		c.attacks = attacks_for(m)
+		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
+		c.attacks += c.second
 
 
 ## Applies damage the way the original does (see "Going down" above).
@@ -629,21 +634,45 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			t.dir = dir_to(t.cell, a.cell)
 	a.dir = dir_to(a.cell, t.cell)
 	a.moves = 0
+	var stab := not free and _can_backstab(a, t)
 	var ac: int = tm.rear_ac if behind else tm.ac
-	var how := " (FROM BEHIND)" if behind else ""
+	if stab:
+		ac = tm.rear_ac + 4
+	var how := " (FROM BEHIND)" if behind and not stab else ""
+	var verb := "BACKSTABS" if stab else "ATTACKS"
 	while a.attacks > 0 and not t.down:
 		a.attacks -= 1
+		var second: bool = int(a.get("second", 0)) > 0
+		if second:
+			a.second -= 1
 		var need: int = am.thac0 - ac
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
 		if not hit:
-			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
+			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
-		var dice: Array = am.damage
+		var dice: Array = am.base_damage_2 if second else (am.damage_large if tm.is_large() else am.damage)
 		var dmg := roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2])
 		dmg = maxi(dmg, 0)
-		message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
+		if stab:
+			dmg *= (am.thief_level() - 1) / 4 + 2
+		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
 		_hurt(j, dmg)
+
+
+## A thief's backstab (as the original): a thief with no weapon or a club, dagger or sword
+## strikes a man-sized target from directly behind after it has been attacked more than
+## once this round: +4 to hit and damage x2 (levels 1-4), x3 (5-8)...
+const BACKSTAB_WEAPONS := [7, 8, 35, 36, 37, 97]
+
+func _can_backstab(a: Dictionary, t: Dictionary) -> bool:
+	var am: PartyMember = a.who
+	var tm: PartyMember = t.who
+	if am.thief_level() <= 0 or (tm.size & 0x7F) > 1:
+		return false
+	if am.weapon != null and not am.weapon.type in BACKSTAB_WEAPONS:
+		return false
+	return int(t.received) > 1 and dir_to(a.cell, t.cell) == int(t.dir)
 
 
 ## Ends the active combatant's turn.
@@ -651,6 +680,7 @@ func done() -> void:
 	if active >= 0:
 		combatants[active].moves = 0
 		combatants[active].attacks = 0
+		combatants[active].second = 0
 
 
 # --- Computer-controlled turns ----------------------------------------------------------

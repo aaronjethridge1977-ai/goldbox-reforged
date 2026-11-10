@@ -64,6 +64,8 @@ var ammo: GameItem = null           # what each shot uses up: the arrows, the qu
                                     # the thrown weapon itself (null: a sling's stones)
 var missile_ready := false          # has what it needs to shoot
 var class_flags := 0                # 0xB0: which item classes the character may use
+var size := 0                       # 0x6C: over 0x80, or low 3 bits over 1 = large
+var half_attacks_2 := 0             # 0xA2: second attack type per round x2 (claw/bite...)
 var class_id := 0
 var hp_rolled := 0
 var xp_value := 0                   # a monster's worth: xp_per_hp x hp_rolled + xp_value
@@ -149,6 +151,8 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.experience = d.decode_u32(0xAC)
 	m.status = d[0x10C]
 	m.class_flags = d[0xB0]
+	m.size = d[0x6C]
+	m.half_attacks_2 = d[0xA2]
 	m.hp_rolled = d[0xB1]
 	m.xp_value = d.decode_s16(0xB8)
 	m.xp_per_hp = d[0xBA]
@@ -243,6 +247,14 @@ func use_shot() -> GameItem:
 	var gone := ammo
 	ammo = null
 	return gone
+
+
+func is_large() -> bool:
+	return size > 0x80 or (size & 7) > 1
+
+
+func thief_level() -> int:
+	return raw[0x9C] if raw.size() > 0x9C else 0
 
 
 const STATUS_RUNNING := 3

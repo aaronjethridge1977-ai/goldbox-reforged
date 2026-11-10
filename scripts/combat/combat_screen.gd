@@ -131,9 +131,9 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		_distance = distance
 		_load_monsters()
 	for e in _combatants:
-		print("%s %s %d %d  move %d morale 0x%02X int %d classes 0x%02X weapon %s" % ["party" if e.team == 0 else "monster",
+		print("%s %s %d %d  move %d morale 0x%02X int %d classes 0x%02X size 0x%02X att2 %d weapon %s" % ["party" if e.team == 0 else "monster",
 			e.who.name, e.cell.x, e.cell.y, e.who.movement, e.who.morale,
-			e.who.stats[1] if e.who.stats.size() > 1 else 0, e.who.class_flags,
+			e.who.stats[1] if e.who.stats.size() > 1 else 0, e.who.class_flags, e.who.size, e.who.half_attacks_2,
 			e.who.weapon.name if e.who.weapon else "-"])
 	if image_path != "":
 		var full := Image.create_empty(Battlefield.WIDTH * CELL, Battlefield.HEIGHT * CELL, false, Image.FORMAT_RGBA8)
