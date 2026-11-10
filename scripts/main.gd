@@ -138,6 +138,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif event.is_action("ui_accept") and _vm.menu.size() == 1:
 				choice = 0
 			if choice >= 0 and choice < _vm.menu.size():
+				_message.text = ""
 				_vm.choose(choice)
 				_after_vm()
 			get_viewport().set_input_as_handled()
