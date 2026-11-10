@@ -50,7 +50,7 @@ def key(name, hold=0.08):
 
 
 def grab(path):
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", "800x600",
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", os.environ.get("GRAB_SIZE", "800x600"),
                     "-i", DISPLAY, "-frames:v", "1", path], check=True)
 
 

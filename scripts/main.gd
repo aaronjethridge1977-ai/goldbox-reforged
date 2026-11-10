@@ -99,6 +99,7 @@ func _ready() -> void:
 	add_child(_sheet)
 	_combat = CombatScreen.new()
 	_combat.visible = false
+	_combat.finished.connect(_on_event_fight_finished)
 	add_child(_combat)
 	_timer = Timer.new()
 	_timer.one_shot = true
@@ -342,6 +343,10 @@ func _capture() -> void:
 ## start exactly where it's needed. Saved in the project's saves/ folder when run from the
 ## editor (git-ignored), otherwise in Godot's user folder.
 func _save_path() -> String:
+	# Testing aid for the lab: --save=<path> uses that quick save file instead.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--save="):
+			return arg.trim_prefix("--save=")
 	if OS.has_feature("editor"):
 		var dir := ProjectSettings.globalize_path("res://saves")
 		DirAccess.make_dir_recursive_absolute(dir)
@@ -625,6 +630,9 @@ func _after_vm() -> void:
 		EclVM.State.SHOP:
 			_open_shop()
 			return
+		EclVM.State.COMBAT:
+			_start_event_fight()
+			return
 		EclVM.State.NEW_ECL:
 			_enter_script(_vm_file, _vm.new_ecl)
 		EclVM.State.ERROR:
@@ -652,6 +660,27 @@ func _open_shop() -> void:
 			items.reverse()
 			break
 	_shop.open(items, _party)
+
+
+## Runs the fight an event script asked for, then lets the script carry on.
+func _start_event_fight() -> void:
+	for m in _party:
+		m.recalculate(_types)
+	var map: GeoMap = _maps[_map_index].map
+	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1),
+		_vm.monsters, _vm.encounter_max, _vm.encounter_advances)
+
+
+func _on_event_fight_finished(result: int) -> void:
+	if result == 2:
+		_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
+		_vm.state = EclVM.State.DONE
+		_show()
+		return
+	_message.text = ""
+	_vm.end_combat(0)
+	_after_vm()
+	_show()
 
 
 ## Every monster record in MON1CHA..MON8CHA, for the monster sheets.

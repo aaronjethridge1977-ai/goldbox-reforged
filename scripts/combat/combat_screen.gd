@@ -14,6 +14,8 @@ extends Control
 ## script: monster, count, icon); an area without any falls back to each monster in turn.
 
 signal closed
+## After a real (event) fight: 1 = the party won, 2 = the party fell.
+signal finished(result: int)
 
 const VIEW_CELLS := 7
 const CELL := 24
@@ -41,6 +43,7 @@ var _combat: Combat = null
 var _messages := PackedStringArray()
 var _ai_timer: Timer
 var _result := 0
+var _event_fight := false
 
 var _picture: TextureRect
 var _info: Label
@@ -80,11 +83,28 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_distance = Placement.encounter_distance(_field, px, py, facing)
 	_combat = null
 	_result = 0
+	_event_fight = false
 	_messages.clear()
 	if _picture == null:
 		_build()
 	_load_monsters()
 	visible = true
+
+
+## A fight started by an event script: the real party against `rows` ([[id, count,
+## picture], ...]) from MON<mon_file>, `max_distance` and `advances` from the script's
+## SPRITE_START / SPRITE_ADVANCE. Emits `finished` when it is over.
+func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
+		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int) -> void:
+	open_test(game_path, map, px, py, facing, party, mon_file, null)
+	_event_fight = true
+	_encounters = [{"monsters": rows, "text": ""}]
+	_enc_index = 0
+	var open_ahead := Placement.encounter_distance(_field, px, py, facing, 2)
+	_distance = maxi(mini(open_ahead, max_distance) - advances, 0)
+	_load_monsters()
+	_start_fight(0, false)
+	_advance()
 
 
 ## Testing aid: a battle with given monsters ([[id, count, picture], ...]) and distance;
@@ -213,14 +233,21 @@ func _place() -> void:
 
 # --- Fighting ---------------------------------------------------------------------------
 
-func _start_fight(seed_value: int = 0) -> void:
-	# Test fights use copies of the party, so nobody gets hurt for real.
-	var copies: Array[PartyMember] = []
+func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
+	if copy_party:
+		# Test fights use copies of the party, so nobody gets hurt for real.
+		var copies: Array[PartyMember] = []
+		for m in _party:
+			var c := m.clone()
+			c.recalculate(_types)
+			copies.append(c)
+		_party = copies
+	# Characters who are down don't take part.
+	var standing: Array[PartyMember] = []
 	for m in _party:
-		var c := m.clone()
-		c.recalculate(_types)
-		copies.append(c)
-	_party = copies
+		if m.hp > 0:
+			standing.append(m)
+	_party = standing
 	_place()
 	_combat = Combat.new(_field, _combatants, seed_value)
 	_combat.message.connect(_on_message)
@@ -350,11 +377,20 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+	if _event_fight and _result == 0 and _combat != null:
+		_fight_input(event, key)
+		return
 	if event.is_action("ui_cancel") or (_result != 0 and event.is_action("ui_accept")):
 		_ai_timer.stop()
+		var was_event := _event_fight
+		var result := _result
 		_combat = null
+		_event_fight = false
 		visible = false
-		closed.emit()
+		if was_event:
+			finished.emit(result)
+		else:
+			closed.emit()
 	elif _combat != null:
 		_fight_input(event, key)
 		return

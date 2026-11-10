@@ -26,7 +26,7 @@ const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plai
 const COMBAT_RESULT := 0x6DC7
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 
-enum State { IDLE, RUNNING, MENU, WAIT, SHOP, DONE, NEW_ECL, ERROR }
+enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -44,6 +44,11 @@ var picture_head := 255
 ## and the portrait it turns into once close (picture id, head id or 255).
 var sprite_id := -1
 var sprite_distance := 0
+## Monsters loaded for the next COMBAT: [[monster id, count, picture id], ...].
+var monsters: Array = []
+## Encounter distance: the maximum from SPRITE_START, less one per SPRITE_ADVANCE.
+var encounter_max := 2
+var encounter_advances := 0
 var sprite_picture := 255
 var sprite_head := 255
 var menu: Array = []             # menu item strings while State.MENU
@@ -119,6 +124,17 @@ func close_shop() -> State:
 	if state != State.SHOP:
 		return state
 	write_byte(SHOP_FLAG, 0)
+	state = State.RUNNING
+	return run()
+
+
+## Continues after a fight. `result`: 0 = the party won (the script reads it).
+func end_combat(result: int) -> State:
+	if state != State.COMBAT:
+		return state
+	write_byte(COMBAT_RESULT, result)
+	monsters = []
+	treasure = []
 	state = State.RUNNING
 	return run()
 
@@ -305,12 +321,18 @@ func _exec(ins: Dictionary) -> void:
 			# A figure walks up: sprite id, starting distance, the portrait it ends on.
 			sprite_id = _value(a[0])
 			sprite_distance = clampi(_value(a[1]), 0, 2)
+			encounter_max = _value(a[1])
+			encounter_advances = 0
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
 		"SPRITE_ADVANCE":
 			sprite_distance = maxi(0, sprite_distance - 1)
-		"SPRITE_OFF", "CLEAR_MON":
+			encounter_advances += 1
+		"SPRITE_OFF":
 			sprite_id = -1
+		"CLEAR_MON":
+			sprite_id = -1
+			monsters = []
 		"DELAY":
 			state = State.WAIT
 		"PICTURE":
@@ -346,6 +368,9 @@ func _exec(ins: Dictionary) -> void:
 				# Shops reuse the after-combat treasure screen: pause and let the caller
 				# open the shop with the TREASURE item list.
 				state = State.SHOP
+			elif not monsters.is_empty():
+				# A fight: pause while the caller runs it, then end_combat().
+				state = State.COMBAT
 			else:
 				_note("combat")
 				if not treasure.is_empty():
@@ -361,7 +386,8 @@ func _exec(ins: Dictionary) -> void:
 				treasure.append(_value(a[i]))
 
 		"LOAD_MON":
-			_note("monsters loaded")
+			if monsters.size() < 63:
+				monsters.append([_value(a[0]), maxi(_value(a[1]), 1), _value(a[2])])
 		"DAMAGE":
 			_note("damage")
 		"GIVE_EXP":

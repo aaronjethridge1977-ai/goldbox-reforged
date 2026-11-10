@@ -31,3 +31,10 @@ meets: the opening combat screen, then Aim → Next across the monsters. It read
 as text with the game's own 8×8 font (`font.json`, generated from `8X8D1.DAX` block 201 and
 kept in `.lab`, since it is game data): the command line, the coordinates line and messages.
 Shots and a log go to `$LAB_OUT`.
+
+`run_godot.sh <quicksave.cfg> steps...` runs **our engine** on a second virtual display
+(1280×800) starting from a quick save file (`--save=`), with the same key/grab steps (or
+`--py script.py`). Example: a save at Slums 14,1 facing west, then `up wait=3 enter` walks
+into the orcs' event and starts the fight. Our engine also has two headless check modes:
+`--battle=GEO2.DAX:20:13:7:W:2:4:6:4:-1` prints where everyone starts (and
+`--battle-image=` saves the field); `--battle-fight=<seed>` fights it out and prints every roll.
