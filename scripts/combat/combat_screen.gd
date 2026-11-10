@@ -190,11 +190,14 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 	for line in _combat.roll_log:
 		print("roll ", line)
 	print("result ", ["", "party won", "party lost"][_combat.outcome()], " after ", _combat.round_no, " rounds")
+	_combat.finish()
+	for m in _party:
+		print("  %s %s HP %d" % [m.name, m.status_name(), m.hp])
 	if _combat.outcome() == 1:
 		var sp := Spoils.gather(defeated(), [], [])
 		var standing := []
 		for m in _party:
-			if m.hp > 0:
+			if m.can_fight():
 				standing.append(m)
 		var before := {}
 		for m in _party:
@@ -298,7 +301,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	# Characters who are down don't take part.
 	var standing: Array[PartyMember] = []
 	for m in _party:
-		if m.hp > 0:
+		if m.can_fight():
 			standing.append(m)
 	_party = standing
 	_place()
@@ -320,6 +323,7 @@ func _advance() -> void:
 	var i := _combat.next_turn()
 	if i < 0:
 		_result = _combat.outcome()
+		_combat.finish()
 		_on_message("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.")
 		_refresh()
 		if _event_fight and _result == 1:
@@ -415,7 +419,7 @@ func _refresh() -> void:
 			_prompt.text = ("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.") + "   Esc or Enter: leave"
 		else:
 			_prompt.text = ("ROUND %d   Arrows / Home PgUp End PgDn: move or attack   Space: done   "
-				+ "Q: quick (computer fights)   Esc: leave") % _combat.round_no
+				+ "G: guard   B: bandage   Q: quick (computer fights)   Esc: leave") % _combat.round_no
 		return
 	var summary := PackedStringArray()
 	var text := ""
@@ -505,6 +509,21 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	elif key == KEY_SPACE or key == KEY_D:
 		_combat.done()
 		_advance()
+	elif key == KEY_G:
+		if _combat.can_guard():
+			_combat.guard(_combat.active)
+			_refresh()
+			_advance()
+		else:
+			_on_message("CAN'T GUARD WITH A MISSILE WEAPON")
+			_refresh()
+	elif key == KEY_B:
+		if _combat.bandage():
+			_refresh()
+			_advance()
+		else:
+			_on_message("NOBODY NEEDS BANDAGING")
+			_refresh()
 	elif key == KEY_Q:
 		_combatants[_combat.active].quick = true
 		_ai_timer.start(0.2)

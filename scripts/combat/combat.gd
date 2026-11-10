@@ -27,7 +27,16 @@ extends RefCounted
 ##   him that round.)
 ## - Guarding: a combatant on guard attacks the first enemy that steps next to it, once,
 ##   with the attacks it saved; guarding ends at its next turn.
-## - At 0 HP or below a character drops (dying); a monster is killed.
+## - Going down (party and monsters alike): damage that leaves exactly 0 HP knocks the
+##   target out (UNCONSCIOUS, "GOES DOWN"); damage past 0 by 1-9 leaves it DYING ("GOES
+##   DOWN AND IS DYING"), bleeding that many points; more than 9 past 0 kills it ("IS
+##   KILLED"). HP shows 0 for anyone down. Each new round a dying combatant bleeds one
+##   point more and dies past 9; while a party member is dying the round opens with
+##   "YOUR TEAMMATE IS DYING". (The lab saw all four messages in the original.)
+## - Bandage: a party member can spend its turn bandaging the first dying party member
+##   (anywhere on the field), who becomes UNCONSCIOUS and stops bleeding ("IS BANDAGED").
+##   Party members on Quick bandage before anything else. The original offers it under
+##   DONE: GUARD DELAY QUIT BANDAGE SPEED EXIT (GUARD only with a melee weapon).
 ## - The fight ends when one side has nobody standing. (QoL: when the last enemy falls the
 ##   battle ends at once; the original asks "Continue Battle?".)
 ## Every die roll goes through roll(), which uses a seedable generator and logs the roll, so
@@ -66,6 +75,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["acted"] = false
 		c["received"] = 0     # attacks received since its own turn (or last step)
 		c["guarding"] = false # guarding until its next turn
+		c["bleeding"] = 0     # points past 0 while dying
 		c["target"] = -1
 		c["pattern"] = 0      # the computer's movement pattern (see below)
 		c["turned"] = 0       # eighth-turns of those attacks, as the original counts them
@@ -99,6 +109,8 @@ func outcome() -> int:
 
 
 func start_round() -> void:
+	if round_no > 0:
+		_bleed()
 	round_no += 1
 	var delays := {}
 	for i in combatants.size():
@@ -146,6 +158,85 @@ func next_turn() -> int:
 		return active
 	active = -1
 	return -1
+
+
+## The end of a round: the dying bleed; anyone past 9 dies.
+func _bleed() -> void:
+	for c in combatants:
+		var m: PartyMember = c.who
+		if m.status == PartyMember.STATUS_DYING:
+			c.bleeding += 1
+			if c.bleeding > 9:
+				m.status = PartyMember.STATUS_DEAD
+				c.bleeding = 0
+	if first_dying(0) >= 0:
+		message.emit("YOUR TEAMMATE IS DYING")
+
+
+## The first dying combatant of a team, or -1.
+func first_dying(team: int) -> int:
+	for i in combatants.size():
+		var c: Dictionary = combatants[i]
+		if c.team == team and (c.who as PartyMember).status == PartyMember.STATUS_DYING:
+			return i
+	return -1
+
+
+## The active combatant bandages the first dying party member; its turn ends.
+func bandage() -> bool:
+	if active < 0:
+		return false
+	var j := first_dying(combatants[active].team)
+	if j < 0:
+		return false
+	var t: Dictionary = combatants[j]
+	(t.who as PartyMember).status = PartyMember.STATUS_UNCONSCIOUS
+	t.bleeding = 0
+	message.emit("%s IS BANDAGED" % t.who.name)
+	done()
+	return true
+
+
+## Can the active combatant guard? (Not with a missile weapon, as in the original.)
+func can_guard() -> bool:
+	if active < 0:
+		return false
+	var m: PartyMember = combatants[active].who
+	return not m.weapon_ranged or m.weapon_ranged_melee
+
+
+## Applies damage the way the original does (see "Going down" above).
+func _hurt(j: int, dmg: int) -> void:
+	var t: Dictionary = combatants[j]
+	var tm: PartyMember = t.who
+	if tm.hp >= dmg:
+		tm.hp -= dmg
+		if tm.hp > 0:
+			return
+		tm.status = PartyMember.STATUS_UNCONSCIOUS
+		t.down = true
+		message.emit("%s GOES DOWN" % tm.name)
+		return
+	var past := dmg - tm.hp
+	tm.hp = 0
+	t.down = true
+	if past > 9:
+		tm.status = PartyMember.STATUS_DEAD
+		message.emit("%s GOES DOWN" % tm.name)
+		message.emit("%s IS KILLED" % tm.name)
+	else:
+		tm.status = PartyMember.STATUS_DYING
+		t.bleeding = past
+		message.emit("%s GOES DOWN AND IS DYING" % tm.name)
+
+
+## After the fight, as the original does: the dying stop bleeding (UNCONSCIOUS, 0 HP).
+func finish() -> void:
+	for c in combatants:
+		var m: PartyMember = c.who
+		if m.status == PartyMember.STATUS_DYING:
+			m.status = PartyMember.STATUS_UNCONSCIOUS
+		c.bleeding = 0
 
 
 # --- Actions ----------------------------------------------------------------------------
@@ -301,11 +392,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var dice: Array = am.damage
 		var dmg := roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2])
 		dmg = maxi(dmg, 0)
-		tm.hp -= dmg
 		message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
-		if tm.hp <= 0:
-			t.down = true
-			message.emit("%s IS %s" % [tm.name, "KILLED" if t.team == 1 else "DOWN"])
+		_hurt(j, dmg)
 
 
 ## Ends the active combatant's turn.
@@ -466,6 +554,8 @@ func ai_act() -> bool:
 		return false
 	if not c.get("ai", false):
 		_ai_begin(active)
+		if c.team == 0 and bandage():
+			return false
 		if not find_target(active):
 			guard(active)
 			return false

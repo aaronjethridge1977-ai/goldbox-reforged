@@ -384,7 +384,7 @@ func _quick_save() -> void:
 			rec[52] = 1 if it.readied else 0
 			items.append(rec)
 		members.append({"name": m.name, "money": m.money, "items": items, "hp": m.hp,
-			"experience": m.experience})
+			"experience": m.experience, "status": m.status})
 	cfg.set_value("party", "members", members)
 	var err := cfg.save(_save_path())
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
@@ -462,6 +462,7 @@ func _quick_load() -> void:
 		_party[i].money = saved.get("money", _party[i].money)
 		_party[i].hp = saved.get("hp", _party[i].hp)
 		_party[i].experience = saved.get("experience", _party[i].experience)
+		_party[i].status = saved.get("status", _party[i].status)
 		var items: Array[GameItem] = []
 		var names := ItemNames.shared(_game_path)
 		for rec in saved.get("items", []):
@@ -728,7 +729,7 @@ func _after_fight(defeated: Array, won_text: String) -> void:
 	var spoils := Spoils.gather(defeated, coins, _item_list(list_id))
 	var standing: Array = []
 	for m in _party:
-		if m.hp > 0:
+		if m.can_fight():
 			standing.append(m)
 	var share := spoils.award(standing)
 	for m in _party:

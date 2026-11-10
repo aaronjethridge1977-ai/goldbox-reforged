@@ -139,6 +139,27 @@ def tactics():
         time.sleep(0.15)
 
 
+def done_menu():
+    """DONE's submenu, guarding and bandaging: the Slums orcs; on each party turn press D,
+    log the menu, then B (bandage) if it is offered, else G (guard). Every screen logged."""
+    s, facing = to_fight()
+    t0 = time.time()
+    while time.time() - t0 < float(os.environ.get("SECS", "100")):
+        s, rows = watch_full("w")
+        b = s["bottom"]
+        if "CONTINUE BATTLE" in " ".join(rows):
+            key("n"); time.sleep(0.5)
+        elif b.startswith("MOVE VIEW"):
+            key("d"); time.sleep(0.6)
+            s, rows = watch_full("done")
+            log("done menu:", s["bottom"])
+            key("b" if "BANDAGE" in s["bottom"] else "g"); time.sleep(0.6)
+        elif "PRESS" in b or b.startswith("VIEW") or "TAKE" in b:
+            watch_full("end")
+            return
+        time.sleep(0.15)
+
+
 if __name__ == "__main__":
     try:
         globals()[sys.argv[1]]()

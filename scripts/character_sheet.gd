@@ -73,7 +73,7 @@ func _refresh() -> void:
 	lines.append("")
 	lines.append("STR %-6s INT %-3d WIS %-3d DEX %-3d CON %-3d CHA %d" % [str_text,
 		m.stats[1], m.stats[2], m.stats[3], m.stats[4], m.stats[5]])
-	lines.append("HP %d/%d   EXP %d" % [m.hp, m.hp_max, m.experience])
+	lines.append("HP %d/%d   EXP %d   STATUS %s" % [m.hp, m.hp_max, m.experience, m.status_name()])
 	lines.append("")
 	lines.append("AC %d  (from behind %d)" % [m.ac, m.rear_ac])
 	lines.append("THAC0 %d" % m.thac0)

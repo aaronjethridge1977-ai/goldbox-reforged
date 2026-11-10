@@ -53,6 +53,11 @@ var strength_exceptional := 0
 var hp := 0
 var hp_max := 0
 var experience := 0
+## Health, as the record stores it (0x10C): OKAY, UNCONSCIOUS (0 HP), DYING (bleeding;
+## combat only), DEAD and the rest. Only an OKAY character with HP above 0 fights.
+var status := 0
+var weapon_ranged := false          # readied weapon reaches more than 1 square
+var weapon_ranged_melee := false    # ... and can also be used hand to hand
 var class_id := 0
 var hp_rolled := 0
 var xp_value := 0                   # a monster's worth: xp_per_hp x hp_rolled + xp_value
@@ -136,6 +141,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.hp_max = d[0x32]
 	m.hp = d[0x11B]
 	m.experience = d.decode_u32(0xAC)
+	m.status = d[0x10C]
 	m.hp_rolled = d[0xB1]
 	m.xp_value = d.decode_s16(0xB8)
 	m.xp_per_hp = d[0xBA]
@@ -165,11 +171,31 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 func clone() -> PartyMember:
 	var m := from_bytes(raw, PackedByteArray())
 	m.is_monster = is_monster
+	m.hp = hp
+	m.status = status
+	m.experience = experience
+	m.money = money.duplicate()
 	for it in items:
 		var c := GameItem.from_record(it.raw)
 		c.name = it.name
 		m.items.append(c)
 	return m
+
+
+const STATUS_OKAY := 0
+const STATUS_UNCONSCIOUS := 4
+const STATUS_DYING := 5
+const STATUS_DEAD := 6
+const STATUS_NAMES := ["OKAY", "ANIMATED", "TEMP GONE", "RUNNING", "UNCONSCIOUS", "DYING",
+	"DEAD", "STONED", "GONE"]
+
+
+func can_fight() -> bool:
+	return status == STATUS_OKAY and hp > 0
+
+
+func status_name() -> String:
+	return STATUS_NAMES[status] if status < STATUS_NAMES.size() else "?"
 
 
 ## What this monster is worth in experience when defeated.
@@ -410,6 +436,8 @@ func recalculate(types: ItemTypes) -> void:
 
 	# To hit and damage
 	var hit_60 := base_thac0_60
+	weapon_ranged = weapon != null and types.range_squares(weapon.type) > 1
+	weapon_ranged_melee = weapon_ranged and (types.flags(weapon.type) & 0x14) == 0x14
 	if weapon == null:
 		damage = base_damage.duplicate()
 		damage_large = base_damage.duplicate()
