@@ -74,8 +74,21 @@ def in_combat(s):
     return s["bottom"].startswith("MOVE") or "AIM" in s["bottom"]
 
 
+def combat_view(im):
+    """True once the battlefield is drawn (the dark grey of the combat window)."""
+    grey = sum(1 for x in range(8, 176, 8) for y in range(8, 176, 8) if im.getpixel((x, y)) == (85, 85, 85))
+    return grey > 100
+
+
 def capture_combat(tag):
-    s = wait_for(in_combat, 15)
+    t = time.time()
+    while time.time() - t < 15:
+        im = screen()
+        if combat_view(im):
+            break
+        time.sleep(0.1)
+    shot(tag + "_first", im)
+    s = wait_for(in_combat, 20)
     shot(tag + "_start", s["im"])
     key("a"); time.sleep(1.5)
     seen = []
@@ -115,10 +128,10 @@ def fight(ev, save="a"):
             capture_combat("fight"); return
         if s["bottom"].startswith("COMBAT"):       # encounter menu: fight it
             shot("before", s["im"])
-            key("c"); time.sleep(4)
+            key("c")
             capture_combat("fight"); return
         if "PRESS" in s["bottom"]:
-            shot("text%d" % i, s["im"]); key("enter"); time.sleep(3)
+            shot("text%d" % i, s["im"]); key("enter"); time.sleep(0.3)
         else:
             shot("other%d" % i, s["im"]); time.sleep(2)
         s = status()
