@@ -142,15 +142,42 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 
 ## Testing aid: fights the check battle to the end with the computer on both sides and the
 ## given dice seed, printing every roll and message (for the lab).
-func run_fight(seed_value: int) -> void:
+## `plan` "away" replays the lab's free-attack check: party members wait until a monster
+## attacks them, then the attacked one steps straight back (away from the monsters).
+func run_fight(seed_value: int, plan: String = "") -> void:
 	_start_fight(seed_value)
 	for c in _combat.combatants:
-		c.quick = true
+		c.quick = c.team == 1 or plan == ""
+	var attacked := {}
+	_combat.message.connect(func(t: String) -> void:
+		for c in _combat.combatants:
+			if c.team == 0 and t.contains(" ATTACKS %s" % c.who.name):
+				attacked[c.who.name] = true)
 	var guard := 0
-	while _combat.next_turn() >= 0 and guard < 5000:
+	var stop := false
+	while not stop and _combat.next_turn() >= 0 and guard < 5000:
 		guard += 1
-		while _combat.ai_act():
-			guard += 1
+		var c: Dictionary = _combatants[_combat.active]
+		if c.quick:
+			while _combat.ai_act():
+				guard += 1
+			continue
+		if attacked.has(c.who.name):
+			var back: int = (Placement.FACING_TO_DIR[_facing] + 4) % 8
+			print("== ", c.who.name, " steps away")
+			for k in 3:
+				var what := _combat.step(back)
+				print("step: ", what, " at ", c.cell)
+				if what != "moved":
+					for y in range(c.cell.y - 2, c.cell.y + 3):
+						var row := ""
+						for x in range(c.cell.x - 3, c.cell.x + 4):
+							row += "%3d" % _field.tile(x, y)
+						print(row)
+					break
+			stop = true
+		else:
+			_combat.done()
 	for line in _combat.roll_log:
 		print("roll ", line)
 	print("result ", ["", "party won", "party lost"][_combat.outcome()], " after ", _combat.round_no, " rounds")
@@ -296,6 +323,9 @@ func _after_player_action(what: String) -> void:
 		_on_message("CAN'T GO THERE")
 	elif what == "no moves":
 		_on_message("NO MOVES LEFT")
+	elif what == "fell":
+		if _combatants[_selected].team == 0:
+			_on_message("YOUR TEAMMATE IS DOWN")
 	var c: Dictionary = _combatants[_selected]
 	if _combat.outcome() != 0 or (c.moves <= 0 and c.attacks <= 0) or (what == "attacked" and c.attacks <= 0):
 		_advance()

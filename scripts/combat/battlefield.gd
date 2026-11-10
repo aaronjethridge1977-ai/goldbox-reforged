@@ -51,6 +51,17 @@ static func build(map: GeoMap, px: int, py: int) -> Battlefield:
 	return f
 
 
+## Tiles a combatant can stand on (dungeon/town set): bare floor and the floor-side halves
+## of walls and door posts. From the original's tile table as documented by Pilgrim's
+## reconstruction (move cost 1; the rest cost 0xFF, impassable); the lab saw a character
+## step onto a door post's base (tile 8) in the original.
+const WALKABLE := [4, 8, 10, 12, 14, 16, 22, 23]
+
+
+func walkable(x: int, y: int) -> bool:
+	return tile(x, y) in WALKABLE
+
+
 func tile(x: int, y: int) -> int:
 	if x < 0 or y < 0 or x >= WIDTH or y >= HEIGHT:
 		return -1

@@ -151,7 +151,8 @@ func _ready() -> void:
 	# Testing aid for the lab: --battle=GEO2.DAX:20:13:7:W:2:4:6:4:2 (map file, map id, x, y,
 	# facing, monster file, monster id, count, picture, distance or -1) [--battle-image=path]
 	# prints where everyone starts and saves the battlefield, then quits. With
-	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll.
+	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll;
+	# --battle-fight=<seed>:away replays the free-attack check (see CombatScreen.run_fight).
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
@@ -393,7 +394,8 @@ func _battle_check(spec: String) -> void:
 				int(a[5]), [[int(a[6]), int(a[7]), int(a[8])]], int(a[9]), image_path)
 			for arg in OS.get_cmdline_user_args():
 				if arg.begins_with("--battle-fight="):
-					_combat.run_fight(int(arg.trim_prefix("--battle-fight=")))
+					var f := arg.trim_prefix("--battle-fight=").split(":")
+					_combat.run_fight(int(f[0]), f[1] if f.size() > 1 else "")
 	get_tree().quit()
 
 

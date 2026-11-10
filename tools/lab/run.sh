@@ -1,6 +1,7 @@
 #!/bin/bash
 # Start the virtual display and DOSBox, run the key/grab steps given as arguments, stop.
 cd "$(dirname "$0")"
+sed -i "s#/sessions/[^/\"]*/lab#$HOME/lab#g" por.conf
 D=$PWD/dosbox-staging-linux-x86_64-0.83.0-7b400
 rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
 Xvfb :99 -screen 0 800x600x24 >/dev/null 2>&1 &

@@ -140,6 +140,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 		m.items = GameItem.list_from(item_data)
 	m.thac0 = 60 - m.base_thac0_60
 	m.ac = 60 - m.base_ac_60
+	m.rear_ac = m.ac + 2
 	m.damage = m.base_damage.duplicate()
 	m.damage_large = m.base_damage.duplicate()
 	m.movement = m.base_movement

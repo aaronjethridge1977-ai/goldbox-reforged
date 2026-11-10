@@ -8,10 +8,17 @@ Setup (in the Linux workspace on the PC):
 1. Unpack `.lab/dosbox-staging-linux-x86_64-v0.83.0.tar.xz` into `~/lab/`.
 2. Copy `Pool of Radiance/POOLRAD` to `~/lab/root/POOLRAD` (a copy: the lab never touches real
    saves; the game's POOL.CFG expects `C:\POOLRAD\`).
-3. Copy these scripts to `~/lab/`.
+3. Copy these scripts to `~/lab/`, with `font.json` and `wheel.json` from `.lab`, and link the
+   game copy for our engine: `ln -s root/POOLRAD ~/lab/game`.
+4. For our engine: unzip `.lab/Godot_v4.7.2-stable_linux.x86_64.zip` into `~/lab/godot/`.
+
+The lab's home path changes between sessions; `run.sh` rewrites the paths in `por.conf` each
+time.
 
 Loading a game asks the code-wheel question; the `solve` step reads the runes and path off
-the screen and types the word, using `wheel.json` from the git-ignored `.lab` folder.
+the screen and types the word, using `wheel.json` from the git-ignored `.lab` folder. (Espruar runes 17-27 are the cell
+pairs 98/99 to 118/119 of `8X8D1.DAX` block 201; fixed 2026-11-10, when one boot in two
+failed on them.)
 From launch to a loaded save: `./run.sh wait=7 enter wait=3 l wait=3 solve wait=3 l wait=3 a wait=8 grab=cap/game.png`.
 
 Use: `./run.sh wait=7 enter wait=3 grab=cap/a.png ...` starts everything, runs the steps
@@ -31,6 +38,15 @@ meets: the opening combat screen, then Aim → Next across the monsters. It read
 as text with the game's own 8×8 font (`font.json`, generated from `8X8D1.DAX` block 201 and
 kept in `.lab`, since it is game data): the command line, the coordinates line and messages.
 Shots and a log go to `$LAB_OUT`.
+
+Source from the cloud workspace arrives as `.lab/src_now.tgz`; `sync.sh` unpacks it into
+`~/lab/src` and runs the Godot check. `ours.sh <user args>` then runs our engine headless,
+e.g. `./ours.sh --battle=GEO2.DAX:20:13:1:W:2:4:4:4:0 --battle-fight=1:away`.
+
+`c3lab.py` holds the combat checks against the original: `./run.sh --py c3lab.py away`
+fights the first battle met on the way to the Slums orcs (13,1), lets party members wait
+until monsters attack them, then steps the attacked one away (free attacks), logging and
+shooting every change of the right-hand panel.
 
 `run_godot.sh <quicksave.cfg> steps...` runs **our engine** on a second virtual display
 (1280×800) starting from a quick save file (`--save=`), with the same key/grab steps (or

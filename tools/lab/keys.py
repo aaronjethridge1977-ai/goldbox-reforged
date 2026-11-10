@@ -64,14 +64,25 @@ def grab(path):
 def screen320():
     """The DOS screen (320x200) from the virtual display."""
     from PIL import Image
-    grab("/tmp/_q.png")
-    im = Image.open("/tmp/_q.png").convert("RGB")
+    tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_q.png")   # not /tmp: a
+    grab(tmp)                                     # stale file there may belong to another user
+    im = Image.open(tmp).convert("RGB")
     return im.crop((80, 100, 720, 500)).resize((320, 200), Image.NEAREST)
 
 
-def solve_wheel(log=print):
+def solve_wheel(log=print, tries=5):
+    """Answers the question; tries again while it is still being drawn."""
     import json
     w = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "wheel.json")))
+    for _ in range(tries):
+        word = _solve_once(w, log)
+        if word:
+            return word
+        time.sleep(1.5)
+    return None
+
+
+def _solve_once(w, log):
     im = screen320()
     red = lambda p: p[0] > 150 and p[1] < 120
 
@@ -79,8 +90,17 @@ def solve_wheel(log=print):
         return bytes(sum(1 << (7 - x) for x in range(8) if red(im.getpixel((x0 + x, y0 + y))))
                      for y in range(8)).hex()
 
-    e = w["espruar"].get(cell(64, 48) + cell(72, 48))
-    d = w["dethek"].get(cell(64, 72))
+    # Runes may sit a few pixels off the text grid: look around the expected cell.
+    def find(table, x0, y0, wide):
+        for dy in (0, -1, 1, -2, 2, -3, 3, -4, 4):
+            for dx in (0, -1, 1, -2, 2, -3, 3, -4, 4):
+                k = cell(x0 + dx, y0 + dy) + (cell(x0 + dx + 8, y0 + dy) if wide else "")
+                if k in table:
+                    return table[k]
+        return None
+
+    e = find(w["espruar"], 64, 48, True)
+    d = find(w["dethek"], 64, 72, False)
     runs = []
     for y in range(100, 112):
         n = 0
@@ -95,6 +115,7 @@ def solve_wheel(log=print):
     path = "dots" if longest < 5 else ("ticks" if short else "dashes")
     log("espruar %s dethek %s path %s" % (e, d, path))
     if e is None or d is None:
+        log("unknown rune cells", cell(64, 48), cell(72, 48), cell(64, 72))
         return None
     word = w["words"][(e + d + w["paths"][path] + 35) % 36]
     for _ in range(4):   # the menu key that opened the question is already in the box
