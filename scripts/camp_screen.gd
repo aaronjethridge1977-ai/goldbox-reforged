@@ -14,10 +14,19 @@ extends Control
 ##   steps, a d100 roll of `percent` or less ends it, and the area's "rest interrupted"
 ##   script runs (usually an encounter). The Slums: every 24 steps (2 hours), 24%; none on
 ##   an event square.
-## Modern controls: Up/Down change the selected part of the rest time, Left/Right or
-## D/H/M pick it, Enter or R rests, Esc stops resting or leaves. V views, S quick-saves.
-## Not yet: MAGIC (memorizing spells, with C5), ALTER, and the full game clock (resting
-## moves the hour on; minutes and days aren't kept yet).
+## - REST offers the time the party needs to memorize the spells picked under MAGIC
+##   (see PartyMember "Spells"); while resting they are memorized one by one.
+## - MAGIC: CAST MEMORIZE SCRIBE DISPLAY REST EXIT, for the selected character (screens
+##   checked in the lab): MEMORIZE shows "<NAME>'S SPELLS IN SPELL BOOK" by level with
+##   "CAN MEMORIZE:" and the free slots per level; leaving asks "MEMORIZE THESE SPELLS?"
+##   over the "SPELLS TO BE MEMORIZED" (marked *). CAST shows "SPELLS IN MEMORY".
+##   DISPLAY lists each character's spell effects ("<NO SPELL EFFECTS>").
+## Modern controls: Up/Down (or Home/End) pick the character in the menus; in the rest
+## time Up/Down change the selected part, Left/Right or D/H/M pick it, Enter or R rests,
+## Esc stops resting or leaves. V views, S quick-saves. In a spell list Up/Down move,
+## Enter chooses, Esc leaves.
+## Not yet: SCRIBE (scrolls), ALTER, and the full game clock (resting moves the hour on;
+## minutes and days aren't kept yet).
 
 signal closed
 signal save_requested
@@ -46,6 +55,19 @@ var _timer: Timer
 var _sheet: CharacterSheet
 var _minute_carry := 0
 
+var spells: SpellTable = null      # set by the game before opening
+var _sel := 0                      # selected character
+var _mode := "camp"                # camp rest magic list whom ask display
+var _list_kind := ""               # memorize, cast, pending
+var _list: Array = []              # rows: [text, spell id or 0 for a heading]
+var _cursor := 0
+var _ask_kind := ""                # memorize_confirm, lose
+var _cast_id := 0
+var _caster: PartyMember = null    # while choosing whom a spell is cast on
+var _rng2 := RandomNumberGenerator.new()
+var _hour_steps := 0
+var _learn_timer := {}             # member -> steps until its next spell is memorized
+
 
 func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_party = party
@@ -55,6 +77,9 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_since_check = 0
 	_to_rest = 0
 	_resting = false
+	_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
+	_mode = "camp"
+	_rng2.randomize()
 	hours_passed = 0
 	_minute_carry = 0
 	_rng.randomize()
@@ -112,20 +137,31 @@ func _build() -> void:
 
 
 func _refresh_party() -> void:
-	var lines := PackedStringArray(["%-16s AC  HP  STATUS" % "NAME"])
-	for m in _party:
-		lines.append("%-16s %2d  %2d  %s" % [m.name, m.ac, m.hp, m.status_name()])
+	var lines := PackedStringArray(["  %-16s AC  HP  STATUS" % "NAME"])
+	for i in _party.size():
+		var m := _party[i]
+		lines.append("%s %-16s %2d  %2d  %s" % [">" if i == _sel else " ", m.name, m.ac, m.hp, m.status_name()])
 	_party_label.text = "\n".join(lines)
 
 
 func _show_menu() -> void:
+	_mode = "camp"
+	_head.text = "CAMPING"
 	_refresh_party()
 	_time_label.text = ""
-	_menu.text = "CAMP:  S save   V view   R rest   Esc exit        (MAGIC and ALTER: not built yet)"
+	_menu.text = "CAMP:  S save   V view   M magic   R rest   Esc exit        (ALTER: not built yet)"
 
 
 func _rest_menu() -> void:
+	_mode = "rest"
+	_head.text = "CAMPING"
 	_refresh_party()
+	_to_rest = 0
+	if spells != null:
+		var need := 0
+		for m in _party:
+			need = maxi(need, m.learn_minutes(spells))
+		_to_rest = (need + 4) / 5
 	_show_time()
 	_menu.text = "REST:  ←/→ or D/H/M pick days, hours or minutes   ↑/↓ more or less   Enter rest   Esc back"
 
@@ -150,6 +186,14 @@ func _start_rest() -> void:
 	if _to_rest <= 0:
 		return
 	_resting = true
+	_hour_steps = 0
+	_learn_timer.clear()
+	if spells != null:
+		for m in _party:
+			m.learn_hours = 0
+			var mins := m.learn_minutes(spells)
+			if mins > 0:
+				m.learn_hours = mins / 60
 	_menu.text = "RESTING...   Esc: stop resting"
 	_timer.start()
 
@@ -172,8 +216,10 @@ func _tick() -> void:
 		if _minute_carry >= 60:
 			_minute_carry -= 60
 			hours_passed += 1
+		SpellCaster.pass_time(_party, 5)
 		if _rest_steps % STEPS_PER_HEAL == 0:
 			_heal_day()
+		_learn_step()
 		if _period > 0:
 			_since_check += 1
 			if _since_check >= _period:
@@ -189,6 +235,37 @@ func _tick() -> void:
 	_refresh_party()
 
 
+## One 5-minute step of memorizing (see PartyMember "Spells"): the hours of study count
+## down every 12 steps; then each spell takes 3 steps per spell level.
+func _learn_step() -> void:
+	if spells == null:
+		return
+	for m in _party:
+		var t: int = _learn_timer.get(m, 0)
+		if t > 0:
+			t -= 1
+		if t == 0 and m.learn_hours == 0:
+			var pending := m.learning_spells()
+			if not pending.is_empty() and _learn_timer.has(m):
+				var id: int = pending[0]
+				var k := m.memorized.find(id + PartyMember.LEARNING)
+				m.memorized[k] = id
+				_note.text = "%s HAS MEMORIZED %s" % [m.name, spells.name_of(id)]
+				pending = m.learning_spells()
+				t = spells.level(pending[0]) * 3 if not pending.is_empty() else 0
+		_learn_timer[m] = t
+	_hour_steps += 1
+	if _hour_steps >= 12:
+		_hour_steps = 0
+		for m in _party:
+			if m.learn_hours > 0:
+				m.learn_hours -= 1
+				if m.learn_hours == 0:
+					var pending := m.learning_spells()
+					if not pending.is_empty():
+						_learn_timer[m] = spells.level(pending[0]) * 3
+
+
 ## A full day's rest: everyone alive gains 1 HP; the unconscious wake.
 func _heal_day() -> void:
 	var any := false
@@ -201,6 +278,182 @@ func _heal_day() -> void:
 	_note.text = "THE WHOLE PARTY IS HEALED" if any else ""
 
 
+# --- MAGIC --------------------------------------------------------------------------------
+
+const LEVEL_WORDS := ["1ST LEVEL", "2ND LEVEL", "3RD LEVEL", "4TH LEVEL", "5TH LEVEL"]
+
+
+func _magic_menu() -> void:
+	_mode = "magic"
+	_head.text = "CAMPING"
+	_refresh_party()
+	_time_label.text = ""
+	_menu.text = "MAGIC:  C cast   M memorize   S scribe   D display   R rest   Esc exit"
+
+
+func _who() -> PartyMember:
+	return _party[_sel]
+
+
+## Builds a spell list by level: rows [text, id] with headings as [text, 0].
+func _build_list(ids: Array, mark: String = "") -> void:
+	_list = []
+	var by_level := {}
+	for id in ids:
+		by_level.get_or_add(spells.level(id), []).append(id)
+	var levels := by_level.keys()
+	levels.sort()
+	for l in levels:
+		_list.append([LEVEL_WORDS[clampi(l - 1, 0, 4)], 0])
+		for id in by_level[l]:
+			_list.append([mark + spells.name_of(id), id])
+	_cursor = _list.size() - 1      # the original starts on the last spell
+
+
+func _open_list(kind: String) -> void:
+	var m := _who()
+	_list_kind = kind
+	var ids: Array = []
+	match kind:
+		"memorize":
+			if m.status != PartyMember.STATUS_OKAY:
+				_note.text = "%s IS IN NO CONDITION TO MEMORIZE SPELLS" % m.name
+				return
+			if not m.has_slots():
+				_note.text = "%s CANNOT MEMORIZE ANY SPELLS" % m.name
+				return
+			for id in range(1, SpellTable.NAMED + 1):
+				if m.knows(id) and spells.spell_class(id) <= 1 and spells.level(id) <= 3:
+					ids.append(id)
+			_head.text = "%s'S SPELLS IN SPELL BOOK" % m.name
+		"cast":
+			if m.status != PartyMember.STATUS_OKAY:
+				_note.text = "%s IS IN NO CONDITION TO CAST ANY SPELLS" % m.name
+				return
+			ids = m.ready_spells()
+			if ids.is_empty():
+				_note.text = "%s HAS NO SPELLS MEMORIZED" % m.name
+				return
+			_head.text = "%s'S SPELLS IN MEMORY" % m.name
+		"pending":
+			ids = m.learning_spells()
+			_head.text = "%s'S SPELLS TO BE MEMORIZED" % m.name
+	_build_list(ids, "*" if kind == "pending" else "")
+	_note.text = ""
+	_mode = "list"
+	_show_list()
+
+
+func _show_list() -> void:
+	var lines := PackedStringArray()
+	for i in _list.size():
+		var row: Array = _list[i]
+		if row[1] == 0:
+			lines.append(row[0])
+		else:
+			lines.append(("> " if i == _cursor and _list_kind != "pending" else "  ") + row[0])
+	if _list_kind == "memorize":
+		lines.append("")
+		lines.append(_who().name)
+		lines.append("CAN MEMORIZE:")
+		for c in 2:
+			var counts := PackedStringArray()
+			var any := false
+			for l in range(1, 4):
+				if _who().spell_slots[c][l - 1] > 0:
+					any = true
+					counts.append(str(_who().slots_left(spells, c, l)))
+				else:
+					counts.append(" ")
+			if any:
+				lines.append("    %s %s" % ["    CLERIC SPELLS:" if c == 0 else "MAGIC-USER SPELLS:", "  ".join(counts)])
+	_party_label.text = "\n".join(lines)
+	_time_label.text = ""
+	match _list_kind:
+		"memorize":
+			_menu.text = "CHOOSE SPELL:  ↑/↓ move   Enter memorize   Esc exit"
+		"cast":
+			_menu.text = "CHOOSE SPELL:  ↑/↓ move   Enter cast   Esc exit"
+		"pending":
+			_menu.text = "MEMORIZE THESE SPELLS?  Y yes   N no"
+
+
+func _move_cursor(d: int) -> void:
+	if _list.is_empty():
+		return
+	var i := _cursor
+	for k in _list.size():
+		i = (i + d + _list.size()) % _list.size()
+		if _list[i][1] != 0:
+			_cursor = i
+			break
+	_show_list()
+
+
+func _choose() -> void:
+	if _cursor < 0 or _cursor >= _list.size() or _list[_cursor][1] == 0:
+		return
+	var id: int = _list[_cursor][1]
+	var m := _who()
+	if _list_kind == "memorize":
+		if m.slots_left(spells, spells.spell_class(id), spells.level(id)) > 0:
+			m.memorized.append(id + PartyMember.LEARNING)
+		_show_list()
+	elif _list_kind == "cast":
+		_cast_id = id
+		_caster = m
+		if not SpellCaster.castable_outside(spells, id):
+			_mode = "ask"
+			_ask_kind = "lose"
+			_note.text = "%s\nCAN'T BE CAST HERE..." % spells.name_of(id)
+			_menu.text = "LOSE IT?  Y yes   N no"
+		elif SpellCaster.needs_member(spells, id):
+			_mode = "whom"
+			_head.text = "CAST SPELL ON WHOM"
+			_refresh_party()
+			_menu.text = "CAST SPELL ON WHOM:  ↑/↓ choose   Enter select   Esc exit"
+		else:
+			_cast(null)
+
+
+func _cast(target: PartyMember) -> void:
+	var lines := SpellCaster.cast_outside(spells, _caster, _cast_id, _party, target, _rng2)
+	_sel = maxi(_party.find(_caster), 0)
+	_note.text = "\n".join(lines)
+	_magic_menu()
+
+
+func _leave_list() -> void:
+	if _list_kind == "memorize" and not _who().learning_spells().is_empty():
+		_open_list("pending")
+		return
+	_magic_menu()
+
+
+func _show_display() -> void:
+	_mode = "display"
+	_head.text = "DISPLAY"
+	var lines := PackedStringArray()
+	for m in _party:
+		lines.append(m.name)
+		var any := false
+		for a in m.affects:
+			lines.append("  " + spells.effect_name(int(a.effect)))
+			any = true
+		if not any:
+			lines.append(" <NO SPELL EFFECTS>")
+		lines.append("")
+	_party_label.text = "\n".join(lines)
+	_menu.text = "Esc exit"
+
+
+func _pick(d: int) -> void:
+	if _party.is_empty():
+		return
+	_sel = (_sel + d + _party.size()) % _party.size()
+	_refresh_party()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or _sheet.visible:
 		return
@@ -210,41 +463,100 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.is_action("ui_cancel"):
 			_stop_rest("RESTING STOPPED.")
 		return
-	var in_rest := _menu.text.begins_with("REST:")
-	if not in_rest:
-		if key == KEY_R:
-			_note.text = ""
-			_rest_menu()
-		elif key == KEY_V:
-			_sheet.open(_party, "PARTY")
-		elif key == KEY_S:
-			save_requested.emit()
-			_note.text = "SAVED."
-		elif event.is_action("ui_cancel") or key == KEY_E:
-			visible = false
-			closed.emit()
-		return
-	if event.is_action("ui_cancel"):
-		_note.text = ""
-		_show_menu()
-	elif key == KEY_D:
-		_field = 0
-		_show_time()
-	elif key == KEY_H:
-		_field = 1
-		_show_time()
-	elif key == KEY_M:
-		_field = 2
-		_show_time()
-	elif event.is_action("ui_left"):
-		_field = (_field + 2) % 3
-		_show_time()
-	elif event.is_action("ui_right"):
-		_field = (_field + 1) % 3
-		_show_time()
-	elif event.is_action("ui_up") or key == KEY_I or key == KEY_EQUAL or key == KEY_KP_ADD:
-		_change(1)
-	elif event.is_action("ui_down") or key == KEY_MINUS or key == KEY_KP_SUBTRACT:
-		_change(-1)
-	elif event.is_action("ui_accept") or key == KEY_R:
-		_start_rest()
+	var cancel := event.is_action("ui_cancel")
+	var up := event.is_action("ui_up") or key == KEY_HOME
+	var down := event.is_action("ui_down") or key == KEY_END
+	match _mode:
+		"camp":
+			if up or down:
+				_pick(-1 if up else 1)
+			elif key == KEY_R:
+				_note.text = ""
+				_rest_menu()
+			elif key == KEY_M and spells != null:
+				_note.text = ""
+				_magic_menu()
+			elif key == KEY_V:
+				_sheet.open(_party, "PARTY", _sel)
+			elif key == KEY_S:
+				save_requested.emit()
+				_note.text = "SAVED."
+			elif cancel or key == KEY_E:
+				visible = false
+				closed.emit()
+		"magic":
+			if up or down:
+				_pick(-1 if up else 1)
+			elif key == KEY_C:
+				_open_list("cast")
+			elif key == KEY_M:
+				_open_list("memorize")
+			elif key == KEY_S:
+				_note.text = "SCRIBE: not built yet."
+			elif key == KEY_D:
+				_show_display()
+			elif key == KEY_R:
+				_note.text = ""
+				_rest_menu()
+			elif cancel or key == KEY_E:
+				_note.text = ""
+				_show_menu()
+		"list":
+			if _list_kind == "pending":
+				if key == KEY_Y or event.is_action("ui_accept"):
+					_magic_menu()
+				elif key == KEY_N or cancel:
+					_who().cancel_learning()
+					_magic_menu()
+			elif up:
+				_move_cursor(-1)
+			elif down:
+				_move_cursor(1)
+			elif event.is_action("ui_accept"):
+				_choose()
+			elif cancel or key == KEY_E:
+				_leave_list()
+		"whom":
+			if up or down:
+				_pick(-1 if up else 1)
+			elif event.is_action("ui_accept"):
+				_cast(_party[_sel])
+			elif cancel:
+				_sel = maxi(_party.find(_caster), 0)
+				_magic_menu()
+		"ask":
+			if key == KEY_Y:
+				_who().forget(_cast_id)
+				_note.text = ""
+				_magic_menu()
+			elif key == KEY_N or cancel:
+				_note.text = ""
+				_magic_menu()
+		"display":
+			if cancel or event.is_action("ui_accept") or key == KEY_E:
+				_magic_menu()
+		"rest":
+			if cancel:
+				_note.text = ""
+				_show_menu()
+			elif key == KEY_D:
+				_field = 0
+				_show_time()
+			elif key == KEY_H:
+				_field = 1
+				_show_time()
+			elif key == KEY_M:
+				_field = 2
+				_show_time()
+			elif event.is_action("ui_left"):
+				_field = (_field + 2) % 3
+				_show_time()
+			elif event.is_action("ui_right"):
+				_field = (_field + 1) % 3
+				_show_time()
+			elif up or key == KEY_I or key == KEY_EQUAL or key == KEY_KP_ADD:
+				_change(1)
+			elif down or key == KEY_MINUS or key == KEY_KP_SUBTRACT:
+				_change(-1)
+			elif event.is_action("ui_accept") or key == KEY_R:
+				_start_rest()

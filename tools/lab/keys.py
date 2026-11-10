@@ -24,7 +24,8 @@ X.XFlush(d)
 
 NAMES = {"enter": "Return", "esc": "Escape", "up": "Up", "down": "Down", "left": "Left",
          "right": "Right", " ": "space", "space": "space", "shift": "Shift_L",
-         "ctrl": "Control_L", "f5": "F5", "backspace": "BackSpace"}
+         "ctrl": "Control_L", "f5": "F5", "backspace": "BackSpace", "home": "Home", "end": "End",
+         "pgup": "Prior", "pgdn": "Next"}   # Home / End pick the previous / next character
 
 
 def keycode(name):

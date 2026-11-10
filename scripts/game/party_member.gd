@@ -16,6 +16,9 @@ extends RefCounted
 ##   0xB1 hit points rolled   0xB8 experience value (s16)   0xBA experience per hit point
 ##   (a monster is worth 0xBA x 0xB1 + 0xB8: an orc 1 x 5 + 10 = 15; checked in the lab)
 ##   0x102 total weight carried (cached)   0x10C status   0x11B current HP
+##   0x17..0x2B spells in memory (21 spell ids, the first in the last byte)
+##   0x33..0x6A spell book (56 bytes, one per spell id 1..56: 1 = known)
+##   0xB2..0xB4 cleric spells per day at levels 1-3   0xB5..0xB7 magic-user spells per day
 ##
 ## Derived stats (recalculate()) follow AD&D 1st edition, which the game implements:
 ## STR to-hit and damage, DEX defensive adjustment, armour, shield, magic pluses, and
@@ -86,6 +89,13 @@ var base_damage_2 := [0, 0, 0]      # second natural attack (claw/claw/bite mons
 var strength_applies := true
 var morale := 0
 var saves := PackedInt32Array()
+
+# Spells (see the record notes above and "Spells" below)
+var spell_book := PackedByteArray()   # by id - 1: known
+var memorized: Array[int] = []        # spell ids; + LEARNING while still being memorized
+var spell_slots := [[0, 0, 0], [0, 0, 0]]   # [cleric, magic-user][level - 1]
+var affects: Array = []               # [{effect, spell, minutes, value}]
+var learn_hours := 0                  # resting: hours still to go before memorizing starts
 
 # Derived by recalculate()
 var ac := 10
@@ -167,6 +177,11 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.strength_applies = d[0xAA] != 0
 	m.morale = d[0x84]
 	m.saves = PackedInt32Array([d[0x6D], d[0x6E], d[0x6F], d[0x70], d[0x71]])
+	m.spell_book = d.slice(0x33, 0x6B)
+	for i in range(0x2B, 0x16, -1):
+		if d[i] > 0:
+			m.memorized.append(d[i])
+	m.spell_slots = [[d[0xB2], d[0xB3], d[0xB4]], [d[0xB5], d[0xB6], d[0xB7]]]
 	if not item_data.is_empty():
 		m.items = GameItem.list_from(item_data)
 	m.thac0 = 60 - m.base_thac0_60
@@ -186,6 +201,8 @@ func clone() -> PartyMember:
 	m.status = status
 	m.experience = experience
 	m.money = money.duplicate()
+	m.memorized = memorized.duplicate()
+	m.affects = affects.duplicate(true)
 	for it in items:
 		var c := GameItem.from_record(it.raw)
 		c.name = it.name
@@ -247,6 +264,113 @@ func use_shot() -> GameItem:
 	var gone := ammo
 	ammo = null
 	return gone
+
+
+# --- Spells -------------------------------------------------------------------------------
+# As the original does it (rules as documented by Pilgrim's reconstruction; screens and
+# timings checked in the lab, save J: Brother Sean memorized Resist Cold in 4 hours 15
+# minutes, the rest time MAGIC's REST offered):
+# - The spells per day at each level are kept in the record (set when a level is gained).
+# - MEMORIZE picks spells from the book into free slots; they wait, marked "*", until the
+#   party rests. Resting to memorize takes 4 hours (6 if any is above 2nd level), then 15
+#   minutes per spell level, one spell after another ("<NAME> HAS MEMORIZED <SPELL>").
+# - Casting removes the spell from memory.
+const LEARNING := 0x100
+const LEVEL_INDEX := [0, 5]        # record levels (0x96..) of cleric and magic-user
+
+
+func class_level(spell_class: int) -> int:
+	if raw.size() < 0x9E or spell_class < 0 or spell_class > 1:
+		return 0
+	return raw[0x96 + LEVEL_INDEX[spell_class]]
+
+
+## The caster's level for a spell (the original's spellMaxTargetCount): its cleric or
+## magic-user level, or a paladin's level - 8; 6 for anyone who casts no spells (items).
+func caster_level(table: SpellTable, id: int) -> int:
+	var cl := class_level(0)
+	var mu := class_level(1)
+	var paladin: int = raw[0x99] if raw.size() > 0x99 else 0
+	var ranger: int = raw[0x9A] if raw.size() > 0x9A else 0
+	if cl == 0 and mu == 0 and paladin < 9 and ranger < 8:
+		return 6
+	match table.spell_class(id):
+		SpellTable.CLERIC:
+			return maxi(cl, paladin - 8)
+		SpellTable.MAGE:
+			return mu
+	return 6
+
+
+func knows(id: int) -> bool:
+	return id > 0 and id <= spell_book.size() and spell_book[id - 1] != 0
+
+
+func ready_spells() -> Array[int]:
+	var out: Array[int] = []
+	for s in memorized:
+		if s < LEARNING:
+			out.append(s)
+	return out
+
+
+func learning_spells() -> Array[int]:
+	var out: Array[int] = []
+	for s in memorized:
+		if s >= LEARNING:
+			out.append(s - LEARNING)
+	return out
+
+
+## Free slots for spells of `spell_class` at `level`, counting those being memorized.
+func slots_left(table: SpellTable, spell_class: int, level: int) -> int:
+	if spell_class < 0 or spell_class > 1 or level < 1 or level > 3:
+		return 0
+	var used := 0
+	for s in memorized:
+		var id := s % LEARNING
+		if table.spell_class(id) == spell_class and table.level(id) == level:
+			used += 1
+	return spell_slots[spell_class][level - 1] - used
+
+
+func has_slots() -> bool:
+	for c in 2:
+		for l in 3:
+			if spell_slots[c][l] > 0:
+				return true
+	return false
+
+
+func cancel_learning() -> void:
+	memorized = memorized.filter(func(s): return s < LEARNING)
+	learn_hours = 0
+
+
+## Minutes of rest this character needs to memorize what it has picked.
+func learn_minutes(table: SpellTable) -> int:
+	var total := 0
+	var top := 0
+	for id in learning_spells():
+		total += table.level(id)
+		top = maxi(top, table.level(id))
+	if total == 0:
+		return 0
+	return (6 if top > 2 else 4) * 60 + total * 15
+
+
+## Removes one memorized copy of `id` (after casting it, or losing it).
+func forget(id: int) -> void:
+	var i := memorized.find(id)
+	if i >= 0:
+		memorized.remove_at(i)
+
+
+func has_affect(effect_id: int) -> bool:
+	for a in affects:
+		if int(a.effect) == effect_id:
+			return true
+	return false
 
 
 func is_large() -> bool:
