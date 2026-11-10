@@ -22,3 +22,6 @@ export_presets.cfg
 Thumbs.db
 desktop.ini
 .vscode/
+
+# Captures from walk mode
+/captures/

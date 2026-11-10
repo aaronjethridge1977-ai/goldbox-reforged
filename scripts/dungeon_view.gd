@@ -78,7 +78,7 @@ func _backdrop(px: PackedByteArray) -> void:
 func _blit_part(px: PackedByteArray, wall: Dictionary, part_index: int, tile_x: int, slot: int) -> void:
 	var part: Dictionary = wall.parts[part_index]
 	var tiles: Array = wall.tiles
-	var size: Vector2i = part.size
+	var size: Vector2i = part["size"]
 	var cells: PackedByteArray = part.cells
 	var left := (tile_x - VIEW_ORIGIN) * 8
 	# Pictures are bottom-aligned within the slot's height.
@@ -96,33 +96,81 @@ func _blit_part(px: PackedByteArray, wall: Dictionary, part_index: int, tile_x: 
 					if sx < 0 or sx >= SIZE:
 						continue
 					var c := tile[py * 8 + pxl]
-					if c != WallSet.TRANSPARENT:
+					if show_slots and (ty * 8 + py == 0 or tx * 8 + pxl == 0 \
+							or ty * 8 + py == size.y * 8 - 1 or tx * 8 + pxl == size.x * 8 - 1):
+						px[sy * SIZE + sx] = 12
+					elif c != WallSet.TRANSPARENT:
 						px[sy * SIZE + sx] = c
+
+
+## For each slot (START_X order), the squares it shows: [steps ahead, steps right, face],
+## where face 0 = the side facing away from the viewer, 1 = left side, 2 = right side.
+const SLOT_CELLS := [
+	[[2, -3, 0], [2, -2, 0], [2, -1, 0], [2, 0, 0], [2, 1, 0], [2, 2, 0], [2, 3, 0]],
+	[[1, -2, 0], [1, -1, 0], [1, 0, 0], [1, 1, 0], [1, 2, 0]],
+	[[0, -1, 0], [0, 0, 0], [0, 1, 0]],
+	[[2, -2, 1], [2, -1, 1], [2, 0, 1]],
+	[[1, -1, 1], [1, 0, 1]],
+	[[0, 0, 1]],
+	[[2, 0, 2], [2, 1, 2], [2, 2, 2]],
+	[[1, 0, 2], [1, 1, 2]],
+	[[0, 0, 2]],
+]
+const SLOT_NAMES := ["far ahead", "middle ahead", "near ahead", "far left", "middle left", "near left",
+	"far right", "middle right", "near right"]
+const DIR_NAMES := ["N", "E", "S", "W"]
+
+## Debug: outline every drawn wall piece (colour 12) in the rendered view.
+var show_slots := false
 
 
 ## Wall values seen from (x, y) facing a direction, per slot (see START_X order).
 func _visible_walls(map: GeoMap, x: int, y: int, facing: int) -> Array:
-	var left := (facing + 3) % 4
-	var right := (facing + 1) % 4
-	var f := DELTA[facing]
-	var r := DELTA[right]
-	# Wall on side `face` of the square `ahead` steps forward and `side` steps to the right.
-	var at := func(ahead: int, side: int, face: int) -> int:
-		var p := Vector2i(x, y) + f * ahead + r * side
-		if p.x < 0 or p.y < 0 or p.x >= GeoMap.SIZE or p.y >= GeoMap.SIZE:
-			return 0
-		return map.wall(p.x, p.y, face)
 	var slots := []
-	slots.resize(9)
-	slots[0] = [at.call(2, -3, facing), at.call(2, -2, facing), at.call(2, -1, facing), at.call(2, 0, facing),
-		at.call(2, 1, facing), at.call(2, 2, facing), at.call(2, 3, facing)]
-	slots[1] = [at.call(1, -2, facing), at.call(1, -1, facing), at.call(1, 0, facing),
-		at.call(1, 1, facing), at.call(1, 2, facing)]
-	slots[2] = [at.call(0, -1, facing), at.call(0, 0, facing), at.call(0, 1, facing)]
-	slots[3] = [at.call(2, -2, left), at.call(2, -1, left), at.call(2, 0, left)]
-	slots[4] = [at.call(1, -1, left), at.call(1, 0, left)]
-	slots[5] = [at.call(0, 0, left)]
-	slots[6] = [at.call(2, 0, right), at.call(2, 1, right), at.call(2, 2, right)]
-	slots[7] = [at.call(1, 0, right), at.call(1, 1, right)]
-	slots[8] = [at.call(0, 0, right)]
+	for cells in SLOT_CELLS:
+		var values := []
+		for c in cells:
+			var info := _cell_for(x, y, facing, c)
+			var p: Vector2i = info[0]
+			var value := 0
+			if p.x >= 0 and p.y >= 0 and p.x < GeoMap.SIZE and p.y < GeoMap.SIZE:
+				value = map.wall(p.x, p.y, info[1])
+			values.append(value)
+		slots.append(values)
 	return slots
+
+
+## [square, map side] for a SLOT_CELLS entry.
+func _cell_for(x: int, y: int, facing: int, c: Array) -> Array:
+	var right := (facing + 1) % 4
+	var p: Vector2i = Vector2i(x, y) + DELTA[facing] * int(c[0]) + DELTA[right] * int(c[1])
+	var face: int = [facing, (facing + 3) % 4, right][int(c[2])]
+	return [p, face]
+
+
+## Text report of every slot: square, side, wall value and where its picture lands
+## in the 88x88 view (x, y, width, height). For comparing against the original.
+func report(map: GeoMap, walls: WallSet, x: int, y: int, facing: int) -> String:
+	var lines := PackedStringArray()
+	lines.append("position %d,%d facing %s" % [x, y, DIR_NAMES[facing]])
+	lines.append("slot           i  square  side  wall  view rect (x,y,w,h)")
+	var visible := _visible_walls(map, x, y, facing)
+	for distance in 3:
+		for placement in 3:
+			var slot := placement * 3 + distance
+			var cells: Array = SLOT_CELLS[slot]
+			var tx: int = START_X[slot]
+			for i in cells.size():
+				var info := _cell_for(x, y, facing, cells[i])
+				var p: Vector2i = info[0]
+				var w: int = visible[slot][i]
+				var rect := ""
+				if w > 0 and w <= walls.walls.size():
+					var size: Vector2i = walls.walls[w - 1].parts[distance * 3 + placement]["size"]
+					var left := (tx - VIEW_ORIGIN) * 8
+					var top: int = (START_Y[slot] - VIEW_ORIGIN) * 8 + MAX_HEIGHT[slot] - size.y * 8
+					rect = "%d,%d,%d,%d" % [left, top, size.x * 8, size.y * 8]
+				lines.append("%-14s %d  %2d,%-2d   %s     %2d    %s" % [
+					SLOT_NAMES[slot], i, p.x, p.y, DIR_NAMES[info[1]], w, rect])
+				tx += SPACING[slot]
+	return "\n".join(lines)

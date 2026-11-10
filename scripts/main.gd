@@ -3,7 +3,8 @@ extends Control
 ##   Tab          : pictures -> maps -> walk -> pictures
 ##   Pictures     : Left/Right picture, Up/Down file
 ##   Maps         : Left/Right map, Enter to walk the map
-##   Walk         : Up forward, Down back, Left/Right turn
+##   Walk         : Up forward, Down back, Left/Right turn,
+##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir"
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -26,9 +27,21 @@ var _walls: WallSet
 var _walls_for := -1        # map index the wall set was built for
 var _pos := Vector2i(8, 8)
 var _facing := DungeonView.Dir.NORTH
+var _goto: LineEdit
 
 
 func _ready() -> void:
+	_goto = LineEdit.new()
+	_goto.placeholder_text = "x y facing (e.g. 12 6 S), Enter to go, Esc to cancel"
+	_goto.visible = false
+	_goto.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_goto.offset_left = -210
+	_goto.offset_right = 210
+	_goto.offset_top = 8
+	_goto.text_submitted.connect(_on_goto)
+	_goto.focus_exited.connect(_on_goto_closed)
+	_goto.gui_input.connect(_on_goto_input)
+	add_child(_goto)
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
 		_status.text = (
@@ -70,7 +83,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
-		if event.is_action("ui_up"):
+		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+		if key == KEY_O:
+			_dungeon.show_slots = not _dungeon.show_slots
+		elif key == KEY_C:
+			_capture()
+			return
+		elif key == KEY_G:
+			_goto.text = ""
+			_goto.visible = true
+			_goto.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.is_action("ui_up"):
 			_move(_facing)
 		elif event.is_action("ui_down"):
 			_move((_facing + 2) % 4)
@@ -116,6 +141,47 @@ func _jump_file(step: int) -> void:
 		if starts[k] <= _pic_index:
 			current = k
 	_pic_index = starts[(current + step + starts.size()) % starts.size()]
+
+
+func _on_goto_closed() -> void:
+	_goto.visible = false
+
+
+func _on_goto_input(ev: InputEvent) -> void:
+	if ev.is_action_pressed("ui_cancel"):
+		_goto.release_focus()
+
+
+func _on_goto(text: String) -> void:
+	_goto.visible = false
+	var parts := text.strip_edges().split(" ", false)
+	if parts.size() >= 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
+		_pos = Vector2i(clampi(parts[0].to_int(), 0, 15), clampi(parts[1].to_int(), 0, 15))
+		if parts.size() >= 3:
+			var d := "NESW".find(parts[2].substr(0, 1).to_upper())
+			if d >= 0:
+				_facing = d as DungeonView.Dir
+	_show()
+
+
+## Saves the current view (4x, PNG) and its slot report to <project>/captures/.
+func _capture() -> void:
+	if _walls == null:
+		return
+	var e: Dictionary = _maps[_map_index]
+	var dir := ProjectSettings.globalize_path("res://captures")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
+	var base := dir.path_join("%s_%d-%d-%s_%s" % [
+		String(e.file).get_basename(), _pos.x, _pos.y, DungeonView.DIR_NAMES[_facing], stamp])
+	var img := DungeonView.to_image(_dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing))
+	img.resize(DungeonView.SIZE * 4, DungeonView.SIZE * 4, Image.INTERPOLATE_NEAREST)
+	img.save_png(base + ".png")
+	var f := FileAccess.open(base + ".txt", FileAccess.WRITE)
+	if f:
+		f.store_string("%s block %d (%s)\n" % [e.file, e.id, GeoMap.AREA_NAMES.get(e.id, "unnamed area")])
+		f.store_string(_dungeon.report(e.map, _walls, _pos.x, _pos.y, _facing) + "\n")
+	_status.text = "Captured %s.png / .txt" % base.get_file()
 
 
 ## Moves one square if no closed wall is in the way. Door handling is provisional:
@@ -194,5 +260,5 @@ func _show() -> void:
 	_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
-	_status.text = "WALK  %s   %d,%d facing %s   (wall set provisional except New Phlan; doors always open)\n↑ forward   ↓ back   ←/→ turn   Tab pictures" % [
+	_status.text = "WALK  %s   %d,%d facing %s   (wall set provisional except New Phlan; doors always open)\n↑ forward  ↓ back  ←/→ turn   O outlines  C capture  G go to   Tab pictures" % [
 		area, _pos.x, _pos.y, facing_name]
