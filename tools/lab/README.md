@@ -15,3 +15,7 @@ process space, so a whole session runs inside one call (up to three minutes).
 
 `unupx.py` unpacks UPX-compressed (NRV2E) Windows programs; used to read GOG's code-wheel
 program.
+
+`check_godot.sh /path/to/goldbox-reforged` (with Godot 4.7.2 for Linux unzipped into
+`~/lab/godot/`) parse-checks every script in a copy of the project and runs the main scene
+headless for two seconds. Run it before every push.
