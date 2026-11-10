@@ -8,12 +8,12 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M0 — Setup.** The project runs and finds your game files. Nothing is playable yet.
+**M0 — Setup, done** (2026-11-09). The project runs and finds your game files. Nothing is playable yet. **Next: M1**, decoding the data files.
 
 | # | Milestone | |
 |---|-----------|--|
-| M0 | Setup | in progress |
-| M1 | Data inventory (file formats documented) | |
+| M0 | Setup | done |
+| M1 | Data inventory (file formats documented) | next |
 | M2 | Viewers (maps, art, fonts, monster and item tables) | |
 | M3 | Exploration | |
 | M4 | Characters | |
