@@ -146,6 +146,15 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	return m
 
 
+## An independent copy (for several monsters of one kind).
+func clone() -> PartyMember:
+	var m := from_bytes(raw, PackedByteArray())
+	m.is_monster = is_monster
+	for it in items:
+		m.items.append(GameItem.from_record(it.raw))
+	return m
+
+
 static func _signed(b: int) -> int:
 	return b - 256 if b > 127 else b
 

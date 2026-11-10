@@ -101,6 +101,45 @@ func wall_ids_for_map(map_id: int) -> Array:
 	return result
 
 
+## Set battles: each COMBAT with the LOAD_MON instructions before it (in address order,
+## since the last COMBAT or CLEAR_MON). LOAD_MON takes monster id, count and picture id:
+## the monster record is MON<file>CHA block id, its icon CPIC<file> block picture.
+## Returns [{offset, monsters: [[id, count, picture], ...], text}]; operands that come
+## from memory (not literal) are -1. `text` is the last message printed before the fight.
+func encounters() -> Array:
+	var out := []
+	var pending := []
+	var text := ""
+	for off in offsets():
+		var ins: Dictionary = instructions[off]
+		match ins.op:
+			"LOAD_MON":
+				var row := []
+				for a in ins.args:
+					row.append(int(a.value) if a.type == 0 else -1)
+				pending.append(row)
+			"CLEAR_MON":
+				pending = []
+			"PRINT", "PRINT_CLEAR":
+				if ins.args[0].type == 0x80 and String(ins.args[0].value) != "":
+					text = ins.args[0].value
+			"COMBAT":
+				if not pending.is_empty():
+					out.append({"offset": off + BASE, "monsters": pending, "text": text})
+				pending = []
+	return out
+
+
+## Picture (icon) id for each monster id, from the literal LOAD_MON instructions.
+func monster_pictures() -> Dictionary:
+	var pics := {}
+	for off in instructions:
+		var ins: Dictionary = instructions[off]
+		if ins.op == "LOAD_MON" and ins.args[0].type == 0 and ins.args[2].type == 0:
+			pics[int(ins.args[0].value)] = int(ins.args[2].value)
+	return pics
+
+
 ## True if some LOAD_AREA_MAP names map_id literally.
 func loads_map(map_id: int) -> bool:
 	for off in instructions:

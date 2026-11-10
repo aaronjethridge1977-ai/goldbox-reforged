@@ -6,7 +6,10 @@ extends Control
 ## C2 (battlefield) only: the field is built, both sides are placed and drawn, and the view
 ## can be moved around. Nobody acts yet; that is C3.
 ##   Arrows: move the view    Tab: next combatant (the view centres on them)
-##   PgUp/PgDn: change the monster type    +/-: monsters nearer/further    Esc: leave
+##   PgUp/PgDn: previous/next set battle of this area    +/-: monsters nearer/further
+##   Esc: leave
+## The monsters come from the area's own set battles (LOAD_MON ... COMBAT in its event
+## script: monster, count, icon); an area without any falls back to each monster in turn.
 
 signal closed
 
@@ -32,8 +35,10 @@ var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
 var _distance := 0
 var _mon_file := 1
-var _mon_ids: Array = []
-var _mon_index := 0
+var _encounters: Array = []      # [{monsters: [[id, count, picture]], text}]
+var _enc_index := 0
+var _pictures: Array[int] = []   # icon id for each of _monsters
+var _types: ItemTypes
 var _game_path := ""
 
 var _picture: TextureRect
@@ -42,19 +47,33 @@ var _prompt: Label
 
 
 ## Starts a test battle at map square (px, py) facing `facing` (0..3 = N E S W) against
-## monsters from MON<mon_file>CHA.
+## the set battles in `script` (monsters from MON<mon_file>CHA).
 func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
-		party: Array[PartyMember], mon_file: int) -> void:
+		party: Array[PartyMember], mon_file: int, script: EclScript) -> void:
 	_game_path = game_path
 	_field = Battlefield.build(map, px, py)
 	_art = CombatArt.load_set(game_path)
 	_party = party
 	_facing = facing
 	_mon_file = mon_file
-	var cha := DaxFile.open(game_path.path_join("MON%dCHA.DAX" % mon_file))
-	_mon_ids = cha.ids() if cha else []
-	_mon_ids.sort()
-	_mon_index = 0
+	if _types == null:
+		_types = ItemTypes.load_file(game_path)
+	_encounters.clear()
+	if script:
+		for e in script.encounters():
+			var rows := []
+			for row in e.monsters:
+				if row[0] >= 0:
+					rows.append([row[0], maxi(row[1], 1), row[2] if row[2] >= 0 else row[0]])
+			if not rows.is_empty():
+				_encounters.append({"monsters": rows, "text": e.text})
+	if _encounters.is_empty():
+		var cha := DaxFile.open(game_path.path_join("MON%dCHA.DAX" % mon_file))
+		var ids: Array = cha.ids() if cha else []
+		ids.sort()
+		for id in ids:
+			_encounters.append({"monsters": [[id, 6, id]], "text": ""})
+	_enc_index = 0
 	_distance = 1
 	if _picture == null:
 		_build()
@@ -89,12 +108,21 @@ func _build() -> void:
 
 func _load_monsters() -> void:
 	_monsters.clear()
-	if not _mon_ids.is_empty():
-		var id: int = _mon_ids[_mon_index]
-		for i in 6:
-			var m := PartyMember.load_monster(_game_path, _mon_file, id)
-			if m:
+	_pictures.clear()
+	if not _encounters.is_empty():
+		for row in _encounters[_enc_index].monsters:
+			var first := PartyMember.load_monster(_game_path, _mon_file, row[0])
+			if first == null:
+				continue
+			first.recalculate(_types)
+			for i in int(row[1]):
+				if _monsters.size() >= 63:   # the original's limit
+					break
+				var m := first if i == 0 else first.clone()
+				if i > 0:
+					m.recalculate(_types)
 				_monsters.append(m)
+				_pictures.append(int(row[2]))
 	_place()
 	_selected = 0
 	_centre_on_selected()
@@ -131,7 +159,7 @@ func _place() -> void:
 		var depth: int = i / 3
 		var p := front + _rotate(Vector2i(across, -depth), _facing)
 		var cell := _free_cell(p, occupied)
-		var icon := _art.monster_icon(_mon_file, _mon_ids[_mon_index])
+		var icon := _art.monster_icon(_mon_file, _pictures[i])
 		_combatants.append({"who": _monsters[i], "team": 1, "cell": cell, "icon": icon})
 
 
@@ -200,9 +228,21 @@ func _refresh() -> void:
 		var m: PartyMember = _combatants[_selected].who
 		var weapon := m.weapon.name if m.weapon else ""
 		_info.text = "%s\n\nHITPOINTS %d\n\nAC %d\n\n%s" % [m.name, m.hp, m.ac, weapon]
-	var mon_name := _monsters[0].name if not _monsters.is_empty() else "none"
-	_prompt.text = ("Test battle (C2: field and placement only)   monsters: %s, %d square(s) away\n"
-		+ "Arrows: move view   Tab: next combatant   PgUp/PgDn: monster type   +/-: distance   Esc: leave") % [mon_name, _distance]
+	var summary := PackedStringArray()
+	var text := ""
+	if not _encounters.is_empty():
+		var e: Dictionary = _encounters[_enc_index]
+		text = e.text
+		for row in e.monsters:
+			var n := "?"
+			for i in _monsters.size():
+				if _pictures[i] == row[2]:
+					n = _monsters[i].name
+					break
+			summary.append("%s x%d" % [n, row[1]])
+	_prompt.text = ("Battle %d of %d: %s   (%d square(s) away)\n%s\n"
+		+ "Arrows: move view   Tab: next combatant   PgUp/PgDn: battle   +/-: distance   Esc: leave") % [
+		_enc_index + 1, _encounters.size(), ", ".join(summary), _distance, text]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -225,9 +265,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_selected = (_selected + 1) % _combatants.size()
 			_centre_on_selected()
 	elif key == KEY_PAGEDOWN or key == KEY_PAGEUP:
-		if not _mon_ids.is_empty():
+		if not _encounters.is_empty():
 			var step := 1 if key == KEY_PAGEDOWN else -1
-			_mon_index = (_mon_index + step + _mon_ids.size()) % _mon_ids.size()
+			_enc_index = (_enc_index + step + _encounters.size()) % _encounters.size()
 			_load_monsters()
 	elif key == KEY_EQUAL or key == KEY_KP_ADD:
 		_distance = mini(_distance + 1, 2)

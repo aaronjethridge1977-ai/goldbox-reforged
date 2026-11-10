@@ -8,7 +8,7 @@ extends Control
 ##                  E write the area's event script listing to captures/, N day/night,
 ##                  1-9 choose a menu item, Enter continue,
 ##                  V party character sheets, M monster sheets (every MONnCHA block),
-##                  B test battle here (battlefield and placement; monsters from MON<area>)
+##                  B test battle here (battlefield and placement; the area's set battles, PgUp/PgDn)
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -191,7 +191,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			for m in _party:
 				m.recalculate(_types)
 			var map: GeoMap = _maps[_map_index].map
-			_combat.open_test(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1))
+			var script: EclScript = null
+			var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % maxi(_vm_file, 1)))
+			if ecl and ecl.blocks.has(_vm_block):
+				script = EclScript.decode(ecl.blocks[_vm_block])
+			_combat.open_test(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1), script)
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_M:
