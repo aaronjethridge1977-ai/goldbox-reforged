@@ -140,6 +140,15 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		full.save_png(image_path)
 
 
+## The monsters brought down in the fight just finished (for experience and treasure).
+func defeated() -> Array:
+	var out := []
+	for c in _combatants:
+		if c.team == 1 and c.get("down", false):
+			out.append(c.who)
+	return out
+
+
 ## Testing aid: fights the check battle to the end with the computer on both sides and the
 ## given dice seed, printing every roll and message (for the lab).
 ## `plan` "away" replays the lab's free-attack check: party members wait until a monster
@@ -181,6 +190,23 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 	for line in _combat.roll_log:
 		print("roll ", line)
 	print("result ", ["", "party won", "party lost"][_combat.outcome()], " after ", _combat.round_no, " rounds")
+	if _combat.outcome() == 1:
+		var sp := Spoils.gather(defeated(), [], [])
+		var standing := []
+		for m in _party:
+			if m.hp > 0:
+				standing.append(m)
+		var before := {}
+		for m in _party:
+			before[m.name] = m.experience
+		var share := sp.award(standing)
+		var names := PackedStringArray()
+		for it in sp.items:
+			names.append(it.name)
+		print("spoils: experience %d, %d standing, %d each; money %s; items %s" % [
+			sp.experience, standing.size(), share, sp.money, ", ".join(names)])
+		for m in _party:
+			print("  %s %d -> %d" % [m.name, before[m.name], m.experience])
 
 
 func _build() -> void:
@@ -296,6 +322,11 @@ func _advance() -> void:
 		_result = _combat.outcome()
 		_on_message("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.")
 		_refresh()
+		if _event_fight and _result == 1:
+			# Straight on to the results (the original's "Continue Battle?" is skipped).
+			await get_tree().create_timer(1.0).timeout
+			if visible and _event_fight and _result == 1:
+				_leave()
 		return
 	_selected = i
 	_centre_on_selected()
@@ -411,16 +442,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fight_input(event, key)
 		return
 	if event.is_action("ui_cancel") or (_result != 0 and event.is_action("ui_accept")):
-		_ai_timer.stop()
-		var was_event := _event_fight
-		var result := _result
-		_combat = null
-		_event_fight = false
-		visible = false
-		if was_event:
-			finished.emit(result)
-		else:
-			closed.emit()
+		_leave()
 	elif _combat != null:
 		_fight_input(event, key)
 		return
@@ -454,6 +476,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	_refresh()
+
+
+func _leave() -> void:
+	_ai_timer.stop()
+	var was_event := _event_fight
+	var result := _result
+	_combat = null
+	_event_fight = false
+	visible = false
+	if was_event:
+		finished.emit(result)
+	else:
+		closed.emit()
 
 
 const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIGHT: 2, KEY_KP_6: 2,

@@ -368,15 +368,13 @@ func _exec(ins: Dictionary) -> void:
 				# Shops reuse the after-combat treasure screen: pause and let the caller
 				# open the shop with the TREASURE item list.
 				state = State.SHOP
-			elif not monsters.is_empty():
-				# A fight: pause while the caller runs it, then end_combat().
+			elif not monsters.is_empty() or not treasure.is_empty():
+				# A fight, or with treasure only a treasure find: pause while the caller
+				# runs it (experience and treasure screens), then end_combat().
 				state = State.COMBAT
 			else:
 				_note("combat")
-				if not treasure.is_empty():
-					_note("treasure")
 				write_byte(COMBAT_RESULT, 0)
-				treasure = []
 		"ENCOUNTER_MENU":
 			_note("encounter")
 			_write(a[3], 1)

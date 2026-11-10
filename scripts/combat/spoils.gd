@@ -1,0 +1,84 @@
+class_name Spoils
+extends RefCounted
+## What a won fight (or a treasure find) leaves: experience for the party and the treasure
+## on the ground: coins, gems and jewellery (7 counts, as a character's money) and items.
+##
+## As the original does it (rules as documented by Pilgrim's reconstruction; checked in
+## the lab on the Slums orcs, 3 orcs and their leader with 24 silver each and a +1 scroll):
+## - The pile is the event's TREASURE (coins, gems, jewellery, an item list) plus every
+##   defeated monster's money and items (unreadied).
+## - Experience: each defeated monster's worth (per hit point x hit points rolled + value),
+##   plus the pile's money in gold (coins at their copper value / 200, a gem 250, a piece of
+##   jewellery 2200), plus 400 for each plus of every magic item. The total is split evenly
+##   among the party members still standing (rounded down): 60 + 4 + 400 = 464, so 77 each
+##   with six standing and 116 each with four, as the original showed.
+## - Each standing member adds the share with their class's bonus or split
+##   (PartyMember.gain_experience); a fighter with STR 17 got 84 of the 77.
+
+const GEM_GOLD := 250
+const JEWELRY_GOLD := 2200
+const ITEM_PLUS_XP := 400
+
+var money := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
+var items: Array[GameItem] = []
+var experience := 0          # the whole fight's experience
+var share := 0               # each standing member's share, before class adjustments
+var fought := false          # monsters were defeated (otherwise a treasure find)
+
+
+## `script_money`: the event's TREASURE coins (copper..platinum, gems, jewellery).
+static func gather(defeated: Array, script_money: Array, script_items: Array[GameItem]) -> Spoils:
+	var s := Spoils.new()
+	for i in mini(script_money.size(), 7):
+		s.money[i] += int(script_money[i])
+	for it in script_items:
+		var c := it.copy()
+		c.name = it.name
+		s.items.append(c)
+	var worth := 0
+	for m in defeated:
+		var pm: PartyMember = m
+		s.fought = true
+		worth += pm.experience_worth()
+		for i in 7:
+			s.money[i] += pm.money[i]
+		for it in pm.items:
+			var c := it.copy()
+			c.name = it.name
+			s.items.append(c)
+	worth += s.money_worth()
+	for it in s.items:
+		if it.plus > 0:
+			worth += it.plus * ITEM_PLUS_XP
+	s.experience = worth
+	return s
+
+
+## The pile's money in gold, as the original counts it for experience.
+func money_worth() -> int:
+	var copper := 0
+	for i in 5:
+		copper += money[i] * PartyMember.COIN_VALUE[i]
+	return copper / PartyMember.COIN_VALUE[3] + money[5] * GEM_GOLD + money[6] * JEWELRY_GOLD
+
+
+func has_treasure() -> bool:
+	return has_money() or not items.is_empty()
+
+
+func has_money() -> bool:
+	for c in money:
+		if c > 0:
+			return true
+	return false
+
+
+## Gives each standing member their share. Returns the share (before class adjustments).
+func award(standing: Array) -> int:
+	if standing.is_empty():
+		share = 0
+		return 0
+	share = experience / standing.size()
+	for m in standing:
+		(m as PartyMember).gain_experience(share)
+	return share

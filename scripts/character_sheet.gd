@@ -15,10 +15,10 @@ var _body: Label
 var _foot: Label
 
 
-func open(people: Array[PartyMember], title: String) -> void:
+func open(people: Array[PartyMember], title: String, start: int = 0) -> void:
 	_people = people
 	_title = title
-	_index = 0
+	_index = clampi(start, 0, maxi(people.size() - 1, 0))
 	if _head == null:
 		_build()
 	_refresh()

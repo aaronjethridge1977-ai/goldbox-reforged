@@ -59,6 +59,8 @@ var _jump_next := false             # the next script move is a placement, not a
 var _party: Array[PartyMember] = []
 var _shop: ShopScreen
 var _sheet: CharacterSheet
+var _treasure: TreasureScreen
+var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
 var _combat: CombatScreen
 var _types: ItemTypes
 
@@ -97,6 +99,10 @@ func _ready() -> void:
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
 	add_child(_sheet)
+	_treasure = TreasureScreen.new()
+	_treasure.visible = false
+	_treasure.closed.connect(_on_treasure_closed)
+	add_child(_treasure)
 	_combat = CombatScreen.new()
 	_combat.visible = false
 	_combat.finished.connect(_on_event_fight_finished)
@@ -149,7 +155,8 @@ func _ready() -> void:
 		if _pictures[i].file == "TITLE.DAX" and _pictures[i].id == 2:
 			_pic_index = i
 	# Testing aid for the lab: --battle=GEO2.DAX:20:13:7:W:2:4:6:4:2 (map file, map id, x, y,
-	# facing, monster file, monster id, count, picture, distance or -1) [--battle-image=path]
+	# facing, monster file, monster id, count, picture, distance or -1, then optionally more
+	# monster rows as id,count,picture) [--battle-image=path]
 	# prints where everyone starts and saves the battlefield, then quits. With
 	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll;
 	# --battle-fight=<seed>:away replays the free-attack check (see CombatScreen.run_fight).
@@ -165,7 +172,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible:
+	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
+			or _treasure.visible:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -375,7 +383,8 @@ func _quick_save() -> void:
 			var rec := it.raw.duplicate()
 			rec[52] = 1 if it.readied else 0
 			items.append(rec)
-		members.append({"name": m.name, "money": m.money, "items": items})
+		members.append({"name": m.name, "money": m.money, "items": items, "hp": m.hp,
+			"experience": m.experience})
 	cfg.set_value("party", "members", members)
 	var err := cfg.save(_save_path())
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
@@ -390,8 +399,12 @@ func _battle_check(spec: String) -> void:
 	for i in _maps.size():
 		if _maps[i].file == a[0] and _maps[i].id == int(a[1]):
 			var facing := "NESW".find(a[4])
+			var rows := [[int(a[6]), int(a[7]), int(a[8])]]
+			for k in range(10, a.size()):     # more monster rows: id,count,picture
+				var r := a[k].split(",")
+				rows.append([int(r[0]), int(r[1]), int(r[2])])
 			_combat.run_check(_game_path, _maps[i].map, int(a[2]), int(a[3]), facing, _party,
-				int(a[5]), [[int(a[6]), int(a[7]), int(a[8])]], int(a[9]), image_path)
+				int(a[5]), rows, int(a[9]), image_path)
 			for arg in OS.get_cmdline_user_args():
 				if arg.begins_with("--battle-fight="):
 					var f := arg.trim_prefix("--battle-fight=").split(":")
@@ -447,9 +460,15 @@ func _quick_load() -> void:
 	for i in mini(members.size(), _party.size()):
 		var saved: Dictionary = members[i]
 		_party[i].money = saved.get("money", _party[i].money)
+		_party[i].hp = saved.get("hp", _party[i].hp)
+		_party[i].experience = saved.get("experience", _party[i].experience)
 		var items: Array[GameItem] = []
+		var names := ItemNames.shared(_game_path)
 		for rec in saved.get("items", []):
-			items.append(GameItem.from_record(rec))
+			var it := GameItem.from_record(rec)
+			if it.name == "":
+				it.name = names.name_of(it)
+			items.append(it)
 		_party[i].items = items
 		_party[i].recalculate(_types)
 	_status.text = "Loaded."
@@ -643,11 +662,18 @@ func _after_vm() -> void:
 		_finish_move(_pending_move)
 
 
-## Opens the shop for the script's TREASURE item list (ITEM<n>.DAX block, shown in
-## reverse of stored order, as the original lists it).
+## Opens the shop for the script's TREASURE item list.
 func _open_shop() -> void:
 	var list_id: int = _vm.treasure[_vm.treasure.size() - 1] if not _vm.treasure.is_empty() else 255
+	_shop.open(_item_list(list_id), _party)
+
+
+## A TREASURE item list: an ITEM<n>.DAX block (this area's file first), in reverse of
+## stored order, as the original lists it. 255 = none.
+func _item_list(list_id: int) -> Array[GameItem]:
 	var items: Array[GameItem] = []
+	if list_id == 255:
+		return items
 	var order := [_vm_file]
 	for n in range(1, 9):
 		if n != _vm_file:
@@ -661,11 +687,20 @@ func _open_shop() -> void:
 			items = GameItem.list_from(dax.blocks[list_id])
 			items.reverse()
 			break
-	_shop.open(items, _party)
+	var names := ItemNames.shared(_game_path)
+	for it in items:
+		if it.name == "":
+			it.name = names.name_of(it)
+	return items
 
 
-## Runs the fight an event script asked for, then lets the script carry on.
+## Runs the fight an event script asked for, then lets the script carry on. A COMBAT with
+## treasure but no monsters is a treasure find: straight to the treasure.
 func _start_event_fight() -> void:
+	_fight_treasure = _vm.treasure.duplicate()
+	if _vm.monsters.is_empty():
+		_after_fight([], "THE PARTY HAS FOUND TREASURE!")
+		return
 	for m in _party:
 		m.recalculate(_types)
 	var map: GeoMap = _maps[_map_index].map
@@ -679,6 +714,32 @@ func _on_event_fight_finished(result: int) -> void:
 		_vm.state = EclVM.State.DONE
 		_show()
 		return
+	_after_fight(_combat.defeated(), "THE PARTY HAS WON.")
+
+
+## Experience and treasure: from the defeated monsters and the event's TREASURE, then the
+## results and treasure screens; the script carries on when they close.
+func _after_fight(defeated: Array, won_text: String) -> void:
+	var coins := []
+	var list_id := 255
+	if _fight_treasure.size() >= 8:
+		coins = _fight_treasure.slice(0, 7)
+		list_id = int(_fight_treasure[7])
+	var spoils := Spoils.gather(defeated, coins, _item_list(list_id))
+	var standing: Array = []
+	for m in _party:
+		if m.hp > 0:
+			standing.append(m)
+	var share := spoils.award(standing)
+	for m in _party:
+		m.recalculate(_types)
+	_treasure.open(spoils, _party, won_text, share)
+
+
+func _on_treasure_closed() -> void:
+	for m in _party:
+		m.recalculate(_types)
+	_fight_treasure = []
 	_message.text = ""
 	_vm.end_combat(0)
 	_after_vm()

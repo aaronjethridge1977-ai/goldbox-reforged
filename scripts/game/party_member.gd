@@ -13,6 +13,8 @@ extends RefCounted
 ##   0xA5/0xA6 dice size   0xA7/0xA8 damage bonus
 ##   0xA9 base AC (60-based: AC = 60 - value)   0xAA 1 = STR bonuses apply (characters and
 ##   humanoids with a strength score; 0 for most monsters)   0xAC experience
+##   0xB1 hit points rolled   0xB8 experience value (s16)   0xBA experience per hit point
+##   (a monster is worth 0xBA x 0xB1 + 0xB8: an orc 1 x 5 + 10 = 15; checked in the lab)
 ##   0x102 total weight carried (cached)   0x10C status   0x11B current HP
 ##
 ## Derived stats (recalculate()) follow AD&D 1st edition, which the game implements:
@@ -51,6 +53,10 @@ var strength_exceptional := 0
 var hp := 0
 var hp_max := 0
 var experience := 0
+var class_id := 0
+var hp_rolled := 0
+var xp_value := 0                   # a monster's worth: xp_per_hp x hp_rolled + xp_value
+var xp_per_hp := 0
 ## cp, sp, ep, gp, pp, gems, jewelry
 var money := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
 var items: Array[GameItem] = []
@@ -105,6 +111,10 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 	var m := from_bytes(cha.blocks[id], item_data)
 	if m:
 		m.is_monster = true
+		var names := ItemNames.shared(game_path)
+		for it in m.items:
+			if it.name == "":
+				it.name = names.name_of(it)
 	return m
 
 
@@ -116,6 +126,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.name = d.slice(1, 1 + mini(d[0], 15)).get_string_from_ascii().strip_edges()
 	m.race_id = d[0x2E]
 	m.race = RACES[d[0x2E]] if d[0x2E] < RACES.size() else "?"
+	m.class_id = d[0x2F]
 	m.char_class = CLASSES[d[0x2F]] if d[0x2F] < CLASSES.size() else "?"
 	m.age = d[0x30]
 	m.alignment = ALIGNMENTS[d[0xA0]] if d[0xA0] < ALIGNMENTS.size() else "?"
@@ -125,6 +136,9 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.hp_max = d[0x32]
 	m.hp = d[0x11B]
 	m.experience = d.decode_u32(0xAC)
+	m.hp_rolled = d[0xB1]
+	m.xp_value = d.decode_s16(0xB8)
+	m.xp_per_hp = d[0xBA]
 	for i in 7:
 		m.money[i] = d.decode_u16(0x88 + i * 2)
 	m.base_thac0_60 = d[0x2D]
@@ -152,8 +166,43 @@ func clone() -> PartyMember:
 	var m := from_bytes(raw, PackedByteArray())
 	m.is_monster = is_monster
 	for it in items:
-		m.items.append(GameItem.from_record(it.raw))
+		var c := GameItem.from_record(it.raw)
+		c.name = it.name
+		m.items.append(c)
 	return m
+
+
+## What this monster is worth in experience when defeated.
+func experience_worth() -> int:
+	return xp_per_hp * hp_rolled + xp_value
+
+
+## Adds a share of a fight's experience the way the original does: +10% for a single-
+## classed character whose prime requisite(s) are over 15, half for two classes, a third
+## for three. (The original's table leaves mage/thief out of the split, so a mage/thief
+## gets the whole share; kept as the original does it.) Returns what was added.
+func gain_experience(share: int) -> int:
+	var st := stats
+	var add := share
+	match class_id:
+		0:
+			if st[2] > 15: add += share / 10
+		2:
+			if st[0] > 15: add += share / 10
+		3:
+			if st[0] > 15 and st[2] > 15: add += share / 10
+		4:
+			if st[0] > 15 and st[1] > 15 and st[2] > 15: add += share / 10
+		5:
+			if st[1] > 15: add += share / 10
+		6:
+			if st[3] > 15: add += share / 10
+		8, 10, 11, 12, 13, 14:
+			add = share / 2
+		9, 15:
+			add = share / 3
+	experience += add
+	return add
 
 
 static func _signed(b: int) -> int:
