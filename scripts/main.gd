@@ -69,7 +69,7 @@ func _ready() -> void:
 	_message.offset_bottom = -64
 	_message.visible = false
 	add_child(_message)
-	_vm.write_byte(EclVM.CLOCK_HOUR, 8)
+	_vm.write_byte(EclVM.CLOCK_HOUR, 0)   # a new game starts at 00:00
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
 		_status.text = (
@@ -320,8 +320,7 @@ func _after_vm() -> void:
 	if not _vm.notes.is_empty():
 		_message.text += "\n[not built yet: %s]" % ", ".join(_vm.notes)
 		_vm.notes = []
-	if _vm.state != EclVM.State.MENU:
-		_adopt_position_from_vm()
+	_adopt_position_from_vm()
 	match _vm.state:
 		EclVM.State.MENU:
 			var lines := PackedStringArray()

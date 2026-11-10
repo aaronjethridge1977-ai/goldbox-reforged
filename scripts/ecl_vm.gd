@@ -189,7 +189,7 @@ func _note(message: String) -> void:
 
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
-const QUIET := ["SPRITE_START", "SPRITE_ADVANCE", "SPRITE_OFF", "CLEAR_MON", "DELAY", "CLEAR_BOX",
+const QUIET := ["SPRITE_ADVANCE", "DELAY", "CLEAR_BOX",
 	"SOUND", "CLOCK", "PARTY_STRENGTH", "PARTY_CHECK", "PARTY_SKILL_CHECK", "SURPRISE",
 	"HAS_EFFECT", "FIND_ITEM", "DESTROY_ITEM", "LOAD_CHAR", "NPC_ADD", "NPC_REMOVE",
 	"WHO", "SPELL", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
@@ -270,6 +270,13 @@ func _exec(ins: Dictionary) -> void:
 			text = _string(a[0])
 		"PRINT_RETURN":
 			text += "\n"
+		"SPRITE_START":
+			# A figure walks up (sprite id, distance, picture); the walk-up animation is not
+			# shown yet, only the close-up portrait it ends on (head from PICTURE_HEAD).
+			picture = _value(a[2])
+			picture_head = read_byte(PICTURE_HEAD)
+		"SPRITE_OFF", "CLEAR_MON":
+			picture = 255
 		"PICTURE":
 			picture = _value(a[0])
 			picture_head = read_byte(PICTURE_HEAD)
