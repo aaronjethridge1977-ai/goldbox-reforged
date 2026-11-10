@@ -4,7 +4,8 @@ extends Control
 ##   Pictures     : Left/Right picture, Up/Down file
 ##   Maps         : Left/Right map, Enter to walk the map
 ##   Walk         : Up forward, Down back, Left/Right turn,
-##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir"
+##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir",
+##                  E write the area's event script listing to captures/
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -28,6 +29,7 @@ var _walls_for := -1        # map index the wall set was built for
 var _pos := Vector2i(8, 8)
 var _facing := DungeonView.Dir.NORTH
 var _goto: LineEdit
+var _deco := []             # current area's wall set ids, from its event script
 
 
 func _ready() -> void:
@@ -88,6 +90,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dungeon.show_slots = not _dungeon.show_slots
 		elif key == KEY_C:
 			_capture()
+			return
+		elif key == KEY_E:
+			_dump_script()
 			return
 		elif key == KEY_G:
 			_goto.text = ""
@@ -164,6 +169,23 @@ func _on_goto(text: String) -> void:
 	_show()
 
 
+## Writes the area's event script, disassembled, to <project>/captures/.
+func _dump_script() -> void:
+	var e: Dictionary = _maps[_map_index]
+	var file_no := int(String(e.file).trim_prefix("GEO").trim_suffix(".DAX"))
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+	if ecl == null or not ecl.blocks.has(e.id):
+		_status.text = "No event script with this map's id in ECL%d.DAX" % file_no
+		return
+	var dir := ProjectSettings.globalize_path("res://captures")
+	DirAccess.make_dir_recursive_absolute(dir)
+	var path := dir.path_join("ECL%d_%d.txt" % [file_no, e.id])
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f:
+		f.store_string(_script(file_no, e.id, ecl).disassemble() + "\n")
+	_status.text = "Wrote %s" % path.get_file()
+
+
 ## Saves the current view (4x, PNG) and its slot report to <project>/captures/.
 func _capture() -> void:
 	if _walls == null:
@@ -196,20 +218,41 @@ func _move(direction: int) -> void:
 	_pos = next
 
 
-## Which WALLDEF blocks an area uses is set by its event script (not decoded yet).
-## Until then: a 15-wall block with the area's own id if there is one (New Phlan),
-## otherwise the file's 5-wall blocks in order.
-func _wall_ids_for(file_no: int, area_id: int) -> Array:
-	var walldef := DaxFile.open(_game_path.path_join("WALLDEF%d.DAX" % file_no))
-	if walldef == null:
+## The area's LOAD_AREA_DECO operands, from its event script: the ECL block with the
+## map's id in the same-numbered file, else any block there that loads the map, else the
+## first wall setting in that file.
+func _area_deco(file_no: int, area_id: int) -> Array:
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+	if ecl == null:
 		return []
-	if walldef.blocks.has(area_id) and walldef.blocks[area_id].size() >= WallSet.BYTES_PER_WALL * 15:
-		return [area_id]
-	var ids := []
-	for id in walldef.ids():
-		if walldef.blocks[id].size() == WallSet.BYTES_PER_WALL * 5 and ids.size() < 3:
-			ids.append(id)
-	return ids
+	if ecl.blocks.has(area_id):
+		var own := _script(file_no, area_id, ecl)
+		var deco := own.wall_ids_for_map(area_id)
+		if not deco.is_empty():
+			return deco
+	for id in ecl.ids():
+		var other := _script(file_no, id, ecl)
+		if other.loads_map(area_id):
+			var deco := other.wall_ids_for_map(area_id)
+			if not deco.is_empty():
+				return deco
+	for id in ecl.ids():
+		var deco := _script(file_no, id, ecl).wall_ids_for_map(-1)
+		if not deco.is_empty():
+			return deco
+	return []
+
+
+var _scripts := {}   # "file:id" -> EclScript
+
+
+func _script(file_no: int, id: int, ecl: DaxFile = null) -> EclScript:
+	var key := "%d:%d" % [file_no, id]
+	if not _scripts.has(key):
+		if ecl == null:
+			ecl = DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+		_scripts[key] = EclScript.decode(ecl.blocks.get(id, PackedByteArray()))
+	return _scripts[key]
 
 
 func _layout() -> void:
@@ -251,7 +294,8 @@ func _show() -> void:
 	# Walk mode
 	if _walls_for != _map_index:
 		var file_no := int(String(e.file).trim_prefix("GEO").trim_suffix(".DAX"))
-		_walls = WallSet.build(_game_path, file_no, _wall_ids_for(file_no, e.id))
+		_deco = _area_deco(file_no, e.id)
+		_walls = WallSet.build_for_area(_game_path, file_no, _deco)
 		_walls_for = _map_index
 	if _walls == null or _walls.walls.is_empty():
 		_status.text = "WALK  %s — no wall graphics found" % area
@@ -260,5 +304,6 @@ func _show() -> void:
 	_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
-	_status.text = "WALK  %s   %d,%d facing %s   (wall set provisional except New Phlan; doors always open)\n↑ forward  ↓ back  ←/→ turn   O outlines  C capture  G go to   Tab pictures" % [
-		area, _pos.x, _pos.y, facing_name]
+	var map: GeoMap = e.map
+	_status.text = "WALK  %s   %d,%d facing %s   square info %d   walls %s   (doors always open)\n↑ forward  ↓ back  ←/→ turn   O outlines  C capture  G go to  E script   Tab pictures" % [
+		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y), str(_deco)]

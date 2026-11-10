@@ -4,7 +4,7 @@ extends RefCounted
 ##
 ## Characters are 6 bits each, packed big-endian: every 3 bytes hold 4 characters.
 ## Value v < 0x20 is the letter chr(v + 0x40) ('@', 'A'..'Z', ...); otherwise chr(v)
-## (space, punctuation, digits). A trailing '@' (value 0) is padding.
+## (space, punctuation, digits). Value 0 is padding and is skipped.
 ##
 ## In ECL scripts a string operand is: 0x80, u8 packed length (bytes), packed text.
 ## Verified by decoding readable game text from every ECL block.
@@ -18,11 +18,14 @@ static func decode(packed: PackedByteArray) -> String:
 		var b1 := packed[i + 1] if i + 1 < packed.size() else 0
 		var b2 := packed[i + 2] if i + 2 < packed.size() else 0
 		var n := (b0 << 16) | (b1 << 8) | b2
-		for shift in [18, 12, 6, 0]:
-			var v: int = (n >> shift) & 63
-			out += char(v + 0x40) if v < 0x20 else char(v)
+		# A short final group of 1 or 2 bytes holds only 1 or 2 whole characters.
+		var count := mini(4, packed.size() - i) if packed.size() - i < 3 else 4
+		for k in count:
+			var v: int = (n >> (18 - 6 * k)) & 63
+			if v != 0:
+				out += char(v + 0x40) if v < 0x20 else char(v)
 		i += 3
-	return out.rstrip("@")
+	return out
 
 
 ## Finds the string operands in an ECL block: [{offset, text}].

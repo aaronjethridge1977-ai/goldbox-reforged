@@ -31,36 +31,67 @@ const BYTES_PER_WALL := 156
 var walls: Array = []
 
 
-## Builds the wall set from WALLDEF<file_no>.DAX, using the given block ids in order
-## (each block adds 5 or 15 walls; map wall values 1..15 index into the result).
-static func build(game_path: String, file_no: int, wall_ids: Array) -> WallSet:
+## Builds an area's walls from its LOAD_AREA_DECO operands [id1, id2, id3] (see EclScript).
+## Each id names a WALLDEF block in WALLDEF<file_no>.DAX contributing 5 walls; together they
+## give the map's wall values 1..15. Special values, as the original resolves them:
+##   127 or an id with no block: reuse the previous block's next 5 walls (a 10- or 15-wall
+##   block fills several slots); id1 127 means block 0; 255: slot unused.
+static func build_for_area(game_path: String, file_no: int, deco: Array) -> WallSet:
+	var walldef := DaxFile.open(game_path.path_join("WALLDEF%d.DAX" % file_no))
+	if walldef == null or deco.size() < 3:
+		return null
+	var id1: int = deco[0]
+	var id2: int = deco[1]
+	var id3: int = deco[2]
+	var def1 := 0 if id1 == 127 else id1
+	var replace2 := id2 == 127 or not walldef.blocks.has(id2)
+	var def2 := def1 if replace2 else id2
+	var replace3 := id3 == 127 or not walldef.blocks.has(id3)
+	var def3 := ((def1 if id2 == 255 else def2) if replace3 else id3)
+	var segments := [[def1, 0]]
+	if id2 != 255:
+		segments.append([def2, 5 if replace2 else 0])
+	if id3 != 255:
+		segments.append([def3, (10 if id2 == 127 else 5) if replace3 else 0])
+	return build(game_path, file_no, segments)
+
+
+## Builds walls from [[walldef_id, first_wall], ...]: 5 walls from each, in order.
+static func build(game_path: String, file_no: int, segments: Array) -> WallSet:
 	var ws := WallSet.new()
 	var walldef := DaxFile.open(game_path.path_join("WALLDEF%d.DAX" % file_no))
 	var tilesets := DaxFile.open(game_path.path_join("8X8D%d.DAX" % file_no))
 	var shared := DaxFile.open(game_path.path_join("8X8D1.DAX"))
 	if walldef == null or tilesets == null or shared == null:
 		return null
-	for id in wall_ids:
+	var tile_cache := {}
+	for seg in segments:
+		var id: int = seg[0]
+		var first: int = seg[1]
 		if not walldef.blocks.has(id):
 			continue
 		var data: PackedByteArray = walldef.blocks[id]
 		var count := data.size() / BYTES_PER_WALL
+		if count < first + 5:
+			continue
 		# Each WALLDEF block indexes its own tile list.
-		var tiles: Array[PackedByteArray] = [_transparent_tile()]
-		tiles.append_array(_tiles_from(shared.blocks.get(203, PackedByteArray())))
-		tiles.append_array(_tiles_from(tilesets.blocks.get(id, PackedByteArray())))
-		if count > 5:
-			var base: int = 10 * (id if id != 0 else 10)
-			for extra in [base + 1, base + 2, base + 3]:
-				tiles.append_array(_tiles_from(tilesets.blocks.get(extra, PackedByteArray())))
-		for w in count:
+		if not tile_cache.has(id):
+			var tiles: Array[PackedByteArray] = [_transparent_tile()]
+			tiles.append_array(_tiles_from(shared.blocks.get(203, PackedByteArray())))
+			tiles.append_array(_tiles_from(tilesets.blocks.get(id, PackedByteArray())))
+			if count > 5:
+				var base: int = 10 * (id if id != 0 else 10)
+				for extra in [base + 1, base + 2, base + 3]:
+					tiles.append_array(_tiles_from(tilesets.blocks.get(extra, PackedByteArray())))
+			tile_cache[id] = tiles
+		for w in range(first, first + 5):
 			var parts := []
 			var o := w * BYTES_PER_WALL
 			for shape in PART_SHAPES:
 				var n := shape.x * shape.y
 				parts.append({"size": shape, "cells": data.slice(o, o + n)})
 				o += n
-			ws.walls.append({"tiles": tiles, "parts": parts})
+			ws.walls.append({"tiles": tile_cache[id], "parts": parts})
 	return ws
 
 
