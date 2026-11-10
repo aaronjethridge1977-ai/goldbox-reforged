@@ -13,6 +13,11 @@ extends RefCounted
 ## - Saving throws by class and level 1..9: five values each (poison, petrification,
 ##   rod/staff/wand, breath, spell), found by the cleric's first rows.
 ## - Hit dice by class (d8 d8 d10 d10 d8 d4 d6 d4) and how many are rolled at first level.
+## - Thief skills (pick pockets, open locks, find/remove traps, move silently, hide in
+##   shadows, hear noise, climb walls, read languages) for levels 1..9, then adjustments by
+##   race (dwarf, elf, gnome, half-elf, halfling, half-orc, human) and, for the first five,
+##   by dexterity 9..18. These are the game's own values (two dexterity entries differ from
+##   the printed AD&D table: dexterity 10 pick pockets -19, dexterity 16 open locks -5).
 ## Checked against the shipped characters: every first-level save and THAC0 matches the
 ## record's cached values, and Brother Sean's three first-level spells are 1 plus wisdom.
 
@@ -28,6 +33,9 @@ var thac0_60 := []       # [class][level 0..10]
 var saves := []          # [class][level 1..9] -> PackedInt32Array of 5
 var hit_die := [8, 8, 10, 10, 8, 4, 6, 4]
 var first_dice := [1, 1, 1, 1, 2, 1, 1, 2]
+var thief := []          # [level 1..9] -> 8 skills
+var thief_race := []     # [race 1..7] -> 8 adjustments
+var thief_dex := []      # [dexterity 9..18] -> 5 adjustments
 var ok := false
 
 static var _shared: ClassTables = null
@@ -76,6 +84,21 @@ static func load_from(game_path: String) -> ClassTables:
 			var q := sv + (c * 9 + lvl) * 5
 			sr.append(PackedInt32Array([image[q], image[q + 1], image[q + 2], image[q + 3], image[q + 4]]))
 		t.saves.append(sr)
+	var ts := ItemNames._find(image, PackedByteArray([30, 25, 20, 15, 10, 10, 85, 0, 35, 29]))
+	if ts >= 0:
+		var sb := func(b: int) -> int: return b - 256 if b > 127 else b
+		for lvl in 9:
+			t.thief.append(Array(image.slice(ts + lvl * 8, ts + lvl * 8 + 8)))
+		for r in 7:
+			var row := []
+			for k in 8:
+				row.append(sb.call(image[ts + 72 + r * 8 + k]))
+			t.thief_race.append(row)
+		for dx in 10:
+			var row := []
+			for k in 5:
+				row.append(sb.call(image[ts + 128 + dx * 5 + k]))
+			t.thief_dex.append(row)
 	if dice >= 0:
 		for c in CLASS_COUNT:
 			t.first_dice[c] = image[dice + c]
@@ -109,3 +132,15 @@ func thac0_at(c: int, level: int) -> int:
 
 func saves_at(c: int, level: int) -> PackedInt32Array:
 	return saves[c][clampi(level, 0, 9)]
+
+
+## A thief's skill `k` (0..7) at `level` for race id `race` (1..7) and dexterity `dex`.
+func thief_skill(k: int, level: int, race: int, dex: int) -> int:
+	if level <= 0 or thief.is_empty():
+		return 0
+	var v: int = thief[clampi(level, 1, 9) - 1][k]
+	if race >= 1 and race <= thief_race.size():
+		v += thief_race[race - 1][k]
+	if k < 5 and not thief_dex.is_empty():
+		v += thief_dex[clampi(dex, 9, 18) - 9][k]
+	return clampi(v, 0, 255)

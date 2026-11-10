@@ -743,6 +743,18 @@ func money_text() -> String:
 #   classes, plus constitution (1 at least); clerics learn every cleric spell of the levels
 #   they can now cast; a magic-user who gained a level picks one new spell to learn.
 
+## Who controls this member, as scripts see it at 0x6BB8: 0 a player character; 128 and
+## up an NPC (128 + morale / 2), whom the computer runs in fights and who won't pay for
+## the party ("THAT PERSON WON'T PAY.").
+var npc := 0
+## 0x6C0C: 0x80 the computer runs this member in the fight, 0x81 it turns against the party.
+var script_team := 0
+
+
+func thief_skill(t: ClassTables, k: int) -> int:
+	return t.thief_skill(k, level_in(6), race_id, stats[3])
+
+
 ## Constitution's hit point adjustment per class (index = constitution).
 const CON_HP := [0, 0, 0, -2, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 

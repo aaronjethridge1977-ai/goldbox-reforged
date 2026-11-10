@@ -332,7 +332,9 @@ func _place() -> void:
 	for i in _party.size():
 		if party_cells[i].x < 0:
 			continue
-		_combatants.append({"who": _party[i], "team": 0, "cell": party_cells[i],
+		# A member a script turned against the party (0x6C0C = 0x81) fights with the monsters.
+		var side := 1 if _party[i].script_team == 0x81 else 0
+		_combatants.append({"who": _party[i], "team": side, "cell": party_cells[i],
 			"icon": _art.character_icon(_party[i]), "dir": party_dir})
 	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
 	var mon_sizes := _monsters.map(func(m): return Combat.foot_size(m))

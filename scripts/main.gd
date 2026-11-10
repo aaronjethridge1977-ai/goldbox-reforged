@@ -149,6 +149,7 @@ func _ready() -> void:
 			_party.append(m)
 	_vm.party = _party
 	_vm.open_ahead = _open_ahead
+	_vm.tables = ClassTables.shared(_game_path)
 	var battle_only := false
 	for arg in OS.get_cmdline_user_args():
 		battle_only = battle_only or arg.begins_with("--battle=")
@@ -213,6 +214,22 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_vm.program = int(a[0])
 			_vm.state = EclVM.State.PROGRAM
 			_after_vm()
+		elif n.begins_with("find="):        # find=<event>: squares with that event number
+			var ev := int(n.trim_prefix("find="))
+			var found := []
+			var mp: GeoMap = _maps[_map_index].map
+			for y in GeoMap.SIZE:
+				for x in GeoMap.SIZE:
+					if mp.flag(x, y) & 127 == ev:
+						found.append("%d,%d" % [x, y])
+			print("   event %d at %s" % [ev, " ".join(found)])
+			continue
+		elif n.begins_with("at="):          # at=x;y;dir places the party (dir 0..3 = N E S W)
+			var a := n.trim_prefix("at=").split(";")
+			_pos = Vector2i(int(a[0]), int(a[1]))
+			_facing = (int(a[2]) if a.size() > 2 else 0) as DungeonView.Dir
+			_sync_position_to_vm(_facing)
+			_show()
 		elif n.begins_with("gold="):        # gold=<party index>:<platinum pieces>
 			var a := n.trim_prefix("gold=").split(":")
 			_party[int(a[0])].money[4] = int(a[1])
@@ -256,8 +273,8 @@ func _state_line() -> String:
 	var text := _message.text
 	if _party_menu.visible:
 		text = _party_menu.screen_text()
-	return "%d,%d %s %s %s vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
-		screen, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
+	return "%d,%d %s %s %s ecl%d:%d vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
+		screen, _vm_file, _vm_block, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -499,7 +516,7 @@ func _quick_save() -> void:
 			items.append(rec)
 		members.append({"name": m.name, "record": m.to_record(), "money": m.money, "items": items, "hp": m.hp,
 			"experience": m.experience, "status": m.status, "memorized": m.memorized,
-			"spell_book": m.spell_book, "affects": m.affects})
+			"spell_book": m.spell_book, "affects": m.affects, "npc": m.npc})
 	cfg.set_value("party", "members", members)
 	var roster := []
 	for m in _party_menu.roster:
@@ -603,6 +620,7 @@ func _quick_load() -> void:
 		_party[i].hp = saved.get("hp", _party[i].hp)
 		_party[i].experience = saved.get("experience", _party[i].experience)
 		_party[i].status = saved.get("status", _party[i].status)
+		_party[i].npc = saved.get("npc", 0)
 		if saved.has("memorized"):
 			var mem: Array[int] = []
 			for v in saved.memorized:
@@ -770,6 +788,12 @@ func _on_timer() -> void:
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
 func _after_vm() -> void:
+	if not _vm.npc_requests.is_empty():
+		_add_npcs()
+	if _vm.party_changed:
+		_vm.party_changed = false
+		for m in _party:
+			m.recalculate(_types)
 	if _vm.minutes_passed > 0:
 		SpellCaster.pass_time(_party, _vm.minutes_passed)
 		_vm.minutes_passed = 0
@@ -824,6 +848,23 @@ func _after_vm() -> void:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		_finish_move(_pending_move)
+
+
+## NPC_ADD: the monster record joins the party as an NPC (the computer runs them in
+## fights; control 128 + morale / 2). The original takes up to 8 in the party.
+func _add_npcs() -> void:
+	for req in _vm.npc_requests:
+		if _party.size() >= 8:
+			break
+		var m := PartyMember.load_monster(_game_path, maxi(_vm_file, 1), int(req[0]))
+		if m == null:
+			continue
+		m.is_monster = false
+		m.npc = 128 + int(req[1]) / 2
+		m.recalculate(_types)
+		_party.append(m)
+		_vm.selected = _party.size() - 1
+	_vm.npc_requests = []
 
 
 ## PROGRAM n from a script: 0 the party menu (training halls), 9 camp (the inns; the

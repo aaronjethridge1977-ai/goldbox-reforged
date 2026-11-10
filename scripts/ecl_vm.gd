@@ -76,8 +76,27 @@ var error := ""
 ## PROGRAM n: hands over to a game screen (0 the party menu / training, 9 camp, 8 the end
 ## of the game, 3 the party is lost); the caller resumes with close_program().
 var program := -1
+## The character window: ECL addresses 0x6B00 + offset read and write fields of the selected
+## party member (LOAD_CHAR, WHO), at the offsets the Gold Box engine uses:
+##   0x00 name   0x18 constitution   0x21.. memorized spells (from 1, as SPELL counts)
+##   0x72 race   0x73 class   0x9B save vs petrification   0xA5..0xAC thief skills
+##   0xB8 control (0 a player character, 128+ an NPC)   0xBB copper 0xBD electrum
+##   0xBF silver 0xC1 gold 0xC3 platinum (16-bit)   0xD8 alignment
+##   0x100 condition (1 able, 0x80 not, 0 no one selected; writing 0 dismisses an NPC,
+##   who leaves at the next LOAD_CHAR with the high bit)   0x10C 0x80 computer-run /
+##   0x81 against the party   0x11B movement   0x2B1, 0x2B4 the member's party index.
+## Anything else in that range is plain memory (0x6DA8, 0x6DC6, 0x6DE1... are game state).
+const CHAR_WINDOW := 0x6B00
+var selected := 0                # party index the window shows (-1: LOAD_CHAR found no one)
+var tables: ClassTables          # set by the game (thief skills)
+var party_changed := false       # an NPC joined or left: the game redraws the party
+var duel := 0                    # CALL 0x8000 (1, the arena) / 0x8001 (2): the next COMBAT is a duel
+var _dismiss := false
+
 ## Minutes the script moved the clock on (CLOCK); the game runs spell effects down by them.
 var minutes_passed := 0
+## NPC_ADD requests waiting for the game: [monster id, morale].
+var npc_requests: Array = []
 
 var _menu_dest := {}             # operand the menu choice is written to
 var _rng := RandomNumberGenerator.new()
@@ -135,6 +154,12 @@ func choose(index: int) -> State:
 		_menu_kind = ""
 		if not _encounter_choice(index):
 			return state      # the menu is shown again (both sides wait, or they close in)
+		state = State.RUNNING
+		return run()
+	if _menu_kind == "who":
+		selected = index
+		_menu_kind = ""
+		menu = []
 		state = State.RUNNING
 		return run()
 	if _menu_kind == "parlay":
@@ -221,11 +246,236 @@ func run(max_steps: int = 20000) -> State:
 # ---------------------------------------------------------------- memory
 
 func read_byte(addr: int) -> int:
-	return mem[addr & 0xFFFF]
+	addr &= 0xFFFF
+	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300:
+		var v := _char_get(addr - CHAR_WINDOW)
+		if v >= 0:
+			return v & 0xFF
+	return mem[addr]
 
 
 func write_byte(addr: int, value: int) -> void:
-	mem[addr & 0xFFFF] = value & 0xFF
+	addr &= 0xFFFF
+	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300 and _char_set(addr - CHAR_WINDOW, value & 0xFF):
+		return
+	mem[addr] = value & 0xFF
+
+
+# ---------------------------------------------------------------- character window
+
+const _COIN_AT := {0xBB: 0, 0xBD: 2, 0xBF: 1, 0xC1: 3, 0xC3: 4}   # offset -> money index
+
+
+func selected_member() -> PartyMember:
+	return party[selected] if selected >= 0 and selected < party.size() else null
+
+
+## A field of the selected member, or -1 if `off` isn't one (then it's plain memory).
+func _char_get(off: int) -> int:
+	if off == 0x2B1 or off == 0x2B4:
+		return maxi(selected, 0)
+	var m := selected_member()
+	if off == 0x100:
+		if m == null:
+			return 0
+		return 1 if m.status == PartyMember.STATUS_OKAY else 0x80
+	if m == null:
+		return -1 if off >= 0x200 else 0
+	if off < 0x10:
+		return m.name.unicode_at(off) if off < m.name.length() else 0
+	if off >= 0xBB and off <= 0xC4:
+		var base := off - ((off - 0xBB) & 1)
+		var coins: int = m.money[_COIN_AT[base]]
+		return coins & 0xFF if off == base else (coins >> 8) & 0xFF
+	if off >= 0x21 and off <= 0x35:
+		return m.memorized[off - 0x21] if off - 0x21 < m.memorized.size() else 0
+	if off >= 0xA5 and off <= 0xAC:
+		return m.thief_skill(tables, off - 0xA5) if tables != null else 0
+	match off:
+		0x18: return m.stats[4]
+		0x72: return m.race_id
+		0x73: return m.class_id
+		0x9B: return m.saves[1] if m.saves.size() > 1 else 20
+		0xB8: return m.npc
+		0xD8: return m.raw[0xA0] if m.raw.size() > 0xA0 else 0
+		0x10C: return m.script_team
+		0x11B: return m.movement
+	return -1
+
+
+func _char_set(off: int, v: int) -> bool:
+	var m := selected_member()
+	if m == null:
+		return false
+	if off == 0:
+		if v == 0:
+			m.name = ""
+		return true
+	if off == 0x100:
+		if v == 0:
+			_dismiss = true
+		return true
+	if off >= 0xBB and off <= 0xC4:
+		var base := off - ((off - 0xBB) & 1)
+		var i: int = _COIN_AT[base]
+		if off == base:
+			m.money[i] = (m.money[i] & 0xFF00) | v
+		else:
+			m.money[i] = (m.money[i] & 0xFF) | (v << 8)
+		return true
+	if off >= 0x21 and off <= 0x35:
+		var k := off - 0x21
+		if k < m.memorized.size():
+			if v == 0:
+				m.memorized.remove_at(k)
+			else:
+				m.memorized[k] = v
+		return true
+	match off:
+		0xB8:
+			m.npc = v
+			return true
+		0x10C:
+			m.script_team = v
+			return true
+		0xD8:
+			if m.raw.size() > 0xA0:
+				m.raw[0xA0] = v
+			return true
+	return false
+
+
+## LOAD_CHAR n: selects party member n & 0x7F. With the high bit the original redraws the
+## party, and a member dismissed through the window (0x6C00 = 0) leaves now.
+func _load_char(v: int) -> void:
+	if v & 0x80 and _dismiss and selected_member() != null:
+		party.remove_at(selected)
+		party_changed = true
+	_dismiss = false
+	var i := v & 0x7F
+	selected = i if i < party.size() else -1
+
+
+## Damage from a script (traps, green slime, falling...), as the original applies it:
+## "<NAME> IS HIT FOR n POINTS OF DAMAGE." or "<NAME> DIES." when it is more than 10 past
+## the hit points left.
+func _hurt(m: PartyMember, damage: int) -> void:
+	if m.status == PartyMember.STATUS_DEAD:
+		return
+	if m.hp + 10 < damage:
+		text += "  %s DIES. " % m.name
+	else:
+		text += "  %s IS HIT FOR %d POINTS OF DAMAGE. " % [m.name, damage]
+	text_changed = true
+	m.hp -= damage
+	if m.hp > 0:
+		return
+	if m.hp < -9:
+		m.status = PartyMember.STATUS_DEAD
+	else:
+		m.status = PartyMember.STATUS_UNCONSCIOUS
+	m.hp = maxi(m.hp, 0) if m.status != PartyMember.STATUS_DEAD else m.hp
+
+
+func _save_roll(m: PartyMember, bonus: int, kind: int) -> bool:
+	var need: int = m.saves[clampi(kind, 0, 4)] if m.saves.size() == 5 else 20
+	return _rng.randi_range(1, 20) + bonus >= need
+
+
+func _random_member() -> PartyMember:
+	return party[_rng.randi_range(0, party.size() - 1)] if not party.is_empty() else null
+
+
+func _damage(a: Array) -> void:
+	var flags := _value(a[0])
+	var count := _value(a[1])
+	var size := _value(a[2])
+	var plus := _value(a[3])
+	var extra := _value(a[4])
+	var roll := func() -> int:
+		var t := plus
+		for i in count:
+			t += _rng.randi_range(1, maxi(size, 1))
+		return t
+	var damage: int = roll.call()
+	if flags & 0x80:
+		var bonus := flags & 0x1F
+		var kind := extra & 7
+		if flags & 0x40:
+			for m in party.duplicate():
+				if flags & 0x20 or not _save_roll(m, bonus, kind) or flags & 0x10:
+					_hurt(m, damage)
+		elif extra & 0x80:
+			var m := selected_member()
+			if m != null and (kind == 0 or not _save_roll(m, bonus, kind - 1) or flags & 0x10):
+				_hurt(m, damage)
+		else:
+			var m := _random_member()
+			if m != null and (not _save_roll(m, bonus, kind) or flags & 0x10):
+				_hurt(m, damage)
+	else:
+		for i in flags:
+			var m := _random_member()
+			if m == null:
+				break
+			var d := _rng.randi_range(1, 20)
+			if d > 1 and (d == 20 or d + extra > 60 - m.ac):
+				_hurt(m, damage)
+			damage = roll.call()
+	var standing := false
+	for m in party:
+		if m.status == PartyMember.STATUS_OKAY:
+			standing = true
+	if not standing and not party.is_empty():
+		text += "\nTHE ENTIRE PARTY IS KILLED!"
+		program = 3
+		state = State.PROGRAM
+
+
+## ROB everyone (or the selected member): coins scaled down by the percentage taken, and
+## each item lost with the chance given (the original lowers that chance for good after a
+## heavy item: -90 for one over 255, -50 for one over 24).
+func _rob(a: Array) -> void:
+	var keep := (100 - _value(a[1])) / 100.0
+	var chance := _value(a[2])
+	var victims: Array = party if _value(a[0]) != 0 else [selected_member()]
+	for m in victims:
+		if m == null:
+			continue
+		for i in m.money.size():
+			m.money[i] = int(m.money[i] * keep)
+		var kept: Array[GameItem] = []
+		for it in m.items:
+			if it.weight > 255:
+				chance = chance - 90 if chance > 90 else 0
+			elif it.weight > 24:
+				chance = chance - 50 if chance > 50 else 0
+			if _rng.randi_range(1, 100) > chance:
+				kept.append(it)
+		m.items = kept
+
+
+## PARTY_CHECK field, effect, a, b, c, d: for a thief skill (or movement), the party's
+## average, best and worst into b, c, d (a = 0); for 0x6C00 + 0x... the original checks an
+## effect on anyone instead.
+func _party_check(a: Array) -> void:
+	var addr := int(a[0].value)
+	var off := addr - CHAR_WINDOW
+	var keep := selected
+	var lo := 255
+	var hi := 0
+	var total := 0
+	for i in party.size():
+		selected = i
+		var v := _char_get(off)
+		lo = mini(lo, v)
+		hi = maxi(hi, v)
+		total += v
+	selected = keep
+	_write(a[2], 0)
+	_write(a[3], total / maxi(party.size(), 1))
+	_write(a[4], hi)
+	_write(a[5], lo if not party.is_empty() else 255)
 
 
 func _value(a: Dictionary) -> int:
@@ -288,10 +538,8 @@ func _note(message: String) -> void:
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
 const QUIET := ["CLEAR_BOX",
-	"SOUND", "PARTY_CHECK",
-	"HAS_EFFECT", "FIND_ITEM", "DESTROY_ITEM", "LOAD_CHAR", "NPC_ADD", "NPC_REMOVE",
-	"WHO", "SPELL", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
-	"UNKNOWN_49", "UNKNOWN_4A", "UNKNOWN_4B", "FOR_START", "FOR_REPEAT", "PICTURE2", "CALL"]
+	"SOUND", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
+	"UNKNOWN_49", "UNKNOWN_4A", "UNKNOWN_4B", "FOR_START", "FOR_REPEAT", "PICTURE2"]
 
 
 func _exec(ins: Dictionary) -> void:
@@ -307,6 +555,71 @@ func _exec(ins: Dictionary) -> void:
 		"PROGRAM":
 			program = _value(a[0])
 			state = State.PROGRAM
+		"LOAD_CHAR":
+			_load_char(_value(a[0]))
+		"WHO":
+			# The prompt, then a party member is picked; the window shows them.
+			text = _string(a[0])
+			text_changed = true
+			var names := []
+			for m in party:
+				names.append((m as PartyMember).name)
+			_pause_for_menu({}, names)
+			_menu_kind = "who"
+		"SPELL":
+			# Finds the spell memorized by anyone: its place in that member's list (from 1)
+			# and the member's index; 255 and the last index if no one has it.
+			var id := _value(a[0])
+			var place := 255
+			var who := party.size() - 1
+			for i in party.size():
+				var k: int = (party[i] as PartyMember).memorized.find(id)
+				if k >= 0:
+					place = k + 1
+					who = i
+					break
+			_write(a[1], place)
+			_write(a[2], who)
+		"FIND_ITEM":
+			# Sets the comparison: equal if anyone carries an item of that type.
+			var kind := _value(a[0])
+			compare = 1
+			for m in party:
+				for it in (m as PartyMember).items:
+					if it.type == kind:
+						compare = 0
+		"DESTROY_ITEM":
+			var kind := _value(a[0])
+			for m in party:
+				var kept: Array[GameItem] = []
+				for it in (m as PartyMember).items:
+					if it.type != kind:
+						kept.append(it)
+				m.items = kept
+		"HAS_EFFECT":
+			var m := selected_member()
+			compare = 0 if m != null and m.has_affect(_value(a[0])) else 1
+		"PARTY_CHECK":
+			_party_check(a)
+		"NPC_ADD":
+			# The game loads the monster record as a party member (see EclVM.npc_requests).
+			npc_requests.append([_value(a[0]), _value(a[1])])
+			party_changed = true
+		"NPC_REMOVE":
+			var m := selected_member()
+			if m != null and m.npc >= 128:
+				party.remove_at(selected)
+				party_changed = true
+		"CALL":
+			match int(a[0].value):
+				0x8000, 0x8001:
+					duel = int(a[0].value) - 0x7FFF
+				0xC01E:
+					# The party moves one square ahead (wrapping at the map edge, as the
+					# original masks the coordinates).
+					var d := read_byte(PARTY_DIR) & 3
+					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
+					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
 		"CLOCK":
 			# Pool of Radiance's form: one operand, minutes (its forced walk passes one a step).
 			minutes_passed += GameClock.add_minutes(self, _value(a[0]))
@@ -481,11 +794,11 @@ func _exec(ins: Dictionary) -> void:
 			if monsters.size() < 63:
 				monsters.append([_value(a[0]), maxi(_value(a[1]), 1), _value(a[2])])
 		"DAMAGE":
-			_note("damage")
+			_damage(a)
 		"GIVE_EXP":
 			_note("experience")
 		"ROB":
-			_note("robbed")
+			_rob(a)
 		"PARLAY":
 			_parlay_values = []
 			for i in 5:
