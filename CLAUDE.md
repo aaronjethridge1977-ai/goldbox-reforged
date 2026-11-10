@@ -7,3 +7,4 @@
 - The roadmap and decisions live in the `ai-business-ideas` repo: `plans/game-modernizer-roadmap.md` and `ideas/game-modernizer.md`.
 - Jeremy works one step at a time: finish a step, show the result, then move on.
 - Use tabs for GDScript indentation; keep files LF.
+- Keep content (maps, encounters, text, scripts) separate from the engine: loaded as data, so other Gold Box games and later converted modules are just content packs. Order of work: Pool of Radiance first, then its series, then other Gold Box series, then modules.
