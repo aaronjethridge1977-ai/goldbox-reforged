@@ -5,7 +5,8 @@ extends Control
 ##   Maps         : Left/Right map, Enter to walk the map
 ##   Walk         : Up forward, Down back, Left/Right turn,
 ##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir",
-##                  E write the area's event script listing to captures/
+##                  E write the area's event script listing to captures/, N day/night,
+##                  1-9 choose a menu item, Enter continue
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -31,6 +32,16 @@ var _facing := DungeonView.Dir.NORTH
 var _goto: LineEdit
 var _deco := []             # current area's wall set ids, from its event script
 
+# Event scripts
+var _vm := EclVM.new()      # one VM for the session, so game flags persist between areas
+var _vm_map := -1           # map index whose script is loaded
+var _vm_file := 0           # ECL file number of the loaded script
+var _vm_block := -1         # ECL block id of the loaded script
+var _pending_move := -1     # direction of a move waiting on an on-move menu
+var _event_image: Image     # picture shown in the view by an event (null = 3D view)
+var _message: Label
+var _dax_cache := {}
+
 
 func _ready() -> void:
 	_goto = LineEdit.new()
@@ -44,6 +55,21 @@ func _ready() -> void:
 	_goto.focus_exited.connect(_on_goto_closed)
 	_goto.gui_input.connect(_on_goto_input)
 	add_child(_goto)
+	_message = Label.new()
+	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	_message.add_theme_font_size_override("font_size", 18)
+	_message.anchor_left = 0.0
+	_message.anchor_right = 0.5
+	_message.anchor_top = 1.0
+	_message.anchor_bottom = 1.0
+	_message.offset_left = 16
+	_message.offset_right = -8
+	_message.offset_top = -230
+	_message.offset_bottom = -64
+	_message.visible = false
+	add_child(_message)
+	_vm.write_byte(EclVM.CLOCK_HOUR, 8)
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
 		_status.text = (
@@ -86,7 +112,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-		if key == KEY_O:
+		if _vm.state == EclVM.State.MENU:
+			# A menu is open: only its choices count.
+			var choice := -1
+			if key >= KEY_1 and key <= KEY_9:
+				choice = key - KEY_1
+			elif event.is_action("ui_accept") and _vm.menu.size() == 1:
+				choice = 0
+			if choice >= 0 and choice < _vm.menu.size():
+				_vm.choose(choice)
+				_after_vm()
+			get_viewport().set_input_as_handled()
+			_show()
+			return
+		if key == KEY_N:
+			var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
+			_vm.write_byte(EclVM.CLOCK_HOUR, 8 if night else 20)
+		elif key == KEY_O:
 			_dungeon.show_slots = not _dungeon.show_slots
 		elif key == KEY_C:
 			_capture()
@@ -101,9 +143,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		elif event.is_action("ui_up"):
-			_move(_facing)
+			_try_move(_facing)
 		elif event.is_action("ui_down"):
-			_move((_facing + 2) % 4)
+			_try_move((_facing + 2) % 4)
 		elif event.is_action("ui_left"):
 			_facing = ((_facing + 3) % 4) as DungeonView.Dir
 		elif event.is_action("ui_right"):
@@ -206,16 +248,185 @@ func _capture() -> void:
 	_status.text = "Captured %s.png / .txt" % base.get_file()
 
 
-## Moves one square if no closed wall is in the way. Door handling is provisional:
-## any side with a door value is treated as passable.
-func _move(direction: int) -> void:
+## A step: the area's on-move script runs first (it can refuse the move, e.g. a locked
+## door), then the party moves and the on-step script runs for the new square.
+func _try_move(direction: int) -> void:
+	_event_image = null
+	_message.text = ""
+	if _vm.ecl != null:
+		var map: GeoMap = _maps[_map_index].map
+		_sync_position_to_vm(direction)
+		_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
+		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)
+		_vm.clear_output()
+		_vm.start(0)
+		_pending_move = direction
+		_after_vm()
+		return
+	_finish_move(direction)
+
+
+## Completes a move once the on-move script has finished without refusing it.
+func _finish_move(direction: int) -> void:
+	_pending_move = -1
+	if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
+		return
 	var map: GeoMap = _maps[_map_index].map
+	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
 		return
 	var next := _pos + DungeonView.DELTA[direction]
 	if next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE:
 		return
 	_pos = next
+	if _vm.ecl != null:
+		_sync_position_to_vm(_facing)
+		_vm.clear_output()
+		_vm.start(1)
+		_after_vm()
+
+
+var _synced := Vector3i(-1, -1, -1)   # x, y, direction last written to the VM
+
+
+func _sync_position_to_vm(direction: int) -> void:
+	var map: GeoMap = _maps[_map_index].map
+	_vm.write_byte(EclVM.PARTY_X, _pos.x)
+	_vm.write_byte(EclVM.PARTY_Y, _pos.y)
+	_vm.write_byte(EclVM.PARTY_DIR, direction)
+	_vm.write_byte(EclVM.SQUARE_INFO, map.flag(_pos.x, _pos.y))
+	_synced = Vector3i(_pos.x, _pos.y, direction)
+
+
+## Scripts can move the party (a guided tour, a trap door): adopt what they wrote.
+func _adopt_position_from_vm() -> void:
+	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
+	if now == _synced:
+		return
+	if now.x < GeoMap.SIZE and now.y < GeoMap.SIZE:
+		_pos = Vector2i(now.x, now.y)
+	if now.z != _synced.z and now.z < 4:
+		_facing = now.z as DungeonView.Dir
+	_synced = now
+
+
+## Shows what a script run produced and carries on with whatever it was waiting for.
+func _after_vm() -> void:
+	if _vm.text != "":
+		_message.text = _vm.text
+	if _vm.picture >= 0:
+		_event_image = null if _vm.picture == 255 else _event_picture(_vm.picture_head, _vm.picture)
+		_vm.picture = -1
+	if not _vm.notes.is_empty():
+		_message.text += "\n[not built yet: %s]" % ", ".join(_vm.notes)
+		_vm.notes = []
+	if _vm.state != EclVM.State.MENU:
+		_adopt_position_from_vm()
+	match _vm.state:
+		EclVM.State.MENU:
+			var lines := PackedStringArray()
+			for i in _vm.menu.size():
+				lines.append(("%d) %s" % [i + 1, _vm.menu[i]]) if _vm.menu.size() > 1 else "Enter) %s" % _vm.menu[i])
+			_message.text += "\n\n" + "    ".join(lines)
+			return
+		EclVM.State.NEW_ECL:
+			_enter_script(_vm_file, _vm.new_ecl)
+		EclVM.State.ERROR:
+			_message.text += "\n[script error: %s]" % _vm.error
+	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
+		_finish_move(_pending_move)
+
+
+## Loads the event script for the current map (when it changes) and runs its init.
+func _ensure_area_script() -> void:
+	if _vm_map == _map_index:
+		return
+	_vm_map = _map_index
+	var e: Dictionary = _maps[_map_index]
+	var file_no := int(String(e.file).trim_prefix("GEO").trim_suffix(".DAX"))
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+	var block_id := -1
+	if ecl != null:
+		if ecl.blocks.has(e.id):
+			block_id = e.id
+		else:
+			for id in ecl.ids():
+				if _script(file_no, id, ecl).loads_map(e.id):
+					block_id = id
+					break
+	if block_id < 0:
+		_vm.ecl = null
+		return
+	_enter_script(file_no, block_id, false)
+
+
+## Switches to another ECL block (NEW_ECL or area change) and runs its init.
+func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void:
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+	if ecl == null or not ecl.blocks.has(block_id):
+		# Look in the other script files.
+		ecl = null
+		for n in range(1, 9):
+			var other := DaxFile.open(_game_path.path_join("ECL%d.DAX" % n))
+			if other != null and other.blocks.has(block_id):
+				ecl = other
+				file_no = n
+				break
+	if ecl == null:
+		_message.text += "\n[script %d not found]" % block_id
+		_vm.ecl = null
+		return
+	_vm_file = file_no
+	_vm_block = block_id
+	_vm.load_script(ecl.blocks[block_id])
+	_sync_position_to_vm(_facing)
+	_vm.clear_output()
+	_vm.area_map = []
+	_vm.start(4)
+	# The init script may load a different map and place the party.
+	if follow_map and not _vm.area_map.is_empty() and _vm.area_map[0] < 127:
+		for i in _maps.size():
+			if _maps[i].id == _vm.area_map[0]:
+				_map_index = i
+				_vm_map = i
+				break
+		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
+		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
+	_pending_move = -1
+	_after_vm()
+
+
+## An event picture: a head and body portrait when a head is set, else a PIC picture.
+func _event_picture(head: int, id: int) -> Image:
+	var img := Image.create_empty(DungeonView.SIZE, DungeonView.SIZE, false, Image.FORMAT_RGB8)
+	if head != 255:
+		var h := _find_picture("HEAD", head)
+		var b := _find_picture("BODY", id)
+		if h != null:
+			img.blit_rect(h, Rect2i(Vector2i.ZERO, h.get_size()), Vector2i.ZERO)
+		if b != null:
+			img.blit_rect(b, Rect2i(Vector2i.ZERO, b.get_size()), Vector2i(0, 40))
+		return img
+	var p := _find_picture("PIC", id)
+	return p if p != null else img
+
+
+## First frame of picture block `id` from PREFIX<n>.DAX, preferring the current script's file.
+func _find_picture(prefix: String, id: int) -> Image:
+	var order := [_vm_file]
+	for n in range(1, 9):
+		if n != _vm_file:
+			order.append(n)
+	for n in order:
+		var name := "%s%d.DAX" % [prefix, n]
+		if not _dax_cache.has(name):
+			_dax_cache[name] = DaxFile.open(_game_path.path_join(name))
+		var dax: DaxFile = _dax_cache[name]
+		if dax != null and dax.blocks.has(id):
+			var pic := EgaPicture.decode_any(dax.blocks[id])
+			if pic != null and not pic.frames.is_empty():
+				return pic.frames[0]
+	return null
 
 
 ## The area's LOAD_AREA_DECO operands, from its event script: the ECL block with the
@@ -262,6 +473,9 @@ func _layout() -> void:
 	_map_view.anchor_left = 0.5 if walk else 0.0
 	_picture.visible = _mode != Mode.MAPS
 	_map_view.visible = _mode != Mode.PICTURES
+	_message.visible = walk
+	# Leave room under the view for event text.
+	_picture.offset_bottom = -236.0 if walk else -60.0
 	if not walk:
 		_map_view.set_marker(Vector2i(-1, -1), 0)
 
@@ -300,10 +514,19 @@ func _show() -> void:
 	if _walls == null or _walls.walls.is_empty():
 		_status.text = "WALK  %s — no wall graphics found" % area
 		return
-	var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
-	_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
+	_ensure_area_script()
+	e = _maps[_map_index]
+	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
+	_dungeon.sky_color = sky if sky > 0 and sky < 16 else 11
+	if _event_image != null:
+		_picture.texture = ImageTexture.create_from_image(_event_image)
+	else:
+		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
+		_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
 	var map: GeoMap = e.map
-	_status.text = "WALK  %s   %d,%d facing %s   square info %d   walls %s   (doors always open)\n↑ forward  ↓ back  ←/→ turn   O outlines  C capture  G go to  E script   Tab pictures" % [
-		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y), str(_deco)]
+	var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
+	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
+	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   N day/night  O outlines  C capture  G go to  E script   Tab pictures" % [
+		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127, "night" if night else "day", script_name]
