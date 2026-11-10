@@ -149,7 +149,8 @@ func _ready() -> void:
 			_pic_index = i
 	# Testing aid for the lab: --battle=GEO2.DAX:20:13:7:W:2:4:6:4:2 (map file, map id, x, y,
 	# facing, monster file, monster id, count, picture, distance or -1) [--battle-image=path]
-	# prints where everyone starts and saves the battlefield, then quits.
+	# prints where everyone starts and saves the battlefield, then quits. With
+	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll.
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
@@ -385,6 +386,9 @@ func _battle_check(spec: String) -> void:
 			var facing := "NESW".find(a[4])
 			_combat.run_check(_game_path, _maps[i].map, int(a[2]), int(a[3]), facing, _party,
 				int(a[5]), [[int(a[6]), int(a[7]), int(a[8])]], int(a[9]), image_path)
+			for arg in OS.get_cmdline_user_args():
+				if arg.begins_with("--battle-fight="):
+					_combat.run_fight(int(arg.trim_prefix("--battle-fight=")))
 	get_tree().quit()
 
 

@@ -3,11 +3,13 @@ extends Control
 ## The combat screen: a 7 x 7 window onto the battlefield (as the original shows it), the
 ## selected combatant's details on the right, and the command line below.
 ##
-## C2 (battlefield) only: the field is built, both sides are placed and drawn, and the view
-## can be moved around. Nobody acts yet; that is C3.
+## Setting up (test battles):
 ##   Arrows: move the view    Tab: next combatant (the view centres on them)
 ##   PgUp/PgDn: previous/next set battle of this area    +/-: monsters nearer/further
-##   Esc: leave
+##   F: fight    Esc: leave
+## Fighting (rules in Combat; the party here is a copy, so test fights hurt nobody):
+##   Arrows, Home/PgUp/End/PgDn (or the keypad): step, or attack the enemy in that direction
+##   Space: done    Q: let the computer fight for this character    Esc: leave
 ## The monsters come from the area's own set battles (LOAD_MON ... COMBAT in its event
 ## script: monster, count, icon); an area without any falls back to each monster in turn.
 
@@ -34,6 +36,11 @@ var _enc_index := 0
 var _pictures: Array[int] = []   # icon id for each of _monsters
 var _types: ItemTypes
 var _game_path := ""
+
+var _combat: Combat = null
+var _messages := PackedStringArray()
+var _ai_timer: Timer
+var _result := 0
 
 var _picture: TextureRect
 var _info: Label
@@ -71,6 +78,9 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 			_encounters.append({"monsters": [[id, 6, id]], "text": ""})
 	_enc_index = 0
 	_distance = Placement.encounter_distance(_field, px, py, facing)
+	_combat = null
+	_result = 0
+	_messages.clear()
 	if _picture == null:
 		_build()
 	_load_monsters()
@@ -110,6 +120,22 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		full.save_png(image_path)
 
 
+## Testing aid: fights the check battle to the end with the computer on both sides and the
+## given dice seed, printing every roll and message (for the lab).
+func run_fight(seed_value: int) -> void:
+	_start_fight(seed_value)
+	for c in _combat.combatants:
+		c.quick = true
+	var guard := 0
+	while _combat.next_turn() >= 0 and guard < 5000:
+		guard += 1
+		while _combat.ai_act():
+			guard += 1
+	for line in _combat.roll_log:
+		print("roll ", line)
+	print("result ", ["", "party won", "party lost"][_combat.outcome()], " after ", _combat.round_no, " rounds")
+
+
 func _build() -> void:
 	ShopScreen._fill(self, 0)
 	var bg := ColorRect.new()
@@ -128,6 +154,10 @@ func _build() -> void:
 	_info.add_theme_font_size_override("font_size", 24)
 	_info.add_theme_color_override("font_color", Color8(85, 255, 85))
 	add_child(_info)
+	_ai_timer = Timer.new()
+	_ai_timer.one_shot = true
+	_ai_timer.timeout.connect(_ai_step)
+	add_child(_ai_timer)
 	_prompt = Label.new()
 	_prompt.position = Vector2(24, VIEW_CELLS * CELL * SCALE + 40)
 	_prompt.size = Vector2(1200, 120)
@@ -181,6 +211,72 @@ func _place() -> void:
 			"icon": _art.monster_icon(_mon_file, _pictures[i]), "dir": (party_dir + 4) % 8})
 
 
+# --- Fighting ---------------------------------------------------------------------------
+
+func _start_fight(seed_value: int = 0) -> void:
+	# Test fights use copies of the party, so nobody gets hurt for real.
+	var copies: Array[PartyMember] = []
+	for m in _party:
+		var c := m.clone()
+		c.recalculate(_types)
+		copies.append(c)
+	_party = copies
+	_place()
+	_combat = Combat.new(_field, _combatants, seed_value)
+	_combat.message.connect(_on_message)
+	_messages.clear()
+	_result = 0
+
+
+func _on_message(text: String) -> void:
+	_messages.append(text)
+	if _messages.size() > 6:
+		_messages = _messages.slice(_messages.size() - 6)
+	print(text)
+
+
+## Moves on to whoever acts next; computer-controlled turns play out on a timer.
+func _advance() -> void:
+	var i := _combat.next_turn()
+	if i < 0:
+		_result = _combat.outcome()
+		_on_message("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.")
+		_refresh()
+		return
+	_selected = i
+	_centre_on_selected()
+	_refresh()
+	if _combatants[i].quick:
+		_ai_timer.start(0.35)
+
+
+func _ai_step() -> void:
+	if _combat == null or not visible:
+		return
+	var more := _combat.ai_act()
+	_centre_on_selected()
+	_refresh()
+	if more:
+		_ai_timer.start(0.3)
+	else:
+		await get_tree().create_timer(0.2).timeout
+		if _combat != null:
+			_advance()
+
+
+func _after_player_action(what: String) -> void:
+	if what == "blocked":
+		_on_message("CAN'T GO THERE")
+	elif what == "no moves":
+		_on_message("NO MOVES LEFT")
+	var c: Dictionary = _combatants[_selected]
+	if _combat.outcome() != 0 or (c.moves <= 0 and c.attacks <= 0) or (what == "attacked" and c.attacks <= 0):
+		_advance()
+	else:
+		_centre_on_selected()
+		_refresh()
+
+
 # --- Drawing ----------------------------------------------------------------------------
 
 func _centre_on_selected() -> void:
@@ -203,6 +299,8 @@ func _refresh() -> void:
 	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
+		if e.get("down", false):
+			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
 		if i == _selected:
@@ -218,9 +316,19 @@ func _refresh() -> void:
 	if _combatants.is_empty():
 		_info.text = ""
 	else:
-		var m: PartyMember = _combatants[_selected].who
+		var e: Dictionary = _combatants[_selected]
+		var m: PartyMember = e.who
 		var weapon := m.weapon.name if m.weapon else ""
 		_info.text = "%s\n\nHITPOINTS %d\n\nAC %d\n\n%s" % [m.name, m.hp, m.ac, weapon]
+		if _combat != null:
+			_info.text += "\n\nMOVES %d  ATTACKS %d\n\n%s" % [e.moves / 2, e.attacks, "\n".join(_messages)]
+	if _combat != null:
+		if _result != 0:
+			_prompt.text = ("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.") + "   Esc or Enter: leave"
+		else:
+			_prompt.text = ("ROUND %d   Arrows / Home PgUp End PgDn: move or attack   Space: done   "
+				+ "Q: quick (computer fights)   Esc: leave") % _combat.round_no
+		return
 	var summary := PackedStringArray()
 	var text := ""
 	if not _encounters.is_empty():
@@ -234,7 +342,7 @@ func _refresh() -> void:
 					break
 			summary.append("%s x%d" % [n, row[1]])
 	_prompt.text = ("Battle %d of %d: %s   (%d square(s) away)\n%s\n"
-		+ "Arrows: move view   Tab: next combatant   PgUp/PgDn: battle   +/-: distance   Esc: leave") % [
+		+ "Arrows: move view   Tab: next combatant   PgUp/PgDn: battle   +/-: distance   F: fight   Esc: leave") % [
 		_enc_index + 1, _encounters.size(), ", ".join(summary), _distance, text]
 
 
@@ -242,9 +350,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-	if event.is_action("ui_cancel"):
+	if event.is_action("ui_cancel") or (_result != 0 and event.is_action("ui_accept")):
+		_ai_timer.stop()
+		_combat = null
 		visible = false
 		closed.emit()
+	elif _combat != null:
+		_fight_input(event, key)
+		return
+	elif key == KEY_F:
+		_start_fight()
+		_advance()
 	elif event.is_action("ui_left"):
 		_view.x -= 1
 	elif event.is_action("ui_right"):
@@ -272,3 +388,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	_refresh()
+
+
+const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIGHT: 2, KEY_KP_6: 2,
+	KEY_PAGEDOWN: 3, KEY_KP_3: 3, KEY_DOWN: 4, KEY_KP_2: 4, KEY_END: 5, KEY_KP_1: 5,
+	KEY_LEFT: 6, KEY_KP_4: 6, KEY_HOME: 7, KEY_KP_7: 7}
+
+
+func _fight_input(event: InputEvent, key: Key) -> void:
+	get_viewport().set_input_as_handled()
+	if _result != 0 or _combat.active < 0 or _combatants[_combat.active].quick:
+		return
+	if _STEP_KEYS.has(key):
+		_after_player_action(_combat.step(_STEP_KEYS[key]))
+	elif key == KEY_SPACE or key == KEY_D:
+		_combat.done()
+		_advance()
+	elif key == KEY_Q:
+		_combatants[_combat.active].quick = true
+		_ai_timer.start(0.2)
