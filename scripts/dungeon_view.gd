@@ -178,3 +178,27 @@ func report(map: GeoMap, walls: WallSet, x: int, y: int, facing: int) -> String:
 					SLOT_NAMES[slot], i, p.x, p.y, DIR_NAMES[info[1]], w, rect])
 				tx += SPACING[slot]
 	return "\n".join(lines)
+
+
+## Draws a sprite frame (see EgaPicture.frame_indices) over a rendered view.
+## Colour 0 is transparent; colour 13 is drawn as black (sprite outlines).
+## Provisional: the colour handling is inferred from the sprite data, not yet checked
+## against the original.
+static func draw_sprite(px: PackedByteArray, frame: Dictionary) -> void:
+	var w: int = frame["w"]
+	var h: int = frame["h"]
+	var left: int = int(frame["x"]) * 8
+	var top: int = int(frame["y"]) * 8
+	var data: PackedByteArray = frame["px"]
+	for y in h:
+		var sy := top + y
+		if sy < 0 or sy >= SIZE:
+			continue
+		for x in w:
+			var sx := left + x
+			if sx < 0 or sx >= SIZE:
+				continue
+			var c := data[y * w + x]
+			if c == 0:
+				continue
+			px[sy * SIZE + sx] = 0 if c == 13 else c

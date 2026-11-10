@@ -142,3 +142,27 @@ func sheet(columns: int = 16) -> Image:
 
 static func _palette_bytes() -> PackedByteArray:
 	return PackedByteArray(PALETTE_RGB)
+
+
+## Frames of an animated block as colour indices, for compositing over the 3D view:
+## [{"w", "h", "x", "y", "px": PackedByteArray (w*h)}]; x and y are the header's
+## position in 8-pixel tiles.
+static func frame_indices(block: PackedByteArray) -> Array:
+	var out := []
+	if not is_animated(block):
+		return out
+	var count := block.decode_u8(0)
+	var p := 1
+	for f in count:
+		var h := block.decode_u16(p + 4)
+		var w := block.decode_u16(p + 6) * 8
+		var px := PackedByteArray()
+		px.resize(w * h)
+		var start := p + 4 + HEADER_SIZE
+		for i in w * h / 2:
+			var b := block[start + i]
+			px[i * 2] = b >> 4
+			px[i * 2 + 1] = b & 15
+		out.append({"w": w, "h": h, "x": block.decode_u16(p + 8), "y": block.decode_u16(p + 10), "px": px})
+		p += 4 + HEADER_SIZE + h * w / 2
+	return out

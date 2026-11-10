@@ -42,6 +42,17 @@ var _event_image: Image     # picture shown in the view by an event (null = 3D v
 var _message: Label
 var _dax_cache := {}
 
+# Timed playback: script DELAYs and script-driven walks
+const DELAY_SECONDS := 0.45
+const WALK_STEP_SECONDS := 0.22
+var _timer: Timer
+var _busy := false                  # a delay or walk is playing; input waits
+var _walk_path: Array[Vector2i] = []
+var _walk_final_dir := 0
+var _held_message := ""
+var _sprite_cache := {}             # "file:id" -> frames
+var _jump_next := false             # the next script move is a placement, not a walk
+
 
 func _ready() -> void:
 	_goto = LineEdit.new()
@@ -70,6 +81,10 @@ func _ready() -> void:
 	_message.visible = false
 	add_child(_message)
 	_vm.write_byte(EclVM.CLOCK_HOUR, 0)   # a new game starts at 00:00
+	_timer = Timer.new()
+	_timer.one_shot = true
+	_timer.timeout.connect(_on_timer)
+	add_child(_timer)
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
 		_status.text = (
@@ -112,6 +127,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+		if _busy:
+			get_viewport().set_input_as_handled()
+			return
 		if _vm.state == EclVM.State.MENU:
 			# A menu is open: only its choices count.
 			var choice := -1
@@ -299,15 +317,93 @@ func _sync_position_to_vm(direction: int) -> void:
 
 
 ## Scripts can move the party (a guided tour, a trap door): adopt what they wrote.
+## A target reachable on foot is walked to step by step, as the original does; anything
+## else is a jump.
 func _adopt_position_from_vm() -> void:
 	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
 	if now == _synced:
 		return
-	if now.x < GeoMap.SIZE and now.y < GeoMap.SIZE:
-		_pos = Vector2i(now.x, now.y)
-	if now.z != _synced.z and now.z < 4:
-		_facing = now.z as DungeonView.Dir
+	var moved := now.x != _synced.x or now.y != _synced.y
+	var turned := now.z != _synced.z and now.z < 4
 	_synced = now
+	if now.x >= GeoMap.SIZE or now.y >= GeoMap.SIZE:
+		return
+	var target := Vector2i(now.x, now.y)
+	var walk := moved and not _jump_next and _mode == Mode.WALK and _vm_map == _map_index
+	_jump_next = false
+	if walk:
+		var path := _find_path(_pos, target)
+		if path.size() > 1:
+			_walk_path = path.slice(1)
+			_walk_final_dir = now.z if turned else _facing
+			_busy = true
+			_timer.start(WALK_STEP_SECONDS)
+			return
+	if moved:
+		_pos = target
+	if turned:
+		_facing = now.z as DungeonView.Dir
+
+
+## Shortest walk between two squares (walls stop you unless they carry a door).
+func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var map: GeoMap = _maps[_map_index].map
+	var came := {from: from}
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		if cur == to:
+			break
+		for d in 4:
+			if map.wall(cur.x, cur.y, d) > 0 and map.door(cur.x, cur.y, d) == 0:
+				continue
+			var nxt: Vector2i = cur + DungeonView.DELTA[d]
+			if nxt.x < 0 or nxt.y < 0 or nxt.x >= GeoMap.SIZE or nxt.y >= GeoMap.SIZE or came.has(nxt):
+				continue
+			came[nxt] = cur
+			queue.append(nxt)
+	var path: Array[Vector2i] = []
+	if not came.has(to):
+		return path
+	var p := to
+	while p != from:
+		path.push_front(p)
+		p = came[p]
+	path.push_front(from)
+	return path
+
+
+func _on_timer() -> void:
+	if not _walk_path.is_empty():
+		# One step of a script-driven walk: face the way you go, then step.
+		var next: Vector2i = _walk_path.pop_front()
+		var delta := next - _pos
+		var d := DungeonView.DELTA.find(delta)
+		if d >= 0:
+			_facing = d as DungeonView.Dir
+		_pos = next
+		if _walk_path.is_empty():
+			_facing = _walk_final_dir as DungeonView.Dir
+			_sync_position_to_vm(_facing)
+			_busy = false
+			if _held_message != "":
+				_message.text = _held_message
+				_held_message = ""
+			if _vm.state == EclVM.State.WAIT:
+				_busy = true
+				_timer.start(DELAY_SECONDS)
+		else:
+			_timer.start(WALK_STEP_SECONDS)
+		_show()
+		return
+	# End of a script DELAY: an approaching figure that has arrived becomes its portrait.
+	_busy = false
+	if _vm.sprite_id >= 0 and _vm.sprite_distance == 0:
+		_event_image = _event_picture(_vm.sprite_head, _vm.sprite_picture)
+		_vm.sprite_id = -1
+	_vm.resume()
+	_after_vm()
+	_show()
 
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
@@ -321,12 +417,25 @@ func _after_vm() -> void:
 		_message.text += "\n[not built yet: %s]" % ", ".join(_vm.notes)
 		_vm.notes = []
 	_adopt_position_from_vm()
+	if not _walk_path.is_empty() and _held_message == "":
+		# Show the text once the walk arrives.
+		_held_message = _message.text
+		_message.text = ""
 	match _vm.state:
+		EclVM.State.WAIT:
+			if not _busy:
+				_busy = true
+				_timer.start(DELAY_SECONDS)
+			return
 		EclVM.State.MENU:
 			var lines := PackedStringArray()
 			for i in _vm.menu.size():
 				lines.append(("%d) %s" % [i + 1, _vm.menu[i]]) if _vm.menu.size() > 1 else "Enter) %s" % _vm.menu[i])
-			_message.text += "\n\n" + "    ".join(lines)
+			var options := "\n\n" + "    ".join(lines)
+			if _held_message != "":
+				_held_message += options
+			else:
+				_message.text += options
 			return
 		EclVM.State.NEW_ECL:
 			_enter_script(_vm_file, _vm.new_ecl)
@@ -379,6 +488,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void
 	_vm_block = block_id
 	_vm.load_script(ecl.blocks[block_id])
 	_sync_position_to_vm(_facing)
+	_jump_next = true
 	_vm.clear_output()
 	_vm.area_map = []
 	_vm.start(4)
@@ -393,6 +503,28 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void
 		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_pending_move = -1
 	_after_vm()
+
+
+## Frames of sprite `id` (SPRIT files, preferring the current script's file number).
+func _sprite_frames(id: int) -> Array:
+	var key := "%d:%d" % [_vm_file, id]
+	if _sprite_cache.has(key):
+		return _sprite_cache[key]
+	var frames := []
+	var order := [_vm_file]
+	for n in range(1, 9):
+		if n != _vm_file:
+			order.append(n)
+	for n in order:
+		var name := "SPRIT%d.DAX" % n
+		if not _dax_cache.has(name):
+			_dax_cache[name] = DaxFile.open(_game_path.path_join(name))
+		var dax: DaxFile = _dax_cache[name]
+		if dax != null and dax.blocks.has(id):
+			frames = EgaPicture.frame_indices(dax.blocks[id])
+			break
+	_sprite_cache[key] = frames
+	return frames
 
 
 ## An event picture: a head and body portrait when a head is set, else a PIC picture.
@@ -521,6 +653,19 @@ func _show() -> void:
 		_picture.texture = ImageTexture.create_from_image(_event_image)
 	else:
 		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
+		if _vm.sprite_id >= 0:
+			var frames := _sprite_frames(_vm.sprite_id)
+			if not frames.is_empty():
+				# A figure can't stand beyond a wall right in front of you.
+				var distance := _vm.sprite_distance
+				var map0: GeoMap = e.map
+				var ahead := _pos + DungeonView.DELTA[_facing]
+				if map0.wall(_pos.x, _pos.y, _facing) > 0:
+					distance = 0
+				elif distance > 1 and ahead.x >= 0 and ahead.y >= 0 and ahead.x < GeoMap.SIZE \
+						and ahead.y < GeoMap.SIZE and map0.wall(ahead.x, ahead.y, _facing) > 0:
+					distance = 1
+				DungeonView.draw_sprite(view, frames[mini(distance, frames.size() - 1)])
 		_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]

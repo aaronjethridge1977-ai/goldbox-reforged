@@ -25,7 +25,7 @@ const MOVEMENT_BLOCK := 0x6DC9  # 255 = the move is refused
 const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plain picture)
 const COMBAT_RESULT := 0x6DC7
 
-enum State { IDLE, RUNNING, MENU, DONE, NEW_ECL, ERROR }
+enum State { IDLE, RUNNING, MENU, WAIT, DONE, NEW_ECL, ERROR }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -38,6 +38,12 @@ var compare := 0
 var text := ""                   # accumulated message text
 var picture := -1                # last PICTURE id (255 = cleared), -1 = untouched
 var picture_head := 255
+## A figure approaching in the 3D view: sprite id (-1 none), distance 2 far .. 0 close,
+## and the portrait it turns into once close (picture id, head id or 255).
+var sprite_id := -1
+var sprite_distance := 0
+var sprite_picture := 255
+var sprite_head := 255
 var menu: Array = []             # menu item strings while State.MENU
 var notes: Array[String] = []    # things the engine would do but can't yet
 var new_ecl := -1                # block id requested by NEW_ECL
@@ -99,6 +105,14 @@ func choose(index: int) -> State:
 	if menu.size() > 1:
 		_write(_menu_dest, index)
 	menu = []
+	state = State.RUNNING
+	return run()
+
+
+## Continues after a DELAY pause.
+func resume() -> State:
+	if state != State.WAIT:
+		return state
 	state = State.RUNNING
 	return run()
 
@@ -189,7 +203,7 @@ func _note(message: String) -> void:
 
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
-const QUIET := ["SPRITE_ADVANCE", "DELAY", "CLEAR_BOX",
+const QUIET := ["CLEAR_BOX",
 	"SOUND", "CLOCK", "PARTY_STRENGTH", "PARTY_CHECK", "PARTY_SKILL_CHECK", "SURPRISE",
 	"HAS_EFFECT", "FIND_ITEM", "DESTROY_ITEM", "LOAD_CHAR", "NPC_ADD", "NPC_REMOVE",
 	"WHO", "SPELL", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
@@ -271,12 +285,17 @@ func _exec(ins: Dictionary) -> void:
 		"PRINT_RETURN":
 			text += "\n"
 		"SPRITE_START":
-			# A figure walks up (sprite id, distance, picture); the walk-up animation is not
-			# shown yet, only the close-up portrait it ends on (head from PICTURE_HEAD).
-			picture = _value(a[2])
-			picture_head = read_byte(PICTURE_HEAD)
+			# A figure walks up: sprite id, starting distance, the portrait it ends on.
+			sprite_id = _value(a[0])
+			sprite_distance = clampi(_value(a[1]), 0, 2)
+			sprite_picture = _value(a[2])
+			sprite_head = read_byte(PICTURE_HEAD)
+		"SPRITE_ADVANCE":
+			sprite_distance = maxi(0, sprite_distance - 1)
 		"SPRITE_OFF", "CLEAR_MON":
-			picture = 255
+			sprite_id = -1
+		"DELAY":
+			state = State.WAIT
 		"PICTURE":
 			picture = _value(a[0])
 			picture_head = read_byte(PICTURE_HEAD)
