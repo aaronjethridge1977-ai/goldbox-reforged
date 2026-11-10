@@ -817,18 +817,20 @@ func _on_event_fight_finished(result: int) -> void:
 		_vm.state = EclVM.State.DONE
 		_show()
 		return
-	_after_fight(_combat.defeated(), "THE PARTY HAS WON.")
+	_after_fight(_combat.defeated(), "THE PARTY HAS WON.", _combat.dropped_items())
 
 
 ## Experience and treasure: from the defeated monsters and the event's TREASURE, then the
 ## results and treasure screens; the script carries on when they close.
-func _after_fight(defeated: Array, won_text: String) -> void:
+func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem] = []) -> void:
 	var coins := []
 	var list_id := 255
 	if _fight_treasure.size() >= 8:
 		coins = _fight_treasure.slice(0, 7)
 		list_id = int(_fight_treasure[7])
-	var spoils := Spoils.gather(defeated, coins, _item_list(list_id))
+	var found := _item_list(list_id)
+	found.append_array(field_items)
+	var spoils := Spoils.gather(defeated, coins, found)
 	var standing: Array = []
 	for m in _party:
 		if m.can_fight():

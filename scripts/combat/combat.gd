@@ -63,6 +63,8 @@ var surprise_flags := 0      # the script's ambush flag: bit 1 the party, bit 2 
 var morale_base := 99        # the encounter's morale (0x6DC6)
 var flee_dir := 0            # where the monsters run: the party's facing on the grid
 var enemy_health := 100      # the monsters' remaining HP, percent in fives
+var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
+var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
 
 
 func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void:
@@ -125,10 +127,7 @@ func start_round() -> void:
 			continue
 		var m: PartyMember = c.who
 		c.moves = maxi(m.movement, 1) * 2
-		var half: int = m.half_attacks
-		if round_no % 2 == 1:
-			half += 1
-		c.attacks = half / 2
+		c.attacks = attacks_for(m)
 		c.acted = false
 		var d := roll(1, 6, "initiative %s" % m.name) + m.dex_missile_bonus()
 		d = maxi(d, 1)
@@ -164,6 +163,21 @@ func next_turn() -> int:
 		return active
 	active = -1
 	return -1
+
+
+## Attacks this round with the readied weapon: half-attacks (missile weapons: the ITEMS
+## table's) rounded up on odd rounds, and never more shots than are left.
+func attacks_for(m: PartyMember) -> int:
+	var half: int = m.half_attacks
+	var shooting := m.weapon_ranged and m.missile_ready
+	if shooting:
+		half = m.missile_half_attacks
+	if round_no % 2 == 1:
+		half += 1
+	var n := half / 2
+	if shooting:
+		n = mini(n, m.shots_left())
+	return n
 
 
 ## The end of a round: the dying bleed; anyone past 9 dies.
@@ -225,6 +239,220 @@ func can_guard() -> bool:
 		return false
 	var m: PartyMember = combatants[active].who
 	return not m.weapon_ranged or m.weapon_ranged_melee
+
+
+# --- Missiles ----------------------------------------------------------------------------
+# As the original does it (rules as documented by Pilgrim's reconstruction; the weapons'
+# ranges, attacks and flags from Pool of Radiance's ITEMS file):
+# - Distance is counted along the original's line walk: 2 per straight cell, 3 per
+#   diagonal one, halved. A target needs a clear line of sight (walls block) and to be
+#   within the weapon's range less 1.
+# - Nobody fires a missile weapon with an enemy next to them, unless the weapon can also be
+#   used in melee (axes, spears): then an adjacent target is simply hit with it.
+# - Beyond a third of the range the target counts 2 better in AC, beyond two thirds 5.
+# - Each shot uses one arrow, quarrel or thrown weapon; a thrown axe or spear lands on the
+#   field and is found after a win, darts and arrows are gone.
+
+## Steps (2 straight, 3 diagonal) along the line from a to b, and whether walls allow it.
+func line_steps(a: Vector2i, b: Vector2i, walls: bool = true) -> Vector2i:
+	var dx := absi(b.x - a.x)
+	var dy := absi(b.y - a.y)
+	var sx := signi(b.x - a.x)
+	var sy := signi(b.y - a.y)
+	var cur := a
+	var err := 0
+	var steps := 0
+	while true:
+		if walls and not field.walkable(cur.x, cur.y):
+			return Vector2i(steps, 0)
+		if cur == b:
+			return Vector2i(steps, 1)
+		if dx >= dy:
+			cur.x += sx
+			err += dy * 2
+			steps += 2
+			if err >= dx:
+				cur.y += sy
+				err -= dx * 2
+				steps += 1
+		else:
+			cur.y += sy
+			err += dx * 2
+			steps += 2
+			if err >= dy:
+				cur.x += sx
+				err -= dy * 2
+				steps += 1
+	return Vector2i(steps, 0)
+
+
+## Range in squares, as the original reports it ("RANGE = n").
+func range_between(a: Vector2i, b: Vector2i) -> int:
+	return line_steps(a, b, false).x / 2
+
+
+func enemy_adjacent(i: int) -> bool:
+	var c: Dictionary = combatants[i]
+	for j in combatants.size():
+		if _enemy_of(c, j) and adjacent(c.cell, combatants[j].cell):
+			return true
+	return false
+
+
+## Can combatant i shoot j with its readied missile weapon? "" if so, else why not.
+func why_not_shoot(i: int, j: int) -> String:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	if not m.weapon_ranged:
+		return "NO MISSILE WEAPON READY"
+	if not m.missile_ready:
+		return "OUT OF AMMUNITION"
+	if c.attacks <= 0:
+		return "NO ATTACKS LEFT"
+	if not _enemy_of(c, j):
+		return "NOT AN ENEMY"
+	if enemy_adjacent(i) and not m.weapon_ranged_melee:
+		return "CAN'T FIRE WITH AN ENEMY NEXT TO YOU"
+	var line := line_steps(c.cell, combatants[j].cell)
+	if line.y == 0:
+		return "NO CLEAR SHOT"
+	if line.x / 2 > m.missile_range:
+		return "OUT OF RANGE"
+	return ""
+
+
+## Combatant i shoots j with all its attacks left (stopping when j falls or the
+## ammunition runs out). An adjacent target of a melee-capable missile weapon is hit
+## hand to hand instead.
+func shoot(i: int, j: int) -> void:
+	var a: Dictionary = combatants[i]
+	var t: Dictionary = combatants[j]
+	var am: PartyMember = a.who
+	var tm: PartyMember = t.who
+	if am.weapon_ranged_melee and adjacent(a.cell, t.cell):
+		attack(i, j)
+		return
+	_note_attack(a, t)
+	var behind: bool = t.received > 1 and dir_to(a.cell, t.cell) == t.dir and t.turned > 4
+	if t.received < 2:
+		t.dir = dir_to(t.cell, a.cell)
+	a.dir = dir_to(a.cell, t.cell)
+	a.moves = 0
+	var reach: int = range_between(a.cell, t.cell)
+	var third: int = (am.missile_range) / 3
+	var penalty := 0
+	if reach > third:
+		reach -= third
+		penalty += 2
+	if reach > third:
+		penalty += 3
+	var ac: int = (tm.rear_ac if behind else tm.ac) + penalty
+	var how := " (FROM BEHIND)" if behind else ""
+	while a.attacks > 0 and not t.down and am.shots_left() > 0:
+		a.attacks -= 1
+		var gone := am.use_shot()
+		if gone != null and types != null:
+			if (types.flags(gone.type) & 0x14) == 0x14:
+				var copy := gone.copy()
+				copy.name = gone.name
+				dropped.append(copy)
+		var need: int = am.thac0 - ac
+		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
+		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
+		if not hit:
+			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
+		else:
+			var dice: Array = am.damage
+			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
+			message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
+			_hurt(j, dmg)
+		if gone != null and types != null:
+			am.recalculate(types)
+	if not am.missile_ready or am.shots_left() <= 0:
+		a.attacks = 0
+
+
+# --- The computer's choice of weapon -----------------------------------------------------
+# As the original does it at the start of each computer-run turn (rules as documented by
+# Pilgrim's reconstruction): every weapon the combatant may use (its class bits, record
+# 0xB0) is rated: dice count x size, + 8 per plus, + 2 per point of damage bonus, + 2 per
+# extra missile attack for a launcher, + 3 if one-handed; cursed ones count 0. The best
+# missile weapon (thrown or launcher) is readied if it rates over half the best melee
+# weapon (or bare hands), has its ammunition, and either no enemy is adjacent or it can
+# also be used in melee; otherwise the best melee weapon (none: bare hands). A two-handed
+# weapon puts the shield away; a one-handed one takes it up again. (The lab saw this:
+# Phineas on Quick switches between his dagger and his darts; a kobold readies its sword.)
+
+func _rate(m: PartyMember, it: GameItem) -> int:
+	if it.cursed:
+		return 0
+	var dmg := types.damage(it.type, false)
+	var r: int = dmg[0] * dmg[1]
+	if it.plus > 0:
+		r += it.plus * 8
+	if dmg[2] > 0:
+		r += dmg[2] * 2
+	if types.flags(it.type) & ItemTypes.FLAG_LAUNCHER:
+		r += (maxi(types.half_attacks(it.type), 2) / 2 - 1) * 2
+	if types.hands(it.type) <= 1:
+		r += 3
+	return r
+
+
+func choose_weapon(i: int) -> void:
+	if types == null:
+		return
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	if m.weapon != null and m.weapon.cursed:
+		return
+	var bare: int = m.base_damage[0] * m.base_damage[1] + maxi(int(m.base_damage[2]), 0) * 2
+	var best_melee: GameItem = null
+	var melee_rate := bare
+	var best_missile: GameItem = null
+	var missile_rate := 1
+	for it in m.items:
+		if not types.has(it.type) or types.slot(it.type) != ItemTypes.SLOT_WEAPON:
+			continue
+		if (types.class_flags(it.type) & m.class_flags) == 0:
+			continue
+		var f := types.flags(it.type)
+		var r := _rate(m, it)
+		if f & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
+			if r > missile_rate:
+				best_missile = it
+				missile_rate = r
+		if (f & ItemTypes.FLAG_LAUNCHER) == 0 and r > melee_rate:
+			best_melee = it
+			melee_rate = r
+	var pick := best_melee
+	if best_missile != null and missile_rate > melee_rate / 2:
+		var f := types.flags(best_missile.type)
+		var has_ammo := (f & ItemTypes.FLAG_THROWN) != 0 or f == 0x0A
+		if f & ItemTypes.FLAG_LAUNCHER and not has_ammo:
+			var want := ItemTypes.TYPE_ARROW if f & ItemTypes.FLAG_ARROWS else ItemTypes.TYPE_QUARREL
+			for it in m.items:
+				if it.readied and it.type == want:
+					has_ammo = true
+		var melee_too := (f & 0x14) == 0x14
+		if has_ammo and (melee_too or not enemy_adjacent(i)):
+			pick = best_missile
+	if pick == m.weapon:
+		return
+	if m.weapon != null:
+		m.weapon.readied = false
+	var shield: GameItem = null
+	for it in m.items:
+		if types.has(it.type) and types.slot(it.type) == ItemTypes.SLOT_SHIELD:
+			if shield == null or it.readied:
+				shield = it
+	if pick != null:
+		pick.readied = true
+		if shield != null:
+			shield.readied = types.hands(pick.type) <= 1 and (types.class_flags(shield.type) & m.class_flags) != 0
+	m.recalculate(types)
+	if c.attacks > 0:
+		c.attacks = attacks_for(m)
 
 
 ## Applies damage the way the original does (see "Going down" above).
@@ -484,6 +712,16 @@ func can_see(a: Vector2i, b: Vector2i) -> bool:
 	return false
 
 
+## Is j within `reach` squares of i with a clear line (1 = adjacent)?
+func _within(i: int, j: int, reach: int) -> bool:
+	var a: Vector2i = combatants[i].cell
+	var b: Vector2i = combatants[j].cell
+	if reach <= 1:
+		return adjacent(a, b)
+	var line := line_steps(a, b)
+	return line.y == 1 and line.x / 2 <= reach
+
+
 ## Keeps the combatant's target if it still stands, else picks a new one (see above).
 func find_target(i: int) -> bool:
 	var c: Dictionary = combatants[i]
@@ -505,9 +743,13 @@ func find_target(i: int) -> bool:
 
 
 ## Ends combatant `i`'s turn on guard, keeping its unused attacks for a guard attack.
-func guard(i: int) -> void:
+func guard(i: int, computer: bool = true) -> void:
 	var c: Dictionary = combatants[i]
 	c.moves = 0
+	if computer and (c.who as PartyMember).weapon_ranged:
+		# With a missile weapon the original just ends the turn: no guard.
+		c.attacks = 0
+		return
 	c.guarding = true
 	c.guard_attacks = c.attacks
 	c.attacks = 0
@@ -663,41 +905,45 @@ func ai_act() -> bool:
 		_ai_begin(active)
 		if c.team == 0 and bandage():
 			return false
+		choose_weapon(active)
 		var morale := _morale_check(active)
 		if morale == "surrender":
-			var m: PartyMember = c.who
+			var sm: PartyMember = c.who
 			c.down = true
-			m.status = PartyMember.STATUS_UNCONSCIOUS
-			m.hp = 0
-			message.emit("%s SURRENDERS" % m.name)
+			sm.status = PartyMember.STATUS_UNCONSCIOUS
+			sm.hp = 0
+			message.emit("%s SURRENDERS" % sm.name)
 			return false
 		c.fleeing = morale == "flee"
 		if c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
-	if c.get("fleeing", false):
-		var r := _flee_step(active)
-		if r == "moved":
-			return true
-		c.fleeing = false
-		if r == "gone" or r == "blocked" or c.down:
-			c.moves = 0
-			c.attacks = 0
-			return false
 		if not find_target(active):
 			guard(active)
+			return false
+	if c.get("fleeing", false):
+		var fr := _flee_step(active)
+		if fr == "moved":
+			return true
+		c.fleeing = false
+		if fr == "gone" or fr == "blocked" or c.down:
+			c.moves = 0
+			c.attacks = 0
 			return false
 	while true:
 		c.tries += 1
 		if c.tries > 20 or c.down:
 			guard(active)
 			return false
+		var m: PartyMember = c.who
+		var shooting: bool = m.weapon_ranged and m.missile_ready
+		var reach: int = m.missile_range if shooting else 1
 		var t: int = c.get("target", -1)
-		if not _enemy_of(c, t) or combatants[t].team == 0 or not adjacent(c.cell, combatants[t].cell):
+		if not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach):
 			t = -1
 		if t < 0:
 			var near: Array[int] = []
 			for j in combatants.size():
-				if _enemy_of(c, j) and adjacent(c.cell, combatants[j].cell):
+				if _enemy_of(c, j) and _within(active, j, reach):
 					near.append(j)
 			if near.is_empty():
 				if not find_target(active):
@@ -710,10 +956,19 @@ func ai_act() -> bool:
 					return false
 				continue
 			t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
+			if shooting and not m.weapon_ranged_melee and enemy_adjacent(active):
+				# Someone is next to it: it changes weapons, and that is its turn.
+				choose_weapon(active)
+				c.moves = 0
+				c.attacks = 0
+				return false
 		if c.attacks <= 0:
 			return false
 		c.target = t
-		attack(active, t)
+		if shooting:
+			shoot(active, t)
+		else:
+			attack(active, t)
 		c.moves = 0
 		if c.attacks <= 0 or not combatants[t].down:
 			c.attacks = 0

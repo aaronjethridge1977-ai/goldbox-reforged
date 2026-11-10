@@ -31,6 +31,10 @@ const FLAG_ARROWS := 0x01     # fires arrows
 const FLAG_DEX_TO_HIT := 0x02 # missile weapon: DEX reaction bonus applies to hit
 const FLAG_MELEE := 0x04      # melee weapon: STR bonuses apply
 const FLAG_QUARRELS := 0x80   # fires quarrels
+const FLAG_LAUNCHER := 0x08   # bows, crossbows, slings: fires ammunition (or stones)
+const FLAG_THROWN := 0x10     # darts, axes, spears: the weapon itself is thrown
+const TYPE_QUARREL := 28      # ammunition items (slot 10)
+const TYPE_ARROW := 73
 
 const SLOT_WEAPON := 0
 const SLOT_SHIELD := 1
@@ -65,6 +69,15 @@ func flags(type: int) -> int:
 
 func armor_byte(type: int) -> int:
 	return records[type][6] if has(type) else 0
+
+
+## Missile attacks per round x2 (0 for melee weapons).
+func half_attacks(type: int) -> int:
+	return records[type][5] if has(type) else 0
+
+
+func class_flags(type: int) -> int:
+	return records[type][13] if has(type) else 0
 
 
 func range_squares(type: int) -> int:

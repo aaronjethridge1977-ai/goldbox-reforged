@@ -58,6 +58,12 @@ var experience := 0
 var status := 0
 var weapon_ranged := false          # readied weapon reaches more than 1 square
 var weapon_ranged_melee := false    # ... and can also be used hand to hand
+var missile_range := 1              # squares a missile weapon reaches (its range - 1)
+var missile_half_attacks := 0       # missile attacks per round x2 (2 at least)
+var ammo: GameItem = null           # what each shot uses up: the arrows, the quarrels or
+                                    # the thrown weapon itself (null: a sling's stones)
+var missile_ready := false          # has what it needs to shoot
+var class_flags := 0                # 0xB0: which item classes the character may use
 var class_id := 0
 var hp_rolled := 0
 var xp_value := 0                   # a monster's worth: xp_per_hp x hp_rolled + xp_value
@@ -142,6 +148,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.hp = d[0x11B]
 	m.experience = d.decode_u32(0xAC)
 	m.status = d[0x10C]
+	m.class_flags = d[0xB0]
 	m.hp_rolled = d[0xB1]
 	m.xp_value = d.decode_s16(0xB8)
 	m.xp_per_hp = d[0xBA]
@@ -183,6 +190,61 @@ func clone() -> PartyMember:
 
 
 const STATUS_OKAY := 0
+## Missile weapons, as the original handles them: a thrown weapon (darts, axes, spears)
+## is its own ammunition; a bow needs readied arrows and a crossbow readied quarrels (their
+## plus adds to hit and damage); a sling needs nothing. A missile weapon reaches its range
+## less 1 and attacks per round from the ITEMS table (darts 3, bows 2), never more than
+## the ammunition left.
+func _missiles(types: ItemTypes) -> void:
+	ammo = null
+	missile_ready = false
+	missile_range = 1
+	missile_half_attacks = 0
+	if weapon == null or not weapon_ranged:
+		return
+	var f := types.flags(weapon.type)
+	missile_range = maxi(types.range_squares(weapon.type) - 1, 1)
+	missile_half_attacks = maxi(types.half_attacks(weapon.type), 2)
+	if f & ItemTypes.FLAG_THROWN:
+		ammo = weapon
+	elif f & ItemTypes.FLAG_LAUNCHER:
+		var want := -1
+		if f & ItemTypes.FLAG_ARROWS:
+			want = ItemTypes.TYPE_ARROW
+		elif f & ItemTypes.FLAG_QUARRELS:
+			want = ItemTypes.TYPE_QUARREL
+		if want < 0:
+			missile_ready = true      # a sling
+			return
+		for it in items:
+			if it.readied and it.type == want:
+				ammo = it
+				break
+	missile_ready = ammo != null
+
+
+## Shots left with the readied missile weapon (a big number for a sling).
+func shots_left() -> int:
+	if not missile_ready:
+		return 0
+	if ammo == null:
+		return 99
+	return maxi(ammo.count, 1)
+
+
+## Uses up one shot. Returns the item if it is now gone (thrown or used up).
+func use_shot() -> GameItem:
+	if ammo == null:
+		return null
+	if ammo.count > 1:
+		ammo.count -= 1
+		return null
+	items.erase(ammo)
+	var gone := ammo
+	ammo = null
+	return gone
+
+
 const STATUS_RUNNING := 3
 const STATUS_UNCONSCIOUS := 4
 const STATUS_DYING := 5
@@ -439,6 +501,7 @@ func recalculate(types: ItemTypes) -> void:
 	var hit_60 := base_thac0_60
 	weapon_ranged = weapon != null and types.range_squares(weapon.type) > 1
 	weapon_ranged_melee = weapon_ranged and (types.flags(weapon.type) & 0x14) == 0x14
+	_missiles(types)
 	if weapon == null:
 		damage = base_damage.duplicate()
 		damage_large = base_damage.duplicate()
@@ -456,9 +519,10 @@ func recalculate(types: ItemTypes) -> void:
 			hit_60 += strength_hit_bonus()
 			damage[2] += strength_damage_bonus()
 			damage_large[2] += strength_damage_bonus()
-		damage[2] += weapon.plus
-		damage_large[2] += weapon.plus
-		var hit_plus := weapon.plus
+		var ammo_plus := ammo.plus if ammo != null and ammo != weapon else 0
+		damage[2] += weapon.plus + ammo_plus
+		damage_large[2] += weapon.plus + ammo_plus
+		var hit_plus := weapon.plus + ammo_plus
 		if race_id == RACE_ELF and t in ELF_WEAPONS:
 			hit_plus += 1
 		hit_60 += hit_plus

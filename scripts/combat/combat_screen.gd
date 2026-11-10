@@ -27,6 +27,10 @@ var _party: Array[PartyMember] = []
 var _monsters: Array[PartyMember] = []
 var _combatants: Array = []      # [{who: PartyMember, team: 0 party / 1 monsters, cell: Vector2i, icon: Image}]
 var _selected := 0
+var _last_dropped: Array[GameItem] = []
+var _aiming := false          # AIM: choosing a target
+var _aim_list: Array[int] = []
+var _aim_index := 0
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
 var _morale_base := 99      # the encounter's morale (from the script)
@@ -127,8 +131,10 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		_distance = distance
 		_load_monsters()
 	for e in _combatants:
-		print("%s %s %d %d  move %d morale 0x%02X int %d" % ["party" if e.team == 0 else "monster", e.who.name,
-			e.cell.x, e.cell.y, e.who.movement, e.who.morale, e.who.stats[1] if e.who.stats.size() > 1 else 0])
+		print("%s %s %d %d  move %d morale 0x%02X int %d classes 0x%02X weapon %s" % ["party" if e.team == 0 else "monster",
+			e.who.name, e.cell.x, e.cell.y, e.who.movement, e.who.morale,
+			e.who.stats[1] if e.who.stats.size() > 1 else 0, e.who.class_flags,
+			e.who.weapon.name if e.who.weapon else "-"])
 	if image_path != "":
 		var full := Image.create_empty(Battlefield.WIDTH * CELL, Battlefield.HEIGHT * CELL, false, Image.FORMAT_RGBA8)
 		full.fill(Color8(85, 85, 85))
@@ -146,6 +152,11 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 					src.flip_x()
 				full.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), e.cell * CELL)
 		full.save_png(image_path)
+
+
+## Thrown weapons left lying on the field (found with the treasure after a win).
+func dropped_items() -> Array[GameItem]:
+	return _combat.dropped if _combat != null else _last_dropped
 
 
 ## Testing aid: the encounter's morale for the next fight.
@@ -319,6 +330,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_party = standing
 	_place()
 	_combat = Combat.new(_field, _combatants, seed_value)
+	_combat.types = _types
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
 	_combat.surprise_flags = _surprise
@@ -385,6 +397,77 @@ func _after_player_action(what: String) -> void:
 		_refresh()
 
 
+# --- AIM ---------------------------------------------------------------------------------
+# The original's AIM: NEXT / PREV step through the figures nearest first, showing each
+# one's sheet and "RANGE = n"; TARGET (offered only when the shot is allowed) attacks it.
+# Modern controls: A aims, ←/→ or Tab change target, Enter attacks, Esc goes back.
+
+func _start_aim() -> void:
+	var me: int = _combat.active
+	var mine: Vector2i = _combatants[me].cell
+	_aim_list = []
+	for j in _combatants.size():
+		if j != me and not _combatants[j].get("down", false) and _combatants[j].team != _combatants[me].team:
+			_aim_list.append(j)
+	if _aim_list.is_empty():
+		_on_message("NO TARGETS")
+		_refresh()
+		return
+	_aim_list.sort_custom(func(a, b): return _combat.range_between(mine, _combatants[a].cell) \
+		< _combat.range_between(mine, _combatants[b].cell))
+	_aiming = true
+	_aim_index = 0
+	_show_aim()
+
+
+func _show_aim() -> void:
+	_selected = _aim_list[_aim_index]
+	_centre_on_selected()
+	_refresh()
+
+
+func _aim_why(j: int) -> String:
+	var me: int = _combat.active
+	var m: PartyMember = _combatants[me].who
+	if m.weapon_ranged:
+		var why := _combat.why_not_shoot(me, j)
+		if why == "" or (m.weapon_ranged_melee and _combat.adjacent(_combatants[me].cell, _combatants[j].cell)):
+			return ""
+		return why
+	if not _combat.adjacent(_combatants[me].cell, _combatants[j].cell):
+		return "OUT OF RANGE"
+	return "" if _combatants[me].attacks > 0 else "NO ATTACKS LEFT"
+
+
+func _aim_input(event: InputEvent, key: Key) -> void:
+	if event.is_action("ui_cancel"):
+		_aiming = false
+		_selected = _combat.active
+		_centre_on_selected()
+		_refresh()
+	elif event.is_action("ui_right") or key == KEY_TAB or key == KEY_N:
+		_aim_index = (_aim_index + 1) % _aim_list.size()
+		_show_aim()
+	elif event.is_action("ui_left") or key == KEY_P:
+		_aim_index = (_aim_index + _aim_list.size() - 1) % _aim_list.size()
+		_show_aim()
+	elif event.is_action("ui_accept") or key == KEY_T:
+		var j: int = _aim_list[_aim_index]
+		var why := _aim_why(j)
+		if why != "":
+			_on_message(why)
+			_refresh()
+			return
+		_aiming = false
+		_selected = _combat.active
+		var me: int = _combat.active
+		if (_combatants[me].who as PartyMember).weapon_ranged:
+			_combat.shoot(me, j)
+		else:
+			_combat.attack(me, j)
+		_after_player_action("attacked")
+
+
 # --- Drawing ----------------------------------------------------------------------------
 
 func _centre_on_selected() -> void:
@@ -433,9 +516,15 @@ func _refresh() -> void:
 	if _combat != null:
 		if _result != 0:
 			_prompt.text = ("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.") + "   Esc or Enter: leave"
+		elif _aiming:
+			var j: int = _aim_list[_aim_index]
+			var why := _aim_why(j)
+			_prompt.text = "AIM: RANGE = %d   %s   ←/→ next/prev   %sEsc: back" % [
+				_combat.range_between(_combatants[_combat.active].cell, _combatants[j].cell),
+				why if why != "" else "", "Enter: target   " if why == "" else ""]
 		else:
 			_prompt.text = ("ROUND %d   Arrows / Home PgUp End PgDn: move or attack   Space: done   "
-				+ "G: guard   B: bandage   Q: quick (computer fights)   Esc: leave") % _combat.round_no
+				+ "A: aim   G: guard   B: bandage   Q: quick   Esc: leave") % _combat.round_no
 		return
 	var summary := PackedStringArray()
 	var text := ""
@@ -458,6 +547,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+	if _aiming:
+		_aim_input(event, key)
+		get_viewport().set_input_as_handled()
+		return
 	if _event_fight and _result == 0 and _combat != null:
 		_fight_input(event, key)
 		return
@@ -502,6 +595,7 @@ func _leave() -> void:
 	_ai_timer.stop()
 	var was_event := _event_fight
 	var result := _result
+	_last_dropped = _combat.dropped if _combat != null else ([] as Array[GameItem])
 	_combat = null
 	_event_fight = false
 	visible = false
@@ -525,9 +619,11 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	elif key == KEY_SPACE or key == KEY_D:
 		_combat.done()
 		_advance()
+	elif key == KEY_A:
+		_start_aim()
 	elif key == KEY_G:
 		if _combat.can_guard():
-			_combat.guard(_combat.active)
+			_combat.guard(_combat.active, false)
 			_refresh()
 			_advance()
 		else:
