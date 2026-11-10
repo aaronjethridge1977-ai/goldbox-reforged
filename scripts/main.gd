@@ -118,7 +118,12 @@ func _ready() -> void:
 		if m != null:
 			m.recalculate(_types)
 			_party.append(m)
+	var battle_only := false
+	for arg in OS.get_cmdline_user_args():
+		battle_only = battle_only or arg.begins_with("--battle=")
 	for file_name in GameData.list_files(_game_path, "DAX"):
+		if battle_only and not file_name.begins_with("GEO"):
+			continue
 		var dax := DaxFile.open(_game_path.path_join(file_name))
 		if dax == null:
 			continue
@@ -142,6 +147,13 @@ func _ready() -> void:
 	for i in _pictures.size():
 		if _pictures[i].file == "TITLE.DAX" and _pictures[i].id == 2:
 			_pic_index = i
+	# Testing aid for the lab: --battle=GEO2.DAX:20:13:7:W:2:4:6:4:2 (map file, map id, x, y,
+	# facing, monster file, monster id, count, picture, distance or -1) [--battle-image=path]
+	# prints where everyone starts and saves the battlefield, then quits.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--battle="):
+			_battle_check(arg.trim_prefix("--battle="))
+			return
 	# Testing aid: start straight in the last quick save, if there is one.
 	if FileAccess.file_exists(_save_path()):
 		_quick_load()
@@ -360,6 +372,20 @@ func _quick_save() -> void:
 	cfg.set_value("party", "members", members)
 	var err := cfg.save(_save_path())
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
+
+
+func _battle_check(spec: String) -> void:
+	var a := spec.split(":")
+	var image_path := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--battle-image="):
+			image_path = arg.trim_prefix("--battle-image=")
+	for i in _maps.size():
+		if _maps[i].file == a[0] and _maps[i].id == int(a[1]):
+			var facing := "NESW".find(a[4])
+			_combat.run_check(_game_path, _maps[i].map, int(a[2]), int(a[3]), facing, _party,
+				int(a[5]), [[int(a[6]), int(a[7]), int(a[8])]], int(a[9]), image_path)
+	get_tree().quit()
 
 
 func _quick_load() -> void:

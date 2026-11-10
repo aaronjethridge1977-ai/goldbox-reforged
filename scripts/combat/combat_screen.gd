@@ -17,14 +17,6 @@ const VIEW_CELLS := 7
 const CELL := 24
 const SCALE := 3
 
-## Party formation in straightened (u, v) cells, for facing north; rotated for other
-## facings. Front line of three across the facing, the rest one line behind. Taken from
-## the two Slums fights (facing west and south); still to be checked against more fights.
-const PARTY_SLOTS := [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(1, 0),
-	Vector2i(0, 1), Vector2i(-1, 1), Vector2i(1, 1), Vector2i(-2, 0), Vector2i(2, 0)]
-## Where the party's front line centre sits, relative to the party square's origin (u, v).
-const PARTY_ANCHOR_UV := Vector2i(4, 3)
-
 var _field: Battlefield
 var _art: CombatArt
 var _party: Array[PartyMember] = []
@@ -33,6 +25,8 @@ var _combatants: Array = []      # [{who: PartyMember, team: 0 party / 1 monster
 var _selected := 0
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
+var _px := 0
+var _py := 0
 var _distance := 0
 var _mon_file := 1
 var _encounters: Array = []      # [{monsters: [[id, count, picture]], text}]
@@ -52,6 +46,8 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, script: EclScript) -> void:
 	_game_path = game_path
 	_field = Battlefield.build(map, px, py)
+	_px = px
+	_py = py
 	_art = CombatArt.load_set(game_path)
 	_party = party
 	_facing = facing
@@ -74,11 +70,44 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		for id in ids:
 			_encounters.append({"monsters": [[id, 6, id]], "text": ""})
 	_enc_index = 0
-	_distance = 1
+	_distance = Placement.encounter_distance(_field, px, py, facing)
 	if _picture == null:
 		_build()
 	_load_monsters()
 	visible = true
+
+
+## Testing aid: a battle with given monsters ([[id, count, picture], ...]) and distance;
+## writes the whole battlefield with everyone on it to `image_path` and prints each
+## combatant's cell. Used by the lab to compare with the original.
+func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
+		party: Array[PartyMember], mon_file: int, rows: Array, distance: int, image_path: String) -> void:
+	open_test(game_path, map, px, py, facing, party, mon_file, null)
+	_encounters = [{"monsters": rows, "text": ""}]
+	_enc_index = 0
+	_load_monsters()
+	if distance >= 0:
+		_distance = distance
+		_load_monsters()
+	for e in _combatants:
+		print("%s %s %d %d" % ["party" if e.team == 0 else "monster", e.who.name, e.cell.x, e.cell.y])
+	if image_path != "":
+		var full := Image.create_empty(Battlefield.WIDTH * CELL, Battlefield.HEIGHT * CELL, false, Image.FORMAT_RGBA8)
+		full.fill(Color8(85, 85, 85))
+		for y in Battlefield.HEIGHT:
+			for x in Battlefield.WIDTH:
+				var ti := _art.tile(_field.tile(x, y))
+				if ti:
+					full.blit_rect(ti, Rect2i(0, 0, CELL, CELL), Vector2i(x * CELL, y * CELL))
+		for e in _combatants:
+			var icon: Image = e.icon
+			if icon:
+				var src := icon
+				if Placement.DX[e.dir] < 0:
+					src = icon.duplicate() as Image
+					src.flip_x()
+				full.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), e.cell * CELL)
+		full.save_png(image_path)
 
 
 func _build() -> void:
@@ -131,52 +160,25 @@ func _load_monsters() -> void:
 
 # --- Placement --------------------------------------------------------------------------
 
-## Rotates a north-facing slot to the party's facing (in u, v: north is -v, east is +u).
-static func _rotate(p: Vector2i, facing: int) -> Vector2i:
-	match facing:
-		1: return Vector2i(-p.y, p.x)      # east
-		2: return Vector2i(-p.x, -p.y)     # south
-		3: return Vector2i(p.y, -p.x)      # west
-	return p
-
-
+## Both sides placed by the original's rule (see Placement): the party around its own
+## square, the monsters around the square `_distance` squares ahead, facing the party.
 func _place() -> void:
 	_combatants.clear()
-	var occupied := {}
-	var o := Battlefield.square_origin(0, 0)
-	var anchor := Battlefield.to_uv(o) + PARTY_ANCHOR_UV
-	var forward := _rotate(Vector2i(0, -1), _facing)
+	var placer := Placement.new(_field, _px, _py)
+	var party_cells := placer.place_team(_party.size(), _facing, Vector2i.ZERO, true)
+	var party_dir: int = Placement.FACING_TO_DIR[_facing]
 	for i in _party.size():
-		var slot: Vector2i = PARTY_SLOTS[i] if i < PARTY_SLOTS.size() else Vector2i(i - 5, 2)
-		var cell := _free_cell(anchor + _rotate(slot, _facing), occupied)
-		_combatants.append({"who": _party[i], "team": 0, "cell": cell, "icon": _art.character_icon(_party[i])})
-	# Monsters: in front, `_distance` squares away (6 cells east-west, 5 north-south),
-	# facing the party, in lines of three.
-	var step := 6 if _facing % 2 == 1 else 5
-	var front := anchor + forward * (1 + _distance * step)
+		if party_cells[i].x < 0:
+			continue
+		_combatants.append({"who": _party[i], "team": 0, "cell": party_cells[i],
+			"icon": _art.character_icon(_party[i]), "dir": party_dir})
+	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
+	var mon_cells := placer.place_team(_monsters.size(), (_facing + 2) % 4, ahead, false)
 	for i in _monsters.size():
-		var across: int = [0, -1, 1][i % 3]
-		var depth: int = i / 3
-		var p := front + _rotate(Vector2i(across, -depth), _facing)
-		var cell := _free_cell(p, occupied)
-		var icon := _art.monster_icon(_mon_file, _pictures[i])
-		_combatants.append({"who": _monsters[i], "team": 1, "cell": cell, "icon": icon})
-
-
-## The nearest floor cell to `uv` that nobody stands on.
-func _free_cell(uv: Vector2i, occupied: Dictionary) -> Vector2i:
-	for r in 4:
-		for du in range(-r, r + 1):
-			for dv in range(-r, r + 1):
-				if maxi(absi(du), absi(dv)) != r:
-					continue
-				var c := Battlefield.to_cell(uv.x + du, uv.y + dv)
-				if _field.tile(c.x, c.y) == Battlefield.FLOOR and not occupied.has(c):
-					occupied[c] = true
-					return c
-	var fallback := Battlefield.to_cell(uv.x, uv.y)
-	occupied[fallback] = true
-	return fallback
+		if mon_cells[i].x < 0:
+			continue
+		_combatants.append({"who": _monsters[i], "team": 1, "cell": mon_cells[i],
+			"icon": _art.monster_icon(_mon_file, _pictures[i]), "dir": (party_dir + 4) % 8})
 
 
 # --- Drawing ----------------------------------------------------------------------------
@@ -198,15 +200,7 @@ func _refresh() -> void:
 			var ti := _art.tile(t)
 			if ti:
 				img.blit_rect(ti, Rect2i(0, 0, CELL, CELL), Vector2i(c * CELL, r * CELL))
-	# The art faces right; a side whose enemies stand to its left is drawn mirrored.
-	var mean_x := [0.0, 0.0]
-	var count := [0, 0]
-	for e in _combatants:
-		mean_x[e.team] += e.cell.x
-		count[e.team] += 1
-	for t in 2:
-		if count[t] > 0:
-			mean_x[t] /= count[t]
+	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
 		var icon: Image = e.icon
@@ -216,8 +210,7 @@ func _refresh() -> void:
 			img.fill_rect(box, Color8(170, 170, 170))
 		if icon:
 			var src := icon
-			var enemy_x: float = mean_x[1 - e.team]
-			if count[1 - e.team] > 0 and enemy_x < e.cell.x:
+			if Placement.DX[e.dir] < 0:
 				src = icon.duplicate() as Image
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
