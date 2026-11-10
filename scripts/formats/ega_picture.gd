@@ -12,7 +12,13 @@ extends RefCounted
 ##           each 4 bits per pixel, high nibble first, rows top to bottom.
 ##
 ## Confirmed for TITLE, BODY, HEAD, CBODY, CHEAD, CPIC, COMSPR, ICON, 8X8D and
-## the combat icon sets. PIC*, SPRIT*, WALLDEF* and some FINAL blocks use other formats.
+## the combat icon sets.
+##
+## Animated blocks (PIC*, SPRIT*, three FINAL blocks) wrap one picture per frame:
+##   u8 frame_count
+##   frame_count * { u32 delay, picture header (17 bytes, frame count 1), pixel data }
+## Frames may differ in size (SPRIT holds the same sprite at several distances).
+## See decode_animated(). Every PIC and SPRIT block in the DOS game matches this exactly.
 
 const HEADER_SIZE := 17
 
@@ -29,6 +35,8 @@ var height: int = 0
 var x: int = 0
 var y: int = 0
 var frames: Array[Image] = []
+## Per-frame delay for animated blocks (units not yet known); empty for plain pictures.
+var delays: Array[int] = []
 
 
 ## True if the block's size matches the picture layout exactly.
@@ -51,21 +59,74 @@ static func decode(block: PackedByteArray) -> EgaPicture:
 	pic.y = block.decode_u16(6)
 	var count := block.decode_u8(8)
 	var frame_bytes := pic.width * pic.height / 2
-	var rgb := _palette_bytes()
 	for f in count:
-		var start := HEADER_SIZE + f * frame_bytes
-		var pixels := PackedByteArray()
-		pixels.resize(pic.width * pic.height * 3)
-		var o := 0
-		for i in frame_bytes:
-			var b := block[start + i]
-			for nibble in [b >> 4, b & 15]:
-				pixels[o] = rgb[nibble * 3]
-				pixels[o + 1] = rgb[nibble * 3 + 1]
-				pixels[o + 2] = rgb[nibble * 3 + 2]
-				o += 3
-		pic.frames.append(Image.create_from_data(pic.width, pic.height, false, Image.FORMAT_RGB8, pixels))
+		pic.frames.append(_pixels_to_image(block, HEADER_SIZE + f * frame_bytes, pic.width, pic.height))
 	return pic
+
+
+## True if the block is a frame list (u8 count, then {u32 delay, picture}) that fills it exactly.
+static func is_animated(block: PackedByteArray) -> bool:
+	if block.is_empty():
+		return false
+	var count := block.decode_u8(0)
+	var p := 1
+	for f in count:
+		if p + 4 + HEADER_SIZE > block.size():
+			return false
+		var h := block.decode_u16(p + 4)
+		var w8 := block.decode_u16(p + 6)
+		if h == 0 or w8 == 0:
+			return false
+		p += 4 + HEADER_SIZE + h * w8 * 4
+	return count > 0 and p == block.size()
+
+
+static func decode_animated(block: PackedByteArray) -> EgaPicture:
+	if not is_animated(block):
+		return null
+	var pic := EgaPicture.new()
+	var count := block.decode_u8(0)
+	var p := 1
+	for f in count:
+		var delay := block.decode_u32(p)
+		var h := block.decode_u16(p + 4)
+		var w := block.decode_u16(p + 6) * 8
+		if f == 0:
+			pic.x = block.decode_u16(p + 8)
+			pic.y = block.decode_u16(p + 10)
+		pic.width = maxi(pic.width, w)
+		pic.height = maxi(pic.height, h)
+		pic.delays.append(delay)
+		pic.frames.append(_pixels_to_image(block, p + 4 + HEADER_SIZE, w, h))
+		p += 4 + HEADER_SIZE + h * w / 2
+	return pic
+
+
+## Decodes either layout.
+static func decode_any(block: PackedByteArray) -> EgaPicture:
+	var pic := decode(block)
+	if pic == null:
+		pic = decode_animated(block)
+	return pic
+
+
+static func _pixels_to_image(block: PackedByteArray, start: int, w: int, h: int) -> Image:
+	var rgb := _palette_bytes()
+	var pixels := PackedByteArray()
+	pixels.resize(w * h * 3)
+	var o := 0
+	for i in w * h / 2:
+		var b := block[start + i]
+		var hi := (b >> 4) * 3
+		var lo := (b & 15) * 3
+		pixels[o] = rgb[hi]
+		pixels[o + 1] = rgb[hi + 1]
+		pixels[o + 2] = rgb[hi + 2]
+		pixels[o + 3] = rgb[lo]
+		pixels[o + 4] = rgb[lo + 1]
+		pixels[o + 5] = rgb[lo + 2]
+		o += 6
+	return Image.create_from_data(w, h, false, Image.FORMAT_RGB8, pixels)
 
 
 ## All frames laid out in a grid (columns wide), for viewing multi-frame sets.
@@ -74,7 +135,8 @@ func sheet(columns: int = 16) -> Image:
 	var rows := ceili(frames.size() / float(cols))
 	var img := Image.create_empty(width * cols, height * rows, false, Image.FORMAT_RGB8)
 	for i in frames.size():
-		img.blit_rect(frames[i], Rect2i(0, 0, width, height), Vector2i((i % cols) * width, (i / cols) * height))
+		var f := frames[i]
+		img.blit_rect(f, Rect2i(0, 0, f.get_width(), f.get_height()), Vector2i((i % cols) * width, (i / cols) * height))
 	return img
 
 

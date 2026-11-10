@@ -14,6 +14,7 @@ enum Mode { PICTURES, MAPS }
 var _mode := Mode.PICTURES
 var _pictures: Array = []   # [{file, id, pic}]
 var _maps: Array = []       # [{file, id, map}]
+var _area_text := {}        # block id -> first event text in that area's ECL block
 var _pic_index := 0
 var _map_index := 0
 
@@ -33,12 +34,18 @@ func _ready() -> void:
 			continue
 		for id in dax.ids():
 			var block: PackedByteArray = dax.blocks[id]
+			if file_name.begins_with("ECL"):
+				var strings := GoldBoxText.find_strings(block)
+				if not strings.is_empty():
+					_area_text[id] = strings[0].text
+				continue
 			if file_name.begins_with("GEO"):
 				var m := GeoMap.decode(block)
 				if m != null:
 					_maps.append({"file": file_name, "id": id, "map": m})
 				continue
-			var pic := EgaPicture.decode(block)
+			var animated := file_name.begins_with("PIC") or file_name.begins_with("SPRIT") or file_name.begins_with("FINAL")
+			var pic := EgaPicture.decode_any(block) if animated else EgaPicture.decode(block)
 			if pic != null:
 				_pictures.append({"file": file_name, "id": id, "pic": pic})
 	# Start on the main title screen (TITLE.DAX block 2).
@@ -107,5 +114,9 @@ func _show() -> void:
 			return
 		var e: Dictionary = _maps[_map_index]
 		_map_view.map = e.map
-		_status.text = "MAPS  %s block %d   [%d/%d]    walls coloured by type, doors gold, shaded = flag bit 7 (unknown)    ←/→ map   Tab pictures" % [
-			e.file, e.id, _map_index + 1, _maps.size()]
+		var area: String = GeoMap.AREA_NAMES.get(e.id, "unnamed area")
+		var hint: String = _area_text.get(e.id, "")
+		if hint.length() > 70:
+			hint = hint.substr(0, 70) + "..."
+		_status.text = "MAPS  %s — %s block %d  [%d/%d]   %s\nwalls coloured by type, doors gold, shaded = flag bit 7 (unknown)    ←/→ map   Tab pictures" % [
+			area, e.file, e.id, _map_index + 1, _maps.size(), hint]

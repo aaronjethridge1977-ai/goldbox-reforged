@@ -16,6 +16,18 @@ extends RefCounted
 const SIZE := 16
 const BLOCK_SIZE := 1026
 
+## Area names by block id. GEO, ECL (events) and WALLDEF/8X8D (graphics) share block ids.
+## 0 confirmed by Jeremy against the cluebook; the rest are named in the area's own event text.
+const AREA_NAMES := {
+	0: "New Phlan",
+	1: "Buccaneer base",
+	10: "Graveyard",
+	20: "Slums",
+	21: "Sokal Keep",
+	28: "Zhentil Outpost",
+	29: "Kuto's Well",
+}
+
 enum Side { NORTH, EAST, SOUTH, WEST }
 
 var header: PackedByteArray
