@@ -24,3 +24,10 @@ program.
 `check_godot.sh /path/to/goldbox-reforged` (with Godot 4.7.2 for Linux unzipped into
 `~/lab/godot/`) parse-checks every script in a copy of the project and runs the main scene
 headless for two seconds. Run it before every push.
+
+`lab.py` runs whole sessions: `./run.sh --py lab.py fight 1` boots, loads save A, walks to
+event 1's squares (routes from `route.py` on the decoded map) and captures the first fight it
+meets: the opening combat screen, then Aim → Next across the monsters. It reads the screen
+as text with the game's own 8×8 font (`font.json`, generated from `8X8D1.DAX` block 201 and
+kept in `.lab`, since it is game data): the command line, the coordinates line and messages.
+Shots and a log go to `$LAB_OUT`.
