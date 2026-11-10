@@ -14,9 +14,13 @@ const DELTA: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1),
 
 # Slot order: ahead (far, middle, near), left (far, middle, near), right (far, middle, near).
 # Screen x/y are in tiles on the original 320x200 screen, where the view starts at tile 3.
-const START_X := [2, 1, -2, 3, 2, 3, 9, 10, 12]
+# Far side walls start at the edge of the middle wall in the same column, so they are
+# spaced 3 tiles like the middle walls. (ssi-engine has them 2 tiles apart starting at
+# tiles 3 and 9; corrected 2026-11-09 against the original at New Phlan 12,6 W, where the
+# far-left wall with the blue door sits at view x 8, not 16.)
+const START_X := [2, 1, -2, 1, 2, 3, 9, 10, 12]
 const START_Y := [7, 6, 4, 6, 4, 3, 6, 4, 3]
-const SPACING := [2, 3, 7, 2, 3, 0, 2, 3, 0]
+const SPACING := [2, 3, 7, 3, 3, 0, 3, 3, 0]
 const MAX_HEIGHT := [16, 32, 64, 32, 64, 88, 32, 64, 88]
 const VIEW_ORIGIN := 3
 
