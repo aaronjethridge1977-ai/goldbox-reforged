@@ -6,7 +6,8 @@ extends Control
 ##   Walk         : Up forward, Down back, Left/Right turn,
 ##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir",
 ##                  E write the area's event script listing to captures/, N day/night,
-##                  1-9 choose a menu item, Enter continue
+##                  1-9 choose a menu item, Enter continue,
+##                  V party character sheets, M monster sheets (every MONnCHA block)
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -56,6 +57,8 @@ var _jump_next := false             # the next script move is a placement, not a
 # The party (the game's saved party A, CHRDATA1-6) and the shop overlay
 var _party: Array[PartyMember] = []
 var _shop: ShopScreen
+var _sheet: CharacterSheet
+var _types: ItemTypes
 
 
 func _ready() -> void:
@@ -89,6 +92,9 @@ func _ready() -> void:
 	_shop.visible = false
 	_shop.closed.connect(_on_shop_closed)
 	add_child(_shop)
+	_sheet = CharacterSheet.new()
+	_sheet.visible = false
+	add_child(_sheet)
 	_timer = Timer.new()
 	_timer.one_shot = true
 	_timer.timeout.connect(_on_timer)
@@ -101,9 +107,11 @@ func _ready() -> void:
 			+ "or run with --game-path=\"<folder containing GEO1.DAX>\"."
 		)
 		return
+	_types = ItemTypes.load_file(_game_path)
 	for i in range(1, 7):
 		var m := PartyMember.load_files(_game_path.path_join("CHRDATA%d.SAV" % i), _game_path.path_join("CHRDATA%d.ITM" % i))
 		if m != null:
+			m.recalculate(_types)
 			_party.append(m)
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		var dax := DaxFile.open(_game_path.path_join(file_name))
@@ -137,7 +145,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _game_path == "" or not event.is_pressed() or _shop.visible:
+	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -168,6 +176,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		elif key == KEY_F3:
 			_quick_load()
+		elif key == KEY_V:
+			for m in _party:
+				m.recalculate(_types)
+			_sheet.open(_party, "PARTY")
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_M:
+			_sheet.open(_all_monsters(), "MONSTERS")
+			get_viewport().set_input_as_handled()
+			return
 		elif key == KEY_N:
 			var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
 			_vm.write_byte(EclVM.CLOCK_HOUR, 8 if night else 20)
@@ -380,6 +398,7 @@ func _quick_load() -> void:
 		for rec in saved.get("items", []):
 			items.append(GameItem.from_record(rec))
 		_party[i].items = items
+		_party[i].recalculate(_types)
 	_status.text = "Loaded."
 	_show()
 
@@ -589,7 +608,26 @@ func _open_shop() -> void:
 	_shop.open(items, _party)
 
 
+## Every monster record in MON1CHA..MON8CHA, for the monster sheets.
+func _all_monsters() -> Array[PartyMember]:
+	var out: Array[PartyMember] = []
+	for n in range(1, 9):
+		var path := _game_path.path_join("MON%dCHA.DAX" % n)
+		if not FileAccess.file_exists(path):
+			continue
+		var dax := DaxFile.open(path)
+		for id in dax.ids():
+			var m := PartyMember.load_monster(_game_path, n, id)
+			if m != null:
+				m.name = "%s  (MON%d block %d)" % [m.name, n, id]
+				m.recalculate(_types)
+				out.append(m)
+	return out
+
+
 func _on_shop_closed() -> void:
+	for m in _party:
+		m.recalculate(_types)
 	_message.text = ""
 	_vm.close_shop()
 	_after_vm()

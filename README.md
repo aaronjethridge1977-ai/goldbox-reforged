@@ -8,7 +8,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M1 done in practice; M3 started.** Pictures, maps, text, the first-person view and the event scripts decode; New Phlan is walkable with its events running (checked against the original). Shops and the starting party are in; monsters and combat are next.
+**M1 done in practice; M3 started.** Pictures, maps, text, the first-person view and the event scripts decode; New Phlan is walkable with its events running (checked against the original). Shops and the starting party are in. Combat has begun: characters and monsters share one model whose AC, THAC0, damage and movement match the original's own figures.
 
 | # | Milestone | |
 |---|-----------|--|
@@ -33,6 +33,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
    - Maps: ←/→ step through the 29 area maps; **Enter** walks the current map.
    - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night.
    - **F2** quick-saves in walk mode and **F3** loads; the engine starts straight in the last quick save (saved in `saves/`, git-ignored). Delete `saves/quicksave.cfg` to start fresh.
+   - **V** shows the party's character sheets (AC, THAC0, damage, movement, items) next to the values the original saved; **M** browses every monster record. ←/→ to page, Esc to close.
    - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
 
 ## Layout

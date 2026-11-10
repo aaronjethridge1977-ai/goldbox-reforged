@@ -7,7 +7,9 @@ extends RefCounted
 ##   0       name length          1..41  name text (a cached display string)
 ##   42..45  links (in-memory list pointers; ignore)
 ##   46      item type            47..49 name word ids (into ITEMS; not decoded yet)
-##   52      readied (1) or not   55..56 weight (coins)   57 count (arrows, darts...)
+##   50      magic plus (signed)  51 saving-throw plus
+##   52      readied (1) or not   54 cursed
+##   55..56  weight (coins, per piece)   57 count (arrows, darts...; 0 = a single item)
 ##   58..59  price in gold
 ## Verified against the New Phlan silver shop (names, prices, counts) and the purchase
 ## test (Silver Mace weight 100), and against the starting party's daggers and armour.
@@ -16,7 +18,9 @@ const SIZE := 63
 
 var name := ""
 var type := 0
+var plus := 0
 var readied := false
+var cursed := false
 var weight := 0
 var count := 0
 var price := 0
@@ -33,7 +37,9 @@ static func from_record(rec: PackedByteArray) -> GameItem:
 		if it.name.begins_with(prefix):
 			it.name = it.name.substr(prefix.length()).strip_edges()
 	it.type = rec[46]
+	it.plus = rec[50] - 256 if rec[50] > 127 else rec[50]
 	it.readied = rec[52] != 0
+	it.cursed = rec[54] != 0
 	it.weight = rec.decode_u16(55)
 	it.count = rec[57]
 	it.price = rec.decode_u16(58)
@@ -46,6 +52,11 @@ static func list_from(data: PackedByteArray) -> Array[GameItem]:
 	for i in range(0, data.size() - SIZE + 1, SIZE):
 		out.append(from_record(data.slice(i, i + SIZE)))
 	return out
+
+
+## Weight of the whole stack, in coins (11 darts at 5 weigh 55).
+func total_weight() -> int:
+	return weight * maxi(count, 1)
 
 
 func copy() -> GameItem:
