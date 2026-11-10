@@ -15,7 +15,8 @@ extends RefCounted
 ## facing east or west leaves one empty line after its front line when any side of its
 ## square (other than the front) is open. If the lines run off the grid, the team tries
 ## its alternative anchors: one square to each side or behind, if that side is open, with
-## their own base slots. A slot is used only if its cell is bare floor and free.
+## their own base slots. A slot is used only if its cell is bare floor and free; for a
+## large creature every cell it fills must be (Combat.FOOTPRINT, from the slot's cell).
 ##
 ## Learned from the original's behaviour as documented by Simeon Pilgrim's reconstruction
 ## of the engine (tables of base slots and footprints), and checked against the original:
@@ -77,8 +78,10 @@ static func encounter_distance(field: Battlefield, px: int, py: int, facing: int
 
 ## Places `count` members of a team facing `facing` (map facing 0..3) whose anchor is
 ## `anchor` squares from the party. Returns their cells (Vector2i(-1, -1) if one finds no
-## room). Call for the party first, then the monsters, on the same Placement.
-func place_team(count: int, facing: int, anchor: Vector2i, is_party: bool) -> Array[Vector2i]:
+## room). Call for the party first, then the monsters, on the same Placement. `sizes`
+## gives each member's footprint (Combat.foot_size); missing entries count as 1.
+func place_team(count: int, facing: int, anchor: Vector2i, is_party: bool,
+		sizes: Array = []) -> Array[Vector2i]:
 	var free := []
 	for t in 4:
 		var span: Array = SLOT_SPAN[4 if t == 1 else facing]
@@ -90,11 +93,13 @@ func place_team(count: int, facing: int, anchor: Vector2i, is_party: bool) -> Ar
 	var half := (count + 1) / 2
 	var out: Array[Vector2i] = []
 	for i in count:
-		out.append(_place_one(facing, anchor, is_party, half, free))
+		out.append(_place_one(facing, anchor, is_party, half, free,
+			int(sizes[i]) if i < sizes.size() else 1))
 	return out
 
 
-func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: Array) -> Vector2i:
+func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: Array,
+		fp: int = 1) -> Vector2i:
 	var state := 0           # 0 = start a line, 1 = next to the right, 2 = next to the left
 	var line := 0
 	var reach := 0
@@ -154,9 +159,15 @@ func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: 
 			continue
 		if not outside and free[tries].has(cur):
 			var cell := Vector2i(cur.x + square.x * 6 + square.y * 5 + 22, cur.y + square.y * 5 + 10)
-			if _field.tile(cell.x, cell.y) == Battlefield.FLOOR and not _used.has(cell):
+			var foot := Combat.cells_at(cell, fp)
+			var ok := true
+			for p in foot:
+				if _field.tile(p.x, p.y) != Battlefield.FLOOR or _used.has(p):
+					ok = false
+			if ok:
 				free[tries].erase(cur)
-				_used[cell] = true
+				for p in foot:
+					_used[p] = true
 				return cell
 	return Vector2i(-1, -1)
 

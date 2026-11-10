@@ -43,8 +43,8 @@ extends RefCounted
 ## a fight can be replayed and compared rule by rule.
 ##
 ## Morale, fleeing, surrender and surprise: see the sections below and start_round().
-## Not yet: missiles, spells, morale and fleeing, surprise from the encounter,
-## large monsters filling two cells.
+## Large creatures fill more than one cell (see "Size" below).
+## Not yet: spells.
 
 signal message(text: String)
 
@@ -87,6 +87,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["target"] = -1
 		c["pattern"] = 0      # the computer's movement pattern (see below)
 		c["turned"] = 0       # eighth-turns of those attacks, as the original counts them
+		c["fp"] = foot_size(c.who)
 
 
 func roll(count: int, size: int, why: String) -> int:
@@ -294,10 +295,25 @@ func range_between(a: Vector2i, b: Vector2i) -> int:
 	return line_steps(a, b, false).x / 2
 
 
+## The line between two combatants, over every pair of their cells: the shortest clear
+## one (steps, 1), or if none is clear, the shortest (steps, 0).
+func clear_line(a: Dictionary, b: Dictionary) -> Vector2i:
+	var best := Vector2i(1 << 30, 0)
+	for p in cells(a):
+		for q in cells(b):
+			var l := line_steps(p, q)
+			var steps := line_steps(p, q, false).x
+			if l.y == 1 and (best.y == 0 or steps < best.x):
+				best = Vector2i(steps, 1)
+			elif l.y == 0 and best.y == 0 and steps < best.x:
+				best = Vector2i(steps, 0)
+	return best
+
+
 func enemy_adjacent(i: int) -> bool:
 	var c: Dictionary = combatants[i]
 	for j in combatants.size():
-		if _enemy_of(c, j) and adjacent(c.cell, combatants[j].cell):
+		if _enemy_of(c, j) and touching(c, combatants[j]):
 			return true
 	return false
 
@@ -316,7 +332,7 @@ func why_not_shoot(i: int, j: int) -> String:
 		return "NOT AN ENEMY"
 	if enemy_adjacent(i) and not m.weapon_ranged_melee:
 		return "CAN'T FIRE WITH AN ENEMY NEXT TO YOU"
-	var line := line_steps(c.cell, combatants[j].cell)
+	var line := clear_line(c, combatants[j])
 	if line.y == 0:
 		return "NO CLEAR SHOT"
 	if line.x / 2 > m.missile_range:
@@ -332,16 +348,16 @@ func shoot(i: int, j: int) -> void:
 	var t: Dictionary = combatants[j]
 	var am: PartyMember = a.who
 	var tm: PartyMember = t.who
-	if am.weapon_ranged_melee and adjacent(a.cell, t.cell):
+	if am.weapon_ranged_melee and touching(a, t):
 		attack(i, j)
 		return
 	_note_attack(a, t)
-	var behind: bool = t.received > 1 and dir_to(a.cell, t.cell) == t.dir and t.turned > 4
+	var behind: bool = t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4
 	if t.received < 2:
-		t.dir = dir_to(t.cell, a.cell)
-	a.dir = dir_to(a.cell, t.cell)
+		t.dir = dir_between(t, a)
+	a.dir = dir_between(a, t)
 	a.moves = 0
-	var reach: int = range_between(a.cell, t.cell)
+	var reach: int = range_of(a, t)
 	var third: int = (am.missile_range) / 3
 	var penalty := 0
 	if reach > third:
@@ -496,12 +512,95 @@ func finish() -> void:
 
 # --- Actions ----------------------------------------------------------------------------
 
-func occupant(cell: Vector2i) -> int:
+# --- Size ---------------------------------------------------------------------------------
+# As the original does it (rules as documented by Pilgrim's reconstruction; sizes and icon
+# shapes read from Pool of Radiance's MON*CHA and CPIC files): the low 3 bits of record
+# byte 0x6C give the cells a combatant fills, counted from its own cell (top left):
+# 1 = one cell; 2 = that cell and the one below (24x48 icons: ogres, trolls, giants,
+# minotaurs, gnolls); 3 = that cell and the one to the right (48x24: scorpions, snakes,
+# centaurs, boars); 4 = a 2x2 block (48x48: wyverns, Tyranithraxus).
+# - Placement: every cell of the footprint must be bare floor and free.
+# - Moving: every cell of the moved footprint must be walkable; anyone found in it (other
+#   than the mover) blocks the step, or is attacked if an enemy.
+# - Distance, adjacency, sight and direction between two combatants use their closest
+#   pair of cells.
+const FOOTPRINT := [[], [Vector2i(0, 0)], [Vector2i(0, 0), Vector2i(0, 1)],
+	[Vector2i(0, 0), Vector2i(1, 0)],
+	[Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]]
+
+
+static func foot_size(m: PartyMember) -> int:
+	return clampi(m.size & 7, 1, 4)
+
+
+static func cells_at(at: Vector2i, fp: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for d in FOOTPRINT[clampi(fp, 1, 4)]:
+		out.append(at + d)
+	return out
+
+
+func cells(c: Dictionary) -> Array[Vector2i]:
+	return cells_at(c.cell, int(c.get("fp", 1)))
+
+
+func occupant(cell: Vector2i, ignore: int = -1) -> int:
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
-		if not c.down and c.cell == cell:
+		if i != ignore and not c.down and cell in cells(c):
 			return i
 	return -1
+
+
+## Can combatant i stand with its top-left cell at `at`? Returns [ok, who's in the way]:
+## ok is false if a cell is not walkable or someone else is there (who = their index).
+func fits(i: int, at: Vector2i) -> Array:
+	var who := -1
+	var ok := true
+	for p in cells_at(at, int(combatants[i].get("fp", 1))):
+		var o := occupant(p, i)
+		if o >= 0:
+			who = o
+			ok = false
+		elif not field.walkable(p.x, p.y):
+			ok = false
+	return [ok, who]
+
+
+## The closest pair of cells between combatants a and b (by range): [a's cell, b's cell].
+func closest(a: Dictionary, b: Dictionary, a_at = null) -> Array:
+	var ac: Array[Vector2i] = cells_at(a.cell if a_at == null else a_at, int(a.get("fp", 1)))
+	var best := [ac[0], b.cell]
+	var best_r := 1 << 30
+	for p in ac:
+		for q in cells(b):
+			var r := line_steps(p, q, false).x
+			if r < best_r:
+				best_r = r
+				best = [p, q]
+	return best
+
+
+## Are combatants a and b next to each other (a optionally at another cell)?
+func touching(a: Dictionary, b: Dictionary, a_at = null) -> bool:
+	var ac: Array[Vector2i] = cells_at(a.cell if a_at == null else a_at, int(a.get("fp", 1)))
+	for p in ac:
+		for q in cells(b):
+			if adjacent(p, q):
+				return true
+	return false
+
+
+## Direction from a to b, from their closest cells.
+func dir_between(a: Dictionary, b: Dictionary) -> int:
+	var pr := closest(a, b)
+	return dir_to(pr[0], pr[1])
+
+
+## Range from a to b in squares, from their closest cells.
+func range_of(a: Dictionary, b: Dictionary) -> int:
+	var pr := closest(a, b)
+	return range_between(pr[0], pr[1])
 
 
 func adjacent(a: Vector2i, b: Vector2i) -> bool:
@@ -539,13 +638,14 @@ func step(dir: int) -> String:
 		return "blocked"
 	var c: Dictionary = combatants[active]
 	var to: Vector2i = c.cell + DIRS[dir]
-	var other := occupant(to)
+	var fit := fits(active, to)
+	var other: int = fit[1]
 	if other >= 0:
 		if combatants[other].team == c.team or c.attacks <= 0:
 			return "blocked"
 		attack(active, other)
 		return "attacked"
-	if not field.walkable(to.x, to.y):
+	if not fit[0]:
 		return "blocked"
 	var cost := 3 if dir % 2 == 1 else 2
 	if cost > c.moves:
@@ -575,7 +675,7 @@ func guard_attacks(i: int) -> void:
 		var e: Dictionary = combatants[j]
 		if c.down:
 			return
-		if e.down or e.team == c.team or not e.guarding or not adjacent(e.cell, c.cell):
+		if e.down or e.team == c.team or not e.guarding or not touching(e, c):
 			continue
 		e.guarding = false
 		if int(e.get("guard_attacks", 0)) <= 0:
@@ -593,12 +693,10 @@ func free_attacks(i: int, to: Vector2i) -> void:
 		var e: Dictionary = combatants[j]
 		if c.down:
 			return
-		if e.down or e.team == c.team or not adjacent(e.cell, c.cell) or adjacent(e.cell, to):
+		if e.down or e.team == c.team or not touching(e, c) or touching(c, e, to):
 			continue
-		var seen := false
-		for k in range(-2, 3):
-			if e.cell + DIRS[(e.dir + k + 8) % 8] == c.cell:
-				seen = true
+		var off := (dir_between(e, c) - int(e.dir) + 8) % 8
+		var seen := off <= 2 or off >= 6    # not one of the three cells at its back
 		if e.acted and e.received > 0 and not seen:
 			continue
 		if e.attacks <= 0:
@@ -612,7 +710,7 @@ func free_attacks(i: int, to: Vector2i) -> void:
 ## and how far they have turned it), before the attack is made.
 func _note_attack(a: Dictionary, t: Dictionary) -> void:
 	t.received += 1
-	var diff := (dir_to(t.cell, a.cell) - int(t.dir) + 8) % 8
+	var diff := (dir_between(t, a) - int(t.dir) + 8) % 8
 	if diff > 4:
 		diff = 8 - diff
 	t.turned = (t.turned + diff) % 8
@@ -628,11 +726,11 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var behind := free
 	if not free:
 		_note_attack(a, t)
-		if t.received > 1 and dir_to(a.cell, t.cell) == t.dir and t.turned > 4:
+		if t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4:
 			behind = true
 		if t.received < 2:
-			t.dir = dir_to(t.cell, a.cell)
-	a.dir = dir_to(a.cell, t.cell)
+			t.dir = dir_between(t, a)
+	a.dir = dir_between(a, t)
 	a.moves = 0
 	var stab := not free and _can_backstab(a, t)
 	var ac: int = tm.rear_ac if behind else tm.ac
@@ -672,7 +770,7 @@ func _can_backstab(a: Dictionary, t: Dictionary) -> bool:
 		return false
 	if am.weapon != null and not am.weapon.type in BACKSTAB_WEAPONS:
 		return false
-	return int(t.received) > 1 and dir_to(a.cell, t.cell) == int(t.dir)
+	return int(t.received) > 1 and dir_between(a, t) == int(t.dir)
 
 
 ## Ends the active combatant's turn.
@@ -744,11 +842,9 @@ func can_see(a: Vector2i, b: Vector2i) -> bool:
 
 ## Is j within `reach` squares of i with a clear line (1 = adjacent)?
 func _within(i: int, j: int, reach: int) -> bool:
-	var a: Vector2i = combatants[i].cell
-	var b: Vector2i = combatants[j].cell
 	if reach <= 1:
-		return adjacent(a, b)
-	var line := line_steps(a, b)
+		return touching(combatants[i], combatants[j])
+	var line := clear_line(combatants[i], combatants[j])
 	return line.y == 1 and line.x / 2 <= reach
 
 
@@ -763,7 +859,7 @@ func find_target(i: int) -> bool:
 	for j in combatants.size():
 		if _enemy_of(c, j):
 			all.append(j)
-			if can_see(c.cell, combatants[j].cell):
+			if clear_line(c, combatants[j]).y == 1:
 				seen.append(j)
 	var pool := seen if not seen.is_empty() else all
 	if pool.is_empty():
@@ -854,8 +950,11 @@ func _flee_step(i: int) -> String:
 	var turns: Array = PATTERN_TURNS[roll(1, 2, "%s runs" % m.name)]
 	for k in 5:
 		var dir := (base + int(turns[k])) % 8
-		var to: Vector2i = c.cell + DIRS[dir]
-		if not field.in_bounds(to.x, to.y):
+		var off_field := false
+		for p in cells_at(c.cell + DIRS[dir], int(c.fp)):
+			if not field.in_bounds(p.x, p.y):
+				off_field = true
+		if off_field:
 			if _gets_away(i):
 				return "gone"
 			c.fleeing = false
@@ -886,8 +985,8 @@ func _gets_away(i: int) -> bool:
 
 ## Could the computer step in direction `dir`? It needs more movement left than the cost.
 func _can_step(c: Dictionary, dir: int) -> bool:
-	var to: Vector2i = c.cell + DIRS[dir]
-	if occupant(to) >= 0 or not field.walkable(to.x, to.y):
+	var fit := fits(combatants.find(c), c.cell + DIRS[dir])
+	if not fit[0]:
 		return false
 	var cost := 3 if dir % 2 == 1 else 2
 	return cost < c.moves
@@ -900,7 +999,7 @@ func _approach(i: int) -> String:
 	if c.moves / 2 <= 0 or (m.class_id == CLASS_MAGE and m.armor == null):
 		guard(i)
 		return "end"
-	var base := dir_to(c.cell, combatants[c.target].cell)
+	var base := dir_between(c, combatants[c.target])
 	var turns: Array = PATTERN_TURNS[c.pattern]
 	var k := 0
 	while k < 5 and not _can_step(c, (base + int(turns[k])) % 8):

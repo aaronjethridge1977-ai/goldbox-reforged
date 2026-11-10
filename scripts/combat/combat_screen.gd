@@ -295,7 +295,8 @@ func _load_monsters() -> void:
 func _place() -> void:
 	_combatants.clear()
 	var placer := Placement.new(_field, _px, _py)
-	var party_cells := placer.place_team(_party.size(), _facing, Vector2i.ZERO, true)
+	var party_sizes := _party.map(func(m): return Combat.foot_size(m))
+	var party_cells := placer.place_team(_party.size(), _facing, Vector2i.ZERO, true, party_sizes)
 	var party_dir: int = Placement.FACING_TO_DIR[_facing]
 	for i in _party.size():
 		if party_cells[i].x < 0:
@@ -303,7 +304,8 @@ func _place() -> void:
 		_combatants.append({"who": _party[i], "team": 0, "cell": party_cells[i],
 			"icon": _art.character_icon(_party[i]), "dir": party_dir})
 	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
-	var mon_cells := placer.place_team(_monsters.size(), (_facing + 2) % 4, ahead, false)
+	var mon_sizes := _monsters.map(func(m): return Combat.foot_size(m))
+	var mon_cells := placer.place_team(_monsters.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
 	for i in _monsters.size():
 		if mon_cells[i].x < 0:
 			continue
@@ -404,7 +406,6 @@ func _after_player_action(what: String) -> void:
 
 func _start_aim() -> void:
 	var me: int = _combat.active
-	var mine: Vector2i = _combatants[me].cell
 	_aim_list = []
 	for j in _combatants.size():
 		if j != me and not _combatants[j].get("down", false) and _combatants[j].team != _combatants[me].team:
@@ -413,8 +414,8 @@ func _start_aim() -> void:
 		_on_message("NO TARGETS")
 		_refresh()
 		return
-	_aim_list.sort_custom(func(a, b): return _combat.range_between(mine, _combatants[a].cell) \
-		< _combat.range_between(mine, _combatants[b].cell))
+	_aim_list.sort_custom(func(a, b): return _combat.range_of(_combatants[me], _combatants[a]) \
+		< _combat.range_of(_combatants[me], _combatants[b]))
 	_aiming = true
 	_aim_index = 0
 	_show_aim()
@@ -431,10 +432,10 @@ func _aim_why(j: int) -> String:
 	var m: PartyMember = _combatants[me].who
 	if m.weapon_ranged:
 		var why := _combat.why_not_shoot(me, j)
-		if why == "" or (m.weapon_ranged_melee and _combat.adjacent(_combatants[me].cell, _combatants[j].cell)):
+		if why == "" or (m.weapon_ranged_melee and _combat.touching(_combatants[me], _combatants[j])):
 			return ""
 		return why
-	if not _combat.adjacent(_combatants[me].cell, _combatants[j].cell):
+	if not _combat.touching(_combatants[me], _combatants[j]):
 		return "OUT OF RANGE"
 	return "" if _combatants[me].attacks > 0 else "NO ATTACKS LEFT"
 
@@ -520,7 +521,7 @@ func _refresh() -> void:
 			var j: int = _aim_list[_aim_index]
 			var why := _aim_why(j)
 			_prompt.text = "AIM: RANGE = %d   %s   ←/→ next/prev   %sEsc: back" % [
-				_combat.range_between(_combatants[_combat.active].cell, _combatants[j].cell),
+				_combat.range_of(_combatants[_combat.active], _combatants[j]),
 				why if why != "" else "", "Enter: target   " if why == "" else ""]
 		else:
 			_prompt.text = ("ROUND %d   Arrows / Home PgUp End PgDn: move or attack   Space: done   "
