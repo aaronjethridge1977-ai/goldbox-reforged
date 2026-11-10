@@ -50,7 +50,7 @@ static func build(game_path: String, file_no: int, wall_ids: Array) -> WallSet:
 		tiles.append_array(_tiles_from(shared.blocks.get(203, PackedByteArray())))
 		tiles.append_array(_tiles_from(tilesets.blocks.get(id, PackedByteArray())))
 		if count > 5:
-			var base := 10 * (id if id != 0 else 10)
+			var base: int = 10 * (id if id != 0 else 10)
 			for extra in [base + 1, base + 2, base + 3]:
 				tiles.append_array(_tiles_from(tilesets.blocks.get(extra, PackedByteArray())))
 		for w in count:
