@@ -8,12 +8,12 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M0 — Setup, done** (2026-11-09). The project runs and finds your game files. Nothing is playable yet. **Next: M1**, decoding the data files.
+**M1 — Data inventory, in progress.** Pictures (static and animated), area maps, game text and the first-person wall graphics decode; you can walk New Phlan in first person. Events, monsters, items and saves are next.
 
 | # | Milestone | |
 |---|-----------|--|
 | M0 | Setup | done |
-| M1 | Data inventory (file formats documented) | next |
+| M1 | Data inventory (file formats documented) | in progress |
 | M2 | Viewers (maps, art, fonts, monster and item tables) | |
 | M3 | Exploration | |
 | M4 | Characters | |
@@ -27,7 +27,11 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 1. Install [Godot 4.7](https://godotengine.org/download) (Standard build).
 2. Put your *Pool of Radiance* install folder next to the project, so that `Pool of Radiance/POOLRAD/GEO1.DAX` sits beside `project.godot`. That folder is git-ignored and is never committed.
    Or point the engine at it from anywhere: run with `-- --game-path="D:/path/to/POOLRAD"`.
-3. Open `project.godot` in Godot and press **F5**. The screen should say it found your data.
+3. Open `project.godot` in Godot and press **F5**. It opens a data browser on the title screen:
+   - **Tab** cycles pictures → maps → walk.
+   - Pictures: ←/→ step through every decoded picture, ↑/↓ jump between files.
+   - Maps: ←/→ step through the 29 area maps; **Enter** walks the current map.
+   - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn.
 
 ## Layout
 

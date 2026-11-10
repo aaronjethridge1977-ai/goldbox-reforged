@@ -1,16 +1,18 @@
 extends Control
 ## M1/M2 data browser.
-##   Tab          : switch between pictures and maps
-##   Left / Right : previous / next item
-##   Up / Down    : previous / next file (pictures)
+##   Tab          : pictures -> maps -> walk -> pictures
+##   Pictures     : Left/Right picture, Up/Down file
+##   Maps         : Left/Right map, Enter to walk the map
+##   Walk         : Up forward, Down back, Left/Right turn
 ## Starts on the title screen.
 
-enum Mode { PICTURES, MAPS }
+enum Mode { PICTURES, MAPS, WALK }
 
 @onready var _picture: TextureRect = $Picture
 @onready var _map_view: MapView = $MapView
 @onready var _status: Label = $Status
 
+var _game_path := ""
 var _mode := Mode.PICTURES
 var _pictures: Array = []   # [{file, id, pic}]
 var _maps: Array = []       # [{file, id, map}]
@@ -18,18 +20,25 @@ var _area_text := {}        # block id -> first event text in that area's ECL bl
 var _pic_index := 0
 var _map_index := 0
 
+# Walk mode state
+var _dungeon := DungeonView.new()
+var _walls: WallSet
+var _walls_for := -1        # map index the wall set was built for
+var _pos := Vector2i(8, 8)
+var _facing := DungeonView.Dir.NORTH
+
 
 func _ready() -> void:
-	var path := GameData.find_game_path()
-	if path == "":
+	_game_path = GameData.find_game_path()
+	if _game_path == "":
 		_status.text = (
 			"Pool of Radiance (DOS) data not found.\n"
 			+ "Place the GOG install folder \"Pool of Radiance\" next to the project,\n"
 			+ "or run with --game-path=\"<folder containing GEO1.DAX>\"."
 		)
 		return
-	for file_name in GameData.list_files(path, "DAX"):
-		var dax := DaxFile.open(path.path_join(file_name))
+	for file_name in GameData.list_files(_game_path, "DAX"):
+		var dax := DaxFile.open(_game_path.path_join(file_name))
 		if dax == null:
 			continue
 		for id in dax.ids():
@@ -56,10 +65,23 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_pressed():
+	if _game_path == "" or not event.is_pressed():
 		return
-	if event is InputEventKey and event.keycode == KEY_TAB:
-		_mode = Mode.MAPS if _mode == Mode.PICTURES else Mode.PICTURES
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
+		_mode = ((_mode + 1) % 3) as Mode
+	elif _mode == Mode.WALK:
+		if event.is_action("ui_up"):
+			_move(_facing)
+		elif event.is_action("ui_down"):
+			_move((_facing + 2) % 4)
+		elif event.is_action("ui_left"):
+			_facing = ((_facing + 3) % 4) as DungeonView.Dir
+		elif event.is_action("ui_right"):
+			_facing = ((_facing + 1) % 4) as DungeonView.Dir
+		else:
+			return
+	elif _mode == Mode.MAPS and event.is_action("ui_accept"):
+		_mode = Mode.WALK
 	elif event.is_action("ui_right"):
 		_step(1)
 	elif event.is_action("ui_left"):
@@ -96,9 +118,47 @@ func _jump_file(step: int) -> void:
 	_pic_index = starts[(current + step + starts.size()) % starts.size()]
 
 
+## Moves one square if no closed wall is in the way. Door handling is provisional:
+## any side with a door value is treated as passable.
+func _move(direction: int) -> void:
+	var map: GeoMap = _maps[_map_index].map
+	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
+		return
+	var next := _pos + DungeonView.DELTA[direction]
+	if next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE:
+		return
+	_pos = next
+
+
+## Which WALLDEF blocks an area uses is set by its event script (not decoded yet).
+## Until then: a 15-wall block with the area's own id if there is one (New Phlan),
+## otherwise the file's 5-wall blocks in order.
+func _wall_ids_for(file_no: int, area_id: int) -> Array:
+	var walldef := DaxFile.open(_game_path.path_join("WALLDEF%d.DAX" % file_no))
+	if walldef == null:
+		return []
+	if walldef.blocks.has(area_id) and walldef.blocks[area_id].size() >= WallSet.BYTES_PER_WALL * 15:
+		return [area_id]
+	var ids := []
+	for id in walldef.ids():
+		if walldef.blocks[id].size() == WallSet.BYTES_PER_WALL * 5 and ids.size() < 3:
+			ids.append(id)
+	return ids
+
+
+func _layout() -> void:
+	# Walk mode: view on the left, map on the right. Otherwise one panel fills the screen.
+	var walk := _mode == Mode.WALK
+	_picture.anchor_right = 0.5 if walk else 1.0
+	_map_view.anchor_left = 0.5 if walk else 0.0
+	_picture.visible = _mode != Mode.MAPS
+	_map_view.visible = _mode != Mode.PICTURES
+	if not walk:
+		_map_view.set_marker(Vector2i(-1, -1), 0)
+
+
 func _show() -> void:
-	_picture.visible = _mode == Mode.PICTURES
-	_map_view.visible = _mode == Mode.MAPS
+	_layout()
 	if _mode == Mode.PICTURES:
 		if _pictures.is_empty():
 			_status.text = "No pictures decoded."
@@ -106,17 +166,33 @@ func _show() -> void:
 		var e: Dictionary = _pictures[_pic_index]
 		var pic: EgaPicture = e.pic
 		_picture.texture = ImageTexture.create_from_image(pic.sheet())
-		_status.text = "PICTURES  %s block %d   %dx%d   %d frame(s)   [%d/%d]    ←/→ picture   ↑/↓ file   Tab maps" % [
+		_status.text = "PICTURES  %s block %d   %dx%d   %d frame(s)   [%d/%d]\n←/→ picture   ↑/↓ file   Tab maps" % [
 			e.file, e.id, pic.width, pic.height, pic.frames.size(), _pic_index + 1, _pictures.size()]
-	else:
-		if _maps.is_empty():
-			_status.text = "No maps decoded."
-			return
-		var e: Dictionary = _maps[_map_index]
-		_map_view.map = e.map
-		var area: String = GeoMap.AREA_NAMES.get(e.id, "unnamed area")
+		return
+	if _maps.is_empty():
+		_status.text = "No maps decoded."
+		return
+	var e: Dictionary = _maps[_map_index]
+	_map_view.map = e.map
+	var area: String = GeoMap.AREA_NAMES.get(e.id, "unnamed area")
+	if _mode == Mode.MAPS:
 		var hint: String = _area_text.get(e.id, "")
 		if hint.length() > 70:
 			hint = hint.substr(0, 70) + "..."
-		_status.text = "MAPS  %s — %s block %d  [%d/%d]   %s\nwalls coloured by type, doors gold, shaded = flag bit 7 (unknown)    ←/→ map   Tab pictures" % [
+		_status.text = "MAPS  %s — %s block %d  [%d/%d]   %s\nwalls coloured by type, doors gold, shaded = flag bit 7 (unknown)    ←/→ map   Enter walk   Tab walk" % [
 			area, e.file, e.id, _map_index + 1, _maps.size(), hint]
+		return
+	# Walk mode
+	if _walls_for != _map_index:
+		var file_no := int(String(e.file).trim_prefix("GEO").trim_suffix(".DAX"))
+		_walls = WallSet.build(_game_path, file_no, _wall_ids_for(file_no, e.id))
+		_walls_for = _map_index
+	if _walls == null or _walls.walls.is_empty():
+		_status.text = "WALK  %s — no wall graphics found" % area
+		return
+	var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
+	_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
+	_map_view.set_marker(_pos, _facing)
+	var facing_name: String = ["North", "East", "South", "West"][_facing]
+	_status.text = "WALK  %s   %d,%d facing %s   (wall set provisional except New Phlan; doors always open)\n↑ forward   ↓ back   ←/→ turn   Tab pictures" % [
+		area, _pos.x, _pos.y, facing_name]
