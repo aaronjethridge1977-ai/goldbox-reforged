@@ -172,6 +172,11 @@ func set_morale_base(value: int) -> void:
 
 
 ## The monsters brought down in the fight just finished (for experience and treasure).
+## Rounds fought (a minute of game time each).
+func rounds() -> int:
+	return _combat.round_no if _combat != null else 0
+
+
 func defeated() -> Array:
 	var out := []
 	for c in _combatants:

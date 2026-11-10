@@ -71,6 +71,8 @@ var area_deco := []              # last LOAD_AREA_DECO operands
 ## gems, jewelry, item list id (ITEM block; 255 = none).
 var treasure := []
 var error := ""
+## Minutes the script moved the clock on (CLOCK); the game runs spell effects down by them.
+var minutes_passed := 0
 
 var _menu_dest := {}             # operand the menu choice is written to
 var _rng := RandomNumberGenerator.new()
@@ -267,7 +269,7 @@ func _note(message: String) -> void:
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
 const QUIET := ["CLEAR_BOX",
-	"SOUND", "CLOCK", "PARTY_CHECK",
+	"SOUND", "PARTY_CHECK",
 	"HAS_EFFECT", "FIND_ITEM", "DESTROY_ITEM", "LOAD_CHAR", "NPC_ADD", "NPC_REMOVE",
 	"WHO", "SPELL", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
 	"UNKNOWN_49", "UNKNOWN_4A", "UNKNOWN_4B", "FOR_START", "FOR_REPEAT", "PICTURE2", "CALL"]
@@ -283,6 +285,9 @@ func _exec(ins: Dictionary) -> void:
 			state = State.DONE
 		"GOTO":
 			_jump(a[0])
+		"CLOCK":
+			# Pool of Radiance's form: one operand, minutes (its forced walk passes one a step).
+			minutes_passed += GameClock.add_minutes(self, _value(a[0]))
 		"GOSUB":
 			stack.append(pc)
 			_jump(a[0])

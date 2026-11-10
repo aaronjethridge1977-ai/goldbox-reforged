@@ -97,7 +97,7 @@ func _ready() -> void:
 	_message.offset_bottom = -64
 	_message.visible = false
 	add_child(_message)
-	_vm.write_byte(EclVM.CLOCK_HOUR, 0)   # a new game starts at 00:00
+	GameClock.set_time(_vm, 0, 0)   # a new game starts at 00:00
 	_shop = ShopScreen.new()
 	_shop.visible = false
 	_shop.closed.connect(_on_shop_closed)
@@ -186,8 +186,49 @@ func _ready() -> void:
 	# Testing aid: start straight in the last quick save, if there is one.
 	if FileAccess.file_exists(_save_path()):
 		_quick_load()
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--keys="):
+				_replay_keys.call_deferred(arg.trim_prefix("--keys=").split(","))
 		return
 	_show()
+
+
+## Testing aid for the lab: --keys=up,up,s,l,e,... presses each key (Godot key names, or
+## "wait" for half a second), waits until the engine is idle and prints where the party is,
+## the clock, what is on screen and the message, one line per key; then quits.
+func _replay_keys(names: PackedStringArray) -> void:
+	print("start  ", _state_line())
+	for n in names:
+		if n == "wait":
+			await get_tree().create_timer(0.5).timeout
+		else:
+			var ev := InputEventKey.new()
+			ev.keycode = OS.find_keycode_from_string({"enter": "Enter", "esc": "Escape"}.get(n, n.capitalize()))
+			ev.pressed = true
+			Input.parse_input_event(ev)
+			var up := ev.duplicate()
+			up.pressed = false
+			Input.parse_input_event(up)
+		for i in 300:
+			await get_tree().process_frame
+			if i > 3 and not _busy:
+				break
+		print(n.rpad(6), " ", _state_line())
+	get_tree().quit()
+
+
+func _state_line() -> String:
+	var screen := "walk"
+	for pair in [[_shop, "shop"], [_sheet, "sheet"], [_combat, "combat"], [_treasure, "treasure"],
+			[_camp, "camp"], [_temple, "temple"]]:
+		if pair[0].visible:
+			screen = pair[1]
+	var effects := []
+	for m in _party:
+		for a in m.affects:
+			effects.append("%s:%d/%d" % [m.name.substr(0, 6), int(a.effect), int(a.minutes)])
+	return "%d,%d %s %s %s vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
+		screen, _vm.state, " ".join(effects), _message.text.replace("\n", " ").left(90)]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -245,8 +286,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_N:
-			var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
-			_vm.write_byte(EclVM.CLOCK_HOUR, 8 if night else 20)
+			var night := GameClock.hour(_vm) >= 14
+			GameClock.set_time(_vm, 8 if night else 20, 0)
 		elif key == KEY_O:
 			_dungeon.show_slots = not _dungeon.show_slots
 		elif key == KEY_C:
@@ -270,6 +311,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_L:
 			# LOOK: searches the square you stand on once.
 			if _vm.ecl != null and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+				_pass_time(GameClock.TEN_MINUTES, 1)
 				_vm.write_byte(SEARCH_FLAG, 1)
 				_sync_position_to_vm(_facing)
 				_vm.clear_output()
@@ -561,6 +603,7 @@ func _finish_move(direction: int) -> void:
 	if next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE:
 		return
 	_pos = next
+	_pass_time(GameClock.TEN_MINUTES if _searching else GameClock.MINUTE, 1)
 	if _vm.ecl != null:
 		_sync_position_to_vm(_facing)
 		_vm.clear_output()
@@ -672,6 +715,9 @@ func _on_timer() -> void:
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
 func _after_vm() -> void:
+	if _vm.minutes_passed > 0:
+		SpellCaster.pass_time(_party, _vm.minutes_passed)
+		_vm.minutes_passed = 0
 	if _vm.text_changed:
 		# PRINT_CLEAR "" clears the box, as between the stops of Rolf's tour.
 		_message.text = _vm.text
@@ -779,13 +825,14 @@ func _on_temple_closed() -> void:
 
 
 func _on_camp_closed() -> void:
-	_advance_clock(_camp.hours_passed)
+	GameClock.add_minutes(_vm, _camp.minutes_passed)   # the camp has already run the effects
 	_show()
 
 
 ## Rest was interrupted: the area's "rest interrupted" script runs (usually an encounter).
 func _on_rest_interrupted() -> void:
-	_advance_clock(_camp.hours_passed)
+	GameClock.add_minutes(_vm, _camp.minutes_passed)
+	_camp.minutes_passed = 0
 	if _vm.ecl != null:
 		_vm.clear_output()
 		_vm.start(3)
@@ -800,9 +847,11 @@ func _open_ahead() -> int:
 	return Placement.encounter_distance(field, _pos.x, _pos.y, int(_facing), 2)
 
 
-func _advance_clock(hours: int) -> void:
-	var h := (_vm.read_byte(EclVM.CLOCK_HOUR) + hours) % 24
-	_vm.write_byte(EclVM.CLOCK_HOUR, h)
+## Game time passes outside camp and combat: the clock moves and everyone's spell effects
+## run down with it.
+func _pass_time(slot: int, amount: int) -> void:
+	var minutes := GameClock.advance(_vm, slot, amount)
+	SpellCaster.pass_time(_party, minutes)
 
 
 ## Runs the fight an event script asked for, then lets the script carry on. A COMBAT with
@@ -821,6 +870,7 @@ func _start_event_fight() -> void:
 
 
 func _on_event_fight_finished(result: int) -> void:
+	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
 	if result == 2:
 		_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
 		_vm.state = EclVM.State.DONE
@@ -1111,8 +1161,8 @@ func _show() -> void:
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
 	var map: GeoMap = e.map
-	var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
+	var night := GameClock.hour(_vm) >= 14
 	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
-	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  S search  L look  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
-		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127,
+	_status.text = "WALK  %s   %d,%d facing %s  %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  S search  L look  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
+		area, _pos.x, _pos.y, facing_name, GameClock.text(_vm), map.flag(_pos.x, _pos.y) & 127,
 		("night" if night else "day") + ("  SEARCHING" if _searching else ""), script_name]

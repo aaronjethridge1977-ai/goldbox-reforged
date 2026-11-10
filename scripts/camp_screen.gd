@@ -44,7 +44,7 @@ var _to_rest := 0           # 5-minute steps still to rest
 var _field := 1             # 0 days, 1 hours, 2 minutes
 var _resting := false
 var _rng := RandomNumberGenerator.new()
-var hours_passed := 0       # whole hours rested, for the caller's clock
+var minutes_passed := 0     # minutes rested since the camp opened, for the caller's clock
 
 var _head: Label
 var _party_label: Label
@@ -53,7 +53,6 @@ var _note: Label
 var _menu: Label
 var _timer: Timer
 var _sheet: CharacterSheet
-var _minute_carry := 0
 
 var spells: SpellTable = null      # set by the game before opening
 var _sel := 0                      # selected character
@@ -80,8 +79,7 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
 	_mode = "camp"
 	_rng2.randomize()
-	hours_passed = 0
-	_minute_carry = 0
+	minutes_passed = 0
 	_rng.randomize()
 	if _head == null:
 		_build()
@@ -212,10 +210,7 @@ func _tick() -> void:
 			return
 		_to_rest -= 1
 		_rest_steps += 1
-		_minute_carry += 5
-		if _minute_carry >= 60:
-			_minute_carry -= 60
-			hours_passed += 1
+		minutes_passed += 5
 		SpellCaster.pass_time(_party, 5)
 		if _rest_steps % STEPS_PER_HEAL == 0:
 			_heal_day()
