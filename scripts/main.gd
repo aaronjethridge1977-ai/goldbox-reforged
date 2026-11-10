@@ -408,8 +408,10 @@ func _on_timer() -> void:
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
 func _after_vm() -> void:
-	if _vm.text != "":
+	if _vm.text_changed:
+		# PRINT_CLEAR "" clears the box, as between the stops of Rolf's tour.
 		_message.text = _vm.text
+		_vm.text_changed = false
 	if _vm.picture >= 0:
 		_event_image = null if _vm.picture == 255 else _event_picture(_vm.picture_head, _vm.picture)
 		_vm.picture = -1

@@ -36,6 +36,7 @@ var compare := 0
 
 # Output since the last clear_output()
 var text := ""                   # accumulated message text
+var text_changed := false        # set by PRINT/PRINT_CLEAR (including clearing to "")
 var picture := -1                # last PICTURE id (255 = cleared), -1 = untouched
 var picture_head := 255
 ## A figure approaching in the 3D view: sprite id (-1 none), distance 2 far .. 0 close,
@@ -280,10 +281,13 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], v)
 		"PRINT":
 			text += _string(a[0])
+			text_changed = true
 		"PRINT_CLEAR":
 			text = _string(a[0])
+			text_changed = true
 		"PRINT_RETURN":
 			text += "\n"
+			text_changed = true
 		"SPRITE_START":
 			# A figure walks up: sprite id, starting distance, the portrait it ends on.
 			sprite_id = _value(a[0])
