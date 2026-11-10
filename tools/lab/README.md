@@ -6,8 +6,13 @@ See `plans/test-lab-roadmap.md` in the ai-business-ideas repo.
 
 Setup (in the Linux workspace on the PC):
 1. Unpack `.lab/dosbox-staging-linux-x86_64-v0.83.0.tar.xz` into `~/lab/`.
-2. Copy `Pool of Radiance/POOLRAD` to `~/lab/game` (a copy: the lab never touches real saves).
+2. Copy `Pool of Radiance/POOLRAD` to `~/lab/root/POOLRAD` (a copy: the lab never touches real
+   saves; the game's POOL.CFG expects `C:\POOLRAD\`).
 3. Copy these scripts to `~/lab/`.
+
+Loading a game asks the code-wheel question; the `solve` step reads the runes and path off
+the screen and types the word, using `wheel.json` from the git-ignored `.lab` folder.
+From launch to a loaded save: `./run.sh wait=7 enter wait=3 l wait=3 solve wait=3 l wait=3 a wait=8 grab=cap/game.png`.
 
 Use: `./run.sh wait=7 enter wait=3 grab=cap/a.png ...` starts everything, runs the steps
 (key names, `wait=seconds`, `grab=file.png`) and stops. Each call to the PC is a fresh
