@@ -32,6 +32,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
    - Pictures: ←/→ step through every decoded picture, ↑/↓ jump between files.
    - Maps: ←/→ step through the 29 area maps; **Enter** walks the current map.
    - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night.
+   - **F2** quick-saves in walk mode and **F3** loads; the engine starts straight in the last quick save (saved in `saves/`, git-ignored). Delete `saves/quicksave.cfg` to start fresh.
    - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
 
 ## Layout

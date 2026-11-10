@@ -129,13 +129,19 @@ func _ready() -> void:
 	for i in _pictures.size():
 		if _pictures[i].file == "TITLE.DAX" and _pictures[i].id == 2:
 			_pic_index = i
+	# Testing aid: start straight in the last quick save, if there is one.
+	if FileAccess.file_exists(_save_path()):
+		_quick_load()
+		return
 	_show()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_path == "" or not event.is_pressed() or _shop.visible:
 		return
-	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
+	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
+		_quick_load()
+	elif event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
@@ -156,7 +162,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show()
 			return
-		if key == KEY_N:
+		if key == KEY_F2:
+			_quick_save()
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_F3:
+			_quick_load()
+		elif key == KEY_N:
 			var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
 			_vm.write_byte(EclVM.CLOCK_HOUR, 8 if night else 20)
 		elif key == KEY_O:
@@ -277,6 +289,99 @@ func _capture() -> void:
 		f.store_string("%s block %d (%s)\n" % [e.file, e.id, GeoMap.AREA_NAMES.get(e.id, "unnamed area")])
 		f.store_string(_dungeon.report(e.map, _walls, _pos.x, _pos.y, _facing) + "\n")
 	_status.text = "Captured %s.png / .txt" % base.get_file()
+
+
+## Quick save (F2) / quick load (F3): the whole game state in one file, so a test can
+## start exactly where it's needed. Saved in the project's saves/ folder when run from the
+## editor (git-ignored), otherwise in Godot's user folder.
+func _save_path() -> String:
+	if OS.has_feature("editor"):
+		var dir := ProjectSettings.globalize_path("res://saves")
+		DirAccess.make_dir_recursive_absolute(dir)
+		return dir.path_join("quicksave.cfg")
+	return "user://quicksave.cfg"
+
+
+func _quick_save() -> void:
+	if _busy or _vm.state == EclVM.State.MENU or _vm.ecl == null:
+		_status.text = "Can't save in the middle of an event; finish it first."
+		return
+	var cfg := ConfigFile.new()
+	cfg.set_value("place", "map_file", String(_maps[_map_index].file))
+	cfg.set_value("place", "map_id", int(_maps[_map_index].id))
+	cfg.set_value("place", "x", _pos.x)
+	cfg.set_value("place", "y", _pos.y)
+	cfg.set_value("place", "facing", int(_facing))
+	cfg.set_value("script", "file", _vm_file)
+	cfg.set_value("script", "block", _vm_block)
+	cfg.set_value("script", "memory", _vm.mem)
+	var members := []
+	for m in _party:
+		var items := []
+		for it in m.items:
+			var rec := it.raw.duplicate()
+			rec[52] = 1 if it.readied else 0
+			items.append(rec)
+		members.append({"name": m.name, "money": m.money, "items": items})
+	cfg.set_value("party", "members", members)
+	var err := cfg.save(_save_path())
+	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
+
+
+func _quick_load() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(_save_path()) != OK:
+		_status.text = "No quick save yet (F2 in walk mode saves)."
+		return
+	var map_file: String = cfg.get_value("place", "map_file", "")
+	var map_id: int = cfg.get_value("place", "map_id", -1)
+	var index := -1
+	for i in _maps.size():
+		if _maps[i].file == map_file and _maps[i].id == map_id:
+			index = i
+	if index < 0:
+		_status.text = "Quick save names a map that isn't here."
+		return
+	# Stop anything in progress.
+	_timer.stop()
+	_busy = false
+	_walk_path.clear()
+	_held_message = ""
+	_pending_move = -1
+	_event_image = null
+	_message.text = ""
+	if _shop.visible:
+		_shop.visible = false
+	# Place and script.
+	_mode = Mode.WALK
+	_map_index = index
+	_walls_for = -1
+	_pos = Vector2i(cfg.get_value("place", "x", 8), cfg.get_value("place", "y", 8))
+	_facing = int(cfg.get_value("place", "facing", 0)) as DungeonView.Dir
+	_vm_file = cfg.get_value("script", "file", 0)
+	_vm_block = cfg.get_value("script", "block", -1)
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % _vm_file))
+	if ecl != null and ecl.blocks.has(_vm_block):
+		_vm.load_script(ecl.blocks[_vm_block])
+	var memory: PackedByteArray = cfg.get_value("script", "memory", PackedByteArray())
+	if memory.size() == _vm.mem.size():
+		_vm.mem = memory
+	_vm.state = EclVM.State.DONE
+	_vm.clear_output()
+	_vm.sprite_id = -1
+	_vm_map = _map_index
+	_sync_position_to_vm(_facing)
+	# Party: money and items as saved.
+	var members: Array = cfg.get_value("party", "members", [])
+	for i in mini(members.size(), _party.size()):
+		var saved: Dictionary = members[i]
+		_party[i].money = saved.get("money", _party[i].money)
+		var items: Array[GameItem] = []
+		for rec in saved.get("items", []):
+			items.append(GameItem.from_record(rec))
+		_party[i].items = items
+	_status.text = "Loaded."
+	_show()
 
 
 ## A step: the area's on-move script runs first (it can refuse the move, e.g. a locked
@@ -718,5 +823,5 @@ func _show() -> void:
 	var map: GeoMap = e.map
 	var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
 	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
-	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   N day/night  O outlines  C capture  G go to  E script   Tab pictures" % [
+	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   F2 save  F3 load   N day/night  O outlines  C capture  G go to  E script   Tab pictures" % [
 		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127, "night" if night else "day", script_name]

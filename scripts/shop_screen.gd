@@ -34,13 +34,13 @@ func open(items: Array[GameItem], party: Array[PartyMember], title: String = "SH
 func _build(title: String) -> void:
 	for c in get_children():
 		c.queue_free()
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fill(self, 0)
 	var bg := ColorRect.new()
 	bg.color = Color(0.04, 0.05, 0.08, 0.97)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fill(bg, 0)
 	add_child(bg)
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fill(box, 0)
 	box.offset_left = 48
 	box.offset_right = -48
 	box.offset_top = 24
@@ -79,6 +79,19 @@ func _build(title: String) -> void:
 		b.add_theme_font_size_override("font_size", 20)
 		b.pressed.connect(spec[1])
 		buttons.add_child(b)
+
+
+## Stretches a control over its parent. (set_anchors_preset alone keeps the control's
+## old size in Godot 4, which left the shop squashed into a strip.)
+static func _fill(c: Control, margin: int) -> void:
+	c.anchor_left = 0.0
+	c.anchor_top = 0.0
+	c.anchor_right = 1.0
+	c.anchor_bottom = 1.0
+	c.offset_left = margin
+	c.offset_top = margin
+	c.offset_right = -margin
+	c.offset_bottom = -margin
 
 
 func _refresh() -> void:
