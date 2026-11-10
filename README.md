@@ -34,6 +34,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
    - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night.
    - **F2** quick-saves in walk mode and **F3** loads; the engine starts straight in the last quick save (saved in `saves/`, git-ignored). Delete `saves/quicksave.cfg` to start fresh.
    - **V** shows the party's character sheets (AC, THAC0, damage, movement, items) next to the values the original saved; **M** browses every monster record. ←/→ to page, Esc to close.
+   - **B** starts a test battle where you stand: the battlefield is built from the map around you, the party and a group of monsters from the area are placed, and the 7×7 combat window can be moved around (arrows, Tab to jump between combatants, PgUp/PgDn to change monster, +/− for distance, Esc to leave). Nobody fights yet.
    - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
 
 ## Layout

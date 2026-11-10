@@ -7,7 +7,8 @@ extends Control
 ##                  O slot outlines, C capture (PNG + slot report to captures/), G go to "x y dir",
 ##                  E write the area's event script listing to captures/, N day/night,
 ##                  1-9 choose a menu item, Enter continue,
-##                  V party character sheets, M monster sheets (every MONnCHA block)
+##                  V party character sheets, M monster sheets (every MONnCHA block),
+##                  B test battle here (battlefield and placement; monsters from MON<area>)
 ## Starts on the title screen.
 
 enum Mode { PICTURES, MAPS, WALK }
@@ -58,6 +59,7 @@ var _jump_next := false             # the next script move is a placement, not a
 var _party: Array[PartyMember] = []
 var _shop: ShopScreen
 var _sheet: CharacterSheet
+var _combat: CombatScreen
 var _types: ItemTypes
 
 
@@ -95,6 +97,9 @@ func _ready() -> void:
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
 	add_child(_sheet)
+	_combat = CombatScreen.new()
+	_combat.visible = false
+	add_child(_combat)
 	_timer = Timer.new()
 	_timer.one_shot = true
 	_timer.timeout.connect(_on_timer)
@@ -145,7 +150,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible:
+	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -180,6 +185,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			for m in _party:
 				m.recalculate(_types)
 			_sheet.open(_party, "PARTY")
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_B:
+			for m in _party:
+				m.recalculate(_types)
+			var map: GeoMap = _maps[_map_index].map
+			_combat.open_test(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1))
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_M:
