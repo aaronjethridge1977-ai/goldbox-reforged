@@ -46,6 +46,17 @@ static func from_record(rec: PackedByteArray) -> GameItem:
 	return it
 
 
+## The record with what changes in play written back (readied, count, charges are in raw).
+func to_record() -> PackedByteArray:
+	var rec := raw.duplicate()
+	if rec.size() < SIZE:
+		return rec
+	rec[52] = 1 if readied else 0
+	rec[54] = 1 if cursed else 0
+	rec[57] = clampi(count, 0, 255)
+	return rec
+
+
 ## All records in a block or file, in stored order.
 static func list_from(data: PackedByteArray) -> Array[GameItem]:
 	var out: Array[GameItem] = []

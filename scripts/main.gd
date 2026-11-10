@@ -142,6 +142,8 @@ func _ready() -> void:
 		)
 		return
 	_types = ItemTypes.load_file(_game_path)
+	CharacterSheet.types = _types
+	CharacterSheet.spells = SpellTable.shared(_game_path)
 	for i in range(1, 7):
 		var m := PartyMember.load_files(_game_path.path_join("CHRDATA%d.SAV" % i), _game_path.path_join("CHRDATA%d.ITM" % i))
 		if m != null:
@@ -236,6 +238,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n.begins_with("xp="):          # xp=<party index>:<experience>
 			var a := n.trim_prefix("xp=").split(":")
 			_party[int(a[0])].experience = int(a[1])
+		elif n.begins_with("sheet="):       # sheet=<index>: what the character sheet shows
+			print(_sheet._body.text if _sheet.visible else "(sheet closed)")
+			print("   foot: " + (_sheet._foot.text if _sheet.visible else ""))
+			continue
 		elif n == "party":
 			for m in _party:
 				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d" % [m.name,
@@ -511,9 +517,7 @@ func _quick_save() -> void:
 	for m in _party:
 		var items := []
 		for it in m.items:
-			var rec := it.raw.duplicate()
-			rec[52] = 1 if it.readied else 0
-			items.append(rec)
+			items.append(it.to_record())
 		members.append({"name": m.name, "record": m.to_record(), "money": m.money, "items": items, "hp": m.hp,
 			"experience": m.experience, "status": m.status, "memorized": m.memorized,
 			"spell_book": m.spell_book, "affects": m.affects, "npc": m.npc})
@@ -522,9 +526,7 @@ func _quick_save() -> void:
 	for m in _party_menu.roster:
 		var items := []
 		for it in m.items:
-			var rec := it.raw.duplicate()
-			rec[52] = 1 if it.readied else 0
-			items.append(rec)
+			items.append(it.to_record())
 		roster.append({"record": m.to_record(), "items": items, "affects": m.affects})
 	cfg.set_value("party", "roster", roster)
 	var err := cfg.save(_save_path())

@@ -48,10 +48,13 @@ static func castable_outside(table: SpellTable, id: int) -> bool:
 ## Casts `id` outside combat. `target` is the chosen member for one-member spells.
 ## Returns the lines to show.
 static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party: Array,
-		target: PartyMember, rng: RandomNumberGenerator) -> PackedStringArray:
+		target: PartyMember, rng: RandomNumberGenerator, from_item: bool = false) -> PackedStringArray:
 	var out := PackedStringArray()
-	caster.forget(id)
-	out.append("%s CASTS %s" % [caster.name, table.name_of(id)])
+	if from_item:
+		out.append("%s USES AN ITEM" % caster.name)
+	else:
+		caster.forget(id)
+		out.append("%s CASTS %s" % [caster.name, table.name_of(id)])
 	var targets: Array = []
 	match table.target(id):
 		SpellTable.TARGET_SELF:
