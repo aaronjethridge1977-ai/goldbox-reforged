@@ -31,6 +31,13 @@ var _last_dropped: Array[GameItem] = []
 var _aiming := false          # AIM: choosing a target
 var _aim_list: Array[int] = []
 var _aim_index := 0
+# CAST: "" (not casting), "choose" (the spell list) or "aim" (where it goes)
+var _casting := ""
+var _spell_list: Array[int] = []
+var _spell_index := 0
+var _spell_id := 0
+var _spell_cell := Vector2i.ZERO
+var _spell_picks: Array[int] = []
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
 var _morale_base := 99      # the encounter's morale (from the script)
@@ -191,6 +198,25 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 	while not stop and _combat.next_turn() >= 0 and guard < 5000:
 		guard += 1
 		var c: Dictionary = _combatants[_combat.active]
+		if plan == "cast" and c.team == 0 and _combat.magic != null:
+			# Lab check: each caster casts its first combat spell at the nearest enemy (or
+			# itself), then fights on Quick.
+			var list := _combat.magic.castable(_combat.active)
+			if not list.is_empty():
+				var id: int = list[0]
+				var best := -1
+				for j in _combatants.size():
+					if _combatants[j].team != 0 and not _combatants[j].down and (best < 0 or
+							_combat.range_of(c, _combatants[j]) < _combat.range_of(c, _combatants[best])):
+						best = j
+				var picks: Array[int] = [best if _combat.magic.table.field(id, 14) != 0 else _combat.active]
+				var at: Vector2i = _combatants[picks[0]].cell
+				print("== %s casts %s at %s (%s)" % [c.who.name, _combat.magic.table.name_of(id), at,
+					_combat.magic.why_not(_combat.active, id, at)])
+				if _combat.magic.why_not(_combat.active, id, at) == "":
+					_combat.magic.cast(_combat.active, id, at, picks)
+					continue
+			c.quick = true
 		if c.quick:
 			while _combat.ai_act():
 				guard += 1
@@ -333,6 +359,9 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_place()
 	_combat = Combat.new(_field, _combatants, seed_value)
 	_combat.types = _types
+	var table := SpellTable.shared(_game_path)
+	if table.is_loaded():
+		_combat.magic = CombatSpells.new(_combat, table)
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
 	_combat.surprise_flags = _surprise
@@ -469,6 +498,115 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 		_after_player_action("attacked")
 
 
+# --- CAST ---------------------------------------------------------------------------------
+# The original's CAST: the caster's memorized spells, then (for a spell that isn't on the
+# caster alone) the aim, with "ABORT SPELL?" on leaving. QoL: the cells an area spell will
+# cover are shaded while aiming. Modern controls: C casts, ↑/↓ choose the spell, Enter
+# picks it; arrows move the aim, Tab jumps to the next figure, Enter casts (or picks a
+# figure, D when done picking), Esc aborts and the spell is kept.
+
+func _start_cast() -> void:
+	if _combat.magic == null:
+		return
+	_spell_list = _combat.magic.castable(_combat.active)
+	if _spell_list.is_empty():
+		_on_message("NO SPELLS MEMORIZED")
+		_refresh()
+		return
+	_casting = "choose"
+	_spell_index = 0
+	_refresh()
+
+
+func _cast_input(event: InputEvent, key: Key) -> void:
+	var me: int = _combat.active
+	if _casting == "choose":
+		if event.is_action("ui_cancel"):
+			_casting = ""
+		elif event.is_action("ui_up") or event.is_action("ui_left"):
+			_spell_index = (_spell_index + _spell_list.size() - 1) % _spell_list.size()
+		elif event.is_action("ui_down") or event.is_action("ui_right"):
+			_spell_index = (_spell_index + 1) % _spell_list.size()
+		elif event.is_action("ui_accept"):
+			_spell_id = _spell_list[_spell_index]
+			_spell_picks = []
+			if _combat.magic.aim_kind(_spell_id) == "self":
+				_finish_cast()
+				return
+			_casting = "aim"
+			_spell_cell = _combatants[me].cell
+			_aim_next_figure()
+		_refresh()
+		return
+	var moves := {KEY_UP: Vector2i(0, -1), KEY_DOWN: Vector2i(0, 1), KEY_LEFT: Vector2i(-1, 0),
+		KEY_RIGHT: Vector2i(1, 0), KEY_HOME: Vector2i(-1, -1), KEY_PAGEUP: Vector2i(1, -1),
+		KEY_END: Vector2i(-1, 1), KEY_PAGEDOWN: Vector2i(1, 1)}
+	if event.is_action("ui_cancel"):
+		_casting = ""
+		_selected = me
+	elif moves.has(key):
+		_spell_cell += moves[key]
+		_view = _spell_cell - Vector2i(3, 3)
+	elif key == KEY_TAB:
+		_aim_next_figure()
+	elif key == KEY_D and not _spell_picks.is_empty():
+		_finish_cast()
+		return
+	elif event.is_action("ui_accept"):
+		var why := _combat.magic.why_not(me, _spell_id, _spell_cell)
+		if why != "":
+			_on_message(why)
+		elif _combat.magic.aim_kind(_spell_id) == "area":
+			_finish_cast()
+			return
+		else:
+			var who := _combat.occupant(_spell_cell)
+			if who < 0:
+				_on_message("NO TARGET THERE")
+			elif who in _spell_picks:
+				_on_message("ALREADY BEEN TARGETED")
+			else:
+				_spell_picks.append(who)
+				if _spell_picks.size() >= _combat.magic.max_picks(_spell_id):
+					_finish_cast()
+					return
+	_refresh()
+
+
+## Moves the aim to the next standing figure (nearest first), enemies before friends for
+## spells meant for enemies.
+func _aim_next_figure() -> void:
+	var me: int = _combat.active
+	var offensive := _combat.magic.table.field(_spell_id, 14) != 0
+	var list: Array[int] = []
+	for j in _combatants.size():
+		if not _combatants[j].get("down", false):
+			list.append(j)
+	list.sort_custom(func(a, b):
+		var fa: int = 0 if (_combatants[a].team != _combatants[me].team) == offensive else 1
+		var fb: int = 0 if (_combatants[b].team != _combatants[me].team) == offensive else 1
+		if fa != fb:
+			return fa < fb
+		return _combat.range_of(_combatants[me], _combatants[a]) < _combat.range_of(_combatants[me], _combatants[b]))
+	if list.is_empty():
+		return
+	var at := _combat.occupant(_spell_cell)
+	var k := list.find(at)
+	var next: int = list[(k + 1) % list.size()] if k >= 0 else list[0]
+	_spell_cell = _combatants[next].cell
+	_selected = next
+	_centre_on_selected()
+
+
+func _finish_cast() -> void:
+	var me: int = _combat.active
+	_casting = ""
+	_selected = me
+	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks)
+	_refresh()
+	_advance()
+
+
 # --- Drawing ----------------------------------------------------------------------------
 
 func _centre_on_selected() -> void:
@@ -478,7 +616,13 @@ func _centre_on_selected() -> void:
 	_view = c - Vector2i(3, 3)
 
 
+var _tint: Image = null
+
+
 func _refresh() -> void:
+	if _tint == null:
+		_tint = Image.create_empty(CELL, CELL, false, Image.FORMAT_RGBA8)
+		_tint.fill(Color(1.0, 0.45, 0.1, 0.45))
 	var size := VIEW_CELLS * CELL
 	var img := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
 	img.fill(Color8(85, 85, 85))
@@ -488,6 +632,20 @@ func _refresh() -> void:
 			var ti := _art.tile(t)
 			if ti:
 				img.blit_rect(ti, Rect2i(0, 0, CELL, CELL), Vector2i(c * CELL, r * CELL))
+	# Casting: the aim cursor and (QoL) the cells the spell will cover.
+	if _casting == "aim":
+		var cells: Array[Vector2i] = []
+		if _combat.magic.aim_kind(_spell_id) == "area":
+			cells = _combat.magic.area_cells(_combat.active, _spell_id, _spell_cell)
+		for p in cells:
+			var at := (p - _view) * CELL
+			if at.x >= 0 and at.y >= 0 and at.x < size and at.y < size:
+				img.blend_rect(_tint, Rect2i(0, 0, CELL, CELL), at)
+		var cur := (_spell_cell - _view) * CELL
+		if cur.x >= 0 and cur.y >= 0 and cur.x < size and cur.y < size:
+			for k in CELL:
+				for edge in [Vector2i(k, 0), Vector2i(k, CELL - 1), Vector2i(0, k), Vector2i(CELL - 1, k)]:
+					img.set_pixelv(cur + edge, Color8(255, 255, 85))
 	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
@@ -517,6 +675,18 @@ func _refresh() -> void:
 	if _combat != null:
 		if _result != 0:
 			_prompt.text = ("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.") + "   Esc or Enter: leave"
+		elif _casting == "choose":
+			var names := PackedStringArray()
+			for k in _spell_list.size():
+				names.append(("[%s]" if k == _spell_index else "%s") % _combat.magic.table.name_of(_spell_list[k]))
+			_prompt.text = "CAST: %s\n↑/↓ choose   Enter cast   Esc back" % "  ".join(names)
+		elif _casting == "aim":
+			var why := _combat.magic.why_not(_combat.active, _spell_id, _spell_cell)
+			var kind := _combat.magic.aim_kind(_spell_id)
+			_prompt.text = "%s: %s   Arrows: aim   Tab: next figure   %s%sEsc: abort" % [
+				_combat.magic.table.name_of(_spell_id), why if why != "" else "RANGE %d" % _combat.magic.spell_range(_combat.active, _spell_id),
+				"Enter: cast   " if why == "" else "",
+				("D: done (%d of %d picked)   " % [_spell_picks.size(), _combat.magic.max_picks(_spell_id)]) if kind == "pick" else ""]
 		elif _aiming:
 			var j: int = _aim_list[_aim_index]
 			var why := _aim_why(j)
@@ -525,7 +695,7 @@ func _refresh() -> void:
 				why if why != "" else "", "Enter: target   " if why == "" else ""]
 		else:
 			_prompt.text = ("ROUND %d   Arrows / Home PgUp End PgDn: move or attack   Space: done   "
-				+ "A: aim   G: guard   B: bandage   Q: quick   Esc: leave") % _combat.round_no
+				+ "A: aim   C: cast   G: guard   B: bandage   Q: quick   Esc: leave") % _combat.round_no
 		return
 	var summary := PackedStringArray()
 	var text := ""
@@ -550,6 +720,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	if _aiming:
 		_aim_input(event, key)
+		get_viewport().set_input_as_handled()
+		return
+	if _casting != "":
+		_cast_input(event, key)
 		get_viewport().set_input_as_handled()
 		return
 	if _event_fight and _result == 0 and _combat != null:
@@ -622,6 +796,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		_advance()
 	elif key == KEY_A:
 		_start_aim()
+	elif key == KEY_C:
+		_start_cast()
 	elif key == KEY_G:
 		if _combat.can_guard():
 			_combat.guard(_combat.active, false)

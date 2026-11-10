@@ -43,8 +43,8 @@ extends RefCounted
 ## a fight can be replayed and compared rule by rule.
 ##
 ## Morale, fleeing, surrender and surprise: see the sections below and start_round().
-## Large creatures fill more than one cell (see "Size" below).
-## Not yet: spells.
+## Large creatures fill more than one cell (see "Size" below). Spells and their effects:
+## CombatSpells (helpless figures lose their turns; attacks on them slay).
 
 signal message(text: String)
 
@@ -65,6 +65,7 @@ var flee_dir := 0            # where the monsters run: the party's facing on the
 var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
 var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
+var magic: CombatSpells = null      # spells and their effects (when the spell table is loaded)
 
 
 func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void:
@@ -120,6 +121,8 @@ func outcome() -> int:
 func start_round() -> void:
 	if round_no > 0:
 		_bleed()
+		if magic:
+			magic.tick()
 	round_no += 1
 	_count_enemy_health()
 	var delays := {}
@@ -133,6 +136,10 @@ func start_round() -> void:
 		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
 		c.attacks += c.second
 		c.acted = false
+		if magic:
+			magic.adjust_round(c)
+			if CombatSpells.held(m):
+				continue
 		var d := roll(1, 6, "initiative %s" % m.name) + m.dex_missile_bonus()
 		d = maxi(d, 1)
 		if round_no == 1 and (c.team == surprised_team or ((c.team + 1) & surprise_flags) != 0):
@@ -157,7 +164,7 @@ func next_turn() -> int:
 				return -1
 		active = order.pop_front()
 		var c: Dictionary = combatants[active]
-		if c.down:
+		if c.down or (magic and CombatSpells.held(c.who)):
 			continue
 		c.acted = true
 		c.received = 0
@@ -366,6 +373,11 @@ func shoot(i: int, j: int) -> void:
 	if reach > third:
 		penalty += 3
 	var ac: int = (tm.rear_ac if behind else tm.ac) + penalty
+	var bonus := 0
+	if magic:
+		magic.reveal(am)
+		ac = magic.armour(tm, (tm.rear_ac if behind else tm.ac)) + penalty
+		bonus = magic.hit_bonus(am, tm)
 	var how := " (FROM BEHIND)" if behind else ""
 	while a.attacks > 0 and not t.down and am.shots_left() > 0:
 		a.attacks -= 1
@@ -375,7 +387,9 @@ func shoot(i: int, j: int) -> void:
 				var copy := gone.copy()
 				copy.name = gone.name
 				dropped.append(copy)
-		var need: int = am.thac0 - ac
+		if magic and magic.image_takes_it(tm):
+			continue
+		var need: int = am.thac0 - ac - bonus
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
 		if not hit:
@@ -477,6 +491,10 @@ func choose_weapon(i: int) -> void:
 
 
 ## Applies damage the way the original does (see "Going down" above).
+func hurt(j: int, dmg: int) -> void:
+	_hurt(j, dmg)
+
+
 func _hurt(j: int, dmg: int) -> void:
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
@@ -736,6 +754,16 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var ac: int = tm.rear_ac if behind else tm.ac
 	if stab:
 		ac = tm.rear_ac + 4
+	var bonus := 0
+	if magic:
+		magic.reveal(am)
+		ac = magic.armour(tm, ac)
+		bonus = magic.hit_bonus(am, tm)
+		if CombatSpells.held(tm):
+			a.attacks = 0
+			message.emit("%s SLAYS HELPLESS %s WITH ONE CRUEL BLOW" % [am.name, tm.name])
+			_hurt(j, tm.hp + 5)
+			return
 	var how := " (FROM BEHIND)" if behind and not stab else ""
 	var verb := "BACKSTABS" if stab else "ATTACKS"
 	while a.attacks > 0 and not t.down:
@@ -743,7 +771,9 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var second: bool = int(a.get("second", 0)) > 0
 		if second:
 			a.second -= 1
-		var need: int = am.thac0 - ac
+		if magic and magic.image_takes_it(tm):
+			continue
+		var need: int = am.thac0 - ac - bonus
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
 		if not hit:
@@ -754,6 +784,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		dmg = maxi(dmg, 0)
 		if stab:
 			dmg *= (am.thief_level() - 1) / 4 + 2
+		if magic:
+			dmg = magic.damage_after(am, dmg)
 		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
 		_hurt(j, dmg)
 
@@ -1046,6 +1078,8 @@ func ai_act() -> bool:
 		c.fleeing = morale == "flee"
 		if c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
+		elif magic and magic.ai_cast(active):
+			return false
 		if not find_target(active):
 			guard(active)
 			return false
