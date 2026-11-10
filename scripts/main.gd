@@ -62,6 +62,8 @@ var _sheet: CharacterSheet
 var _treasure: TreasureScreen
 var _camp: CampScreen
 var _temple: TempleScreen
+const SEARCH_FLAG := 0x6DCA       # 1 while searching (SEARCH, LOOK); the scripts test it
+var _searching := false
 const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
 const REST_PERCENT := 0x6DD3      # ... and the chance (d100) that rest is interrupted
 var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
@@ -139,6 +141,8 @@ func _ready() -> void:
 		if m != null:
 			m.recalculate(_types)
 			_party.append(m)
+	_vm.party = _party
+	_vm.open_ahead = _open_ahead
 	var battle_only := false
 	for arg in OS.get_cmdline_user_args():
 		battle_only = battle_only or arg.begins_with("--battle=")
@@ -173,7 +177,8 @@ func _ready() -> void:
 	# monster rows as id,count,picture) [--battle-image=path]
 	# prints where everyone starts and saves the battlefield, then quits. With
 	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll;
-	# --battle-fight=<seed>:away replays the free-attack check (see CombatScreen.run_fight).
+	# --battle-fight=<seed>:away replays the free-attack check (see CombatScreen.run_fight);
+	# --battle-morale=<n> sets the encounter's morale (the scripts use 99 or 60).
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
@@ -253,6 +258,26 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		elif key == KEY_F4:
 			_dump_script()
+			return
+		elif key == KEY_S:
+			# SEARCH: the original's search mode, which the scripts read (more random
+			# encounters, hidden things found).
+			_searching = not _searching
+			_vm.write_byte(SEARCH_FLAG, 1 if _searching else 0)
+			_status.text = "SEARCHING" if _searching else "Search off."
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_L:
+			# LOOK: searches the square you stand on once.
+			if _vm.ecl != null and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+				_vm.write_byte(SEARCH_FLAG, 1)
+				_sync_position_to_vm(_facing)
+				_vm.clear_output()
+				_vm.start(1)
+				if not _searching:
+					_vm.write_byte(SEARCH_FLAG, 0)
+				_after_vm()
+			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_G:
 			_goto.text = ""
@@ -423,6 +448,9 @@ func _battle_check(spec: String) -> void:
 				rows.append([int(r[0]), int(r[1]), int(r[2])])
 			_combat.run_check(_game_path, _maps[i].map, int(a[2]), int(a[3]), facing, _party,
 				int(a[5]), rows, int(a[9]), image_path)
+			for arg in OS.get_cmdline_user_args():
+				if arg.begins_with("--battle-morale="):
+					_combat.set_morale_base(int(arg.trim_prefix("--battle-morale=")))
 			for arg in OS.get_cmdline_user_args():
 				if arg.begins_with("--battle-fight="):
 					var f := arg.trim_prefix("--battle-fight=").split(":")
@@ -756,6 +784,13 @@ func _on_rest_interrupted() -> void:
 	_show()
 
 
+## Open squares ahead of the party (0..2), as the encounter menu measures distance.
+func _open_ahead() -> int:
+	var map: GeoMap = _maps[_map_index].map
+	var field := Battlefield.build(map, _pos.x, _pos.y)
+	return Placement.encounter_distance(field, _pos.x, _pos.y, int(_facing), 2)
+
+
 func _advance_clock(hours: int) -> void:
 	var h := (_vm.read_byte(EclVM.CLOCK_HOUR) + hours) % 24
 	_vm.write_byte(EclVM.CLOCK_HOUR, h)
@@ -772,7 +807,8 @@ func _start_event_fight() -> void:
 		m.recalculate(_types)
 	var map: GeoMap = _maps[_map_index].map
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1),
-		_vm.monsters, _vm.encounter_max, _vm.encounter_advances)
+		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
+		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH))
 
 
 func _on_event_fight_finished(result: int) -> void:
@@ -1066,5 +1102,6 @@ func _show() -> void:
 	var map: GeoMap = e.map
 	var night := _vm.read_byte(EclVM.CLOCK_HOUR) >= 14
 	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
-	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
-		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127, "night" if night else "day", script_name]
+	_status.text = "WALK  %s   %d,%d facing %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  S search  L look  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
+		area, _pos.x, _pos.y, facing_name, map.flag(_pos.x, _pos.y) & 127,
+		("night" if night else "day") + ("  SEARCHING" if _searching else ""), script_name]

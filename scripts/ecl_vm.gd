@@ -24,6 +24,8 @@ const SKY_INDOORS := 0x49FE
 const MOVEMENT_BLOCK := 0x6DC9  # 255 = the move is refused
 const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plain picture)
 const COMBAT_RESULT := 0x6DC7
+const MORALE_BASE := 0x6DC6     # the encounter's morale (scripts write it before COMBAT; 99 = steady)
+const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the monsters (SURPRISE)
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
 
@@ -53,6 +55,14 @@ var encounter_advances := 0
 var sprite_picture := 255
 var sprite_head := 255
 var menu: Array = []             # menu item strings while State.MENU
+## Set by the game: the party (for PARTY_STRENGTH, PARTY_SKILL_CHECK and the encounter
+## menu) and a Callable giving how many open squares lie ahead (0..2).
+var party: Array = []
+var open_ahead: Callable
+var _menu_kind := ""             # "", "encounter" or "parlay": how a choice is stored
+var _enc := {}                   # the ENCOUNTER_MENU's operands while it is open
+var _parlay_values: Array = []
+var encounter_distance := 0      # squares between party and monsters, as the menu sees it
 var notes: Array[String] = []    # things the engine would do but can't yet
 var new_ecl := -1                # block id requested by NEW_ECL
 var area_map := []               # last LOAD_AREA_MAP operands
@@ -113,6 +123,19 @@ func start(entry: int) -> State:
 func choose(index: int) -> State:
 	if state != State.MENU:
 		return state
+	if _menu_kind == "encounter":
+		menu = []
+		_menu_kind = ""
+		if not _encounter_choice(index):
+			return state      # the menu is shown again (both sides wait, or they close in)
+		state = State.RUNNING
+		return run()
+	if _menu_kind == "parlay":
+		_write(_menu_dest, int(_parlay_values[index]) if index < _parlay_values.size() else 0)
+		_menu_kind = ""
+		menu = []
+		state = State.RUNNING
+		return run()
 	if menu.size() > 1:
 		_write(_menu_dest, index)
 	menu = []
@@ -244,7 +267,7 @@ func _note(message: String) -> void:
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
 const QUIET := ["CLEAR_BOX",
-	"SOUND", "CLOCK", "PARTY_STRENGTH", "PARTY_CHECK", "PARTY_SKILL_CHECK", "SURPRISE",
+	"SOUND", "CLOCK", "PARTY_CHECK",
 	"HAS_EFFECT", "FIND_ITEM", "DESTROY_ITEM", "LOAD_CHAR", "NPC_ADD", "NPC_REMOVE",
 	"WHO", "SPELL", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
 	"UNKNOWN_49", "UNKNOWN_4A", "UNKNOWN_4B", "FOR_START", "FOR_REPEAT", "PICTURE2", "CALL"]
@@ -307,6 +330,10 @@ func _exec(ins: Dictionary) -> void:
 		"WRITE_MEM":
 			if a[0].type == 0x80:
 				_write_string(a[1], a[0].value)
+			elif a[0].type == 0x81:
+				# A string held in memory: copied whole ("YOU HAVE SURPRISED A PARTY OF" +
+				# the monsters' name, put together this way by the random encounters).
+				_write_string(a[1], _string(a[0]))
 			else:
 				_write(a[1], _value(a[0]))
 		"WRITE_MEM_BASE_OFF":
@@ -373,6 +400,18 @@ func _exec(ins: Dictionary) -> void:
 			area_map = [_value(a[0]), _value(a[1]), _value(a[2])]
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
+		"SURPRISE":
+			# As the original: a d6 for each side against (d + 2 - a) and (b + 2 - c); the
+			# monsters' surprise wins when both come up (names from ssi-engine: the result
+			# is COMBAT_IS_AMBUSH; rules as documented by Pilgrim's reconstruction).
+			var party_roll := randi_range(1, 6)
+			var mon_roll := randi_range(1, 6)
+			var result := 0
+			if party_roll <= _value(a[3]) + 2 - _value(a[0]):
+				result = 1
+			if mon_roll <= _value(a[1]) + 2 - _value(a[2]):
+				result = 2
+			write_byte(AMBUSH, result)
 		"COMBAT":
 			if read_byte(TEMPLE_FLAG) == 1:
 				state = State.TEMPLE
@@ -388,8 +427,24 @@ func _exec(ins: Dictionary) -> void:
 				_note("combat")
 				write_byte(COMBAT_RESULT, 0)
 		"ENCOUNTER_MENU":
-			_note("encounter")
-			_write(a[3], 1)
+			_enc = {"dest": a[3], "reactions": [], "texts": [],
+				"flee_need": _value(a[12]), "mon_speed": _value(a[13])}
+			for i in range(4, 9):
+				_enc.reactions.append(_value(a[i]))
+			for i in range(9, 12):
+				_enc.texts.append(_string(a[i]))
+			var ahead := 2
+			if open_ahead.is_valid():
+				ahead = int(open_ahead.call())
+			encounter_max = _value(a[1])
+			encounter_distance = maxi(mini(ahead, encounter_max) - encounter_advances, 0)
+			# The monsters' figure stands at that distance (it becomes their picture
+			# when they reach the party).
+			sprite_id = _value(a[0])
+			sprite_picture = _value(a[2])
+			sprite_head = read_byte(PICTURE_HEAD)
+			sprite_distance = encounter_distance
+			_show_encounter_menu()
 		"TREASURE":
 			treasure = []
 			for i in a.size():
@@ -405,7 +460,22 @@ func _exec(ins: Dictionary) -> void:
 		"ROB":
 			_note("robbed")
 		"PARLAY":
-			_note("parley")
+			_parlay_values = []
+			for i in 5:
+				_parlay_values.append(_value(a[i]))
+			_pause_for_menu(a[5], ["HAUGHTY", "SLY", "NICE", "MEEK", "ABUSIVE"])
+			_menu_kind = "parlay"
+		"PARTY_STRENGTH":
+			_write(a[0], party_strength())
+		"PARTY_SKILL_CHECK":
+			# As the original: the first flag says a ranger is in the party (harder to
+			# surprise); the second is always 0.
+			var ranger := 0
+			for m in party:
+				if (m as PartyMember).class_id == 4 or (m as PartyMember).class_id == 10:
+					ranger = 1
+			_write(a[0], ranger)
+			_write(a[1], 0)
 		"PROGRAM":
 			_note("program %d" % _value(a[0]))
 			state = State.DONE
@@ -426,8 +496,135 @@ func _test(op: String) -> bool:
 	return false
 
 
+# --- Encounters -------------------------------------------------------------------------
+# ENCOUNTER_MENU as the original does it (rules as documented by Pilgrim's reconstruction):
+# operands: sprite, maximum distance, picture, where to store the outcome, five reaction
+# types (one for each choice: COMBAT, WAIT, FLEE, ADVANCE, PARLAY), three texts (by
+# distance 0, 1, 2), the party movement needed to flee, and the monsters' speed.
+# The menu offers COMBAT WAIT FLEE PARLAY when the monsters are close (distance 0) and
+# COMBAT WAIT FLEE ADVANCE otherwise. Outcomes stored: 0 the monsters flee, 1 a fight,
+# 2 the party gets away, 3 talk (the script goes on to PARLAY).
+#   reaction 0: FLEE gets away if the party's slowest is at least the needed movement,
+#               anything else is a fight
+#   reaction 1: COMBAT fights; WAIT: "BOTH SIDES WAIT."; FLEE gets away; ADVANCE comes a
+#               square closer; PARLAY closes in, then talks
+#   reaction 2: the monsters flee ("THE MONSTERS FLEE."), unless COMBAT and they are
+#               faster than the party's fastest (then a fight)
+#   reaction 3: COMBAT fights; WAIT/ADVANCE close in ("BOTH SIDES WAIT." when there);
+#               FLEE gets away; PARLAY closes in, then talks
+#   reaction 4: COMBAT fights; FLEE gets away; anything else closes in, then talks
+
+func _show_encounter_menu() -> void:
+	var texts: Array = _enc.texts
+	var i := clampi(encounter_distance, 0, 2)
+	var line := ""
+	for k in 3:
+		var t: String = texts[(i + k) % 3]
+		if t != "":
+			line = t
+			break
+	if line != "":
+		text = line
+		text_changed = true
+	var last := "PARLAY" if encounter_distance == 0 else "ADVANCE"
+	_pause_for_menu({}, ["COMBAT", "WAIT", "FLEE", last])
+	_menu_kind = "encounter"
+
+
+func _party_moves() -> Vector2i:
+	var lo := 255
+	var hi := 0
+	for m in party:
+		var mv := (m as PartyMember).movement
+		lo = mini(lo, mv)
+		hi = maxi(hi, mv)
+	return Vector2i(lo, hi)
+
+
+func _close_in() -> bool:
+	if encounter_distance > 0:
+		encounter_distance -= 1
+		encounter_advances += 1
+		sprite_distance = encounter_distance
+		return true
+	return false
+
+
+## Resolves a choice; returns false when the menu should be shown again.
+func _encounter_choice(choice: int) -> bool:
+	if choice == 3 and encounter_distance == 0:
+		choice = 4       # PARLAY sits where ADVANCE would be
+	var reaction: int = _enc.reactions[choice] if choice < _enc.reactions.size() else 0
+	var moves := _party_moves()
+	var outcome := -1
+	match reaction:
+		0:
+			outcome = 2 if choice == 2 and moves.x >= int(_enc.flee_need) else 1
+		1:
+			match choice:
+				0: outcome = 1
+				1: _say("BOTH SIDES WAIT.")
+				2: outcome = 2
+				3:
+					if not _close_in():
+						_say("BOTH SIDES WAIT.")
+				4:
+					if not _close_in():
+						outcome = 3
+		2:
+			if choice == 0 and int(_enc.mon_speed) <= moves.y:
+				outcome = 1
+			else:
+				outcome = 0
+				_say("THE MONSTERS FLEE.")
+		3:
+			match choice:
+				0: outcome = 1
+				1, 3:
+					if not _close_in():
+						_say("BOTH SIDES WAIT.")
+				2: outcome = 2
+				4:
+					if not _close_in():
+						outcome = 3
+		4:
+			match choice:
+				0: outcome = 1
+				2: outcome = 2
+				_:
+					if not _close_in():
+						outcome = 3
+	if outcome < 0:
+		_show_encounter_menu()
+		return false
+	_write(_enc.dest, outcome)
+	_enc = {}
+	return true
+
+
+func _say(line: String) -> void:
+	text = line
+	text_changed = true
+
+
+## PARTY_STRENGTH as the original works it out: for each character, (cleric levels x 4 +
+## HP + 5 per point of AC below 0 + 5 per point of THAC0 below 21 + magic-user levels x 8)
+## / 10, added up.
+func party_strength() -> int:
+	var total := 0
+	for p in party:
+		var m: PartyMember = p
+		var cleric: int = m.raw[0x96] if m.raw.size() > 0x9B else 0
+		var mage: int = m.raw[0x9B] if m.raw.size() > 0x9B else 0
+		var ac_bonus := maxi(-m.ac, 0)
+		var hit_bonus := maxi(21 - m.thac0, 0)
+		total += (cleric * 4 + m.hp + ac_bonus * 5 + hit_bonus * 5 + mage * 8) / 10
+	return mini(total, 255)
+
+
 func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	# One item is a "press to continue" prompt; its choice is not stored.
 	_menu_dest = dest
+	_menu_kind = ""
 	menu = items
 	state = State.MENU

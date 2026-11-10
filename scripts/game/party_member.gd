@@ -183,6 +183,7 @@ func clone() -> PartyMember:
 
 
 const STATUS_OKAY := 0
+const STATUS_RUNNING := 3
 const STATUS_UNCONSCIOUS := 4
 const STATUS_DYING := 5
 const STATUS_DEAD := 6

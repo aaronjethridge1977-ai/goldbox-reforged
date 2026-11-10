@@ -29,6 +29,8 @@ var _combatants: Array = []      # [{who: PartyMember, team: 0 party / 1 monster
 var _selected := 0
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
+var _morale_base := 99      # the encounter's morale (from the script)
+var _surprise := 0          # the script's ambush flag
 var _px := 0
 var _py := 0
 var _distance := 0
@@ -60,6 +62,8 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_py = py
 	_art = CombatArt.load_set(game_path)
 	_party = party
+	_morale_base = 99
+	_surprise = 0
 	_facing = facing
 	_mon_file = mon_file
 	if _types == null:
@@ -95,9 +99,12 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 ## picture], ...]) from MON<mon_file>, `max_distance` and `advances` from the script's
 ## SPRITE_START / SPRITE_ADVANCE. Emits `finished` when it is over.
 func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
-		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int) -> void:
+		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int,
+		morale_base: int = 99, surprise: int = 0) -> void:
 	open_test(game_path, map, px, py, facing, party, mon_file, null)
 	_event_fight = true
+	_morale_base = morale_base
+	_surprise = surprise
 	_encounters = [{"monsters": rows, "text": ""}]
 	_enc_index = 0
 	var open_ahead := Placement.encounter_distance(_field, px, py, facing, 2)
@@ -120,7 +127,8 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		_distance = distance
 		_load_monsters()
 	for e in _combatants:
-		print("%s %s %d %d" % ["party" if e.team == 0 else "monster", e.who.name, e.cell.x, e.cell.y])
+		print("%s %s %d %d  move %d morale 0x%02X int %d" % ["party" if e.team == 0 else "monster", e.who.name,
+			e.cell.x, e.cell.y, e.who.movement, e.who.morale, e.who.stats[1] if e.who.stats.size() > 1 else 0])
 	if image_path != "":
 		var full := Image.create_empty(Battlefield.WIDTH * CELL, Battlefield.HEIGHT * CELL, false, Image.FORMAT_RGBA8)
 		full.fill(Color8(85, 85, 85))
@@ -140,11 +148,16 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		full.save_png(image_path)
 
 
+## Testing aid: the encounter's morale for the next fight.
+func set_morale_base(value: int) -> void:
+	_morale_base = value
+
+
 ## The monsters brought down in the fight just finished (for experience and treasure).
 func defeated() -> Array:
 	var out := []
 	for c in _combatants:
-		if c.team == 1 and c.get("down", false):
+		if c.team == 1 and c.get("down", false) and not c.get("fled", false):
 			out.append(c.who)
 	return out
 
@@ -306,6 +319,9 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_party = standing
 	_place()
 	_combat = Combat.new(_field, _combatants, seed_value)
+	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
+	_combat.morale_base = _morale_base
+	_combat.surprise_flags = _surprise
 	_combat.message.connect(_on_message)
 	_messages.clear()
 	_result = 0

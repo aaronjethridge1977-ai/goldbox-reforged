@@ -42,6 +42,7 @@ extends RefCounted
 ## Every die roll goes through roll(), which uses a seedable generator and logs the roll, so
 ## a fight can be replayed and compared rule by rule.
 ##
+## Morale, fleeing, surrender and surprise: see the sections below and start_round().
 ## Not yet: missiles, spells, morale and fleeing, surprise from the encounter,
 ## large monsters filling two cells.
 
@@ -58,6 +59,10 @@ var round_no := 0
 var order: Array[int] = []
 var active := -1
 var surprised_team := -1
+var surprise_flags := 0      # the script's ambush flag: bit 1 the party, bit 2 the monsters
+var morale_base := 99        # the encounter's morale (0x6DC6)
+var flee_dir := 0            # where the monsters run: the party's facing on the grid
+var enemy_health := 100      # the monsters' remaining HP, percent in fives
 
 
 func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void:
@@ -112,6 +117,7 @@ func start_round() -> void:
 	if round_no > 0:
 		_bleed()
 	round_no += 1
+	_count_enemy_health()
 	var delays := {}
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
@@ -126,7 +132,7 @@ func start_round() -> void:
 		c.acted = false
 		var d := roll(1, 6, "initiative %s" % m.name) + m.dex_missile_bonus()
 		d = maxi(d, 1)
-		if c.team == surprised_team and round_no == 1:
+		if round_no == 1 and (c.team == surprised_team or ((c.team + 1) & surprise_flags) != 0):
 			d -= 6
 		if d <= 0 or d > 20:
 			continue
@@ -171,6 +177,22 @@ func _bleed() -> void:
 				c.bleeding = 0
 	if first_dying(0) >= 0:
 		message.emit("YOUR TEAMMATE IS DYING")
+
+
+## The monsters' remaining HP as a percentage (in fives), as the original works it out
+## each round for morale.
+func _count_enemy_health() -> void:
+	var now := 0
+	var full := 0
+	for c in combatants:
+		if c.team != 1:
+			continue
+		var m: PartyMember = c.who
+		if not c.down:
+			now += m.hp
+		full += m.hp_max
+	if full > 0:
+		enemy_health = (20 * now / full) * 5
 
 
 ## The first dying combatant of a team, or -1.
@@ -505,6 +527,91 @@ func _ai_begin(i: int) -> void:
 	c.pattern = p
 
 
+# --- Morale, fleeing and surrender -------------------------------------------------------
+# As the original does it (rules as documented by Pilgrim's reconstruction; names of the
+# script variables from ssi-engine; "KOBOLD SURRENDERS" seen in the lab):
+# - Each computer-run monster checks its morale at the start of its turn. Its morale is
+#   the low 7 bits of record byte 0x84 doubled (over 102 counts as 0). If that is below
+#   the share of its own HP it has lost (or 0), the side's morale is tried: the monsters'
+#   remaining HP percentage against 100 - the encounter's morale (0x6DC6; the scripts use
+#   99 for steady foes, 60 for skittish ones).
+# - Failing both, it runs if no party member moves faster than it ("FLEES IN PANIC"),
+#   otherwise surrenders if its INT is over 5 ("SURRENDERS": out of the fight, beaten).
+# - Running: its whole turn goes into steps away from the party (the direction the party
+#   faces, by a random one of the first two movement patterns). Reaching the edge of the
+#   field it gets away ("GOT AWAY": no experience, no loot) if faster than every party
+#   member, or on an even roll if as fast; otherwise "ESCAPE IS BLOCKED" and it stops
+#   running. Out of movement, it fights whatever is next to it.
+
+func _fastest(team: int) -> int:
+	var best := 0
+	for c in combatants:
+		if c.team == team and not c.down:
+			best = maxi(best, (c.who as PartyMember).movement)
+	return best
+
+
+## The morale check (see above). Returns "", "flee" or "surrender".
+func _morale_check(i: int) -> String:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	if c.team != 1 or m.morale < 0x80 or m.hp_max <= 0:
+		return ""
+	var own := (m.morale & 0x7F) * 2
+	if own > 102:
+		own = 0
+	var lost := 100 - (m.hp * 100) / m.hp_max
+	if not (own < lost or own == 0):
+		return ""
+	if not (enemy_health < 100 - morale_base or enemy_health == 0):
+		return ""
+	if _fastest(0) <= m.movement:
+		return "flee"
+	if m.stats.size() > 1 and m.stats[1] > 5:
+		return "surrender"
+	return ""
+
+
+## One step of a running combatant. Returns "moved", "gone" or "stop".
+func _flee_step(i: int) -> String:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	if c.moves / 2 <= 0:
+		return "stop"
+	var base := flee_dir if c.team == 1 else (flee_dir + 4) % 8
+	var turns: Array = PATTERN_TURNS[roll(1, 2, "%s runs" % m.name)]
+	for k in 5:
+		var dir := (base + int(turns[k])) % 8
+		var to: Vector2i = c.cell + DIRS[dir]
+		if not field.in_bounds(to.x, to.y):
+			if _gets_away(i):
+				return "gone"
+			c.fleeing = false
+			c.moves = 0
+			return "blocked"
+		if _can_step(c, dir):
+			return "moved" if step(dir) == "moved" else "stop"
+	c.moves = 0
+	return "stop"
+
+
+func _gets_away(i: int) -> bool:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	var foes := _fastest(1 - c.team)
+	var away := standing(1 - c.team) == 0 or foes < m.movement
+	if not away and foes == m.movement:
+		away = roll(1, 2, "%s gets away?" % m.name) == 1
+	if away:
+		c.down = true
+		c.fled = true
+		m.status = PartyMember.STATUS_RUNNING
+		message.emit("%s GOT AWAY" % m.name)
+	else:
+		message.emit("ESCAPE IS BLOCKED")
+	return away
+
+
 ## Could the computer step in direction `dir`? It needs more movement left than the cost.
 func _can_step(c: Dictionary, dir: int) -> bool:
 	var to: Vector2i = c.cell + DIRS[dir]
@@ -555,6 +662,26 @@ func ai_act() -> bool:
 	if not c.get("ai", false):
 		_ai_begin(active)
 		if c.team == 0 and bandage():
+			return false
+		var morale := _morale_check(active)
+		if morale == "surrender":
+			var m: PartyMember = c.who
+			c.down = true
+			m.status = PartyMember.STATUS_UNCONSCIOUS
+			m.hp = 0
+			message.emit("%s SURRENDERS" % m.name)
+			return false
+		c.fleeing = morale == "flee"
+		if c.fleeing:
+			message.emit("%s FLEES IN PANIC" % c.who.name)
+	if c.get("fleeing", false):
+		var r := _flee_step(active)
+		if r == "moved":
+			return true
+		c.fleeing = false
+		if r == "gone" or r == "blocked" or c.down:
+			c.moves = 0
+			c.attacks = 0
 			return false
 		if not find_target(active):
 			guard(active)
