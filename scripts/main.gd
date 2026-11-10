@@ -62,6 +62,7 @@ var _sheet: CharacterSheet
 var _treasure: TreasureScreen
 var _camp: CampScreen
 var _temple: TempleScreen
+var _party_menu: PartyMenu
 const SEARCH_FLAG := 0x6DCA       # 1 while searching (SEARCH, LOOK); the scripts test it
 var _searching := false
 const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
@@ -115,6 +116,11 @@ func _ready() -> void:
 	_camp.save_requested.connect(_quick_save)
 	_camp.interrupted.connect(_on_rest_interrupted)
 	add_child(_camp)
+	_party_menu = PartyMenu.new()
+	_party_menu.visible = false
+	_party_menu.closed.connect(_on_party_menu_closed)
+	_party_menu.save_requested.connect(_quick_save)
+	add_child(_party_menu)
 	_temple = TempleScreen.new()
 	_temple.visible = false
 	_temple.closed.connect(_on_temple_closed)
@@ -201,9 +207,29 @@ func _replay_keys(names: PackedStringArray) -> void:
 	for n in names:
 		if n == "wait":
 			await get_tree().create_timer(0.5).timeout
+		elif n.begins_with("program="):     # program=0:120 runs PROGRAM 0 with hall mask 120
+			var a := n.trim_prefix("program=").split(":")
+			_vm.write_byte(EclVM.TRAINING_MASK, int(a[1]) if a.size() > 1 else 0)
+			_vm.program = int(a[0])
+			_vm.state = EclVM.State.PROGRAM
+			_after_vm()
+		elif n.begins_with("gold="):        # gold=<party index>:<platinum pieces>
+			var a := n.trim_prefix("gold=").split(":")
+			_party[int(a[0])].money[4] = int(a[1])
+		elif n.begins_with("xp="):          # xp=<party index>:<experience>
+			var a := n.trim_prefix("xp=").split(":")
+			_party[int(a[0])].experience = int(a[1])
+		elif n == "party":
+			for m in _party:
+				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d" % [m.name,
+					str(m.raw.slice(0x96, 0x9E)), m.experience, m.hp, m.hp_max, m.hp_rolled, 60 - m.base_thac0_60,
+					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1)])
+			continue
 		else:
 			var ev := InputEventKey.new()
-			ev.keycode = OS.find_keycode_from_string({"enter": "Enter", "esc": "Escape"}.get(n, n.capitalize()))
+			var key_name: String = {"enter": "Enter", "esc": "Escape", "home": "Home", "end": "End",
+				"up": "Up", "down": "Down", "left": "Left", "right": "Right"}.get(n, n.to_upper())
+			ev.keycode = OS.find_keycode_from_string(key_name)
 			ev.pressed = true
 			Input.parse_input_event(ev)
 			var up := ev.duplicate()
@@ -220,20 +246,23 @@ func _replay_keys(names: PackedStringArray) -> void:
 func _state_line() -> String:
 	var screen := "walk"
 	for pair in [[_shop, "shop"], [_sheet, "sheet"], [_combat, "combat"], [_treasure, "treasure"],
-			[_camp, "camp"], [_temple, "temple"]]:
+			[_camp, "camp"], [_temple, "temple"], [_party_menu, "party"]]:
 		if pair[0].visible:
 			screen = pair[1]
 	var effects := []
 	for m in _party:
 		for a in m.affects:
 			effects.append("%s:%d/%d" % [m.name.substr(0, 6), int(a.effect), int(a.minutes)])
+	var text := _message.text
+	if _party_menu.visible:
+		text = _party_menu.screen_text()
 	return "%d,%d %s %s %s vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
-		screen, _vm.state, " ".join(effects), _message.text.replace("\n", " ").left(90)]
+		screen, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
-			or _treasure.visible or _camp.visible or _temple.visible:
+			or _treasure.visible or _camp.visible or _temple.visible or _party_menu.visible:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -468,10 +497,19 @@ func _quick_save() -> void:
 			var rec := it.raw.duplicate()
 			rec[52] = 1 if it.readied else 0
 			items.append(rec)
-		members.append({"name": m.name, "money": m.money, "items": items, "hp": m.hp,
+		members.append({"name": m.name, "record": m.to_record(), "money": m.money, "items": items, "hp": m.hp,
 			"experience": m.experience, "status": m.status, "memorized": m.memorized,
 			"spell_book": m.spell_book, "affects": m.affects})
 	cfg.set_value("party", "members", members)
+	var roster := []
+	for m in _party_menu.roster:
+		var items := []
+		for it in m.items:
+			var rec := it.raw.duplicate()
+			rec[52] = 1 if it.readied else 0
+			items.append(rec)
+		roster.append({"record": m.to_record(), "items": items, "affects": m.affects})
+	cfg.set_value("party", "roster", roster)
 	var err := cfg.save(_save_path())
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
 
@@ -544,8 +582,21 @@ func _quick_load() -> void:
 	_vm.sprite_id = -1
 	_vm_map = _map_index
 	_sync_position_to_vm(_facing)
-	# Party: money and items as saved.
+	# Party: whole records where the save has them (levels, trained values, party changes),
+	# then money and items as saved.
 	var members: Array = cfg.get_value("party", "members", [])
+	if not members.is_empty() and (members[0] as Dictionary).has("record"):
+		var rebuilt: Array[PartyMember] = []
+		for saved in members:
+			rebuilt.append(PartyMember.from_bytes(saved.record, PackedByteArray()))
+		_party.assign(rebuilt)
+	_party_menu.roster.clear()
+	for saved in cfg.get_value("party", "roster", []):
+		var r := PartyMember.from_bytes(saved.record, PackedByteArray())
+		r.items = _items_from(saved.get("items", []))
+		r.affects = saved.get("affects", [])
+		r.recalculate(_types)
+		_party_menu.roster.append(r)
 	for i in mini(members.size(), _party.size()):
 		var saved: Dictionary = members[i]
 		_party[i].money = saved.get("money", _party[i].money)
@@ -559,17 +610,21 @@ func _quick_load() -> void:
 			_party[i].memorized = mem
 			_party[i].spell_book = saved.get("spell_book", _party[i].spell_book)
 			_party[i].affects = saved.get("affects", [])
-		var items: Array[GameItem] = []
-		var names := ItemNames.shared(_game_path)
-		for rec in saved.get("items", []):
-			var it := GameItem.from_record(rec)
-			if it.name == "":
-				it.name = names.name_of(it)
-			items.append(it)
-		_party[i].items = items
+		_party[i].items = _items_from(saved.get("items", []))
 		_party[i].recalculate(_types)
 	_status.text = "Loaded."
 	_show()
+
+
+func _items_from(records: Array) -> Array[GameItem]:
+	var items: Array[GameItem] = []
+	var names := ItemNames.shared(_game_path)
+	for rec in records:
+		var it := GameItem.from_record(rec)
+		if it.name == "":
+			it.name = names.name_of(it)
+		items.append(it)
+	return items
 
 
 ## A step: the area's on-move script runs first (it can refuse the move, e.g. a locked
@@ -760,12 +815,49 @@ func _after_vm() -> void:
 		EclVM.State.COMBAT:
 			_start_event_fight()
 			return
+		EclVM.State.PROGRAM:
+			_run_program()
+			return
 		EclVM.State.NEW_ECL:
 			_enter_script(_vm_file, _vm.new_ecl)
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		_finish_move(_pending_move)
+
+
+## PROGRAM n from a script: 0 the party menu (training halls), 9 camp (the inns; the
+## script ends there, as in the original), 8 the end of the game, 3 the party is lost.
+func _run_program() -> void:
+	match _vm.program:
+		0:
+			for m in _party:
+				m.recalculate(_types)
+			_party_menu.tables = ClassTables.shared(_game_path)
+			_party_menu.spells = SpellTable.shared(_game_path)
+			_party_menu.open(_party, _vm.read_byte(EclVM.TRAINING_MASK))
+		9:
+			_vm.close_program()
+			_make_camp()
+		3:
+			_vm.close_program()
+			_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
+			_show()
+		_:
+			if _vm.program == 8:
+				_message.text = "[the end of the game: the original shows its closing text here]"
+			_vm.close_program()
+			_after_vm()
+
+
+func _on_party_menu_closed() -> void:
+	for m in _party:
+		m.recalculate(_types)
+	_vm.write_byte(EclVM.TRAINING_MASK, 0)
+	_message.text = ""
+	_vm.close_program()
+	_after_vm()
+	_show()
 
 
 ## Opens the shop for the script's TREASURE item list.

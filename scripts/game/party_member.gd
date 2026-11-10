@@ -725,3 +725,180 @@ func money_text() -> String:
 		if money[i] > 0:
 			parts.append("%s %d" % [MONEY_NAMES[i], money[i]])
 	return ", ".join(parts) if not parts.is_empty() else "no money"
+
+
+# --- Training (the training halls' TRAIN CHARACTER) --------------------------------------
+# The original's rules (Pool of Radiance's own texts and tables; the rule order as Pilgrim's
+# reconstruction of the engine documents it):
+# - Only conscious characters train ("WE ONLY TRAIN CONSCIOUS PEOPLE"), and training costs
+#   1000 gold pieces' worth of the trainee's own money ("TRAINING COSTS 1000 GP.").
+# - A class can advance when the character's experience reaches the next level's total
+#   and the class isn't at its cap. If several classes can, the original trains only the
+#   one whose next level costs the most experience.
+# - The hall trains only its own classes ("WE DON'T TRAIN THAT CLASS HERE"), and only if
+#   that class has the experience ("NOT ENOUGH EXPERIENCE").
+# - On training: the level goes up; THAC0, saving throws, spells per day and attacks are
+#   recalculated from the class tables; hit points go up by the better of two rolls of the
+#   class's hit die (summed over the classes trained), divided among all the character's
+#   classes, plus constitution (1 at least); clerics learn every cleric spell of the levels
+#   they can now cast; a magic-user who gained a level picks one new spell to learn.
+
+## Constitution's hit point adjustment per class (index = constitution).
+const CON_HP := [0, 0, 0, -2, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+
+
+func level_in(c: int) -> int:
+	return raw[0x96 + c] if raw.size() > 0x96 + c else 0
+
+
+func set_level(c: int, value: int) -> void:
+	raw[0x96 + c] = value
+
+
+func class_indices() -> Array[int]:
+	var out: Array[int] = []
+	for c in ClassTables.CLASS_COUNT:
+		if level_in(c) > 0:
+			out.append(c)
+	return out
+
+
+## What the hall (its class bits) would do with this character: {"error": text} or
+## {"classes": [class indices that would advance]}.
+func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
+	if status != STATUS_OKAY:
+		return {"error": "WE ONLY TRAIN CONSCIOUS PEOPLE"}
+	if wealth_copper() < 1000 * 200:
+		return {"error": "TRAINING COSTS 1000 GP."}
+	var have_mask := 0
+	var exp_mask := 0
+	var last_level := 0
+	for c in class_indices():
+		have_mask |= ClassTables.CLASS_MASKS[c]
+		last_level = level_in(c)
+		var need := t.needed(c, level_in(c) + 1)
+		if need > 0 and experience >= need:
+			exp_mask |= ClassTables.CLASS_MASKS[c]
+	# Several classes ready: the original keeps the one whose table entry (for the level
+	# after the last class it looked at) is the largest, so a multi-class character trains
+	# its slowest class first.
+	var best := -1
+	var best_exp := 0
+	for c in class_indices():
+		if exp_mask & ClassTables.CLASS_MASKS[c]:
+			var e := t.needed(c, last_level + 1)
+			if e > best_exp:
+				best_exp = e
+				best = c
+	if best >= 0:
+		exp_mask = ClassTables.CLASS_MASKS[best]
+	if have_mask & hall_mask == 0:
+		return {"error": "WE DON'T TRAIN THAT CLASS HERE"}
+	if exp_mask & hall_mask == 0:
+		return {"error": "NOT ENOUGH EXPERIENCE"}
+	var classes: Array[int] = []
+	for c in class_indices():
+		if ClassTables.CLASS_MASKS[c] & exp_mask & hall_mask:
+			classes.append(c)
+	return {"classes": classes}
+
+
+## Trains: pays, raises the levels in `classes` and recalculates everything that depends
+## on level. Returns true if the character is a magic-user who should now learn a spell.
+func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNumberGenerator) -> bool:
+	pay_gold(1000)
+	var old_mu := level_in(5)
+	for c in classes:
+		set_level(c, level_in(c) + 1)
+	apply_class_tables(t, table)
+	# Hit points.
+	var count := class_indices().size()
+	var rolled := 0
+	for c in classes:
+		var die: int = t.hit_die[c]
+		rolled += maxi(rng.randi_range(1, die), rng.randi_range(1, die))
+	hp_rolled += maxi(rolled / count, 1)
+	var con := 0
+	for c in class_indices():
+		con += CON_HP[clampi(stats[4], 0, CON_HP.size() - 1)]
+		if class_id in [2, 3, 4]:
+			match stats[4]:
+				17: con += 1
+				18: con += 2
+	var gain := maxi((rolled + con) / count, 1)
+	var lost := hp_max - hp
+	hp_max += gain
+	hp = hp_max - lost
+	raw[0x32] = hp_max
+	raw[0xB1] = hp_rolled
+	return level_in(5) > old_mu
+
+
+## THAC0, saving throws, attacks and spells per day from the levels (and clerics' spell
+## books), as the original recalculates them after training.
+func apply_class_tables(t: ClassTables, table: SpellTable) -> void:
+	var best_thac0 := 0
+	var best_saves := PackedInt32Array([20, 20, 20, 20, 20])
+	for c in class_indices():
+		best_thac0 = maxi(best_thac0, t.thac0_at(c, level_in(c)))
+		var s := t.saves_at(c, level_in(c))
+		for k in 5:
+			best_saves[k] = mini(best_saves[k], s[k])
+	base_thac0_60 = best_thac0
+	saves = best_saves
+	raw[0x2D] = base_thac0_60
+	for k in 5:
+		raw[0x6D + k] = saves[k]
+	if level_in(2) >= 7 or level_in(3) >= 7 or level_in(4) >= 8:
+		half_attacks = 3
+		raw[0xA1] = 3
+	var cl := t.slots_at(0, level_in(0))
+	if level_in(0) > 0:
+		var wis := stats[2]
+		if wis > 12 and cl[0] > 0: cl[0] += 1
+		if wis > 13 and cl[0] > 0: cl[0] += 1
+		if wis > 14 and cl[1] > 0: cl[1] += 1
+		if wis > 15 and cl[1] > 0: cl[1] += 1
+		if wis > 16 and cl[2] > 0: cl[2] += 1
+	var mu := t.slots_at(5, level_in(5))
+	spell_slots = [cl, mu]
+	for k in 3:
+		raw[0xB2 + k] = cl[k]
+		raw[0xB5 + k] = mu[k]
+	# Clerics know every cleric spell of the levels they have slots for.
+	if table != null and level_in(0) > 0:
+		for id in range(1, mini(spell_book.size(), SpellTable.NAMED) + 1):
+			if table.spell_class(id) == SpellTable.CLERIC and table.level(id) <= 3 \
+					and cl[table.level(id) - 1] > 0:
+				spell_book[id - 1] = 1
+
+
+## Magic-user spells this character could learn now (levels it has slots for, not known).
+func learnable_spells(table: SpellTable) -> Array[int]:
+	var out: Array[int] = []
+	for id in range(1, mini(spell_book.size(), SpellTable.NAMED) + 1):
+		if table.spell_class(id) == SpellTable.MAGE and table.level(id) <= 3 \
+				and spell_slots[1][table.level(id) - 1] > 0 and spell_book[id - 1] == 0:
+			out.append(id)
+	return out
+
+
+## The character record with everything that changes in play written back (for saves).
+func to_record() -> PackedByteArray:
+	var d := raw.duplicate()
+	if d.size() < 285:
+		return d
+	d[0x32] = hp_max
+	d[0x11B] = clampi(hp, 0, 255)
+	d.encode_u32(0xAC, experience)
+	d[0x10C] = status
+	for i in 7:
+		d.encode_u16(0x88 + i * 2, clampi(money[i], 0, 65535))
+	for i in spell_book.size():
+		d[0x33 + i] = spell_book[i]
+	for i in range(0x17, 0x2C):
+		d[i] = 0
+	for k in memorized.size():
+		if 0x2B - k >= 0x17:
+			d[0x2B - k] = memorized[k]
+	return d

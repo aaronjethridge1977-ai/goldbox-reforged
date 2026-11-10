@@ -29,7 +29,9 @@ const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the mons
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
 
-enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE }
+const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
+
+enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -71,6 +73,9 @@ var area_deco := []              # last LOAD_AREA_DECO operands
 ## gems, jewelry, item list id (ITEM block; 255 = none).
 var treasure := []
 var error := ""
+## PROGRAM n: hands over to a game screen (0 the party menu / training, 9 camp, 8 the end
+## of the game, 3 the party is lost); the caller resumes with close_program().
+var program := -1
 ## Minutes the script moved the clock on (CLOCK); the game runs spell effects down by them.
 var minutes_passed := 0
 
@@ -150,6 +155,20 @@ func close_temple() -> State:
 	if state != State.TEMPLE:
 		return state
 	write_byte(TEMPLE_FLAG, 0)
+	state = State.RUNNING
+	return run()
+
+
+## Continues after the screen PROGRAM opened. PROGRAM 9 (camp) ends the script, as in the
+## original; the others carry on with the next instruction.
+func close_program() -> State:
+	if state != State.PROGRAM:
+		return state
+	var was := program
+	program = -1
+	if was == 9 or was == 3:
+		state = State.DONE
+		return state
 	state = State.RUNNING
 	return run()
 
@@ -285,6 +304,9 @@ func _exec(ins: Dictionary) -> void:
 			state = State.DONE
 		"GOTO":
 			_jump(a[0])
+		"PROGRAM":
+			program = _value(a[0])
+			state = State.PROGRAM
 		"CLOCK":
 			# Pool of Radiance's form: one operand, minutes (its forced walk passes one a step).
 			minutes_passed += GameClock.add_minutes(self, _value(a[0]))
@@ -481,9 +503,6 @@ func _exec(ins: Dictionary) -> void:
 					ranger = 1
 			_write(a[0], ranger)
 			_write(a[1], 0)
-		"PROGRAM":
-			_note("program %d" % _value(a[0]))
-			state = State.DONE
 		"INPUT_NUMBER", "INPUT_STRING", "PRINT_RUNES":
 			_note(op.to_lower())
 		_:
