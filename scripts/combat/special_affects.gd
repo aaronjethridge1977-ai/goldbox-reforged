@@ -73,6 +73,9 @@ extends RefCounted
 ## Damage messages (GAME.OVR 0x2C27B): "TAKES n POINTS OF DAMAGE" or "TAKES 1 POINT OF
 ## DAMAGE", then by type FROM FIRE / COLD / ELECTRICITY / ACID, or FROM MAGIC when the
 ## damage is only magic.
+##   0x49          (tiger) both claws hit: "RAKES..." and two more attacks of 2d4
+##   0x4D          (giant mantis) a hit on anyone with STR under 19: "IS HELD FAST"; each of
+##                 its turns it attacks the one it holds (3d4) until they fall
 ##   0x4C          (stirge) a hit latches it on: at the start of each of its turns it "SUCKS
 ##                 SOME BLOOD" for 1d4 instead of attacking, until it has had ~12 or a side falls
 ##   0x68          (thri-kreen) avoids 60% of missiles ("AVOIDS IT")

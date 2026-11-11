@@ -191,9 +191,9 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | 0x45 | DRIDER | built | drider: paralysis 1d9+10 rounds (0x10341) |
 | 0x46 | PHASE SPIDER | built | poison, save -2 |
 | 0x48 | 6TH LVL THIEF | built | hides: 95% invisible each round |
-| 0x49 | TIGER | missing | tiger: rear claws ('Rakes...') when both front claws hit |
+| 0x49 | TIGER | built | tiger: both claws hit -> 'RAKES...', two more attacks of 2d4 |
 | 0x4c | STIRGE | built | stirge: latches on, 1d4 a turn ('SUCKS SOME BLOOD') until it has had ~12; the victim's own restriction (0x3A) not traced |
-| 0x4d | GIANT MANTIS | missing | giant mantis: grips anyone with STR under 19 |
+| 0x4d | GIANT MANTIS | built | giant mantis: 'IS HELD FAST' (STR under 19), then 3d4 each turn; the victim's own restriction (0x3A) not traced |
 | 0x4f | TYRANITHRAXUS | built | 2d10 fire on a hit |
 | 0x50 | AHNKHEG | built | 1d4 acid on a bite |
 | 0x51 | TYRANITHRAXUS | checked | fear aura by level |

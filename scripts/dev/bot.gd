@@ -50,7 +50,7 @@ func run(plan_path: String) -> void:
 		await _do(line)
 		if _wiped():
 			_issue("party wiped at plan line %d (%s)" % [_pc, line])
-			if _checkpoint == "" or _retries >= 3:
+			if _checkpoint == "" or _retries >= 6:
 				break
 			_retries += 1
 			print("== back to checkpoint %s (try %d)" % [_checkpoint, _retries + 1])
@@ -371,6 +371,14 @@ func _explore(skip: Array) -> void:
 		await main._tour(at)
 		await _settle()
 		await _heal_if_low()
+		if not _wiped() and _here() == area:
+			# A checkpoint after each event; a wipe comes back here and explores again
+			# (events already done do nothing the second time).
+			_checkpoint = "explore"
+			_checkpoint_pc = _pc - 1
+			_retries = 0
+			main._quick_save()
+			DirAccess.copy_absolute(main._save_path(), "user://bot_explore.cfg")
 
 
 func _heal_if_low() -> void:
@@ -412,7 +420,7 @@ func _make_char(race: String, cls: String, al: String, name: String) -> void:
 		for p in CreationRules.parts(c):
 			for a in PRIME.get(p, []):
 				score += rec[0x10 + a]
-				if rec[0x10 + a] < 15:
+				if rec[0x10 + a] < 17:
 					ok = false
 		if score > best_score:
 			best_score = score

@@ -858,8 +858,32 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			continue
 		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
 		_hurt(j, dmg)
+		a["hits"] = int(a.get("hits", 0)) + 1
 		if not t.down:
 			_on_hit_specials(i, j)
+		if am.has_affect(0x49) and int(a.hits) == 2 and not t.down:
+			# A tiger whose two claws both hit rakes with its rear claws: two more attacks of
+			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
+			message.emit("%s RAKES..." % am.name)
+			_extra_attacks(i, j, 2, 2, 4)
+
+
+## Attacks a power adds (a tiger's rake, a mantis's hold): `n` rolls to hit, `count`d`size` each.
+func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> void:
+	var am: PartyMember = combatants[i].who
+	var t: Dictionary = combatants[j]
+	var tm: PartyMember = t.who
+	for k in n:
+		if t.down:
+			return
+		var need: int = am.thac0 - tm.ac
+		var d20 := roll(1, 20, "%s to hit %s (needs %d)" % [am.name, tm.name, need])
+		if d20 == 1 or (d20 != 20 and d20 < need):
+			message.emit("%s ATTACKS %s AND MISSES" % [am.name, tm.name])
+			continue
+		var dmg := roll(count, size, "%s damage" % am.name)
+		message.emit("%s ATTACKS %s HITTING FOR %d" % [am.name, tm.name, dmg])
+		_hurt(j, dmg)
 
 
 ## What a hit does besides damage, from the attacker's standing effects (SpecialAffects):
@@ -882,6 +906,11 @@ func _on_hit_specials(i: int, j: int) -> void:
 				t.down = true
 				message.emit("%s IS KILLED" % tm.name)
 				_went_down(j)
+	if am.has_affect(0x4D) and int(combatants[i].get("gripping", -1)) < 0 and not t.down \
+			and tm.stats[0] < 19:
+		# A giant mantis grips anyone with STR under 19 ("IS HELD FAST", GAME.OVR 0x10590).
+		combatants[i]["gripping"] = j
+		message.emit("%s IS HELD FAST" % tm.name)
 	if am.has_affect(0x4C) and int(combatants[i].get("latched", -1)) < 0 and not t.down:
 		combatants[i]["latched"] = j        # a stirge latches on (0x4C)
 		combatants[i]["drink"] = 207 >> 4
@@ -1572,6 +1601,18 @@ func stone(j: int) -> void:
 func _turn_start_powers(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
+	var gripping: int = c.get("gripping", -1)
+	c["hits"] = 0
+	if gripping >= 0:
+		# The mantis attacks whoever it holds: one attack of 3d4 a turn (0x16281).
+		if combatants[gripping].down:
+			c.gripping = -1
+		else:
+			_extra_attacks(i, gripping, 1, 3, 4)
+			c.moves = 0
+			c.attacks = 0
+			c["drank"] = true
+			return
 	var latched: int = c.get("latched", -1)
 	if latched >= 0:
 		# A stirge (0x4C/0x4B, GAME.OVR 0x10510 / 0x103CA) that has latched on drinks 1d4 at
