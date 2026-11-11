@@ -219,6 +219,22 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
+	# Names and passwords the game tells the party ("SPEAK MY NAME, OHLO."), for when a
+	# script asks for a word.
+	var said: String = main._message.text
+	for cue in ["SPEAK MY NAME, ", "THE PASSWORD IS ", "PASSWORD IS "]:
+		var at := said.find(cue)
+		if at >= 0:
+			var word := said.substr(at + cue.length()).get_slice(" ", 0).rstrip(".,'!\"").strip_edges()
+			if word != "" and not word in _words:
+				_words.append(word)
+				print("   (bot remembers the word %s)" % word)
+	if main._vm.state == EclVM.State.INPUT and main._tour_answers.is_empty() and not _words.is_empty():
+		var w: String = _words[_word_try % _words.size()]
+		_word_try += 1
+		print("   >> typed %s (remembered)" % w)
+		main._on_typed(w)
+		return true
 	if main._combat.visible and main._combat._result != 0 and not _fight_noted:
 		_fight_noted = true
 		if _hurt():
@@ -301,12 +317,28 @@ func _hook() -> bool:
 		# A player doesn't attack the people the scripts put in his way (the Slums' fortune
 		# teller: murdering her raises the alarm for good). LEAVE when it is offered.
 		var items: Array = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper())
+		# The same question again and again (a script that puts the party back outside, and the
+		# walk going straight back in): stop the walk.
+		var ask: String = "%s %s|" % [_here(), main._pos] + main._message.text.strip_edges().left(80) + "|" + " ".join(items)
+		if "ATTACK" in items or "LEAVE" in items or "TALK" in items:
+			_asked[ask] = int(_asked.get(ask, 0)) + 1
+		if int(_asked.get(ask, 0)) > 3:
+			main.tour_stop = true
+			if int(_asked[ask]) == 4:
+				_issue("the same question keeps coming at %s %s: %s" % [_here(), str(main._pos), ask.left(120)])
+		if "ACCEPT THE COMMISSION" in items:
+			print("   >> 1 (accepting the commission)")
+			await main._press("1")
+			return true
+		if "ATTACK" in items and "TALK" in items:
+			print("   >> %d (TALK rather than ATTACK)" % (items.find("TALK") + 1))
+			await main._press(str(items.find("TALK") + 1))
+			return true
 		if "ATTACK" in items and "LEAVE" in items:
 			print("   >> %d (LEAVE rather than ATTACK)" % (items.find("LEAVE") + 1))
 			await main._press(str(items.find("LEAVE") + 1))
 			return true
 		# Nor does he break into the town's houses or fight the city watch.
-		var said: String = main._message.text
 		if said.contains("BREAK IN") and "NO" in items:
 			print("   >> %d (no breaking in)" % (items.find("NO") + 1))
 			await main._press(str(items.find("NO") + 1))
@@ -315,6 +347,11 @@ func _hook() -> bool:
 			print("   >> %d (running from the watch)" % (items.find("RUN") + 1))
 			await main._press(str(items.find("RUN") + 1))
 			return true
+	if main._vm.state == EclVM.State.MENU and ((_want == "train" and main._message.text.contains("WANT TO TRAIN")) \
+			or (_want in ["sell", "shop"] and main._message.text.contains("SHOW YOU OUR WARES")) \
+			or (_want == "temple" and main._message.text.contains("HEALING"))):
+		await main._press("1")
+		return true
 	if _want == "inn" and main._vm.state == EclVM.State.MENU and main._message.text.contains("TO REST HERE"):
 		await main._press("1")
 		return true
@@ -364,6 +401,9 @@ func _ready_all() -> void:
 var _judged := ""
 var _fight_noted := false
 var _looted := false
+var _asked := {}      # script questions answered, by text and choices
+var _words: PackedStringArray = []   # names and passwords the game has told the party
+var _word_try := 0
 var _loot_turn := 0
 var _interrupted := false     # a tour was stopped after a fight that left the party hurt
 
@@ -855,6 +895,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 		if _wiped() or _here() != area:
 			break
 		print("   explore: event %d at %s" % [best, at])
+		_asked = {}
 		for attempt in 4:
 			_interrupted = false
 			await main._tour(at)
@@ -887,7 +928,10 @@ func _explore_pass(skip: Array) -> Dictionary:
 
 const TOWN := "3:0"
 ## New Phlan's training halls (squares on the town map), the clerk, the temple and the inn.
-const HALLS := ["8,0", "6,0", "5,0", "9,0"]
+## (Events 16 fighters 8,0, 12 clerics 5,0, 13 magic-users 7,0, 17 thieves 9,0; 6,0 is a sign.
+## After a hall's question the next two event squares stay quiet (0x4A09), which this order
+## walks off on the way.)
+const HALLS := ["8,0", "5,0", "7,0", "9,0"]
 
 
 ## Full HP and spells before an event (resting can bring random encounters; they are
