@@ -229,6 +229,14 @@ func _hook() -> bool:
 			if word != "" and not word in _words:
 				_words.append(word)
 				print("   (bot remembers the word %s)" % word)
+	if main._vm.state == EclVM.State.INPUT and main._tour_answers.is_empty():
+		# A player reads the word from the runes or the journal; the bot reads what the script
+		# compares the answer with, just ahead ('RHODIA', the booth's 'OHLO').
+		var lit := _word_ahead()
+		if lit != "":
+			print("   >> typed %s (the word the script expects)" % lit)
+			main._on_typed(lit)
+			return true
 	if main._vm.state == EclVM.State.INPUT and main._tour_answers.is_empty() and not _words.is_empty():
 		var w: String = _words[_word_try % _words.size()]
 		_word_try += 1
@@ -326,6 +334,12 @@ func _hook() -> bool:
 			main.tour_stop = true
 			if int(_asked[ask]) == 4:
 				_issue("the same question keeps coming at %s %s: %s" % [_here(), str(main._pos), ask.left(120)])
+		if "SURRENDER" in items and ("FIGHT" in items or "ATTACK" in items):
+			# Norris the Gray's 'SURRENDER OR DIE!': surrendering loses every valuable.
+			var fight: int = items.find("FIGHT") if "FIGHT" in items else items.find("ATTACK")
+			print("   >> %d (no surrender)" % (fight + 1))
+			await main._press(str(fight + 1))
+			return true
 		if "ACCEPT THE COMMISSION" in items:
 			print("   >> 1 (accepting the commission)")
 			await main._press("1")
@@ -662,6 +676,25 @@ func _event_odds(ev: int) -> float:
 	for i in us.size():
 		us[i].hp = hp[i]
 	return odds
+
+
+## The first string the script writes or compares within a few instructions of where it
+## waits for typed input ("" if none).
+func _word_ahead() -> String:
+	var vm: EclVM = main._vm
+	var p: int = vm.pc
+	for n in 8:
+		var ins: Dictionary = vm.ecl._read(p)
+		if ins.is_empty():
+			break
+		if String(ins.op) in ["COMPARE", "WRITE_MEM"]:
+			for a in ins.args:
+				if int(a.type) == 0x80 and String(a.value).strip_edges() != "":
+					return String(a.value).strip_edges()
+		if String(ins.op) in ["EXIT", "RETURN"]:
+			break
+		p += int(ins.size)
+	return ""
 
 
 ## A player's spell for party member i (CombatSpells.party_planner): Sleep or Stinking Cloud
