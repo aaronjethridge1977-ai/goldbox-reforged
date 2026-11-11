@@ -373,7 +373,9 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 		3:          # Cure Light Wounds
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
-				t.hp = mini(t.hp + c.roll(1, 8, "cure"), t.hp_max)
+				var amount := c.roll(1, 8, "cure")
+				if not SpecialAffects.diseased(t):
+					t.hp = mini(t.hp + amount, t.hp_max)
 				c.message.emit("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 		4, 20:      # Cause Light Wounds, Shocking Grasp: touch attacks
 			for j in targets:
@@ -499,13 +501,19 @@ func _damage(i: int, id: int, j: int, dmg: int) -> void:
 	var t: PartyMember = c.combatants[j].who
 	if c.combatants[j].down:
 		return
+	var kind := SpecialAffects.MAGIC
 	if id == 9 or id == 47:     # Burning Hands, Fireball: fire
-		dmg = SpecialAffects.element_damage(t, 1, dmg)
+		kind = SpecialAffects.FIRE
+	elif id == 20 or id == 51:  # Shocking Grasp, Lightning Bolt
+		kind = SpecialAffects.ELECTRIC
+	dmg = SpecialAffects.element_damage(t, kind, dmg)
+	if id == 15 and t.has_affect(0x5B):
+		dmg = 0                 # juju zombies ignore Magic Missile
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return
 	c.message.emit("%s TAKES %d POINT%s OF DAMAGE" % [t.name, dmg, "" if dmg == 1 else "S"])
-	c.hurt(j, dmg)
+	c.hurt(j, dmg, kind)
 
 
 func _sleep_cost(t: PartyMember) -> int:

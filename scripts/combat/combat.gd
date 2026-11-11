@@ -90,6 +90,11 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["pattern"] = 0      # the computer's movement pattern (see below)
 		c["turned"] = 0       # eighth-turns of those attacks, as the original counts them
 		c["fp"] = foot_size(c.who)
+		c["last_kind"] = 0    # damage type of the last blow taken (SpecialAffects.FIRE...)
+		c["regen_in"] = 0     # rounds until a troll starts regenerating (0x65)
+		c["revive_in"] = 0    # rounds until a downed troll gets up (0x64)
+		c["dies_in"] = 0      # rounds until a wild boar falls dead (0x63)
+		c["first_miss"] = false   # Tyranthraxus's one free miss used (0x59)
 
 
 func roll(count: int, size: int, why: String) -> int:
@@ -128,7 +133,11 @@ func start_round() -> void:
 		_bleed()
 		if magic:
 			magic.tick()
+		_power_timers()
+	else:
+		_battle_start_powers()
 	round_no += 1
+	_round_start_powers()
 	_count_enemy_health()
 	var delays := {}
 	for i in combatants.size():
@@ -428,15 +437,21 @@ func shoot(i: int, j: int) -> void:
 		var need: int = am.thac0 - ac - bonus
 		need -= SpecialAffects.hit_bonus(am, tm)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
+		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 		else:
 			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
-			dmg = SpecialAffects.weapon_damage(am, tm, am.readied_weapon(types), types, dmg)
-			if dmg == 0 and tm.has_affect(0x77):
-				message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
+			var weapon: GameItem = gone if gone != null else am.readied_weapon(types)
+			var notes: Array = []
+			var before := dmg
+			dmg = SpecialAffects.weapon_damage(am, tm, weapon, types, dmg, _dice, range_of(a, t) > 1, notes)
+			for n in notes:
+				message.emit(n)
+			if dmg == 0 and before > 0:
+				if notes.is_empty():
+					message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 			else:
 				message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
 				_hurt(j, dmg)
@@ -532,13 +547,16 @@ func choose_weapon(i: int) -> void:
 
 
 ## Applies damage the way the original does (see "Going down" above).
-func hurt(j: int, dmg: int) -> void:
-	_hurt(j, dmg)
+func hurt(j: int, dmg: int, kind: int = 0) -> void:
+	_hurt(j, dmg, kind)
 
 
-func _hurt(j: int, dmg: int) -> void:
+func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
+	t.last_kind = kind
+	if dmg > 0 and tm.has_affect(0x65) and not tm.has_affect(0x62) and int(t.regen_in) == 0:
+		t.regen_in = 3      # a troll's wounds start closing three rounds later (0x65, 0x3B)
 	if tm.hp >= dmg:
 		tm.hp -= dmg
 		if tm.hp > 0:
@@ -546,6 +564,7 @@ func _hurt(j: int, dmg: int) -> void:
 		tm.status = PartyMember.STATUS_UNCONSCIOUS
 		t.down = true
 		message.emit("%s GOES DOWN" % tm.name)
+		_went_down(j)
 		return
 	var past := dmg - tm.hp
 	tm.hp = 0
@@ -558,6 +577,7 @@ func _hurt(j: int, dmg: int) -> void:
 		tm.status = PartyMember.STATUS_DYING
 		t.bleeding = past
 		message.emit("%s GOES DOWN AND IS DYING" % tm.name)
+	_went_down(j)
 
 
 ## After the fight, as the original does: the dying stop bleeding (UNCONSCIOUS, 0 HP).
@@ -818,7 +838,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			continue
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
+		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
 		if not hit:
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
@@ -829,10 +849,11 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			dmg *= (am.thief_level() - 1) / 4 + 2
 		if magic:
 			dmg = magic.damage_after(am, dmg)
-		dmg = SpecialAffects.weapon_damage(am, tm, am.readied_weapon(types), types, dmg)
-		if dmg == 0 and tm.has_affect(0x77):
-			# Only magic hurts it: the original reports the blow as a miss (lab: a party with
-			# THAC0 1 "ATTACKS FERRAN MARTINEZ AND MISSES" round after round).
+		var before := dmg
+		dmg = SpecialAffects.weapon_damage(am, tm, am.readied_weapon(types), types, dmg, _dice)
+		if dmg == 0 and before > 0:
+			# Only magic (or silver) hurts it: the original reports the blow as a miss (lab: a
+			# party with THAC0 1 "ATTACKS FERRAN MARTINEZ AND MISSES" round after round).
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
 		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
@@ -860,6 +881,7 @@ func _on_hit_specials(i: int, j: int) -> void:
 				tm.status = PartyMember.STATUS_DEAD
 				t.down = true
 				message.emit("%s IS KILLED" % tm.name)
+				_went_down(j)
 	var paralysis := 0
 	if am.has_affect(0x43):
 		paralysis = roll(2, 8, "paralysis rounds")
@@ -873,12 +895,21 @@ func _on_hit_specials(i: int, j: int) -> void:
 	for type in [0x55, 0x56]:
 		if am.has_affect(type) and not t.down:
 			drain(j, 1 if type == 0x55 else 2)
+	if am.has_affect(0x57) and not t.down:
+		# A mummy's touch (GAME.OVR 0x11047): disease, no save.
+		if SpecialAffects.infect(tm, roll(1, 6, "months of rot")):
+			message.emit("%s IS DISEASED" % tm.name)
 	if am.has_affect(0x4F) and not t.down:
 		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
-		var burn := SpecialAffects.element_damage(tm, 1, roll(2, 10, "fire"))
+		var burn := SpecialAffects.element_damage(tm, SpecialAffects.FIRE, roll(2, 10, "fire"))
 		if burn > 0:
 			message.emit("%s TAKES %d POINTS OF DAMAGE" % [tm.name, burn])
-			_hurt(j, burn)
+			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC)
+	if am.has_affect(0x50) and not t.down:
+		# An ankheg's acid (0x106A7): 1d4 more.
+		var acid := roll(1, 4, "acid")
+		message.emit("%s TAKES %d POINT%s OF DAMAGE" % [tm.name, acid, "" if acid == 1 else "S"])
+		_hurt(j, acid, SpecialAffects.ACID)
 
 
 func _save(m: PartyMember, kind: int, bonus: int) -> bool:
@@ -971,7 +1002,8 @@ const CLASS_MAGE := 5
 
 
 func _enemy_of(c: Dictionary, j: int) -> bool:
-	return j >= 0 and j < combatants.size() and not combatants[j].down and combatants[j].team != c.team
+	return j >= 0 and j < combatants.size() and not combatants[j].down and combatants[j].team != c.team \
+			and not SpecialAffects.repels(c.who, combatants[j].who)
 
 
 ## Line of sight between two cells: a straight line across the grid (the original's own
@@ -1280,6 +1312,9 @@ func ai_act() -> bool:
 		return false
 	if not c.get("ai", false):
 		_ai_begin(active)
+		_turn_start_powers(active)
+		if c.down:
+			return false
 		if c.team == 0 and bandage():
 			return false
 		choose_weapon(active)
@@ -1359,3 +1394,210 @@ func ai_act() -> bool:
 			return false
 		return true
 	return false
+
+
+# --- Monsters' powers outside the blow itself ---------------------------------------------
+# The standing effects GAME.OVR runs at set moments (SpecialAffects has the full list):
+# at the start of the fight (category 8), of each round (19), of a computer-run turn (14),
+# and when a figure goes down (13).
+
+func _dice(count: int, size: int) -> int:
+	return roll(count, size, "power")
+
+
+## Tyranthraxus (0x59): the first attack roll against it in a fight misses.
+func _free_miss(t: Dictionary) -> bool:
+	if not (t.who as PartyMember).has_affect(0x59) or t.first_miss:
+		return false
+	t.first_miss = true
+	return true
+
+
+## Adds a condition the way the original's add-effect routine (GAME.OVR 0x2C540) does:
+## immunities first, then the save; "IS UNAFFECTED" when either stops it.
+func _afflict(j: int, effect: int, rounds: int, saved: bool, words: String) -> void:
+	var tm: PartyMember = combatants[j].who
+	var blocked := effect == SpecialAffects.PARALYZED \
+			and SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists"))
+	if blocked or saved:
+		message.emit("%s IS UNAFFECTED" % tm.name)
+		return
+	SpellCaster.add_affect(tm, effect, 0, rounds, 12)
+	message.emit("%s %s" % [tm.name, words])
+
+
+func _battle_start_powers() -> void:
+	for i in combatants.size():
+		var c: Dictionary = combatants[i]
+		var m: PartyMember = c.who
+		if m.has_affect(0x51):
+			# Tyranthraxus's fear (GAME.OVR 0x10705): every enemy saves vs spells.
+			for j in combatants.size():
+				var t: Dictionary = combatants[j]
+				if t.down or t.team == c.team:
+					continue
+				var saved := _save(t.who, 4, 0)
+				var lvl := SpecialAffects.level_of(t.who)
+				if lvl <= 3:
+					_afflict(j, SpecialAffects.PARALYZED, 0, saved, "IS PARALYZED WITH FEAR")
+				elif lvl <= 5:
+					_afflict(j, CombatSpells.EFFECT_CURSE, 0, saved, "IS WEAKENED BY FEAR")
+		if m.has_affect(0x52):
+			# A mummy's fear (0x10803), once a fight: save vs paralysis, +2 for humans, +1
+			# when the side numbers six or more; else held 1d4 rounds.
+			for e in combatants:
+				var em: PartyMember = e.who
+				em.affects = em.affects.filter(func(a): return int(a.effect) != 0x52)
+			for j in combatants.size():
+				var t: Dictionary = combatants[j]
+				if t.down or t.team == c.team:
+					continue
+				var bonus := 0
+				if _side_size(t.team) >= 6:
+					bonus += 1
+				if (t.who as PartyMember).race_id == 7:
+					bonus += 2
+				var saved := _save(t.who, 0, bonus)
+				_afflict(j, SpecialAffects.PARALYZED, roll(1, 4, "fear rounds"), saved, "IS PARALYZED WITH FEAR")
+		if m.has_affect(0x48):
+			_hide(i)
+
+
+func _side_size(team: int) -> int:
+	var n := 0
+	for c in combatants:
+		if c.team == team:
+			n += 1
+	return n
+
+
+## A thief who hides (0x48): 95% to be invisible for the round.
+func _hide(i: int) -> void:
+	var m: PartyMember = combatants[i].who
+	if roll(1, 100, "%s hides" % m.name) <= 95:
+		SpellCaster.add_affect(m, CombatSpells.EFFECT_INVISIBLE, 0, 1, 12)
+
+
+func _round_start_powers() -> void:
+	for i in combatants.size():
+		var c: Dictionary = combatants[i]
+		if c.down:
+			continue
+		var m: PartyMember = c.who
+		if m.has_affect(0x62):
+			m.hp = mini(m.hp + 3, m.hp_max)     # regeneration (0x1135B)
+		if m.has_affect(0x48):
+			_hide(i)
+
+
+## The powers' own clocks, a round at a time (in the original, effects that run out).
+func _power_timers() -> void:
+	for i in combatants.size():
+		var c: Dictionary = combatants[i]
+		var m: PartyMember = c.who
+		if int(c.regen_in) > 0:
+			c.regen_in -= 1
+			if c.regen_in == 0:
+				SpecialAffects.add(m, [0x62])
+		if int(c.revive_in) > 0 and c.down:
+			c.revive_in -= 1
+			if c.revive_in == 0 and not _revive(i, m.hp_max):
+				c.revive_in = 1     # its square is taken: it tries again next round
+		if int(c.dies_in) > 0 and not c.down:
+			c.dies_in -= 1
+			if c.dies_in == 0:
+				m.hp = 0
+				m.status = PartyMember.STATUS_DEAD
+				c.down = true
+				message.emit("%s FALLS DEAD" % m.name)
+
+
+## Gets a downed figure back up with `hp` (GAME.OVR 0x2C753), if its square is free.
+func _revive(i: int, hp: int) -> bool:
+	var c: Dictionary = combatants[i]
+	for p in cells(c):
+		if occupant(p, i) >= 0:
+			return false
+	var m: PartyMember = c.who
+	m.status = PartyMember.STATUS_OKAY
+	m.hp = hp
+	c.down = false
+	c.bleeding = 0
+	message.emit("%s %s" % [m.name, "STANDS UP AND GRINS" if c.team == 1 else "GETS BACK UP"])
+	return true
+
+
+## What happens as a figure goes down (category 13).
+func _went_down(j: int) -> void:
+	var t: Dictionary = combatants[j]
+	var tm: PartyMember = t.who
+	if tm.has_affect(0x63) and tm.status in [PartyMember.STATUS_DYING, PartyMember.STATUS_UNCONSCIOUS]:
+		# A wild boar fights on (0x1138B): back up with 6 less the rounds it bled.
+		var hp := 6 if tm.status == PartyMember.STATUS_UNCONSCIOUS else maxi(6 - int(t.bleeding), 0)
+		if hp > 0 and _revive(j, hp):
+			t.dies_in = roll(1, 4, "boar rounds") + 1
+			tm.affects = tm.affects.filter(func(a): return int(a.effect) != 0x63)
+			return
+	if tm.has_affect(0x64) and (int(t.last_kind) & (SpecialAffects.FIRE | SpecialAffects.ACID)) == 0:
+		t.revive_in = roll(3, 6, "troll rounds")    # 0x11434, then 0x114C1
+	if tm.has_affect(0x67) and tm.status != PartyMember.STATUS_RUNNING:
+		tm.status = PartyMember.STATUS_RUNNING      # 0x1151A
+		t.fled = true
+		message.emit("%s TURNS GASEOUS AND ESCAPES" % tm.name)
+
+
+## Turns `j` to stone (status 7), as the original's kill routine (0xECB3) does.
+func stone(j: int) -> void:
+	var t: Dictionary = combatants[j]
+	var tm: PartyMember = t.who
+	if tm.status in [PartyMember.STATUS_DEAD, SpecialAffects.STONED, SpecialAffects.GONE]:
+		return
+	message.emit("%s IS STONED" % tm.name)
+	tm.status = SpecialAffects.STONED
+	tm.hp = 0
+	t.down = true
+	_went_down(j)
+
+
+## At the start of a computer-run turn (category 14): gazes and the ankheg's spit, aimed
+## at the figure it last went for.
+func _turn_start_powers(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	var j: int = c.get("target", -1)
+	if j < 0 or j >= combatants.size() or combatants[j].down:
+		return
+	var t: Dictionary = combatants[j]
+	if m.has_affect(0x53):
+		# Stoning gaze (0x10908): a readied Mirror turns it back on the gazer.
+		message.emit("%s GAZES..." % m.name)
+		var victim := j
+		if m.has_affect(0x7F) and SpecialAffects.readied_with(t.who, SpecialAffects.WORD_MIRROR) != null:
+			message.emit("%s REFLECTS IT!" % t.who.name)
+			victim = i
+		if not _save(combatants[victim].who, 1, 0):
+			stone(victim)
+		if c.down:
+			return
+	if m.has_affect(0x54) and not t.down and t.team != c.team and clear_line(c, t).y == 1:
+		# A vampire's charming gaze (0x10AD2): save vs spells at -2.
+		message.emit("%s GAZES..." % m.name)
+		var tm: PartyMember = t.who
+		var immune: bool = magic != null and magic.resists(tm, SpecialAffects.CHARM)
+		if immune or _save(tm, 4, -2):
+			message.emit("%s IS UNAFFECTED" % tm.name)
+		else:
+			t.team = c.team
+			t.quick = true
+			t.target = -1
+			message.emit("%s IS CHARMED" % tm.name)
+	if m.has_affect(0x79) and not t.down and roll(1, 100, "spit?") <= 25 and range_of(c, t) < 4:
+		# An ankheg's acid spit (0x11877), once: 8d4, half on a save vs breath.
+		message.emit("%s SPITS ACID" % m.name)
+		var dmg := roll(8, 4, "acid spit")
+		if _save(t.who, 3, 0):
+			dmg /= 2
+		m.affects = m.affects.filter(func(a): return not int(a.effect) in [0x79, 0x50])
+		if dmg > 0:
+			message.emit("%s TAKES %d POINT%s OF DAMAGE" % [t.who.name, dmg, "" if dmg == 1 else "S"])
+			hurt(j, dmg, SpecialAffects.ACID)

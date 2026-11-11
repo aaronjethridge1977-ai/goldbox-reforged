@@ -217,7 +217,8 @@ func _ready() -> void:
 	# prints where everyone starts and saves the battlefield, then quits. With
 	# --battle-fight=<seed> it also fights it out (computer on both sides), printing every roll;
 	# --battle-fight=<seed>:away replays the free-attack check (see CombatScreen.run_fight);
-	# --battle-morale=<n> sets the encounter's morale (the scripts use 99 or 60).
+	# --battle-morale=<n> sets the encounter's morale (the scripts use 99 or 60);
+	# --battle-strong gives the party 200 HP, AC -10 and THAC0 1.
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
@@ -860,6 +861,18 @@ func _battle_check(spec: String) -> void:
 	for i in _maps.size():
 		if _maps[i].file == a[0] and _maps[i].id == int(a[1]):
 			var facing := "NESW".find(a[4])
+			if "--battle-strong" in OS.get_cmdline_user_args():
+				# Lab aid, as mksave.py's "strong": 200 HP, AC -10, THAC0 1.
+				for m in _party:
+					m.raw[0x2D] = 59        # THAC0 1 (60-based)
+					m.raw[0xA9] = 70        # AC -10
+					m.raw[0x32] = 200
+					m.raw[0x11B] = 200
+					m.base_thac0_60 = 59
+					m.base_ac_60 = 70
+					m.hp_max = 200
+					m.hp = 200
+					m.recalculate(_types)
 			var rows := [[int(a[6]), int(a[7]), int(a[8])]]
 			for k in range(10, a.size()):     # more monster rows: id,count,picture
 				var r := a[k].split(",")
@@ -1392,7 +1405,7 @@ func _after_vm() -> void:
 		for m in _party:
 			m.recalculate(_types)
 	if _vm.minutes_passed > 0:
-		SpellCaster.pass_time(_party, _vm.minutes_passed)
+		_show_time_news(SpellCaster.pass_time(_party, _vm.minutes_passed))
 		_vm.minutes_passed = 0
 	if _vm.text_changed:
 		# PRINT_CLEAR "" clears the box, as between the stops of Rolf's tour.
@@ -1608,7 +1621,13 @@ func _open_ahead() -> int:
 ## run down with it.
 func _pass_time(slot: int, amount: int) -> void:
 	var minutes := GameClock.advance(_vm, slot, amount)
-	SpellCaster.pass_time(_party, minutes)
+	_show_time_news(SpellCaster.pass_time(_party, minutes))
+
+
+## Lines from effects that ran their course as time passed ("ROTS...").
+func _show_time_news(news: PackedStringArray) -> void:
+	if not news.is_empty():
+		_message.text = "\n".join(news)
 
 
 ## Runs the fight an event script asked for, then lets the script carry on. A COMBAT with

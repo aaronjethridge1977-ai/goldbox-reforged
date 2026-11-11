@@ -17,9 +17,12 @@ extends Control
 ## Modern controls, as in the shop: Left/Right choose the character, Up/Down the cure,
 ## Enter asks for it, Y/N answer, P pools the party's money with the chosen character,
 ## V views, Esc leaves.
-## Not yet: blindness, disease, poison, curses and stoning aren't conditions our
-## characters can have yet, so those cures always ask "cast cure anyway"; APPRAISE
-## (gems and jewellery); Raise Dead's loss of constitution.
+## - Cure Disease ends a mummy's disease; Stone to Flesh brings the stoned back at 1 HP
+##   (GAME.OVR 0x4EB4). The wound cures don't heal the diseased (the original's heal skips
+##   them).
+## Not yet: blindness, poison and curses aren't conditions our characters can have yet, so
+## those cures always ask "cast cure anyway"; APPRAISE (gems and jewellery); Raise Dead's
+## loss of constitution.
 
 signal closed
 
@@ -141,9 +144,13 @@ func _needs(m: PartyMember, i: int) -> bool:
 	match i:
 		2, 3, 4:
 			return true
+		1:
+			return SpecialAffects.diseased(m) or m.has_affect(SpecialAffects.ROT)
 		5:
 			return m.status == PartyMember.STATUS_DEAD
-	return false   # blindness, disease, poison, curses, stoning: not modelled yet
+		8:
+			return m.status == SpecialAffects.STONED
+	return false   # blindness, poison, curses: not modelled yet
 
 
 func _pay() -> void:
@@ -158,8 +165,14 @@ func _pay() -> void:
 			_heal(m, _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + 1)
 		4:
 			_heal(m, _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + 3)
+		1:
+			SpecialAffects.cure_disease(m)
 		5:
 			if m.status == PartyMember.STATUS_DEAD:
+				m.status = PartyMember.STATUS_OKAY
+				m.hp = 1
+		8:
+			if m.status == SpecialAffects.STONED:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
 	_note.text = "%s IS CURED." % m.name
@@ -167,6 +180,8 @@ func _pay() -> void:
 
 
 func _heal(m: PartyMember, amount: int) -> void:
+	if SpecialAffects.diseased(m):
+		return
 	if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
 		m.hp = mini(m.hp + amount, m.hp_max)
 		if m.hp > 0:

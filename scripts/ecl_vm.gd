@@ -98,7 +98,9 @@ var program := -1
 ##   0xBF silver 0xC1 gold 0xC3 platinum (16-bit)   0xD8 alignment
 ##   0x100 condition (1 able, 0x80 not, 0 no one selected; writing 0 dismisses an NPC,
 ##   who leaves at the next LOAD_CHAR with the high bit)   0x10C 0x80 computer-run /
-##   0x81 against the party   0x11B movement   0x2B1, 0x2B4 the member's party index.
+##   0x81 against the party   0x11B movement   0x2B1, 0x2B4 the member's party index
+##   0x2CF (0x6DCF) the parley bonus from charisma, which several PARLAYs add (GAME.OVR
+##   0x7E78: CHA 3 0, 4 5, 5 10, 6 15, 7 20, 8-12 25, 13 30, 14 35, 15 40, 16 50, 17 55, 18+ 60).
 ## Anything else in that range is plain memory (0x6DA8, 0x6DC6, 0x6DE1... are game state).
 const CHAR_WINDOW := 0x6B00
 var selected := 0                # party index the window shows (-1: LOAD_CHAR found no one)
@@ -306,6 +308,15 @@ func write_byte(addr: int, value: int) -> void:
 const _COIN_AT := {0xBB: 0, 0xBD: 2, 0xBF: 1, 0xC1: 3, 0xC3: 4}   # offset -> money index
 
 
+## The parley bonus for a charisma (window field 0x2CF); below 3 the original leaves it unset.
+static func charisma_bonus(cha: int) -> int:
+	if cha >= 18:
+		return 60
+	if cha >= 8 and cha <= 12:
+		return 25
+	return {3: 0, 4: 5, 5: 10, 6: 15, 7: 20, 13: 30, 14: 35, 15: 40, 16: 50, 17: 55}.get(cha, 0)
+
+
 func selected_member() -> PartyMember:
 	return party[selected] if selected >= 0 and selected < party.size() else null
 
@@ -315,6 +326,8 @@ func _char_get(off: int) -> int:
 	if off == 0x2B1 or off == 0x2B4:
 		return maxi(selected, 0)
 	var m := selected_member()
+	if off == 0x2CF:
+		return charisma_bonus(m.stats[5] if m != null and m.stats.size() > 5 else 0)
 	if off == 0x100:
 		if m == null:
 			return 0

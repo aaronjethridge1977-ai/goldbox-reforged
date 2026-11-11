@@ -242,7 +242,9 @@ func _tick() -> void:
 		_to_rest -= 1
 		_rest_steps += 1
 		minutes_passed += 5
-		SpellCaster.pass_time(_party, 5)
+		var news := SpellCaster.pass_time(_party, 5)
+		if not news.is_empty():
+			_note.text = "\n".join(news)
 		if _rest_steps % STEPS_PER_HEAL == 0:
 			_heal_day()
 		_learn_step()
@@ -306,7 +308,7 @@ func _heal_day() -> void:
 	var any := false
 	for m in _party:
 		if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING] \
-				and m.hp < m.hp_max:
+				and m.hp < m.hp_max and not SpecialAffects.diseased(m):
 			m.hp += 1
 			m.status = PartyMember.STATUS_OKAY
 			any = true

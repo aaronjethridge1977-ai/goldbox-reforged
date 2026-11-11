@@ -70,7 +70,11 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			if _heal(t, rng.randi_range(1, 8)):
 				out.append("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 			return out
-		CURE_BLINDNESS, CURE_DISEASE, REMOVE_CURSE:
+		CURE_DISEASE:
+			for t in targets:
+				SpecialAffects.cure_disease(t)
+			return out
+		CURE_BLINDNESS, REMOVE_CURSE:
 			return out      # nothing our characters can suffer from yet
 	var effect := table.effect(id)
 	if effect == 0 and not WORDS.has(id):
@@ -94,8 +98,11 @@ static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, va
 	m.affects.append({"effect": effect, "spell": spell, "minutes": minutes, "value": value})
 
 
-## Lets `minutes` of game time pass for everyone's effects; those that run out end.
-static func pass_time(party: Array, minutes: int) -> void:
+## Lets `minutes` of game time pass for everyone's effects; those that run out end, except
+## diseases, which run their course (SpecialAffects.disease_expires). Returns the lines
+## to show ("ROTS...").
+static func pass_time(party: Array, minutes: int) -> PackedStringArray:
+	var out := PackedStringArray()
 	for p in party:
 		var m: PartyMember = p
 		var keep: Array = []
@@ -104,14 +111,23 @@ static func pass_time(party: Array, minutes: int) -> void:
 				keep.append(a)          # 0 = until removed
 				continue
 			a.minutes = int(a.minutes) - minutes
-			if int(a.minutes) > 0:
+			var lasts := true
+			while lasts and int(a.minutes) <= 0:
+				if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT]:
+					lasts = SpecialAffects.disease_expires(m, a, out)
+				else:
+					lasts = false
+			if lasts:
 				keep.append(a)
 		m.affects = keep
+	return out
 
 
 static func _heal(m: PartyMember, amount: int) -> bool:
 	if not m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
 		return false
+	if SpecialAffects.diseased(m) and m.hp < m.hp_max:
+		return false    # the original's heal (GAME.OVR 0x2C647) skips the diseased
 	m.hp = mini(m.hp + amount, m.hp_max)
 	if m.hp > 0:
 		m.status = PartyMember.STATUS_OKAY
