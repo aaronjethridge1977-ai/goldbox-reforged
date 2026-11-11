@@ -157,11 +157,11 @@ func _ready() -> void:
 	add_child(_timer)
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
-		_status.text = (
-			"Pool of Radiance (DOS) data not found.\n"
-			+ "Place the GOG install folder \"Pool of Radiance\" next to the project,\n"
-			+ "or run with --game-path=\"<folder containing GEO1.DAX>\"."
-		)
+		# Ask for the player's own copy (GameFolderScreen), then start over with it.
+		_status.text = ""
+		var ask := GameFolderScreen.new()
+		ask.ready_to_start.connect(func(_p: String) -> void: get_tree().reload_current_scene())
+		add_child(ask)
 		return
 	_types = ItemTypes.load_file(_game_path)
 	GameScreen.load_art(_game_path)
