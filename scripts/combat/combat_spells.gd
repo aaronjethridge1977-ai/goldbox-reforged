@@ -84,6 +84,9 @@ const GOOD := [0, 3, 6]
 var c: Combat
 var table: SpellTable
 var outdoors := false
+## Lab (PlayBot): let the party's computer-run members cast as the monsters do, standing in
+## for a player choosing spells. Off in normal play.
+static var party_casts := false
 
 
 func _init(combat: Combat, spells: SpellTable) -> void:
@@ -670,7 +673,7 @@ func _sleep_cost(t: PartyMember) -> int:
 func ai_cast(i: int) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	if me.team == 0:
+	if me.team == 0 and not party_casts:
 		return false
 	var list := castable(i)
 	if list.is_empty() or c.standing(1 - me.team) == 0:

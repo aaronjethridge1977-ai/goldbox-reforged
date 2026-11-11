@@ -35,6 +35,7 @@ var issues: PackedStringArray = []
 
 func run(plan_path: String) -> void:
 	_rng.randomize()
+	CombatSpells.party_casts = true
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
@@ -71,8 +72,10 @@ func _issue(t: String) -> void:
 func _wiped() -> bool:
 	if main._party.is_empty():
 		return false
+	if main._lost:
+		return true
 	for m in main._party:
-		if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+		if m.status == PartyMember.STATUS_OKAY:
 			return false
 	return true
 
@@ -92,6 +95,8 @@ func _do(line: String) -> void:
 			await _settle()
 		"tour":
 			for xy in w.slice(1):
+				if _wiped():
+					return
 				var a := xy.split(",")
 				await main._tour(Vector2i(int(a[0]), int(a[1])))
 				await _settle()
@@ -115,6 +120,33 @@ func _do(line: String) -> void:
 			await _settle()
 		"heal":
 			await _heal()
+		"shop":
+			# shop x,y | <member> <item> | <member> <item> ...
+			var parts := line.split("|")
+			_buys = []
+			for p in parts.slice(1):
+				var q := p.strip_edges().split(" ", false, 1)
+				_buys.append([int(q[0]), q[1]])
+			_want = "shop"
+			var a := w[1].split(",")
+			await main._tour(Vector2i(int(a[0]), int(a[1])))
+			await _settle()
+			_want = ""
+			_ready_all()
+		"inn":
+			_want = "inn"
+			var a := w[1].split(",")
+			await main._tour(Vector2i(int(a[0]), int(a[1])))
+			await _settle()
+			_want = ""
+		"trainat":
+			_want = "train"
+			var a := w[1].split(",")
+			await main._tour(Vector2i(int(a[0]), int(a[1])))
+			await _settle()
+			_want = ""
+		"ready":
+			_ready_all()
 		"memorize":
 			await _memorize()
 		"train":
@@ -156,12 +188,47 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
-	if main._vm.state == EclVM.State.PROGRAM or (main._party_menu.visible and _training):
-		return _training
+	if _want == "shop" and main._shop.visible:
+		for b in _buys:
+			_buy(int(b[0]), String(b[1]))
+		_buys = []
+		_want = ""
+		main._shop._exit()
+		return true
+	if _want == "inn" and main._camp.visible:
+		_want = ""
+		_pick_spells()
+		var need := 0
+		for m in main._party:
+			if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+				need = maxi(need, m.hp_max - m.hp)
+		await _rest_in_camp(mini(need, 14))
+		print("   inn: %s | %s" % [" ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])),
+			" ".join(main._party.map(func(m): return str(m.memorized)))])
+		return true
+	if _want == "train" and main._party_menu.visible:
+		_want = ""
+		await _train()
+		return true
 	return false
 
 
 var _training := false
+var _want := ""          # "shop" or "train": what to do when that screen opens on the way
+var _buys: Array = []    # [member, item name start]
+
+
+## Readies what each member carries, as the character sheet's READY does (best armour and
+## first weapon; the sheet refuses what doesn't fit).
+func _ready_all() -> void:
+	var sheet: CharacterSheet = main._sheet
+	for m in main._party:
+		for it in m.items:
+			if not it.readied:
+				var why: String = sheet._ready_item(m, it)
+				if why != "" and not why.contains("STRONGER"):
+					pass
+		m.recalculate(main._types)
 
 
 # --- Characters -----------------------------------------------------------------------------
@@ -180,7 +247,13 @@ func _make_char(race: String, cls: String, al: String, name: String) -> void:
 	var rules := CreationRules.shared(main._game_path)
 	var r: int = RACES[race]
 	var c: int = CLASSES[cls]
-	var rec := rules.start_record(r, 0, c, ALIGNMENTS[al], _rng)
+	if not c in rules.classes_for(r):
+		_issue("%s can't be a %s (classes %s)" % [race, cls, str(rules.classes_for(r))])
+		return
+	var align: int = ALIGNMENTS[al]
+	if not align in rules.alignments_for(c):
+		align = rules.alignments_for(c)[0]
+	var rec := rules.start_record(r, 0, c, align, _rng)
 	var best := PackedByteArray()
 	var best_score := -1
 	for attempt in 3000:
@@ -270,6 +343,31 @@ const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [34, 32], [47, 48, 51]]]
 
 
 func _memorize() -> void:
+	if not _pick_spells():
+		return
+	if not await _open_camp():
+		return
+	await _rest_in_camp(0)
+	await _settle()
+	print("   memorized: %s" % " | ".join(main._party.map(func(m): return "%s %s" % [m.name, str(m.memorized)])))
+
+
+## Rests in the open camp: long enough to memorize, and `days` more.
+func _rest_in_camp(days: int) -> void:
+	var camp: CampScreen = main._camp
+	camp._rest_menu()
+	camp._to_rest += days * 288
+	camp._start_rest()
+	while camp.visible and camp._resting:
+		await get_tree().process_frame
+	if camp.visible:
+		await main._press("esc")
+		if camp.visible:
+			await main._press("e")
+
+
+## Queues the bot's spells in every caster's free slots; true if any.
+func _pick_spells() -> bool:
 	var table := SpellTable.shared(main._game_path)
 	var any := false
 	for m in main._party:
@@ -285,20 +383,7 @@ func _memorize() -> void:
 					k += 1
 					n -= 1
 					any = true
-	if not any:
-		return
-	if not await _open_camp():
-		return
-	var camp: CampScreen = main._camp
-	camp._rest_menu()
-	camp._start_rest()
-	while camp.visible and camp._resting:
-		await get_tree().process_frame
-	if camp.visible:
-		await main._press("esc")
-		await main._press("e")
-	await _settle()
-	print("   memorized: %s" % " | ".join(main._party.map(func(m): return "%s %s" % [m.name, str(m.memorized)])))
+	return any
 
 
 # --- Town ---------------------------------------------------------------------------------
@@ -352,5 +437,8 @@ func _temple() -> void:
 
 func _load(name: String) -> void:
 	DirAccess.copy_absolute("user://bot_%s.cfg" % name, main._save_path())
+	main._lost = false
+	if main._start_menu != null:
+		main._start_menu.visible = false
 	main._quick_load()
 	await _settle()

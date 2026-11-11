@@ -1,0 +1,51 @@
+# The M6 playthrough: a new party from New Phlan to Tyranthraxus (PlayBot, --play=).
+# Squares come from the area maps (tools/lab/plan.py, evmap.py) and the original's text.
+
+log Party creation
+char human fighter lg ARN
+char dwarf fighter lg BRAM
+char human cleric lg CEDRIC
+char half-elf fighter/magic-user ng ELWEN
+char human magic-user ng MARA
+char halfling fighter/thief ng PIP
+begin
+expect 3:0
+checkpoint start
+
+log New Phlan: arms and armour (13,8), then City Hall's commissions
+shop 13,8 | 0 Long Sword | 0 Banded Mail | 0 Shield | 1 Long Sword | 1 Banded Mail | 1 Shield | 2 Mace | 2 Chain Mail | 2 Shield | 3 Long Sword | 3 Leather | 4 Quarter Staff | 4 4 Dart | 5 Short Sword | 5 Leather | 5 Short Bow | 5 10 Arrow
+tour 4,4 4,5
+face E
+step
+inn 2,12
+checkpoint shopped
+
+log The Slums (west gate)
+tour 0,4
+face W
+step
+expect 2:20
+heal
+tour 13,1
+heal
+tour 10,1
+heal
+tour 6,3 6,2
+heal
+tour 8,5
+heal
+checkpoint slums1
+tour 3,8 0,7 1,5
+heal
+# Event 15's door at 3,11 (from 2,11) alerts a hall of guards when bashed; go in from 4,10.
+tour 4,10 3,10
+heal
+tour 6,10 6,11 0,14
+heal
+checkpoint slums2
+tour 3,5 3,3 7,0 3,1
+heal
+tour 0,0 0,2 13,10 15,12
+heal
+checkpoint slums3
+stop

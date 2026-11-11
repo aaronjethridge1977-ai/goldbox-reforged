@@ -284,6 +284,28 @@ func _on_start_chosen(what: String, letter: String) -> void:
 
 
 var _starting_party := false
+var _lost := false     # the party has fallen: a key goes back to the start menu
+
+
+## The whole party is down: the adventure ends here; any key goes back to the start menu
+## (load a game or continue from the quick save). (The original's own screen for this is
+## still to be compared in the lab.)
+func _party_lost() -> void:
+	_lost = true
+	_vm.state = EclVM.State.DONE
+	_message.text = "THE PARTY HAS FALLEN.\n\nPRESS A KEY."
+	_show()
+
+
+func _back_to_start() -> void:
+	_lost = false
+	_message.text = ""
+	_start_menu = StartMenu.new() if _start_menu == null else _start_menu
+	if _start_menu.get_parent() == null:
+		add_child(_start_menu)
+		_start_menu.chosen.connect(_on_start_chosen)
+	_start_menu.visible = true
+	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 var _menu_sel := 0   # the event menus' highlight, kept from one menu to the next
 
 
@@ -444,6 +466,9 @@ func _tour(goal: Vector2i) -> void:
 	_said = ""
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
+		if _lost:
+			print("   the party has fallen")
+			return
 		if await _auto_handle():
 			if _auto_gave_up:
 				_auto_gave_up = false
@@ -464,6 +489,7 @@ func _tour(goal: Vector2i) -> void:
 		while int(_facing) != d:
 			await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
 		var before := _pos
+		var area_before := "%d:%d" % [_vm_file, _vm_block]
 		await _press("up")
 		for i in 60:
 			await get_tree().process_frame
@@ -471,9 +497,18 @@ func _tour(goal: Vector2i) -> void:
 				and not _combat.visible and _message.text.strip_edges() == "":
 			print("   blocked at %s" % _pos)
 			return
+		while await _auto_handle():
+			await get_tree().process_frame
+		if _pos == before and area_before == "%d:%d" % [_vm_file, _vm_block]:
+			# The square ahead turned the party back (a guarded door, a refusal): go round it.
+			_refused["%d:%d,%d,%d" % [_map_index, before.x, before.y, d]] = true
+			if path[1] == goal:
+				print("   %s refuses entry; gave up" % goal)
+				return
 
 
 var _said := ""
+var _refused := {}     # the tour's steps the game turned back ("map:x,y,dir")
 var _auto_gave_up := false
 var _menu_seen := {}
 ## Called before a fight's or screen's default handling; a playthrough bot sets it to take
@@ -485,6 +520,8 @@ var auto_hook: Callable = Callable()
 ## the first menu choice or the next answer, leave shops). Returns true if something was
 ## open or running (the caller should keep waiting), false when the party is free to move.
 func _auto_handle() -> bool:
+	if _lost:
+		return false
 	if _busy:
 		return true
 	var text := _message.text.strip_edges()
@@ -552,7 +589,6 @@ func _auto_handle() -> bool:
 		if not one and _tour_answers.is_empty():
 			_menu_seen[key] = int(_menu_seen.get(key, 0)) + 1
 			if int(_menu_seen[key]) > 2:
-				k = str(_vm.menu.size())
 				for i in _vm.menu.size():
 					if String(_vm.menu[i]).strip_edges().to_upper() in ["NO", "LEAVE", "EXIT", "QUIT", "DONE"]:
 						k = str(i + 1)
@@ -590,6 +626,10 @@ func _state_line() -> String:
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
 			or _treasure.visible or _camp.visible or _temple.visible or _party_menu.visible:
+		return
+	if _lost and event is InputEventKey:
+		get_viewport().set_input_as_handled()
+		_back_to_start()
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
@@ -1454,6 +1494,8 @@ func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 		for d in 4:
 			if map.wall(cur.x, cur.y, d) > 0 and map.door(cur.x, cur.y, d) == 0:
 				continue
+			if _refused.has("%d:%d,%d,%d" % [_map_index, cur.x, cur.y, d]):
+				continue
 			var nxt: Vector2i = cur + DungeonView.DELTA[d]
 			if nxt.x < 0 or nxt.y < 0 or nxt.x >= GeoMap.SIZE or nxt.y >= GeoMap.SIZE or came.has(nxt):
 				continue
@@ -1613,8 +1655,7 @@ func _run_program() -> void:
 			_make_camp()
 		3:
 			_vm.close_program()
-			_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
-			_show()
+			_party_lost()
 		8:
 			# Tyranthraxus is beaten: the closing pictures and words, then the script goes on.
 			if _ending == null:
@@ -1822,9 +1863,7 @@ func _on_event_fight_finished(result: int) -> void:
 		_show()
 		return
 	if result == 2:
-		_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
-		_vm.state = EclVM.State.DONE
-		_show()
+		_party_lost()
 		return
 	if _arena and _duelist != null:
 		# The arena (lab 2026-11-11): no experience for the double and none of its gear;
@@ -1942,6 +1981,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		return
 	_vm_file = file_no
 	_vm_block = block_id
+	var carry := _pending_move if arrive else -1
 	if arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
@@ -1953,6 +1993,8 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# 1 survived a trip south and back and a trip through the Slums; Slums -> Kuto's Well
 	# changed 0x4A00 255 -> 0 and nothing else). A loaded save writes its own values back.
 	_vm.write_byte(0x4A00, 0)
+	if arrive:
+		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)
 	_jump_next = true
 	_vm.clear_output()
@@ -1988,6 +2030,16 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		_vm.start(1)
 		if _vm.text == "" and not _vm.text_changed:
 			_vm.text = keep
+		# The step that crossed the edge carries on into the new area when nothing there
+		# stops it: the original lands one square further in, a minute later (lab, chat 6:
+		# Slums 0,4 west arrives in Kuto's Well at 14,4, not 15,4), but stays on the edge
+		# square when the arrival shows something (the Slums' greeting).
+		if carry >= 0 and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] \
+				and _vm.text.strip_edges() == "" and not _vm.on_overland:
+			var was := _pos
+			_finish_move(carry)
+			if _pos != was:
+				return
 	_after_vm()
 
 
