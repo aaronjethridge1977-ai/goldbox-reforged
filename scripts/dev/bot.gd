@@ -9,6 +9,9 @@ extends Node
 ## Plan lines ("#" starts a comment):
 ##   char <race> <class> <alignment> <name>   roll a character with the creation rules
 ##            (rerolled until its class's main abilities are 15+, as a player rerolls)
+##   modify                MODIFY CHARACTER on the new characters, as a player would with the
+##            party menu's MODIFY: every ability to 18 as far as race and class allow (fighters
+##            on to 18/00 where allowed), HP to the most the classes and CON allow
 ##   begin                 start the adventure with them (PARTY CREATION's BEGIN ADVENTURING)
 ##   tour <x>,<y> ...      walk to each square in turn, playing whatever happens
 ##   face N|E|S|W / step / key <name> / answers a;b;c / say <text>
@@ -17,6 +20,9 @@ extends Node
 ##   train                 (in a training hall's party menu) train everyone who can
 ##   buy <member> <item>   (in a shop) buy the first item whose name starts so; pool first
 ##   temple                (at a temple) raise / cure / heal everyone who needs it
+##   travel <set>:<block>  walk area to area by the area graph (--exits=)
+##   explore [events to skip]  visit every event of this area, resting first, training on the way
+##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
 ##   checkpoint <name>     quick save to user://bot_<name>.cfg; a wipe goes back to the last
 ##   expect <set>:<block>  log a mismatch if the party isn't in that area
 ##   log <text>            a heading in the log
@@ -36,6 +42,8 @@ var issues: PackedStringArray = []
 func run(plan_path: String) -> void:
 	_rng.randomize()
 	CombatSpells.party_casts = true
+	CombatSpells.party_planner = _plan_spell
+	Combat.party_judge = _judge_fight
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
@@ -44,7 +52,7 @@ func run(plan_path: String) -> void:
 		_pc += 1
 		if line == "" or line.begins_with("#"):
 			continue
-		print("\n>> ", line)
+		print("\n>> [%ds] %s" % [Time.get_ticks_msec() / 1000, line])
 		if line == "stop":
 			break
 		await _do(line)
@@ -85,6 +93,8 @@ func _do(line: String) -> void:
 	match w[0]:
 		"char":
 			_make_char(w[1], w[2], w[3], " ".join(w.slice(4)))
+		"modify":
+			_modify_all()
 		"begin":
 			main._party.clear()
 			for m in _new_party:
@@ -153,6 +163,8 @@ func _do(line: String) -> void:
 			_ready_all()
 		"travel":
 			await _travel(w[1])
+		"town":
+			await _town()
 		"explore":
 			await _explore(w.slice(1))
 		"memorize":
@@ -200,6 +212,11 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
+	if main._vm.state == EclVM.State.MENU and main._vm._menu_kind == "encounter" and not main._combat.visible:
+		var k := _encounter_choice()
+		print("   >> %d (encounter: %s)" % [k, _judged])
+		await main._press(str(k))
+		return true
 	if main._vm.state == EclVM.State.MENU and main._message.text.contains("WHO WILL PAY") and main._vm.menu.size() == main._party.size():
 		var best := 0
 		for i in main._party.size():
@@ -214,6 +231,9 @@ func _hook() -> bool:
 		_buys = []
 		_want = ""
 		main._shop._exit()
+		return true
+	if _want == "inn" and main._vm.state == EclVM.State.MENU and main._message.text.contains("TO REST HERE"):
+		await main._press("1")
 		return true
 	if _want == "inn" and main._camp.visible:
 		_want = ""
@@ -254,6 +274,335 @@ func _ready_all() -> void:
 				if why != "" and not why.contains("STRONGER"):
 					pass
 		m.recalculate(main._types)
+
+
+# --- A player's judgement in fights --------------------------------------------------------
+
+var _judged := ""
+var _fled: PackedStringArray = []
+
+
+## Expected damage a round from `a` against armour class `ac`.
+static func _dpr(a: PartyMember, ac: int) -> float:
+	var hit := clampf((21.0 - (a.thac0 - ac)) / 20.0, 0.05, 0.95)
+	var d: Array = a.damage
+	var avg := float(d[0]) * (float(d[1]) + 1.0) / 2.0 + float(d[2])
+	var d2: Array = a.base_damage_2
+	if a.is_monster and int(d2[0]) > 0:
+		avg += float(d2[0]) * (float(d2[1]) + 1.0) / 2.0 + float(d2[2])
+	return hit * maxf(avg, 1.0) * maxf(a.half_attacks, 1) / 2.0
+
+
+## COMBAT (1) or FLEE (3) at an encounter menu: the party's staying power times its damage
+## against the monsters' (Lanchester's square law in rough form), with what the party's
+## Sleep spells would take out of the fight first.
+func _encounter_choice() -> int:
+	var mons: Array[PartyMember] = []
+	for row in main._vm.monsters + _monsters_ahead():
+		var first := PartyMember.load_monster(main._game_path, maxi(main._vm_file, 1), int(row[0]))
+		if first == null:
+			continue
+		first.recalculate(main._types)
+		for n in int(row[1]):
+			mons.append(first)
+	# A party already beaten up runs, whatever it meets.
+	var standing := 0
+	var hp := 0
+	var hp_max := 0
+	for m in main._party:
+		hp_max += m.hp_max
+		if m.status == PartyMember.STATUS_OKAY:
+			standing += 1
+			hp += m.hp
+	if standing * 2 < main._party.size() or hp * 5 < hp_max * 2:
+		_judged = "%d standing, %d/%d HP" % [standing, hp, hp_max]
+		return 3
+	if mons.is_empty():
+		_judged = "no monsters known"
+		return 1
+	var up: Array[PartyMember] = []
+	for m in main._party:
+		if m.status == PartyMember.STATUS_OKAY:
+			up.append(m)
+	# Sleep: about 10 hit dice of the weakest per spell.
+	var sleeps := 0
+	for m in up:
+		for id in m.ready_spells():
+			if id == 21:
+				sleeps += 1
+	var left: Array[PartyMember] = mons.duplicate()
+	left.sort_custom(func(a, b): return a.raw[0x73] < b.raw[0x73])
+	var budget := sleeps * 10
+	var slept := 0
+	while not left.is_empty() and budget > 0 and int(left[0].raw[0x73]) <= 4:
+		var cost: int = [1, 1, 2, 4, 6][int(left[0].raw[0x73])]
+		if cost > budget:
+			break
+		budget -= cost
+		left.pop_front()
+		slept += 1
+	var p_hp := 0.0
+	var p_dmg := 0.0
+	var p_ac := 0.0
+	for m in up:
+		p_hp += m.hp
+		p_ac += m.ac
+	p_ac /= maxf(up.size(), 1)
+	var m_hp := 0.0
+	var m_dmg := 0.0
+	var m_ac := 0.0
+	for e in left:
+		m_hp += e.hp_max
+		m_ac += e.ac
+		m_dmg += _dpr(e, int(round(p_ac)))
+	m_ac = m_ac / left.size() if not left.is_empty() else 10.0
+	for m in up:
+		p_dmg += _dpr(m, int(round(m_ac)))
+	var ours := p_hp * p_dmg
+	var theirs := m_hp * m_dmg
+	var ratio := ours / maxf(theirs, 0.01)
+	_judged = "%d %s, %d asleep; party %d HP x %.1f vs %d HP x %.1f: %.2f" % [mons.size(), mons[0].name,
+		slept, int(p_hp), p_dmg, int(m_hp), m_dmg, ratio]
+	if ratio < 1.5:
+		_fled.append("%s %s: %s" % [_here(), str(main._pos), _judged])
+		return 3
+	return 1
+
+
+## Runs when the fight left is hopeless: the party's standing HP times damage against the
+## awake enemies', below a fifth, and no Sleep or Stinking Cloud left to turn it.
+func _judge_fight(c: Combat, i: int) -> String:
+	var us: Array[PartyMember] = []
+	var them: Array[PartyMember] = []
+	var spells_left := false
+	for e in c.combatants:
+		if e.down:
+			continue
+		if e.team == 0:
+			us.append(e.who)
+			for id in e.who.ready_spells():
+				if id in [21, 34]:
+					spells_left = true
+		elif not CombatSpells.held(e.who) and not e.get("fleeing", false):
+			them.append(e.who)
+	if them.is_empty() or spells_left:
+		return ""
+	var ratio := _odds(us, them, true)
+	if ratio < 0.2:
+		if c.combatants[i].get("judged", "") != "flee":
+			print("   (bot: %s runs, odds %.2f)" % [c.combatants[i].who.name, ratio])
+		c.combatants[i]["judged"] = "flee"
+		return "flee"
+	return ""
+
+
+## Rough odds: (party HP x damage a round) / (enemies' HP x damage a round).
+func _odds(us: Array[PartyMember], them: Array[PartyMember], current_hp: bool) -> float:
+	if them.is_empty():
+		return 99.0
+	var p_hp := 0.0
+	var p_ac := 0.0
+	for m in us:
+		p_hp += m.hp
+		p_ac += m.ac
+	p_ac /= maxf(us.size(), 1)
+	var m_hp := 0.0
+	var m_ac := 0.0
+	var m_dmg := 0.0
+	for e in them:
+		m_hp += e.hp if current_hp else e.hp_max
+		m_ac += e.ac
+		m_dmg += _dpr(e, int(round(p_ac)))
+	m_ac /= them.size()
+	var p_dmg := 0.0
+	for m in us:
+		p_dmg += _dpr(m, int(round(m_ac)))
+	return (p_hp * p_dmg) / maxf(m_hp * m_dmg, 0.01)
+
+
+## The monsters the script loads after the encounter menu, read ahead from where it waits
+## (straight on, following GOTOs, up to its COMBAT): [[id, count, picture], ...].
+func _monsters_ahead(start: int = -1) -> Array:
+	var vm: EclVM = main._vm
+	var out := []
+	var p: int = vm.pc if start < 0 else start
+	var back: Array[int] = []
+	var after_if := false
+	for n in 200:
+		var ins: Dictionary = vm.ecl._read(p)
+		if ins.is_empty():
+			break
+		var was_if := after_if
+		after_if = String(ins.op).begins_with("IF_")
+		if was_if and String(ins.op) in ["EXIT", "RETURN", "GOTO"] and start >= 0:
+			# Reading an event from its start: take the way where its tests pass
+			# (an "already done" check exits here).
+			p += int(ins.size)
+			continue
+		match String(ins.op):
+			"LOAD_MON":
+				var a: Array = ins.args
+				out.append([vm._value(a[0]), maxi(vm._value(a[1]), 1), vm._value(a[2])])
+			"COMBAT", "EXIT", "NEW_ECL":
+				break
+			"RETURN":
+				if back.is_empty():
+					break
+				p = back.pop_back()
+				continue
+			"GOTO":
+				p = int(ins.args[0].value) - EclScript.BASE
+				continue
+			"ON_GOTO":
+				# After an encounter menu the script branches on its outcome: 1 is a fight.
+				if ins.args.size() > 3:
+					p = int(ins.args[3].value) - EclScript.BASE
+					continue
+			"GOSUB":
+				if back.size() < 8:
+					back.append(p + int(ins.size))
+					p = int(ins.args[0].value) - EclScript.BASE
+					continue
+		p += int(ins.size)
+	return out
+
+
+## Where event `ev` of the current area starts: the on-step entry's ON_GOTO on the event
+## number (ECL memory 0x9800); -1 if not found.
+func _event_start(ev: int) -> int:
+	for p in main._vm.ecl.instructions:
+		var ins: Dictionary = main._vm.ecl.instructions[p]
+		if ins.op == "ON_GOTO" and int(ins.args[0].value) == 0x9800 and ins.args[0].type in [1, 2, 3, 5, 0x81]:
+			var k: int = 2 + ev
+			if k < ins.args.size():
+				return int(ins.args[k].value) - EclScript.BASE
+	return -1
+
+
+## The party's odds (fresh, with its Sleep spells) against an event's first fight; 99 if
+## the event has no fight.
+func _event_odds(ev: int) -> float:
+	var at := _event_start(ev)
+	if at < 0:
+		return 99.0
+	var rows := _monsters_ahead(at)
+	if rows.is_empty():
+		return 99.0
+	var mons: Array[PartyMember] = []
+	for row in rows:
+		var first := PartyMember.load_monster(main._game_path, maxi(main._vm_file, 1), int(row[0]))
+		if first == null:
+			continue
+		first.recalculate(main._types)
+		for n in int(row[1]):
+			mons.append(first)
+	var us: Array[PartyMember] = []
+	var sleeps := 0
+	for m in main._party:
+		if m.status == PartyMember.STATUS_OKAY:
+			us.append(m)
+			var table := SpellTable.shared(main._game_path)
+			if m.knows(21):
+				sleeps += m.spell_slots[1][0]
+	mons.sort_custom(func(a, b): return a.raw[0x73] < b.raw[0x73])
+	var budget := sleeps * 10
+	while not mons.is_empty() and budget > 0 and int(mons[0].raw[0x73]) <= 4:
+		var cost: int = [1, 1, 2, 4, 6][int(mons[0].raw[0x73])]
+		if cost > budget:
+			break
+		budget -= cost
+		mons.pop_front()
+	# At full health.
+	var hp := []
+	for m in us:
+		hp.append(m.hp)
+		m.hp = m.hp_max
+	var odds := _odds(us, mons, false)
+	for i in us.size():
+		us[i].hp = hp[i]
+	return odds
+
+
+## A player's spell for party member i (CombatSpells.party_planner): Sleep or Stinking Cloud
+## where it catches the most enemies and none of the party; Hold Person on the strongest;
+## Bless before the fight closes; Cure Light Wounds on whoever is hurt worst; Magic Missile
+## and other blasts on the enemy nearest to falling. {} keeps the spell and fights.
+func _plan_spell(cs: CombatSpells, i: int) -> Dictionary:
+	var c: Combat = cs.c
+	var me: Dictionary = c.combatants[i]
+	var list := cs.castable(i)
+	var foes: Array[int] = []
+	for j in c.combatants.size():
+		var e: Dictionary = c.combatants[j]
+		if not e.down and e.team != me.team and not CombatSpells.held(e.who):
+			foes.append(j)
+	if foes.is_empty():
+		return {}
+	# Area spells that leave enemies helpless.
+	for id in [21, 34]:
+		if not id in list:
+			continue
+		var best := {}
+		var best_n := 0
+		for j in foes:
+			var cell: Vector2i = c.combatants[j].cell
+			if cs.why_not(i, id, cell) != "":
+				continue
+			var n := 0
+			var mine := false
+			for k in cs._people_in(cs.area_cells(i, id, cell)):
+				var e: Dictionary = c.combatants[k]
+				if e.team == me.team:
+					mine = true
+				elif not CombatSpells.held(e.who) and (id != 21 or int(e.who.raw[0x73]) <= 4):
+					n += 1
+			if not mine and n > best_n:
+				best_n = n
+				var picked: Array[int] = [j]
+				best = {"id": id, "cell": cell, "picked": picked}
+		if best_n >= mini(2, foes.size()):
+			return best
+	# Cure the worst hurt (below half) in reach.
+	if 3 in list:
+		var worst := -1
+		for j in c.combatants.size():
+			var e: Dictionary = c.combatants[j]
+			if e.team == me.team and not e.down and e.who.hp * 2 < e.who.hp_max \
+					and cs.why_not(i, 3, e.cell) == "" and (worst < 0 or e.who.hp < c.combatants[worst].who.hp):
+				worst = j
+		if worst >= 0:
+			var one: Array[int] = [worst]
+			return {"id": 3, "cell": c.combatants[worst].cell, "picked": one}
+	# Bless at the start, when there is a real fight.
+	if 1 in list and c.round_no <= 2 and foes.size() >= 3 and not me.who.has_affect(1):
+		var self_only: Array[int] = [i]
+		return {"id": 1, "cell": me.cell, "picked": self_only}
+	# Blasts at whoever is nearest to falling.
+	for id in list:
+		if cs.table.field(id, 14) == 0 or id in [21, 34]:
+			continue
+		var t := -1
+		for j in foes:
+			if cs.why_not(i, id, c.combatants[j].cell) == "" and (t < 0 or c.combatants[j].who.hp < c.combatants[t].who.hp):
+				t = j
+		if t < 0:
+			continue
+		var picked: Array[int] = [t]
+		if cs.aim_kind(id) == "pick":
+			for j in foes:
+				if picked.size() >= cs.max_picks(id):
+					break
+				if not j in picked and cs.why_not(i, id, c.combatants[j].cell) == "":
+					picked.append(j)
+		elif cs.aim_kind(id) == "area":
+			var hits_us := false
+			for k in cs._people_in(cs.area_cells(i, id, c.combatants[t].cell)):
+				if c.combatants[k].team == me.team:
+					hits_us = true
+			if hits_us:
+				continue
+		return {"id": id, "cell": c.combatants[t].cell, "picked": picked}
+	return {}
 
 
 # --- Getting around -----------------------------------------------------------------------
@@ -329,13 +678,19 @@ func _travel(goal: String) -> void:
 			return
 		print("   travel %s -> %s by %d,%d %s" % [_here(), next, best.x, best.y, "NESW"[best.dir]])
 		var before := _here()
-		await main._tour(Vector2i(best.x, best.y))
-		await _settle()
-		if _here() == before and best.entry == "move":
-			while int(main._facing) != int(best.dir):
-				await main._press("right")
-			await main._press("up")
+		for attempt in 3:
+			# A wandering monster can interrupt the walk: fight it out and try again.
+			if _wiped() or _here() != before:
+				break
+			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
+			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
+				while int(main._facing) != int(best.dir):
+					await main._press("right")
+				await main._press("up")
+				await _settle()
+		if _wiped():
+			return
 		if _here() == before:
 			_issue("travel: the way out at %d,%d didn't lead to %s" % [best.x, best.y, next])
 			return
@@ -344,7 +699,24 @@ func _travel(goal: String) -> void:
 
 ## Visits a square of every event in the area, nearest first (except the listed events),
 ## healing when anyone is below half.
+## Explores the area in passes: the events it can't win yet wait until the party has
+## trained (New Phlan and back), up to four passes; what still waits is logged.
 func _explore(skip: Array) -> void:
+	var area := _here()
+	for n in 4:
+		var deferred: Dictionary = await _explore_pass(skip)
+		if deferred.is_empty() or _wiped() or _here() != area:
+			return
+		if not _can_train():
+			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
+			return
+		await _town()
+		await _travel(area)
+		if _here() != area:
+			return
+
+
+func _explore_pass(skip: Array) -> Dictionary:
 	var map: GeoMap = main._maps[main._map_index].map
 	var area := _here()
 	var todo := {}
@@ -354,6 +726,13 @@ func _explore(skip: Array) -> void:
 			if ev == 0 or str(ev) in skip or todo.has(ev):
 				continue
 			todo[ev] = Vector2i(x, y)
+	var deferred := {}
+	for ev in todo.keys():
+		var odds := _event_odds(ev)
+		if odds < 1.0:
+			print("   explore: event %d deferred (odds %.2f)" % [ev, odds])
+			deferred[ev] = todo[ev]
+			todo.erase(ev)
 	while not todo.is_empty() and not _wiped() and _here() == area:
 		var best := -1
 		var best_len := 1 << 20
@@ -364,13 +743,26 @@ func _explore(skip: Array) -> void:
 				best_len = path.size()
 		if best < 0:
 			print("   explore: no route to events %s" % str(todo.keys()))
-			return
+			return deferred
 		var at: Vector2i = todo[best]
 		todo.erase(best)
+		# A player rests and memorizes before walking into the next event.
+		await _prepare()
+		if _wiped() or _here() != area:
+			break
 		print("   explore: event %d at %s" % [best, at])
 		await main._tour(at)
 		await _settle()
 		await _heal_if_low()
+		if not _wiped() and _can_train() and area != TOWN:
+			# Training first: to New Phlan and back, then on with the area.
+			var back: Vector2i = main._pos
+			await _town()
+			await _travel(area)
+			if _here() != area:
+				return deferred
+			await main._tour(back)
+			await _settle()
 		if not _wiped() and _here() == area:
 			# A checkpoint after each event; a wipe comes back here and explores again
 			# (events already done do nothing the second time).
@@ -378,9 +770,95 @@ func _explore(skip: Array) -> void:
 			_checkpoint_pc = _pc - 1
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_explore.cfg")
+	return deferred
+
+
+const TOWN := "3:0"
+## New Phlan's training halls (squares on the town map), the clerk, the temple and the inn.
+const HALLS := ["8,0", "6,0", "5,0", "9,0"]
+
+
+## Full HP and spells before an event (resting can bring random encounters; they are
+## fought or fled as any other).
+func _prepare() -> void:
+	_pick_spells()
+	if not _learning() and not _needs_rest():
+		return
+	# Near town, a player rests at the inn rather than in monster country.
+	var area := _here()
+	if area != TOWN and _hops(area, TOWN) <= 2:
+		var back: Vector2i = main._pos
+		print("   == to the inn to rest")
+		await _travel(TOWN)
+		if _here() == TOWN:
+			await _do("inn 4,12")
+			await _travel(area)
+			if _here() == area:
+				await main._tour(back)
+				await _settle()
+				return
+	await _memorize()
+	if _needs_rest():
+		await _heal()
+
+
+## Areas between `a` and `b` by the area graph (99 if there is no way).
+func _hops(a: String, b: String) -> int:
+	_load_exits()
+	var dist := {a: 0}
+	var queue := [a]
+	while not queue.is_empty():
+		var x: String = queue.pop_front()
+		if x == b:
+			return dist[x]
+		for e in _exits.get(x, []):
+			if not dist.has(e.to):
+				dist[e.to] = dist[x] + 1
+				queue.append(e.to)
+	return 99
+
+
+## Whether anyone has the experience for a new level.
+func _can_train() -> bool:
+	var t := ClassTables.shared(main._game_path)
+	for m in main._party:
+		if m.status == PartyMember.STATUS_OKAY and _has_exp(m, t):
+			return true
+	return false
+
+
+static func _has_exp(m: PartyMember, t: ClassTables) -> bool:
+	for c in m.class_indices():
+		var need := t.needed(c, m.level_in(c) + 1)
+		if need > 0 and m.experience >= need:
+			return true
+	return false
+
+
+## The round in New Phlan: the clerk's rewards, the temple, every training hall, the inn.
+func _town() -> void:
+	print("   == to New Phlan to train")
+	await _travel(TOWN)
+	if _here() != TOWN:
+		return
+	await main._tour(Vector2i(4, 4))
+	await _settle()
+	await main._tour(Vector2i(4, 5))
+	await _settle()
+	while int(main._facing) != 1:
+		await main._press("right")
+	await main._press("up")
+	await _settle()
+	await _travel(TOWN)
+	for sq in ["temple 2,12"] + HALLS.map(func(h): return "trainat " + h) + ["inn 4,12"]:
+		await _do(sq)
+		if _wiped():
+			return
 
 
 func _heal_if_low() -> void:
+	if _wiped():
+		return
 	for m in main._party:
 		if m.status != PartyMember.STATUS_OKAY or m.hp * 2 < m.hp_max:
 			await _heal()
@@ -438,6 +916,35 @@ func _make_char(race: String, cls: String, al: String, name: String) -> void:
 	print("   %s: %s %s STR %d/%d INT %d WIS %d DEX %d CON %d CHA %d HP %d gold %d" % [m.name, race, cls,
 		m.stats[0], m.strength_exceptional, m.stats[1], m.stats[2], m.stats[3], m.stats[4], m.stats[5],
 		m.hp_max, m.wealth_copper() / 200])
+
+
+## What MODIFY CHARACTER allows, at its most (CharacterModify's limits): abilities up to 18
+## within the race's and class's range, a fighter's 18 on to the race's best 18/xx, HP to
+## the classes' dice at their most with CON. Applied as MODIFY's KEEP does.
+func _modify_all() -> void:
+	var rules := CreationRules.shared(main._game_path)
+	var tables := ClassTables.shared(main._game_path)
+	var spells := SpellTable.shared(main._game_path)
+	for m in _new_party:
+		var d := m.to_record()
+		for i in 6:
+			var r := rules.ability_range(d, i)
+			d[0x10 + i] = clampi(18, r.x, r.y)
+		d[0x16] = rules.exceptional_max(d) if d[0x98] > 0 and d[0x10] == 18 else 0
+		var hp := rules.hp_most(d)
+		d[0x32] = hp
+		d[0x11B] = hp
+		var fresh := PartyMember.from_bytes(d, PackedByteArray())
+		for k in [0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x32, 0x11B]:
+			m.raw[k] = d[k]
+		m.stats = fresh.stats
+		m.strength_exceptional = fresh.strength_exceptional
+		m.hp_max = fresh.hp_max
+		m.hp = fresh.hp
+		m.apply_class_tables(tables, spells)
+		m.recalculate(main._types)
+		print("   MODIFY %s: STR %d/%d INT %d WIS %d DEX %d CON %d CHA %d HP %d" % [m.name, m.stats[0],
+			m.strength_exceptional, m.stats[1], m.stats[2], m.stats[3], m.stats[4], m.stats[5], m.hp_max])
 
 
 func _party_report() -> void:
@@ -503,7 +1010,8 @@ const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [34, 32], [47, 48, 51]]]
 
 
 func _memorize() -> void:
-	if not _pick_spells():
+	_pick_spells()
+	if not _learning():
 		return
 	if not await _open_camp():
 		return
@@ -524,6 +1032,15 @@ func _rest_in_camp(days: int) -> void:
 		await main._press("esc")
 		if camp.visible:
 			await main._press("e")
+
+
+## Whether any spell is queued and not yet memorized.
+func _learning() -> bool:
+	for m in main._party:
+		for s in m.memorized:
+			if s >= PartyMember.LEARNING:
+				return true
+	return false
 
 
 ## Queues the bot's spells in every caster's free slots; true if any.
@@ -571,6 +1088,7 @@ func _train() -> void:
 		return
 	_training = true
 	for i in main._party.size():
+		_fund(i)
 		pm._sel = i
 		pm._train()
 		if pm._mode == "confirm_train":
@@ -583,6 +1101,20 @@ func _train() -> void:
 	_training = false
 	await main._press("esc")
 	await _settle()
+
+
+## Moves platinum and gold from the others to member i until it has the 1000 gold training
+## costs (only when it has the experience).
+func _fund(i: int) -> void:
+	var m: PartyMember = main._party[i]
+	var t := ClassTables.shared(main._game_path)
+	if not _has_exp(m, t):
+		return
+	for o in main._party:
+		for coin in [4, 3]:
+			while o != m and o.money[coin] > 0 and m.wealth_copper() < 1000 * 200:
+				o.money[coin] -= 1
+				m.money[coin] += 1
 
 
 ## At an open temple: Raise Dead, Stone to Flesh and Cure Disease for whoever needs them,

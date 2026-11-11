@@ -1338,6 +1338,11 @@ func _approach(i: int) -> String:
 
 
 ## One action of a computer-controlled turn. Returns false when the turn is over.
+## Lab (PlayBot): a player's call for a computer-run party member at the start of its turn:
+## party_judge(combat, i) returns "flee" to run for the edge, as a player would.
+static var party_judge: Callable
+
+
 func ai_act() -> bool:
 	if active < 0:
 		return false
@@ -1356,6 +1361,8 @@ func ai_act() -> bool:
 			return false
 		choose_weapon(active)
 		var morale := _morale_check(active)
+		if c.team == 0 and party_judge.is_valid() and party_judge.call(self, active) == "flee":
+			morale = "flee"
 		if morale == "surrender":
 			var sm: PartyMember = c.who
 			c.down = true

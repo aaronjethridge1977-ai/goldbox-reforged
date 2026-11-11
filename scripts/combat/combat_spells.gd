@@ -87,6 +87,10 @@ var outdoors := false
 ## Lab (PlayBot): let the party's computer-run members cast as the monsters do, standing in
 ## for a player choosing spells. Off in normal play.
 static var party_casts := false
+## Lab (PlayBot): a player's own choice of spell for a party member, asked before the
+## computer's random picks: planner(spells, i) returns {id, cell, picked}, {} for none
+## (the member then fights), or {"random": true} to let the computer pick.
+static var party_planner: Callable
 
 
 func _init(combat: Combat, spells: SpellTable) -> void:
@@ -678,6 +682,13 @@ func ai_cast(i: int) -> bool:
 	var list := castable(i)
 	if list.is_empty() or c.standing(1 - me.team) == 0:
 		return false
+	if me.team == 0 and party_planner.is_valid():
+		var p: Dictionary = party_planner.call(self, i)
+		if not p.has("random"):
+			if p.is_empty():
+				return false
+			cast(i, p.id, p.cell, p.picked)
+			return true
 	var tries := c.roll(1, 7, "%s thinks of spells" % m.name)
 	var priority := 7
 	for k in tries:
