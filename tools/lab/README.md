@@ -96,3 +96,22 @@ unpack them into `/home/claude/lab` as `rebuild.sh` does, and nothing leaves the
   event square from every facing, every menu choice to a depth, fights taken as won) and lists what
   isn't built yet: opcodes, unknown CALLs, notes, script errors, and where each area leads.
 - Saves made in the original's lab copy: B = Slums 0,11 W (west exit to Kuto's Well).
+
+### Lab saves for any area, and tours (chat 5)
+
+The original's load menu offers only A-J, and only A and J ship with the game copy. Make the
+others from J:
+
+- `mksave.py <base> <new> <ecl file> <block> <x> <y> <N|E|S|W> [strong] [xp<n>=…] [pp<n>=…] [addr=val]`
+  copies the save and patches its script image's on-move entry with the game's own area change:
+  load it (`pl.py boot <new>`), press Up once, and the original moves there. Our engine loads the
+  same file (`--keys=load=<new>,up`). `strong` gives everyone 200 HP, AC -10, THAC0 1.
+- `tour.py <geo> <block> <x,y> ...` plays squares in the original with a fixed policy and logs
+  every settled screen to `cap/tour.txt` (`TOUR_ENCOUNTER=f` flees encounters; `answers=` feeds
+  script menus). The same in ours: `--keys=...,tour=x;y,...` (add `--fast`).
+- `plan.py <geo> <block> <x,y>` lists one square per event in walking order; `evmap.py` prints
+  an area's events; `ourtour.sh <set> <block> <x> <y> <F>` runs a whole area in ours.
+- The original's quick fights are slow and can stall (both sides guarding); check events, not
+  fights, there. Where 0x49E7 is set (Valjevo, the graveyard) the original hides the square, so
+  `tour.py` can't route: step by hand.
+
