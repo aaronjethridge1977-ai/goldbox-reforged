@@ -101,16 +101,19 @@ func tile(col: int, row: int, index: int) -> void:
 		img.blit_rect(_tiles[index], Rect2i(0, 0, 8, 8), Vector2i(col * 8, row * 8))
 
 
-## A menu line: each item's first letter white, the rest green.
-func menu_line(row: int, items: Array, col: int = 0) -> void:
+## A menu line: each item's first letter white, the rest green; the highlighted item
+## (`selected`, the one Enter picks) all white, as the original shows it.
+func menu_line(row: int, items: Array, col: int = 0, selected: int = -1) -> void:
 	var c := col
+	var i := 0
 	for it in items:
 		var s := String(it)
 		if s == "":
 			continue
 		text(c, row, s.substr(0, 1), WHITE)
-		text(c + 1, row, s.substr(1), GREEN)
+		text(c + 1, row, s.substr(1), WHITE if i == selected else GREEN)
 		c += s.length() + 1
+		i += 1
 
 
 ## Word-wraps `s` to `width` characters a line.
@@ -171,7 +174,7 @@ func frame_main(view_frame: bool = true, overland: bool = false) -> void:
 ## wilderness screen; `wild`: its map view, 120x120 from (8, 8) with no frame of its own
 ## (an event picture there sits in the usual framed view).
 func draw_walk(view: Image, party: Array, selected: int, place: String, lines: PackedStringArray,
-		menu: Array, wild: bool = false, overland: bool = false) -> void:
+		menu: Array, wild: bool = false, overland: bool = false, menu_selected: int = 0) -> void:
 	clear()
 	frame_main(not wild, overland or wild)
 	if wild and view != null:
@@ -187,7 +190,7 @@ func draw_walk(view: Image, party: Array, selected: int, place: String, lines: P
 	party_list(party, selected)
 	text(17, 15, place, GREEN)
 	text_box(lines)
-	menu_line(24, menu)
+	menu_line(24, menu, 0, menu_selected)
 	update()
 
 

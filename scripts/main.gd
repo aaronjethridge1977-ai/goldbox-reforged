@@ -262,6 +262,7 @@ func _on_start_chosen(what: String, letter: String) -> void:
 
 
 var _starting_party := false
+var _menu_sel := 0   # the event menus' highlight, kept from one menu to the next
 
 
 ## A new game with the ready-made party: New Phlan at the start of the adventure.
@@ -439,9 +440,13 @@ func _unhandled_input(event: InputEvent) -> void:
 						hits.append(i)
 				if hits.size() == 1:
 					choice = hits[0]
-			elif event.is_action("ui_accept") and _vm.menu.size() == 1:
-				choice = 0
+			elif event.is_action("ui_left") or event.is_action("ui_right"):
+				# The highlight moves along the menu (the original's way to choose).
+				_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if event.is_action("ui_right") else -1), _vm.menu.size())
+			elif event.is_action("ui_accept"):
+				choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			if choice >= 0 and choice < _vm.menu.size():
+				_menu_sel = choice   # the original keeps the highlight where the last choice was
 				_message.text = ""
 				_vm.choose(choice)
 				_after_vm()
@@ -1887,6 +1892,7 @@ func _show() -> void:
 func _draw_screen() -> void:
 	var body := _message.text
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
+	var selected := 0
 	if _door_options != "":
 		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
 		menu = []
@@ -1899,6 +1905,7 @@ func _draw_screen() -> void:
 		if cut >= 0:
 			body = body.substr(0, cut)
 		menu = _vm.menu.duplicate()
+		selected = clampi(_menu_sel, 0, menu.size() - 1)
 	elif _vm.state == EclVM.State.INPUT:
 		menu = []
 	elif _busy:
@@ -1918,7 +1925,7 @@ func _draw_screen() -> void:
 	OverlayLook.last_wild = wild
 	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
-	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland)
+	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1)
 
 
 ## AREA: the overhead map of the block in the view window, walls as lines, the party as an
