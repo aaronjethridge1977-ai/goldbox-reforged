@@ -903,12 +903,12 @@ func _on_hit_specials(i: int, j: int) -> void:
 		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
 		var burn := SpecialAffects.element_damage(tm, SpecialAffects.FIRE, roll(2, 10, "fire"))
 		if burn > 0:
-			message.emit("%s TAKES %d POINTS OF DAMAGE" % [tm.name, burn])
+			message.emit(SpecialAffects.damage_words(tm.name, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC))
 			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC)
 	if am.has_affect(0x50) and not t.down:
 		# An ankheg's acid (0x106A7): 1d4 more.
 		var acid := roll(1, 4, "acid")
-		message.emit("%s TAKES %d POINT%s OF DAMAGE" % [tm.name, acid, "" if acid == 1 else "S"])
+		message.emit(SpecialAffects.damage_words(tm.name, acid, SpecialAffects.ACID))
 		_hurt(j, acid, SpecialAffects.ACID)
 
 
@@ -1599,5 +1599,79 @@ func _turn_start_powers(i: int) -> void:
 			dmg /= 2
 		m.affects = m.affects.filter(func(a): return not int(a.effect) in [0x79, 0x50])
 		if dmg > 0:
-			message.emit("%s TAKES %d POINT%s OF DAMAGE" % [t.who.name, dmg, "" if dmg == 1 else "S"])
+			message.emit(SpecialAffects.damage_words(t.who.name, dmg, SpecialAffects.ACID))
 			hurt(j, dmg, SpecialAffects.ACID)
+	if m.has_affect(0x58) and not t.down and (round_no == 0 or roll(1, 100, "breathe?") <= 50):
+		_breathe(i, j)
+
+
+## Tyranthraxus's breath (GAME.OVR 0x2A0F1): lightning along a line from it through its
+## target, its own HP in damage, half on a save vs breath; three breaths a fight (the
+## effect's power counts down from 0xFF). The line runs as Lightning Bolt's does, up to
+## 10 squares; which figures the original's line routine (0x98D4) takes is not traced.
+func _breathe(i: int, j: int) -> void:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
+	message.emit("%s BREATHES!" % m.name)
+	var line := _line_from(c.cell, combatants[j].cell, 20)
+	var dmg := m.hp_max
+	for k in combatants.size():
+		var t: Dictionary = combatants[k]
+		if k == i or t.down:
+			continue
+		var hit_it := false
+		for p in cells(t):
+			if p in line:
+				hit_it = true
+		if not hit_it:
+			continue
+		var hit := dmg / 2 if _save(t.who, 3, 0) else dmg
+		hit = SpecialAffects.element_damage(t.who, SpecialAffects.ELECTRIC, hit)
+		message.emit(SpecialAffects.damage_words(t.who.name, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC))
+		hurt(k, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC)
+	for a in m.affects:
+		if int(a.effect) == 0x58:
+			if int(a.value) > 0xFD:
+				a.value = int(a.value) - 1
+			else:
+				m.affects.erase(a)
+			break
+	c.moves = 0
+	c.attacks = 0
+
+
+## Cells on a straight line from `from` through `to` and on, `reach` half-steps long
+## (2 a straight step, 3 a diagonal one), stopping at walls.
+func _line_from(from: Vector2i, to: Vector2i, reach: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var d := to - from
+	if d == Vector2i.ZERO:
+		return out
+	var dx := absi(d.x)
+	var dy := absi(d.y)
+	var sx := signi(d.x)
+	var sy := signi(d.y)
+	var cur := from
+	var err := 0
+	var steps := 0
+	while steps < reach:
+		if dx >= dy:
+			cur.x += sx
+			err += dy * 2
+			steps += 2
+			if err >= dx:
+				cur.y += sy
+				err -= dx * 2
+				steps += 1
+		else:
+			cur.y += sy
+			err += dx * 2
+			steps += 2
+			if err >= dy:
+				cur.x += sx
+				err -= dy * 2
+				steps += 1
+		if not field.in_bounds(cur.x, cur.y) or not field.walkable(cur.x, cur.y):
+			break
+		out.append(cur)
+	return out

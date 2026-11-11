@@ -512,7 +512,8 @@ func _damage(i: int, id: int, j: int, dmg: int) -> void:
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return
-	c.message.emit("%s TAKES %d POINT%s OF DAMAGE" % [t.name, dmg, "" if dmg == 1 else "S"])
+	var words := kind if kind != SpecialAffects.MAGIC or id == 15 else 0
+	c.message.emit(SpecialAffects.damage_words(t.name, dmg, words))
 	c.hurt(j, dmg, kind)
 
 

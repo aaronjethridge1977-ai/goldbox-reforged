@@ -110,7 +110,8 @@ others from J:
   every settled screen to `cap/tour.txt` (`TOUR_ENCOUNTER=f` flees encounters; `answers=` feeds
   script menus). The same in ours: `--keys=...,tour=x;y,...` (add `--fast`).
 - `plan.py <geo> <block> <x,y>` lists one square per event in walking order; `evmap.py` prints
-  an area's events; `ourtour.sh <set> <block> <x> <y> <F>` runs a whole area in ours.
+  an area's events. A whole area in ours: `./t.sh --fast '--keys=load=J,area=<set>:<block>,tour=x;y,tour=x;y,...'`
+  (quote the keys: the shell splits on `;`).
 - The original's quick fights are slow and can stall (both sides guarding); check events, not
   fights, there. Where 0x49E7 is set (Valjevo, the graveyard) the original hides the square, so
   `tour.py` can't route: step by hand.

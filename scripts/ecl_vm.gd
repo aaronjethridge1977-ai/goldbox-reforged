@@ -365,8 +365,12 @@ func _char_set(off: int, v: int) -> bool:
 			m.name = ""
 		return true
 	if off == 0x100:
+		# GAME.OVR 0x803F: 0 dismisses; 0x87 turns the member to stone (the trap door in
+		# Valjevo's castle, "TURNS TO STONE"); other values of 0x80+ only mark it unable.
 		if v == 0:
 			_dismiss = true
+		elif v == 0x87:
+			m.status = SpecialAffects.STONED
 		return true
 	if off >= 0xBB and off <= 0xC4:
 		var base := off - ((off - 0xBB) & 1)

@@ -64,8 +64,14 @@ extends RefCounted
 ## 0x75 (undead) holy water does 1d6+1. Damage types (GAME.OVR's 0x6819 bits): 1 fire,
 ## 2 cold, 4 electricity, 8 magic, 0x10 acid; 0x72 halves electricity, 0x5D fire, 0x5B
 ## (juju zombie) ignores electricity and Magic Missile.
+##   0x58          (Tyranthraxus) at the start of its turn, 50%: "BREATHES!" a line of
+##                 lightning toward its target, damage = its HP (record 0x32), half on a save
+##                 vs breath; its power byte counts the breaths (0xFF: three) (0x2A0F1)
+## Damage messages (GAME.OVR 0x2C27B): "TAKES n POINTS OF DAMAGE" or "TAKES 1 POINT OF
+## DAMAGE", then by type FROM FIRE / COLD / ELECTRICITY / ACID, or FROM MAGIC when the
+## damage is only magic.
 ## Not built: magic resistance (0x69 50%, 0x6A 15% for Tyranthraxus: chance less 5 per
-## spell level under 11, so never against Pool's spells); 0x58 has no handler at all.
+## spell level under 11, so never against Pool's spells).
 ## Categories (when each type runs) are the lists of the dispatcher at GAME.OVR 0x2B1E4.
 
 const POISONED := 0x37
@@ -229,6 +235,21 @@ static func weapon_damage(attacker: PartyMember, target: PartyMember, weapon: Ga
 	if target.has_affect(0x75) and wtype == TYPE_HOLY_WATER and roll.is_valid():
 		dmg = int(roll.call(1, 6)) + 1
 	return dmg
+
+
+## "<NAME> TAKES n POINTS OF DAMAGE FROM FIRE" as the original words it.
+static func damage_words(name: String, dmg: int, kind: int) -> String:
+	var t := "%s TAKES 1 POINT OF DAMAGE" % name if dmg == 1 else "%s TAKES %d POINTS OF DAMAGE" % [name, dmg]
+	match kind & ~MAGIC:
+		FIRE:
+			return t + " FROM FIRE"
+		COLD:
+			return t + " FROM COLD"
+		ELECTRIC:
+			return t + " FROM ELECTRICITY"
+		ACID:
+			return t + " FROM ACID"
+	return t + " FROM MAGIC" if kind == MAGIC else t
 
 
 ## Does this item's name use word `word` (record bytes 47..49)?
