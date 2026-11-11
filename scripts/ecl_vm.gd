@@ -32,6 +32,12 @@ const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan'
 const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move moves to the next area)
 const FILE_SET := 0x6E12        # data set (ECLn, GEOn, ...) of the block the next NEW_ECL loads
 const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
+# The wilderness (see OverlandMap): the party's square, and its heading as the on-move
+# script reads it (8-way: 0 north, 2 east, 4 south, 6 west; the original keeps the
+# party's facing there, doubled).
+const OVERLAND_X := 0x49C3
+const OVERLAND_Y := 0x49C4
+const OVERLAND_HEADING := 0x033D
 
 enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM, INPUT }
 
@@ -71,6 +77,11 @@ var notes: Array[String] = []    # things the engine would do but can't yet
 var new_ecl := -1                # block id requested by NEW_ECL
 var area_map := []               # last LOAD_AREA_MAP operands
 var area_deco := []              # last LOAD_AREA_DECO operands
+## The wilderness map, which band of it LOAD_AREA_MAP 4,4,0 / 5,5,0 / 6,6,0 last chose
+## (0..2), and whether the party is out on it (false in a 3D area).
+var overland: OverlandMap
+var overland_band := 0
+var on_overland := false
 ## Last TREASURE operands: coin amounts (copper, silver, electrum, gold, platinum),
 ## gems, jewelry, item list id (ITEM block; 255 = none).
 var treasure := []
@@ -655,6 +666,16 @@ func _exec(ins: Dictionary) -> void:
 					var d := read_byte(PARTY_DIR) & 3
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
+				0xC01B, 0xC018:
+					# Read / change a wilderness square through 0x00FB, 0x00FC, 0x00B1 and
+					# 0x035F. The original never does either: its ECL memory ignores writes
+					# to those three addresses and has nothing behind 0x035F, so the scripts'
+					# lists of blocked squares never match (checked in the lab: squares on
+					# them can be walked onto). The squares the scripts mean to change are
+					# changed by the wilderness view itself (OverlandMap.tile).
+					pass
+				0x0806:
+					pass    # the wilderness view gives way to the picture frame (main does it)
 				0x2C90:
 					pass    # redraws the view after the script changed it
 				0xBA03:
@@ -779,6 +800,13 @@ func _exec(ins: Dictionary) -> void:
 			state = State.NEW_ECL
 		"LOAD_AREA_MAP":
 			area_map = [_value(a[0]), _value(a[1]), _value(a[2])]
+			# 4,4,0 / 5,5,0 / 6,6,0: the wilderness, one of its three bands; a map of
+			# its own (mode 0 or 2) means a 3D area.
+			if area_map[0] == area_map[1] and area_map[0] >= 4 and area_map[0] <= 6 and area_map[2] == 0:
+				overland_band = area_map[0] - 4
+				on_overland = true
+			elif area_map[0] < 127 and area_map[1] in [0, 2]:
+				on_overland = false
 			# Mode 16 turns the view into a page for PRINT_RUNES; mode 2 brings the view back.
 			if area_map[1] == 16:
 				rune_lines = []

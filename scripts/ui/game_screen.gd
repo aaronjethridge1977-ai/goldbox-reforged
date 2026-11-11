@@ -23,6 +23,7 @@ const WHITE := 15
 const CYAN := 11
 const GREEN := 10
 const YELLOW := 14
+const RED := 12
 
 static var _font := PackedByteArray()
 static var _tiles: Array[Image] = []
@@ -137,7 +138,7 @@ static func wrap(s: String, width: int) -> PackedStringArray:
 	return out
 
 
-func frame_main() -> void:
+func frame_main(view_frame: bool = true, overland: bool = false) -> void:
 	for c in 40:
 		tile(c, 0, 22)
 		tile(c, 16, 22)
@@ -150,6 +151,10 @@ func frame_main() -> void:
 	for p in [Vector2i(0, 0), Vector2i(16, 0), Vector2i(39, 0), Vector2i(0, 16), Vector2i(16, 16),
 			Vector2i(39, 16), Vector2i(0, 23), Vector2i(39, 23)]:
 		tile(p.x, p.y, 20)
+	if overland:
+		tile(16, 16, 22)   # the wilderness screens have rope across under the view
+	if not view_frame:
+		return
 	# The view's own frame.
 	for c in range(2, 15):
 		tile(c, 2, 22)
@@ -162,12 +167,18 @@ func frame_main() -> void:
 
 
 ## The walking screen. `view` is the 88x88 3D view (or event picture); `lines` the text
-## box's lines (the last six show); `menu` the bottom line's items.
+## box's lines (the last six show); `menu` the bottom line's items. `overland`: the
+## wilderness screen; `wild`: its map view, 120x120 from (8, 8) with no frame of its own
+## (an event picture there sits in the usual framed view).
 func draw_walk(view: Image, party: Array, selected: int, place: String, lines: PackedStringArray,
-		menu: Array) -> void:
+		menu: Array, wild: bool = false, overland: bool = false) -> void:
 	clear()
-	frame_main()
-	if view != null:
+	frame_main(not wild, overland or wild)
+	if wild and view != null:
+		var w: Image = view.duplicate()
+		w.convert(Image.FORMAT_RGBA8)
+		img.blit_rect(w, Rect2i(0, 0, mini(w.get_width(), 120), mini(w.get_height(), 120)), Vector2i(8, 8))
+	elif view != null:
 		var v: Image = view.duplicate()
 		v.convert(Image.FORMAT_RGBA8)
 		if v.get_width() != 88 or v.get_height() != 88:
@@ -186,12 +197,15 @@ func party_list(party: Array, selected: int) -> void:
 	text(37, 2, "HP", WHITE)
 	for i in mini(party.size(), 8):
 		var m: PartyMember = party[i]
-		var color := WHITE if i == selected else CYAN
+		# The selected member white; one who can't act (unconscious, dying, dead) light red.
+		var down := m.status >= PartyMember.STATUS_UNCONSCIOUS or m.hp <= 0
+		var color := WHITE if i == selected else (RED if down else CYAN)
 		text(17, 4 + i, m.name.left(15), color)
+		# AC light green; HP light green at full strength, yellow below (as the original).
 		var ac := str(m.ac)
-		text(35 - ac.length(), 4 + i, ac, color)
+		text(35 - ac.length(), 4 + i, ac, GREEN)
 		var hp := str(m.hp)
-		text(39 - hp.length(), 4 + i, hp, color)
+		text(39 - hp.length(), 4 + i, hp, GREEN if m.hp >= m.hp_max else YELLOW)
 
 
 func text_box(lines: PackedStringArray, color: int = GREEN) -> void:

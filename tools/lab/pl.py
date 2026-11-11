@@ -74,7 +74,7 @@ def walk(spec):
     if x is None:
         print("walk: no position on screen:", s["bottom"])
         return
-    p = R.route((x, y), {(gx, gy)}, avoid)
+    p = R.route((x, y), {(gx, gy)}, avoid - {R.event(x, y)})
     if p is None:
         print("walk: no route from", (x, y), "to", (gx, gy))
         return
@@ -99,6 +99,10 @@ def go(spec, tries=8):
         for i in range(250):
             s = lab.status()
             b = s["bottom"]
+            if b != last:
+                print("  |", b, "|", lab.text(s["im"], 17).strip("? "), "|", lab.text(s["im"], 18).strip("? "))
+            if s["im"].convert("L").getextrema()[1] < 30 and i > 3:
+                print("go: screen is blank (left the game?)"); keys.grab("cap/blank.png"); return
             if b.startswith("AREA"):
                 break
             if b.startswith("COMBAT WAIT FLEE"):
@@ -115,12 +119,14 @@ def go(spec, tries=8):
                 keys.key("enter"); time.sleep(1.5)
             elif "QUICK" in b:
                 print("fight:", b, "-> quick"); keys.key("q"); time.sleep(2)
-            elif "MOVE LEFT" in b or "AIM" in b or "ATTACK" in b:
+            elif "MOVE LEFT" in b:
+                keys.key("esc"); time.sleep(1)
+            elif "AIM" in b or "ATTACK" in b:
                 time.sleep(1.5)
             else:
                 same = same + 1 if b == last else 0
                 last = b
-                if same >= 8:
+                if same >= 400:
                     print("stuck at menu:", b); dump(); return
                 time.sleep(1)
         gx, gy = [int(v) for v in spec.split(":")[2].split(",")]

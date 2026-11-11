@@ -175,9 +175,13 @@ func _ready() -> void:
 	_vm.party = _party
 	_vm.open_ahead = _open_ahead
 	_vm.tables = ClassTables.shared(_game_path)
+	_vm.overland = OverlandMap.shared(_game_path)
 	var battle_only := false
 	for arg in OS.get_cmdline_user_args():
 		battle_only = battle_only or arg.begins_with("--battle=")
+		# --seed=<n>: the same dice every run (for the lab's step-by-step comparisons).
+		if arg.begins_with("--seed="):
+			seed(int(arg.get_slice("=", 1)))
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		if battle_only and not file_name.begins_with("GEO"):
 			continue
@@ -286,6 +290,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var a := n.trim_prefix("area=").split(":")
 			_mode = Mode.WALK
 			_enter_script(int(a[0]), int(a[1]))
+		elif n == "ending":                 # ending: plays the end-of-game screens
+			_vm.program = 8
+			_run_program()
 		elif n.begins_with("shot="):        # shot=<png path> saves the window (not headless)
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(n.trim_prefix("shot="))
@@ -366,7 +373,10 @@ func _state_line() -> String:
 		text = _party_menu.screen_text()
 	elif _camp.visible:
 		text = "%s | %s | %s | %s" % [_camp._head.text, _camp._party_label.text.replace("\n", " / ").left(140), _camp._note.text, _camp._menu.text.left(30)]
-	return "%d,%d %s %s %s ecl%d:%d vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
+	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
+	if _vm.on_overland:
+		place = "wild " + _overland_place()
+	return "%s %s ecl%d:%d vm=%d | %s | %s" % [place,
 		screen, _vm_file, _vm_block, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
 
 
@@ -487,6 +497,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_goto.grab_focus()
 			get_viewport().set_input_as_handled()
 			return
+		elif _vm.on_overland and (event.is_action("ui_up") or event.is_action("ui_right") \
+				or event.is_action("ui_down") or event.is_action("ui_left")):
+			# The wilderness: each arrow steps that way (the original has no turning here).
+			var dirs := ["ui_up", "ui_right", "ui_down", "ui_left"]
+			for d in 4:
+				if event.is_action(dirs[d]):
+					_try_move(d)
+					break
 		elif event.is_action("ui_up"):
 			_try_move(_facing)
 		elif event.is_action("ui_down"):
@@ -657,6 +675,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "file", _vm_file)
 	cfg.set_value("script", "block", _vm_block)
 	cfg.set_value("script", "memory", _vm.mem)
+	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	var members := []
 	for m in _party:
 		var items := []
@@ -809,6 +828,9 @@ func _quick_load() -> void:
 	var memory: PackedByteArray = cfg.get_value("script", "memory", PackedByteArray())
 	if memory.size() == _vm.mem.size():
 		_vm.mem = memory
+	var wild: Array = cfg.get_value("script", "overland", [false, 0])
+	_vm.on_overland = wild[0]
+	_vm.overland_band = wild[1]
 	_vm.state = EclVM.State.DONE
 	_vm.clear_output()
 	_vm.sprite_id = -1
@@ -865,6 +887,9 @@ func _items_from(records: Array) -> Array[GameItem]:
 func _try_move(direction: int) -> void:
 	_event_image = null
 	_message.text = ""
+	if _vm.on_overland:
+		_overland_move(direction)
+		return
 	if _vm.ecl != null:
 		var map: GeoMap = _maps[_map_index].map
 		_sync_position_to_vm(direction)
@@ -1005,6 +1030,9 @@ func _finish_move(direction: int) -> void:
 	_pending_move = -1
 	if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
 		return
+	if _vm.on_overland:
+		_overland_step(direction)
+		return
 	var map: GeoMap = _maps[_map_index].map
 	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
@@ -1033,6 +1061,60 @@ func _step_into(next: Vector2i) -> void:
 
 
 var _synced := Vector3i(-1, -1, -1)   # x, y, direction last written to the VM
+
+
+## A step in the wilderness (see OverlandMap): the band's on-move script may refuse it or
+## take the party into the next band; then the map itself decides.
+func _overland_move(direction: int) -> void:
+	_facing = direction as DungeonView.Dir
+	_vm.write_byte(EclVM.PARTY_DIR, direction)
+	_vm.write_byte(EclVM.OVERLAND_HEADING, direction * 2)
+	_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)
+	if _vm.ecl == null:
+		_overland_step(direction)
+		return
+	_vm.clear_output()
+	_vm.start(0)
+	_pending_move = direction
+	_after_vm()
+
+
+func _overland_step(direction: int) -> void:
+	var ov := _vm.overland
+	var x := clampi(_vm.read_byte(EclVM.OVERLAND_X) + DungeonView.DELTA[direction].x, 0, 15)
+	var y := clampi(_vm.read_byte(EclVM.OVERLAND_Y) + DungeonView.DELTA[direction].y, 0, OverlandMap.HEIGHT - 1)
+	var v := ov.value(x + ov.band_x(_vm.overland_band), y)
+	# Water stops the party; so does the poisoned river until 0x4AA2 is set. The original
+	# has a line for the river ("The river's stench drives you back.") but the lab shows
+	# no text on screen, so none here either.
+	if OverlandMap.water(v) or (OverlandMap.river(v) and _vm.read_byte(0x4AA2) == 0):
+		return
+	_vm.write_byte(EclVM.OVERLAND_X, x)
+	_vm.write_byte(EclVM.OVERLAND_Y, y)
+	_pass_time(GameClock.HOUR, 12)
+	if _vm.ecl != null:
+		_vm.clear_output()
+		_vm.start(1)
+		_after_vm()
+
+
+## The wilderness screen's view: the 5x5 squares around the party and the party's mark.
+func _overland_view() -> Image:
+	var ov := _vm.overland
+	var x := _vm.read_byte(EclVM.OVERLAND_X) + ov.band_x(_vm.overland_band)
+	var img := ov.view(x, _vm.read_byte(EclVM.OVERLAND_Y), _vm.read_byte)
+	# The party's mark. The original draws a mounted party here; where it keeps that
+	# picture is not found yet, so a plain marker stands in.
+	for k in range(4, 20):
+		for p in [Vector2i(48 + k, 52), Vector2i(48 + k, 67), Vector2i(52, 48 + k), Vector2i(67, 48 + k)]:
+			if p.x >= 52 and p.x <= 67 and p.y >= 52 and p.y <= 67:
+				img.set_pixelv(p, GameScreen.EGA[15])
+	return img
+
+
+func _overland_place() -> String:
+	var x := _vm.read_byte(EclVM.OVERLAND_X) + _vm.overland.band_x(_vm.overland_band)
+	return "%d,%d %s %s" % [x, _vm.read_byte(EclVM.OVERLAND_Y), "NESW"[_facing], GameClock.text(_vm)]
 
 
 func _sync_position_to_vm(direction: int) -> void:
@@ -1242,9 +1324,17 @@ func _run_program() -> void:
 			_vm.close_program()
 			_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
 			_show()
+		8:
+			# Tyranthraxus is beaten: the closing pictures and words, then the script goes on.
+			if _ending == null:
+				_ending = EndingScreen.new()
+				add_child(_ending)
+				_ending.finished.connect(func() -> void:
+					_vm.close_program()
+					_after_vm()
+					_show())
+			_ending.open(_game_path)
 		_:
-			if _vm.program == 8:
-				_message.text = "[the end of the game: the original shows its closing text here]"
 			_vm.close_program()
 			_after_vm()
 
@@ -1368,6 +1458,7 @@ func _start_event_fight() -> void:
 
 
 var _duelist: PartyMember = null
+var _ending: EndingScreen
 
 
 ## Hirelings take their cut of the coins before the party sees them, as the original does
@@ -1529,7 +1620,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_vm.area_map = []
 	_vm.start(4)
 	# The init script may load a different map and place the party.
-	if follow_map and not _vm.area_map.is_empty() and _vm.area_map[0] < 127:
+	if follow_map and not _vm.on_overland and not _vm.area_map.is_empty() and _vm.area_map[0] < 127:
 		for i in _maps.size():
 			if _maps[i].id == _vm.area_map[0]:
 				_map_index = i
@@ -1698,6 +1789,14 @@ func _show() -> void:
 			area, e.file, e.id, _map_index + 1, _maps.size(), hint]
 		return
 	# Walk mode
+	if _vm.on_overland and _vm.overland != null:
+		_view_img = _event_image if _event_image != null else _overland_view()
+		_picture.texture = ImageTexture.create_from_image(_view_img)
+		_status.text = "WILDERNESS  %s   ECL%d block %d\n←↑→↓ move   E encamp  S search  L look  V view  F2 save  F3 load" % [
+			_overland_place(), _vm_file, _vm_block]
+		if _screen.visible:
+			_draw_screen()
+		return
 	if _walls_for != _map_index:
 		var file_no := int(String(e.file).trim_prefix("GEO").trim_suffix(".DAX"))
 		_deco = _area_deco(file_no, e.id)
@@ -1766,15 +1865,21 @@ func _draw_screen() -> void:
 	elif _busy:
 		menu = []
 	var view := _view_img
-	if _area_view:
+	if _area_view and not _vm.on_overland:
 		view = _area_picture()
 	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
+	var wild := _vm.on_overland and _event_image == null and not _area_view
+	if _vm.on_overland:
+		place = _overland_place()
+		menu.erase("AREA")
 	if _searching:
 		place += " SEARCHING"
 	var lines := GameScreen.wrap(body.strip_edges(), 38)
 	OverlayLook.last_view = view
+	OverlayLook.last_wild = wild
+	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
-	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu)
+	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland)
 
 
 ## AREA: the overhead map of the block in the view window, walls as lines, the party as an

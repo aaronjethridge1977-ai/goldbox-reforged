@@ -15,6 +15,8 @@ extends GameScreen
 ## The adventure screen's last view and place line (main sets them), for "walk" layouts.
 static var last_view: Image
 static var last_place := ""
+static var last_wild := false
+static var last_overland := false
 
 var layout := "page"
 var head: Control
@@ -139,7 +141,7 @@ func redraw() -> void:
 		var party: Array = party_of.call() if party_of.is_valid() else []
 		var heading := plain(_text_of(head))
 		var lines := note_lines
-		draw_walk(last_view, party, 0, last_place + place_suffix, lines, [])
+		draw_walk(last_view, party, 0, last_place + place_suffix, lines, [], last_wild, last_overland)
 		draw_menu(24, items)
 		update()
 		return
