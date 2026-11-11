@@ -442,6 +442,8 @@ var _judged := ""
 var _fight_noted := false
 var _looted := false
 var _asked := {}      # script questions answered, by text and choices
+var _visited := {}    # "map:event" explored in this area's explore
+var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
 var _loot_turn := 0
@@ -908,13 +910,21 @@ func _travel(goal: String) -> void:
 ## trained (New Phlan and back), up to four passes; what still waits is logged.
 func _explore(later: Array) -> void:
 	var area := _here()
-	for n in 4:
+	_visited = {}
+	var trips := 0
+	for n in 12:
+		var map_before: int = main._map_index
 		var deferred: Dictionary = await _explore_pass(later if n == 0 else [])
-		if deferred.is_empty() or _wiped() or _here() != area:
+		if _wiped() or _here() != area:
 			return
-		if not _can_train():
+		if main._map_index != map_before:
+			continue     # a ladder or stair took the party to the area's other map: explore it
+		if deferred.is_empty():
+			return
+		if not _can_train() or trips >= 3:
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
 			return
+		trips += 1
 		await _town()
 		await _travel(area)
 		if _here() != area:
@@ -928,7 +938,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
-			if ev == 0 or todo.has(ev):
+			if ev == 0 or todo.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]):
 				continue
 			todo[ev] = Vector2i(x, y)
 	var deferred := {}
@@ -939,7 +949,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 			print("   explore: event %d deferred (odds %.2f)" % [ev, odds])
 			deferred[ev] = todo[ev]
 			todo.erase(ev)
-	while not todo.is_empty() and not _wiped() and _here() == area:
+	var map_now: int = main._map_index
+	while not todo.is_empty() and not _wiped() and _here() == area and main._map_index == map_now:
 		var best := -1
 		var best_len := 1 << 20
 		for ev in todo:
@@ -952,6 +963,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			return deferred
 		var at: Vector2i = todo[best]
 		todo.erase(best)
+		_visited["%d:%d" % [map_now, best]] = true
 		# A player rests and memorizes before walking into the next event.
 		await _prepare()
 		if _wiped() or _here() != area:
@@ -1021,6 +1033,28 @@ func _prepare() -> void:
 		await _heal()
 
 
+## New Phlan locks its shop, City Hall and more from hour 14 (0x49C9 >= 14, the town's
+## on-move script): a player camps until the doors open.
+func _wait_for_day() -> void:
+	var h := GameClock.hour(main._vm)
+	if h < 14:
+		return
+	if not await _open_camp():
+		return
+	print("   (waiting in camp for the doors to open: %02d:00)" % h)
+	var camp: CampScreen = main._camp
+	camp._rest_menu()
+	camp._to_rest = (24 - h) * 12
+	camp._start_rest()
+	while camp.visible and camp._resting:
+		await get_tree().process_frame
+	if camp.visible:
+		await main._press("esc")
+		if camp.visible:
+			await main._press("e")
+	await _settle()
+
+
 ## Areas between `a` and `b` by the area graph (99 if there is no way).
 func _hops(a: String, b: String) -> int:
 	_load_exits()
@@ -1043,7 +1077,7 @@ func _can_train() -> bool:
 	var purse := 0
 	for m in main._party:
 		purse += m.wealth_copper() + (m.money[5] * 50 + m.money[6] * 500) * 200   # gems and jewellery at a guess
-	if purse < 1000 * 200:
+	if purse < 1000 * 200 or purse < _purse_needed:
 		return false     # training costs 1000 gold; the party can't pay it yet
 	for m in main._party:
 		if m.status == PartyMember.STATUS_OKAY and _has_exp(m, t):
@@ -1065,6 +1099,7 @@ func _town() -> void:
 	await _travel(TOWN)
 	if _here() != TOWN:
 		return
+	await _wait_for_day()
 	await main._tour(Vector2i(4, 4))
 	await _settle()
 	await main._tour(Vector2i(4, 5))
@@ -1074,6 +1109,9 @@ func _town() -> void:
 	await main._press("up")
 	await _settle()
 	await _travel(TOWN)
+	var levels_before := 0
+	for m in main._party:
+		levels_before += Array(m.raw.slice(0x96, 0x9E)).reduce(func(a, b): return a + b, 0)
 	var gems := 0
 	for m in main._party:
 		gems += m.money[5] + m.money[6]
@@ -1082,6 +1120,13 @@ func _town() -> void:
 		await _do(sq)
 		if _wiped():
 			return
+	# Nobody trained: don't come back until the purse has grown by a training's price.
+	var levels_after := 0
+	var purse := 0
+	for m in main._party:
+		levels_after += Array(m.raw.slice(0x96, 0x9E)).reduce(func(a, b): return a + b, 0)
+		purse += m.wealth_copper()
+	_purse_needed = purse + 1000 * 200 if levels_after == levels_before else 0
 
 
 func _heal_if_low() -> void:
