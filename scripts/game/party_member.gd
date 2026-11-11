@@ -803,6 +803,15 @@ func thief_skill(t: ClassTables, k: int) -> int:
 
 
 ## Constitution's hit point adjustment per class (index = constitution).
+## Hit points from constitution, per class the character has (GAME.OVR 0x1D8B0): the
+## table, and for a (single-class) fighter one more at CON 17 and another at 18.
+static func con_hp_bonus(con: int, whole_class: int) -> int:
+	var b: int = CON_HP[clampi(con, 0, CON_HP.size() - 1)]
+	if whole_class == 2:
+		b += (1 if con > 16 else 0) + (1 if con > 17 else 0)
+	return b
+
+
 const CON_HP := [0, 0, 0, -2, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 
 
@@ -879,11 +888,7 @@ func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNu
 	hp_rolled += maxi(rolled / count, 1)
 	var con := 0
 	for c in class_indices():
-		con += CON_HP[clampi(stats[4], 0, CON_HP.size() - 1)]
-		if class_id in [2, 3, 4]:
-			match stats[4]:
-				17: con += 1
-				18: con += 2
+		con += con_hp_bonus(stats[4], class_id)
 	var gain := maxi((rolled + con) / count, 1)
 	var lost := hp_max - hp
 	hp_max += gain

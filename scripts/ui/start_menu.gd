@@ -4,6 +4,7 @@ extends Control
 ##   CONTINUE        the quick save (F2), when there is one
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
+##   PARTY CREATION  the original's way in: create characters, add them, begin
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
 
@@ -62,6 +63,7 @@ func _show_menu() -> void:
 	if not _saves.is_empty():
 		_items.append("LOAD SAVED GAME")
 	_items.append("NEW GAME")
+	_items.append("PARTY CREATION")
 	_items.append("EXIT")
 	_sel = clampi(_sel, 0, _items.size() - 1)
 	_draw()
@@ -135,5 +137,8 @@ func _pick(item: String) -> void:
 		"NEW GAME":
 			visible = false
 			chosen.emit("new", "")
+		"PARTY CREATION":
+			visible = false
+			chosen.emit("create", "")
 		"EXIT":
 			get_tree().quit()

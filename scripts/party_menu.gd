@@ -11,7 +11,8 @@ extends Control
 ## <CLASS>" lines, "DO YOU WISH TO TRAIN?" (Y/N), "CONGRATULATIONS...", and a magic-user who
 ## gained a level then picks one new spell.
 ## Removed characters wait in the roster (saved with the game) and ADD brings them back;
-## DROP removes one for good. Not built yet: CREATE and MODIFY (character creation).
+## DROP removes one for good. CREATE runs CharacterCreator; the new character waits in
+## the roster for ADD, as the original keeps it on disk until added. Not built yet: MODIFY.
 
 signal closed
 signal save_requested
@@ -21,6 +22,9 @@ var roster: Array[PartyMember] = []   # characters removed from the party
 var hall_mask := 0                     # 0x6DA8: the classes this hall trains (0 = no training)
 var tables: ClassTables
 var spells: SpellTable
+var types: ItemTypes
+var game_path := ""
+var _creator: CharacterCreator
 
 var _sel := 0
 var _mode := "menu"                    # menu, confirm_train, confirm_drop, learn, add
@@ -124,6 +128,23 @@ func _show_menu() -> void:
 	_menu.text = "CHOOSE A FUNCTION   (first letter; Home/End or ↑/↓ pick the character)"
 
 
+func _create() -> void:
+	if _creator == null:
+		_creator = CharacterCreator.new()
+		_creator.created.connect(_on_created)
+		_creator.cancelled.connect(_show_menu)
+		add_child(_creator)
+	_creator.tables = tables
+	_creator.spells = spells
+	_creator.types = types
+	_creator.open(game_path)
+
+
+func _on_created(m: PartyMember) -> void:
+	roster.append(m)
+	_show_menu()
+
+
 func _who() -> PartyMember:
 	return party[_sel] if _sel < party.size() else null
 
@@ -192,7 +213,7 @@ func _pick(d: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed() or _sheet.visible:
+	if not visible or not event.is_pressed() or _sheet.visible or (_creator != null and _creator.visible):
 		return
 	get_viewport().set_input_as_handled()
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
@@ -224,9 +245,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif key == KEY_D and party.size() > 1:
 				_menu.text = "DROP FROM PARTY? %s WILL BE GONE FOR GOOD.  Y/N" % _who().name
 				_mode = "confirm_drop"
-			elif key == KEY_C or key == KEY_M:
-				_note.text = "CHARACTER CREATION: not built yet."
-			elif key == KEY_B or cancel:
+			elif key == KEY_C and game_path != "":
+				_create()
+			elif key == KEY_M:
+				_note.text = "MODIFY CHARACTER: not built yet."
+			elif (key == KEY_B or cancel) and not party.is_empty():
 				visible = false
 				closed.emit()
 		"confirm_train":

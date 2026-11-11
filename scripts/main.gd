@@ -246,12 +246,31 @@ func _on_start_chosen(what: String, letter: String) -> void:
 			load_original_save(letter)
 		"new":
 			_new_game()
+		"create":
+			# As the original starts: an empty party, the party menu's CREATE / ADD, then
+			# BEGIN ADVENTURING starts the game with whoever was added.
+			_party.clear()
+			_starting_party = true
+			_vm.write_byte(EclVM.TRAINING_MASK, 0)
+			_party_menu.tables = ClassTables.shared(_game_path)
+			_party_menu.spells = SpellTable.shared(_game_path)
+			_party_menu.types = _types
+			_party_menu.game_path = _game_path
+			_party_menu.open(_party, 0)
+			return
 	_show()
+
+
+var _starting_party := false
 
 
 ## A new game with the ready-made party: New Phlan at the start of the adventure.
 func _new_game() -> void:
 	_mode = Mode.WALK
+	# A fresh start: no flags or places from an earlier game.
+	_vm.mem.fill(0)
+	_vm.on_overland = false
+	_vm.overland_band = 0
 	GameClock.set_time(_vm, 0, 0)
 	_vm.write_byte(EclVM.PARTY_X, NEW_GAME_PLACE.x)
 	_vm.write_byte(EclVM.PARTY_Y, NEW_GAME_PLACE.y)
@@ -290,6 +309,12 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var a := n.trim_prefix("area=").split(":")
 			_mode = Mode.WALK
 			_enter_script(int(a[0]), int(a[1]))
+		elif n == "create":                 # create: the start menu's PARTY CREATION
+			_on_start_chosen("create", "")
+		elif n == "party":                  # party: opens the party menu (PROGRAM 0, no training)
+			_vm.write_byte(EclVM.TRAINING_MASK, 0)
+			_vm.program = 0
+			_run_program()
 		elif n == "ending":                 # ending: plays the end-of-game screens
 			_vm.program = 8
 			_run_program()
@@ -1321,6 +1346,8 @@ func _run_program() -> void:
 				m.recalculate(_types)
 			_party_menu.tables = ClassTables.shared(_game_path)
 			_party_menu.spells = SpellTable.shared(_game_path)
+			_party_menu.types = _types
+			_party_menu.game_path = _game_path
 			_party_menu.open(_party, _vm.read_byte(EclVM.TRAINING_MASK))
 		9:
 			_vm.close_program()
@@ -1347,6 +1374,11 @@ func _run_program() -> void:
 func _on_party_menu_closed() -> void:
 	for m in _party:
 		m.recalculate(_types)
+	if _starting_party:
+		_starting_party = false
+		_new_game()
+		_show()
+		return
 	_vm.write_byte(EclVM.TRAINING_MASK, 0)
 	_message.text = ""
 	_vm.close_program()
