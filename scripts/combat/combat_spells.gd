@@ -181,8 +181,27 @@ func save(m: PartyMember, kind: int, bonus: int, caster: PartyMember) -> bool:
 		d += 1
 	if caster != null and _protected_from(m, caster):
 		d += 2
+	d += racial_save_bonus(m, kind)
 	var need: int = m.saves[kind] if kind < m.saves.size() else 20
 	return d >= need
+
+
+## Racial save bonus (the characters' .SPC files carry these as standing effects; the rules
+## are the AD&D ones the game's rule book gives): dwarves and halflings add CON / 3.5 against
+## poison (kind 0), wands (2) and spells (4); gnomes against wands and spells.
+static func racial_save_bonus(m: PartyMember, kind: int) -> int:
+	var hardy := m.race_id in [1, 5]          # dwarf, halfling
+	var gnome := m.race_id == 3
+	if not (hardy and kind in [0, 2, 4]) and not (gnome and kind in [2, 4]):
+		return 0
+	return int(floor(m.stats[4] / 3.5))      # CON 4-6 +1 ... 18 +5
+
+
+## Elves resist sleep and charm 90% of the time, half-elves 30% (the rule book's racial
+## abilities; the .SPC files carry them as standing effects).
+func resists_sleep_charm(t: PartyMember) -> bool:
+	var pct: int = {2: 90, 4: 30}.get(t.race_id, 0)
+	return pct > 0 and c.roll(1, 100, "%s resists" % t.name) <= pct
 
 
 # --- Choosing and aiming ------------------------------------------------------------------
@@ -380,6 +399,8 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				var resists: bool = (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1
+				if id == 10 and not resists:
+					resists = resists_sleep_charm(t)
 				if t.is_large() or resists or save(t, table.field(id, 9), bonus, m):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
@@ -407,6 +428,9 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				if t.has_affect(EFFECT_SLEEP) or power < cost:
 					continue
 				power -= cost
+				if resists_sleep_charm(t):
+					c.message.emit("%s IS UNAFFECTED" % t.name)
+					continue
 				SpellCaster.add_affect(t, EFFECT_SLEEP, id, dur, lvl)
 				c.message.emit("%s FALLS ASLEEP" % t.name)
 		34:         # Stinking Cloud: a failed save against poison leaves one helpless

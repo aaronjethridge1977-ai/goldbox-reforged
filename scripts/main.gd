@@ -182,6 +182,9 @@ func _ready() -> void:
 		# --seed=<n>: the same dice every run (for the lab's step-by-step comparisons).
 		if arg.begins_with("--seed="):
 			seed(int(arg.get_slice("=", 1)))
+		# --fast: the lab's long tours run every pause and fight step 25 times faster.
+		if arg == "--fast":
+			Engine.time_scale = 25.0
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		if battle_only and not file_name.begins_with("GEO"):
 			continue
@@ -322,6 +325,14 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n.begins_with("shot="):        # shot=<png path> saves the window (not headless)
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(n.trim_prefix("shot="))
+		elif n.begins_with("tour="):        # tour=x;y walks there a step at a time, playing what comes
+			var a := n.trim_prefix("tour=").split(";")
+			await _tour(Vector2i(int(a[0]), int(a[1])))
+			print("   at ", _state_line())
+			continue
+		elif n.begins_with("answers="):     # answers=a;b;c: letters the tour gives to script menus
+			_tour_answers = Array(n.trim_prefix("answers=").split(";"))
+			continue
 		elif n.begins_with("load="):        # load=<letter> loads the original's SAVGAM<letter>.DAT
 			load_original_save(n.trim_prefix("load="))
 		elif n.begins_with("say="):         # say=<text> answers INPUT_STRING / INPUT_NUMBER
@@ -382,6 +393,105 @@ func _replay_keys(names: PackedStringArray) -> void:
 				break
 		print(n.rpad(6), " ", _state_line())
 	get_tree().quit()
+
+
+var _tour_answers := []
+
+
+## Lab: one key press as the replay sends it.
+func _press(n: String) -> void:
+	var ev := InputEventKey.new()
+	var key_name: String = {"enter": "Enter", "esc": "Escape", "up": "Up", "down": "Down",
+		"left": "Left", "right": "Right"}.get(n, n.to_upper())
+	ev.keycode = OS.find_keycode_from_string(key_name)
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	var up := ev.duplicate()
+	up.pressed = false
+	Input.parse_input_event(up)
+	for i in 4:
+		await get_tree().process_frame
+
+
+## Lab: walks to a square one step at a time and plays out whatever happens with the same
+## policy as the lab's tour.py for the original (Enter on prompts, COMBAT on encounters, quick
+## fights, CONTINUE BATTLE no, leave the treasure, BASH locked doors, script menus from answers= or their
+## first item), printing each new message and menu.
+func _tour(goal: Vector2i) -> void:
+	var said := ""
+	var deadline := Time.get_ticks_msec() + 600000
+	while Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+		if _busy:
+			continue
+		var text := _message.text.strip_edges()
+		if _vm.state == EclVM.State.MENU:
+			text += "  [" + " ".join(_vm.menu) + "]"
+		if text != "" and text != said:
+			print("   ", text.replace("\n", " / "))
+			said = text
+		if _combat.visible:
+			if _combat._asking_continue:
+				print("   CONTINUE BATTLE -> N")
+				await _press("n")
+			elif _combat._result != 0:
+				print("   (fight over: result %d)" % _combat._result)
+				await _press("enter")
+			elif _combat._combat != null and _combat._combat.active >= 0 \
+					and not _combat._combatants[_combat._combat.active].quick:
+				await _press("q")
+			continue
+		if _treasure.visible:
+			if _treasure._amount_box.visible:
+				await _press("esc")
+			elif _treasure._page == 0:
+				await _press("enter")
+			elif _treasure._asking_exit:
+				await _press("n")
+			else:
+				print("   (treasure: %s)" % _treasure._spoils.describe() if _treasure._spoils.has_method("describe") else "   (treasure)")
+				await _press("e")
+			continue
+		if _shop.visible or _temple.visible or _camp.visible or _party_menu.visible or _sheet.visible:
+			print("   (screen open: leaving)")
+			await _press("esc")
+			await _press("e")
+			continue
+		if _door_options != "":
+			print("   LOCKED -> B")
+			await _press("b")
+			continue
+		if _vm.state == EclVM.State.INPUT:
+			var said_text: String = _tour_answers.pop_front() if not _tour_answers.is_empty() else "x"
+			print("   >> typed ", said_text)
+			_on_typed(said_text)
+			continue
+		if _vm.state == EclVM.State.MENU:
+			var one: bool = _vm.menu.size() == 1
+			var k: String = "1" if one or _tour_answers.is_empty() else String(_tour_answers.pop_front())
+			if not one:
+				print("   >> ", k)
+			await _press(k)
+			continue
+		if _vm.state in [EclVM.State.RUNNING, EclVM.State.WAIT]:
+			continue
+		if _pos == goal:
+			return
+		var path := _find_path(_pos, goal)
+		if path.size() < 2:
+			print("   no route from %s" % _pos)
+			return
+		var d := DungeonView.DELTA.find(path[1] - _pos)
+		while int(_facing) != d:
+			await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
+		var before := _pos
+		await _press("up")
+		for i in 60:
+			await get_tree().process_frame
+		if _pos == before and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
+				and not _combat.visible and _message.text.strip_edges() == "":
+			print("   blocked at %s" % _pos)
+			return
 
 
 func _state_line() -> String:
@@ -772,10 +882,18 @@ func load_original_save(letter: String) -> bool:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % set_no))
 	if ecl == null:
 		return false
+	# The area is the block whose script the saved image matches best (the image holds the
+	# script's tables as they stood, so a few bytes differ).
 	var block_id := -1
+	var best := 0
 	for id in ecl.ids():
 		var code := EclScript.decode(ecl.blocks[id]).code
-		if code.size() > 64 and s.slice(0x1401, 0x1401 + 64) == code.slice(0, 64):
+		var same := 0
+		for i in mini(code.size(), 512):
+			if s[0x1401 + i] == code[i]:
+				same += 1
+		if code.size() > 64 and same > best and same * 4 > mini(code.size(), 512) * 3:
+			best = same
 			block_id = id
 	if block_id < 0:
 		_status.text = "Saved game %s: its area wasn't found." % letter.to_upper()
@@ -816,6 +934,8 @@ func load_original_save(letter: String) -> bool:
 	var code_len := EclScript.decode(ecl.blocks[block_id]).code.size()
 	for i in code_len:
 		_vm.mem[EclScript.BASE + i] = s[0x1401 + i]
+	# The original runs the saved image, so run that rather than the block as shipped.
+	_vm.ecl = EclScript.decode(s.slice(0x1401, 0x1401 + code_len))
 	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
 	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
 	_sync_position_to_vm(_facing)
@@ -1483,7 +1603,22 @@ func _pass_time(slot: int, amount: int) -> void:
 ## treasure but no monsters is a treasure find: straight to the treasure.
 func _start_event_fight() -> void:
 	_fight_treasure = _vm.treasure.duplicate()
-	if _vm.monsters.is_empty():
+	# CALL 0x8000 (the arena): the opponent is a copy of the duelist, as GAME.OVR builds it
+	# (overlay at file 0x74D3, routine +0x1A6F): the whole record and its items copied,
+	# named ROLF, no money, morale 0xB2, using the duelist's own combat icon.
+	var opponents: Array[PartyMember] = []
+	if _vm.duel == 1 and _vm.selected >= 0 and _vm.selected < _party.size():
+		var copy := _party[_vm.selected].clone()
+		copy.name = "ROLF"
+		copy.is_monster = true
+		for k in copy.money.size():
+			copy.money[k] = 0
+		if copy.raw.size() > 0x84:
+			copy.raw[0x84] = 0xB2
+			copy.morale = 0xB2
+		copy.recalculate(_types)
+		opponents.append(copy)
+	if _vm.monsters.is_empty() and opponents.is_empty():
 		_after_fight([], "THE PARTY HAS FOUND TREASURE!")
 		return
 	for m in _party:
@@ -1498,7 +1633,7 @@ func _start_event_fight() -> void:
 	_vm.duel = 0
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
-		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH))
+		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents)
 
 
 var _duelist: PartyMember = null
@@ -1658,6 +1793,12 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_vm.load_script(ecl.blocks[block_id])
+	# ECL memory 0x4A00-0x4AFF belongs to the area: the original starts every area with it
+	# cleared (lab, 2026-11-11: back in the Slums from New Phlan, its "YOU HAVE ENTERED THE
+	# MONSTER-CRAWLING SLUMS" shows again although 4A00 was 255 when it left). 0x4900-0x49FF
+	# carries the game's lasting flags. A loaded save writes its own values back afterwards.
+	for a in range(0x4A00, 0x4B00):
+		_vm.write_byte(a, 0)
 	_sync_position_to_vm(_facing)
 	_jump_next = true
 	_vm.clear_output()

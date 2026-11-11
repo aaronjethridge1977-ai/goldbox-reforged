@@ -3,7 +3,8 @@ BFS from a square to an event's squares, avoiding other events, and the arrow ke
 Needs dax.py from the ideas research tools (DAX reader) on the path."""
 import dax, os, sys
 from collections import deque
-P=os.environ.get("POOLRAD", os.path.expanduser("~/mnt/goldbox-reforged/Pool of Radiance/POOLRAD/"))
+_here=os.path.join(os.path.dirname(os.path.abspath(__file__)),"game/")
+P=os.environ.get("POOLRAD", _here if os.path.isdir(_here) else os.path.expanduser("~/mnt/goldbox-reforged/Pool of Radiance/POOLRAD/"))
 def load(f,b):
     d=dax.read_dax(P+'GEO%d.DAX'%f)[b]
     return d[2:258], d[258:514], d[514:770], d[770:1026]

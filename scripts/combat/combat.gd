@@ -965,6 +965,86 @@ func _ai_begin(i: int) -> void:
 	c.pattern = p
 
 
+# --- Turning undead ----------------------------------------------------------------------
+# Clerics, and paladins from 3rd level as a cleric two levels lower, can try once a fight
+# (TURN on the fight menu; quick clerics do it when undead are in sight). The undead's
+# kind is record byte 0x76 (1 skeleton, 2 zombie, 3 ghoul, 5 wight, 7 wraith, 8 mummy,
+# 9 spectre, 10 vampire: the rule book's turning table order) and undead have 0x9F = 4.
+# One d20 against the table for the turner's level; 2d6 undead are affected, the weakest
+# first: turned ones run for the rest of the fight, destroyed ones are gone. The table is
+# the AD&D one the rule book prints; the original's own code is not yet traced.
+const T := -1
+const D := -2
+const TURN_TABLE := [
+	[10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0, 0, 0],
+	[7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0, 0],
+	[4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0],
+	[T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0],
+	[T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0],
+	[D, T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0],
+	[D, D, T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0],
+	[D, D, D, T, T, 4, 7, 10, 13, 16, 19, 20, 0],
+	[D, D, D, D, T, T, 4, 7, 10, 13, 16, 19, 20]]
+
+
+static func turn_level(m: PartyMember) -> int:
+	if m == null or m.is_monster:
+		return 0
+	return maxi(m.level_in(0), m.level_in(3) - 2)
+
+
+static func is_undead(m: PartyMember) -> bool:
+	return m.raw.size() > 0x9F and m.raw[0x9F] == 4
+
+
+func _undead_in_sight(i: int) -> Array[int]:
+	var out: Array[int] = []
+	for j in combatants.size():
+		var e: Dictionary = combatants[j]
+		if _enemy_of(combatants[i], j) and not e.get("turned", false) and is_undead(e.who) \
+				and can_see(combatants[i].cell, e.cell):
+			out.append(j)
+	return out
+
+
+func can_turn(i: int) -> bool:
+	var c: Dictionary = combatants[i]
+	return turn_level(c.who) > 0 and not c.get("tried_turning", false) and not _undead_in_sight(i).is_empty()
+
+
+func turn_undead(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	c.tried_turning = true
+	var undead := _undead_in_sight(i)
+	undead.sort_custom(func(a, b): return combatants[a].who.raw[0x76] < combatants[b].who.raw[0x76])
+	var row: Array = TURN_TABLE[clampi(turn_level(c.who), 1, 9) - 1]
+	var d20 := roll(1, 20, "%s turns undead" % c.who.name)
+	var count := roll(2, 6, "how many undead")
+	var any := false
+	for j in undead:
+		if count <= 0:
+			break
+		var e: Dictionary = combatants[j]
+		var need: int = row[clampi(int(e.who.raw[0x76]), 1, 13) - 1]
+		if need == 0 or (need > 0 and d20 < need):
+			continue
+		count -= 1
+		any = true
+		if need == D:
+			e.down = true
+			(e.who as PartyMember).hp = 0
+			(e.who as PartyMember).status = PartyMember.STATUS_DEAD
+			message.emit("%s IS DESTROYED" % e.who.name)
+		else:
+			e.turned = true
+			e.fleeing = true
+			message.emit("%s IS TURNED" % e.who.name)
+	if not any:
+		message.emit("%s FAILS TO TURN THE UNDEAD" % c.who.name)
+	c.moves = 0
+	c.attacks = 0
+
+
 # --- Morale, fleeing and surrender -------------------------------------------------------
 # As the original does it (rules as documented by Pilgrim's reconstruction; names of the
 # script variables from ssi-engine; "KOBOLD SURRENDERS" seen in the lab):
@@ -1113,8 +1193,13 @@ func ai_act() -> bool:
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
-		c.fleeing = morale == "flee"
-		if c.fleeing:
+		c.fleeing = morale == "flee" or c.get("turned", false)
+		if c.get("turned", false):
+			pass
+		elif c.team == 0 and can_turn(active):
+			turn_undead(active)
+			return false
+		elif c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
 		elif magic and magic.ai_cast(active):
 			return false

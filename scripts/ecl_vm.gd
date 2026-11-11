@@ -416,7 +416,7 @@ func _hurt(m: PartyMember, damage: int) -> void:
 
 func _save_roll(m: PartyMember, bonus: int, kind: int) -> bool:
 	var need: int = m.saves[clampi(kind, 0, 4)] if m.saves.size() == 5 else 20
-	return _rng.randi_range(1, 20) + bonus >= need
+	return _rng.randi_range(1, 20) + bonus + CombatSpells.racial_save_bonus(m, clampi(kind, 0, 4)) >= need
 
 
 func _random_member() -> PartyMember:
@@ -835,8 +835,8 @@ func _exec(ins: Dictionary) -> void:
 				# Shops reuse the after-combat treasure screen: pause and let the caller
 				# open the shop with the TREASURE item list.
 				state = State.SHOP
-			elif not monsters.is_empty() or not treasure.is_empty():
-				# A fight, or with treasure only a treasure find: pause while the caller
+			elif not monsters.is_empty() or not treasure.is_empty() or duel == 1:
+				# A fight (the arena's needs no monsters: CALL 0x8000 makes the opponent), or with treasure only a treasure find: pause while the caller
 				# runs it (experience and treasure screens), then end_combat().
 				state = State.COMBAT
 			else:

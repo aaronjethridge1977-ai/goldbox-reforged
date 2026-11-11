@@ -111,8 +111,9 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 ## SPRITE_START / SPRITE_ADVANCE. Emits `finished` when it is over.
 func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int,
-		morale_base: int = 99, surprise: int = 0) -> void:
+		morale_base: int = 99, surprise: int = 0, extra: Array[PartyMember] = []) -> void:
 	open_test(game_path, map, px, py, facing, party, mon_file, null)
+	_extra_monsters = extra
 	_event_fight = true
 	_morale_base = morale_base
 	_surprise = surprise
@@ -387,8 +388,21 @@ func _draw_original(field: Image) -> void:
 		var c: Dictionary = _combatants[_combat.active]
 		if c.moves / 2 > 0 and c.attacks > 0:
 			g.text(0, 23, "MOVE/ATTACK, MOVE LEFT = %d" % (c.moves / 2), GameScreen.GREEN)
-		g.menu_line(24, ["AIM", "USE", "CAST", "GUARD", "BANDAGE", "QUICK", "DONE"])
+		# The original's line: CAST only for someone with spells ready, TURN for those who
+		# can turn undead (GUARD and BANDAGE are under DONE; G and B still work here).
+		var items := ["MOVE", "VIEW", "AIM", "USE"]
+		var who: PartyMember = c.who
+		if _combat.magic != null and not _combat.magic.castable(_combat.active).is_empty():
+			items.append("CAST")
+		if Combat.turn_level(who) > 0:
+			items.append("TURN")
+		items.append_array(["QUICK", "DONE"])
+		g.menu_line(24, items)
 	g.update()
+
+
+## Opponents that aren't monster records (the arena's copy of the duelist).
+var _extra_monsters: Array[PartyMember] = []
 
 
 func _load_monsters() -> void:
@@ -408,6 +422,9 @@ func _load_monsters() -> void:
 					m.recalculate(_types)
 				_monsters.append(m)
 				_pictures.append(int(row[2]))
+	for m in _extra_monsters:
+		_monsters.append(m)
+		_pictures.append(-1)
 	_place()
 	_selected = 0
 	_centre_on_selected()
@@ -437,8 +454,10 @@ func _place() -> void:
 	for i in _monsters.size():
 		if mon_cells[i].x < 0:
 			continue
+		var icon: Variant = _art.character_icon(_monsters[i]) if _pictures[i] < 0 \
+			else _art.monster_icon(_mon_file, _pictures[i])
 		_combatants.append({"who": _monsters[i], "team": 1, "cell": mon_cells[i],
-			"icon": _art.monster_icon(_mon_file, _pictures[i]), "dir": (party_dir + 4) % 8})
+			"icon": icon, "dir": (party_dir + 4) % 8})
 
 
 # --- Fighting ---------------------------------------------------------------------------
@@ -967,6 +986,10 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		else:
 			_on_message("NOBODY NEEDS BANDAGING")
 			_refresh()
+	elif key == KEY_T and Combat.turn_level(_combatants[_combat.active].who) > 0:
+		_combat.turn_undead(_combat.active)
+		_refresh()
+		_advance()
 	elif key == KEY_Q:
 		_combatants[_combat.active].quick = true
 		_ai_timer.start(0.2)
