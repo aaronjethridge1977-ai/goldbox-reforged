@@ -240,6 +240,41 @@ func roll(d: PackedByteArray, rng: RandomNumberGenerator) -> void:
 	d[0x6B] = 1
 
 
+## What MODIFY allows for ability i (0 STR .. 5 CHA): the race's limits (STR by sex) and
+## the class's minimum.
+func ability_range(d: PackedByteArray, i: int) -> Vector2i:
+	var race := d[0x2E]
+	var sex := d[0x9E] & 1
+	var lo: int
+	var hi: int
+	if i == 0:
+		lo = _byte(DS_LIMITS + race * 16 + sex)
+		hi = _byte(DS_LIMITS + race * 16 + 2 + sex)
+	else:
+		lo = _byte(DS_LIMITS + race * 16 + 6 + (i - 1) * 2)
+		hi = _byte(DS_LIMITS + race * 16 + 7 + (i - 1) * 2)
+	lo = maxi(lo, _byte(DS_CLASS_MIN + d[0x2F] * 6 + i))
+	return Vector2i(lo, maxi(hi, lo))
+
+
+## The best 18/xx the race and sex allow (0: none).
+func exceptional_max(d: PackedByteArray) -> int:
+	return _byte(DS_LIMITS + d[0x2E] * 16 + 4 + (d[0x9E] & 1))
+
+
+## The most level-1 hit points the classes and CON allow (lab: a dwarf fighter, CON 14, 1-10).
+func hp_most(d: PackedByteArray) -> int:
+	var classes := 0
+	var most := 0
+	var con := 0
+	for p in 8:
+		if d[0x96 + p] > 0:
+			classes += 1
+			most += _byte(DS_HP_COUNT + p) * _byte(DS_HP_SIZE + p)
+			con += PartyMember.con_hp_bonus(d[0x14], d[0x2F])
+	return maxi((most + con) / maxi(classes, 1), 1)
+
+
 ## The finished member from a record (class tables, cleric spells, derived values).
 func member(d: PackedByteArray, tables: ClassTables, spells: SpellTable, types: ItemTypes) -> PartyMember:
 	var m := PartyMember.from_bytes(d, PackedByteArray())

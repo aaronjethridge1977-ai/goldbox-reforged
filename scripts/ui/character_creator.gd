@@ -30,7 +30,7 @@ var _member: PartyMember
 var _name := ""
 var _head := 0
 var _body := 0
-var _pictures := {}           # "HEAD:id" -> Image
+static var _pictures := {}    # "path:HEAD:id" -> Image
 var _icons: IconEditor
 
 
@@ -169,8 +169,8 @@ func _draw() -> void:
 const MAGENTA := 13
 
 
-func _picture(prefix: String, id: int) -> Image:
-	var key := "%s:%d" % [prefix, id]
+static func _picture(game_path: String, prefix: String, id: int) -> Image:
+	var key := "%s:%s:%d" % [game_path, prefix, id]
 	if _pictures.has(key):
 		return _pictures[key]
 	var img: Image = null
@@ -187,10 +187,16 @@ func _picture(prefix: String, id: int) -> Image:
 
 
 func _portrait() -> Image:
+	return portrait_for(game_path, _head, _body)
+
+
+## A character's portrait: head choice (record 0xBB, 1-based) over body choice (0xBC).
+static func portrait_for(game_path: String, head: int, body: int) -> Image:
+	var rules := CreationRules.shared(game_path)
 	var img := Image.create(88, 88, false, Image.FORMAT_RGBA8)
 	img.fill(Color.BLACK)
-	var h := _picture("HEAD", _rules.head_id(_head))
-	var b := _picture("BODY", _rules.body_id(_body))
+	var h := _picture(game_path, "HEAD", rules.head_id(head))
+	var b := _picture(game_path, "BODY", rules.body_id(body))
 	if h != null:
 		img.blit_rect(h, Rect2i(Vector2i.ZERO, h.get_size()), Vector2i(0, 0))
 	if b != null:
@@ -200,7 +206,7 @@ func _portrait() -> Image:
 
 ## The original's character page (as creation shows it): the frame with the portrait's
 ## own frame at the top right (columns 27-39, rows 0-12), labels white, values green.
-static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image) -> void:
+static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image, highlight: int = -1) -> void:
 	for c in 40:
 		g.tile(c, 0, 22)
 		g.tile(c, 23, 22)
@@ -218,6 +224,8 @@ static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image) -> void:
 		g.img.blit_rect(portrait, Rect2i(0, 0, 88, 88), Vector2i(224, 8))
 	var W := GameScreen.WHITE
 	var G := GameScreen.GREEN
+	if m.name != "":
+		g.text(1, 1, m.name, GameScreen.CYAN)
 	g.text(1, 3, "%s %s AGE %d" % [m.gender, m.race, m.age], W)
 	g.text(1, 4, m.alignment, W)
 	g.text(1, 5, m.char_class.replace("MAGE", "MAGIC-USER"), W)
@@ -225,8 +233,9 @@ static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image) -> void:
 	for i in 6:
 		var v := str(m.stats[i])
 		if i == 0 and m.stats[0] == 18 and m.strength_exceptional > 0:
-			v += "/%02d" % (m.strength_exceptional % 100)
-		g.text(1, 7 + i, "%s %s" % [names[i], v], G)
+			v += "(%02d)" % (m.strength_exceptional % 100)
+		g.text(1, 7 + i, names[i], G)
+		g.text(5, 7 + i, v, MAGENTA if highlight == i else G)
 	g.text(16, 7, "GOLD %d" % m.money[3], G)
 	var levels := PackedStringArray()
 	for c in m.class_indices():
@@ -242,7 +251,7 @@ static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image) -> void:
 	g.text(22, 17, "ENCUMBRANCE", W)
 	g.text(34, 17, str(m.encumbrance()), G)
 	g.text(1, 18, "HP", W)
-	g.text(4, 18, str(m.hp), G)
+	g.text(4, 18, str(m.hp), MAGENTA if highlight == 6 else G)
 	g.text(8, 18, "DAMAGE", W)
 	g.text(15, 18, PartyMember.dice_text(m.damage), G)
 	g.text(25, 18, "MOVEMENT", W)

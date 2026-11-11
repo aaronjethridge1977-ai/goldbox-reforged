@@ -12,7 +12,8 @@ extends Control
 ## gained a level then picks one new spell.
 ## Removed characters wait in the roster (saved with the game) and ADD brings them back;
 ## DROP removes one for good. CREATE runs CharacterCreator; the new character waits in
-## the roster for ADD, as the original keeps it on disk until added. Not built yet: MODIFY.
+## the roster for ADD, as the original keeps it on disk until added. MODIFY runs
+## CharacterModify for a character with no experience yet.
 
 signal closed
 signal save_requested
@@ -25,6 +26,7 @@ var spells: SpellTable
 var types: ItemTypes
 var game_path := ""
 var _creator: CharacterCreator
+var _modifier: CharacterModify
 
 var _sel := 0
 var _mode := "menu"                    # menu, confirm_train, confirm_drop, learn, add
@@ -140,6 +142,18 @@ func _create() -> void:
 	_creator.open(game_path)
 
 
+func _modify() -> void:
+	if _modifier == null:
+		_modifier = CharacterModify.new()
+		_modifier.finished.connect(func(_c: bool) -> void: _show_menu())
+		add_child(_modifier)
+	_modifier.tables = tables
+	_modifier.spells = spells
+	_modifier.types = types
+	var m := _who()
+	_modifier.open(game_path, m, CharacterCreator.portrait_for(game_path, maxi(m.raw[0xBB] - 1, 0), maxi(m.raw[0xBC] - 1, 0)))
+
+
 func _on_created(m: PartyMember) -> void:
 	roster.append(m)
 	_show_menu()
@@ -213,7 +227,8 @@ func _pick(d: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed() or _sheet.visible or (_creator != null and _creator.visible):
+	if not visible or not event.is_pressed() or _sheet.visible or (_creator != null and _creator.visible) \
+			or (_modifier != null and _modifier.visible):
 		return
 	get_viewport().set_input_as_handled()
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
@@ -247,8 +262,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_mode = "confirm_drop"
 			elif key == KEY_C and game_path != "":
 				_create()
-			elif key == KEY_M:
-				_note.text = "MODIFY CHARACTER: not built yet."
+			elif key == KEY_M and _who() != null and game_path != "":
+				if _who().experience > 0:
+					_note.text = "%s HAS ADVENTURED: TOO LATE TO MODIFY." % _who().name
+				else:
+					_modify()
 			elif (key == KEY_B or cancel) and not party.is_empty():
 				visible = false
 				closed.emit()
