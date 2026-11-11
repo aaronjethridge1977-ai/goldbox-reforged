@@ -47,6 +47,8 @@ var ecl: EclScript
 var state := State.IDLE
 var pc := 0                      # offset into script.code
 var stepped_through := false     # CALL 0xC01E ran: the party stepped through a map edge
+## The current map's info byte for a square (set by main), for CALL 0x2C90.
+var square_info: Callable
 var stack: Array[int] = []
 var compare := 0
 
@@ -699,7 +701,13 @@ func _exec(ins: Dictionary) -> void:
 				0x0806:
 					pass    # the wilderness view gives way to the picture frame (main does it)
 				0x2C90:
-					pass    # redraws the view after the script changed it
+					# Redraws the view after the script moved the party, and with it the new
+					# square's info byte (0xC04F), which the step script then reads for its
+					# event: the Slums' booth (event 19) puts the party out at 14,12 and runs
+					# the step script again, which must find 14,12's event, not the booth's
+					# (ours looped there; the original doesn't).
+					if square_info.is_valid():
+						write_byte(SQUARE_INFO, int(square_info.call(read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15)))
 				0xBA03:
 					pass    # plays sound effect [0x03DE] (8 the Rolf tour's, 10 thunder); silent here
 				_:

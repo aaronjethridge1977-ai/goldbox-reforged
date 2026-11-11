@@ -330,10 +330,11 @@ func _hook() -> bool:
 			print("   >> 1 (accepting the commission)")
 			await main._press("1")
 			return true
-		if "ATTACK" in items and "TALK" in items:
-			print("   >> %d (TALK rather than ATTACK)" % (items.find("TALK") + 1))
-			await main._press(str(items.find("TALK") + 1))
-			return true
+		for talk in ["TALK", "SPEAK"]:
+			if "ATTACK" in items and talk in items and int(_asked.get(ask, 0)) <= 2:
+				print("   >> %d (%s rather than ATTACK)" % [items.find(talk) + 1, talk])
+				await main._press(str(items.find(talk) + 1))
+				return true
 		if "ATTACK" in items and "LEAVE" in items:
 			print("   >> %d (LEAVE rather than ATTACK)" % (items.find("LEAVE") + 1))
 			await main._press(str(items.find("LEAVE") + 1))
@@ -1282,7 +1283,7 @@ static func _worth_taking(it: GameItem) -> bool:
 	return false
 
 
-## Moves platinum and gold from the others to member i until it has the 1000 gold training
+## Moves coins (largest first) from the others to member i until it has the 1000 gold training
 ## costs (only when it has the experience).
 func _fund(i: int) -> void:
 	var m: PartyMember = main._party[i]
@@ -1290,7 +1291,7 @@ func _fund(i: int) -> void:
 	if not _has_exp(m, t):
 		return
 	for o in main._party:
-		for coin in [4, 3]:
+		for coin in [4, 3, 2, 1, 0]:
 			while o != m and o.money[coin] > 0 and m.wealth_copper() < 1000 * 200:
 				o.money[coin] -= 1
 				m.money[coin] += 1

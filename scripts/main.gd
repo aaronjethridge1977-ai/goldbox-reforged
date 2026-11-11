@@ -130,6 +130,7 @@ func _ready() -> void:
 	_sheet.visible = false
 	add_child(_sheet)
 	_shop.sheet = _sheet
+	_vm.square_info = func(x: int, y: int) -> int: return _maps[_map_index].map.flag(x, y) if not _maps.is_empty() else 0
 	_treasure = TreasureScreen.new()
 	_treasure.visible = false
 	_treasure.closed.connect(_on_treasure_closed)
