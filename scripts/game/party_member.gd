@@ -782,6 +782,14 @@ func pay_gold(gold: int) -> bool:
 	return true
 
 
+## A shop pays `gold` gold pieces in the largest coins, keeping the purse's other coins as
+## they are (lab, chat 8: selling a Two-Handed Sword for 15 gold added 3 platinum, a Flail
+## for 1 gold added 1 gold; silver untouched).
+func receive_gold(gold: int) -> void:
+	money[4] += gold / 5
+	money[3] += gold % 5
+
+
 ## Encumbrance in coins: every coin weighs 1, plus item weights (stacks count each piece).
 ## Matches the record's cached weight on all six shipped characters.
 func encumbrance() -> int:

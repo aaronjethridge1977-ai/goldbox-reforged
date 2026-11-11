@@ -1,8 +1,18 @@
 class_name ShopScreen
 extends Control
-## The shop: the original's BUY / POOL / EXIT flow with modern controls.
+## The shop: the original's BUY VIEW POOL APPRAISE EXIT with modern controls.
 ##   Up/Down or mouse: choose an item    Enter or double-click / BUY: buy it
 ##   Left/Right: change buyer             P / POOL: gather the party's coins to the buyer
+##   V / VIEW: the buyer's sheet, whose item menu offers SELL (CharacterSheet.in_shop)
+##   A / APPRAISE: the buyer's gems and jewellery, one at a time, as the original (lab and
+##     GAME.OVR 0x26680, chat 8): "YOU HAVE A FINE COLLECTION OF:" n GEMS / n PIECES OF
+##     JEWELRY, then GEMS JEWELRY EXIT; each appraised piece leaves the count, "THE GEM IS
+##     VALUED AT n GP." (or JEWEL), then SELL (whole platinum for it, n / 5: the original
+##     drops the rest) or KEEP (an item: type 70, weight 1, price n, "Gem" or "Jewelry").
+##     Values by d100: a gem 10 (1-25), 50 (-50), 100 (-70), 500 (-90), 1000 (-99), 5000;
+##     jewellery 100 + Random(900) (1-10), 200 + Random(1000) (-20), 300 + Random(1500)
+##     (-40), 500 + Random(2500) (-50), 1000 + Random(5000) (-70), 2000 + Random(6000)
+##     (-90), 2000 + Random(10000).
 ##   Esc / EXIT: leave
 ## Prices are in gold; the buyer pays from all their coins and the change is regrouped
 ## into the largest coins (checked against the original: 140 gold - 80 = 12 platinum).
@@ -16,12 +26,20 @@ var _buyer := 0
 var _list: Tree
 var _who: Label
 var _note: Label
+## The character sheet main uses, for VIEW (set by main).
+var sheet: CharacterSheet
+var _mode := "buy"       # buy, appraise (the collection), value (SELL / KEEP)
+var _value := 0
+var _jewel := false
+var _rng := RandomNumberGenerator.new()
 
 
 func open(items: Array[GameItem], party: Array[PartyMember], title: String = "SHOP") -> void:
 	_items = items
 	_party = party
 	_buyer = 0
+	_mode = "buy"
+	_rng.randomize()
 	_build(title)
 	_refresh()
 	visible = true
@@ -72,7 +90,8 @@ func _build(title: String) -> void:
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 16)
 	box.add_child(buttons)
-	for spec in [["◀", _prev_buyer], ["BUY", _buy], ["POOL", _pool], ["▶", _next_buyer], ["EXIT", _exit]]:
+	for spec in [["◀", _prev_buyer], ["BUY", _buy], ["VIEW", _view], ["POOL", _pool], ["APPRAISE", _appraise],
+			["▶", _next_buyer], ["EXIT", _exit]]:
 		var b := Button.new()
 		b.text = spec[0]
 		b.focus_mode = Control.FOCUS_NONE
@@ -184,15 +203,152 @@ func _reselect(i: int) -> void:
 
 
 func _exit() -> void:
+	if _mode != "buy":
+		_mode = "buy"
+		_note.text = ""
+		_refresh()
+		return
 	visible = false
 	closed.emit()
+
+
+func _view() -> void:
+	if sheet == null or _party.is_empty() or _mode != "buy":
+		return
+	if not sheet.closed.is_connected(_after_view):
+		sheet.closed.connect(_after_view)
+	sheet.open(_party, "SHOP", _buyer, true)
+
+
+func _after_view() -> void:
+	if visible:
+		var i := _selected_index()
+		_refresh()
+		_reselect(i)
+		_list.grab_focus()
+
+
+# --- APPRAISE -----------------------------------------------------------------------------
+
+func _appraise() -> void:
+	if _party.is_empty():
+		return
+	var m := _party[_buyer]
+	if m.money[5] == 0 and m.money[6] == 0:
+		_mode = "buy"
+		_note.text = "NO GEMS OR JEWELRY"
+		return
+	_mode = "appraise"
+	_show_collection()
+
+
+func _show_collection() -> void:
+	var m := _party[_buyer]
+	var lines := PackedStringArray(["YOU HAVE A FINE COLLECTION OF:"])
+	if m.money[5] > 0:
+		lines.append("%d GEM%s" % [m.money[5], "" if m.money[5] == 1 else "S"])
+	if m.money[6] > 0:
+		lines.append("%d PIECE%s OF JEWELRY" % [m.money[6], "" if m.money[6] == 1 else "S"])
+	lines.append("APPRAISE :   G GEMS   J JEWELRY   E EXIT")
+	_note.text = "\n".join(lines)
+
+
+## Appraises one gem (or piece of jewellery): it leaves the count and is valued.
+func appraise_one(jewel: bool) -> int:
+	var m := _party[_buyer]
+	var k := 6 if jewel else 5
+	if m.money[k] <= 0:
+		return -1
+	m.money[k] -= 1
+	_jewel = jewel
+	_value = jewel_value(_rng) if jewel else gem_value(_rng)
+	_mode = "value"
+	_note.text = "THE %s IS VALUED AT %d GP.\nYOU CAN : S SELL   K KEEP" % ["JEWEL" if jewel else "GEM", _value]
+	return _value
+
+
+static func gem_value(rng: RandomNumberGenerator) -> int:
+	var r := rng.randi_range(1, 100)
+	if r <= 25:
+		return 10
+	if r <= 50:
+		return 50
+	if r <= 70:
+		return 100
+	if r <= 90:
+		return 500
+	if r <= 99:
+		return 1000
+	return 5000
+
+
+static func jewel_value(rng: RandomNumberGenerator) -> int:
+	var r := rng.randi_range(1, 100)
+	for row in [[10, 100, 900], [20, 200, 1000], [40, 300, 1500], [50, 500, 2500], [70, 1000, 5000], [90, 2000, 6000]]:
+		if r <= row[0]:
+			return row[1] + rng.randi_range(0, row[2] - 1)
+	return 2000 + rng.randi_range(0, 9999)
+
+
+## SELL (true) or KEEP the piece just appraised.
+func settle(sell: bool) -> void:
+	var m := _party[_buyer]
+	if sell:
+		m.money[4] += _value / 5
+	else:
+		m.items.append(appraised_item(_jewel, _value))
+	if m.money[5] > 0 or m.money[6] > 0:
+		_mode = "appraise"
+		_show_collection()
+	else:
+		_mode = "buy"
+		_note.text = ""
+	_refresh()
+
+
+## The item KEEP makes, as the original's record: type 70, weight 1, price = the value,
+## name word 101 (Gem) or 214 (Jewelry).
+static func appraised_item(jewel: bool, value: int) -> GameItem:
+	var rec := PackedByteArray()
+	rec.resize(GameItem.SIZE)
+	var name := "Jewelry" if jewel else "Gem"
+	rec[0] = name.length()
+	for i in name.length():
+		rec[1 + i] = name.unicode_at(i)
+	rec[46] = 70
+	rec[49] = 214 if jewel else 101
+	rec.encode_u16(55, 1)
+	rec.encode_u16(58, mini(value, 65535))
+	return GameItem.from_record(rec)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
+	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+	if _mode == "appraise":
+		if key == KEY_G:
+			appraise_one(false)
+		elif key == KEY_J:
+			appraise_one(true)
+		elif key == KEY_E or event.is_action("ui_cancel"):
+			_exit()
+		_refresh()
+		get_viewport().set_input_as_handled()
+		return
+	if _mode == "value":
+		if key == KEY_S:
+			settle(true)
+		elif key == KEY_K:
+			settle(false)
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action("ui_cancel"):
 		_exit()
+	elif key == KEY_V:
+		_view()
+	elif key == KEY_A:
+		_appraise()
 	elif event.is_action("ui_left"):
 		_prev_buyer()
 	elif event.is_action("ui_right"):

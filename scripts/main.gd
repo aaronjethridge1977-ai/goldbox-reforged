@@ -129,6 +129,7 @@ func _ready() -> void:
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
 	add_child(_sheet)
+	_shop.sheet = _sheet
 	_treasure = TreasureScreen.new()
 	_treasure.visible = false
 	_treasure.closed.connect(_on_treasure_closed)
@@ -469,6 +470,10 @@ func _tour(goal: Vector2i) -> void:
 		if _lost:
 			print("   the party has fallen")
 			return
+		if tour_stop and not _combat.visible and not _treasure.visible and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+			tour_stop = false
+			print("   tour stopped short of %s" % goal)
+			return
 		if await _auto_handle():
 			if _auto_gave_up:
 				_auto_gave_up = false
@@ -510,6 +515,9 @@ func _tour(goal: Vector2i) -> void:
 var _said := ""
 var _refused := {}     # the tour's steps the game turned back ("map:x,y,dir")
 var _auto_gave_up := false
+## Lab (PlayBot): set to end the current tour at the next quiet moment (a hurt party stops
+## to rest instead of walking on into the next wandering monster).
+var tour_stop := false
 var _menu_seen := {}
 ## Called before a fight's or screen's default handling; a playthrough bot sets it to take
 ## over (return true when it handled the moment itself).
@@ -1981,7 +1989,11 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		return
 	_vm_file = file_no
 	_vm_block = block_id
-	var carry := _pending_move if arrive else -1
+	# Only a step through the map's edge (the leaving script's CALL 0xC01E) carries on; a
+	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
+	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
+	var carry := _pending_move if arrive and _vm.stepped_through else -1
+	_vm.stepped_through = false
 	if arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)

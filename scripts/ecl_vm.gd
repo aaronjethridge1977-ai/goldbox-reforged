@@ -46,6 +46,7 @@ var mem := PackedByteArray()
 var ecl: EclScript
 var state := State.IDLE
 var pc := 0                      # offset into script.code
+var stepped_through := false     # CALL 0xC01E ran: the party stepped through a map edge
 var stack: Array[int] = []
 var compare := 0
 
@@ -684,6 +685,7 @@ func _exec(ins: Dictionary) -> void:
 					# The party moves one square ahead (wrapping at the map edge, as the
 					# original masks the coordinates).
 					var d := read_byte(PARTY_DIR) & 3
+					stepped_through = true
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
 				0xC01B, 0xC018:

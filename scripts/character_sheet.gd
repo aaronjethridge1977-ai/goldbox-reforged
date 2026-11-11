@@ -19,6 +19,11 @@ extends Control
 ##   than their load allowance + 1500 coins says "OVERLOADED"); DROP: "YOUR <item> WILL BE
 ##   GONE FOREVER" / "DROP IT?". HALVE splits a stack ("CAN'T HALVE THAT" for one piece);
 ##   JOIN gathers matching stacks into this one.
+## - In a shop (VIEW from the shop) the item menu is READY TRADE DROP HALVE JOIN SELL ID EXIT,
+##   as the original's: SELL offers half the price, "I'LL GIVE YOU n GOLD PIECES FOR YOUR
+##   <item>" / "IS IT A DEAL?", paid in the largest coins; a readied item can't be sold
+##   (the original doesn't react). Lab-checked: Two-Handed Sword (30) 15, Flail (3) 1. ID is
+##   not built yet.
 ## - SPELLS lists the spells memorized and known. TRADE and DROP at the top move money:
 ##   TRADE TO? (another member), SELECT TYPE OF COIN, HOW MUCH WILL YOU TRADE? (or DROP).
 
@@ -42,11 +47,13 @@ var _coin := 4
 var _amount := ""
 var _note := ""
 var _rng := RandomNumberGenerator.new()
+var in_shop := false       # opened from a shop's VIEW: the item menu offers SELL
 
 const COIN_KEYS := {KEY_C: 0, KEY_S: 1, KEY_E: 2, KEY_G: 3, KEY_P: 4}
 
 
-func open(people: Array[PartyMember], title: String, start: int = 0) -> void:
+func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool = false) -> void:
+	in_shop = shop
 	_people = people
 	_title = title
 	_index = clampi(start, 0, maxi(people.size() - 1, 0))
@@ -176,7 +183,8 @@ func _refresh() -> void:
 			_foot.text = (_note + "\n" if _note != "" else "") + nav + \
 				(("    VIEW: ITEMS %sTRADE DROP EXIT (first letter)" % ("SPELLS " if _caster() else "")) if _editable() else "    Esc: close")
 		"items":
-			_foot.text = (_note + "\n" if _note != "" else "") + "↑/↓ item    READY  USE  TRADE  DROP  HALVE  JOIN  EXIT (first letter)"
+			_foot.text = (_note + "\n" if _note != "" else "") + ("↑/↓ item    READY  TRADE  DROP  HALVE  JOIN  SELL  ID  EXIT (first letter)" \
+				if in_shop else "↑/↓ item    READY  USE  TRADE  DROP  HALVE  JOIN  EXIT (first letter)")
 		"spells":
 			_foot.text = "Esc: back"
 		"whom":
@@ -339,6 +347,11 @@ func _can_take(p: PartyMember, it: GameItem) -> bool:
 	return p.encumbrance() + it.total_weight() <= p.load_allowance() + 1500
 
 
+## What a shop pays for an item: half its price.
+static func _sale_price(it: GameItem) -> int:
+	return it.price / 2
+
+
 func _halve(m: PartyMember, it: GameItem) -> String:
 	var half := it.count / 2
 	if half <= 0:
@@ -418,6 +431,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				pass
 			elif key == KEY_R:
 				_note = _ready_item(m, it)
+			elif key == KEY_S and in_shop:
+				if not it.readied:
+					_pending = "sell"
+					_note = "I'LL GIVE YOU %d GOLD PIECES FOR YOUR %s.  IS IT A DEAL?" % [_sale_price(it), item_label(it)]
+					_mode = "confirm"
+			elif key == KEY_U and in_shop:
+				pass
 			elif key == KEY_U:
 				var r := _use_item(m, it, false)
 				if r != "\u0001":
@@ -468,6 +488,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				var it := _item()
 				if _pending == "drop" and it != null:
 					m.items.erase(it)
+					_note = ""
+				elif _pending == "sell" and it != null:
+					m.items.erase(it)
+					m.receive_gold(_sale_price(it))
 					_note = ""
 				elif _pending == "use" and it != null:
 					_note = _use_item(m, it, true)
