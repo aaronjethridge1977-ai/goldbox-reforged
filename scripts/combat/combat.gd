@@ -1167,6 +1167,10 @@ func _fastest(team: int) -> int:
 func _morale_check(i: int) -> String:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
+	if m.has_meta("arena_double"):
+		# "Normally not to the death": in the lab the arena's double ran (CONTINUE BATTLE)
+		# in both duels once it had been hurt. The original's exact trigger isn't traced.
+		return "flee" if m.hp < m.hp_max else ""
 	if c.team != 1 or m.morale < 0x80 or m.hp_max <= 0:
 		return ""
 	var own := (m.morale & 0x7F) * 2

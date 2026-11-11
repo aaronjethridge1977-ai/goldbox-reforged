@@ -423,8 +423,10 @@ func _load_monsters() -> void:
 				_monsters.append(m)
 				_pictures.append(int(row[2]))
 	for m in _extra_monsters:
+		# The arena's double fights as combat picture 11 of the area's CPIC file, as
+		# GAME.OVR loads it (lab: ROLF is a stock swordsman, not the duelist's icon).
 		_monsters.append(m)
-		_pictures.append(-1)
+		_pictures.append(11)
 	_place()
 	_selected = 0
 	_centre_on_selected()

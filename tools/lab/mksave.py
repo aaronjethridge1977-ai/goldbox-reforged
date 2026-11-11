@@ -1,6 +1,6 @@
 """Make a lab save for the original that jumps to another area on the first step.
 
-  python3 mksave.py <base letter> <new letter (B-I)> <ecl file> <block> <x> <y> <facing N|E|S|W> [addr=val ...] [strong]
+  python3 mksave.py <base letter> <new letter (B-I)> <ecl file> <block> <x> <y> <facing N|E|S|W> [addr=val ...] [xp<n>=<experience>] [pp<n>=<platinum>] [strong]
 
 The original's save holds the current area's script image from byte 0x1401 (base 0x9900).
 This patches the script's "on move" entry (its first GOTO's target) to do what the game's
@@ -21,8 +21,18 @@ def wm(v, a):
 patch = wm(int(x), 0xC04B) + wm(int(y), 0xC04C) + wm("NESW".index(f.upper()), 0xC04D) + wm(int(n), 0x6E12) + bytes([0x20, 0x00, int(b)])
 s[o:o + len(patch)] = patch
 strong = "strong" in sys.argv[8:]
+xp = {}
+pp = {}
 for a in sys.argv[8:]:
     if a == "strong":
+        continue
+    if a.startswith("xp"):          # xp<n>=<experience> for character file n (1-6)
+        k, v = a[2:].split("=")
+        xp[int(k)] = int(v)
+        continue
+    if a.startswith("pp"):          # pp<n>=<platinum pieces> for character file n
+        k, v = a[2:].split("=")
+        pp[int(k)] = int(v)
         continue
     k, v = a.split("=")
     s[1 + 2 * (int(k, 16) - 0x4900)] = int(v, 0)
@@ -40,5 +50,15 @@ if strong:   # lab only: 200 HP, AC -10, THAC0 1, so the walker survives late ar
         d[0xA9] = d[0x111] = 70
         d[0x2D] = d[0x110] = 59
         open(p, "wb").write(d)
+for n_, v in xp.items():
+    p_ = os.path.join(G, "CHRDAT%s%d.SAV" % (N, n_))
+    d_ = bytearray(open(p_, "rb").read())
+    struct.pack_into("<I", d_, 0xAC, v)
+    open(p_, "wb").write(d_)
+for n_, v in pp.items():
+    p_ = os.path.join(G, "CHRDAT%s%d.SAV" % (N, n_))
+    d_ = bytearray(open(p_, "rb").read())
+    struct.pack_into("<H", d_, 0x88 + 4 * 2, v)
+    open(p_, "wb").write(d_)
 open(os.path.join(G, "SAVGAM%s.DAT" % N), "wb").write(s)
 print("SAVGAM%s.DAT: first step goes to ECL%s block %s at %s,%s %s" % (N, n, b, x, y, f))

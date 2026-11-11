@@ -761,13 +761,18 @@ func wealth_copper() -> int:
 	return total
 
 
-## Pays `gold` gold pieces. The change is regrouped into the largest coins, as the original
-## shows it (140 gold, after an 80-gold purchase, became 12 platinum).
+## Pays `gold` gold pieces. The change is regrouped into the largest coins but never
+## electrum, as the original shows it (140 gold, after an 80-gold purchase, became 12
+## platinum; lab 2026-11-11: 144 silver and 500 platinum, after 1000 gold of training,
+## became 301 platinum, 2 gold, 4 silver).
 func pay_gold(gold: int) -> bool:
 	var left := wealth_copper() - gold * 200
 	if left < 0:
 		return false
 	for i in range(4, -1, -1):
+		if i == 2:
+			money[i] = 0
+			continue
 		money[i] = left / COIN_VALUE[i]
 		left -= money[i] * COIN_VALUE[i]
 	return true

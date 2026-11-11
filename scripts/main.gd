@@ -1612,12 +1612,16 @@ func _start_event_fight() -> void:
 	_fight_treasure = _vm.treasure.duplicate()
 	# CALL 0x8000 (the arena): the opponent is a copy of the duelist, as GAME.OVR builds it
 	# (overlay at file 0x74D3, routine +0x1A6F): the whole record and its items copied,
-	# named ROLF, no money, morale 0xB2, using the duelist's own combat icon.
+	# named ROLF, no money, morale 0xB2, drawn as combat picture 11. Lab 2026-11-11: ROLF
+	# shows the duelist's HP, AC and weapon (14, 1, FLAIL for Thrender Grone).
 	var opponents: Array[PartyMember] = []
+	_arena = false
 	if _vm.duel == 1 and _vm.selected >= 0 and _vm.selected < _party.size():
+		_arena = true
 		var copy := _party[_vm.selected].clone()
 		copy.name = "ROLF"
 		copy.is_monster = true
+		copy.set_meta("arena_double", true)
 		for k in copy.money.size():
 			copy.money[k] = 0
 		if copy.raw.size() > 0x84:
@@ -1644,6 +1648,7 @@ func _start_event_fight() -> void:
 
 
 var _duelist: PartyMember = null
+var _arena := false
 var _ending: EndingScreen
 
 
@@ -1689,6 +1694,17 @@ func _on_event_fight_finished(result: int) -> void:
 		_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
 		_vm.state = EclVM.State.DONE
 		_show()
+		return
+	if _arena and _duelist != null:
+		# The arena (lab 2026-11-11): no experience for the double and none of its gear;
+		# the duelist gets 100 experience per level (Thrender Grone, a 2nd-level fighter,
+		# 200; Bakshi, 1st level in three classes, 100).
+		_arena = false
+		var top := 1
+		for c in 8:
+			top = maxi(top, _duelist.level_in(c))
+		_duelist.experience += 100 * top
+		_after_fight([], "YOU HAVE WON THE DUEL.\n\nTHE DUELIST RECEIVES %d\n\nEXPERIENCE POINTS." % (100 * top))
 		return
 	_after_fight(_combat.defeated(), "THE PARTY HAS WON.", _combat.dropped_items())
 
