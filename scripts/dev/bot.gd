@@ -5,6 +5,7 @@ extends Node
 ## every screen and every surprise; used for the M6 whole-game playthrough.
 ##
 ##   godot --headless --path <project> -- --game-path=<POOLRAD> --play=<plan file> [--fast]
+##         [--resume=<quick save>:<checkpoint name>]   (start from another run's checkpoint)
 ##
 ## Plan lines ("#" starts a comment):
 ##   char <race> <class> <alignment> <name>   roll a character with the creation rules
@@ -48,6 +49,27 @@ func run(plan_path: String) -> void:
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
+	# --resume=<quick save file>:<checkpoint name>: start from another run's checkpoint,
+	# at the plan line after "checkpoint <name>" (the lab keeps them; game data, not in git).
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--resume="):
+			var spec := arg.trim_prefix("--resume=")
+			var cut := spec.rfind(":")
+			var file := spec.left(cut)
+			var name := spec.substr(cut + 1)
+			var at := -1
+			for i in lines.size():
+				if lines[i].strip_edges() == "checkpoint " + name:
+					at = i + 1
+			if at < 0 or not FileAccess.file_exists(file):
+				_issue("resume: no checkpoint %s in the plan, or no file %s" % [name, file])
+				break
+			DirAccess.copy_absolute(file, "user://bot_%s.cfg" % name)
+			_pc = at
+			_checkpoint = name
+			_checkpoint_pc = at
+			print("== resuming at checkpoint %s (plan line %d)" % [name, at + 1])
+			await _load(name)
 	while _pc < lines.size():
 		var line := lines[_pc].strip_edges()
 		_pc += 1
