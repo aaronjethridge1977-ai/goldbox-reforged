@@ -186,22 +186,15 @@ func save(m: PartyMember, kind: int, bonus: int, caster: PartyMember) -> bool:
 	return d >= need
 
 
-## Racial save bonus (the characters' .SPC files carry these as standing effects; the rules
-## are the AD&D ones the game's rule book gives): dwarves and halflings add CON / 3.5 against
-## poison (kind 0), wands (2) and spells (4); gnomes against wands and spells.
+## Save bonus from standing effects (SpecialAffects: racial CON bonuses, undead that
+## always save against poison).
 static func racial_save_bonus(m: PartyMember, kind: int) -> int:
-	var hardy := m.race_id in [1, 5]          # dwarf, halfling
-	var gnome := m.race_id == 3
-	if not (hardy and kind in [0, 2, 4]) and not (gnome and kind in [2, 4]):
-		return 0
-	return int(floor(m.stats[4] / 3.5))      # CON 4-6 +1 ... 18 +5
+	return SpecialAffects.save_bonus(m, kind)
 
 
-## Elves resist sleep and charm 90% of the time, half-elves 30% (the rule book's racial
-## abilities; the .SPC files carry them as standing effects).
-func resists_sleep_charm(t: PartyMember) -> bool:
-	var pct: int = {2: 90, 4: 30}.get(t.race_id, 0)
-	return pct > 0 and c.roll(1, 100, "%s resists" % t.name) <= pct
+## Whether `t` throws off Sleep, Charm, Hold or poison (SpecialAffects.blocks).
+func resists(t: PartyMember, type: int) -> bool:
+	return SpecialAffects.blocks(t, type, func(): return c.roll(1, 100, "%s resists" % t.name))
 
 
 # --- Choosing and aiming ------------------------------------------------------------------
@@ -398,10 +391,10 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				bonus = [0, -3 if id == 49 else -2, -1, 0, 0][mini(targets.size(), 4)]
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
-				var resists: bool = (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1
-				if id == 10 and not resists:
-					resists = resists_sleep_charm(t)
-				if t.is_large() or resists or save(t, table.field(id, 9), bonus, m):
+				var immune: bool = (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1
+				if not immune:
+					immune = resists(t, SpecialAffects.CHARM if id == 10 else SpecialAffects.PARALYZED)
+				if t.is_large() or immune or save(t, table.field(id, 9), bonus, m):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
 				if id == 10:
@@ -428,7 +421,7 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				if t.has_affect(EFFECT_SLEEP) or power < cost:
 					continue
 				power -= cost
-				if resists_sleep_charm(t):
+				if resists(t, SpecialAffects.SLEEP):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
 				SpellCaster.add_affect(t, EFFECT_SLEEP, id, dur, lvl)
@@ -506,6 +499,8 @@ func _damage(i: int, id: int, j: int, dmg: int) -> void:
 	var t: PartyMember = c.combatants[j].who
 	if c.combatants[j].down:
 		return
+	if id == 9 or id == 47:     # Burning Hands, Fireball: fire
+		dmg = SpecialAffects.element_damage(t, 1, dmg)
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return

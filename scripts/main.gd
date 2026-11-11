@@ -419,6 +419,7 @@ func _press(n: String) -> void:
 ## first item), printing each new message and menu.
 func _tour(goal: Vector2i) -> void:
 	var said := ""
+	var steps := 0
 	var deadline := Time.get_ticks_msec() + 600000
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
@@ -476,6 +477,10 @@ func _tour(goal: Vector2i) -> void:
 		if _vm.state in [EclVM.State.RUNNING, EclVM.State.WAIT]:
 			continue
 		if _pos == goal:
+			return
+		steps += 1
+		if steps > 40:
+			print("   gave up on %s" % goal)
 			return
 		var path := _find_path(_pos, goal)
 		if path.size() < 2:
@@ -1004,6 +1009,7 @@ func _quick_load() -> void:
 		var r := PartyMember.from_bytes(saved.record, PackedByteArray())
 		r.items = _items_from(saved.get("items", []))
 		r.affects = saved.get("affects", [])
+		SpecialAffects.add(r, SpecialAffects.RACIAL.get(r.race_id, []))
 		r.recalculate(_types)
 		_party_menu.roster.append(r)
 	for i in mini(members.size(), _party.size()):
@@ -1020,6 +1026,7 @@ func _quick_load() -> void:
 			_party[i].memorized = mem
 			_party[i].spell_book = saved.get("spell_book", _party[i].spell_book)
 			_party[i].affects = saved.get("affects", [])
+			SpecialAffects.add(_party[i], SpecialAffects.RACIAL.get(_party[i].race_id, []))
 		_party[i].items = _items_from(saved.get("items", []))
 		_party[i].recalculate(_types)
 	_status.text = "Loaded."

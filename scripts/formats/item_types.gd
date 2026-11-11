@@ -15,7 +15,9 @@ extends RefCounted
 ##                     splint and banded 0x38 = AC 4, plate 0x39 = AC 3. For a shield
 ##                     (slot 1) the low bits are its bonus (1). With low bits 0, only the
 ##                     item's magic plus counts (rings, cloaks...).
-##   7, 8               not yet known
+##   7  damage kind     weapons: 128 blunt, 0 or 1 edged/pointed (skeletons take half from
+##                     these: GAME.OVR's effect 0x73)
+##   8                 not yet known
 ##   9  normal_count   damage dice against small and man-sized creatures: count, size, bonus
 ##   10 normal_size
 ##   11 normal_bonus
@@ -53,6 +55,11 @@ static func load_file(game_path: String) -> ItemTypes:
 
 func has(type: int) -> bool:
 	return type >= 0 and type < records.size()
+
+
+## Any byte of the type's record (7: how the weapon hurts; 128 = blunt).
+func field(type: int, index: int) -> int:
+	return records[type][index] if has(type) else 0
 
 
 func slot(type: int) -> int:

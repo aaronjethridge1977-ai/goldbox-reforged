@@ -117,7 +117,11 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 	var item_data := PackedByteArray()
 	if FileAccess.file_exists(itm_path):
 		item_data = FileAccess.get_file_as_bytes(itm_path)
-	return from_bytes(d, item_data)
+	var m := from_bytes(d, item_data)
+	var spc_path := sav_path.get_basename() + ".SPC"
+	if m != null and FileAccess.file_exists(spc_path):
+		SpecialAffects.add_records(m, FileAccess.get_file_as_bytes(spc_path))
+	return m
 
 
 ## A monster: block `id` of MON<file_no>CHA.DAX, with its items from MON<file_no>ITM.DAX.
@@ -134,6 +138,10 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 	var m := from_bytes(cha.blocks[id], item_data)
 	if m:
 		m.is_monster = true
+		m.affects.clear()
+		var spc := DaxFile.open(game_path.path_join("MON%dSPC.DAX" % file_no))
+		if spc and spc.blocks.has(id):
+			SpecialAffects.add_records(m, spc.blocks[id])
 		var names := ItemNames.shared(game_path)
 		for it in m.items:
 			if it.name == "":
@@ -190,7 +198,17 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.damage = m.base_damage.duplicate()
 	m.damage_large = m.base_damage.duplicate()
 	m.movement = m.base_movement
+	# Racial abilities are standing effects, as character creation gives them.
+	SpecialAffects.add(m, SpecialAffects.RACIAL.get(m.race_id, []))
 	return m
+
+
+## The readied weapon (slot 0), or null.
+func readied_weapon(types: ItemTypes) -> GameItem:
+	for it in items:
+		if it.readied and types != null and types.slot(it.type) == ItemTypes.SLOT_WEAPON:
+			return it
+	return null
 
 
 ## An independent copy (for several monsters of one kind).

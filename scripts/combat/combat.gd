@@ -426,6 +426,7 @@ func shoot(i: int, j: int) -> void:
 		if magic and magic.image_takes_it(tm):
 			continue
 		var need: int = am.thac0 - ac - bonus
+		need -= SpecialAffects.hit_bonus(am, tm)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
 		if not hit:
@@ -433,8 +434,12 @@ func shoot(i: int, j: int) -> void:
 		else:
 			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
-			message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
-			_hurt(j, dmg)
+			dmg = SpecialAffects.weapon_damage(am, tm, am.readied_weapon(types), types, dmg)
+			if dmg == 0 and tm.has_affect(0x77):
+				message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
+			else:
+				message.emit("%s ATTACKS %s%s HITTING FOR %d" % [am.name, tm.name, how, dmg])
+				_hurt(j, dmg)
 		if gone != null and types != null:
 			am.recalculate(types)
 	if not am.missile_ready or am.shots_left() <= 0:
@@ -811,7 +816,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			a.second -= 1
 		if magic and magic.image_takes_it(tm):
 			continue
-		var need: int = am.thac0 - ac - bonus
+		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need)
 		if not hit:
@@ -824,8 +829,91 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			dmg *= (am.thief_level() - 1) / 4 + 2
 		if magic:
 			dmg = magic.damage_after(am, dmg)
+		dmg = SpecialAffects.weapon_damage(am, tm, am.readied_weapon(types), types, dmg)
+		if dmg == 0 and tm.has_affect(0x77):
+			# Only magic hurts it: the original reports the blow as a miss (lab: a party with
+			# THAC0 1 "ATTACKS FERRAN MARTINEZ AND MISSES" round after round).
+			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
+			continue
 		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
 		_hurt(j, dmg)
+		if not t.down:
+			_on_hit_specials(i, j)
+
+
+## What a hit does besides damage, from the attacker's standing effects (SpecialAffects):
+## poison, paralysis, level drain.
+func _on_hit_specials(i: int, j: int) -> void:
+	var am: PartyMember = combatants[i].who
+	var t: Dictionary = combatants[j]
+	var tm: PartyMember = t.who
+	if t.down:
+		return
+	for type in SpecialAffects.POISON_BONUS:
+		if am.has_affect(type) and not t.down:
+			if SpecialAffects.blocks(tm, SpecialAffects.POISONED, func(): return roll(1, 100, "resists")):
+				continue
+			if not _save(tm, 0, int(SpecialAffects.POISON_BONUS[type])):
+				message.emit("%s IS POISONED" % tm.name)
+				SpellCaster.add_affect(tm, SpecialAffects.POISONED, 0, 0, 0)
+				tm.hp = 0
+				tm.status = PartyMember.STATUS_DEAD
+				t.down = true
+				message.emit("%s IS KILLED" % tm.name)
+	var paralysis := 0
+	if am.has_affect(0x43):
+		paralysis = roll(2, 8, "paralysis rounds")
+	if am.has_affect(0x44) and tm.race_id != 2:
+		paralysis = 63
+	if paralysis > 0 and not t.down and not CombatSpells.held(tm) \
+			and not SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists")) \
+			and not _save(tm, 0, 0):
+		message.emit("%s IS PARALYZED" % tm.name)
+		SpellCaster.add_affect(tm, SpecialAffects.PARALYZED, 0, paralysis, 12)
+	for type in [0x55, 0x56]:
+		if am.has_affect(type) and not t.down:
+			drain(j, 1 if type == 0x55 else 2)
+
+
+func _save(m: PartyMember, kind: int, bonus: int) -> bool:
+	if magic:
+		return magic.save(m, kind, bonus, null)
+	var d := roll(1, 20, "%s saves" % m.name)
+	return d != 1 and (d == 20 or d + bonus + SpecialAffects.save_bonus(m, kind) >= (m.saves[kind] if kind < m.saves.size() else 20))
+
+
+## Level drain as GAME.OVR does it (overlay 0x10D7D): "<NAME> IS DRAINED A LEVEL" (or
+## " 2 LEVELS"); for each level the HP lost is max HP / total levels (max, rolled and
+## current HP all drop), and the highest class loses a level; someone with fewer than two
+## levels left "IS DEAD FOREVER".
+func drain(j: int, levels: int) -> void:
+	var t: Dictionary = combatants[j]
+	var m: PartyMember = t.who
+	message.emit("%s IS DRAINED %s" % [m.name, "A LEVEL" if levels == 1 else "%d LEVELS" % levels])
+	for k in levels:
+		var total := 0
+		var top := -1
+		for c in 8:
+			total += m.level_in(c)
+			if top < 0 or m.level_in(c) > m.level_in(top):
+				top = c
+		if total < 2:
+			m.hp = 0
+			m.hp_max = 0
+			m.status = 8      # GONE
+			t.down = true
+			message.emit("%s IS DEAD FOREVER" % m.name)
+			return
+		var per := m.hp_max / total
+		m.hp_max = maxi(m.hp_max - per, 0)
+		m.hp_rolled = maxi(m.hp_rolled - per, 0)
+		m.hp = maxi(m.hp - per, 0)
+		m.set_level(top, m.level_in(top) - 1)
+		if m.hp == 0:
+			m.status = PartyMember.STATUS_DEAD
+			t.down = true
+			message.emit("%s IS KILLED" % m.name)
+			return
 
 
 ## A thief's backstab (as the original): a thief with no weapon or a club, dagger or sword
@@ -1001,7 +1089,7 @@ func _undead_in_sight(i: int) -> Array[int]:
 	var out: Array[int] = []
 	for j in combatants.size():
 		var e: Dictionary = combatants[j]
-		if _enemy_of(combatants[i], j) and not e.get("turned", false) and is_undead(e.who) \
+		if _enemy_of(combatants[i], j) and not e.get("turned_undead", false) and is_undead(e.who) \
 				and can_see(combatants[i].cell, e.cell):
 			out.append(j)
 	return out
@@ -1036,11 +1124,11 @@ func turn_undead(i: int) -> void:
 			(e.who as PartyMember).status = PartyMember.STATUS_DEAD
 			message.emit("%s IS DESTROYED" % e.who.name)
 		else:
-			e.turned = true
+			e.turned_undead = true
 			e.fleeing = true
 			message.emit("%s IS TURNED" % e.who.name)
 	if not any:
-		message.emit("%s FAILS TO TURN THE UNDEAD" % c.who.name)
+		message.emit("NOTHING HAPPENS...")   # the original's line (lab: a turn at Ferran Martinez)
 	c.moves = 0
 	c.attacks = 0
 
@@ -1193,8 +1281,8 @@ func ai_act() -> bool:
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
-		c.fleeing = morale == "flee" or c.get("turned", false)
-		if c.get("turned", false):
+		c.fleeing = morale == "flee" or c.get("turned_undead", false)
+		if c.get("turned_undead", false):
 			pass
 		elif c.team == 0 and can_turn(active):
 			turn_undead(active)
