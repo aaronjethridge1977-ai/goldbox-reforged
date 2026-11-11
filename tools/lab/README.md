@@ -60,3 +60,18 @@ can be compared with ours. Random encounters usually get in first, which serves 
 into the orcs' event and starts the fight. Our engine also has two headless check modes:
 `--battle=GEO2.DAX:20:13:7:W:2:4:6:4:-1` prints where everyone starts (and
 `--battle-image=` saves the field); `--battle-fight=<seed>` fights it out and prints every roll.
+
+## Working from the cloud workspace (2026-11-10)
+
+- If `~/lab` is gone, run `.lab/rebuild.sh` (a copy of `rebuild.sh` here): it unpacks DOSBox and
+  Godot, copies the game, the scripts (from `.lab/tree/tools/lab`) and the git-ignored `font.json` /
+  `wheel.json`, fills in the lab path in `por.conf` and copies `saves/quicksave.cfg`.
+- `.lab/tree` is a copy of the repo on the PC. Changes go over as a gzip+base64 patch on stdin:
+  `echo '<b64>' | .lab/apply.sh <md5>` (plain `patch`, since `.lab/tree` sits inside the repo
+  folder and `git apply` would silently skip it), then `./check_godot.sh $HOME/mnt/goldbox-reforged/.lab/tree`.
+- Our engine headless with key presses: `./ours.sh --save=$PWD/quicksave.cfg --keys=up,wait,1,...`
+  prints position, clock, screen, script block and message after each key. Helpers in the list:
+  `find=<event>` (squares with that event), `at=x;y;dir` (place the party), `xp=i:n`, `gold=i:platinum`,
+  `program=0:<mask>` (open the party menu as a training room), `scroll=i:<spell_name>`, `party`
+  (levels, HP, THAC0, saves, slots, money, spell book), `sheet=0` (the character sheet's text).
+- `dump.py` prints the original's screen as text; `unexepack.py` unpacks START.EXE for reading tables.
