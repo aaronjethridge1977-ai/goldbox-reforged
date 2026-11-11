@@ -1,4 +1,5 @@
 # The M6 playthrough: a new party from New Phlan to Tyranthraxus (PlayBot, --play=).
+# travel / explore use the lab's area graph (--exits=, from tools/sweep.gd's EXIT lines).
 # Squares come from the area maps (tools/lab/plan.py, evmap.py) and the original's text.
 
 log Party creation
@@ -12,40 +13,54 @@ begin
 expect 3:0
 checkpoint start
 
-log New Phlan: arms and armour (13,8), then City Hall's commissions
+log New Phlan: arms and armour (13,8), City Hall's commissions, the inn
 shop 13,8 | 0 Long Sword | 0 Banded Mail | 0 Shield | 1 Long Sword | 1 Banded Mail | 1 Shield | 2 Mace | 2 Chain Mail | 2 Shield | 3 Long Sword | 3 Leather | 4 Quarter Staff | 4 4 Dart | 5 Short Sword | 5 Leather | 5 Short Bow | 5 10 Arrow
 tour 4,4 4,5
 face E
 step
+travel 3:0
 inn 4,12
 checkpoint shopped
 
-log The Slums (west gate)
-tour 0,4
-face W
-step
+log The Slums
+travel 2:20
 expect 2:20
-heal
-tour 13,1
-heal
-tour 10,1
-heal
-tour 6,3 6,2
-heal
-tour 8,5
-heal
-checkpoint slums1
-tour 3,8 0,7 1,5
-heal
-# Event 15's door at 3,11 (from 2,11) alerts a hall of guards when bashed; go in from 4,10.
-tour 4,10 3,10
-heal
-tour 6,10 6,11 0,14
-heal
-checkpoint slums2
-tour 3,5 3,3 7,0 3,1
-heal
-tour 0,0 0,2 13,10 15,12
-heal
-checkpoint slums3
+explore
+checkpoint slums
+
+log Back to New Phlan: the clerk's reward, training, the inn
+travel 3:0
+tour 4,4 4,5
+face E
+step
+travel 3:0
+temple 2,12
+trainat 8,0
+trainat 6,0
+trainat 5,0
+trainat 9,0
+inn 4,12
+checkpoint trained1
+
+log Kuto's Well
+travel 8:29
+explore
+checkpoint kuto
+
+log Podol Plaza and beyond (areas by the graph)
+travel 1:18
+explore
+checkpoint podol
+travel 3:0
+tour 4,4 4,5
+face E
+step
+travel 3:0
+temple 2,12
+trainat 8,0
+trainat 6,0
+trainat 5,0
+trainat 9,0
+inn 4,12
+checkpoint trained2
 stop

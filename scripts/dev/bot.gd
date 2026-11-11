@@ -151,6 +151,10 @@ func _do(line: String) -> void:
 			_want = ""
 		"ready":
 			_ready_all()
+		"travel":
+			await _travel(w[1])
+		"explore":
+			await _explore(w.slice(1))
 		"memorize":
 			await _memorize()
 		"train":
@@ -158,7 +162,11 @@ func _do(line: String) -> void:
 		"buy":
 			_buy(int(w[1]), " ".join(w.slice(2)))
 		"temple":
-			await _temple()
+			_want = "temple"
+			var a := w[1].split(",")
+			await main._tour(Vector2i(int(a[0]), int(a[1])))
+			await _settle()
+			_want = ""
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
@@ -218,6 +226,11 @@ func _hook() -> bool:
 		print("   inn: %s | %s" % [" ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])),
 			" ".join(main._party.map(func(m): return str(m.memorized)))])
 		return true
+	if _want == "temple" and main._temple.visible:
+		_want = ""
+		_temple_cures()
+		await main._press("esc")
+		return true
 	if _want == "train" and main._party_menu.visible:
 		_want = ""
 		await _train()
@@ -241,6 +254,130 @@ func _ready_all() -> void:
 				if why != "" and not why.contains("STRONGER"):
 					pass
 		m.recalculate(main._types)
+
+
+# --- Getting around -----------------------------------------------------------------------
+# The area graph comes from tools/sweep.gd's EXIT lines (where each square's on-move or
+# on-step script leads), kept in the lab folder: --exits=<file>.
+
+var _exits := {}     # "set:block" -> [{x, y, dir, entry, to}]
+
+
+func _load_exits() -> void:
+	if not _exits.is_empty():
+		return
+	var path := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--exits="):
+			path = arg.trim_prefix("--exits=")
+	for line in FileAccess.get_file_as_string(path).split("\n"):
+		var w := line.split(" ", false)
+		if w.size() < 9 or w[0] != "EXIT":
+			continue
+		var xy := w[3].split(",")
+		var to := w[7]
+		if to.begins_with("0:"):
+			to = w[1].split(":")[0] + to.substr(1)     # NEW_ECL in the same data set
+		var e := {"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[4]), "entry": w[5], "to": to}
+		if not _exits.has(w[1]):
+			_exits[w[1]] = []
+		_exits[w[1]].append(e)
+
+
+func _here() -> String:
+	return "%d:%d" % [main._vm_file, main._vm_block]
+
+
+## Walks from area to area (shortest number of areas) to `goal` ("set:block").
+func _travel(goal: String) -> void:
+	_load_exits()
+	for hop in 12:
+		if _here() == goal or _wiped():
+			return
+		# Breadth first over areas.
+		var came := {_here(): ""}
+		var queue := [_here()]
+		while not queue.is_empty():
+			var a: String = queue.pop_front()
+			if a == goal:
+				break
+			for e in _exits.get(a, []):
+				if not came.has(e.to):
+					came[e.to] = a
+					queue.append(e.to)
+		if not came.has(goal):
+			_issue("travel: no way from %s to %s" % [_here(), goal])
+			return
+		var next := goal
+		while came[next] != _here():
+			next = came[next]
+		# The nearest open way out to `next`.
+		var map: GeoMap = main._maps[main._map_index].map
+		var best := {}
+		var best_len := 1 << 20
+		for e in _exits.get(_here(), []):
+			if e.to != next:
+				continue
+			if e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
+				continue
+			var path: Array = main._find_path(main._pos, Vector2i(e.x, e.y))
+			if (path.size() > 0 or main._pos == Vector2i(e.x, e.y)) and path.size() < best_len:
+				best = e
+				best_len = path.size()
+		if best.is_empty():
+			_issue("travel: no open way from %s to %s" % [_here(), next])
+			return
+		print("   travel %s -> %s by %d,%d %s" % [_here(), next, best.x, best.y, "NESW"[best.dir]])
+		var before := _here()
+		await main._tour(Vector2i(best.x, best.y))
+		await _settle()
+		if _here() == before and best.entry == "move":
+			while int(main._facing) != int(best.dir):
+				await main._press("right")
+			await main._press("up")
+			await _settle()
+		if _here() == before:
+			_issue("travel: the way out at %d,%d didn't lead to %s" % [best.x, best.y, next])
+			return
+		await _heal_if_low()
+
+
+## Visits a square of every event in the area, nearest first (except the listed events),
+## healing when anyone is below half.
+func _explore(skip: Array) -> void:
+	var map: GeoMap = main._maps[main._map_index].map
+	var area := _here()
+	var todo := {}
+	for y in GeoMap.SIZE:
+		for x in GeoMap.SIZE:
+			var ev := map.flag(x, y) & 127
+			if ev == 0 or str(ev) in skip or todo.has(ev):
+				continue
+			todo[ev] = Vector2i(x, y)
+	while not todo.is_empty() and not _wiped() and _here() == area:
+		var best := -1
+		var best_len := 1 << 20
+		for ev in todo:
+			var path: Array = main._find_path(main._pos, todo[ev])
+			if path.size() > 0 and path.size() < best_len:
+				best = ev
+				best_len = path.size()
+		if best < 0:
+			print("   explore: no route to events %s" % str(todo.keys()))
+			return
+		var at: Vector2i = todo[best]
+		todo.erase(best)
+		print("   explore: event %d at %s" % [best, at])
+		await main._tour(at)
+		await _settle()
+		await _heal_if_low()
+
+
+func _heal_if_low() -> void:
+	for m in main._party:
+		if m.status != PartyMember.STATUS_OKAY or m.hp * 2 < m.hp_max:
+			await _heal()
+			return
 
 
 # --- Characters -----------------------------------------------------------------------------
@@ -326,6 +463,10 @@ func _open_camp() -> bool:
 ## and the rest begun again.
 func _heal() -> void:
 	var days := 0
+	if _pick_spells():
+		if await _open_camp():
+			await _rest_in_camp(0)
+			await _settle()
 	while _needs_rest() and days < 60 and not _wiped():
 		if not await _open_camp():
 			_issue("couldn't open camp to heal at %s" % main._state_line())
@@ -437,14 +578,18 @@ func _train() -> void:
 	await _settle()
 
 
-func _temple() -> void:
+## At an open temple: Raise Dead, Stone to Flesh and Cure Disease for whoever needs them,
+## pooling the party's money with them first.
+func _temple_cures() -> void:
 	var t: TempleScreen = main._temple
-	if not t.visible:
-		_issue("temple: no temple open")
-		return
-	print("   (temple: not automated yet)")
-	await main._press("esc")
-	await _settle()
+	for i in main._party.size():
+		for cure in [5, 8, 1]:
+			if t._needs(main._party[i], cure):
+				t._who = i
+				t._pool()
+				t._cure = cure
+				t._pay()
+				print("   temple: %s %s: %s" % [main._party[i].name, TempleScreen.CURES[cure][0], t._note.text])
 
 
 func _load(name: String) -> void:

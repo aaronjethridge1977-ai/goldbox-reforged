@@ -8,32 +8,32 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M1 done in practice; M3 started.** Pictures, maps, text, the first-person view and the event scripts decode; New Phlan is walkable with its events running (checked against the original). Shops and the starting party are in. Combat has begun: characters and monsters share one model whose AC, THAC0, damage and movement match the original's own figures.
+**M6 (full playthrough) in progress.** The whole game's scripts run (every area, every opcode: `tools/sweep.gd`), with exploration, characters, combat, spells, magic items and monster powers built from the original's own data and code and checked against the original in a test lab (DOSBox beside our engine). `docs/coverage.md` lists every spell, usable item, script opcode and monster power with its state. A playthrough bot (`scripts/dev/bot.gd`) plays a new party through the game headless and logs what goes wrong.
 
 | # | Milestone | |
 |---|-----------|--|
 | M0 | Setup | done |
-| M1 | Data inventory (file formats documented) | in progress |
-| M2 | Viewers (maps, art, fonts, monster and item tables) | |
-| M3 | Exploration | |
-| M4 | Characters | |
-| M5 | Combat | |
-| M6 | Full playthrough | |
-| M7 | QoL features | |
-| M8 | Release | |
+| M1 | Data inventory (file formats documented) | done (open points in the formats notes) |
+| M2 | Viewers (maps, art, fonts, monster and item tables) | done |
+| M3 | Exploration | done |
+| M4 | Characters | done |
+| M5 | Combat | done (gaps listed in docs/coverage.md) |
+| M6 | Full playthrough | in progress |
+| M7 | QoL features | automap (mini-map and full map), quick save, area-of-effect preview, battle auto-end done; quest tracker and mouse still to do |
+| M8 | Release | started: the game asks for your own game folder; Web and Windows export presets |
 
 ## Running it
 
 1. Install [Godot 4.7](https://godotengine.org/download) (Standard build).
 2. Put your *Pool of Radiance* install folder next to the project, so that `Pool of Radiance/POOLRAD/GEO1.DAX` sits beside `project.godot`. That folder is git-ignored and is never committed.
-   Or point the engine at it from anywhere: run with `-- --game-path="D:/path/to/POOLRAD"`.
+   Or point the engine at it from anywhere: run with `-- --game-path="D:/path/to/POOLRAD"`. If it finds no game files, the game asks for the folder and remembers it.
 3. Open `project.godot` in Godot and press **F5**. It opens a data browser on the title screen:
    - **Tab** cycles pictures → maps → walk.
    - Pictures: ←/→ step through every decoded picture, ↑/↓ jump between files.
    - Maps: ←/→ step through the 29 area maps; **Enter** walks the current map.
-   - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night.
+   - Walk: first-person view with the map beside it. ↑ forward, ↓ back, ←/→ turn. The area's event scripts run as you walk (text, menus 1–9 / Enter, portraits, Rolf's tour); N switches day/night. M shows or hides the mini-map, F the full map of the area (SETTINGS on the start menu turns the automap off).
    - **F2** quick-saves in walk mode and **F3** loads; the engine starts straight in the last quick save (saved in `saves/`, git-ignored). Delete `saves/quicksave.cfg` to start fresh.
-   - **V** shows the party's character sheets (AC, THAC0, damage, movement, items) next to the values the original saved; **M** browses every monster record. ←/→ to page, Esc to close.
+   - **V** shows the party's character sheets (AC, THAC0, damage, movement, items) next to the values the original saved; **Shift+M** browses every monster record. ←/→ to page, Esc to close.
    - **B** starts a test battle where you stand: the battlefield is built from the map around you, the party and a group of monsters from the area are placed, and the 7×7 combat window can be moved around (arrows, Tab to jump between combatants, PgUp/PgDn to change monster, +/− for distance, Esc to leave). **F** starts the fight: arrows and Home/PgUp/End/PgDn (or the keypad) step or attack, Space ends a turn, Q lets the computer fight for that character; monsters move and attack on their own, and the battle ends as soon as the last enemy falls. Test fights use a copy of the party.
    - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
 

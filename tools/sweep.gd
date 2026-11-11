@@ -14,6 +14,7 @@ var depth_limit := 3
 var findings := {}      # text -> [count, first place]
 var reached := {}       # "set:block" -> {"new_ecl": {}, "program": {}, "calls": {}}
 var budget := 0
+var exits: PackedStringArray = []   # where each square leads (NEW_ECL), for the playthrough bot
 
 
 func _init() -> void:
@@ -43,6 +44,8 @@ func _init() -> void:
 	keys.sort()
 	for k in keys:
 		print("%-60s x%-4d first at %s" % [k, findings[k][0], findings[k][1]])
+	for e in exits:
+		print(e)
 	print("--- areas")
 	var areas := reached.keys()
 	areas.sort()
@@ -142,6 +145,9 @@ func _follow(vm: EclVM, where: String, place: String, depth: int) -> void:
 				vm.close_program()
 			EclVM.State.NEW_ECL:
 				reached[where].new_ecl["%d:%d" % [vm.read_byte(EclVM.FILE_SET), vm.new_ecl]] = true
+				exits.append("EXIT %s %s -> %d:%d at %d,%d,%s" % [where, place, vm.read_byte(EclVM.FILE_SET),
+					vm.new_ecl, vm.read_byte(EclVM.PARTY_X) & 15, vm.read_byte(EclVM.PARTY_Y) & 15,
+					"NESW"[vm.read_byte(EclVM.PARTY_DIR) & 3]])
 				return
 			EclVM.State.MENU:
 				if depth >= depth_limit:
