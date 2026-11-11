@@ -284,6 +284,7 @@ func _new_game() -> void:
 
 
 const NEW_GAME_PLACE := Vector3i(11, 9, 2)
+const CURRENT_BLOCK := 0x49F2    # the area's block, written after its init
 const NO_COORDINATES := 0x49FB   # 1: no square on the place line, no AREA map (START.EXE 0x35A6)
 
 
@@ -1851,6 +1852,10 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_vm.clear_output()
 	_vm.area_map = []
 	_vm.start(4)
+	# The original writes the area's block number to 0x49F2 once its init has run (GAME.OVR
+	# 0x192F, 0x40D6); many inits test it ("already here": a loaded game) and then skip
+	# placing the party, resetting the clock and the like.
+	_vm.write_byte(CURRENT_BLOCK, block_id)
 	# The init script may load a different map and place the party.
 	if follow_map and not _vm.on_overland and not _vm.area_map.is_empty() and _vm.area_map[0] < 127:
 		for i in _maps.size():
