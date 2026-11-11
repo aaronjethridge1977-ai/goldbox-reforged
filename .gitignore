@@ -27,3 +27,4 @@ desktop.ini
 /captures/
 /.lab/
 /saves/
+__pycache__/

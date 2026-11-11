@@ -75,3 +75,24 @@ into the orcs' event and starts the fight. Our engine also has two headless chec
   `program=0:<mask>` (open the party menu as a training room), `scroll=i:<spell_name>`, `party`
   (levels, HP, THAC0, saves, slots, money, spell book), `sheet=0` (the character sheet's text).
 - `dump.py` prints the original's screen as text; `unexepack.py` unpacks START.EXE for reading tables.
+
+## The whole lab inside the cloud workspace (2026-11-11)
+
+The cloud workspace has Xvfb, ffmpeg and the X libraries, so the lab can run there too, with no
+three-minute limit per command. Stage `.lab/tmp/poolrad.tgz` (a tar of the game folder),
+`labextra.tgz` (font.json, wheel.json), the DOSBox and Godot archives and `saves/quicksave.cfg`,
+unpack them into `/home/claude/lab` as `rebuild.sh` does, and nothing leaves the workspace.
+
+- `pl.py`: a persistent session of the original. `pl.py boot <save letter>` starts it; then
+  `pl.py do <steps>` sends keys while the game keeps running: key names, `wait=s`, `dump`
+  (screen as text), `face=N|E|S|W`, `walk=<geo>:<block>:<x>,<y>[:<event to avoid>...]`, and
+  `go=` (the same, but it flees encounters, quick-fights, bashes locked doors and leaves the
+  treasure screen, until it arrives). The coordinates line only redraws after a step, so step
+  once after an area change before `walk`.
+- `exits.py <geo> <block>`: the squares where a step leaves the map.
+- `t.sh --keys=...`: Godot check, then our engine with keys. Extra helpers: `area=<set>:<block>`
+  (enter that area's script), `mem=<hex address>:<value>`.
+- `sweep.sh [--only=<set>:<block>] [--depth=3]`: runs every area's scripts through our VM (every
+  event square from every facing, every menu choice to a depth, fights taken as won) and lists what
+  isn't built yet: opcodes, unknown CALLs, notes, script errors, and where each area leads.
+- Saves made in the original's lab copy: B = Slums 0,11 W (west exit to Kuto's Well).

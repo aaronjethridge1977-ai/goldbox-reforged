@@ -226,6 +226,13 @@ func _replay_keys(names: PackedStringArray) -> void:
 						found.append("%d,%d" % [x, y])
 			print("   event %d at %s" % [ev, " ".join(found)])
 			continue
+		elif n.begins_with("area="):        # area=<set>:<block> enters that area's script (init)
+			var a := n.trim_prefix("area=").split(":")
+			_mode = Mode.WALK
+			_enter_script(int(a[0]), int(a[1]))
+		elif n.begins_with("mem="):         # mem=<hex address>:<value> writes ECL memory
+			var a := n.trim_prefix("mem=").split(":")
+			_vm.write_byte(a[0].hex_to_int(), int(a[1]))
 		elif n.begins_with("at="):          # at=x;y;dir places the party (dir 0..3 = N E S W)
 			var a := n.trim_prefix("at=").split(";")
 			_pos = Vector2i(int(a[0]), int(a[1]))
@@ -674,6 +681,12 @@ func _try_move(direction: int) -> void:
 		_sync_position_to_vm(direction)
 		_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)
+		# A step that would leave the map (through an open side or a door on the edge): the
+		# area's on-move script sees 0x6DD5 set and moves the party into the next area.
+		var next := _pos + DungeonView.DELTA[direction]
+		var open := map.wall(_pos.x, _pos.y, direction) == 0 or map.door(_pos.x, _pos.y, direction) != 0
+		var off := next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE
+		_vm.write_byte(EclVM.LEAVING_MAP, 1 if off and open else 0)
 		_vm.clear_output()
 		_vm.start(0)
 		_pending_move = direction
@@ -720,7 +733,7 @@ func _sync_position_to_vm(direction: int) -> void:
 ## else is a jump.
 func _adopt_position_from_vm() -> void:
 	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
-	if now == _synced:
+	if now == _synced or _vm.state == EclVM.State.NEW_ECL:
 		return
 	var moved := now.x != _synced.x or now.y != _synced.y
 	var turned := now.z != _synced.z and now.z < 4
@@ -862,7 +875,10 @@ func _after_vm() -> void:
 			_run_program()
 			return
 		EclVM.State.NEW_ECL:
-			_enter_script(_vm_file, _vm.new_ecl)
+			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
+			var set_no := _vm.read_byte(EclVM.FILE_SET)
+			_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true)
+			return
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
@@ -1112,7 +1128,7 @@ func _ensure_area_script() -> void:
 
 
 ## Switches to another ECL block (NEW_ECL or area change) and runs its init.
-func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void:
+func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false) -> void:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
 	if ecl == null or not ecl.blocks.has(block_id):
 		# Look in the other script files.
@@ -1129,6 +1145,10 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void
 		return
 	_vm_file = file_no
 	_vm_block = block_id
+	if arrive:
+		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
+		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
+		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_vm.load_script(ecl.blocks[block_id])
 	_sync_position_to_vm(_facing)
 	_jump_next = true
@@ -1142,9 +1162,20 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true) -> void
 				_map_index = i
 				_vm_map = i
 				break
-		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
-		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
+	_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
+	_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
+	_synced = Vector3i(_pos.x, _pos.y, int(_facing))
+	_walls_for = -1
 	_pending_move = -1
+	_vm.write_byte(EclVM.LEAVING_MAP, 0)
+	if arrive and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE]:
+		# As in the original, the square arrived on runs its event (New Phlan's gateway
+		# text when coming in from the Slums).
+		_sync_position_to_vm(_facing)
+		var keep := _vm.text
+		_vm.start(1)
+		if _vm.text == "" and not _vm.text_changed:
+			_vm.text = keep
 	_after_vm()
 
 

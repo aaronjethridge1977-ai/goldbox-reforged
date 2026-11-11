@@ -29,6 +29,8 @@ const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the mons
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
 
+const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move moves to the next area)
+const FILE_SET := 0x6E12        # data set (ECLn, GEOn, ...) of the block the next NEW_ECL loads
 const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
 
 enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM }
@@ -459,6 +461,15 @@ func _rob(a: Array) -> void:
 ## average, best and worst into b, c, d (a = 0); for 0x6C00 + 0x... the original checks an
 ## effect on anyone instead.
 func _party_check(a: Array) -> void:
+	if int(a[0].type) == 0x00:
+		# PARTY_CHECK 0, <effect>, ..., dest: is anyone under that spell effect (19, the
+		# traps scripts test it before their thief-skill rolls)? 1 or 0 in the last operand.
+		var found := 0
+		for m in party:
+			if (m as PartyMember).has_affect(_value(a[1])):
+				found = 1
+		_write(a[5], found)
+		return
 	var addr := int(a[0].value)
 	var off := addr - CHAR_WINDOW
 	var keep := selected
@@ -620,6 +631,10 @@ func _exec(ins: Dictionary) -> void:
 					var d := read_byte(PARTY_DIR) & 3
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
+				0x2C90:
+					pass    # redraws the view after the script changed it
+				_:
+					_note("call %04X" % int(a[0].value))
 		"CLOCK":
 			# Pool of Radiance's form: one operand, minutes (its forced walk passes one a step).
 			minutes_passed += GameClock.add_minutes(self, _value(a[0]))
