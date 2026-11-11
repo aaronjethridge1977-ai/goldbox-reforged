@@ -41,6 +41,8 @@ checkpoint trained1
 log The Slums again: the orcs' home and the hobgoblin hall
 travel 2:20
 explore
+# The clerk pays for the Slums after 25 won fights there (0x4ABB becomes 254).
+grind 4ABB 254
 checkpoint slums2
 town
 

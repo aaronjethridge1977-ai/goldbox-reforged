@@ -24,6 +24,7 @@ extends Node
 ##   travel <set>:<block>  walk area to area by the area graph (--exits=)
 ##   explore [events]      visit every event of this area, resting first, training on the way;
 ##            the listed events (and any whose first fight looks unwinnable) wait for training
+##   grind <hex addr> <n> rest here, fighting what comes, until script memory addr reaches n
 ##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
 ##   checkpoint <name>     quick save to user://bot_<name>.cfg; a wipe goes back to the last
 ##   expect <set>:<block>  log a mismatch if the party isn't in that area
@@ -197,6 +198,11 @@ func _do(line: String) -> void:
 			await _travel(w[1])
 		"town":
 			await _town()
+		"grind":
+			# grind <hex address> <value>: rest in this area (its patrols interrupt) and fight
+			# them until the script's counter reaches the value (the Slums: 0x4ABB, 25 wins
+			# make it 254, which the clerk's reward and the end of the patrols read).
+			await _grind(w[1].hex_to_int(), int(w[2]))
 		"explore":
 			await _explore(w.slice(1))
 		"memorize":
@@ -458,6 +464,7 @@ var _looted := false
 var _asked := {}      # script questions answered, by text and choices
 var _visited := {}    # "map:event" explored in this area's explore
 var _ladders := {}    # "map:event" ladders and stairs left for last
+var _no_route := {}   # "map:event" explore found no way to
 var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
@@ -928,6 +935,7 @@ func _explore(later: Array) -> void:
 	var start_map: int = main._map_index
 	_visited = {}
 	_ladders = {}
+	_no_route = {}
 	var arrivals := {}       # map index -> the square the party arrived on there
 	var trips := 0
 	for n in 12:
@@ -1008,6 +1016,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 				ladders = {}
 				continue
 			print("   explore: no route to events %s" % str(todo.keys()))
+			for ev in todo:
+				_no_route["%d:%d" % [map_now, ev]] = true
 			return deferred
 		var at: Vector2i = todo[best]
 		todo.erase(best)
@@ -1089,11 +1099,36 @@ func _unvisited_here() -> int:
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
-			if ev == 0 or ev == here or seen.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]):
+			if ev == 0 or ev == here or seen.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]) \
+					or _no_route.has("%d:%d" % [main._map_index, ev]):
 				continue
 			if main._find_path(main._pos, Vector2i(x, y)).size() > 0:
 				seen[ev] = true
 	return seen.size()
+
+
+func _grind(addr: int, value: int) -> void:
+	var area := _here()
+	for n in 40:
+		if main._vm.read_byte(addr) >= value or _wiped() or _here() != area:
+			break
+		print("   grind: 0x%X = %d (want %d)" % [addr, main._vm.read_byte(addr), value])
+		if not await _open_camp():
+			return
+		var camp: CampScreen = main._camp
+		camp._rest_menu()
+		camp._to_rest = 288      # a day; a patrol may interrupt
+		camp._start_rest()
+		while camp.visible and camp._resting:
+			await get_tree().process_frame
+		if camp.visible:
+			await main._press("esc")
+			if camp.visible:
+				await main._press("e")
+		await _settle()
+		if _hurt():
+			await _prepare()
+	print("   grind: 0x%X = %d" % [addr, main._vm.read_byte(addr)])
 
 
 ## New Phlan locks its shop, City Hall and more from hour 14 (0x49C9 >= 14, the town's
