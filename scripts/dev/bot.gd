@@ -995,8 +995,16 @@ func _explore_pass(skip: Array) -> Dictionary:
 				best = ev
 				best_len = path.size()
 		if best < 0:
+			# Nothing else reachable: now the ladders and stairs declined on the way.
+			for y in GeoMap.SIZE:
+				for x in GeoMap.SIZE:
+					var lev := map.flag(x, y) & 127
+					if _ladders.has("%d:%d" % [map_now, lev]) and not ladders.has(lev):
+						ladders[lev] = Vector2i(x, y)
 			if not ladders.is_empty():
-				todo = ladders     # nothing else reachable: now the ladders and stairs
+				todo = ladders
+				for lev in ladders:
+					_ladders.erase("%d:%d" % [map_now, lev])
 				ladders = {}
 				continue
 			print("   explore: no route to events %s" % str(todo.keys()))
