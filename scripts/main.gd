@@ -1370,6 +1370,34 @@ func _start_event_fight() -> void:
 var _duelist: PartyMember = null
 
 
+## Hirelings take their cut of the coins before the party sees them, as the original does
+## (GAME.OVR, before the treasure screen): every conscious member whose record byte 0x84
+## has bit 7 set (a hired NPC) counts (0x85 & 7) shares, everyone else one; from each kind
+## of coin each hireling's shares of (pool / total shares) leave with them. Returns the
+## original's lines ("<NAME> takes and hides his share.").
+func _hirelings_take_shares(spoils: Spoils) -> String:
+	var shares := 0
+	var total := 0
+	var who := PackedStringArray()
+	for m in _party:
+		var r: PackedByteArray = m.raw
+		if r.size() > 0x85 and r[0x84] > 0x7F and m.status == 0:
+			shares += r[0x85] & 7
+			total += r[0x85] & 7
+			if r[0x85] > 0:
+				who.append("%s takes and hides his share." % m.name)
+		else:
+			total += 1
+	if shares == 0 or total == 0:
+		return ""
+	var took := false
+	for k in spoils.money.size():
+		if spoils.money[k] > 0:
+			spoils.money[k] -= (spoils.money[k] / total) * shares
+			took = true
+	return "\n".join(who).to_upper() if took else ""
+
+
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
 	if result == 3 or (result == 2 and _duelist != null):
@@ -1399,6 +1427,9 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	var found := _item_list(list_id)
 	found.append_array(field_items)
 	var spoils := Spoils.gather(defeated, coins, found)
+	var hidden := _hirelings_take_shares(spoils)
+	if hidden != "":
+		won_text += "\n" + hidden
 	var standing: Array = []
 	for m in _party:
 		if m.can_fight() and (_duelist == null or m == _duelist):
