@@ -50,7 +50,7 @@ func run(plan_path: String) -> void:
 		await _do(line)
 		if _wiped():
 			_issue("party wiped at plan line %d (%s)" % [_pc, line])
-			if _checkpoint == "" or _retries >= 6:
+			if _checkpoint == "" or _retries >= 8:
 				break
 			_retries += 1
 			print("== back to checkpoint %s (try %d)" % [_checkpoint, _retries + 1])
@@ -376,7 +376,6 @@ func _explore(skip: Array) -> void:
 			# (events already done do nothing the second time).
 			_checkpoint = "explore"
 			_checkpoint_pc = _pc - 1
-			_retries = 0
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_explore.cfg")
 
