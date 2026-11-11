@@ -33,7 +33,7 @@ const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move mov
 const FILE_SET := 0x6E12        # data set (ECLn, GEOn, ...) of the block the next NEW_ECL loads
 const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
 
-enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM }
+enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM, INPUT }
 
 var mem := PackedByteArray()
 var ecl: EclScript
@@ -148,6 +148,30 @@ func start(entry: int) -> State:
 
 
 ## Continues after a menu: writes the chosen index (0-based) and resumes.
+var rune_lines: Array[String] = []
+var runes_shown := false
+var runes_changed := false
+
+
+## INPUT_STRING / INPUT_NUMBER: the script waits for typed text (passwords, "TYPE A SINGLE
+## WORD", wagers). input_max is the most characters (digits) the original takes.
+var input_max := 0
+var input_numeric := false
+var _input_dest := {}
+
+
+func answer_input(text: String) -> State:
+	if state != State.INPUT:
+		return state
+	text = text.strip_edges().to_upper().left(input_max)
+	if input_numeric:
+		_write(_input_dest, int(text) if text.is_valid_int() else 0)
+	else:
+		_write_string(_input_dest, text)
+	state = State.RUNNING
+	return run()
+
+
 func choose(index: int) -> State:
 	if state != State.MENU:
 		return state
@@ -633,6 +657,8 @@ func _exec(ins: Dictionary) -> void:
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
 				0x2C90:
 					pass    # redraws the view after the script changed it
+				0xBA03:
+					pass    # plays sound effect [0x03DE] (8 the Rolf tour's, 10 thunder); silent here
 				_:
 					_note("call %04X" % int(a[0].value))
 		"CLOCK":
@@ -753,6 +779,13 @@ func _exec(ins: Dictionary) -> void:
 			state = State.NEW_ECL
 		"LOAD_AREA_MAP":
 			area_map = [_value(a[0]), _value(a[1]), _value(a[2])]
+			# Mode 16 turns the view into a page for PRINT_RUNES; mode 2 brings the view back.
+			if area_map[1] == 16:
+				rune_lines = []
+				runes_shown = true
+			elif area_map[1] == 2 and runes_shown:
+				runes_shown = false
+				rune_lines = []
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
 		"SURPRISE":
@@ -831,8 +864,16 @@ func _exec(ins: Dictionary) -> void:
 					ranger = 1
 			_write(a[0], ranger)
 			_write(a[1], 0)
-		"INPUT_NUMBER", "INPUT_STRING", "PRINT_RUNES":
-			_note(op.to_lower())
+		"INPUT_NUMBER", "INPUT_STRING":
+			input_max = maxi(_value(a[0]), 1)
+			input_numeric = op == "INPUT_NUMBER"
+			_input_dest = a[1]
+			state = State.INPUT
+		"PRINT_RUNES":
+			# Rune text: each character code is drawn with that glyph of the game's font
+			# (codes 0x40-0x7F are the rune glyphs, two to a rune).
+			rune_lines.append(_string(a[0]))
+			runes_changed = true
 		_:
 			_note("unhandled " + op)
 

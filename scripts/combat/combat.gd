@@ -110,11 +110,15 @@ func standing(team: int) -> int:
 	return n
 
 
-## 0 = fight on, 1 = the party won, 2 = the party lost.
+## 0 = fight on, 1 = the party won, 2 = the party lost, 3 = the party ran away (no one
+## left standing, but some got off the field).
 func outcome() -> int:
 	if standing(1) == 0:
 		return 1
 	if standing(0) == 0:
+		for c in combatants:
+			if c.team == 0 and c.get("fled", false):
+				return 3
 		return 2
 	return 0
 
@@ -557,6 +561,8 @@ func finish() -> void:
 		var m: PartyMember = c.who
 		if m.status == PartyMember.STATUS_DYING:
 			m.status = PartyMember.STATUS_UNCONSCIOUS
+		if c.team == 0 and m.status == PartyMember.STATUS_RUNNING:
+			m.status = PartyMember.STATUS_OKAY
 		c.bleeding = 0
 
 

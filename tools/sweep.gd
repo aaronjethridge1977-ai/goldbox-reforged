@@ -135,6 +135,8 @@ func _follow(vm: EclVM, where: String, place: String, depth: int) -> void:
 				vm.close_shop()
 			EclVM.State.TEMPLE:
 				vm.close_temple()
+			EclVM.State.INPUT:
+				vm.answer_input("")
 			EclVM.State.PROGRAM:
 				reached[where].program[vm.program] = true
 				vm.close_program()

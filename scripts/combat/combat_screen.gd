@@ -405,7 +405,7 @@ func _advance() -> void:
 	if i < 0:
 		_result = _combat.outcome()
 		_combat.finish()
-		_on_message("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.")
+		_on_message(["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result])
 		_refresh()
 		if _event_fight and _result == 1:
 			# Straight on to the results (the original's "Continue Battle?" is skipped).
@@ -696,7 +696,7 @@ func _refresh() -> void:
 			_info.text += "\n\nMOVES %d  ATTACKS %d\n\n%s" % [e.moves / 2, e.attacks, "\n".join(_messages)]
 	if _combat != null:
 		if _result != 0:
-			_prompt.text = ("THE PARTY WINS." if _result == 1 else "THE PARTY HAS FALLEN.") + "   Esc or Enter: leave"
+			_prompt.text = ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result] + "   Esc or Enter: leave"
 		elif _casting == "choose":
 			var names := PackedStringArray()
 			for k in _spell_list.size():

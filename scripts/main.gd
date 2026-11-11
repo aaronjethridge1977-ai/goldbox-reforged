@@ -32,6 +32,7 @@ var _walls_for := -1        # map index the wall set was built for
 var _pos := Vector2i(8, 8)
 var _facing := DungeonView.Dir.NORTH
 var _goto: LineEdit
+var _typed: LineEdit         # INPUT_STRING / INPUT_NUMBER: what the player types
 var _deco := []             # current area's wall set ids, from its event script
 
 # Event scripts
@@ -87,6 +88,15 @@ func _ready() -> void:
 	_goto.focus_exited.connect(_on_goto_closed)
 	_goto.gui_input.connect(_on_goto_input)
 	add_child(_goto)
+	_typed = LineEdit.new()
+	_typed.visible = false
+	_typed.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_typed.offset_left = -160
+	_typed.offset_right = 160
+	_typed.offset_top = -40
+	_typed.offset_bottom = -8
+	_typed.text_submitted.connect(_on_typed)
+	add_child(_typed)
 	_message = Label.new()
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -233,6 +243,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var a := n.trim_prefix("area=").split(":")
 			_mode = Mode.WALK
 			_enter_script(int(a[0]), int(a[1]))
+		elif n.begins_with("load="):        # load=<letter> loads the original's SAVGAM<letter>.DAT
+			load_original_save(n.trim_prefix("load="))
+		elif n.begins_with("say="):         # say=<text> answers INPUT_STRING / INPUT_NUMBER
+			_on_typed(n.trim_prefix("say="))
 		elif n.begins_with("mem="):         # mem=<hex address>:<value> writes ECL memory
 			var a := n.trim_prefix("mem=").split(":")
 			_vm.write_byte(a[0].hex_to_int(), int(a[1]))
@@ -461,6 +475,42 @@ func _jump_file(step: int) -> void:
 	_pic_index = starts[(current + step + starts.size()) % starts.size()]
 
 
+var _font_glyphs := PackedByteArray()
+
+
+## The view as a page of runes (PRINT_RUNES): white glyphs of the game's own 1-bit font
+## (8X8D1 block 201, 8 bytes a glyph, indexed by character code) on black.
+func _rune_page() -> Image:
+	if _font_glyphs.is_empty():
+		var dax := DaxFile.open(_game_path.path_join("8X8D1.DAX"))
+		if dax != null and dax.blocks.has(201):
+			_font_glyphs = dax.blocks[201]
+	var view := DungeonView.to_image(_dungeon.render(_maps[_map_index].map, _walls, _pos.x, _pos.y, _facing))
+	var img := Image.create(view.get_width(), view.get_height(), false, Image.FORMAT_RGBA8)
+	img.fill(Color.BLACK)
+	for row in _vm.rune_lines.size():
+		var line: String = _vm.rune_lines[row]
+		for col in line.length():
+			var g := line.unicode_at(col)
+			for y in 8:
+				var bits := _font_glyphs[g * 8 + y] if g * 8 + y < _font_glyphs.size() else 0
+				for x in 8:
+					var px := 8 + col * 8 + x
+					var py := 8 + row * 12 + y
+					if bits >> (7 - x) & 1 and px < img.get_width() and py < img.get_height():
+						img.set_pixel(px, py, Color.WHITE)
+	return img
+
+
+func _on_typed(text: String) -> void:
+	_typed.visible = false
+	_typed.release_focus()
+	if _vm.state == EclVM.State.INPUT:
+		_vm.answer_input(text)
+		_after_vm()
+		_show()
+
+
 func _on_goto_closed() -> void:
 	_goto.visible = false
 
@@ -590,6 +640,75 @@ func _battle_check(spec: String) -> void:
 					var f := arg.trim_prefix("--battle-fight=").split(":")
 					_combat.run_fight(int(f[0]), f[1] if f.size() > 1 else "")
 	get_tree().quit()
+
+
+## Loads one of the original's own saved games (SAVGAM<letter>.DAT with its CHRDAT<letter>n
+## character files) as found in the game folder. The save holds: byte 0 the data set
+## (ECLn/GEOn), then ECL memory 0x4900-0x4AFF as words (the game's flags and clock), the
+## area's script with its tables as they stood (from 0x1401, the block identifies the area),
+## the party's square at 0x3201 (x, y, facing x2), and from 0x3209 the character file names
+## (a length byte and 40 bytes each).
+func load_original_save(letter: String) -> bool:
+	var path := _game_path.path_join("SAVGAM%s.DAT" % letter.to_upper())
+	var s := FileAccess.get_file_as_bytes(path)
+	if s.size() < 0x3300:
+		_status.text = "No saved game %s." % letter.to_upper()
+		return false
+	var set_no := s[0]
+	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % set_no))
+	if ecl == null:
+		return false
+	var block_id := -1
+	for id in ecl.ids():
+		var code := EclScript.decode(ecl.blocks[id]).code
+		if code.size() > 64 and s.slice(0x1401, 0x1401 + 64) == code.slice(0, 64):
+			block_id = id
+	if block_id < 0:
+		_status.text = "Saved game %s: its area wasn't found." % letter.to_upper()
+		return false
+	# The party.
+	var loaded: Array[PartyMember] = []
+	for k in 8:
+		var o := 0x3209 + k * 41
+		var n := s[o]
+		if n <= 0 or n > 12:
+			continue
+		var stem := s.slice(o + 1, o + 1 + n).get_string_from_ascii()
+		var m := PartyMember.load_files(_game_path.path_join(stem + ".SAV"), _game_path.path_join(stem + ".ITM"))
+		if m != null:
+			m.recalculate(_types)
+			loaded.append(m)
+	if loaded.is_empty():
+		return false
+	_party.assign(loaded)
+	_vm.party = _party
+	_timer.stop()
+	_busy = false
+	_walk_path.clear()
+	_held_message = ""
+	_event_image = null
+	_message.text = ""
+	_mode = Mode.WALK
+	var flags := func() -> void:
+		for a in range(0x4900, 0x4B00):
+			_vm.write_byte(a, s[1 + 2 * (a - 0x4900)])
+	flags.call()
+	_vm.write_byte(EclVM.PARTY_X, s[0x3201])
+	_vm.write_byte(EclVM.PARTY_Y, s[0x3202])
+	_vm.write_byte(EclVM.PARTY_DIR, s[0x3203] / 2)
+	_enter_script(set_no, block_id, true, false)
+	# Back to the saved state after the area's init: flags, the script's tables, the square.
+	flags.call()
+	var code_len := EclScript.decode(ecl.blocks[block_id]).code.size()
+	for i in code_len:
+		_vm.mem[EclScript.BASE + i] = s[0x1401 + i]
+	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
+	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
+	_sync_position_to_vm(_facing)
+	_vm.state = EclVM.State.DONE
+	_status.text = "Loaded saved game %s." % letter.to_upper()
+	_show()
+	return true
 
 
 func _quick_load() -> void:
@@ -1011,6 +1130,13 @@ func _after_vm() -> void:
 		EclVM.State.PROGRAM:
 			_run_program()
 			return
+		EclVM.State.INPUT:
+			_typed.text = ""
+			_typed.max_length = _vm.input_max
+			_typed.placeholder_text = "a number, then Enter" if _vm.input_numeric else "type, then Enter"
+			_typed.visible = true
+			_typed.grab_focus()
+			return
 		EclVM.State.NEW_ECL:
 			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
 			var set_no := _vm.read_byte(EclVM.FILE_SET)
@@ -1169,13 +1295,31 @@ func _start_event_fight() -> void:
 	for m in _party:
 		m.recalculate(_types)
 	var map: GeoMap = _maps[_map_index].map
-	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1),
+	# CALL 0x8000 / 0x8001: a duel; only the member WHO picked fights.
+	var fighters: Array[PartyMember] = _party
+	_duelist = null
+	if _vm.duel != 0 and _vm.selected >= 0 and _vm.selected < _party.size():
+		_duelist = _party[_vm.selected]
+		fighters = [_duelist]
+	_vm.duel = 0
+	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH))
 
 
+var _duelist: PartyMember = null
+
+
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
+	if result == 3 or (result == 2 and _duelist != null):
+		# The party ran (or the duelist lost): the script goes on with 0x6DC7 = 129.
+		_duelist = null
+		_fight_treasure = []
+		_vm.end_combat(129)
+		_after_vm()
+		_show()
+		return
 	if result == 2:
 		_message.text = "THE PARTY HAS FALLEN.\n\n(F3 loads the quick save.)"
 		_vm.state = EclVM.State.DONE
@@ -1197,8 +1341,9 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	var spoils := Spoils.gather(defeated, coins, found)
 	var standing: Array = []
 	for m in _party:
-		if m.can_fight():
+		if m.can_fight() and (_duelist == null or m == _duelist):
 			standing.append(m)
+	_duelist = null
 	var share := spoils.award(standing)
 	for m in _party:
 		m.recalculate(_types)
@@ -1465,7 +1610,9 @@ func _show() -> void:
 	e = _maps[_map_index]
 	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
 	_dungeon.sky_color = sky if sky > 0 and sky < 16 else 11
-	if _event_image != null:
+	if _vm.runes_shown and not _vm.rune_lines.is_empty():
+		_picture.texture = ImageTexture.create_from_image(_rune_page())
+	elif _event_image != null:
 		_picture.texture = ImageTexture.create_from_image(_event_image)
 	else:
 		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
