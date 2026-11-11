@@ -2,7 +2,9 @@ class_name SpellTable
 extends RefCounted
 ## Pool of Radiance's own spell list, read from START.EXE (EXEPACK-compressed): 56 names
 ## as 41-byte Pascal strings (found by the first, "Bless"), followed at once by one
-## 16-byte entry per spell (id 1..63; ids over 56 are monster powers with no name here).
+## 16-byte entry per spell (id 1..67; ids over 56 are item and monster powers with no name
+## here: an item's spell byte over 56 is reduced by 23 before it is cast, GAME.OVR 0x22B62,
+## so Potion of Healing's 85 is entry 62; see from_item).
 ##
 ## Entry bytes (meanings as documented by Pilgrim's reconstruction of the engine, which
 ## uses the same layout; the values here are Pool of Radiance's own):
@@ -20,7 +22,7 @@ extends RefCounted
 const NAME_SIZE := 41
 const ENTRY_SIZE := 16
 const NAMED := 56
-const COUNT := 63
+const COUNT := 67
 
 const CLERIC := 0
 const MAGE := 1
@@ -70,6 +72,36 @@ static func load_from(game_path: String) -> SpellTable:
 	return t
 
 
+## The spell an item's record byte 61 casts: over 56 it is reduced by 23 (GAME.OVR 0x22B62).
+static func from_item(b: int) -> int:
+	return b - 23 if b > 56 else b
+
+
+## Words for the item spells, which have no names in the table.
+const ITEM_NAMES := {57: "SPEED", 58: "NEUTRALIZE POISON", 59: "GIANT STRENGTH",
+	60: "LIGHTNING", 61: "PARALYZATION", 62: "HEALING", 63: "DISAPPEARANCE", 64: "MISSILES",
+	65: "MAGIC MISSILES", 66: "DISPLACEMENT", 67: "BODILY HEALTH"}
+
+
+## Durations the original works out by hand for some item spells (GAME.OVR 0x277EE):
+## Cause Disease 1d6 x 10; Speed and Paralyzation 5d4; Giant Strength 1d4 x 10 + 40;
+## Disappearance 2d10 x 10 in a fight, (1d10 + 10) x 10 outside; Bodily Health a day.
+## `roll(count, size)`; -1 when the table's own duration applies.
+static func special_duration(id: int, roll: Callable, in_combat: bool) -> int:
+	match id:
+		40:
+			return int(roll.call(1, 6)) * 10
+		57, 61:
+			return int(roll.call(5, 4))
+		59:
+			return int(roll.call(1, 4)) * 10 + 40
+		63:
+			return int(roll.call(2, 10)) * 10 if in_combat else (int(roll.call(1, 10)) + 10) * 10
+		67:
+			return 1440
+	return -1
+
+
 func is_loaded() -> bool:
 	return names.size() > 1
 
@@ -79,6 +111,8 @@ func valid(id: int) -> bool:
 
 
 func name_of(id: int) -> String:
+	if id > NAMED:
+		return ITEM_NAMES.get(id, "")
 	return names[id].to_upper() if id > 0 and id < names.size() else ""
 
 

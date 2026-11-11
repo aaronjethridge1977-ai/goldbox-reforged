@@ -887,6 +887,8 @@ func _on_hit_specials(i: int, j: int) -> void:
 		paralysis = roll(2, 8, "paralysis rounds")
 	if am.has_affect(0x44) and tm.race_id != 2:
 		paralysis = 63
+	if am.has_affect(0x45):
+		paralysis = roll(1, 9, "paralysis rounds") + 10     # drider (GAME.OVR 0x10341)
 	if paralysis > 0 and not t.down and not CombatSpells.held(tm) \
 			and not SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists")) \
 			and not _save(tm, 0, 0):

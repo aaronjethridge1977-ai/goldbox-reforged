@@ -14,8 +14,12 @@ extends RefCounted
 ##   "IS PROTECTED"...). The camp's DISPLAY lists those effects by spell name.
 ## - Cure Light Wounds heals 1d8 ("IS FULLY HEALED" / "IS PARTIALLY HEALED"), waking the
 ##   unconscious and stopping the dying from bleeding.
-## Not yet: what the effects do in a fight (C5 continues), strength changes from Enlarge
-## and Strength, Knock and Find Traps on doors and traps, Remove Curse, Dispel Magic.
+## - Enlarge, Strength and Giant Strength raise STR (Strength); Potion of Healing heals 2d4+2
+##   ("IS HEALED", 0x29FE8); Potion of Speed hastes unless slowed ("IS SPEEDY"); Dust of
+##   Disappearance makes the party invisible; the Manual of Bodily Health: "IS READING"
+##   for a day, then "STARTS TO TRAIN" for 30 days, then CON + 1 ("IS HARDIER", 0xEDDA,
+##   0xEE8E; the hit point recount for CON 15+ is not built).
+## Not yet: Knock and Find Traps outside doors, Remove Curse, Dispel Magic outside fights.
 
 const CURE_LIGHT := 3
 const CURE_BLINDNESS := 37
@@ -32,7 +36,8 @@ const WORDS := {1: "IS BLESSED", 2: "IS CURSED", 5: "IS AFFECTED", 6: "IS PROTEC
 	29: "IS AFFECTED", 30: "IS INVISIBLE", 31: "KNOCK-KNOCK", 32: "IS DUPLICATED",
 	33: "IS WEAKENED", 35: "IS STRONGER", 38: "IS BLIND", 40: "IS DISEASED",
 	42: "IS PRAYING", 44: "IS CURSED", 48: "IS HASTED", 49: "IS HELD", 50: "IS INVISIBLE",
-	52: "IS PROTECTED", 53: "IS PROTECTED", 54: "IS PROTECTED", 55: "IS SLOWED"}
+	52: "IS PROTECTED", 53: "IS PROTECTED", 54: "IS PROTECTED", 55: "IS SLOWED",
+	61: "IS PARALYZED", 63: "IS INVISIBLE"}
 
 
 ## Does this spell need a party member chosen as its target (out of combat)?
@@ -74,8 +79,37 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			for t in targets:
 				SpecialAffects.cure_disease(t)
 			return out
-		CURE_BLINDNESS, REMOVE_CURSE:
-			return out      # nothing our characters can suffer from yet
+		CURE_BLINDNESS:
+			for t in targets:
+				remove_effect(t, 0x21)
+			return out
+		REMOVE_CURSE:
+			return out      # cursed items: not built yet
+		12, 35, 59:         # Enlarge, Strength, Giant Strength
+			var t: PartyMember = targets[0]
+			var v := Strength.enlarge_target(lvl) if id == 12 else Vector2i(21, 0)
+			if id == 35:
+				v = Strength.spell_target(t, func(n, d): return _roll(rng, n, d))
+			var minutes := special_duration(table, id, lvl, rng, false)
+			if Strength.add(t, table.effect(id), id, v.x, v.y, minutes):
+				out.append("%s IS STRONGER" % t.name)
+			return out
+		57:                 # Potion of Speed: haste, unless slowed
+			var t: PartyMember = targets[0]
+			if not t.has_affect(42):
+				add_affect(t, 39, id, special_duration(table, id, lvl, rng, false), lvl)
+				out.append("%s IS SPEEDY" % t.name)
+			return out
+		62:                 # Potion of Healing
+			var t: PartyMember = targets[0]
+			if _heal(t, _roll(rng, 2, 4) + 2):
+				out.append("%s IS HEALED" % t.name)
+			return out
+		67:                 # Manual of Bodily Health
+			var t: PartyMember = targets[0]
+			add_affect(t, MANUAL_READING, id, 1440, 0xFF)
+			out.append("%s IS READING" % t.name)
+			return out
 	var effect := table.effect(id)
 	if effect == 0 and not WORDS.has(id):
 		return out
@@ -84,10 +118,53 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 		if m.status == PartyMember.STATUS_DEAD:
 			continue
 		if effect > 0:
-			add_affect(m, effect, id, table.duration_for(id, lvl), lvl)
+			add_affect(m, effect, id, special_duration(table, id, lvl, rng, false), lvl)
 		if WORDS.has(id):
 			out.append("%s %s" % [m.name, WORDS[id]])
 	return out
+
+
+const MANUAL_READING := 4
+const MANUAL_TRAINING := 7
+
+
+static func _roll(rng: RandomNumberGenerator, n: int, d: int) -> int:
+	var t := 0
+	for i in n:
+		t += rng.randi_range(1, d)
+	return t
+
+
+## A spell's duration in minutes: the original's own for some item spells, otherwise the
+## table's (fixed + per caster level).
+static func special_duration(table: SpellTable, id: int, lvl: int, rng: RandomNumberGenerator,
+		in_combat: bool) -> int:
+	var d := SpellTable.special_duration(id, func(n, s): return _roll(rng, n, s), in_combat)
+	return d if d >= 0 else table.duration_for(id, lvl)
+
+
+## Removes every effect of `type` from `m`, running its end (strength comes back).
+static func remove_effect(m: PartyMember, type: int) -> void:
+	for a in m.affects.duplicate():
+		if int(a.effect) == type:
+			m.affects.erase(a)
+			ended(m, a, PackedStringArray())
+
+
+## What happens when effect `a` ends (it is already out of m.affects). Lines go to `out`.
+static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void:
+	match int(a.effect):
+		Strength.ENLARGE, Strength.STRENGTH:
+			Strength.ended(m, a)
+		MANUAL_READING:
+			out.append("%s STARTS TO TRAIN" % m.name)
+			m.affects.append({"effect": MANUAL_TRAINING, "spell": 67, "minutes": 43200, "value": 0xFF})
+		MANUAL_TRAINING:
+			out.append("%s IS HARDIER" % m.name)
+			if m.stats.size() > 4:
+				m.stats[4] += 1
+				if m.raw.size() > 0x14:
+					m.raw[0x14] = m.stats[4]
 
 
 static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, value: int) -> void:
@@ -106,6 +183,7 @@ static func pass_time(party: Array, minutes: int) -> PackedStringArray:
 	for p in party:
 		var m: PartyMember = p
 		var keep: Array = []
+		var ending: Array = []
 		for a in m.affects:
 			if int(a.minutes) == 0:
 				keep.append(a)          # 0 = until removed
@@ -119,7 +197,11 @@ static func pass_time(party: Array, minutes: int) -> PackedStringArray:
 					lasts = false
 			if lasts:
 				keep.append(a)
+			else:
+				ending.append(a)
 		m.affects = keep
+		for a in ending:
+			ended(m, a, out)
 	return out
 
 

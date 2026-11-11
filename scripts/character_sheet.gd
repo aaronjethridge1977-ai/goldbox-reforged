@@ -215,7 +215,7 @@ func _ready_item(m: PartyMember, it: GameItem) -> String:
 		if it.cursed:
 			return "IT'S CURSED"
 		it.readied = false
-		return ""
+		return " / ".join(ItemPowers.changed(m, it, false))
 	var slot := types.slot(it.type)
 	var hands := 0
 	var blocking: GameItem = null
@@ -238,8 +238,11 @@ func _ready_item(m: PartyMember, it: GameItem) -> String:
 		return "ALREADY USING " + item_label(blocking)
 	if hands + types.hands(it.type) > 2:
 		return "YOUR HANDS ARE FULL!"
+	var no := ItemPowers.refuse(m, it)
+	if no != "":
+		return no
 	it.readied = true
-	return ""
+	return " / ".join(ItemPowers.changed(m, it, true))
 
 
 func _is_scroll(it: GameItem) -> bool:
@@ -259,7 +262,7 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 				id = it.raw[k] & 0x7F
 				break
 	elif it.raw.size() > 62 and it.raw[61] > 0 and it.raw[62] < 0x80:
-		id = it.raw[61] & 0x7F
+		id = SpellTable.from_item(it.raw[61] & 0x7F)
 	if id == 0 or spells == null:
 		return "NOTHING HAPPENS..."
 	if not wasted and not SpellCaster.castable_outside(spells, id):
@@ -288,7 +291,7 @@ static func item_spell(m: PartyMember, it: GameItem) -> int:
 				return it.raw[k] & 0x7F
 		return 0
 	if it.raw.size() > 62 and it.raw[61] > 0 and it.raw[62] < 0x80:
-		return it.raw[61] & 0x7F
+		return SpellTable.from_item(it.raw[61] & 0x7F)
 	return 0
 
 

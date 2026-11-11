@@ -222,7 +222,7 @@ func clone() -> PartyMember:
 	m.memorized = memorized.duplicate()
 	m.affects = affects.duplicate(true)
 	for it in items:
-		var c := GameItem.from_record(it.raw)
+		var c := GameItem.from_record(it.to_record())
 		c.name = it.name
 		m.items.append(c)
 	return m
@@ -435,6 +435,9 @@ func has_affect(effect_id: int) -> bool:
 	for a in affects:
 		if int(a.effect) == effect_id:
 			return true
+	for it in items:
+		if it.readied and it.raw.size() > 62 and it.raw[62] in ItemPowers.LENDS and it.raw[61] == effect_id:
+			return true     # a readied item lends it (ItemPowers)
 	return false
 
 

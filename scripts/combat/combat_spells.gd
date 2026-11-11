@@ -30,8 +30,21 @@ extends RefCounted
 ## - The computer casts (monsters with spells): each turn it tries up to d7 priority levels
 ##   from 7 down, three random memorized spells at each; a spell qualifies if its
 ##   priority is high enough and, if it is meant for enemies, one is in range.
+## - Item spells (ids 57-67, SpellTable.from_item), from their handlers in GAME.OVR's table
+##   at DS:0x6B88: Speed (haste unless slowed, "IS SPEEDY"), Giant Strength (STR 21),
+##   Javelin of Lightning (1d6+20 electricity, half on a save), Paralyzation (Hold, "IS
+##   PARALYZED"), Healing (2d4+2, "IS HEALED"), Disappearance (effect 0x47: -4 to hit, as
+##   Invisibility), Necklace of Missiles (Fireball's handler), Magic Missiles (2d4+2).
+## - Element damage (handlers 0x0A, 0x14, 0x3D): Resist Cold halves cold and Resist Fire
+##   fire, each +3 to the save; a Ring of Fire Resistance takes 2 off each die of fire
+##   (never below 1 a die) and +4 to the save. Blindness (0x21) and Bestow Curse (0x24):
+##   -4 to hit and -4 to saves; blindness also 4 worse AC. A silenced caster (0x15) loses
+##   the spell ("IS SILENCED"). Protection from Normal Missiles (0x29): missiles without a
+##   plus are avoided (SpecialAffects.weapon_damage). Haste ages its target a year, once
+##   ("AGES", handler 0x27).
 ## Not yet: Stinking Cloud's lasting cloud, Lightning Bolt bouncing off walls (it runs
-## straight), Spiritual Hammer's weapon, Charm Person lasting beyond the fight, Silence.
+## straight), Spiritual Hammer's weapon, Charm Person lasting beyond the fight, Blink,
+## Silence's own area and save.
 
 const EFFECT_BLESS := 1
 const EFFECT_CURSE := 2
@@ -51,6 +64,16 @@ const EFFECT_SNAKE_CHARM := 51
 const EFFECT_PARALYZE := 52
 const EFFECT_SLEEP := 53
 const HELD := [EFFECT_SNAKE_CHARM, EFFECT_PARALYZE, EFFECT_SLEEP, EFFECT_HELPLESS]
+
+const EFFECT_RESIST_COLD := 0x0A
+const EFFECT_RESIST_FIRE := 0x14
+const EFFECT_SILENCED := 0x15
+const EFFECT_BLIND := 0x21
+const EFFECT_BESTOW_CURSE := 0x24
+const EFFECT_PNM := 0x29
+const EFFECT_DISAPPEAR := 0x47
+const RING_FIRE := 0x3D
+const NECKLACE := 64
 
 const MAGIC_MISSILE := 15
 const LIGHTNING := 51
@@ -99,7 +122,11 @@ func hit_bonus(am: PartyMember, tm: PartyMember) -> int:
 		b += 1
 	if _protected_from(tm, am):
 		b -= 2
-	if tm.has_affect(EFFECT_INVISIBLE):
+	if tm.has_affect(EFFECT_INVISIBLE) or tm.has_affect(EFFECT_DISAPPEAR):
+		b -= 4
+	if am.has_affect(EFFECT_BLIND):
+		b -= 4
+	if am.has_affect(EFFECT_BESTOW_CURSE):
 		b -= 4
 	return b
 
@@ -115,6 +142,8 @@ func _protected_from(tm: PartyMember, am: PartyMember) -> bool:
 
 ## AC as spells leave it (Shield: no worse than 3).
 func armour(tm: PartyMember, ac: int) -> int:
+	if tm.has_affect(EFFECT_BLIND):
+		ac += 4
 	return mini(ac, 3) if tm.has_affect(EFFECT_SHIELD) else ac
 
 
@@ -142,9 +171,10 @@ func image_takes_it(tm: PartyMember) -> bool:
 
 
 func reveal(m: PartyMember) -> void:
-	var a := _affect(m, EFFECT_INVISIBLE)
-	if not a.is_empty():
-		m.affects.erase(a)
+	for e in [EFFECT_INVISIBLE, EFFECT_DISAPPEAR]:
+		var a := _affect(m, e)
+		if not a.is_empty():
+			m.affects.erase(a)
 
 
 ## Moves and attacks at the start of a round, after Haste and Slow.
@@ -153,6 +183,12 @@ func adjust_round(entry: Dictionary) -> void:
 	if m.has_affect(EFFECT_HASTE):
 		entry.moves *= 2
 		entry.attacks *= 2
+		var h := _affect(m, EFFECT_HASTE)
+		if not h.is_empty() and (int(h.value) & 0x10) == 0:
+			h.value = int(h.value) + 0x10
+			c.message.emit("%s AGES" % m.name)
+			if m.raw.size() > 0x31:
+				m.raw.encode_u16(0x30, m.raw.decode_u16(0x30) + 1)
 	if m.has_affect(EFFECT_SLOW):
 		entry.moves /= 2
 		entry.attacks /= 2
@@ -182,6 +218,8 @@ func save(m: PartyMember, kind: int, bonus: int, caster: PartyMember) -> bool:
 	if caster != null and _protected_from(m, caster):
 		d += 2
 	d += racial_save_bonus(m, kind)
+	if m.has_affect(EFFECT_BLIND) or m.has_affect(EFFECT_BESTOW_CURSE):
+		d -= 4
 	var need: int = m.saves[kind] if kind < m.saves.size() else 20
 	return d >= need
 
@@ -215,7 +253,7 @@ func area_code(id: int) -> int:
 ## "self", "area" (radius) or "pick" (several figures).
 func aim_kind(id: int) -> String:
 	var code := area_code(id)
-	if code == 0 or table.target(id) == SpellTable.TARGET_SELF:
+	if code == 0 or table.target(id) == SpellTable.TARGET_SELF or id == 63:
 		return "self"
 	if code >= 8 and code <= 14:
 		return "area"
@@ -223,7 +261,7 @@ func aim_kind(id: int) -> String:
 
 
 func radius(id: int) -> int:
-	if id == FIREBALL and outdoors:
+	if (id == FIREBALL or id == NECKLACE) and outdoors:
 		return 2
 	return area_code(id) & 7
 
@@ -335,6 +373,9 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 	reveal(m)
 	me.moves = 0
 	me.attacks = 0
+	if m.has_affect(EFFECT_SILENCED) and item == null:
+		c.message.emit("%s IS SILENCED" % m.name)
+		return
 	c.message.emit(("%s USES %s" % [m.name, item.name.to_upper()]) if item != null else "%s CASTS A SPELL" % m.name)
 	c.message.emit("SPELL: %s" % table.name_of(id))
 	var targets: Array[int] = []
@@ -356,7 +397,9 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
 	var lvl := m.caster_level(table, id)
-	var dur := table.duration_for(id, lvl)
+	var dur := SpellTable.special_duration(id, func(n, d): return c.roll(n, d, "duration"), true)
+	if dur < 0:
+		dur = table.duration_for(id, lvl)
 	match id:
 		1, 42:      # Bless, Prayer: the caster's side (Bless: not those next to an enemy)
 			var side: Array[int] = []
@@ -439,14 +482,63 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 		32:         # Mirror Image: d4 images
 			SpellCaster.add_affect(m, EFFECT_MIRROR, id, dur, c.roll(1, 4, "images") << 4)
 			c.message.emit("%s IS DUPLICATED" % m.name)
-		47, 51:     # Fireball, Lightning Bolt: the caster's level in d6, half on a save
-			var dmg := c.roll(lvl, 6, table.name_of(id).to_lower())
+		47, 51, NECKLACE:   # Fireball, Lightning Bolt: the caster's level in d6, half on a save
+			var dmg := c.roll(lvl, 6, "%s damage" % (table.name_of(id).to_lower()))
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				var hit := dmg
-				if save(t, table.field(id, 9), 0, m):
+				if save(t, table.field(id, 9), element_save_bonus(t, kind_of(id)), m):
+					hit /= 2
+				_damage(i, id, j, hit, lvl)
+		60:         # Javelin of Lightning: 1d6+20, half on a save
+			var dmg := c.roll(1, 6, "javelin") + 20
+			for j in targets:
+				var t: PartyMember = c.combatants[j].who
+				var hit := dmg
+				if save(t, table.field(id, 9), element_save_bonus(t, kind_of(id)), m):
 					hit /= 2
 				_damage(i, id, j, hit)
+		65:         # Wand of Magic Missiles: 2d4+2
+			for j in targets:
+				var t: PartyMember = c.combatants[j].who
+				if t.has_affect(EFFECT_SHIELD):
+					c.message.emit("%s IS UNAFFECTED" % t.name)
+					continue
+				_damage(i, id, j, c.roll(2, 4, "magic missiles") + 2)
+		12, 35, 59: # Enlarge, Strength, Giant Strength
+			for j in targets:
+				var t: PartyMember = c.combatants[j].who
+				var v := Strength.enlarge_target(lvl) if id == 12 else Vector2i(21, 0)
+				if id == 35:
+					v = Strength.spell_target(t, func(n, d): return c.roll(n, d, "strength"))
+				var minutes := SpellTable.special_duration(id, func(n, d): return c.roll(n, d, "duration"), true)
+				if Strength.add(t, table.effect(id), id, v.x, v.y, minutes if minutes >= 0 else dur):
+					c.message.emit("%s IS STRONGER" % t.name)
+				if c.types != null:
+					t.recalculate(c.types)
+		57:         # Potion of Speed
+			for j in targets:
+				var t: PartyMember = c.combatants[j].who
+				if t.has_affect(EFFECT_SLOW):
+					continue
+				SpellCaster.add_affect(t, EFFECT_HASTE, id, c.roll(5, 4, "speed"), lvl)
+				c.message.emit("%s IS SPEEDY" % t.name)
+		63:         # Dust of Disappearance: the caster's whole side
+			var side: Array[int] = []
+			for j in range(c.combatants.size()):
+				if not c.combatants[j].down and c.combatants[j].team == me.team:
+					side.append(j)
+			for j in side:
+				var t: PartyMember = c.combatants[j].who
+				SpellCaster.add_affect(t, EFFECT_DISAPPEAR, id, c.roll(2, 10, "duration") * 10, lvl)
+				c.message.emit("%s IS INVISIBLE" % t.name)
+		62:         # Potion of Healing
+			for j in targets:
+				var t: PartyMember = c.combatants[j].who
+				var amount := c.roll(2, 4, "healing") + 2
+				if not SpecialAffects.diseased(t):
+					t.hp = mini(t.hp + amount, t.hp_max)
+					c.message.emit("%s IS HEALED" % t.name)
 		48, 55:     # Haste, Slow: up to the caster's level of figures, the other cancelled first
 			var other := EFFECT_SLOW if id == 48 else EFFECT_HASTE
 			var left := lvl
@@ -466,7 +558,10 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				if not t.affects.is_empty():
+					var gone: Array = t.affects.duplicate()
 					t.affects.clear()
+					for a in gone:
+						SpellCaster.ended(t, a, PackedStringArray())
 					c.message.emit("%s IS AFFECTED" % t.name)
 		_:
 			_effects(i, id, targets, dur, lvl)
@@ -479,6 +574,9 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int) -> void:
 		var t: PartyMember = c.combatants[j].who
 		var no_save := table.field(id, 8) == 0
 		if not no_save and table.field(id, 8) == 1 and save(t, table.field(id, 9), 0, m):
+			c.message.emit("%s IS UNAFFECTED" % t.name)
+			continue
+		if effect in [SpecialAffects.SLEEP, SpecialAffects.CHARM, SpecialAffects.PARALYZED] and resists(t, effect):
 			c.message.emit("%s IS UNAFFECTED" % t.name)
 			continue
 		if effect > 0:
@@ -497,24 +595,57 @@ func _touch_hits(i: int, j: int) -> bool:
 	return d != 1 and (d == 20 or d >= need)
 
 
-func _damage(i: int, id: int, j: int, dmg: int) -> void:
+func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 	var t: PartyMember = c.combatants[j].who
 	if c.combatants[j].down:
 		return
-	var kind := SpecialAffects.MAGIC
-	if id == 9 or id == 47:     # Burning Hands, Fireball: fire
-		kind = SpecialAffects.FIRE
-	elif id == 20 or id == 51:  # Shocking Grasp, Lightning Bolt
-		kind = SpecialAffects.ELECTRIC
+	var kind := kind_of(id)
 	dmg = SpecialAffects.element_damage(t, kind, dmg)
-	if id == 15 and t.has_affect(0x5B):
+	dmg = resisted(t, kind, dmg, dice)
+	dmg = SpecialAffects.efreeti_fire(t, kind, dmg, dice)
+	if (id == 15 or id == 65) and t.has_affect(0x5B):
 		dmg = 0                 # juju zombies ignore Magic Missile
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return
-	var words := kind if kind != SpecialAffects.MAGIC or id == 15 else 0
+	var words := kind if kind != SpecialAffects.MAGIC or id == 15 or id == 65 else 0
 	c.message.emit(SpecialAffects.damage_words(t.name, dmg, words))
 	c.hurt(j, dmg, kind)
+
+
+## Save bonus against an element (Resist Fire / Cold +3, a Ring of Fire Resistance +4).
+static func element_save_bonus(t: PartyMember, kind: int) -> int:
+	var b := 0
+	if (kind & SpecialAffects.COLD) and t.has_affect(EFFECT_RESIST_COLD):
+		b += 3
+	if (kind & SpecialAffects.FIRE) and t.has_affect(EFFECT_RESIST_FIRE):
+		b += 3
+	if (kind & SpecialAffects.FIRE) and t.has_affect(RING_FIRE):
+		b += 4
+	return b
+
+
+## Element damage after Resist Fire / Cold and a Ring of Fire Resistance (`dice`: how many
+## dice the damage was rolled with).
+static func resisted(t: PartyMember, kind: int, dmg: int, dice: int) -> int:
+	if (kind & SpecialAffects.COLD) and t.has_affect(EFFECT_RESIST_COLD):
+		dmg /= 2
+	if (kind & SpecialAffects.FIRE) and t.has_affect(EFFECT_RESIST_FIRE):
+		dmg /= 2
+	if (kind & SpecialAffects.FIRE) and t.has_affect(RING_FIRE):
+		for k in dice:
+			dmg -= 2
+			dmg = maxi(dmg, dice)
+	return dmg
+
+
+static func kind_of(id: int) -> int:
+	match id:
+		9, 47, NECKLACE:
+			return SpecialAffects.FIRE
+		20, 51, 60:
+			return SpecialAffects.ELECTRIC
+	return SpecialAffects.MAGIC
 
 
 func _sleep_cost(t: PartyMember) -> int:

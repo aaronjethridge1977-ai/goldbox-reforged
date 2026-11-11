@@ -853,6 +853,27 @@ func _quick_save() -> void:
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
 
 
+## Lab aid: the first item in the game's treasure and monster lists whose full name starts
+## with `name` (identified).
+func _find_listed_item(name: String) -> GameItem:
+	var words := ItemNames.shared(_game_path)
+	for file in ["ITEM1", "ITEM2", "ITEM3", "ITEM4", "ITEM5", "ITEM6", "ITEM7", "ITEM8",
+			"MON2ITM", "MON3ITM", "MON5ITM", "MON6ITM", "MON7ITM", "MON8ITM"]:
+		var dax := DaxFile.open(_game_path.path_join(file + ".DAX"))
+		if dax == null:
+			continue
+		for id in dax.ids():
+			var b: PackedByteArray = dax.blocks[id]
+			for o in range(0, b.size() - 62, 63):
+				var it := GameItem.from_record(b.slice(o, o + 63))
+				it.raw[53] = 0
+				var n := words.name_of(it)
+				if n.to_upper().begins_with(name.to_upper()):
+					it.name = n
+					return it
+	return null
+
+
 func _battle_check(spec: String) -> void:
 	var a := spec.split(":")
 	var image_path := ""
@@ -874,6 +895,14 @@ func _battle_check(spec: String) -> void:
 					m.hp_max = 200
 					m.hp = 200
 					m.recalculate(_types)
+			for arg in OS.get_cmdline_user_args():
+				if arg.begins_with("--battle-give="):     # --battle-give=<member>:<item name start>
+					var g := arg.trim_prefix("--battle-give=").split(":")
+					var it := _find_listed_item(g[1])
+					if it != null and int(g[0]) < _party.size():
+						it.readied = true
+						_party[int(g[0])].items.append(it)
+						print("gave %s to %s" % [it.name, _party[int(g[0])].name])
 			var rows := [[int(a[6]), int(a[7]), int(a[8])]]
 			for k in range(10, a.size()):     # more monster rows: id,count,picture
 				var r := a[k].split(",")

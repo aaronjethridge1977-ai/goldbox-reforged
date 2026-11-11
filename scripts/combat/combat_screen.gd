@@ -211,6 +211,37 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 		if t < 0:
 			break
 		var c: Dictionary = _combatants[_combat.active]
+		if plan == "use" and c.team == 0 and _combat.magic != null:
+			# Lab check: each member with a readied item that casts uses it once, at the nearest
+			# enemy (or itself, for a potion), then fights on Quick.
+			var used := false
+			for it in c.who.items:
+				var id := CharacterSheet.item_spell(c.who, it) if it.readied else 0
+				if id == 0 or c.has("used"):
+					continue
+				var best := -1
+				for j in _combatants.size():
+					if _combatants[j].team != 0 and not _combatants[j].down and (best < 0 or
+							_combat.range_of(c, _combatants[j]) < _combat.range_of(c, _combatants[best])):
+						best = j
+				var picks: Array[int] = [best if _combat.magic.table.field(id, 14) != 0 else _combat.active]
+				var at: Vector2i = _combatants[picks[0]].cell
+				print("== %s uses %s (spell %d) at %s (%s)" % [c.who.name, it.name, id, at,
+					_combat.magic.why_not(_combat.active, id, at)])
+				if _combat.magic.aim_kind(id) == "self" or _combat.magic.why_not(_combat.active, id, at) == "":
+					c["used"] = true
+					_combat.magic.cast(_combat.active, id, at, picks, it)
+					used = true
+					break
+			if used:
+				continue
+			if not c.has("used"):
+				for it in c.who.items:
+					if it.readied:
+						print("   %s has %s (spell %d, class %d, slot %d)" % [c.who.name, it.name,
+							CharacterSheet.item_spell(c.who, it), c.who.class_flags, CharacterSheet.types.slot(it.type)])
+				c["used"] = true
+			c.quick = true
 		if plan == "cast" and c.team == 0 and _combat.magic != null:
 			# Lab check: each caster casts its first combat spell at the nearest enemy (or
 			# itself), then fights on Quick.

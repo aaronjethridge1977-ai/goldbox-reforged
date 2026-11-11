@@ -131,3 +131,15 @@ others from J:
   Monster files and ids for the powers: basilisk 2:26, troll 2:31, hill giant 2:55, mummy 4:114,
   vampire 4:23, wight 4:20, wraith 4:21, juju zombie 4:29, medusa 5:49, Tyranthraxus 5:66,
   ankheg 6:65, wild boar 6:120.
+
+### Chat 7 additions
+
+- `ovr.py` reads GAME.OVR: `dis <offset>` (far calls resolved through the overlay stubs, Pascal
+  strings shown), `handler <type>` (an effect type's handler), `stub <seg> <entry>`, `cats` (when
+  each effect type runs). The spell-cast handlers are a second table at DS:0x6B88 (GAME.OVR
+  0x2A452 fills it), one per spell id 1-67.
+- `tools/coverage.py <POOLRAD>` regenerates `docs/coverage.md`; update its STATUS lists as gaps close.
+- `check.sh <tool>` runs the Godot check, then `tools/<tool>.gd` headless: `check.sh check_items`
+  tests magic items and strength outside fights.
+- Our engine: `--battle-give=<member>:<item name>` gives a readied item from the game's lists
+  before a test battle; `--battle-fight=<seed>:use` has each member use its first usable item.

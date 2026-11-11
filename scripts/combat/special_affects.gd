@@ -25,6 +25,9 @@ extends RefCounted
 ##                 "IS POISONED", "IS KILLED"
 ##   0x43          a hit paralyses for 2d8 rounds unless the target saves (kind 0)
 ##   0x44          a hit paralyses (63 rounds) unless the target saves; elves are immune
+##   0x03          (a readied Two-Handed Sword +1 +3 vs Undead) +2 to hit and damage
+##                 against undead (record 0x9F = 4)
+##   0x45          (drider) a hit paralyses for 1d9+10 rounds unless the target saves
 ##   0x55 / 0x56   a hit drains 1 / 2 levels ("IS DRAINED A LEVEL" / " 2 LEVELS")
 ##   0x4F          a hit burns for 2d10 more (fire): Tyranthraxus
 ##   0x51          (Tyranthraxus) at the start of a fight every enemy saves vs spells (kind
@@ -70,6 +73,8 @@ extends RefCounted
 ## Damage messages (GAME.OVR 0x2C27B): "TAKES n POINTS OF DAMAGE" or "TAKES 1 POINT OF
 ## DAMAGE", then by type FROM FIRE / COLD / ELECTRICITY / ACID, or FROM MAGIC when the
 ## damage is only magic.
+##   0x68          (thri-kreen) avoids 60% of missiles ("AVOIDS IT")
+##   0x71          (efreeti) fire: one less a die
 ## Not built: magic resistance (0x69 50%, 0x6A 15% for Tyranthraxus: chance less 5 per
 ## spell level under 11, so never against Pool's spells).
 ## Categories (when each type runs) are the lists of the dispatcher at GAME.OVR 0x2B1E4.
@@ -184,6 +189,8 @@ static func blocks(m: PartyMember, type: int, roll_d100: Callable) -> bool:
 ## To-hit adjustment for `attacker` against `target` from either side's standing effects.
 static func hit_bonus(attacker: PartyMember, target: PartyMember) -> int:
 	var b := 0
+	if attacker.has_affect(0x03) and _raw(target, 0x9F) == 4:
+		b += 2      # a weapon +3 against undead (handler 0x03: also +2 damage)
 	if _raw(target, 0x9F) == 1 and _raw(target, 0x6C) == 1:
 		if attacker.has_affect(0x1A) and _named(target, DWARF_FOES):
 			b += 1
@@ -205,10 +212,23 @@ static func weapon_damage(attacker: PartyMember, target: PartyMember, weapon: Ga
 		types: ItemTypes, dmg: int, roll: Callable = Callable(), ranged: bool = false,
 		notes: Array = []) -> int:
 	var wtype := weapon.type if weapon != null else -1
+	if attacker.has_affect(0x03) and _raw(target, 0x9F) == 4:
+		dmg += 2
 	if target.has_affect(0x78) and ranged and wtype == TYPE_BOULDER and roll.is_valid() \
 			and int(roll.call(1, 100)) <= 50:
 		notes.append("%s AVOIDS IT" % target.name)
 		return 0
+	# 0x29 Protection from Normal Missiles: a missile without a plus; 0x68 (thri-kreen) 60%
+	# of missiles (GAME.OVR 0xFCE1, 0x1155C, both through 0xFC07: "AVOIDS IT").
+	if ranged and weapon != null and roll.is_valid():
+		var avoid := 0
+		if target.has_affect(0x68):
+			avoid = 60
+		if target.has_affect(0x29) and weapon.plus == 0:
+			avoid = 100
+		if avoid > 0 and int(roll.call(1, 100)) <= avoid:
+			notes.append("%s AVOIDS IT" % target.name)
+			return 0
 	if target.has_affect(0x73) and weapon != null and types != null:
 		var kind := types.field(weapon.type, 7)
 		if kind == 0 or (kind & 1) != 0:
@@ -365,4 +385,12 @@ static func element_damage(target: PartyMember, element: int, dmg: int) -> int:
 		dmg /= 2
 	if (element & FIRE) and target.has_affect(0x5D):
 		dmg /= 2
+	return dmg
+
+
+## Fire after an efreeti's 0x71: one less a die, never below one a die (GAME.OVR 0x11683).
+static func efreeti_fire(target: PartyMember, element: int, dmg: int, dice: int) -> int:
+	if (element & FIRE) and target.has_affect(0x71):
+		for k in dice:
+			dmg = maxi(dmg - 1, dice)
 	return dmg
