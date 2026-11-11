@@ -976,6 +976,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			todo.erase(ev)
 	if todo.is_empty():
 		todo = ladders
+		ladders = {}
 	var deferred := {}
 	for ev in todo.keys():
 		# Event fights come without a menu to flee by: wait for clear odds.
@@ -994,6 +995,10 @@ func _explore_pass(skip: Array) -> Dictionary:
 				best = ev
 				best_len = path.size()
 		if best < 0:
+			if not ladders.is_empty():
+				todo = ladders     # nothing else reachable: now the ladders and stairs
+				ladders = {}
+				continue
 			print("   explore: no route to events %s" % str(todo.keys()))
 			return deferred
 		var at: Vector2i = todo[best]
