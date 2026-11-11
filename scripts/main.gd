@@ -232,6 +232,21 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_facing = (int(a[2]) if a.size() > 2 else 0) as DungeonView.Dir
 			_sync_position_to_vm(_facing)
 			_show()
+		elif n.begins_with("scroll="):      # scroll=<index>:<spell name>: a magic-user scroll
+			var a := n.trim_prefix("scroll=").split(":")
+			var table := SpellTable.shared(_game_path)
+			var rec := PackedByteArray()
+			rec.resize(GameItem.SIZE)
+			var label := "Scroll".to_ascii_buffer()
+			rec[0] = label.size()
+			for i in label.size():
+				rec[1 + i] = label[i]
+			rec[46] = 61
+			rec.encode_u16(55, 1)
+			for id in range(1, SpellTable.NAMED + 1):
+				if table.name_of(id).strip_edges().to_upper() == a[1].replace("_", " ").to_upper():
+					rec[60] = id
+			_party[int(a[0])].items.append(GameItem.from_record(rec))
 		elif n.begins_with("gold="):        # gold=<party index>:<platinum pieces>
 			var a := n.trim_prefix("gold=").split(":")
 			_party[int(a[0])].money[4] = int(a[1])
@@ -244,9 +259,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			continue
 		elif n == "party":
 			for m in _party:
-				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d" % [m.name,
+				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d items %d" % [m.name,
 					str(m.raw.slice(0x96, 0x9E)), m.experience, m.hp, m.hp_max, m.hp_rolled, 60 - m.base_thac0_60,
-					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1)])
+					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1), m.items.size()])
 			continue
 		else:
 			var ev := InputEventKey.new()
@@ -279,6 +294,8 @@ func _state_line() -> String:
 	var text := _message.text
 	if _party_menu.visible:
 		text = _party_menu.screen_text()
+	elif _camp.visible:
+		text = "%s | %s | %s | %s" % [_camp._head.text, _camp._party_label.text.replace("\n", " / ").left(140), _camp._note.text, _camp._menu.text.left(30)]
 	return "%d,%d %s %s %s ecl%d:%d vm=%d | %s | %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm),
 		screen, _vm_file, _vm_block, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
 
@@ -773,7 +790,7 @@ func _on_timer() -> void:
 				_held_message = ""
 			if _vm.state == EclVM.State.WAIT:
 				_busy = true
-				_timer.start(DELAY_SECONDS)
+				_timer.start(DELAY_SECONDS * [0.5, 1.0, 2.0][CampScreen.speed])
 		else:
 			_timer.start(WALK_STEP_SECONDS)
 		_show()
@@ -818,7 +835,7 @@ func _after_vm() -> void:
 		EclVM.State.WAIT:
 			if not _busy:
 				_busy = true
-				_timer.start(DELAY_SECONDS)
+				_timer.start(DELAY_SECONDS * [0.5, 1.0, 2.0][CampScreen.speed])
 			return
 		EclVM.State.MENU:
 			var lines := PackedStringArray()

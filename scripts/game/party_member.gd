@@ -314,6 +314,53 @@ func ready_spells() -> Array[int]:
 	return out
 
 
+## SCRIBE: magic-user spells on this member's scrolls marked for copying into the spell
+## book (the original sets bit 7 of the scroll's spell byte, record bytes 60..62). Resting
+## copies them after any memorizing, a spell at a time ("<NAME> HAS SCRIBED <SPELL>").
+func scribe_pending() -> Array[int]:
+	var out: Array[int] = []
+	for it in items:
+		for k in [60, 61, 62]:
+			if it.raw.size() > k and it.raw[k] > 0x80:
+				out.append(it.raw[k] & 0x7F)
+	return out
+
+
+## Copies the first marked scroll spell into the book; the spell leaves the scroll, and an
+## empty scroll is gone. Returns the spell id (0 if none was marked).
+func scribe_next() -> int:
+	for it in items:
+		for k in [60, 61, 62]:
+			if it.raw.size() > k and it.raw[k] > 0x80:
+				var id: int = it.raw[k] & 0x7F
+				it.raw[k] = 0
+				if id <= spell_book.size():
+					spell_book[id - 1] = 1
+				if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
+					items.erase(it)
+				return id
+	return 0
+
+
+## Scroll spells this magic-user could scribe: magic-user spells of levels they have slots
+## for, not already in the book, on scrolls whose spells are known (record byte 53 clear).
+func scribable(table: SpellTable) -> Array:
+	var out: Array = []     # [item, record byte, id]
+	if class_level(1) == 0:
+		return out
+	for it in items:
+		if it.raw.size() < 63 or it.raw[53] != 0:
+			continue
+		for k in [60, 61, 62]:
+			var id: int = it.raw[k] & 0x7F
+			if id == 0 or id > SpellTable.NAMED or table.spell_class(id) != SpellTable.MAGE:
+				continue
+			var lvl := table.level(id)
+			if lvl >= 1 and lvl <= 3 and spell_slots[1][lvl - 1] > 0 and not knows(id):
+				out.append([it, k, id])
+	return out
+
+
 func learning_spells() -> Array[int]:
 	var out: Array[int] = []
 	for s in memorized:
@@ -351,7 +398,7 @@ func cancel_learning() -> void:
 func learn_minutes(table: SpellTable) -> int:
 	var total := 0
 	var top := 0
-	for id in learning_spells():
+	for id in learning_spells() + scribe_pending():
 		total += table.level(id)
 		top = maxi(top, table.level(id))
 	if total == 0:

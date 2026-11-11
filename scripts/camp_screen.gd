@@ -25,8 +25,11 @@ extends Control
 ## time Up/Down change the selected part, Left/Right or D/H/M pick it, Enter or R rests,
 ## Esc stops resting or leaves. V views, S quick-saves. In a spell list Up/Down move,
 ## Enter chooses, Esc leaves.
-## Not yet: SCRIBE (scrolls), ALTER, and the full game clock (resting moves the hour on;
-## minutes and days aren't kept yet).
+## SCRIBE (MAGIC): a magic-user marks spells on their scrolls; resting copies them into the
+## spell book after any memorizing, 15 minutes a level ("<NAME> HAS SCRIBED <SPELL>").
+## ALTER: ORDER (move the chosen member up the party), DROP (gone for good, "DROP FROM
+## PARTY?"), SPEED (message speed), ICON and PICS (not built yet).
+## The game clock runs while resting (GameClock); the caller adds the minutes rested.
 
 signal closed
 signal save_requested
@@ -65,6 +68,9 @@ var _cast_id := 0
 var _caster: PartyMember = null    # while choosing whom a spell is cast on
 var _rng2 := RandomNumberGenerator.new()
 var _hour_steps := 0
+## ALTER's SPEED: 0 fastest .. 2 slowest; scales the pause after each message.
+static var speed := 1
+var _scrolls: Array = []          # SCRIBE list: [item, record byte, spell id]
 var _learn_timer := {}             # member -> steps until its next spell is memorized
 
 
@@ -147,7 +153,14 @@ func _show_menu() -> void:
 	_head.text = "CAMPING"
 	_refresh_party()
 	_time_label.text = ""
-	_menu.text = "CAMP:  S save   V view   M magic   R rest   Esc exit        (ALTER: not built yet)"
+	_menu.text = "CAMP:  S save   V view   M magic   R rest   A alter   Esc exit"
+
+
+func _alter_menu() -> void:
+	_mode = "alter"
+	_head.text = "ALTER"
+	_refresh_party()
+	_menu.text = "ALTER:  O order (move up)   D drop   S speed (%s)   I icon   P pics   Esc exit" % ["FAST", "MEDIUM", "SLOW"][speed]
 
 
 func _rest_menu() -> void:
@@ -239,15 +252,17 @@ func _learn_step() -> void:
 		var t: int = _learn_timer.get(m, 0)
 		if t > 0:
 			t -= 1
-		if t == 0 and m.learn_hours == 0:
+		if t == 0 and m.learn_hours == 0 and _learn_timer.has(m):
 			var pending := m.learning_spells()
-			if not pending.is_empty() and _learn_timer.has(m):
+			if not pending.is_empty():
 				var id: int = pending[0]
 				var k := m.memorized.find(id + PartyMember.LEARNING)
 				m.memorized[k] = id
 				_note.text = "%s HAS MEMORIZED %s" % [m.name, spells.name_of(id)]
-				pending = m.learning_spells()
-				t = spells.level(pending[0]) * 3 if not pending.is_empty() else 0
+			elif not m.scribe_pending().is_empty():
+				var id := m.scribe_next()
+				_note.text = "%s HAS SCRIBED %s" % [m.name, spells.name_of(id)]
+			t = _next_learn_steps(m)
 		_learn_timer[m] = t
 	_hour_steps += 1
 	if _hour_steps >= 12:
@@ -256,9 +271,16 @@ func _learn_step() -> void:
 			if m.learn_hours > 0:
 				m.learn_hours -= 1
 				if m.learn_hours == 0:
-					var pending := m.learning_spells()
-					if not pending.is_empty():
-						_learn_timer[m] = spells.level(pending[0]) * 3
+					if _next_learn_steps(m) > 0:
+						_learn_timer[m] = _next_learn_steps(m)
+
+
+## 5-minute steps for the next spell to memorize, then to scribe: 15 minutes a level.
+func _next_learn_steps(m: PartyMember) -> int:
+	var pending := m.learning_spells()
+	if pending.is_empty():
+		pending = m.scribe_pending()
+	return spells.level(pending[0]) * 3 if not pending.is_empty() else 0
 
 
 ## A full day's rest: everyone alive gains 1 HP; the unconscious wake.
@@ -333,6 +355,17 @@ func _open_list(kind: String) -> void:
 		"pending":
 			ids = m.learning_spells()
 			_head.text = "%s'S SPELLS TO BE MEMORIZED" % m.name
+		"scribe":
+			if m.status != PartyMember.STATUS_OKAY:
+				_note.text = "%s IS IN NO CONDITION TO SCRIBE SPELLS" % m.name
+				return
+			_scrolls = m.scribable(spells)
+			if _scrolls.is_empty():
+				_note.text = "%s HAS NO SPELLS TO SCRIBE" % m.name
+				return
+			for row in _scrolls:
+				ids.append(row[2])
+			_head.text = "%s'S SPELLS ON SCROLLS" % m.name
 	_build_list(ids, "*" if kind == "pending" else "")
 	_note.text = ""
 	_mode = "list"
@@ -393,6 +426,15 @@ func _choose() -> void:
 	if _list_kind == "memorize":
 		if m.slots_left(spells, spells.spell_class(id), spells.level(id)) > 0:
 			m.memorized.append(id + PartyMember.LEARNING)
+		_show_list()
+	elif _list_kind == "scribe":
+		# Marks (or unmarks) the scroll spell to be scribed while resting.
+		for row in _scrolls:
+			if row[2] == id:
+				var it: GameItem = row[0]
+				it.raw[row[1]] ^= 0x80
+				_note.text = ("%s WILL BE SCRIBED" if it.raw[row[1]] > 0x80 else "%s WILL NOT BE SCRIBED") % spells.name_of(id).to_upper()
+				break
 		_show_list()
 	elif _list_kind == "cast":
 		_cast_id = id
@@ -476,9 +518,37 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif key == KEY_S:
 				save_requested.emit()
 				_note.text = "SAVED."
+			elif key == KEY_A:
+				_note.text = ""
+				_alter_menu()
 			elif cancel or key == KEY_E:
 				visible = false
 				closed.emit()
+		"alter":
+			if up or down:
+				_pick(-1 if up else 1)
+			elif key == KEY_O and _sel > 0:
+				var m: PartyMember = _party[_sel]
+				_party.remove_at(_sel)
+				_party.insert(_sel - 1, m)
+				_sel -= 1
+				_refresh_party()
+			elif key == KEY_D and _party.size() > 1:
+				_mode = "drop"
+				_menu.text = "DROP FROM PARTY? %s WILL BE GONE FOR GOOD.  Y/N" % _who().name
+			elif key == KEY_S:
+				speed = (speed + 1) % 3
+				_alter_menu()
+			elif key == KEY_I or key == KEY_P:
+				_note.text = "ICON and PICS: not built yet."
+			elif cancel or key == KEY_E:
+				_note.text = ""
+				_show_menu()
+		"drop":
+			if key == KEY_Y:
+				_party.remove_at(_sel)
+				_sel = mini(_sel, _party.size() - 1)
+			_alter_menu()
 		"magic":
 			if up or down:
 				_pick(-1 if up else 1)
@@ -487,7 +557,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif key == KEY_M:
 				_open_list("memorize")
 			elif key == KEY_S:
-				_note.text = "SCRIBE: not built yet."
+				_open_list("scribe")
 			elif key == KEY_D:
 				_show_display()
 			elif key == KEY_R:
