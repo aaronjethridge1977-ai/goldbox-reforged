@@ -65,6 +65,9 @@ var _temple: TempleScreen
 var _party_menu: PartyMenu
 const SEARCH_FLAG := 0x6DCA       # 1 while searching (SEARCH, LOOK); the scripts test it
 var _searching := false
+var _door_options := ""            # the LOCKED. menu while it is open ("BPKE" letters offered)
+var _door_side := -1
+var _door_rng := RandomNumberGenerator.new()
 const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
 const REST_PERCENT := 0x6DD3      # ... and the chance (d100) that rest is interrupted
 var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
@@ -171,7 +174,7 @@ func _ready() -> void:
 			if file_name.begins_with("GEO"):
 				var m := GeoMap.decode(block)
 				if m != null:
-					_maps.append({"file": file_name, "id": id, "map": m})
+					_maps.append({"file": file_name, "id": id, "map": m, "block": block})
 				continue
 			var animated := file_name.begins_with("PIC") or file_name.begins_with("SPRIT") or file_name.begins_with("FINAL")
 			var pic := EgaPicture.decode_any(block) if animated else EgaPicture.decode(block)
@@ -319,6 +322,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 		if _busy:
 			get_viewport().set_input_as_handled()
+			return
+		if _door_options != "":
+			var letter := OS.get_keycode_string(key).to_upper()
+			if letter.length() == 1:
+				_door_choice(letter)
+			get_viewport().set_input_as_handled()
+			_show()
 			return
 		if _vm.state == EclVM.State.MENU:
 			# A menu is open: only its choices count.
@@ -695,6 +705,122 @@ func _try_move(direction: int) -> void:
 	_finish_move(direction)
 
 
+## The original's locked doors (door type 2 locked, 3 wizard-locked): a menu of what the
+## party can try. 0x6DDE-0x6DE0 hold whether BASH, PICK and KNOCK may still be tried here;
+## a step resets them. One try per choice; success opens the door (both sides) and steps
+## through it. A door where nothing is left to try turns into a plain wall.
+const DOOR_TRY_BASH := 0x6DDE
+const DOOR_TRY_PICK := 0x6DDF
+const DOOR_TRY_KNOCK := 0x6DE0
+const KNOCK := 31
+
+
+func _locked_door(direction: int) -> void:
+	var map: GeoMap = _maps[_map_index].map
+	var kind := map.door(_pos.x, _pos.y, direction)
+	var any_class := func(c: int) -> bool:
+		for m in _party:
+			if (m as PartyMember).level_in(c) > 0:
+				return true
+		return false
+	var options := ""
+	if _vm.read_byte(DOOR_TRY_BASH) != 0:
+		options += "B"
+	if _vm.read_byte(DOOR_TRY_PICK) != 0 and any_class.call(6):
+		options += "P"
+	if _vm.read_byte(DOOR_TRY_KNOCK) != 0 and (any_class.call(5) if kind == 3 else _knock_caster() != null):
+		options += "K"
+	if options == "":
+		map.set_door(_pos.x, _pos.y, direction, 0)
+		return
+	_door_options = options + "E"
+	_door_side = direction
+	var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
+	var line := "LOCKED."
+	for c in _door_options:
+		line += " " + words[c]
+	_message.text = line
+
+
+func _knock_caster() -> PartyMember:
+	for m in _party:
+		if (m as PartyMember).memorized.has(KNOCK):
+			return m
+	return null
+
+
+func _door_choice(c: String) -> void:
+	if not _door_options.contains(c):
+		return
+	var map: GeoMap = _maps[_map_index].map
+	var kind := map.door(_pos.x, _pos.y, _door_side)
+	var direction := _door_side
+	_door_options = ""
+	_message.text = ""
+	var opened := false
+	match c:
+		"B":
+			# Every member in turn tries (strength, as the open-doors roll), until one does it.
+			for m in _party:
+				var pm := m as PartyMember
+				var st := pm.stats[0]
+				var ex := pm.strength_exceptional
+				var r6 := _door_rng.randi_range(1, 6)
+				if kind == 3:
+					if st == 18 and ex >= 91 and ex <= 99:
+						opened = r6 == 1
+					elif st == 18 and ex == 100:
+						opened = r6 <= 2
+					elif st == 19 or st == 20:
+						opened = r6 <= 3
+					elif st == 21 or st == 22:
+						opened = r6 <= 4
+					elif st == 23:
+						opened = r6 <= 5
+					elif st == 24:
+						opened = _door_rng.randi_range(1, 8) <= 7
+					elif st >= 25:
+						opened = true
+					else:
+						_vm.write_byte(DOOR_TRY_BASH, 0)
+				else:
+					if st >= 3 and st <= 7:
+						opened = r6 == 1
+					elif st >= 8 and st <= 15:
+						opened = r6 <= 2
+					elif st >= 16 and st <= 17:
+						opened = r6 <= 3
+					elif st == 18 and ex <= 50:
+						opened = r6 <= 3
+					elif st == 18 and ex <= 99:
+						opened = r6 <= 4
+					elif st == 18:
+						opened = r6 <= 5
+				if opened:
+					break
+		"P":
+			_vm.write_byte(DOOR_TRY_PICK, 0)
+			if kind == 2:
+				for m in _party:
+					var pm := m as PartyMember
+					if _door_rng.randi_range(1, 100) <= pm.thief_skill(ClassTables.shared(_game_path), 1) and pm.status == 0:
+						opened = true
+						break
+		"K":
+			var caster := _knock_caster()
+			if caster != null:
+				caster.memorized.erase(KNOCK)
+				opened = true
+	if not opened:
+		_show()
+		return
+	map.set_door(_pos.x, _pos.y, direction, 1)
+	var next := _pos + DungeonView.DELTA[direction]
+	next = Vector2i(posmod(next.x, GeoMap.SIZE), posmod(next.y, GeoMap.SIZE))
+	map.set_door(next.x, next.y, (direction + 2) % 4, 1)
+	_step_into(next)
+
+
 ## Completes a move once the on-move script has finished without refusing it.
 func _finish_move(direction: int) -> void:
 	_pending_move = -1
@@ -704,9 +830,20 @@ func _finish_move(direction: int) -> void:
 	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
 		return
+	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) >= 2:
+		_locked_door(direction)
+		return
 	var next := _pos + DungeonView.DELTA[direction]
 	if next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE:
 		return
+	_step_into(next)
+
+
+## The step itself, once nothing stops it: time passes and the new square's event runs.
+func _step_into(next: Vector2i) -> void:
+	_vm.write_byte(DOOR_TRY_BASH, 1)
+	_vm.write_byte(DOOR_TRY_PICK, 1)
+	_vm.write_byte(DOOR_TRY_KNOCK, 1)
 	_pos = next
 	_pass_time(GameClock.TEN_MINUTES if _searching else GameClock.MINUTE, 1)
 	if _vm.ecl != null:
@@ -1160,6 +1297,9 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		for i in _maps.size():
 			if _maps[i].id == _vm.area_map[0]:
 				_map_index = i
+				# Loading the area again brings back its doors as the data has them (a bashed
+				# door stays open only until then, as in the original).
+				_maps[i].map = GeoMap.decode(_maps[i].block)
 				_vm_map = i
 				break
 	_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
@@ -1168,6 +1308,8 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_walls_for = -1
 	_pending_move = -1
 	_vm.write_byte(EclVM.LEAVING_MAP, 0)
+	for a in [DOOR_TRY_BASH, DOOR_TRY_PICK, DOOR_TRY_KNOCK]:
+		_vm.write_byte(a, 1)
 	if arrive and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE]:
 		# As in the original, the square arrived on runs its event (New Phlan's gateway
 		# text when coming in from the Slums).

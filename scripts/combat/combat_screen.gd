@@ -200,8 +200,15 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 				attacked[c.who.name] = true)
 	var guard := 0
 	var stop := false
-	while not stop and _combat.next_turn() >= 0 and guard < 5000:
+	while not stop and guard < 5000:
 		guard += 1
+		var t := _combat.next_turn()
+		if t == Combat.ASK_CONTINUE:
+			print("CONTINUE BATTLE: NO")
+			_combat.continue_battle(false)
+			continue
+		if t < 0:
+			break
 		var c: Dictionary = _combatants[_combat.active]
 		if plan == "cast" and c.team == 0 and _combat.magic != null:
 			# Lab check: each caster casts its first combat spell at the nearest enemy (or
@@ -377,6 +384,9 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_result = 0
 
 
+var _asking_continue := false
+
+
 func _on_message(text: String) -> void:
 	_messages.append(text)
 	if _messages.size() > 6:
@@ -387,6 +397,11 @@ func _on_message(text: String) -> void:
 ## Moves on to whoever acts next; computer-controlled turns play out on a timer.
 func _advance() -> void:
 	var i := _combat.next_turn()
+	if i == Combat.ASK_CONTINUE:
+		_asking_continue = true
+		_on_message("CONTINUE BATTLE: YES NO")
+		_refresh()
+		return
 	if i < 0:
 		_result = _combat.outcome()
 		_combat.finish()
@@ -731,6 +746,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _casting != "":
 		_cast_input(event, key)
+		get_viewport().set_input_as_handled()
+		return
+	if _asking_continue:
+		if key == KEY_Y or key == KEY_N:
+			_asking_continue = false
+			_combat.continue_battle(key == KEY_Y)
+			_advance()
 		get_viewport().set_input_as_handled()
 		return
 	if _event_fight and _result == 0 and _combat != null:

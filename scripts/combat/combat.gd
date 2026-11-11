@@ -160,6 +160,11 @@ func start_round() -> void:
 func next_turn() -> int:
 	while outcome() == 0:
 		if order.is_empty():
+			# The original's end of round: with every enemy still standing on the run, it
+			# asks "CONTINUE BATTLE:" (answered by continue_battle()).
+			if round_no > 0 and asked_round != round_no and enemies_all_running():
+				asked_round = round_no
+				return ASK_CONTINUE
 			start_round()
 			if order.is_empty():
 				return -1
@@ -175,6 +180,32 @@ func next_turn() -> int:
 		return active
 	active = -1
 	return -1
+
+
+const ASK_CONTINUE := -2
+var asked_round := -1
+
+
+func enemies_all_running() -> bool:
+	var any := false
+	for c in combatants:
+		if c.team == 1 and not c.down:
+			any = true
+			if not c.get("fleeing", false):
+				return false
+	return any
+
+
+## The answer to "CONTINUE BATTLE:": no ends the fight, the runners getting away (no
+## experience or treasure for them).
+func continue_battle(yes: bool) -> void:
+	if yes:
+		return
+	for c in combatants:
+		if c.team == 1 and not c.down:
+			c.down = true
+			c.fled = true
+			(c.who as PartyMember).status = PartyMember.STATUS_RUNNING
 
 
 ## Attacks this round with the readied weapon: half-attacks (missile weapons: the ITEMS

@@ -79,5 +79,9 @@ func door(x: int, y: int, side: int) -> int:
 	return doors[side][y * SIZE + x]
 
 
+func set_door(x: int, y: int, side: int, value: int) -> void:
+	doors[side][y * SIZE + x] = value
+
+
 func flag(x: int, y: int) -> int:
 	return flags[y * SIZE + x]
