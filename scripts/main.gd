@@ -460,9 +460,13 @@ func _tour(goal: Vector2i) -> void:
 			await _press("e")
 			continue
 		if _door_options != "":
-			print("   LOCKED -> B")
-			await _press("b")
-			continue
+			if "B" in _door_options:
+				print("   LOCKED -> B")
+				await _press("b")
+				continue
+			print("   LOCKED, BASH used up -> EXIT; gave up on %s" % goal)
+			await _press("e")
+			return
 		if _vm.state == EclVM.State.INPUT:
 			var said_text: String = _tour_answers.pop_front() if not _tour_answers.is_empty() else "x"
 			print("   >> typed ", said_text)
