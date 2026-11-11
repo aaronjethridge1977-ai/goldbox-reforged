@@ -25,7 +25,9 @@ checkpoint shopped
 log The Slums
 travel 2:20
 expect 2:20
-explore
+# First pass: everything but the two big halls (9: the orcs' home behind the door at 2,3;
+# 15: the hobgoblin training hall), which wipe a 1st-level party; they come after training.
+explore 9 15
 checkpoint slums
 
 log Back to New Phlan: the clerk's reward, training, the inn
