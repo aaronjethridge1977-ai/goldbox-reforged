@@ -92,6 +92,12 @@ func _build() -> void:
 	help.text = "←/→ who   ↑/↓ cure   Enter heal   P pool money   V view   Esc exit"
 	help.add_theme_font_size_override("font_size", 17)
 	box.add_child(help)
+	var look := OverlayLook.new()
+	look.head = _head
+	look.bodies = [_party_label, _list_label]
+	look.note = _note
+	look.menu = help
+	add_child(look)
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
 	add_child(_sheet)

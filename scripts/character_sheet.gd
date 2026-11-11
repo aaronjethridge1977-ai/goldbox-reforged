@@ -87,6 +87,13 @@ func _build() -> void:
 	_foot.add_theme_font_size_override("font_size", 16)
 	_foot.modulate = Color(0.7, 0.75, 0.8)
 	box.add_child(_foot)
+	var look := OverlayLook.new()
+	look.head = _head
+	look.bodies = [_body]
+	look.note = null
+	look.menu = _foot
+	look.full = true
+	add_child(look)
 
 
 func _who() -> PartyMember:

@@ -301,6 +301,66 @@ func _build() -> void:
 	_prompt.size = Vector2(1200, 120)
 	_prompt.add_theme_font_size_override("font_size", 18)
 	add_child(_prompt)
+	# The original's combat screen over all of it (F12 shows the developer layout).
+	_scr = GameScreen.new()
+	add_child(_scr)
+
+
+var _scr: GameScreen
+static var dev_view := false
+
+
+## The original's combat screen: rope frame (rows 0 and 22, columns 0, 22 and 39), the
+## 7x7 field at (8, 8), the figure's name (yellow), HITPOINTS, AC and weapon at column 23
+## rows 1-7, the fight's messages below them, and the prompt or menu on row 24.
+func _draw_original(field: Image) -> void:
+	_scr.visible = not dev_view
+	if dev_view:
+		return
+	var g := _scr
+	g.img.fill(GameScreen.EGA[8])   # the original's combat screen is dark grey throughout
+	for c in 40:
+		g.tile(c, 0, 22)
+		g.tile(c, 22, 22)
+	for r in range(1, 22):
+		g.tile(0, r, 21)
+		g.tile(22, r, 21)
+		g.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(22, 0), Vector2i(39, 0), Vector2i(0, 22), Vector2i(22, 22), Vector2i(39, 22)]:
+		g.tile(p.x, p.y, 20)
+	var f: Image = field.duplicate()
+	f.convert(Image.FORMAT_RGBA8)
+	g.img.blit_rect(f, Rect2i(0, 0, mini(f.get_width(), 168), mini(f.get_height(), 168)), Vector2i(8, 8))
+	if not _combatants.is_empty():
+		var e: Dictionary = _combatants[_selected]
+		var m: PartyMember = e.who
+		g.text(23, 1, m.name.left(16), GameScreen.YELLOW)
+		g.text(23, 3, "HITPOINTS %d" % m.hp, GameScreen.GREEN)
+		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
+		if m.weapon:
+			g.text(23, 7, m.weapon.name.to_upper().left(16), GameScreen.GREEN)
+	var lines := PackedStringArray()
+	for msg in _messages:
+		lines.append_array(GameScreen.wrap(String(msg).to_upper(), 16))
+	var start := maxi(lines.size() - 12, 0)
+	for i in range(start, lines.size()):
+		g.text(23, 9 + i - start, lines[i], GameScreen.WHITE)
+	# Bottom line.
+	if _asking_continue:
+		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
+		g.menu_line(24, ["YES", "NO"], 17)
+	elif _combat != null and _result != 0:
+		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
+	elif _combat != null and _casting == "choose":
+		g.text(0, 24, "CAST: CHOOSE A SPELL", GameScreen.GREEN)
+	elif _combat != null and (_casting == "aim" or _aiming):
+		g.menu_line(24, ["NEXT", "PREV", "TARGET", "EXIT"])
+	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].quick:
+		var c: Dictionary = _combatants[_combat.active]
+		if c.moves / 2 > 0 and c.attacks > 0:
+			g.text(0, 23, "MOVE/ATTACK, MOVE LEFT = %d" % (c.moves / 2), GameScreen.GREEN)
+		g.menu_line(24, ["AIM", "CAST", "GUARD", "BANDAGE", "QUICK", "DONE"])
+	g.update()
 
 
 func _load_monsters() -> void:
@@ -685,6 +745,7 @@ func _refresh() -> void:
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
 	_picture.texture = ImageTexture.create_from_image(img)
+	_draw_original(img)
 	if _combatants.is_empty():
 		_info.text = ""
 	else:

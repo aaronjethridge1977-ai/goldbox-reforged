@@ -110,6 +110,12 @@ func _build() -> void:
 		b.add_theme_font_size_override("font_size", 20)
 		b.pressed.connect(spec[1])
 		_buttons.add_child(b)
+	var look := OverlayLook.new()
+	look.head = _head
+	look.bodies = [_party_label, _list, _amount_label]
+	look.note = _note
+	look.menu = _buttons
+	add_child(look)
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
 	add_child(_sheet)

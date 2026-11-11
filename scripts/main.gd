@@ -75,6 +75,12 @@ var _fight_treasure := []        # the event's TREASURE operands, kept for after
 var _combat: CombatScreen
 var _types: ItemTypes
 
+# The original's adventure screen (F12 switches to the developer view and back).
+var _screen: GameScreen
+var _dev_view := false
+var _view_img: Image
+var _area_view := false            # AREA: the overhead map in the view window
+
 
 func _ready() -> void:
 	_goto = LineEdit.new()
@@ -97,6 +103,9 @@ func _ready() -> void:
 	_typed.offset_bottom = -8
 	_typed.text_submitted.connect(_on_typed)
 	add_child(_typed)
+	_screen = GameScreen.new()
+	_screen.visible = false
+	add_child(_screen)
 	_message = Label.new()
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_message.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -155,6 +164,7 @@ func _ready() -> void:
 		)
 		return
 	_types = ItemTypes.load_file(_game_path)
+	GameScreen.load_art(_game_path)
 	CharacterSheet.types = _types
 	CharacterSheet.spells = SpellTable.shared(_game_path)
 	for i in range(1, 7):
@@ -243,6 +253,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var a := n.trim_prefix("area=").split(":")
 			_mode = Mode.WALK
 			_enter_script(int(a[0]), int(a[1]))
+		elif n.begins_with("shot="):        # shot=<png path> saves the window (not headless)
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(n.trim_prefix("shot="))
 		elif n.begins_with("load="):        # load=<letter> loads the original's SAVGAM<letter>.DAT
 			load_original_save(n.trim_prefix("load="))
 		elif n.begins_with("say="):         # say=<text> answers INPUT_STRING / INPUT_NUMBER
@@ -345,10 +358,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			_show()
 			return
 		if _vm.state == EclVM.State.MENU:
-			# A menu is open: only its choices count.
+			# A menu is open: only its choices count (digits, or an item's first letter
+			# as in the original when that letter is unique).
 			var choice := -1
 			if key >= KEY_1 and key <= KEY_9:
 				choice = key - KEY_1
+			elif key >= KEY_A and key <= KEY_Z:
+				var letter := OS.get_keycode_string(key).to_upper()
+				var hits := []
+				for i in _vm.menu.size():
+					if String(_vm.menu[i]).strip_edges().to_upper().begins_with(letter):
+						hits.append(i)
+				if hits.size() == 1:
+					choice = hits[0]
 			elif event.is_action("ui_accept") and _vm.menu.size() == 1:
 				choice = 0
 			if choice >= 0 and choice < _vm.menu.size():
@@ -390,9 +412,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			GameClock.set_time(_vm, 8 if night else 20, 0)
 		elif key == KEY_O:
 			_dungeon.show_slots = not _dungeon.show_slots
-		elif key == KEY_C:
+		elif key == KEY_F9:
 			_capture()
 			return
+		elif key == KEY_F12:
+			_dev_view = not _dev_view
+			CombatScreen.dev_view = _dev_view
+		elif key == KEY_A:
+			_area_view = not _area_view
 		elif key == KEY_E:
 			_make_camp()
 			get_viewport().set_input_as_handled()
@@ -1566,6 +1593,15 @@ func _layout() -> void:
 	_picture.visible = _mode != Mode.MAPS
 	_map_view.visible = _mode != Mode.PICTURES
 	_message.visible = walk
+	var original := walk and not _dev_view
+	_screen.visible = original
+	if original:
+		_picture.visible = false
+		_map_view.visible = false
+		_message.visible = false
+		_status.visible = false
+	else:
+		_status.visible = true
 	# Leave room under the view for event text.
 	_picture.offset_bottom = -236.0 if walk else -60.0
 	if not walk:
@@ -1611,9 +1647,11 @@ func _show() -> void:
 	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
 	_dungeon.sky_color = sky if sky > 0 and sky < 16 else 11
 	if _vm.runes_shown and not _vm.rune_lines.is_empty():
-		_picture.texture = ImageTexture.create_from_image(_rune_page())
+		_view_img = _rune_page()
+		_picture.texture = ImageTexture.create_from_image(_view_img)
 	elif _event_image != null:
-		_picture.texture = ImageTexture.create_from_image(_event_image)
+		_view_img = _event_image
+		_picture.texture = ImageTexture.create_from_image(_view_img)
 	else:
 		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
 		if _vm.sprite_id >= 0:
@@ -1629,7 +1667,8 @@ func _show() -> void:
 						and ahead.y < GeoMap.SIZE and map0.wall(ahead.x, ahead.y, _facing) > 0:
 					distance = 1
 				DungeonView.draw_sprite(view, frames[mini(distance, frames.size() - 1)])
-		_picture.texture = ImageTexture.create_from_image(DungeonView.to_image(view))
+		_view_img = DungeonView.to_image(view)
+		_picture.texture = ImageTexture.create_from_image(_view_img)
 	_map_view.set_marker(_pos, _facing)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
 	var map: GeoMap = e.map
@@ -1638,3 +1677,68 @@ func _show() -> void:
 	_status.text = "WALK  %s   %d,%d facing %s  %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  S search  L look  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
 		area, _pos.x, _pos.y, facing_name, GameClock.text(_vm), map.flag(_pos.x, _pos.y) & 127,
 		("night" if night else "day") + ("  SEARCHING" if _searching else ""), script_name]
+	if _screen.visible:
+		_draw_screen()
+
+
+## The adventure screen as the original shows it.
+func _draw_screen() -> void:
+	var body := _message.text
+	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
+	if _door_options != "":
+		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
+		menu = []
+		for c in _door_options:
+			menu.append(words[c])
+		body = ""
+		menu.push_front("LOCKED.")
+	elif _vm.state == EclVM.State.MENU and not _vm.menu.is_empty():
+		var cut := body.rfind("\n\n")
+		if cut >= 0:
+			body = body.substr(0, cut)
+		menu = _vm.menu.duplicate()
+	elif _vm.state == EclVM.State.INPUT:
+		menu = []
+	elif _busy:
+		menu = []
+	var view := _view_img
+	if _area_view:
+		view = _area_picture()
+	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
+	if _searching:
+		place += " SEARCHING"
+	var lines := GameScreen.wrap(body.strip_edges(), 38)
+	OverlayLook.last_view = view
+	OverlayLook.last_place = place
+	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu)
+
+
+## AREA: the overhead map of the block in the view window, walls as lines, the party as an
+## arrow (the original's AREA view; our automap shows only what has been seen... for now all).
+func _area_picture() -> Image:
+	var im := Image.create(88, 88, false, Image.FORMAT_RGBA8)
+	im.fill(Color.BLACK)
+	var map: GeoMap = _maps[_map_index].map
+	var wall_c := GameScreen.EGA[7]
+	var door_c := GameScreen.EGA[14]
+	for y in GeoMap.SIZE:
+		for x in GeoMap.SIZE:
+			var ox := 4 + x * 5
+			var oy := 4 + y * 5
+			for side in 4:
+				if map.wall(x, y, side) == 0:
+					continue
+				var c: Color = door_c if map.door(x, y, side) != 0 else wall_c
+				for k in 6:
+					match side:
+						0: im.set_pixel(ox + k, oy, c)
+						1: im.set_pixel(ox + 5, oy + k, c)
+						2: im.set_pixel(ox + k, oy + 5, c)
+						3: im.set_pixel(ox, oy + k, c)
+	var px := 4 + _pos.x * 5 + 2
+	var py := 4 + _pos.y * 5 + 2
+	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		im.set_pixel(px + d.x, py + d.y, GameScreen.EGA[12])
+	var tip := DungeonView.DELTA[_facing]
+	im.set_pixel(clampi(px + tip.x * 2, 0, 87), clampi(py + tip.y * 2, 0, 87), GameScreen.EGA[15])
+	return im

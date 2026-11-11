@@ -79,6 +79,12 @@ func _build(title: String) -> void:
 		b.add_theme_font_size_override("font_size", 20)
 		b.pressed.connect(spec[1])
 		buttons.add_child(b)
+	var look := OverlayLook.new()
+	look.head = head
+	look.bodies = [_list, _who]
+	look.note = _note
+	look.menu = buttons
+	add_child(look)
 
 
 ## Stretches a control over its parent. (set_anchors_preset alone keeps the control's

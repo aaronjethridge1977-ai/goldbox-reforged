@@ -131,6 +131,12 @@ func _build() -> void:
 	_menu = Label.new()
 	_menu.add_theme_font_size_override("font_size", 20)
 	box.add_child(_menu)
+	var look := OverlayLook.new()
+	look.head = _head
+	look.bodies = [_party_label, _time_label]
+	look.note = _note
+	look.menu = _menu
+	add_child(look)
 	_timer = Timer.new()
 	_timer.wait_time = 0.05
 	_timer.timeout.connect(_tick)
