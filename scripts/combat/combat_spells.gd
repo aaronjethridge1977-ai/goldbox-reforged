@@ -313,14 +313,17 @@ func _people_in(cells: Array[Vector2i]) -> Array[int]:
 # --- Casting ------------------------------------------------------------------------------
 
 ## Combatant i casts `id` at `cell` (area spells) or at the figures in `picked`.
-func cast(i: int, id: int, cell: Vector2i, picked: Array[int]) -> void:
+func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = null) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	m.forget(id)
+	if item != null:
+		CharacterSheet.spend_use(m, item, id)
+	else:
+		m.forget(id)
 	reveal(m)
 	me.moves = 0
 	me.attacks = 0
-	c.message.emit("%s CASTS A SPELL" % m.name)
+	c.message.emit(("%s USES %s" % [m.name, item.name.to_upper()]) if item != null else "%s CASTS A SPELL" % m.name)
 	c.message.emit("SPELL: %s" % table.name_of(id))
 	var targets: Array[int] = []
 	match aim_kind(id):

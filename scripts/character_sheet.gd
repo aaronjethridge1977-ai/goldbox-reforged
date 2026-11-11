@@ -274,6 +274,43 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	return " / ".join(lines)
 
 
+## The spell a readied item casts when used (a scroll: its first spell; a wand, potion or
+## other charged item: record byte 61), 0 if none. Scrolls need a caster.
+static func item_spell(m: PartyMember, it: GameItem) -> int:
+	if types == null:
+		return 0
+	var slot := types.slot(it.type)
+	if slot >= 11 and slot <= 13:
+		if m.class_level(0) == 0 and m.class_level(1) == 0:
+			return 0
+		for k in [60, 61, 62]:
+			if it.raw.size() > k and it.raw[k] & 0x7F > 0:
+				return it.raw[k] & 0x7F
+		return 0
+	if it.raw.size() > 62 and it.raw[61] > 0 and it.raw[62] < 0x80:
+		return it.raw[61] & 0x7F
+	return 0
+
+
+static func spend_use(m: PartyMember, it: GameItem, id: int) -> void:
+	var slot := types.slot(it.type) if types != null else 0
+	if slot >= 11 and slot <= 13:
+		for k in [60, 61, 62]:
+			if it.raw[k] & 0x7F == id:
+				it.raw[k] = 0
+				break
+		if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
+			m.items.erase(it)
+		return
+	if it.raw[60] > 0:
+		if it.count > 1:
+			it.count -= 1
+		else:
+			it.raw[60] -= 1
+			if it.raw[60] == 0:
+				m.items.erase(it)
+
+
 ## A use spends a scroll's spell, a piece of a stack, or a charge (gone at none).
 func _spend(m: PartyMember, it: GameItem, id: int) -> void:
 	if _is_scroll(it):

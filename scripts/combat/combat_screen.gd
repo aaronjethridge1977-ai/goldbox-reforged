@@ -334,17 +334,40 @@ func _draw_original(field: Image) -> void:
 	if not _combatants.is_empty():
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
-		g.text(23, 1, m.name.left(16), GameScreen.YELLOW)
-		g.text(23, 3, "HITPOINTS %d" % m.hp, GameScreen.GREEN)
+		g.text(23, 1, m.name.left(16), GameScreen.CYAN if e.team == 0 else GameScreen.YELLOW)
+		g.text(23, 3, "HITPOINTS", GameScreen.GREEN)
+		g.text(33, 3, str(m.hp), GameScreen.YELLOW)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
 		if m.weapon:
 			g.text(23, 7, m.weapon.name.to_upper().left(16), GameScreen.GREEN)
-	var lines := PackedStringArray()
-	for msg in _messages:
-		lines.append_array(GameScreen.wrap(String(msg).to_upper(), 16))
-	var start := maxi(lines.size() - 12, 0)
-	for i in range(start, lines.size()):
-		g.text(23, 9 + i - start, lines[i], GameScreen.WHITE)
+	# The last action, as the original prints it from row 10: each name on its own line
+	# (party light cyan, monsters yellow), the rest green, 16 to a line.
+	var names := {}
+	for c in _combatants:
+		names[(c.who as PartyMember).name.to_upper()] = GameScreen.CYAN if c.team == 0 else GameScreen.YELLOW
+	var lines := []
+	if not _messages.is_empty():
+		var msg := String(_messages[-1]).to_upper()
+		var rest := msg
+		while rest != "":
+			var hit := ""
+			var at := rest.length()
+			for n in names:
+				var k := rest.find(n)
+				if k >= 0 and (k < at or (k == at and n.length() > hit.length())):
+					at = k
+					hit = n
+			if at > 0:
+				for w in GameScreen.wrap(rest.substr(0, at).strip_edges(), 16):
+					if w != "":
+						lines.append([w, GameScreen.GREEN])
+			if hit == "":
+				break
+			lines.append([hit.left(16), names[hit]])
+			rest = rest.substr(at + hit.length()).strip_edges()
+	if _casting != "choose":
+		for i in mini(lines.size(), 12):
+			g.text(23, 10 + i, lines[i][0], lines[i][1])
 	# Bottom line.
 	if _asking_continue:
 		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
@@ -352,14 +375,19 @@ func _draw_original(field: Image) -> void:
 	elif _combat != null and _result != 0:
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
 	elif _combat != null and _casting == "choose":
-		g.text(0, 24, "CAST: CHOOSE A SPELL", GameScreen.GREEN)
+		# The spells (or items) to choose from, the chosen one white.
+		g.text(23, 9, "USE WHICH?" if not _use_items.is_empty() else "CAST WHICH?", GameScreen.WHITE)
+		for k in mini(_spell_list.size(), 12):
+			var label := _use_items[k].name if k < _use_items.size() else _combat.magic.table.name_of(_spell_list[k])
+			g.text(23, 10 + k, label.to_upper().left(16), GameScreen.WHITE if k == _spell_index else GameScreen.CYAN)
+		g.menu_line(24, ["SELECT", "EXIT"])
 	elif _combat != null and (_casting == "aim" or _aiming):
 		g.menu_line(24, ["NEXT", "PREV", "TARGET", "EXIT"])
 	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].quick:
 		var c: Dictionary = _combatants[_combat.active]
 		if c.moves / 2 > 0 and c.attacks > 0:
 			g.text(0, 23, "MOVE/ATTACK, MOVE LEFT = %d" % (c.moves / 2), GameScreen.GREEN)
-		g.menu_line(24, ["AIM", "CAST", "GUARD", "BANDAGE", "QUICK", "DONE"])
+		g.menu_line(24, ["AIM", "USE", "CAST", "GUARD", "BANDAGE", "QUICK", "DONE"])
 	g.update()
 
 
@@ -587,9 +615,37 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 # picks it; arrows move the aim, Tab jumps to the next figure, Enter casts (or picks a
 # figure, D when done picking), Esc aborts and the spell is kept.
 
+var _use_items: Array[GameItem] = []    # USE: the items behind _spell_list (empty for CAST)
+
+
+## USE: a readied item that casts a spell (potion, wand, scroll...), through the same
+## choose-and-aim steps as CAST; the item's charge is spent instead of a memorized spell.
+func _start_use() -> void:
+	if _combat.magic == null:
+		return
+	var m: PartyMember = _combatants[_combat.active].who
+	_spell_list = []
+	_use_items = []
+	for it in m.items:
+		if not it.readied:
+			continue
+		var id := CharacterSheet.item_spell(m, it)
+		if id > 0:
+			_spell_list.append(id)
+			_use_items.append(it)
+	if _spell_list.is_empty():
+		_on_message("NOTHING TO USE")
+		_refresh()
+		return
+	_casting = "choose"
+	_spell_index = 0
+	_refresh()
+
+
 func _start_cast() -> void:
 	if _combat.magic == null:
 		return
+	_use_items = []
 	_spell_list = _combat.magic.castable(_combat.active)
 	if _spell_list.is_empty():
 		_on_message("NO SPELLS MEMORIZED")
@@ -611,6 +667,7 @@ func _cast_input(event: InputEvent, key: Key) -> void:
 			_spell_index = (_spell_index + 1) % _spell_list.size()
 		elif event.is_action("ui_accept"):
 			_spell_id = _spell_list[_spell_index]
+			_use_item = _use_items[_spell_index] if _spell_index < _use_items.size() else null
 			_spell_picks = []
 			if _combat.magic.aim_kind(_spell_id) == "self":
 				_finish_cast()
@@ -684,9 +741,13 @@ func _finish_cast() -> void:
 	var me: int = _combat.active
 	_casting = ""
 	_selected = me
-	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks)
+	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item)
+	_use_item = null
 	_refresh()
 	_advance()
+
+
+var _use_item: GameItem = null
 
 
 # --- Drawing ----------------------------------------------------------------------------
@@ -761,7 +822,8 @@ func _refresh() -> void:
 		elif _casting == "choose":
 			var names := PackedStringArray()
 			for k in _spell_list.size():
-				names.append(("[%s]" if k == _spell_index else "%s") % _combat.magic.table.name_of(_spell_list[k]))
+				var label := _use_items[k].name if k < _use_items.size() else _combat.magic.table.name_of(_spell_list[k])
+				names.append(("[%s]" if k == _spell_index else "%s") % label)
 			_prompt.text = "CAST: %s\n↑/↓ choose   Enter cast   Esc back" % "  ".join(names)
 		elif _casting == "aim":
 			var why := _combat.magic.why_not(_combat.active, _spell_id, _spell_cell)
@@ -888,6 +950,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		_start_aim()
 	elif key == KEY_C:
 		_start_cast()
+	elif key == KEY_U:
+		_start_use()
 	elif key == KEY_G:
 		if _combat.can_guard():
 			_combat.guard(_combat.active, false)
