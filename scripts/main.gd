@@ -215,14 +215,47 @@ func _ready() -> void:
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
 			return
-	# Testing aid: start straight in the last quick save, if there is one.
-	if FileAccess.file_exists(_save_path()):
+	# Testing aid: with --keys=, start straight in the last quick save and replay.
+	var keys_arg := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--keys="):
+			keys_arg = arg.trim_prefix("--keys=")
+	if keys_arg != "" and FileAccess.file_exists(_save_path()):
 		_quick_load()
-		for arg in OS.get_cmdline_user_args():
-			if arg.begins_with("--keys="):
-				_replay_keys.call_deferred(arg.trim_prefix("--keys=").split(","))
+		_replay_keys.call_deferred(keys_arg.split(","))
 		return
+	# Otherwise the title and the start menu.
+	_start_menu = StartMenu.new()
+	add_child(_start_menu)
+	_start_menu.chosen.connect(_on_start_chosen)
+	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
+
+
+var _start_menu: StartMenu
+
+
+func _on_start_chosen(what: String, letter: String) -> void:
+	match what:
+		"continue":
+			_quick_load()
+		"load":
+			load_original_save(letter)
+		"new":
+			_new_game()
 	_show()
+
+
+## A new game with the ready-made party: New Phlan at the start of the adventure.
+func _new_game() -> void:
+	_mode = Mode.WALK
+	GameClock.set_time(_vm, 0, 0)
+	_vm.write_byte(EclVM.PARTY_X, NEW_GAME_PLACE.x)
+	_vm.write_byte(EclVM.PARTY_Y, NEW_GAME_PLACE.y)
+	_vm.write_byte(EclVM.PARTY_DIR, NEW_GAME_PLACE.z)
+	_enter_script(3, 0, true, true)
+
+
+const NEW_GAME_PLACE := Vector3i(11, 9, 2)
 
 
 ## Testing aid for the lab: --keys=up,up,s,l,e,... presses each key (Godot key names, or
