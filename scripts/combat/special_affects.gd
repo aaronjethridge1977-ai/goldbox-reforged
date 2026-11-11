@@ -26,6 +26,10 @@ extends RefCounted
 ##   0x43          a hit paralyses for 2d8 rounds unless the target saves (kind 0)
 ##   0x44          a hit paralyses (63 rounds) unless the target saves; elves are immune
 ##   0x55 / 0x56   a hit drains 1 / 2 levels ("IS DRAINED A LEVEL" / " 2 LEVELS")
+##   0x4F          a hit burns for 2d10 more (fire): Tyranthraxus
+## Not built yet: gaze (0x7F, checked in the code at 0x10992), Tyranthraxus's aura (0x51),
+## trolls' and vampires' regeneration (0x64/0x65, 0x62/0x67), mummy disease (0x57),
+## holy water against undead (0x75), giants' rocks (0x78) and the rest of the 130 types.
 
 const POISONED := 0x37
 const PARALYZED := 0x34

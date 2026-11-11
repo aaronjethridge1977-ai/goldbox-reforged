@@ -873,6 +873,12 @@ func _on_hit_specials(i: int, j: int) -> void:
 	for type in [0x55, 0x56]:
 		if am.has_affect(type) and not t.down:
 			drain(j, 1 if type == 0x55 else 2)
+	if am.has_affect(0x4F) and not t.down:
+		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
+		var burn := SpecialAffects.element_damage(tm, 1, roll(2, 10, "fire"))
+		if burn > 0:
+			message.emit("%s TAKES %d POINTS OF DAMAGE" % [tm.name, burn])
+			_hurt(j, burn)
 
 
 func _save(m: PartyMember, kind: int, bonus: int) -> bool:
