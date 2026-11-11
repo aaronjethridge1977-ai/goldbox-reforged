@@ -80,6 +80,7 @@ var _screen: GameScreen
 var _dev_view := false
 var _view_img: Image
 var _area_view := false            # AREA: the overhead map in the view window
+var _automap: Automap               # QoL: mini-map (M) and full map (F) of visited squares
 
 
 func _ready() -> void:
@@ -155,6 +156,14 @@ func _ready() -> void:
 	_timer.one_shot = true
 	_timer.timeout.connect(_on_timer)
 	add_child(_timer)
+	_automap = Automap.new()
+	_automap.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_automap.gate = func() -> bool:
+		return _screen.visible and _mode == Mode.WALK and not _vm.on_overland and not (_shop.visible \
+			or _sheet.visible or _combat.visible or _treasure.visible or _camp.visible \
+			or _temple.visible or _party_menu.visible or (_start_menu != null and _start_menu.visible) \
+			or (_ending != null and _ending.visible))
+	add_child(_automap)
 	_game_path = GameData.find_game_path()
 	if _game_path == "":
 		# Ask for the player's own copy (GameFolderScreen), then start over with it.
@@ -223,6 +232,14 @@ func _ready() -> void:
 		if arg.begins_with("--battle="):
 			_battle_check(arg.trim_prefix("--battle="))
 			return
+	# Lab: --play=<plan file> plays the game from a plan (PlayBot), from the start menu on.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--play="):
+			var bot := PlayBot.new()
+			bot.main = self
+			add_child(bot)
+			bot.run.call_deferred(arg.trim_prefix("--play="))
+			return
 	# Testing aid: with --keys=, start straight in the last quick save and replay.
 	var keys_arg := ""
 	for arg in OS.get_cmdline_user_args():
@@ -243,6 +260,7 @@ var _start_menu: StartMenu
 
 
 func _on_start_chosen(what: String, letter: String) -> void:
+	_automap.enabled = Automap.load_enabled()
 	match what:
 		"continue":
 			_quick_load()
@@ -421,67 +439,16 @@ func _press(n: String) -> void:
 ## fights, CONTINUE BATTLE no, leave the treasure, BASH locked doors, script menus from answers= or their
 ## first item), printing each new message and menu.
 func _tour(goal: Vector2i) -> void:
-	var said := ""
 	var steps := 0
 	var deadline := Time.get_ticks_msec() + 600000
+	_said = ""
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
-		if _busy:
-			continue
-		var text := _message.text.strip_edges()
-		if _vm.state == EclVM.State.MENU:
-			text += "  [" + " ".join(_vm.menu) + "]"
-		if text != "" and text != said:
-			print("   ", text.replace("\n", " / "))
-			said = text
-		if _combat.visible:
-			if _combat._asking_continue:
-				print("   CONTINUE BATTLE -> N")
-				await _press("n")
-			elif _combat._result != 0:
-				print("   (fight over: result %d)" % _combat._result)
-				await _press("enter")
-			elif _combat._combat != null and _combat._combat.active >= 0 \
-					and not _combat._combatants[_combat._combat.active].quick:
-				await _press("q")
-			continue
-		if _treasure.visible:
-			if _treasure._amount_box.visible:
-				await _press("esc")
-			elif _treasure._page == 0:
-				await _press("enter")
-			elif _treasure._asking_exit:
-				await _press("n")
-			else:
-				print("   (treasure: %s)" % _treasure._spoils.describe() if _treasure._spoils.has_method("describe") else "   (treasure)")
-				await _press("e")
-			continue
-		if _shop.visible or _temple.visible or _camp.visible or _party_menu.visible or _sheet.visible:
-			print("   (screen open: leaving)")
-			await _press("esc")
-			await _press("e")
-			continue
-		if _door_options != "":
-			if "B" in _door_options:
-				print("   LOCKED -> B")
-				await _press("b")
-				continue
-			print("   LOCKED, BASH used up -> EXIT; gave up on %s" % goal)
-			await _press("e")
-			return
-		if _vm.state == EclVM.State.INPUT:
-			var said_text: String = _tour_answers.pop_front() if not _tour_answers.is_empty() else "x"
-			print("   >> typed ", said_text)
-			_on_typed(said_text)
-			continue
-		if _vm.state == EclVM.State.MENU:
-			var one: bool = _vm.menu.size() == 1
-			var k: String = "1" if one or _tour_answers.is_empty() else String(_tour_answers.pop_front())
-			if not one:
-				print("   >> ", k)
-			await _press(k)
-			continue
-		if _vm.state in [EclVM.State.RUNNING, EclVM.State.WAIT]:
+		if await _auto_handle():
+			if _auto_gave_up:
+				_auto_gave_up = false
+				print("   LOCKED, BASH used up -> EXIT; gave up on %s" % goal)
+				return
 			continue
 		if _pos == goal:
 			return
@@ -504,6 +471,98 @@ func _tour(goal: Vector2i) -> void:
 				and not _combat.visible and _message.text.strip_edges() == "":
 			print("   blocked at %s" % _pos)
 			return
+
+
+var _said := ""
+var _auto_gave_up := false
+var _menu_seen := {}
+## Called before a fight's or screen's default handling; a playthrough bot sets it to take
+## over (return true when it handled the moment itself).
+var auto_hook: Callable = Callable()
+
+
+## Lab: plays whatever is on screen with the tour's policy (Enter on prompts, quick fights,
+## the first menu choice or the next answer, leave shops). Returns true if something was
+## open or running (the caller should keep waiting), false when the party is free to move.
+func _auto_handle() -> bool:
+	if _busy:
+		return true
+	var text := _message.text.strip_edges()
+	if _vm.state == EclVM.State.MENU:
+		text += "  [" + " ".join(_vm.menu) + "]"
+	if text != "" and text != _said:
+		print("   ", text.replace("\n", " / "))
+		_said = text
+	if auto_hook.is_valid() and await auto_hook.call():
+		return true
+	if _combat.visible:
+		if _combat._asking_continue:
+			print("   CONTINUE BATTLE -> N")
+			await _press("n")
+		elif _combat._result != 0:
+			print("   (fight over: result %d)" % _combat._result)
+			await _press("enter")
+		elif _combat._combat != null and _combat._combat.active >= 0 \
+				and not _combat._combatants[_combat._combat.active].quick:
+			await _press("q")
+		return true
+	if _treasure.visible:
+		if _treasure._amount_box.visible:
+			await _press("esc")
+		elif _treasure._page == 0:
+			await _press("enter")
+		elif _treasure._asking_exit:
+			await _press("n")
+		else:
+			print("   (treasure: %s)" % _treasure._spoils.describe() if _treasure._spoils.has_method("describe") else "   (treasure)")
+			await _press("e")
+		return true
+	if _shop.visible or _temple.visible or _camp.visible or _party_menu.visible or _sheet.visible:
+		if _shop.visible:
+			print("   (shop: %s)" % ", ".join(_shop._items.map(func(it): return "%s %d" % [it.name, it.price])))
+			_shop._exit()
+			return true
+		print("   (screen open: leaving %s)" % ", ".join([[_temple, "temple"], [_camp, "camp"],
+			[_party_menu, "party menu"], [_sheet, "sheet"]].filter(func(p): return p[0].visible).map(func(p): return p[1])))
+		await _press("esc")
+		if _temple.visible or _camp.visible or _party_menu.visible or _sheet.visible:
+			await _press("e")
+		return true
+	if _door_options != "":
+		if "B" in _door_options:
+			print("   LOCKED -> B")
+			await _press("b")
+			return true
+		await _press("e")
+		_auto_gave_up = true
+		return true
+	if _vm.state == EclVM.State.INPUT:
+		var said_text: String = _tour_answers.pop_front() if not _tour_answers.is_empty() else "x"
+		print("   >> typed ", said_text)
+		_on_typed(said_text)
+		return true
+	if _vm.state == EclVM.State.MENU:
+		var one: bool = _vm.menu.size() == 1
+		var k: String = "1" if one or _tour_answers.is_empty() else String(_tour_answers.pop_front())
+		# A menu answered the same way twice already (a loop such as "WILL YOU GO AGAIN?"):
+		# take its last choice this time.
+		var body := _message.text.strip_edges()
+		var cut := body.rfind("\n\n")
+		var key := " ".join(_vm.menu) + "|" + (body.substr(0, cut) if cut > 0 else body).right(50) + "|%s" % _pos
+		if not one and _tour_answers.is_empty():
+			_menu_seen[key] = int(_menu_seen.get(key, 0)) + 1
+			if int(_menu_seen[key]) > 2:
+				k = str(_vm.menu.size())
+				for i in _vm.menu.size():
+					if String(_vm.menu[i]).strip_edges().to_upper() in ["NO", "LEAVE", "EXIT", "QUIT", "DONE"]:
+						k = str(i + 1)
+		if not one:
+			print("   >> ", k)
+		await _press(k)
+		return true
+	if _vm.state in [EclVM.State.RUNNING, EclVM.State.WAIT]:
+		return true
+	return false
 
 
 func _state_line() -> String:
@@ -598,8 +657,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			_combat.open_test(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1), script)
 			get_viewport().set_input_as_handled()
 			return
-		elif key == KEY_M:
-			_sheet.open(_all_monsters(), "MONSTERS")
+		elif key == KEY_M and (event as InputEventKey).shift_pressed:
+			_sheet.open(_all_monsters(), "MONSTERS")    # developer aid
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_M and _automap.enabled:
+			_automap.mini_open = not _automap.mini_open
+			_automap.full_open = false
+			_automap.queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_ESCAPE and _automap.full_open:
+			_automap.full_open = false
+			_automap.queue_redraw()
+			get_viewport().set_input_as_handled()
+			return
+		elif key == KEY_F and _automap.enabled and not _vm.on_overland:
+			_automap.full_open = not _automap.full_open
+			_automap.queue_redraw()
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_N:
@@ -833,6 +908,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "block", _vm_block)
 	cfg.set_value("script", "memory", _vm.mem)
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
+	cfg.set_value("qol", "visited", _automap.to_save())
 	var members := []
 	for m in _party:
 		var items := []
@@ -1027,6 +1103,7 @@ func _quick_load() -> void:
 	_map_index = index
 	_walls_for = -1
 	_pos = Vector2i(cfg.get_value("place", "x", 8), cfg.get_value("place", "y", 8))
+	_automap.from_save(cfg.get_value("qol", "visited", {}))
 	_facing = int(cfg.get_value("place", "facing", 0)) as DungeonView.Dir
 	_vm_file = cfg.get_value("script", "file", 0)
 	_vm_block = cfg.get_value("script", "block", -1)
@@ -2099,6 +2176,7 @@ func _show() -> void:
 		_view_img = DungeonView.to_image(view)
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	_map_view.set_marker(_pos, _facing)
+	_automap.place(e.map, "%s:%d" % [e.file, e.id], _pos, int(_facing), area.to_upper())
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
 	var map: GeoMap = e.map
 	var night := GameClock.hour(_vm) >= 14

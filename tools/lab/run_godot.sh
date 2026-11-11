@@ -9,6 +9,6 @@ XP=$!
 for i in $(seq 50); do [ -e /tmp/.X11-unix/X98 ] && break; sleep 0.1; done
 DISPLAY=:98 $G --path proj --rendering-driver opengl3 --resolution 1280x800 --position 0,0 -- --game-path=$PWD/game --save=$PWD/$SAVE > godot.log 2>&1 &
 GP=$!
-if [ "$1" = "--py" ]; then shift; DISPLAY=:98 timeout 150 python3 "$@"; else DISPLAY=:98 GRAB_SIZE=1280x800 timeout 150 python3 keys.py "$@"; fi; echo "exit $?"
+if [ "$1" = "--sh" ]; then shift; DISPLAY=:98 GRAB_SIZE=1280x800 timeout 150 bash "$@"; elif [ "$1" = "--py" ]; then shift; DISPLAY=:98 timeout 150 python3 "$@"; else DISPLAY=:98 GRAB_SIZE=1280x800 timeout 150 python3 keys.py "$@"; fi; echo "exit $?"
 kill -9 $GP $XP 2>/dev/null
 rm -f /tmp/.X98-lock /tmp/.X11-unix/X98

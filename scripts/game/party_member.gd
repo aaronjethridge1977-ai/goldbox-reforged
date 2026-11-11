@@ -139,7 +139,8 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 	if m:
 		m.is_monster = true
 		m.affects.clear()
-		var spc := DaxFile.open(game_path.path_join("MON%dSPC.DAX" % file_no))
+		var spc_path := game_path.path_join("MON%dSPC.DAX" % file_no)
+		var spc := DaxFile.open(spc_path) if FileAccess.file_exists(spc_path) else null
 		if spc and spc.blocks.has(id):
 			SpecialAffects.add_records(m, spc.blocks[id])
 		var names := ItemNames.shared(game_path)

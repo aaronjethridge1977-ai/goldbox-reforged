@@ -64,6 +64,7 @@ func _show_menu() -> void:
 		_items.append("LOAD SAVED GAME")
 	_items.append("NEW GAME")
 	_items.append("PARTY CREATION")
+	_items.append("SETTINGS")
 	_items.append("EXIT")
 	_sel = clampi(_sel, 0, _items.size() - 1)
 	_draw()
@@ -89,6 +90,12 @@ func _draw() -> void:
 			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _sel else GameScreen.GREEN)
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
 		g.text(2, 21, "PLAYS HERE.", GameScreen.CYAN)
+	elif _stage == "settings":
+		g.text(4, 6, "SETTINGS  (ADDITIONS TO THE ORIGINAL)", GameScreen.WHITE)
+		g.text(4, 9, "A", GameScreen.WHITE)
+		g.text(5, 9, "UTOMAP: " + ("ON" if Automap.load_enabled() else "OFF"), GameScreen.GREEN)
+		g.text(6, 11, "M MINI-MAP, F FULL MAP WHILE WALKING", GameScreen.CYAN)
+		g.text(4, 20, "A CHANGES IT, ESC GOES BACK", GameScreen.CYAN)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -104,6 +111,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		_show_menu()
 		return
 	var letter := OS.get_keycode_string(key).to_upper() if key != KEY_NONE else ""
+	if _stage == "settings":
+		if key == KEY_A:
+			Automap.save_enabled(not Automap.load_enabled())
+			_draw()
+		elif key == KEY_E or key == KEY_ESCAPE:
+			_show_menu()
+		return
 	if _stage == "load":
 		if _saves.has(letter):
 			visible = false
@@ -140,5 +154,8 @@ func _pick(item: String) -> void:
 		"PARTY CREATION":
 			visible = false
 			chosen.emit("create", "")
+		"SETTINGS":
+			_stage = "settings"
+			_draw()
 		"EXIT":
 			get_tree().quit()
