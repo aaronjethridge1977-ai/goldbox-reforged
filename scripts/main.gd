@@ -600,6 +600,11 @@ func _on_goto_input(ev: InputEvent) -> void:
 
 func _on_goto(text: String) -> void:
 	_goto.visible = false
+	if text.strip_edges().to_lower() == "ending":
+		# For testing: the end-of-game screens without playing to the end.
+		_vm.program = 8
+		_run_program()
+		return
 	var parts := text.strip_edges().split(" ", false)
 	if parts.size() >= 2 and parts[0].is_valid_int() and parts[1].is_valid_int():
 		_pos = Vector2i(clampi(parts[0].to_int(), 0, 15), clampi(parts[1].to_int(), 0, 15))
