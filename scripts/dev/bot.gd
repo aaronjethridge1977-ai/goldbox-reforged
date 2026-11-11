@@ -359,6 +359,20 @@ func _hook() -> bool:
 			main.tour_stop = true
 			if int(_asked[ask]) == 4:
 				_issue("the same question keeps coming at %s %s: %s" % [_here(), str(main._pos), ask.left(120)])
+		# Ladders and stairs to the area's other map: not while this map still has events to
+		# see (Kuto's Well: down the rungs, then 'CLIMB UP THE RUNGS?' at the bottom).
+		if "YES" in items and "NO" in items and (said.contains("CLIMB") or said.contains("STAIRS")):
+			var left := _unvisited_here()
+			var k: int = items.find("NO") if left > 0 else items.find("YES")
+			var key := "%d:%d" % [main._map_index, main._maps[main._map_index].map.flag(main._pos.x, main._pos.y) & 127]
+			if left > 0:
+				_visited.erase(key)       # come back to it last
+				_ladders[key] = true
+			else:
+				_ladders.erase(key)
+			print("   >> %d (%s: %d events left on this map)" % [k + 1, items[k], left])
+			await main._press(str(k + 1))
+			return true
 		if "SURRENDER" in items and ("FIGHT" in items or "ATTACK" in items):
 			# Norris the Gray's 'SURRENDER OR DIE!': surrendering loses every valuable.
 			var fight: int = items.find("FIGHT") if "FIGHT" in items else items.find("ATTACK")
@@ -443,6 +457,7 @@ var _fight_noted := false
 var _looted := false
 var _asked := {}      # script questions answered, by text and choices
 var _visited := {}    # "map:event" explored in this area's explore
+var _ladders := {}    # "map:event" ladders and stairs left for last
 var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
@@ -910,7 +925,10 @@ func _travel(goal: String) -> void:
 ## trained (New Phlan and back), up to four passes; what still waits is logged.
 func _explore(later: Array) -> void:
 	var area := _here()
+	var start_map: int = main._map_index
 	_visited = {}
+	_ladders = {}
+	var arrivals := {}       # map index -> the square the party arrived on there
 	var trips := 0
 	for n in 12:
 		var map_before: int = main._map_index
@@ -918,17 +936,26 @@ func _explore(later: Array) -> void:
 		if _wiped() or _here() != area:
 			return
 		if main._map_index != map_before:
+			if not arrivals.has(main._map_index):
+				arrivals[main._map_index] = main._pos
 			continue     # a ladder or stair took the party to the area's other map: explore it
 		if deferred.is_empty():
-			return
+			break
 		if not _can_train() or trips >= 3:
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
-			return
+			break
 		trips += 1
 		await _town()
 		await _travel(area)
 		if _here() != area:
 			return
+	# Back up the ladder to the map the area's ways out are on.
+	for n in 3:
+		if main._map_index == start_map or _wiped() or _here() != area or not arrivals.has(main._map_index):
+			break
+		print("   explore: back to map %d by %s" % [start_map, arrivals[main._map_index]])
+		await main._tour(arrivals[main._map_index])
+		await _settle()
 
 
 func _explore_pass(skip: Array) -> Dictionary:
@@ -941,6 +968,14 @@ func _explore_pass(skip: Array) -> Dictionary:
 			if ev == 0 or todo.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]):
 				continue
 			todo[ev] = Vector2i(x, y)
+	# Ladders and stairs declined while the map had more to see come last.
+	var ladders := {}
+	for ev in todo.keys():
+		if _ladders.has("%d:%d" % [main._map_index, ev]):
+			ladders[ev] = todo[ev]
+			todo.erase(ev)
+	if todo.is_empty():
+		todo = ladders
 	var deferred := {}
 	for ev in todo.keys():
 		# Event fights come without a menu to flee by: wait for clear odds.
@@ -1031,6 +1066,21 @@ func _prepare() -> void:
 	await _memorize()
 	if _needs_rest():
 		await _heal()
+
+
+## Events on the current map not yet visited by this explore (the one underfoot excluded).
+func _unvisited_here() -> int:
+	var map: GeoMap = main._maps[main._map_index].map
+	var here := map.flag(main._pos.x, main._pos.y) & 127
+	var seen := {}
+	for y in GeoMap.SIZE:
+		for x in GeoMap.SIZE:
+			var ev := map.flag(x, y) & 127
+			if ev == 0 or ev == here or seen.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]):
+				continue
+			if main._find_path(main._pos, Vector2i(x, y)).size() > 0:
+				seen[ev] = true
+	return seen.size()
 
 
 ## New Phlan locks its shop, City Hall and more from hour 14 (0x49C9 >= 14, the town's
