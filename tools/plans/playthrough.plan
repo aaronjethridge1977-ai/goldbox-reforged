@@ -31,7 +31,7 @@ travel 2:20
 expect 2:20
 # explore leaves the fights the party can't win yet (the orcs' guards, the orcs' home,
 # the hobgoblin hall) until it has trained, and trains as soon as anyone qualifies.
-explore
+explore 9
 checkpoint slums
 
 log Back to New Phlan: the clerk's reward, temple, training, the inn

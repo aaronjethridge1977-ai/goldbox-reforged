@@ -21,7 +21,8 @@ extends Node
 ##   buy <member> <item>   (in a shop) buy the first item whose name starts so; pool first
 ##   temple                (at a temple) raise / cure / heal everyone who needs it
 ##   travel <set>:<block>  walk area to area by the area graph (--exits=)
-##   explore [events to skip]  visit every event of this area, resting first, training on the way
+##   explore [events]      visit every event of this area, resting first, training on the way;
+##            the listed events (and any whose first fight looks unwinnable) wait for training
 ##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
 ##   checkpoint <name>     quick save to user://bot_<name>.cfg; a wipe goes back to the last
 ##   expect <set>:<block>  log a mismatch if the party isn't in that area
@@ -143,6 +144,12 @@ func _do(line: String) -> void:
 			await _settle()
 			_want = ""
 			_ready_all()
+		"sell":
+			_want = "sell"
+			var a := w[1].split(",")
+			await main._tour(Vector2i(int(a[0]), int(a[1])))
+			await _settle()
+			_want = ""
 		"inn":
 			_want = "inn"
 			var a := w[1].split(",")
@@ -212,6 +219,13 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
+	if main._combat.visible and main._combat._result != 0 and not _fight_noted:
+		_fight_noted = true
+		if _hurt():
+			main.tour_stop = true
+			_interrupted = true
+	elif not main._combat.visible:
+		_fight_noted = false
 	if main._vm.state == EclVM.State.MENU and main._vm._menu_kind == "encounter" and not main._combat.visible:
 		var k := _encounter_choice()
 		print("   >> %d (encounter: %s)" % [k, _judged])
@@ -225,6 +239,57 @@ func _hook() -> bool:
 		print("   >> %d (most platinum: %d)" % [best + 1, main._party[best].money[4]])
 		await main._press(str(best + 1))
 		return true
+	if main._treasure.visible and main._treasure._page == 1 and not main._treasure._amount_box.visible \
+			and not main._treasure._asking_exit:
+		if not _looted:
+			# A player takes the money (SHARE) and every item, handed round the party.
+			_looted = true
+			var t: TreasureScreen = main._treasure
+			t._share()
+			# Items: only what a player carries off (magic, scrolls, potions, wands...), not
+			# every orc's spear.
+			for n in 60:
+				var pick := -1
+				for i in t._spoils.items.size():
+					if _worth_taking(t._spoils.items[i]):
+						pick = i
+						break
+				if pick < 0:
+					break
+				t._who = _loot_turn % main._party.size()
+				_loot_turn += 1
+				t._refresh()
+				var root: TreeItem = t._list.get_root()
+				for row in root.get_children():
+					if row.get_metadata(0) == pick:
+						row.select(0)
+				var before: int = t._spoils.items.size()
+				t._take()
+				if t._spoils.items.size() == before:
+					break
+				print("   loot: %s" % t._note.text)
+			_ready_all()
+		return false
+	if not main._treasure.visible:
+		_looted = false
+	if _want == "sell" and main._shop.visible:
+		# The town round: every gem and piece of jewellery appraised and sold.
+		_want = ""
+		var shop: ShopScreen = main._shop
+		var got := 0
+		for i in main._party.size():
+			shop._buyer = i
+			var m: PartyMember = main._party[i]
+			while m.money[5] > 0 or m.money[6] > 0:
+				var v := shop.appraise_one(m.money[5] == 0)
+				if v < 0:
+					break
+				got += v
+				shop.settle(true)
+		print("   appraised and sold gems and jewellery for %d gold" % got)
+		shop._mode = "buy"
+		shop._exit()
+		return true
 	if _want == "shop" and main._shop.visible:
 		for b in _buys:
 			_buy(int(b[0]), String(b[1]))
@@ -232,6 +297,24 @@ func _hook() -> bool:
 		_want = ""
 		main._shop._exit()
 		return true
+	if main._vm.state == EclVM.State.MENU and main._tour_answers.is_empty() and main._vm._menu_kind != "encounter":
+		# A player doesn't attack the people the scripts put in his way (the Slums' fortune
+		# teller: murdering her raises the alarm for good). LEAVE when it is offered.
+		var items: Array = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper())
+		if "ATTACK" in items and "LEAVE" in items:
+			print("   >> %d (LEAVE rather than ATTACK)" % (items.find("LEAVE") + 1))
+			await main._press(str(items.find("LEAVE") + 1))
+			return true
+		# Nor does he break into the town's houses or fight the city watch.
+		var said: String = main._message.text
+		if said.contains("BREAK IN") and "NO" in items:
+			print("   >> %d (no breaking in)" % (items.find("NO") + 1))
+			await main._press(str(items.find("NO") + 1))
+			return true
+		if said.contains("CITY WATCH") and "RUN" in items:
+			print("   >> %d (running from the watch)" % (items.find("RUN") + 1))
+			await main._press(str(items.find("RUN") + 1))
+			return true
 	if _want == "inn" and main._vm.state == EclVM.State.MENU and main._message.text.contains("TO REST HERE"):
 		await main._press("1")
 		return true
@@ -279,6 +362,23 @@ func _ready_all() -> void:
 # --- A player's judgement in fights --------------------------------------------------------
 
 var _judged := ""
+var _fight_noted := false
+var _looted := false
+var _loot_turn := 0
+var _interrupted := false     # a tour was stopped after a fight that left the party hurt
+
+
+## Hurt enough to stop and rest: anyone down, or the party below 60% of its HP.
+func _hurt() -> bool:
+	var hp := 0
+	var most := 0
+	for m in main._party:
+		if m.status in [PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+			return true
+		if m.status == PartyMember.STATUS_OKAY:
+			hp += m.hp
+			most += m.hp_max
+	return hp * 5 < most * 3
 var _fled: PackedStringArray = []
 
 
@@ -682,6 +782,9 @@ func _travel(goal: String) -> void:
 			# A wandering monster can interrupt the walk: fight it out and try again.
 			if _wiped() or _here() != before:
 				break
+			if _interrupted:
+				_interrupted = false
+				await _heal()
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
 			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
@@ -701,10 +804,10 @@ func _travel(goal: String) -> void:
 ## healing when anyone is below half.
 ## Explores the area in passes: the events it can't win yet wait until the party has
 ## trained (New Phlan and back), up to four passes; what still waits is logged.
-func _explore(skip: Array) -> void:
+func _explore(later: Array) -> void:
 	var area := _here()
 	for n in 4:
-		var deferred: Dictionary = await _explore_pass(skip)
+		var deferred: Dictionary = await _explore_pass(later if n == 0 else [])
 		if deferred.is_empty() or _wiped() or _here() != area:
 			return
 		if not _can_train():
@@ -723,13 +826,14 @@ func _explore_pass(skip: Array) -> Dictionary:
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
-			if ev == 0 or str(ev) in skip or todo.has(ev):
+			if ev == 0 or todo.has(ev):
 				continue
 			todo[ev] = Vector2i(x, y)
 	var deferred := {}
 	for ev in todo.keys():
-		var odds := _event_odds(ev)
-		if odds < 1.0:
+		# Event fights come without a menu to flee by: wait for clear odds.
+		var odds := 0.0 if str(ev) in skip else _event_odds(ev)
+		if odds < 2.0:
 			print("   explore: event %d deferred (odds %.2f)" % [ev, odds])
 			deferred[ev] = todo[ev]
 			todo.erase(ev)
@@ -751,8 +855,16 @@ func _explore_pass(skip: Array) -> Dictionary:
 		if _wiped() or _here() != area:
 			break
 		print("   explore: event %d at %s" % [best, at])
-		await main._tour(at)
-		await _settle()
+		for attempt in 4:
+			_interrupted = false
+			await main._tour(at)
+			await _settle()
+			if _wiped() or _here() != area or not _interrupted:
+				break
+			print("   explore: stopped to rest on the way to event %d" % best)
+			await _prepare()
+			if _wiped() or _here() != area:
+				break
 		await _heal_if_low()
 		if not _wiped() and _can_train() and area != TOWN:
 			# Training first: to New Phlan and back, then on with the area.
@@ -821,6 +933,11 @@ func _hops(a: String, b: String) -> int:
 ## Whether anyone has the experience for a new level.
 func _can_train() -> bool:
 	var t := ClassTables.shared(main._game_path)
+	var purse := 0
+	for m in main._party:
+		purse += m.wealth_copper() + (m.money[5] * 50 + m.money[6] * 500) * 200   # gems and jewellery at a guess
+	if purse < 1000 * 200:
+		return false     # training costs 1000 gold; the party can't pay it yet
 	for m in main._party:
 		if m.status == PartyMember.STATUS_OKAY and _has_exp(m, t):
 			return true
@@ -850,7 +967,11 @@ func _town() -> void:
 	await main._press("up")
 	await _settle()
 	await _travel(TOWN)
-	for sq in ["temple 2,12"] + HALLS.map(func(h): return "trainat " + h) + ["inn 4,12"]:
+	var gems := 0
+	for m in main._party:
+		gems += m.money[5] + m.money[6]
+	var round := ["sell 13,8"] if gems > 0 else []
+	for sq in round + ["temple 2,12"] + HALLS.map(func(h): return "trainat " + h) + ["inn 4,12"]:
 		await _do(sq)
 		if _wiped():
 			return
@@ -1101,6 +1222,20 @@ func _train() -> void:
 	_training = false
 	await main._press("esc")
 	await _settle()
+
+
+const LOOT_WORDS := ["SCROLL", "POTION", "WAND", "RING", "NECKLACE", "BRACERS", "GAUNTLETS", "CLOAK",
+	"DUST", "JAVELIN", "MANUAL", "GEM", "JEWEL", "HOLY", "MIRROR", "BOOK", "TOME", "MAP", "STAFF OF", "ROD"]
+
+
+static func _worth_taking(it: GameItem) -> bool:
+	if it.plus != 0 or it.name.contains("+"):
+		return true
+	var up := it.name.to_upper()
+	for w in LOOT_WORDS:
+		if up.contains(w):
+			return true
+	return false
 
 
 ## Moves platinum and gold from the others to member i until it has the 1000 gold training
