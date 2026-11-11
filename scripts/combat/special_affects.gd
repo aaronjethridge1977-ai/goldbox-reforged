@@ -73,6 +73,8 @@ extends RefCounted
 ## Damage messages (GAME.OVR 0x2C27B): "TAKES n POINTS OF DAMAGE" or "TAKES 1 POINT OF
 ## DAMAGE", then by type FROM FIRE / COLD / ELECTRICITY / ACID, or FROM MAGIC when the
 ## damage is only magic.
+##   0x4C          (stirge) a hit latches it on: at the start of each of its turns it "SUCKS
+##                 SOME BLOOD" for 1d4 instead of attacking, until it has had ~12 or a side falls
 ##   0x68          (thri-kreen) avoids 60% of missiles ("AVOIDS IT")
 ##   0x71          (efreeti) fire: one less a die
 ## Not built: magic resistance (0x69 50%, 0x6A 15% for Tyranthraxus: chance less 5 per

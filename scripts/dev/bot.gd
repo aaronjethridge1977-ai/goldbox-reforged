@@ -138,7 +138,11 @@ func _do(line: String) -> void:
 			var a := w[1].split(",")
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
-			_want = ""
+			if _want == "inn":
+				_issue("the inn didn't take us (%s); memorizing in camp here" % main._message.text.strip_edges())
+				_want = ""
+				await _memorize()
+				await _heal()
 		"trainat":
 			_want = "train"
 			var a := w[1].split(",")
@@ -188,6 +192,14 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
+	if main._vm.state == EclVM.State.MENU and main._message.text.contains("WHO WILL PAY") and main._vm.menu.size() == main._party.size():
+		var best := 0
+		for i in main._party.size():
+			if main._party[i].money[4] > main._party[best].money[4]:
+				best = i
+		print("   >> %d (most platinum: %d)" % [best + 1, main._party[best].money[4]])
+		await main._press(str(best + 1))
+		return true
 	if _want == "shop" and main._shop.visible:
 		for b in _buys:
 			_buy(int(b[0]), String(b[1]))

@@ -17,7 +17,7 @@ shop 13,8 | 0 Long Sword | 0 Banded Mail | 0 Shield | 1 Long Sword | 1 Banded Ma
 tour 4,4 4,5
 face E
 step
-inn 2,12
+inn 4,12
 checkpoint shopped
 
 log The Slums (west gate)

@@ -109,7 +109,7 @@ POWERS = {
     0x46: ("built", "poison, save -2"),
     0x48: ("built", "hides: 95% invisible each round"),
     0x49: ("missing", "tiger: rear claws ('Rakes...') when both front claws hit"),
-    0x4C: ("missing", "stirge: attaches and drains 1d4 a round ('Sucks some Blood')"),
+    0x4C: ("built", "stirge: latches on, 1d4 a turn ('SUCKS SOME BLOOD') until it has had ~12; the victim's own restriction (0x3A) not traced"),
     0x4D: ("missing", "giant mantis: grips anyone with STR under 19"),
     0x4F: ("built", "2d10 fire on a hit"), 0x50: ("built", "1d4 acid on a bite"),
     0x51: ("checked", "fear aura by level"), 0x52: ("built", "mummy fear"),

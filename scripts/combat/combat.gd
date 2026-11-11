@@ -882,6 +882,9 @@ func _on_hit_specials(i: int, j: int) -> void:
 				t.down = true
 				message.emit("%s IS KILLED" % tm.name)
 				_went_down(j)
+	if am.has_affect(0x4C) and int(combatants[i].get("latched", -1)) < 0 and not t.down:
+		combatants[i]["latched"] = j        # a stirge latches on (0x4C)
+		combatants[i]["drink"] = 207 >> 4
 	var paralysis := 0
 	if am.has_affect(0x43):
 		paralysis = roll(2, 8, "paralysis rounds")
@@ -1317,6 +1320,9 @@ func ai_act() -> bool:
 		_turn_start_powers(active)
 		if c.down:
 			return false
+		if c.get("drank", false):
+			c.drank = false
+			return false
 		if c.team == 0 and bandage():
 			return false
 		choose_weapon(active)
@@ -1566,6 +1572,25 @@ func stone(j: int) -> void:
 func _turn_start_powers(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
+	var latched: int = c.get("latched", -1)
+	if latched >= 0:
+		# A stirge (0x4C/0x4B, GAME.OVR 0x10510 / 0x103CA) that has latched on drinks 1d4 at
+		# the start of each of its turns instead of attacking, until it has had about 12
+		# (its effect's 207 >> 4) or one of them falls.
+		if combatants[latched].down:
+			c.latched = -1
+		else:
+			message.emit("%s SUCKS SOME BLOOD" % m.name)
+			var d := roll(1, 4, "blood")
+			hurt(latched, d)
+			if int(c.drink) > d:
+				c.drink = int(c.drink) - d
+			else:
+				c.latched = -1
+			c.moves = 0
+			c.attacks = 0
+			c["drank"] = true
+			return
 	var j: int = c.get("target", -1)
 	if j < 0 or j >= combatants.size() or combatants[j].down:
 		return
