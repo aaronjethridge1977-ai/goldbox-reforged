@@ -115,3 +115,18 @@ others from J:
   fights, there. Where 0x49E7 is set (Valjevo, the graveyard) the original hides the square, so
   `tour.py` can't route: step by hand.
 
+
+### Chat 6 additions
+
+- `settle.py [seconds]` answers the original's prompts (quick-fights, says no to CONTINUE BATTLE,
+  leaves treasure, flees encounters) until the AREA menu is back. Run it in the background: the
+  original's quick fights can take many minutes and sometimes stall with both sides guarding (then
+  reload a save and try another way round).
+- Reading the original's state: save in camp (ENCAMP, SAVE, a letter B-I) and read
+  `SAVGAMx.DAT` (ECL memory 0x4900-0x52FF as words from byte 1, so `s[1 + 2 * (addr - 0x4900)]`).
+  This is how chat 6 settled the area-memory rule.
+- Our engine: `--battle-strong` (with `--battle=... --battle-fight=<seed>`) gives the party 200 HP,
+  AC -10 and THAC0 1, to see a monster's powers play out (trolls getting up, the boar, the mummy).
+  Monster files and ids for the powers: basilisk 2:26, troll 2:31, hill giant 2:55, mummy 4:114,
+  vampire 4:23, wight 4:20, wraith 4:21, juju zombie 4:29, medusa 5:49, Tyranthraxus 5:66,
+  ankheg 6:65, wild boar 6:120.
