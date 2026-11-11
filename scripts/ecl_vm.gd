@@ -31,6 +31,7 @@ const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan'
 
 const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move moves to the next area)
 const FILE_SET := 0x6E12        # data set (ECLn, GEOn, ...) of the block the next NEW_ECL loads
+const PARTY_SIZE := 0x6E3E     # how many are in the party (the finale's vote, hirelings' room)
 const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
 # The wilderness (see OverlandMap): the party's square, and its heading as the on-move
 # script reads it (8-way: 0 north, 2 east, 4 south, 6 west; the original keeps the
@@ -284,6 +285,8 @@ func run(max_steps: int = 20000) -> State:
 
 func read_byte(addr: int) -> int:
 	addr &= 0xFFFF
+	if addr == PARTY_SIZE and party != null:
+		return party.size()
 	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300:
 		var v := _char_get(addr - CHAR_WINDOW)
 		if v >= 0:
