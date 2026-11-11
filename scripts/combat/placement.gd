@@ -15,13 +15,17 @@ extends RefCounted
 ## facing east or west leaves one empty line after its front line when any side of its
 ## square (other than the front) is open. If the lines run off the grid, the team tries
 ## its alternative anchors: one square to each side or behind, if that side is open, with
-## their own base slots. A slot is used only if its cell is bare floor and free; for a
+## their own base slots. A slot is used only if its cell is free and one a figure can stand
+## on (Battlefield.WALKABLE: floor and the floor-side halves of walls and door posts); for a
 ## large creature every cell it fills must be (Combat.FOOTPRINT, from the slot's cell).
 ##
 ## Learned from the original's behaviour as documented by Simeon Pilgrim's reconstruction
 ## of the engine (tables of base slots and footprints), and checked against the original:
 ## the Slums fights at 13,1 W (4 orcs, distance 0), 13,7 W (6 orcs, distance 2) and
-## 14,6 S (6 kobolds, distance 1) match cell for cell.
+## 14,6 S (6 kobolds, distance 1) match cell for cell. Large monsters (lab, chat 8): the
+## Slums' event 20 at 0,14 N (2 ogres, 4 trolls, distance 0) matches every figure the
+## original shows: ogres at 25,11 and 26,11, trolls at 27,11 (its top cell is a wall's
+## floor-side half), 24,10 and 25,9; bare floor alone had left the trolls in one diagonal.
 
 # The eight directions in combat cells (0 = north, clockwise). On the slanted battlefield
 # map north is up-left, east is right, south is down-right, west is left.
@@ -162,7 +166,7 @@ func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: 
 			var foot := Combat.cells_at(cell, fp)
 			var ok := true
 			for p in foot:
-				if _field.tile(p.x, p.y) != Battlefield.FLOOR or _used.has(p):
+				if not _field.tile(p.x, p.y) in Battlefield.WALKABLE or _used.has(p):
 					ok = false
 			if ok:
 				free[tries].erase(cur)
