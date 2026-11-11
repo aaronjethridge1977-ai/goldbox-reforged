@@ -90,6 +90,9 @@ func _wiped() -> bool:
 
 
 func _do(line: String) -> void:
+	# The tour's memory of steps the game turned back only grows; over a long run it closes
+	# whole routes ("no route from 0,4"). Each plan step starts with it empty.
+	main._refused.clear()
 	var w := line.split(" ", false)
 	match w[0]:
 		"char":
@@ -660,12 +663,15 @@ func _event_odds(ev: int) -> float:
 			if m.knows(21):
 				sleeps += m.spell_slots[1][0]
 	mons.sort_custom(func(a, b): return a.raw[0x73] < b.raw[0x73])
-	var budget := sleeps * 10
-	while not mons.is_empty() and budget > 0 and int(mons[0].raw[0x73]) <= 4:
+	# Sleep's small area catches a handful at best: about 7 hit dice, 5 figures a spell.
+	var budget := sleeps * 7
+	var figures := sleeps * 5
+	while not mons.is_empty() and budget > 0 and figures > 0 and int(mons[0].raw[0x73]) <= 4:
 		var cost: int = [1, 1, 2, 4, 6][int(mons[0].raw[0x73])]
 		if cost > budget:
 			break
 		budget -= cost
+		figures -= 1
 		mons.pop_front()
 	# At full health.
 	var hp := []
@@ -928,6 +934,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 		await _prepare()
 		if _wiped() or _here() != area:
 			break
+		main._refused.clear()
 		print("   explore: event %d at %s" % [best, at])
 		_asked = {}
 		for attempt in 4:
