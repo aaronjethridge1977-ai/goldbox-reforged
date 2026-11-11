@@ -28,7 +28,9 @@ extends Control
 ## SCRIBE (MAGIC): a magic-user marks spells on their scrolls; resting copies them into the
 ## spell book after any memorizing, 15 minutes a level ("<NAME> HAS SCRIBED <SPELL>").
 ## ALTER: ORDER (move the chosen member up the party), DROP (gone for good, "DROP FROM
-## PARTY?"), SPEED (message speed), ICON and PICS (not built yet).
+## PARTY?"), SPEED (message speed), ICON (IconEditor for the chosen member) and PICS
+## (MONSTERS ON/OFF, PORTRAITS ON/OFF: whether approaching monsters and event portraits
+## show in the view).
 ## The game clock runs while resting (GameClock); the caller adds the minutes rested.
 
 signal closed
@@ -70,6 +72,10 @@ var _rng2 := RandomNumberGenerator.new()
 var _hour_steps := 0
 ## ALTER's SPEED: 0 fastest .. 2 slowest; scales the pause after each message.
 static var speed := 1
+## ALTER's PICS.
+static var show_monsters := true
+static var show_portraits := true
+var _icon_editor: IconEditor
 var _scrolls: Array = []          # SCRIBE list: [item, record byte, spell id]
 var _learn_timer := {}             # member -> steps until its next spell is memorized
 
@@ -167,6 +173,12 @@ func _alter_menu() -> void:
 	_head.text = "ALTER"
 	_refresh_party()
 	_menu.text = "ALTER:  O order (move up)   D drop   S speed (%s)   I icon   P pics   Esc exit" % ["FAST", "MEDIUM", "SLOW"][speed]
+
+
+func _pics_menu() -> void:
+	_mode = "pics"
+	_menu.text = "M monsters %s   P portraits %s   Esc exit" % ["on" if show_monsters else "off",
+		"on" if show_portraits else "off"]
 
 
 func _rest_menu() -> void:
@@ -498,7 +510,7 @@ func _pick(d: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed() or _sheet.visible:
+	if not visible or not event.is_pressed() or _sheet.visible or (_icon_editor != null and _icon_editor.visible):
 		return
 	get_viewport().set_input_as_handled()
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
@@ -545,11 +557,26 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif key == KEY_S:
 				speed = (speed + 1) % 3
 				_alter_menu()
-			elif key == KEY_I or key == KEY_P:
-				_note.text = "ICON and PICS: not built yet."
+			elif key == KEY_I and _who() != null:
+				if _icon_editor == null:
+					_icon_editor = IconEditor.new()
+					_icon_editor.finished.connect(func(_c: bool) -> void: _alter_menu())
+					add_child(_icon_editor)
+				_icon_editor.open(GameData.find_game_path(), _who())
+			elif key == KEY_P:
+				_pics_menu()
 			elif cancel or key == KEY_E:
 				_note.text = ""
 				_show_menu()
+		"pics":
+			if key == KEY_M:
+				show_monsters = not show_monsters
+				_pics_menu()
+			elif key == KEY_P:
+				show_portraits = not show_portraits
+				_pics_menu()
+			elif cancel or key == KEY_E:
+				_alter_menu()
 		"drop":
 			if key == KEY_Y:
 				_party.remove_at(_sel)

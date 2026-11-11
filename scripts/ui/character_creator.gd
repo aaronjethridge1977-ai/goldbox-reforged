@@ -6,8 +6,7 @@ extends Control
 ##   the rolled character on the view page with its portrait, "KEEP THIS CHARACTER? YES NO"
 ##     (No rolls again);
 ##   "CHARACTER NAME:" (up to 15 letters), then the portrait: HEAD BODY KEEP.
-## Not built yet: the combat icon editor that follows in the original (PARTS, COLOR-1,
-## COLOR-2, SIZE); the new character keeps the default icon.
+##   then the combat icon (IconEditor).
 
 signal created(member: PartyMember)
 signal cancelled
@@ -32,6 +31,7 @@ var _name := ""
 var _head := 0
 var _body := 0
 var _pictures := {}           # "HEAD:id" -> Image
+var _icons: IconEditor
 
 
 func open(path: String) -> void:
@@ -114,6 +114,13 @@ func _finish() -> void:
 	d[0xBB] = _head + 1
 	d[0xBC] = _body + 1
 	var m := _rules.member(d, tables, spells, types)
+	# Last, as in the original: the combat icon.
+	if _icons == null:
+		_icons = IconEditor.new()
+		add_child(_icons)
+	_icons.open(game_path, m)
+	await _icons.finished
+	m.recalculate(types)
 	visible = false
 	created.emit(m)
 
@@ -247,7 +254,7 @@ static func draw_sheet(g: GameScreen, m: PartyMember, portrait: Image) -> void:
 # ---------------------------------------------------------------- keys
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event is InputEventKey or not event.is_pressed():
+	if not visible or not event is InputEventKey or not event.is_pressed() or (_icons != null and _icons.visible):
 		return
 	get_viewport().set_input_as_handled()
 	var k := (event as InputEventKey).keycode

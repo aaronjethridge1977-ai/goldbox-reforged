@@ -57,7 +57,13 @@ func character_icon(m: PartyMember, attack: bool = false) -> Image:
 	var key := "c%s:%d" % [m.name, int(attack)]
 	if _cache.has(key):
 		return _cache[key]
-	var d := m.raw
+	var img := record_icon(m.raw, attack)
+	_cache[key] = img
+	return img
+
+
+## The icon a character record describes (no caching: the icon editor changes it).
+func record_icon(d: PackedByteArray, attack: bool = false) -> Image:
 	var offset := (64 if d[0xC0] == 2 else 0) + (128 if attack else 0)
 	var body_dax := _dax("CBODY.DAX")
 	var head_dax := _dax("CHEAD.DAX")
@@ -90,8 +96,19 @@ func character_icon(m: PartyMember, attack: bool = false) -> Image:
 			if px[i] != 0:
 				px[i] = remap[px[i]]
 		img = _to_image(px, w, h, true)
-	_cache[key] = img
 	return img
+
+
+## Block ids (below 64) a part file has: the choices the icon editor steps through.
+func part_ids(file_name: String) -> Array[int]:
+	var out: Array[int] = []
+	var dax := _dax(file_name)
+	if dax != null:
+		for id in dax.ids():
+			if id < 64:
+				out.append(id)
+	out.sort()
+	return out
 
 
 func _dax(file_name: String) -> DaxFile:

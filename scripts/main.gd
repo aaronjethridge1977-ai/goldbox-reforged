@@ -1263,6 +1263,8 @@ func _after_vm() -> void:
 		_vm.text_changed = false
 	if _vm.picture >= 0:
 		_event_image = null if _vm.picture == 255 else _event_picture(_vm.picture_head, _vm.picture)
+		if _vm.picture_head != 255 and not CampScreen.show_portraits:
+			_event_image = null   # ALTER PICS: PORTRAITS OFF
 		_vm.picture = -1
 	if not _vm.notes.is_empty():
 		_message.text += "\n[not built yet: %s]" % ", ".join(_vm.notes)
@@ -1854,7 +1856,7 @@ func _show() -> void:
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	else:
 		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
-		if _vm.sprite_id >= 0:
+		if _vm.sprite_id >= 0 and CampScreen.show_monsters:
 			var frames := _sprite_frames(_vm.sprite_id)
 			if not frames.is_empty():
 				# A figure can't stand beyond a wall right in front of you.
