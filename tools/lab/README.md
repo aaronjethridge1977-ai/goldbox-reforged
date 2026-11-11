@@ -113,7 +113,7 @@ others from J:
   an area's events. A whole area in ours: `./t.sh --fast '--keys=load=J,area=<set>:<block>,tour=x;y,tour=x;y,...'`
   (quote the keys: the shell splits on `;`).
 - The original's quick fights are slow and can stall (both sides guarding); check events, not
-  fights, there. Where 0x49E7 is set (Valjevo, the graveyard) the original hides the square, so
+  fights, there. Where 0x49FB is set (Valjevo, the pyramid, the graveyard, many dungeons) the original hides the square, so
   `tour.py` can't route: step by hand.
 
 

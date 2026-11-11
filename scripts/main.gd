@@ -284,7 +284,7 @@ func _new_game() -> void:
 
 
 const NEW_GAME_PLACE := Vector3i(11, 9, 2)
-const NO_COORDINATES := 0x49E7   # set by Valjevo's and the graveyard's scripts
+const NO_COORDINATES := 0x49FB   # 1: no square on the place line, no AREA map (START.EXE 0x35A6)
 
 
 ## Testing aid for the lab: --keys=up,up,s,l,e,... presses each key (Godot key names, or
@@ -2103,7 +2103,8 @@ func _draw_screen() -> void:
 		view = _area_picture()
 	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
 	if _vm.read_byte(NO_COORDINATES) != 0:
-		# Valjevo and the graveyard's storm set 0x49E7: the original shows no square there.
+		# Where an area's script sets 0x49FB (Valjevo's castle, the pyramid, the graveyard,
+		# Sokal Keep...) the original shows no square (START.EXE 0x35A6, lab chat 6).
 		place = "%s %s" % ["NESW"[_facing], GameClock.text(_vm)]
 	var wild := _vm.on_overland and _event_image == null and not _area_view
 	if _vm.on_overland:

@@ -74,20 +74,31 @@ def play(limit=1500):
     return False
 import route as R
 R.NE, R.SW, R.INFO, R.DOORS = R.load(int(geo), int(block))
+# Where the original hides the square (0x49FB set), TOUR_START=x,y,F walks by dead
+# reckoning from there: turns and steps are counted on the decoded map (teleports and
+# script moves are not followed, so the log is only good until the first of those).
+_dr = None
+if os.environ.get("TOUR_START"):
+    a = os.environ["TOUR_START"].split(",")
+    _dr = [int(a[0]), int(a[1]), "NESW".index(a[2])]
 def step_to(gx, gy):
     """One square at a time, playing out whatever each step brings."""
     for _ in range(60):
         x, y, f, s = pl.where()
-        if x is None:
+        if x is None and _dr is not None:
+            x, y, f = _dr
+        elif x is None:
             play(); continue
         if (x, y) == (gx, gy):
             return True
         p = R.route((x, y), {(gx, gy)}, set())
         if p is None or len(p) < 2:
             log("   no route from %s,%s" % (x, y)); return False
-        ks, _ = R.keys(p[:2], f)
+        ks, nf = R.keys(p[:2], f)
         for k in ks:
             keys.key(k); time.sleep(0.35)
+        if _dr is not None:
+            _dr[:] = [p[1][0], p[1][1], nf]
         time.sleep(0.5)
         play()
     return False
