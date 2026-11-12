@@ -370,6 +370,11 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "ending":                 # ending: plays the end-of-game screens
 			_vm.program = 8
 			_run_program()
+		elif n == "cells":                  # cells: where everyone stands in the fight on screen
+			print("   distance %d, party square %d,%d facing %d" % [_combat._distance, _combat._px, _combat._py, _combat._facing])
+			for c in _combat._combatants:
+				print("   %s %-16s %d,%d" % ["party  " if c.team == 0 else "monster", c.who.name, c.cell.x, c.cell.y])
+			continue
 		elif n.begins_with("shot="):        # shot=<png path> saves the window (not headless)
 			await RenderingServer.frame_post_draw
 			get_viewport().get_texture().get_image().save_png(n.trim_prefix("shot="))
@@ -2383,7 +2388,8 @@ func _exit_tree() -> void:
 
 ## Dev shortcut (M6, PlayBot): moves the party to `pos` facing `facing` in script block
 ## `block` of ECL<file> (entering it, with its init, when it isn't the current one), or in
-## the current area when `block` < 0. Debug builds only. Returns false if refused.
+## the current area when `block` < 0; pos.x < 0 keeps where the init put the party. Debug
+## builds only. Returns false if refused.
 func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 	if not DevShortcuts.allowed() or _vm.on_overland:
 		return false
@@ -2391,6 +2397,8 @@ func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 		_enter_script(file_no, block)
 		if _vm.state == EclVM.State.MENU:
 			return false
+	if pos.x < 0:
+		return true        # where the area's init placed the party
 	_pos = pos
 	_facing = (facing & 3) as DungeonView.Dir
 	_sync_position_to_vm(_facing)

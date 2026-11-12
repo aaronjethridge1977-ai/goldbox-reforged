@@ -1323,6 +1323,15 @@ func _travel(goal: String) -> void:
 	_travelling = true
 	await _travel_hops(goal)
 	_travelling = false
+	# M6: stuck short of the goal (no way found or every way failed): the smallest shortcut
+	# is a teleport there, entering the area as its init places the party. Logged.
+	if _here() != goal and not _wiped() and goal.contains(":"):
+		var from := _here()
+		var a := goal.split(":")
+		var ok: bool = main.dev_teleport(int(a[0]), int(a[1]), Vector2i(-1, -1), 0)
+		await _settle()
+		_shortcut("teleport", "%s -> %s%s" % [from, goal, "" if ok and _here() == goal else " FAILED"],
+			"travel found no way")
 
 
 func _travel_hops(goal: String) -> void:
