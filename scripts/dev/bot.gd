@@ -349,6 +349,17 @@ func _hook() -> bool:
 				got += v
 				shop.settle(true)
 		print("   appraised and sold gems and jewellery for %d gold" % got)
+		# And the plain gear nobody has readied, at the shop's half price.
+		var gear := 0
+		for m in main._party:
+			if m.npc >= 128:
+				continue
+			for it in m.items.duplicate():
+				if not it.readied and not _keeper(it) and it.price >= 2:
+					m.items.erase(it)
+					m.receive_gold(CharacterSheet._sale_price(it))
+					gear += CharacterSheet._sale_price(it)
+		print("   sold spare gear for %d gold" % gear)
 		shop._mode = "buy"
 		shop._exit()
 		return true
@@ -1267,6 +1278,9 @@ func _can_train() -> bool:
 	var purse := 0
 	for m in main._party:
 		purse += m.wealth_copper() + (m.money[5] * 50 + m.money[6] * 500) * 200   # gems and jewellery at a guess
+		for it in m.items:
+			if not it.readied and not _keeper(it):
+				purse += it.price / 2 * 200     # spare gear the shop buys
 	if purse < 1000 * 200 or purse < _purse_needed:
 		return false     # training costs 1000 gold; the party can't pay it yet
 	for m in main._party:
@@ -1305,6 +1319,9 @@ func _town() -> void:
 	var gems := 0
 	for m in main._party:
 		gems += m.money[5] + m.money[6]
+		for it in m.items:
+			if not it.readied and not _keeper(it) and it.price >= 2:
+				gems += 1
 	var round := ["sell 13,8"] if gems > 0 else []
 	for sq in round + ["temple 2,12"] + HALLS.map(func(h): return "trainat " + h) + ["inn 4,12"]:
 		await _do(sq)
@@ -1592,6 +1609,14 @@ const LOOT_WORDS := ["SCROLL", "POTION", "WAND", "RING", "NECKLACE", "BRACERS", 
 
 
 static func _worth_taking(it: GameItem) -> bool:
+	if _keeper(it):
+		return true
+	# Plain gear the shop pays for (half its price): training is 1000 gold a level.
+	return it.price >= 20 and it.weight <= 400
+
+
+## Magic and the things a player keeps (scrolls, potions, wands, books...): never sold.
+static func _keeper(it: GameItem) -> bool:
 	if it.plus != 0 or it.name.contains("+"):
 		return true
 	var up := it.name.to_upper()
