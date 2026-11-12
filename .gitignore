@@ -28,6 +28,3 @@ desktop.ini
 /.lab/
 /saves/
 __pycache__/
-
-# --- The lab on Jeremy's PC (game data, saves, code-wheel answers): never commit ---
-/.lab/
