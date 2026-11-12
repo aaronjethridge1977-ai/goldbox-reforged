@@ -75,7 +75,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -284,6 +284,14 @@ func _do(line: String) -> void:
 				await main._tour(best)
 				await _settle()
 				await _heal_if_low()
+		"gate":
+			# gate <from set:block> <x>,<y> <to set:block> <choice>: a way between areas that
+			# a menu opens (the band outside the walls: "EASTERN EDGE ... NORTH SOUTH BOAT").
+			_load_exits()
+			var xy := w[2].split(",")
+			if not _exits.has(w[1]):
+				_exits[w[1]] = []
+			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": w[4].to_upper()})
 		"answer":
 			# answer <set:block> <words of the question>|<choice>: answer that question so.
 			var spec := " ".join(w.slice(2)).split("|")
@@ -507,6 +515,11 @@ func _hook() -> bool:
 			var fight: int = items.find("FIGHT") if "FIGHT" in items else items.find("ATTACK")
 			print("   >> %d (no surrender)" % (fight + 1))
 			await main._press(str(fight + 1))
+			return true
+		# A gate travel is going through (gate lines): its choice.
+		if _gate_answer != "" and _gate_answer in items:
+			print("   >> %d (%s: the way to go)" % [items.find(_gate_answer) + 1, _gate_answer])
+			await main._press(str(items.find(_gate_answer) + 1))
 			return true
 		# The plan's answers to particular questions (answer <area> <text>|<choice>).
 		for rule in _answer_rules.get(_here(), []):
@@ -1236,7 +1249,8 @@ func _travel(goal: String) -> void:
 				continue
 			if e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
 				continue
-			var path: Array = main._find_path(main._pos, Vector2i(e.x, e.y))
+			var path: Array = _overland_path(Vector2i(e.x, e.y)) if main._vm.on_overland \
+				else main._find_path(main._pos, Vector2i(e.x, e.y))
 			if (path.size() > 0 or main._pos == Vector2i(e.x, e.y)) and path.size() < best_len:
 				best = e
 				best_len = path.size()
@@ -1255,8 +1269,17 @@ func _travel(goal: String) -> void:
 				_interrupted = false
 				if goal != TOWN and not _at_inn:
 					await _heal()
+			_gate_answer = String(best.get("answer", ""))
+			if main._vm.on_overland:
+				await _overland_walk(Vector2i(best.x, best.y))
+				await _settle()
+				_gate_answer = ""
+				continue
+			if main._pos == Vector2i(best.x, best.y) and _gate_answer != "":
+				await _step_off()
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
+			_gate_answer = ""
 			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
 				while int(main._facing) != int(best.dir):
 					await main._press("right")
@@ -2007,7 +2030,7 @@ func _train() -> void:
 
 
 const LOOT_WORDS := ["SCROLL", "POTION", "WAND", "RING", "NECKLACE", "BRACERS", "GAUNTLETS", "CLOAK",
-	"DUST", "JAVELIN", "MANUAL", "GEM", "JEWEL", "HOLY", "MIRROR", "BOOK", "TOME", "MAP", "STAFF OF", "ROD"]
+	"DUST", "JAVELIN", "MANUAL", "GEM", "JEWEL", "HOLY", "MIRROR", "BOOK", "TOME", "MAP", "STAFF OF", "ROD", "KEY"]
 
 
 static func _worth_taking(it: GameItem) -> bool:
@@ -2089,6 +2112,7 @@ var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
 var _first_day := {}      # area -> game day first entered
 var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
 var _mark := -1           # the party's coins at the last ledger entry
+var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
@@ -2188,6 +2212,79 @@ func _load_counters(path: String) -> void:
 	_first_day = d.get("first", {})
 	_trainings = PackedStringArray(d.get("trainings", []))
 	print("== counters carried on from %s" % path)
+
+
+## The party's square in the wilderness band (0x49C3 x within the band, 0x49C4 y).
+func _overland_at() -> Vector2i:
+	return Vector2i(main._vm.read_byte(EclVM.OVERLAND_X), main._vm.read_byte(EclVM.OVERLAND_Y))
+
+
+## A path over the wilderness band to `to` (water stops; the poisoned river until 0x4AA2).
+func _overland_path(to: Vector2i) -> Array:
+	var ov = main._vm.overland
+	var bx: int = ov.band_x(main._vm.overland_band)
+	var from := _overland_at()
+	var came := {from: from}
+	var queue: Array[Vector2i] = [from]
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		if cur == to:
+			break
+		for d in 4:
+			var nxt: Vector2i = cur + DungeonView.DELTA[d]
+			if nxt.x < 0 or nxt.x > 15 or nxt.y < 0 or nxt.y >= OverlandMap.HEIGHT or came.has(nxt):
+				continue
+			var v: int = ov.value(nxt.x + bx, nxt.y)
+			if OverlandMap.water(v) or (OverlandMap.river(v) and main._vm.read_byte(0x4AA2) == 0):
+				continue
+			came[nxt] = cur
+			queue.append(nxt)
+	var path: Array = []
+	if not came.has(to):
+		return path
+	var p := to
+	while p != from:
+		path.push_front(p)
+		p = came[p]
+	path.push_front(from)
+	return path
+
+
+## Walks the wilderness band to `to`, a step at a time, playing what each step brings (12
+## hours a step; encounters and the edges' menus). Stops when the party leaves the band.
+func _overland_walk(to: Vector2i) -> void:
+	var area := _here()
+	for n in 80:
+		if _wiped() or _here() != area or not main._vm.on_overland:
+			return
+		var path := _overland_path(to)
+		if _overland_at() == to:
+			if path.size() <= 1:
+				# Standing on the gate: step off and back on to bring its menu up again.
+				for d in 4:
+					var nb: Vector2i = to + DungeonView.DELTA[d]
+					if _overland_path(nb).size() == 2:
+						await _overland_step(d)
+						break
+				if _here() != area:
+					return
+				path = _overland_path(to)
+			else:
+				return
+		if path.size() < 2:
+			_issue("wilderness: no way from %s to %s" % [str(_overland_at()), str(to)])
+			return
+		var d := DungeonView.DELTA.find(path[1] - path[0])
+		await _overland_step(d)
+		if _overland_at() == to:
+			await _settle()
+			return
+
+
+func _overland_step(d: int) -> void:
+	# In the wilderness the four arrows move the party that way (no turning).
+	await main._press(["up", "right", "down", "left"][d])
+	await _settle()
 
 
 ## One step to any open neighbouring square (to walk back onto an event square).

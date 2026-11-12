@@ -31,6 +31,23 @@ answer 1:18 DRINK HEAVILY|LEAVE
 # turn down the thieves' offer to copy the seal.
 answer 4:2 SEAL OF THE FAMILY OF CADORNA|TAKE IT UNOPENED
 answer 4:2 DUPLICATE THE SEAL|NO
+# Skullcrusher, chained in the Textile House: free him with Grishnak's brass key, talk, take him on.
+answer 4:2 WHAT DO YOU DO WITH THE MAN|FREE
+answer 4:2 HOW WILL YOU FREE HIM|UNLOCK
+answer 4:2 THERE IS A FREE MAN HERE|PARLAY
+answer 4:2 ADD HIM TO YOUR PARTY|YES
+
+# The band outside the walls (7:26) opens the city's other quarters from menus (probed in
+# our engine from the band's step script, chat 10): the eastern edge 13,27, the north edge
+# 12,26, the western edge 11,28.
+gate 7:26 13,27 1:24 SOUTH
+gate 7:26 13,27 3:14 NORTH
+gate 7:26 13,27 3:0 BOAT
+gate 7:26 12,26 4:10 GRAVEYARD
+gate 7:26 11,28 1:18 NORTH
+gate 7:26 11,28 4:2 SOUTH
+# Passing an edge on the way elsewhere: LEAVE (the gate's own choice comes first).
+answer 7:26 EDGE OF THE CITY|LEAVE
 
 # The Slums (any room whose fight is won), Sokal Keep (after four patrols), the library
 # (except the garden) and the wilderness: camp.
