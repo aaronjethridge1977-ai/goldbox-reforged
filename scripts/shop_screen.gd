@@ -20,10 +20,9 @@ extends Control
 ##     jewellery 100 + Random(900) (1-10), 200 + Random(1000) (-20), 300 + Random(1500)
 ##     (-40), 500 + Random(2500) (-50), 1000 + Random(5000) (-70), 2000 + Random(6000)
 ##     (-90), 2000 + Random(10000).
-## Prices are in gold; the buyer pays from all their coins and the change is regrouped
-## into the largest coins (checked against the original: 140 gold - 80 = 12 platinum).
-## Not yet as the original: its shop keeps no change under a gold piece (lab, chat 10:
-## 144 silver and 2 platinum paying 1 gold left 3 platinum, 1 gold); one case so far.
+## Prices are in gold; the buyer pays from all their coins and the change comes back in
+## platinum and gold, the part under a gold piece lost (PartyMember.pay_gold_in_shop;
+## checked against the original: 140 gold - 80 = 12 platinum; lab chat 10, two more).
 ## Not yet checked: the original's words after a purchase or when the money is short.
 
 signal closed
@@ -141,7 +140,7 @@ func _buy() -> void:
 		return
 	var it := _items[i]
 	var member := _party[_buyer]
-	if not member.pay_gold(it.price):
+	if not member.pay_gold_in_shop(it.price):
 		_note.text = "NOT ENOUGH MONEY."
 		_refresh()
 		return

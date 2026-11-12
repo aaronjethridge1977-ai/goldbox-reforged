@@ -793,6 +793,22 @@ func pay_gold(gold: int) -> bool:
 	return true
 
 
+## A shop's purchase: all the coins together pay, and what is left comes back in platinum
+## and gold only, the part under a gold piece lost (lab, chat 10, New Phlan's arms shop:
+## 144 silver and 2 platinum paying 1 gold left 3 platinum and 1 gold; 3 platinum paying 1
+## gold left 2 platinum and 4 gold). Training gives silver change (pay_gold).
+func pay_gold_in_shop(gold: int) -> bool:
+	var left := wealth_copper() - gold * 200
+	if left < 0:
+		return false
+	var whole := left / COIN_VALUE[3]
+	for i in 5:
+		money[i] = 0
+	money[4] = whole * COIN_VALUE[3] / COIN_VALUE[4]
+	money[3] = whole - money[4] * COIN_VALUE[4] / COIN_VALUE[3]
+	return true
+
+
 ## A shop pays `gold` gold pieces in the largest coins, keeping the purse's other coins as
 ## they are (lab, chat 8: selling a Two-Handed Sword for 15 gold added 3 platinum, a Flail
 ## for 1 gold added 1 gold; silver untouched).
