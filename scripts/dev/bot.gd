@@ -813,15 +813,21 @@ func _plan_spell(cs: CombatSpells, i: int) -> Dictionary:
 	for id in list:
 		if cs.table.field(id, 14) == 0 or id in [21, 34]:
 			continue
-		var t := -1
+		# Charm and Hold Person don't touch monsters (raw 0x9F above 1) or large creatures.
+		var fit: Array[int] = []
 		for j in foes:
+			var w: PartyMember = c.combatants[j].who
+			if not id in [10, 23, 49] or (not w.is_large() and (w.raw[0x9F] if w.raw.size() > 0x9F else 0) <= 1):
+				fit.append(j)
+		var t := -1
+		for j in fit:
 			if cs.why_not(i, id, c.combatants[j].cell) == "" and (t < 0 or c.combatants[j].who.hp < c.combatants[t].who.hp):
 				t = j
 		if t < 0:
 			continue
 		var picked: Array[int] = [t]
 		if cs.aim_kind(id) == "pick":
-			for j in foes:
+			for j in fit:
 				if picked.size() >= cs.max_picks(id):
 					break
 				if not j in picked and cs.why_not(i, id, c.combatants[j].cell) == "":
@@ -1092,21 +1098,31 @@ func _prepare() -> void:
 		return
 	# Near town (three areas: Podol Plaza's rests are interrupted every time), a player rests
 	# at the inn rather than in monster country.
-	var area := _here()
-	if area != TOWN and _hops(area, TOWN) <= 3:
-		var back: Vector2i = main._pos
-		print("   == to the inn to rest")
-		await _travel(TOWN)
-		if _here() == TOWN:
-			await _do("inn 4,12")
-			await _travel(area)
-			if _here() == area:
-				await main._tour(back)
-				await _settle()
-				return
+	if await _rest_at_inn(3):
+		return
 	await _memorize()
 	if _needs_rest():
 		await _heal()
+
+
+## Walks to the inn, rests there and comes back to this square, when town is at most `hops`
+## areas away and there is a way back (not Sokal Keep, reached by boat). True if done.
+func _rest_at_inn(hops: int) -> bool:
+	var area := _here()
+	if area == TOWN or _hops(area, TOWN) > hops or _hops(TOWN, area) > hops + 1:
+		return false
+	var back: Vector2i = main._pos
+	print("   == to the inn to rest")
+	await _travel(TOWN)
+	if _here() != TOWN:
+		return false
+	await _do("inn 4,12")
+	await _travel(area)
+	if _here() != area:
+		return false
+	await main._tour(back)
+	await _settle()
+	return true
 
 
 ## Events still on explore's list for this map (the one underfoot excluded).
@@ -1361,6 +1377,7 @@ func _open_camp() -> bool:
 ## and the rest begun again.
 func _heal() -> void:
 	var days := 0
+	var interrupted := 0
 	if _pick_spells():
 		if await _open_camp():
 			await _rest_in_camp(0)
@@ -1375,14 +1392,26 @@ func _heal() -> void:
 		for m in main._party:
 			need = maxi(need, m.hp_max - m.hp)
 		camp._to_rest = mini(need, 10) * 288
+		var hits := [0]
+		var count := func(): hits[0] += 1
+		camp.interrupted.connect(count)
 		camp._start_rest()
 		while camp.visible and camp._resting:
 			await get_tree().process_frame
+		camp.interrupted.disconnect(count)
 		days += 1
 		if camp.visible:
 			await main._press("esc")
 			await main._press("e")
 		await _settle()
+		# Rests here keep being interrupted and the fights leave the party worse off: a
+		# player gives up camping and walks to the inn (when there is a way back).
+		if hits[0] > 0:
+			interrupted += 1
+			if interrupted >= 2 and _hurt() and not _wiped():
+				_interrupted = false
+				if await _rest_at_inn(5):
+					return
 	if days > 0:
 		print("   rested; %s" % " ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])))
 
