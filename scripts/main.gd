@@ -2000,12 +2000,16 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_vm.load_script(ecl.blocks[block_id])
-	# Entering an area zeroes ECL 0x4A00 only, the scripts' "first time in this visit" byte
-	# (the Slums' greeting, Sokal Keep's dead elf). The rest of 0x4A01-0x4AFF carries over
-	# from area to area (lab, chat 6, read from the original's saves: Kuto's Well's 0x4A23 =
-	# 1 survived a trip south and back and a trip through the Slums; Slums -> Kuto's Well
-	# changed 0x4A00 255 -> 0 and nothing else). A loaded save writes its own values back.
-	_vm.write_byte(0x4A00, 0)
+	# Entering an area zeroes ECL 0x4A00-0x4A1F, the scripts' per-visit bytes (the Slums'
+	# greeting 0x4A00, Sokal Keep's dead elf, City Hall's "visited this time" 0x4A01 that
+	# keeps the clerk from looking for rewards). 0x4A20-0x4AFF carries over from area to
+	# area. Lab, chat 8: a save with 0x4A01-0x4A3F all 0x11, entering New Phlan from the
+	# Slums, saved again: 0x4A00-0x4A1F were 0 (0x4A17 = 1, set by New Phlan's init) and
+	# 0x4A20-0x4A3F still 0x11; leaving City Hall and coming back made the clerk check for
+	# rewards again. Chat 6's evidence agrees (Kuto's Well's 0x4A23 survived trips away).
+	# A loaded save writes its own values back.
+	for a in range(0x4A00, 0x4A20):
+		_vm.write_byte(a, 0)
 	if arrive:
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)
