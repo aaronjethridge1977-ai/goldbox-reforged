@@ -208,4 +208,110 @@ search off
 checkpoint library2
 town
 
+# M6 (2026-11-12): the rest of the game in the Clue Book's order. Where the bot has no route yet
+# (the wilderness sites are entered from the bands' menus, not all probed), travel ends in a
+# logged teleport; each one is a route to build, and a place where coverage needs checking.
+
+log 9. Kovel Mansion (3:14), from outside the walls
+travel 3:14
+explore
+checkpoint kovel
+town
+
+log 10. The eastern wilderness band (8:27): the kobolds' caves are entered from it
+travel 8:27
+explore
+checkpoint band3
+town
+
+log 11. The kobolds' caves (6:19, the enormous cave)
+travel 6:19
+explore
+checkpoint kobold_caves
+town
+
+log The western wilderness band (6:25)
+travel 6:25
+explore
+checkpoint band1
+town
+
+log 12. Sorcerer's Island: Yarash's pyramid (7:22)
+travel 7:22
+explore
+checkpoint pyramid1
+town
+
+log 12b. Yarash's pyramid, inside (7:23)
+travel 7:23
+explore
+checkpoint pyramid2
+town
+
+log 13. Lizard Man Keep (8:13; no spells inside)
+travel 8:13
+explore
+checkpoint lizard
+town
+
+log 8:16 (a wilderness site)
+travel 8:16
+explore
+checkpoint site816
+town
+
+log 14. The Buccaneers' base (6:1: stampede the animals)
+travel 6:1
+explore
+checkpoint buccaneers
+town
+
+log 15. The Zhentil Keep outpost (6:28): escape fast
+travel 6:28
+explore
+checkpoint zhentil
+town
+
+log 16. Valhingen Graveyard (4:10), with the council's weapons
+travel 4:10
+explore
+checkpoint graveyard
+town
+
+log 17. Stojanow Gate (2:9)
+travel 2:9
+explore
+checkpoint stojanow
+town
+
+log 18. Valjevo Castle (5:3)
+travel 5:3
+explore
+checkpoint valjevo3
+town
+
+log 18b. Valjevo Castle (5:4)
+travel 5:4
+explore
+checkpoint valjevo4
+town
+
+log 18c. Valjevo Castle (5:5)
+travel 5:5
+explore
+checkpoint valjevo5
+town
+
+log 18d. Valjevo Castle (5:6)
+travel 5:6
+explore
+checkpoint valjevo6
+town
+
+log 18e. Valjevo Castle and Tyranthraxus (5:7)
+travel 5:7
+explore
+checkpoint valjevo7
+town
+
 stop
