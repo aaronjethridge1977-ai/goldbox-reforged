@@ -47,7 +47,9 @@ var _last_fight := {}
 var _win_fights: PackedStringArray = []
 var _shortcuts: Array = []
 var _skipped_fights: Array = []
-var _expected_level := {}       # area -> the level the game expects there (plan: level)
+var _expected_level := {}
+var _event_now := ""            # the event explore is walking to ("area map:event")
+var _skip_events := {}          # events passed by shortcut after they beat the party twice       # area -> the level the game expects there (plan: level)
 var _new_party: Array[PartyMember] = []
 var _rng := RandomNumberGenerator.new()
 var issues: PackedStringArray = []
@@ -96,6 +98,8 @@ func run(plan_path: String) -> void:
 		if line == "" or line.begins_with("#"):
 			continue
 		print("\n>> [%ds] %s" % [Time.get_ticks_msec() / 1000, line])
+		_last_fight = {}
+		_event_now = ""
 		if line == "stop":
 			break
 		await _do(line)
@@ -106,6 +110,7 @@ func run(plan_path: String) -> void:
 				break
 			_retries += 1
 			var beaten := _last_fight.duplicate()
+			var event_then := _event_now
 			print("== back to checkpoint %s (try %d)" % [_checkpoint, _retries + 1])
 			await _load(_checkpoint)
 			_pc = _checkpoint_pc
@@ -115,6 +120,12 @@ func run(plan_path: String) -> void:
 			# goes on the list for the combat test suite). This replaced grinding a level.
 			if _retries == 1:
 				_shortcut("restore", DevShortcuts.restore(main._party), "wiped at plan line %d" % (_pc + 1))
+			elif beaten.is_empty() and event_then != "":
+				# Beaten twice by something that isn't a fight (a trap, a script): the smallest
+				# shortcut is to pass that event by, logged.
+				_shortcut("restore", DevShortcuts.restore(main._party), "wiped again")
+				_skip_events[event_then] = true
+				_shortcut("skip", event_then, "it beat the party twice, not in a fight")
 			elif not beaten.is_empty():
 				_shortcut("restore", DevShortcuts.restore(main._party), "wiped again")
 				_win_fights.append(beaten.key)
@@ -1479,7 +1490,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
-			if ev == 0 or todo.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]):
+			if ev == 0 or todo.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]) \
+					or _skip_events.has("%s %d:%d" % [area, main._map_index, ev]):
 				continue
 			todo[ev] = Vector2i(x, y)
 	# Ladders and stairs declined while the map had more to see come last.
@@ -1542,6 +1554,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 			break
 		main._refused.clear()
 		print("   explore: event %d at %s" % [best, at])
+		_event_now = "%s %d:%d" % [area, map_now, best]
+		_last_fight = {}
 		_asked = {}
 		for attempt in 4:
 			_interrupted = false
