@@ -374,7 +374,8 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_vm.program = 8
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
-			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible else _screen)
+			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible \
+				else (_temple._scr if _temple.visible else _screen))
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue

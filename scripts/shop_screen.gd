@@ -329,8 +329,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_LEFT or key == KEY_RIGHT:
 		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
-	elif key == KEY_UP or key == KEY_DOWN:
-		var step := 1 if key == KEY_DOWN else -1
+	elif key in [KEY_UP, KEY_DOWN, KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1]:
+		# The original moves through lists and the party with Home and End (keypad 7 and 1).
+		var step := 1 if key in [KEY_DOWN, KEY_END, KEY_KP_1] else -1
 		if _mode == "list":
 			_move(step)
 		elif _mode == "menu":

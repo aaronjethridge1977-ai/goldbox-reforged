@@ -2329,7 +2329,8 @@ func _fund(i: int) -> void:
 func _temple_cures() -> void:
 	var t: TempleScreen = main._temple
 	for i in main._party.size():
-		for cure in [5, 8, 1]:
+		for cure_name in ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]:
+			var cure := t.cure_index(cure_name)
 			if t._needs(main._party[i], cure):
 				t._who = i
 				t._pool()
