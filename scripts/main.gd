@@ -199,6 +199,9 @@ func _ready() -> void:
 		# --coverage=<file>: record which parts of the event scripts run (M6). Dev builds only.
 		if arg.begins_with("--coverage=") and OS.is_debug_build():
 			_vm.coverage = ScriptCoverage.new(arg.trim_prefix("--coverage="))
+		# --branches=<file>: at each script menu, also try every choice in a copy of the VM (M6).
+		if arg.begins_with("--branches=") and OS.is_debug_build():
+			_shadow = ShadowExplorer.new(arg.trim_prefix("--branches="))
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		if battle_only and not file_name.begins_with("GEO"):
 			continue
@@ -536,6 +539,7 @@ var _menu_seen := {}
 ## Called before a fight's or screen's default handling; a playthrough bot sets it to take
 ## over (return true when it handled the moment itself).
 var auto_hook: Callable = Callable()
+var _shadow: ShadowExplorer = null     # dev: tries the choices not taken (--branches=)
 
 
 ## Lab: plays whatever is on screen with the tour's policy (Enter on prompts, quick fights,
@@ -552,6 +556,8 @@ func _auto_handle() -> bool:
 	if text != "" and text != _said:
 		print("   ", text.replace("\n", " / "))
 		_said = text
+		if _shadow != null and _vm.state == EclVM.State.MENU:
+			_shadow.explore(_vm)
 	if auto_hook.is_valid() and await auto_hook.call():
 		return true
 	if _combat.visible:
@@ -2384,6 +2390,8 @@ func _area_picture() -> Image:
 func _exit_tree() -> void:
 	if _vm != null and _vm.coverage != null:
 		_vm.coverage.save()
+	if _shadow != null:
+		_shadow.coverage.save()
 
 
 ## Dev shortcut (M6, PlayBot): moves the party to `pos` facing `facing` in script block

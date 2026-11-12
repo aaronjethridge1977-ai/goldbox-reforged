@@ -136,6 +136,48 @@ func _init() -> void:
 	_rng.randomize()
 
 
+## Dev only (ShadowExplorer): a copy that can run on without touching this VM or the party
+## (members are cloned); it records into `cov`.
+func fork(cov: ScriptCoverage) -> EclVM:
+	var f := EclVM.new()
+	f.mem = mem.duplicate()
+	f.ecl = ecl
+	f.state = state
+	f.pc = pc
+	f.stack.assign(stack)
+	f.compare = compare
+	f.square_info = square_info
+	f.open_ahead = open_ahead
+	f.menu = menu.duplicate()
+	f._menu_kind = _menu_kind
+	f._enc = _enc.duplicate(true)
+	f._menu_dest = _menu_dest.duplicate()
+	f._parlay_values = _parlay_values.duplicate()
+	f.encounter_distance = encounter_distance
+	f.encounter_advances = encounter_advances
+	f.encounter_max = encounter_max
+	f.monsters = monsters.duplicate(true)
+	f.monster_teams.assign(monster_teams)
+	f.selected = selected
+	f.selected_creature = selected_creature
+	f._input_dest = _input_dest.duplicate()
+	f.input_max = input_max
+	f.input_numeric = input_numeric
+	f.overland = overland
+	f.overland_band = overland_band
+	f.on_overland = on_overland
+	f.tables = tables
+	var copies: Array = []
+	for m in party:
+		copies.append((m as PartyMember).clone())
+	f.party = copies
+	f.block_key = block_key
+	f._at = _at
+	f._menu_at = _menu_at
+	f.coverage = cov
+	return f
+
+
 ## Loads a script block and copies its code into memory at EclScript.BASE.
 func load_script(block: PackedByteArray, key: String = "") -> void:
 	block_key = key
