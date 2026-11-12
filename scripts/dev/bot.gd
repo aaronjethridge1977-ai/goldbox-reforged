@@ -407,6 +407,11 @@ func _hook() -> bool:
 			print("   >> %d (no breaking in)" % (items.find("NO") + 1))
 			await main._press(str(items.find("NO") + 1))
 			return true
+		# The arena's duels give nothing the plan needs.
+		if said.contains("DO YOU DUEL") and "NO" in items:
+			print("   >> %d (no duel)" % (items.find("NO") + 1))
+			await main._press(str(items.find("NO") + 1))
+			return true
 		if said.contains("CITY WATCH") and "RUN" in items:
 			print("   >> %d (running from the watch)" % (items.find("RUN") + 1))
 			await main._press(str(items.find("RUN") + 1))
@@ -595,7 +600,8 @@ func _judge_fight(c: Combat, i: int) -> String:
 					spells_left = true
 		elif not CombatSpells.held(e.who) and not e.get("fleeing", false):
 			them.append(e.who)
-	if them.is_empty() or spells_left:
+	# A duel is "normally not to the death" and its double may block the way out.
+	if them.is_empty() or spells_left or main._arena:
 		return ""
 	var ratio := _odds(us, them, true)
 	if ratio < 0.2:
@@ -1098,7 +1104,7 @@ func _prepare() -> void:
 		return
 	# Near town (three areas: Podol Plaza's rests are interrupted every time), a player rests
 	# at the inn rather than in monster country.
-	if await _rest_at_inn(3):
+	if await _rest_at_inn(4):
 		return
 	await _memorize()
 	if _needs_rest():
@@ -1428,8 +1434,16 @@ func _memorize() -> void:
 		return
 	if not await _open_camp():
 		return
+	var hits := [0]
+	var count := func(): hits[0] += 1
+	main._camp.interrupted.connect(count)
 	await _rest_in_camp(0)
+	main._camp.interrupted.disconnect(count)
 	await _settle()
+	# Interrupted and hurt: off to the inn rather than camping again among the monsters.
+	if hits[0] > 0 and _hurt() and not _wiped():
+		_interrupted = false
+		await _rest_at_inn(5)
 	print("   memorized: %s" % " | ".join(main._party.map(func(m): return "%s %s" % [m.name, str(m.memorized)])))
 
 
