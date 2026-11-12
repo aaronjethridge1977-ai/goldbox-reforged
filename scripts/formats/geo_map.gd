@@ -72,10 +72,14 @@ static func decode(block: PackedByteArray) -> GeoMap:
 
 
 func wall(x: int, y: int, side: int) -> int:
+	if x < 0 or y < 0 or x >= SIZE or y >= SIZE:
+		return 0      # off the map (the wilderness bands' coordinates): no wall drawn there
 	return walls[side][y * SIZE + x]
 
 
 func door(x: int, y: int, side: int) -> int:
+	if x < 0 or y < 0 or x >= SIZE or y >= SIZE:
+		return 0
 	return doors[side][y * SIZE + x]
 
 
