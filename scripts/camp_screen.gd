@@ -8,7 +8,8 @@ extends Control
 ##     line ending "CAMPING", "THE PARTY MAKES CAMP..." (row 18), "CAMP:" (magenta) then
 ##     SAVE VIEW MAGIC REST ALTER EXIT. A chosen item's place carries over to the next menu.
 ##     Esc is EXIT in every menu.
-##   SAVE: "SAVE WHICH GAME:" A to J.
+##   SAVE: "SAVE WHICH GAME:" A to J, written in the original's own format (OriginalSave),
+##     then "QUIT TO DOS" (yellow) YES NO with NO lit.
 ##   REST: "REST TIME: DD:HH:MM" (row 17, the field being set white), REST DAYS HOURS MINS
 ##     INC DEC EXIT at fixed columns (DAYS's hot key is Y). Y/H/M pick the field, Left/Right
 ##     too; INC/DEC add or take a day, an hour or 5 minutes (never below 0). While resting the
@@ -36,8 +37,7 @@ extends Control
 ##       the start).
 ##     ICON: the icon editor. PICS: "MONSTERS ON  PORTRAITS ON  EXIT", M and P switch them.
 ## Not yet seen in the original (drawn the same way as the rest, to check): the heal and
-## memorized messages while resting, SCRIBE's list, "CAN'T BE CAST HERE", and a SAVE in the
-## original's own format (SAVE writes our save file for now, whichever letter is chosen).
+## memorized messages while resting, SCRIBE's list, "CAN'T BE CAST HERE".
 ##
 ## Rules (as documented by Pilgrim's reconstruction, checked in the lab: save J rested 24
 ## hours in the Slums' "dirty room" and Bakshi and Phineas each went from 4 to 5 HP):
@@ -196,7 +196,7 @@ func _next_fire() -> void:
 		return
 	_fire_frame = (_fire_frame + 1) % _fire.size()
 	_anim.start(_fire_delay(_fire_frame))
-	if _mode in ["camp", "save", "rest", "magic", "whom", "alter", "order", "drop", "speed", "pics", "ask"]:
+	if _mode in ["camp", "save", "quit", "rest", "magic", "whom", "alter", "order", "drop", "speed", "pics", "ask"]:
 		_refresh()
 
 
@@ -286,6 +286,9 @@ func _draw_walk() -> void:
 			for i in items.size():
 				_scr.menu_line(24, [items[i]], col, 0 if i == _pick else -1)
 				col += items[i].length() + 2
+		"quit":
+			_scr.text(0, 24, "QUIT TO DOS", PROMPT)
+			_scr.menu_line(24, YES_NO, 12, _pick)
 		"ask":
 			_scr.text(0, 24, "LOSE IT?", PROMPT)
 			_scr.menu_line(24, YES_NO, 9, _pick)
@@ -752,7 +755,7 @@ func _items() -> Array:
 		"magic": return MAGIC_MENU
 		"list": return _list_menu()
 		"pending", "display": return ["EXIT"]
-		"confirm", "drop", "ask": return YES_NO
+		"confirm", "drop", "ask", "quit": return YES_NO
 		"whom": return ["SELECT", "EXIT"]
 		"alter": return ALTER_MENU
 		"order": return ["PLACE" if _ordering >= 0 else "SELECT", "EXIT"]
@@ -836,8 +839,17 @@ func _act(choice: String) -> void:
 					_anim.stop()
 					closed.emit()
 		"save":
+			# Lab: after saving, the original asks QUIT TO DOS (NO lit); NO comes back to
+			# the camp menu with VIEW lit (NO's place carried over).
 			save_requested.emit(choice)
-			_pick = 0
+			_mode = "quit"
+			_pick = 1
+			_refresh()
+		"quit":
+			if choice == "YES":
+				get_tree().quit()
+				return
+			_pick = 1
 			_show_menu()
 		"rest":
 			match choice:

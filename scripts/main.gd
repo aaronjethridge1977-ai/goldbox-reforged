@@ -138,14 +138,14 @@ func _ready() -> void:
 	_camp = CampScreen.new()
 	_camp.visible = false
 	_camp.closed.connect(_on_camp_closed)
-	_camp.save_requested.connect(func(_letter: String) -> void: _quick_save())
+	_camp.save_requested.connect(_save_original)
 	_camp.time_passed.connect(_on_camp_rested)
 	_camp.interrupted.connect(_on_rest_interrupted)
 	add_child(_camp)
 	_party_menu = PartyMenu.new()
 	_party_menu.visible = false
 	_party_menu.closed.connect(_on_party_menu_closed)
-	_party_menu.save_requested.connect(func(_letter: String) -> void: _quick_save())
+	_party_menu.save_requested.connect(_save_original)
 	add_child(_party_menu)
 	_temple = TempleScreen.new()
 	_temple.visible = false
@@ -1096,9 +1096,24 @@ func _battle_check(spec: String) -> void:
 	get_tree().quit()
 
 
+## Saves the game in the original's own format as SAVGAM<letter>.DAT with its CHRDAT files in
+## the game folder (OriginalSave), as the original's SAVE does: it loads in the original too.
+func _save_original(letter: String) -> bool:
+	if _vm.ecl == null:
+		_status.text = "Can't save here."
+		return false
+	if not _vm.on_overland:
+		_sync_position_to_vm(_facing)
+	var ok := OriginalSave.write(_game_path, letter, _vm_file, _vm.mem, _vm.read_byte(EclVM.PARTY_X),
+		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party)
+	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
+	print("   (saved game %s%s)" % [letter.to_upper(), "" if ok else ": FAILED"])
+	return ok
+
+
 ## Loads one of the original's own saved games (SAVGAM<letter>.DAT with its CHRDAT<letter>n
 ## character files) as found in the game folder. The save holds: byte 0 the data set
-## (ECLn/GEOn), then ECL memory 0x4900-0x4AFF as words (the game's flags and clock), the
+## (ECLn/GEOn), then ECL memory 0x4900-0x52FF as words (the game's flags, clock and the engine's own data), the
 ## area's script with its tables as they stood (from 0x1401, the block identifies the area),
 ## the party's square at 0x3201 (x, y, facing x2), and from 0x3209 the character file names
 ## (a length byte and 40 bytes each).
@@ -1152,7 +1167,7 @@ func load_original_save(letter: String) -> bool:
 	_message.text = ""
 	_mode = Mode.WALK
 	var flags := func() -> void:
-		for a in range(0x4900, 0x4B00):
+		for a in range(0x4900, 0x5300):
 			_vm.write_byte(a, s[1 + 2 * (a - 0x4900)])
 	flags.call()
 	_vm.write_byte(EclVM.PARTY_X, s[0x3201])
