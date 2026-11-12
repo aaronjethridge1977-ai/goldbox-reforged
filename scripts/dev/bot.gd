@@ -1364,6 +1364,12 @@ func _here() -> String:
 ## Walks from area to area (shortest number of areas) to `goal` ("set:block").
 func _travel(goal: String) -> void:
 	_travelling = true
+	# Chat 11: what failed on an earlier trip is tried again. Run A kept every failed way
+	# out for good, and once the caves' "DO YOU WANT TO LEAVE?" had been answered NO while
+	# exploring (main's rule for a question asked twice), its exits were marked bad and the
+	# caves to town took about 30 teleports.
+	_bad_exits.clear()
+	main._menu_seen.clear()
 	await _travel_hops(goal)
 	_travelling = false
 	# M6: stuck short of the goal (no way found or every way failed): the smallest shortcut

@@ -1,0 +1,105 @@
+# The M6 playthrough: a new party from New Phlan to Tyranthraxus (PlayBot, --play=).
+# Chat 10: the Clue Book's area order and commissions, its rest rules, readying the best gear
+# (ai-business-ideas research/pool-of-radiance-strategy.md, sections 4, 8, 10 and 11).
+# travel / explore use the lab's area graph (--exits=, from tools/sweep.gd's EXIT lines).
+# Squares come from the area maps (tools/lab/plan.py, evmap.py) and the original's text.
+
+# Where to rest (the Clue Book's table, section 8). Unlisted areas camp; an interrupted camp
+# still sends the party to the inn when there is a way back.
+rest 3:0 inn
+# Kuto's Well: nowhere until Norris is beaten (camp in the catacombs after).
+rest 8:29 inn 4A24 255
+# Podol Plaza: the inn until the block is quiet (0x4AE7 = 254 after nine patrols won).
+rest 1:18 inn 4AE7 254
+# The Textile House: not until the ogre leader and ten random fights are beaten.
+rest 4:2 inn
+# The Wealthy Area and the Temple of Bane: not until both blocks are cleared.
+rest 1:24 inn
+# Kovel Mansion: not while thieves are about.
+rest 3:14 inn
+# Valhingen Graveyard: not until cleared.
+rest 4:10 inn
+# The level the game expects of a party in each area (research/pool-of-radiance-strategy.md,
+# section 4: Claude's estimates from the guides, the low end of each range). M6: a member more
+# than one level below it trains, or gets the level by shortcut (logged).
+expect_level 2:20 1
+expect_level 4:21 2
+expect_level 8:29 3
+expect_level 2:15 3
+expect_level 1:18 3
+expect_level 4:2 4
+expect_level 1:24 5
+expect_level 3:14 5
+expect_level 7:17 5
+expect_level 8:27 5
+expect_level 4:10 6
+expect_level 2:9 7
+expect_level 5:3 7
+expect_level 5:4 7
+expect_level 5:5 7
+expect_level 5:6 7
+expect_level 5:7 7
+# Encounters the Clue Book settles by talking: Ferran Martinez in Sokal Keep (a spectre that
+# drains two levels a hit) gives his story and the word for the library.
+parley 4:21 A PALE FORM RISES
+# People the Clue Book says not to take along: the library's madman (trouble in town).
+answer 2:15 QUITE MAD|NO
+answer 2:15 DO YOU INSIST HE COME|NO
+# Podol Plaza's tavern (MIX WITH MONSTERS, DRINK HEAVILY, ATTACK, LEAVE): leave.
+answer 1:18 DRINK HEAVILY|LEAVE
+# Cadorna's box: take it unopened (opening it loses the reward and makes him an enemy), and
+# turn down the thieves' offer to copy the seal.
+answer 4:2 SEAL OF THE FAMILY OF CADORNA|TAKE IT UNOPENED
+answer 4:2 DUPLICATE THE SEAL|NO
+# Skullcrusher, chained in the Textile House: free him with Grishnak's brass key, talk, take him on.
+answer 4:2 WHAT DO YOU DO WITH THE MAN|FREE
+answer 4:2 HOW WILL YOU FREE HIM|UNLOCK
+answer 4:2 THERE IS A FREE MAN HERE|PARLAY
+answer 4:2 ADD HIM TO YOUR PARTY|YES
+
+# The band outside the walls (7:26) opens the city's other quarters from menus (probed in
+# our engine from the band's step script, chat 10): the eastern edge 13,27, the north edge
+# 12,26, the western edge 11,28.
+gate 7:26 13,27 1:24 SOUTH
+gate 7:26 13,27 3:14 NORTH
+gate 7:26 13,27 3:0 BOAT
+gate 7:26 12,26 4:10 GRAVEYARD
+gate 7:26 11,28 1:18 NORTH
+gate 7:26 11,28 4:2 SOUTH
+# The Temple of Bane's quarter leaves by a table the area graph can't read: its east edge,
+# where the band's eastern gate brings the party in, goes back out to the band.
+exit 1:24 15,4 E 7:26
+# The wilderness bands join at their edges (the band's on-move script: x 15 going east from
+# 7:26 is 8:27, x 2 going west is 6:25; and back). The bands' sites, probed from their scripts:
+# the nomad camp 7:26 12,11 (ENTER), the boats home 7:26 7,29 and 8:27 9,29, the kobolds'
+# caves 8:27 6,15 and 3,18.
+exit 7:26 15,12 E 8:27
+exit 7:26 15,16 E 8:27
+exit 7:26 15,20 E 8:27
+exit 8:27 2,12 W 7:26
+exit 8:27 2,16 W 7:26
+exit 8:27 2,20 W 7:26
+gate 7:26 12,11 7:17 ENTER
+gate 7:26 7,29 3:0 TAKE BOAT
+gate 8:27 9,29 3:0 YES
+# The sites, read from the bands' on-step tables (chat 10: row y values, counts, x values and a
+# site type per square; 6:25 0xADD6.., 7:26 0xB04A.., 8:27 0xABA6..), with each site's menu.
+gate 6:25 10,9 6:19 ENTER CAVE
+gate 6:25 12,31 6:1 ENTER
+gate 6:25 3,32 6:28 YES
+gate 7:26 6,16 7:22 ENTER
+gate 8:27 11,8 8:16 ENTER
+gate 8:27 6,15 8:13 LARGE
+# The western band joins the middle one at its edges as the middle joins the eastern.
+exit 7:26 2,12 W 6:25
+exit 7:26 2,16 W 6:25
+exit 7:26 2,20 W 6:25
+exit 6:25 15,12 E 7:26
+exit 6:25 15,16 E 7:26
+exit 6:25 15,20 E 7:26
+checkpoint kobold_caves
+log travel test: caves to town
+travel 3:0
+log back to the caves
+travel 8:13
+log done
