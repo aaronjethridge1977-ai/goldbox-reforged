@@ -85,7 +85,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit", "level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit", "expect_level"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -277,8 +277,8 @@ func _do(line: String) -> void:
 		"explore":
 			await _keep_level()
 			await _explore(w.slice(1))
-		"level":
-			# level <set:block> <n>: the level the game expects of a party there (M6: the
+		"expect_level":
+			# expect_level <set:block> <n>: the level the game expects of a party there (M6: the
 			# party is kept near it, since some encounters scale with the party).
 			_expected_level[w[1]] = int(w[2])
 		"memorize":
@@ -2642,7 +2642,7 @@ func _pick_spell(offered: Array) -> int:
 	return offered[0]
 
 
-## M6: a member more than one level below what the area expects (its best class, as multi-class
+## M6 (plan: expect_level): a member more than one level below what the area expects (its best class, as multi-class
 ## characters run behind) first trains normally if it can; what's still missing is granted by
 ## shortcut, logged.
 func _keep_level() -> void:
