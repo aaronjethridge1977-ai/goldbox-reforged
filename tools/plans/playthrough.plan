@@ -1,64 +1,63 @@
 # The M6 playthrough: a new party from New Phlan to Tyranthraxus (PlayBot, --play=).
+# Chat 10: the Clue Book's area order and commissions, its rest rules, readying the best gear
+# (ai-business-ideas research/pool-of-radiance-strategy.md, sections 4, 8, 10 and 11).
 # travel / explore use the lab's area graph (--exits=, from tools/sweep.gd's EXIT lines).
 # Squares come from the area maps (tools/lab/plan.py, evmap.py) and the original's text.
 
-log Party creation
+# Where to rest (the Clue Book's table, section 8). Unlisted areas camp; an interrupted camp
+# still sends the party to the inn when there is a way back.
+rest 3:0 inn
+# Kuto's Well: nowhere until Norris is beaten (camp in the catacombs after).
+rest 8:29 inn
+# Podol Plaza: the inn until the block is quiet (0x4AE7 = 254 after nine patrols won).
+rest 1:18 inn 4AE7 254
+# The Textile House: not until the ogre leader and ten random fights are beaten.
+rest 4:2 inn
+# The Wealthy Area and the Temple of Bane: not until both blocks are cleared.
+rest 1:24 inn
+# Kovel Mansion: not while thieves are about.
+rest 3:14 inn
+# Valhingen Graveyard: not until cleared.
+rest 4:10 inn
+# The Slums (any room whose fight is won), Sokal Keep (after four patrols), the library
+# (except the garden) and the wilderness: camp.
+
+log Party creation (strategy change 11: the Clue Book's makeup)
 char human fighter lg ARN
-char dwarf fighter lg BRAM
+char human fighter lg BRAM
 char human cleric lg CEDRIC
-char half-elf fighter/magic-user ng ELWEN
-char human magic-user ng MARA
-char halfling fighter/thief ng PIP
-# Jeremy (chat 8): if the bot can't get a rolled level-1 party through the Slums, use the
-# game's own MODIFY to set every ability to 18 (18/00 for fighters). Rolled parties wiped in
-# the Slums in every run of chat 8 (event 7's waves, wandering kobolds on the way to the inn).
+char half-elf cleric/fighter/magic-user ng ELWEN
+char elf fighter/magic-user ng LIRA
+char dwarf fighter/thief ng DORN
+# Jeremy (chat 8 and 10): every ability set to 18 (18/00 for fighters) with MODIFY.
 modify
 begin
 expect 3:0
 checkpoint start
 
-log New Phlan: arms and armour (13,8), City Hall's commissions, the inn
-shop 13,8 | 0 Long Sword | 0 Banded Mail | 0 Shield | 1 Long Sword | 1 Banded Mail | 1 Shield | 2 Mace | 2 Chain Mail | 2 Shield | 3 Long Sword | 3 Leather | 4 Quarter Staff | 4 4 Dart | 5 Short Sword | 5 Leather | 5 Short Bow | 5 10 Arrow
-tour 4,4 4,5
-face E
-step
-travel 3:0
+log New Phlan: arms and armour (13,8), City Hall, the inn
+shop 13,8 | 0 Long Sword | 0 Banded Mail | 0 Shield | 1 Long Sword | 1 Banded Mail | 1 Shield | 2 Mace | 2 Banded Mail | 2 Shield | 3 Mace | 3 Chain Mail | 3 Shield | 4 Long Sword | 4 Chain Mail | 4 Short Bow | 4 10 Arrow | 5 Long Sword | 5 Leather | 5 Shield
+clerk
 inn 4,12
 checkpoint shopped
 
-log The Slums
+log 2. The Slums: the set fights first; the goblin guards (12) after a level, the trolls (16) at level 3
 travel 2:20
 expect 2:20
-# explore leaves the fights the party can't win yet (the orcs' guards, the orcs' home,
-# the hobgoblin hall) until it has trained, and trains as soon as anyone qualifies.
-explore 9
+explore 9 12 16
 checkpoint slums
-
-log Back to New Phlan: the clerk's reward, temple, training, the inn
 town
-checkpoint trained1
-
-log The Slums again: the orcs' home and the hobgoblin hall
 travel 2:20
-explore
+explore 16
 # The clerk pays for the Slums after 25 won fights there (0x4ABB becomes 254).
 grind 4ABB 254
 checkpoint slums2
-town
-
-log Kuto's Well (8:29)
-travel 8:29
+level 3
 explore
-checkpoint kuto
+checkpoint slums3
 town
 
-log Podol Plaza (1:18)
-travel 1:18
-explore
-checkpoint podol
-town
-
-log Sokal Keep by boat: the harbor master (event 2, 11,1), SOKAL, then the pier's end (event 1, 15,1)
+log 3. Sokal Keep by boat: the harbor master (event 2, 11,1), SOKAL, then the pier's end (event 1, 15,1)
 answers 1
 tour 11,1
 tour 15,1
@@ -68,31 +67,33 @@ checkpoint sokal
 travel 3:0
 town
 
-log Mendor's library and the garden (2:15)
+log 4. Kuto's Well (8:29) and the catacombs
+travel 8:29
+explore
+checkpoint kuto
+town
+
+log 5. Mendor's library and the garden (2:15)
 travel 2:15
 explore
 checkpoint library
 town
 
-# Experience before the rest of the city: Podol Plaza's patrols interrupt every rest
-# and are sized to the party.
-log Podol Plaza for experience
+log 6. Podol Plaza (1:18), disguised, on the clerk's secret mission
 travel 1:18
-level 5
-checkpoint level5
+explore
+checkpoint podol
 town
 
-# The gate (event 13, 7,6) opens on ten level 6 magic-users and more: Valjevo, much later.
-log 2:9 (towards Valjevo)
-travel 2:9
-explore 13
-checkpoint area2_9
-town
-
-# South of Podol Plaza: its rests bring ghouls and wights; after 2:9 and more training.
-log 4:2 (south of Podol Plaza)
+log 7. Cadorna Textile House (4:2): Cadorna's commission (east door of City Hall)
 travel 4:2
 explore
-checkpoint area4_2
+checkpoint textile
+town
+
+log 8. The Wealthy Area and the Temple of Bane (1:24): Bishop Braccio's commission
+travel 1:24
+explore
+checkpoint bane
 town
 stop

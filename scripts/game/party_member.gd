@@ -425,6 +425,17 @@ func learn_minutes(table: SpellTable) -> int:
 	return (6 if top > 2 else 4) * 60 + total * 15
 
 
+## The hours of study before the spells themselves (4, or 6 with a 3rd-level spell); the
+## 15 minutes a spell level come after them (learn_minutes is the whole).
+func learn_study_hours(table: SpellTable) -> int:
+	var top := 0
+	for id in learning_spells() + scribe_pending():
+		top = maxi(top, table.level(id))
+	if top == 0:
+		return 0
+	return 6 if top > 2 else 4
+
+
 ## Removes one memorized copy of `id` (after casting it, or losing it).
 func forget(id: int) -> void:
 	var i := memorized.find(id)

@@ -220,9 +220,8 @@ func _start_rest() -> void:
 	if spells != null:
 		for m in _party:
 			m.learn_hours = 0
-			var mins := m.learn_minutes(spells)
-			if mins > 0:
-				m.learn_hours = mins / 60
+			# The study hours; each spell's 15 minutes a level follow (_learn_step).
+			m.learn_hours = m.learn_study_hours(spells)
 	_menu.text = "RESTING...   Esc: stop resting"
 	_timer.start()
 

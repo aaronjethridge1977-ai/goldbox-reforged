@@ -26,6 +26,10 @@ extends Node
 ##            the listed events (and any whose first fight looks unwinnable) wait for training
 ##   grind <hex addr> <n> rest here, fighting what comes, until script memory addr reaches n
 ##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
+##   clerk                 City Hall twice (rewards, then up to three commissions a visit)
+##   rest <set:block> inn|camp [<hex addr> <value>]   where to rest in an area (the inn until
+##            script memory addr reaches value, then camp); unlisted areas camp
+##   status                print the counters (fights, rests, wipes, gold by source, trainings)
 ##   checkpoint <name>     quick save to user://bot_<name>.cfg; a wipe goes back to the last
 ##   expect <set>:<block>  log a mismatch if the party isn't in that area
 ##   log <text>            a heading in the log
@@ -50,6 +54,7 @@ func run(plan_path: String) -> void:
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
+	main._camp.interrupted.connect(func(): _count("interrupted"))
 	# --resume=<quick save file>:<checkpoint name>: start from another run's checkpoint,
 	# at the plan line after "checkpoint <name>" (the lab keeps them; game data, not in git).
 	for arg in OS.get_cmdline_user_args():
@@ -66,6 +71,7 @@ func run(plan_path: String) -> void:
 				_issue("resume: no checkpoint %s in the plan, or no file %s" % [name, file])
 				break
 			DirAccess.copy_absolute(file, "user://bot_%s.cfg" % name)
+			_load_counters(file.get_basename() + ".json")
 			_pc = at
 			_checkpoint = name
 			_checkpoint_pc = at
@@ -81,6 +87,7 @@ func run(plan_path: String) -> void:
 			break
 		await _do(line)
 		if _wiped():
+			_count("wipes")
 			_issue("party wiped at plan line %d (%s)" % [_pc, line])
 			if _checkpoint == "" or _retries >= 8:
 				break
@@ -93,6 +100,7 @@ func run(plan_path: String) -> void:
 		print("ISSUE ", i)
 	print(main._state_line())
 	_party_report()
+	_report()
 	main.get_tree().quit()
 
 
@@ -166,21 +174,27 @@ func _do(line: String) -> void:
 				_buys.append([int(q[0]), q[1]])
 			_want = "shop"
 			var a := w[1].split(",")
+			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
+			_book("shop", before)
 			_want = ""
 			_ready_all()
 		"sell":
 			_want = "sell"
 			var a := w[1].split(",")
+			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
+			_book("selling", before)
 			_want = ""
 		"inn":
 			_want = "inn"
 			var a := w[1].split(",")
+			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
+			_book("inn", before)
 			if _want == "inn":
 				_issue("the inn didn't take us (%s); memorizing in camp here" % main._message.text.strip_edges())
 				_want = ""
@@ -219,15 +233,33 @@ func _do(line: String) -> void:
 		"temple":
 			_want = "temple"
 			var a := w[1].split(",")
+			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
+			_book("temple", before)
 			_want = ""
+		"clerk":
+			await _clerk()
+		"rest":
+			# rest <set:block> inn|camp [<hex address> <value>]: where a player rests in that
+			# area (the Clue Book's table). "inn" with an address: the inn until script
+			# memory there reaches the value (the area's condition for safe rests), then camp.
+			_rest_rules[w[1]] = {"rule": w[2], "addr": w[3].hex_to_int() if w.size() > 4 else -1,
+				"value": int(w[4]) if w.size() > 4 else 0}
+		"status":
+			_report()
+		"hire":
+			# hire <n>: how many hired NPCs the party takes on when the arena offers them.
+			_hire_wanted = int(w[1])
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
 			_retries = 0
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_%s.cfg" % w[1])
+			_save_counters("user://bot_%s.json" % w[1])
+			print("== checkpoint %s" % w[1])
+			_report()
 		"expect":
 			var a := w[1].split(":")
 			if main._vm_file != int(a[0]) or main._vm_block != int(a[1]):
@@ -258,10 +290,18 @@ func _hook() -> bool:
 	# Names and passwords the game tells the party ("SPEAK MY NAME, OHLO."), for when a
 	# script asks for a word.
 	var said: String = main._message.text
+	if not _first_day.has(_here()) and main._vm_file > 0:
+		_first_day[_here()] = _day()
+		print("   (first time in %s: day %d)" % [_here(), _day()])
 	for cue in ["SPEAK MY NAME, ", "THE PASSWORD IS ", "PASSWORD IS "]:
 		var at := said.find(cue)
 		if at >= 0:
-			var word := said.substr(at + cue.length()).get_slice(" ", 0).rstrip(".,'!\"").strip_edges()
+			var rest := said.substr(at + cue.length())
+			var word := ""
+			for ch in rest:
+				if ch < "A" or ch > "Z":
+					break
+				word += ch
 			if word != "" and not word in _words:
 				_words.append(word)
 				print("   (bot remembers the word %s)" % word)
@@ -281,6 +321,7 @@ func _hook() -> bool:
 		return true
 	if main._combat.visible and main._combat._result != 0 and not _fight_noted:
 		_fight_noted = true
+		_count(["", "won", "lost", "fled"][main._combat._result])
 		if _hurt():
 			main.tour_stop = true
 			_interrupted = true
@@ -288,6 +329,8 @@ func _hook() -> bool:
 		_fight_noted = false
 	if main._vm.state == EclVM.State.MENU and main._vm._menu_kind == "encounter" and not main._combat.visible:
 		var k := _encounter_choice()
+		if k == 3:
+			_count("avoided")
 		print("   >> %d (encounter: %s)" % [k, _judged])
 		await main._press(str(k))
 		return true
@@ -307,7 +350,11 @@ func _hook() -> bool:
 			# A player takes the money (SHARE) and every item, handed round the party.
 			_looted = true
 			var t: TreasureScreen = main._treasure
+			var before := _coin()
+			var gems_before := _gems()
 			t._share()
+			_book("treasure", before)
+			_gem_ledger["treasure"] = int(_gem_ledger.get("treasure", 0)) + _gems() - gems_before
 			# Items: only what a player carries off (magic, scrolls, potions, wands...), not
 			# every orc's spear.
 			for n in 60:
@@ -325,9 +372,9 @@ func _hook() -> bool:
 				for row in root.get_children():
 					if row.get_metadata(0) == pick:
 						row.select(0)
-				var before: int = t._spoils.items.size()
+				var items_before: int = t._spoils.items.size()
 				t._take()
-				if t._spoils.items.size() == before:
+				if t._spoils.items.size() == items_before:
 					break
 				print("   loot: %s" % t._note.text)
 			_ready_all()
@@ -407,6 +454,20 @@ func _hook() -> bool:
 			print("   >> %d (no surrender)" % (fight + 1))
 			await main._press(str(fight + 1))
 			return true
+		# PARLAY's manner (HAUGHTY SLY NICE MEEK ABUSIVE): NICE, as the Clue Book advises with
+		# anyone not plainly hostile (Ohlo fights the HAUGHTY and the ABUSIVE and offers his
+		# commission to the NICE and the MEEK).
+		if "NICE" in items and "HAUGHTY" in items:
+			_count("parleys")
+			print("   >> %d (parley: NICE)" % (items.find("NICE") + 1))
+			await main._press(str(items.find("NICE") + 1))
+			return true
+		# Podol Plaza's gate (STRIDE BOLDLY / DISGUISE / SNEAK): the Clue Book goes in
+		# disguised, on the clerk's secret mission.
+		if "DISGUISE" in items:
+			print("   >> %d (DISGUISE)" % (items.find("DISGUISE") + 1))
+			await main._press(str(items.find("DISGUISE") + 1))
+			return true
 		if "ACCEPT THE COMMISSION" in items:
 			print("   >> 1 (accepting the commission)")
 			await main._press("1")
@@ -419,6 +480,21 @@ func _hook() -> bool:
 		if "ATTACK" in items and "LEAVE" in items:
 			print("   >> %d (LEAVE rather than ATTACK)" % (items.find("LEAVE") + 1))
 			await main._press(str(items.find("LEAVE") + 1))
+			return true
+		# The arena's hirelings ("DO YOU SEEK A PARTNER", then each offer): only as many hired
+		# NPCs as the plan asks for (`hire <n>`; none by default). Each takes shares of every
+		# treasure (three for a robber or a swordsman).
+		if (said.contains("SEEK A PARTNER") or said.contains("CONSIDER SOMEONE ELSE") or said.contains("IS THIS ACCEPTABLE")) \
+				and "YES" in items and "NO" in items:
+			var hired: int = main._party.filter(func(m): return m.npc >= 128).size()
+			var k: String = "YES" if hired < _hire_wanted else "NO"
+			print("   >> %d (%s: %d hired, plan wants %d)" % [items.find(k) + 1, k, hired, _hire_wanted])
+			await main._press(str(items.find(k) + 1))
+			return true
+		# City Hall's council guard: "HALT. YOUR PRESENCE IS NOT AUTHORIZED. LEAVE. DO YOU LEAVE?"
+		if said.contains("DO YOU LEAVE") and "YES" in items:
+			print("   >> %d (leaving, as the guard asks)" % (items.find("YES") + 1))
+			await main._press(str(items.find("YES") + 1))
 			return true
 		# Nor does he break into the town's houses or fight the city watch.
 		if said.contains("BREAK IN") and "NO" in items:
@@ -449,7 +525,22 @@ func _hook() -> bool:
 		for m in main._party:
 			if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
 				need = maxi(need, m.hp_max - m.hp)
-		await _rest_in_camp(mini(need, 14))
+		# Long enough to memorize and heal; on to the morning when New Phlan's doors are
+		# shut (from hour 14) and the party came to wait for them.
+		var camp: CampScreen = main._camp
+		camp._rest_menu()
+		camp._to_rest += mini(need, 14) * 288
+		if _inn_till_day:
+			var h := GameClock.hour(main._vm)
+			var till := ((24 - h) * 60 - GameClock.minute(main._vm) + 5) / 5
+			camp._to_rest = maxi(camp._to_rest, till)
+		_start_rest(camp)
+		while camp.visible and camp._resting:
+			await get_tree().process_frame
+		if camp.visible:
+			await main._press("esc")
+			if camp.visible:
+				await main._press("e")
 		print("   inn: %s | %s" % [" ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])),
 			" ".join(main._party.map(func(m): return str(m.memorized)))])
 		return true
@@ -470,17 +561,65 @@ var _want := ""          # "shop" or "train": what to do when that screen opens 
 var _buys: Array = []    # [member, item name start]
 
 
-## Readies what each member carries, as the character sheet's READY does (best armour and
-## first weapon; the sheet refuses what doesn't fit).
+## Readies the best of what each member carries, as a player does with the character
+## sheet's READY (the sheet refuses what doesn't fit): first anything into an empty slot,
+## then each spare weapon, shield and armour tried in place of what holds its slot, kept
+## when it scores better (expected melee damage a round against AC 5, plus AC).
+## Missile weapons are left to the fight's own weapon choice (Combat picks a readied bow or
+## the best melee weapon carried).
 func _ready_all() -> void:
 	var sheet: CharacterSheet = main._sheet
+	var types: ItemTypes = main._types
 	for m in main._party:
 		for it in m.items:
 			if not it.readied:
-				var why: String = sheet._ready_item(m, it)
-				if why != "" and not why.contains("STRONGER"):
-					pass
-		m.recalculate(main._types)
+				sheet._ready_item(m, it)
+		m.recalculate(types)
+		for round_no in 2:
+			for it in m.items.duplicate():
+				if it.readied or it.cursed:
+					continue
+				var slot := types.slot(it.type)
+				if not slot in [ItemTypes.SLOT_WEAPON, ItemTypes.SLOT_SHIELD, ItemTypes.SLOT_ARMOR]:
+					continue
+				if slot == ItemTypes.SLOT_WEAPON and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
+					continue
+				# What has to come off for it: the same slot; a shield and a two-handed weapon.
+				var off: Array[GameItem] = []
+				for o in m.items:
+					if not o.readied or o == it:
+						continue
+					var os := types.slot(o.type)
+					if os == slot or (slot == ItemTypes.SLOT_WEAPON and os == ItemTypes.SLOT_SHIELD and types.hands(it.type) >= 2) \
+							or (slot == ItemTypes.SLOT_SHIELD and os == ItemTypes.SLOT_WEAPON and types.hands(o.type) >= 2):
+						off.append(o)
+				if off.any(func(o): return o.cursed):
+					continue
+				var score := _gear_score(m)
+				for o in off:
+					sheet._ready_item(m, o)
+				sheet._ready_item(m, it)
+				m.recalculate(types)
+				if it.readied and _gear_score(m) > score + 0.01:
+					print("   ready: %s readies %s (was %s)" % [m.name, it.name, ", ".join(off.map(func(o): return o.name))])
+					continue
+				if it.readied:
+					sheet._ready_item(m, it)
+				for o in off:
+					sheet._ready_item(m, o)
+				m.recalculate(types)
+
+
+## How good a member's readied gear is: expected melee damage a round against AC 5, plus
+## a third of a point for each point of AC (one AC point is 5% fewer enemy hits).
+func _gear_score(m: PartyMember) -> float:
+	var types: ItemTypes = main._types
+	var missile := 0.0
+	for it in m.items:
+		if it.readied and types.slot(it.type) == ItemTypes.SLOT_WEAPON \
+				and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
+			missile = 100.0     # a bow in hand outside a fight: a melee weapon is better
+	return _dpr(m, 5) + (10 - m.ac) * 0.35 - missile
 
 
 # --- A player's judgement in fights --------------------------------------------------------
@@ -1121,9 +1260,9 @@ func _prepare() -> void:
 	_pick_spells()
 	if not _learning() and not _needs_rest():
 		return
-	# Near town (three areas: Podol Plaza's rests are interrupted every time), a player rests
-	# at the inn rather than in monster country.
-	if await _rest_at_inn(4):
+	# Where the area isn't safe to camp in (the plan's rest lines, from the Clue Book), a
+	# player rests at the inn rather than in monster country.
+	if _rest_rule() == "inn" and await _rest_safe():
 		return
 	await _memorize()
 	if _needs_rest():
@@ -1174,7 +1313,7 @@ func _grind(addr: int, value: int) -> void:
 		var camp: CampScreen = main._camp
 		camp._rest_menu()
 		camp._to_rest = 288      # a day; a patrol may interrupt
-		camp._start_rest()
+		_start_rest(camp)
 		while camp.visible and camp._resting:
 			await get_tree().process_frame
 		if camp.visible:
@@ -1222,7 +1361,7 @@ func _level_up(goal: int) -> void:
 		var camp: CampScreen = main._camp
 		camp._rest_menu()
 		camp._to_rest = 288
-		camp._start_rest()
+		_start_rest(camp)
 		while camp.visible and camp._resting:
 			await get_tree().process_frame
 		if camp.visible:
@@ -1241,13 +1380,20 @@ func _wait_for_day() -> void:
 	var h := GameClock.hour(main._vm)
 	if h < 14:
 		return
+	if _here() == TOWN and not _at_inn:
+		# The Clue Book: in New Phlan only the inn is safe (the watch rousts campers).
+		_inn_till_day = true
+		await _do("inn 4,12")
+		_inn_till_day = false
+		if GameClock.hour(main._vm) < 14:
+			return
 	if not await _open_camp():
 		return
 	print("   (waiting in camp for the doors to open: %02d:00)" % h)
 	var camp: CampScreen = main._camp
 	camp._rest_menu()
 	camp._to_rest = (24 - h) * 12
-	camp._start_rest()
+	_start_rest(camp)
 	while camp.visible and camp._resting:
 		await get_tree().process_frame
 	if camp.visible:
@@ -1306,16 +1452,7 @@ func _town() -> void:
 	await _travel(TOWN)
 	if _here() != TOWN:
 		return
-	await _wait_for_day()
-	await main._tour(Vector2i(4, 4))
-	await _settle()
-	await main._tour(Vector2i(4, 5))
-	await _settle()
-	while int(main._facing) != 1:
-		await main._press("right")
-	await main._press("up")
-	await _settle()
-	await _travel(TOWN)
+	await _clerk()
 	var levels_before := 0
 	for m in main._party:
 		levels_before += Array(m.raw.slice(0x96, 0x9E)).reduce(func(a, b): return a + b, 0)
@@ -1459,6 +1596,8 @@ func _open_camp() -> bool:
 ## Rests in camp a day at a time until everyone is healed; an interruption is fought out
 ## and the rest begun again.
 func _heal() -> void:
+	if _needs_rest() and _rest_rule() == "inn" and not _at_inn and await _rest_safe():
+		return
 	var days := 0
 	var interrupted := 0
 	if _pick_spells():
@@ -1478,7 +1617,7 @@ func _heal() -> void:
 		var hits := [0]
 		var count := func(): hits[0] += 1
 		camp.interrupted.connect(count)
-		camp._start_rest()
+		_start_rest(camp)
 		while camp.visible and camp._resting:
 			await get_tree().process_frame
 		camp.interrupted.disconnect(count)
@@ -1509,6 +1648,8 @@ func _memorize() -> void:
 	_pick_spells()
 	if not _learning():
 		return
+	if _rest_rule() == "inn" and not _at_inn and await _rest_safe():
+		return
 	if not await _open_camp():
 		return
 	var hits := [0]
@@ -1529,7 +1670,7 @@ func _rest_in_camp(days: int) -> void:
 	var camp: CampScreen = main._camp
 	camp._rest_menu()
 	camp._to_rest += days * 288
-	camp._start_rest()
+	_start_rest(camp)
 	while camp.visible and camp._resting:
 		await get_tree().process_frame
 	if camp.visible:
@@ -1594,11 +1735,15 @@ func _train() -> void:
 	for i in main._party.size():
 		_fund(i)
 		pm._sel = i
+		var before := _coin()
 		pm._train()
 		if pm._mode == "confirm_train":
 			pm._do_train()
 			if pm._mode == "learn":
 				pm._learn_selected() if pm.has_method("_learn_selected") else await main._press("enter")
+			_book("training", before)
+			var m: PartyMember = main._party[i]
+			_trainings.append("%s %s day %d" % [m.name, "/".join(Array(m.raw.slice(0x96, 0x9E)).filter(func(x): return x > 0).map(func(x): return str(x))), _day()])
 			print("   %s trained: %s" % [main._party[i].name, pm._note.text])
 		else:
 			print("   %s: %s" % [main._party[i].name, pm._note.text])
@@ -1657,6 +1802,215 @@ func _temple_cures() -> void:
 				t._cure = cure
 				t._pay()
 				print("   temple: %s %s: %s" % [main._party[i].name, TempleScreen.CURES[cure][0], t._note.text])
+
+
+# --- Counters and the money ledger (strategy change 0) --------------------------------------
+# Per area: fights won, lost and fled, encounters avoided at the menu, wipes, rests begun and
+# interrupted. Money: coins in by source (treasure, rewards, selling, other) and out (shop,
+# training, inn, temple), in copper; gems and jewellery counted as pieces. Saved beside each
+# checkpoint (user://bot_<name>.json) so a resumed run carries them on.
+
+var _stats := {}          # area -> {key: count}
+var _ledger := {}         # "in:<source>" / "out:<source>" -> copper
+var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
+var _first_day := {}      # area -> game day first entered
+var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
+var _mark := -1           # the party's coins at the last ledger entry
+var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
+var _inn_till_day := false   # the inn's rest runs on until New Phlan's doors open
+var _last_said := ""
+var _rest_rules := {}     # area -> {rule, addr, value}
+
+
+func _count(key: String) -> void:
+	var a := _here()
+	if not _stats.has(a):
+		_stats[a] = {}
+	_stats[a][key] = int(_stats[a].get(key, 0)) + 1
+
+
+## The player characters' coins in copper (hired NPCs' money is their own).
+func _coin() -> int:
+	var c := 0
+	for m in main._party:
+		if m.npc < 128:
+			c += m.wealth_copper()
+	return c
+
+
+func _gems() -> int:
+	var n := 0
+	for m in main._party:
+		if m.npc < 128:
+			n += m.money[5] + m.money[6]
+	return n
+
+
+## Books the change in coins since `before` to `source`; a change since the last entry
+## that nothing booked goes to "other" first (script gifts and robberies).
+func _book(source: String, before: int) -> void:
+	if _mark >= 0 and before != _mark:
+		_add_ledger("other", before - _mark)
+	_add_ledger(source, _coin() - before)
+	_mark = _coin()
+
+
+func _add_ledger(source: String, delta: int) -> void:
+	if delta == 0:
+		return
+	var key := ("in:" if delta > 0 else "out:") + source
+	_ledger[key] = int(_ledger.get(key, 0)) + absi(delta)
+
+
+## Days since the game's calendar began (day, month of 30 days, year of 12 months).
+func _day() -> int:
+	var vm: EclVM = main._vm
+	return vm.read_byte(0x49CA) + 30 * vm.read_byte(0x49CB) + 360 * vm.read_byte(0x49CC)
+
+
+func _report() -> void:
+	_book("other", _coin())
+	var levels := []
+	for m in main._party:
+		levels.append("%s %s" % [m.name, "/".join(Array(m.raw.slice(0x96, 0x9E)).filter(func(x): return x > 0).map(func(x): return str(x)))])
+	print("== COUNTERS day %d, %s, in %s" % [_day(), GameClock.text(main._vm), _here()])
+	print("   levels: %s" % ", ".join(levels))
+	var total := {}
+	for a in _stats:
+		var s: Dictionary = _stats[a]
+		print("   %-6s first day %s: won %d, lost %d, fled %d, avoided %d, wipes %d, rests %d (interrupted %d)" % [a,
+			str(_first_day.get(a, "?")), s.get("won", 0), s.get("lost", 0), s.get("fled", 0), s.get("avoided", 0),
+			s.get("wipes", 0), s.get("rests", 0), s.get("interrupted", 0)])
+		for k in s:
+			total[k] = int(total.get(k, 0)) + int(s[k])
+	print("   all: %s" % str(total))
+	var ins := []
+	var outs := []
+	for k in _ledger:
+		var t := "%s %d" % [String(k).get_slice(":", 1), int(_ledger[k]) / 200]
+		(ins if String(k).begins_with("in:") else outs).append(t)
+	print("   gold in: %s | out: %s | gems/jewels in: %s | purse %d gold, %d gems/jewels" % [", ".join(ins),
+		", ".join(outs), str(_gem_ledger), _coin() / 200, _gems()])
+	print("   trainings: %s" % ", ".join(_trainings))
+
+
+func _save_counters(path: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify({"stats": _stats, "ledger": _ledger, "gems": _gem_ledger,
+			"first": _first_day, "trainings": Array(_trainings)}))
+
+
+func _load_counters(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	var d = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(d) != TYPE_DICTIONARY:
+		return
+	_stats = d.get("stats", {})
+	_ledger = d.get("ledger", {})
+	_gem_ledger = d.get("gems", {})
+	_first_day = d.get("first", {})
+	_trainings = PackedStringArray(d.get("trainings", []))
+	print("== counters carried on from %s" % path)
+
+
+## A rest begun in camp (counted).
+func _start_rest(camp: CampScreen) -> void:
+	_count("rests")
+	camp._start_rest()
+
+
+# --- Where to rest (strategy change 2) ----------------------------------------------------
+
+## "inn" or "camp" for the area the party is in, by the plan's rest lines (default camp).
+func _rest_rule() -> String:
+	var r: Dictionary = _rest_rules.get(_here(), {})
+	if r.is_empty():
+		return "camp"
+	if r.rule == "inn" and int(r.addr) >= 0 and main._vm.read_byte(int(r.addr)) >= int(r.value):
+		return "camp"
+	return String(r.rule)
+
+
+## To the inn and back, for an area where camping isn't safe. True if the party rested there.
+func _rest_safe() -> bool:
+	if _at_inn:
+		return false
+	if _here() == TOWN:
+		await _wait_for_day()
+		await _do("inn 4,12")
+		return true
+	var ok := await _rest_at_inn(99)
+	if not ok:
+		_issue("no safe rest from %s %s (no way to the inn); camping" % [_here(), str(main._pos)])
+	return ok
+
+
+# --- City Hall (strategy change 1) --------------------------------------------------------
+
+## The clerk: in and out of City Hall twice (she checks for rewards and offers up to three
+## open commissions a visit, 0x4A05; a second visit after leaving lets her look again).
+func _clerk() -> void:
+	await _travel(TOWN)
+	if _here() != TOWN:
+		return
+	await _wait_for_day()
+	for visit in 2:
+		var before := _coin()
+		var gems := _gems()
+		await main._tour(Vector2i(4, 4))
+		await _settle()
+		await main._tour(Vector2i(4, 5))
+		await _settle()
+		while int(main._facing) != 1:
+			await main._press("right")
+		await main._press("up")
+		await _settle()
+		await _travel(TOWN)
+		_book("rewards", before)
+		_gem_ledger["rewards"] = int(_gem_ledger.get("rewards", 0)) + _gems() - gems
+		if visit == 0 and [0x4A97, 0x4A98, 0x4A99, 0x4A9A].any(func(a): return main._vm.read_byte(a) == 254):
+			await _summoned()
+	var flags := []
+	for a in [0x4ABB, 0x4AA7, 0x4AC2, 0x4AB0, 0x4A97, 0x4A9B, 0x4AB2, 0x4AB7, 0x4AB6, 0x4AB3, 0x4AB5, 0x4A98, 0x4A99, 0x4A9A, 0x4ABE]:
+		flags.append("%X=%d" % [a, main._vm.read_byte(a)])
+	print("   commission flags: %s" % " ".join(flags))
+
+
+## A summons inside City Hall (the clerk sets 254: Cadorna 0x4A97 east, his pouch 0x4A98
+## and Lord Urslingen 0x4A99 south, the council 0x4A9A): back in, to that room's event
+## (City Hall's events 5-8; 9 is the guard who turns the uninvited away).
+func _summoned() -> void:
+	var want := {0x4A97: 5, 0x4A98: 6, 0x4A99: 7, 0x4A9A: 8}
+	await main._tour(Vector2i(4, 4))
+	await _settle()
+	await main._tour(Vector2i(4, 5))
+	await _settle()
+	while int(main._facing) != 1:
+		await main._press("right")
+	await main._press("up")
+	await _settle()
+	if _here() != "3:8":
+		_issue("summoned to City Hall but not inside (%s)" % _here())
+		return
+	var map: GeoMap = main._maps[main._map_index].map
+	for addr in want:
+		if main._vm.read_byte(addr) != 254:
+			continue
+		var at := Vector2i(-1, -1)
+		for y in GeoMap.SIZE:
+			for x in GeoMap.SIZE:
+				if map.flag(x, y) & 127 == want[addr] and at.x < 0:
+					at = Vector2i(x, y)
+		print("   summoned (0x%X): to City Hall's event %d at %s" % [addr, want[addr], at])
+		if at.x >= 0:
+			await main._tour(at)
+			await _settle()
+		if main._vm.read_byte(addr) != 255:
+			_issue("City Hall summons 0x%X not answered at %s" % [addr, str(at)])
+	if _here() == "3:8":
+		await _travel(TOWN)
 
 
 func _load(name: String) -> void:
