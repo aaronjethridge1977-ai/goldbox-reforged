@@ -484,7 +484,7 @@ func _tour(goal: Vector2i) -> void:
 		if _pos == goal:
 			return
 		steps += 1
-		if steps > 40:
+		if steps > 150:
 			print("   gave up on %s" % goal)
 			return
 		var path := _find_path(_pos, goal)
@@ -505,6 +505,10 @@ func _tour(goal: Vector2i) -> void:
 			return
 		while await _auto_handle():
 			await get_tree().process_frame
+		if _pos == before and _door_retry:
+			# A locked door that didn't open this time: try it again (the tries are counted).
+			_door_retry = false
+			continue
 		if _pos == before and area_before == "%d:%d" % [_vm_file, _vm_block]:
 			# The square ahead turned the party back (a guarded door, a refusal): go round it.
 			_refused["%d:%d,%d,%d" % [_map_index, before.x, before.y, d]] = true
@@ -575,10 +579,18 @@ func _auto_handle() -> bool:
 			await _press("e")
 		return true
 	if _door_options != "":
-		if "B" in _door_options:
-			print("   LOCKED -> B")
-			await _press("b")
-			return true
+		# A player sends the thief first, then Knock, then bashes; each can be tried again,
+		# as in the original (a few tries a door, then gives up).
+		var key := "%d,%d,%d,%d" % [_map_index, _pos.x, _pos.y, _door_side]
+		var tries: int = _door_tries.get(key, 0)
+		_door_tries[key] = tries + 1
+		if tries < 6:
+			for c in ["P", "K", "B"]:
+				if c in _door_options:
+					print("   LOCKED -> %s (try %d)" % [c, tries + 1])
+					_door_retry = true
+					await _press(c.to_lower())
+					return true
 		await _press("e")
 		_auto_gave_up = true
 		return true
@@ -1280,6 +1292,10 @@ func _locked_door(direction: int) -> void:
 	for c in _door_options:
 		line += " " + words[c]
 	_message.text = line
+
+
+var _door_retry := false
+var _door_tries := {}   # the tour's tries at each locked door (map,x,y,side)
 
 
 func _knock_caster() -> PartyMember:

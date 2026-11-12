@@ -49,12 +49,13 @@ checkpoint slums
 town
 travel 2:20
 explore 16
-# The clerk pays for the Slums after 25 won fights there (0x4ABB becomes 254).
-grind 4ABB 254
+# (Chat 10: no grind. Resting in the Slums brings no patrols; the 25 wins that clear them,
+# 0x4ABB, come from the set fights still waiting, after Kuto's Well.)
 checkpoint slums2
-level 3
-explore
-checkpoint slums3
+# Ohlo's errand: the booth in the rope guild (SPEAK, OHLO), then the potion to Ohlo (GIVE).
+tour 14,11
+tour 15,12
+tour 11,9
 town
 
 log 3. Sokal Keep by boat: the harbor master (event 2, 11,1), SOKAL, then the pier's end (event 1, 15,1)
@@ -62,6 +63,7 @@ answers 1
 tour 11,1
 tour 15,1
 expect 4:21
+checkpoint sokal0
 explore
 checkpoint sokal
 travel 3:0
@@ -73,7 +75,17 @@ explore
 checkpoint kuto
 town
 
+log The Slums' trolls and ogres (16), at level 3 or more
+travel 2:20
+explore
+checkpoint slums3
+town
+
 log 5. Mendor's library and the garden (2:15)
+# Strategy change 4: a mirror for each front-liner against the basilisk (General Items,
+# New Phlan event 19, 15,8), and more arrows (arms and armour, 13,8).
+shop 15,8 | 0 Mirror | 1 Mirror | 2 Mirror | 3 Mirror | 4 Mirror | 5 Mirror
+shop 13,8 | 4 10 Arrow | 4 10 Arrow
 travel 2:15
 explore
 checkpoint library

@@ -191,6 +191,8 @@ func _do(line: String) -> void:
 		"inn":
 			_want = "inn"
 			var a := w[1].split(",")
+			if main._pos == Vector2i(int(a[0]), int(a[1])):
+				await _step_off()
 			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
@@ -402,7 +404,7 @@ func _hook() -> bool:
 			if m.npc >= 128:
 				continue
 			for it in m.items.duplicate():
-				if not it.readied and not _keeper(it) and it.price >= 2:
+				if not it.readied and not _keeper(it) and not _missile_kit(m, it) and it.price >= 2:
 					m.items.erase(it)
 					m.receive_gold(CharacterSheet._sale_price(it))
 					gear += CharacterSheet._sale_price(it)
@@ -511,7 +513,8 @@ func _hook() -> bool:
 			await main._press(str(items.find("RUN") + 1))
 			return true
 	if main._vm.state == EclVM.State.MENU and ((_want == "train" and main._message.text.contains("WANT TO TRAIN")) \
-			or (_want in ["sell", "shop"] and main._message.text.contains("SHOW YOU OUR WARES")) \
+			or (_want in ["sell", "shop"] and (main._message.text.contains("SHOW YOU OUR WARES") \
+				or main._message.text.contains("CAN I SHOW YOU SOMETHING") or main._message.text.contains("SEE OUR SELECTION"))) \
 			or (_want == "temple" and main._message.text.contains("HEALING"))):
 		await main._press("1")
 		return true
@@ -762,7 +765,14 @@ func _judge_fight(c: Combat, i: int) -> String:
 	if them.is_empty() or spells_left or main._arena:
 		return ""
 	var ratio := _odds(us, them, true)
-	if ratio < 0.2:
+	# Strategy change 9: decide early. A retreat after a hero falls leaves him behind for
+	# good, so while everyone stands the party goes below half odds; once someone is down it
+	# fights on unless the fight is hopeless (below a fifth).
+	var fallen := false
+	for e in c.combatants:
+		if e.team == 0 and e.down and e.who.status in [PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+			fallen = true
+	if ratio < 0.2 or (not fallen and ratio < 0.5):
 		if c.combatants[i].get("judged", "") != "flee":
 			print("   (bot: %s runs, odds %.2f)" % [c.combatants[i].who.name, ratio])
 		c.combatants[i]["judged"] = "flee"
@@ -919,6 +929,29 @@ func _word_ahead() -> String:
 	return ""
 
 
+## How urgently an enemy should be stopped (the Clue Book's "who to hit first"): 3 for a
+## spellcaster, 2 for an archer, a level drainer or a paralyser, else 0.
+func _threat(w: PartyMember) -> int:
+	var up := w.name.to_upper()
+	for word in ["MU", "MAGE", "MAGIC", "CLERIC", "SHAMAN", "PRIEST", "WIZARD", "SORCER"]:
+		if (" " + up + " ").contains(" " + word + " ") or up.begins_with(word):
+			return 3
+	for s in w.memorized:
+		if s > 0:
+			return 3
+	for word in ["WIGHT", "WRAITH", "SPECTRE", "VAMPIRE", "GHOUL", "GHAST", "THRI-KREEN", "BASILISK", "MEDUSA"]:
+		if up.contains(word):
+			return 2
+	var types: ItemTypes = main._types
+	for it in w.items:
+		if it.readied and types.slot(it.type) == ItemTypes.SLOT_WEAPON \
+				and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
+			return 2
+	if up.contains("ARCHER"):
+		return 2
+	return 0
+
+
 ## A player's spell for party member i (CombatSpells.party_planner): Sleep or Stinking Cloud
 ## where it catches the most enemies and none of the party; Hold Person on the strongest;
 ## Bless before the fight closes; Cure Light Wounds on whoever is hurt worst; Magic Missile
@@ -983,10 +1016,17 @@ func _plan_spell(cs: CombatSpells, i: int) -> Dictionary:
 			var w: PartyMember = c.combatants[j].who
 			if not id in [10, 23, 49] or (not w.is_large() and (w.raw[0x9F] if w.raw.size() > 0x9F else 0) <= 1):
 				fit.append(j)
+		# Strategy change 6: casters first, then archers, then drainers and paralysers, then
+		# whoever is nearest to falling (the Clue Book's order).
+		fit.sort_custom(func(a, b):
+			var ta := _threat(c.combatants[a].who)
+			var tb := _threat(c.combatants[b].who)
+			return ta > tb or (ta == tb and c.combatants[a].who.hp < c.combatants[b].who.hp))
 		var t := -1
 		for j in fit:
-			if cs.why_not(i, id, c.combatants[j].cell) == "" and (t < 0 or c.combatants[j].who.hp < c.combatants[t].who.hp):
+			if cs.why_not(i, id, c.combatants[j].cell) == "":
 				t = j
+				break
 		if t < 0:
 			continue
 		var picked: Array[int] = [t]
@@ -1056,6 +1096,17 @@ func _travel(goal: String) -> void:
 				if not came.has(e.to):
 					came[e.to] = a
 					queue.append(e.to)
+		if not came.has(goal) and goal == SOKAL and _here() == TOWN:
+			# Sokal Keep is reached by boat: the harbor master (event 2, 11,1), SOKAL, then
+			# the pier's end (event 1, 15,1). The area graph doesn't follow boats.
+			print("   travel 3:0 -> 4:21 by boat")
+			main._tour_answers = ["1"]
+			await main._tour(Vector2i(11, 1))
+			await _settle()
+			await main._tour(Vector2i(15, 1))
+			await _settle()
+			main._tour_answers = []
+			continue
 		if not came.has(goal):
 			_issue("travel: no way from %s to %s" % [_here(), goal])
 			return
@@ -1129,7 +1180,7 @@ func _explore(later: Array) -> void:
 			continue     # a ladder or stair took the party to the area's other map: explore it
 		if deferred.is_empty():
 			break
-		if not _can_train() or trips >= 3:
+		if not _can_train() or trips >= 3 or _hops(TOWN, area) >= 99:
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
 			break
 		trips += 1
@@ -1227,7 +1278,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			if _wiped() or _here() != area:
 				break
 		await _heal_if_low()
-		if not _wiped() and _can_train() and area != TOWN:
+		if not _wiped() and _can_train() and area != TOWN and _hops(TOWN, area) < 99:
 			# Training first: to New Phlan and back, then on with the area.
 			var back: Vector2i = main._pos
 			await _town()
@@ -1247,6 +1298,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 
 
 const TOWN := "3:0"
+const SOKAL := "4:21"
 ## New Phlan's training halls (squares on the town map), the clerk, the temple and the inn.
 ## (Events 16 fighters 8,0, 12 clerics 5,0, 13 magic-users 7,0, 17 thieves 9,0; 6,0 is a sign.
 ## After a hall's question the next two event squares stay quiet (0x4A09), which this order
@@ -1428,7 +1480,7 @@ func _can_train() -> bool:
 			continue
 		purse += m.wealth_copper() + (m.money[5] * 50 + m.money[6] * 500) * 200   # gems and jewellery at a guess
 		for it in m.items:
-			if not it.readied and not _keeper(it):
+			if not it.readied and not _keeper(it) and not _missile_kit(m, it):
 				purse += it.price / 2 * 200     # spare gear the shop buys
 	if purse < 1000 * 200 or purse < _purse_needed:
 		return false     # training costs 1000 gold; the party can't pay it yet
@@ -1460,7 +1512,7 @@ func _town() -> void:
 	for m in main._party:
 		gems += m.money[5] + m.money[6]
 		for it in m.items:
-			if not it.readied and not _keeper(it) and it.price >= 2:
+			if not it.readied and not _keeper(it) and not _missile_kit(m, it) and it.price >= 2:
 				gems += 1
 	var round := ["sell 13,8"] if gems > 0 else []
 	for sq in round + ["temple 2,12"] + HALLS.map(func(h): return "trainat " + h) + ["inn 4,12"]:
@@ -1598,6 +1650,29 @@ func _open_camp() -> bool:
 func _heal() -> void:
 	if _needs_rest() and _rest_rule() == "inn" and not _at_inn and await _rest_safe():
 		return
+	# Cure Light Wounds first, rest for the rest (the guides): cast every cure on the most
+	# hurt, rest just long enough to memorize them again, and repeat while that heals more
+	# than a day's rest would.
+	for round_no in 12:
+		if not _needs_rest() or _wiped():
+			break
+		var cured := _cure_in_camp()
+		if not _needs_rest():
+			break
+		if cured == 0 and round_no > 0:
+			break
+		if not _pick_spells() or not await _open_camp():
+			break
+		var hits := [0]
+		var count := func(): hits[0] += 1
+		main._camp.interrupted.connect(count)
+		await _rest_in_camp(0)
+		main._camp.interrupted.disconnect(count)
+		await _settle()
+		if hits[0] > 0:
+			break
+	if not _needs_rest():
+		return
 	var days := 0
 	var interrupted := 0
 	if _pick_spells():
@@ -1636,6 +1711,29 @@ func _heal() -> void:
 					return
 	if days > 0:
 		print("   rested; %s" % " ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])))
+
+
+## Casts every memorized Cure Light Wounds (3) outside a fight on whoever is most hurt (by at
+## least 4 HP), as the camp's MAGIC menu does. Returns the casts made.
+func _cure_in_camp() -> int:
+	var table := SpellTable.shared(main._game_path)
+	var n := 0
+	for caster in main._party:
+		if caster.status != PartyMember.STATUS_OKAY:
+			continue
+		while caster.memorized.has(3):
+			var worst: PartyMember = null
+			for m in main._party:
+				if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING] \
+						and m.hp_max - m.hp >= 4 and (worst == null or m.hp_max - m.hp > worst.hp_max - worst.hp):
+					worst = m
+			if worst == null:
+				return n
+			var said := SpellCaster.cast_outside(table, caster, 3, main._party, worst, _rng)
+			n += 1
+			_count("cures")
+			print("   camp: %s" % " / ".join(said))
+	return n
 
 
 ## What the bot memorizes, by class and level, in turn: clerics Cure Light Wounds twice to
@@ -1761,6 +1859,16 @@ static func _worth_taking(it: GameItem) -> bool:
 		return true
 	# Plain gear the shop pays for (half its price): training is 1000 gold a level.
 	return it.price >= 20 and it.weight <= 400
+
+
+## A bow, sling, thrown weapon or ammunition its carrier can use: the archer's kit, never
+## sold (the fight readies it itself; out of a fight a melee weapon is in hand).
+func _missile_kit(m: PartyMember, it: GameItem) -> bool:
+	var types: ItemTypes = main._types
+	if it.type == ItemTypes.TYPE_ARROW or it.type == ItemTypes.TYPE_QUARREL:
+		return true
+	return types.slot(it.type) == ItemTypes.SLOT_WEAPON and (m.class_flags & types.class_flags(it.type)) != 0 \
+		and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN) != 0
 
 
 ## Magic and the things a player keeps (scrolls, potions, wands, books...): never sold.
@@ -1913,6 +2021,18 @@ func _load_counters(path: String) -> void:
 	_first_day = d.get("first", {})
 	_trainings = PackedStringArray(d.get("trainings", []))
 	print("== counters carried on from %s" % path)
+
+
+## One step to any open neighbouring square (to walk back onto an event square).
+func _step_off() -> void:
+	for d in DungeonView.DELTA:
+		var n: Vector2i = main._pos + d
+		if n.x < 0 or n.y < 0 or n.x >= GeoMap.SIZE or n.y >= GeoMap.SIZE:
+			continue
+		if main._find_path(main._pos, n).size() == 2:
+			await main._tour(n)
+			await _settle()
+			return
 
 
 ## A rest begun in camp (counted).
