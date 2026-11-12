@@ -1486,8 +1486,8 @@ func _travel_hops(goal: String) -> void:
 				if _here() == before:
 					_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
 				continue
-			if main._pos == Vector2i(best.x, best.y) and _gate_answer != "":
-				await _step_off()
+			if main._pos == Vector2i(best.x, best.y) and (_gate_answer != "" or best.entry == "step"):
+				await _step_off()     # its event runs on stepping onto the square
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
 			_gate_answer = ""
