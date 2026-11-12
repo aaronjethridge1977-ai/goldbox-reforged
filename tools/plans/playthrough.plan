@@ -25,6 +25,12 @@ parley 4:21 A PALE FORM RISES
 # People the Clue Book says not to take along: the library's madman (trouble in town).
 answer 2:15 QUITE MAD|NO
 answer 2:15 DO YOU INSIST HE COME|NO
+# Podol Plaza's tavern (MIX WITH MONSTERS, DRINK HEAVILY, ATTACK, LEAVE): leave.
+answer 1:18 DRINK HEAVILY|LEAVE
+# Cadorna's box: take it unopened (opening it loses the reward and makes him an enemy), and
+# turn down the thieves' offer to copy the seal.
+answer 4:2 SEAL OF THE FAMILY OF CADORNA|TAKE IT UNOPENED
+answer 4:2 DUPLICATE THE SEAL|NO
 
 # The Slums (any room whose fight is won), Sokal Keep (after four patrols), the library
 # (except the garden) and the wilderness: camp.
@@ -104,18 +110,6 @@ explore
 checkpoint podol
 town
 
-log 5b. The library again: the wizard-locked stacks (Knock), searching for the council's books
-travel 2:15
-explore
-search on
-revisit 2 4
-revisit 3 4
-revisit 4 4
-revisit 5 4
-search off
-checkpoint library2
-town
-
 log 7. Cadorna Textile House (4:2): Cadorna's commission (east door of City Hall)
 travel 4:2
 explore
@@ -127,4 +121,17 @@ travel 1:24
 explore
 checkpoint bane
 town
+
+log 8b. The library again, once a magic-user knows Knock: the wizard-locked stacks, searching for the council's books
+travel 2:15
+explore
+search on
+revisit 2 4
+revisit 3 4
+revisit 4 4
+revisit 5 4
+search off
+checkpoint library2
+town
+
 stop

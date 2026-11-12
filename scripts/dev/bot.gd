@@ -1837,10 +1837,10 @@ func _cure_in_camp() -> int:
 ## What the bot memorizes, by class and level, in turn: clerics Cure Light Wounds twice to
 ## a Bless; Hold Person; Prayer. Magic-users Sleep and Magic Missile; Stinking Cloud;
 ## Fireball, Haste, Lightning Bolt.
-## A magic-user's new spell at training, in order of want: Magic Missile, Sleep, Knock (the
-## library's wizard-locked doors), Stinking Cloud, Invisibility, Mirror Image, Fireball,
+## A magic-user's new spell at training, in order of want: Knock (the
+## library's wizard-locked doors), Magic Missile, Sleep, Stinking Cloud, Invisibility, Mirror Image, Fireball,
 ## Haste, Lightning Bolt, Hold Person, Dispel Magic, Slow.
-const LEARN_ORDER := [15, 21, 31, 34, 30, 32, 47, 48, 51, 49, 46, 55]
+const LEARN_ORDER := [31, 15, 21, 34, 30, 32, 47, 48, 51, 49, 46, 55]
 const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [31, 34, 32], [47, 48, 51]]]
 
 
