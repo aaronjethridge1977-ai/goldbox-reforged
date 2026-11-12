@@ -545,7 +545,9 @@ func _hook() -> bool:
 		# The same question again and again (a script that puts the party back outside, and the
 		# walk going straight back in): stop the walk.
 		var ask: String = "%s %s|" % [_here(), main._pos] + main._message.text.strip_edges().left(80) + "|" + " ".join(items)
-		if "ATTACK" in items or "LEAVE" in items or "TALK" in items:
+		# (Any way out counts: "LEAVE IT" at Kovel Mansion's trapped cabinet, chat 10, where
+		# EXAMINE / LEAVE over and over set the gas trap off until the party died.)
+		if "ATTACK" in items or "TALK" in items or items.any(func(x): return String(x).begins_with("LEAVE")):
 			_asked[ask] = int(_asked.get(ask, 0)) + 1
 		if int(_asked.get(ask, 0)) > 3:
 			main.tour_stop = true
