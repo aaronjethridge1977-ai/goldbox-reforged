@@ -1397,17 +1397,39 @@ func _travel_hops(goal: String) -> void:
 		# Breadth first over areas. From here only the ways out the party can walk to now
 		# (a band of the wilderness is split by the poisoned river: arriving on its west side
 		# from Podol Plaza, its east edge can't be reached).
+		# Nodes are an area and, in a wilderness band, the part of it the party is in (the
+		# river splits them): learned arrivals say which part an exit leads to.
 		var open_here := _open_exits()
-		var came := {_here(): ""}
-		var queue := [_here()]
+		var start := _here() + "#" + str(_part_now())
+		var came := {start: ""}
+		var via := {}
+		var queue := [start]
+		var reached := ""
 		while not queue.is_empty():
-			var a: String = queue.pop_front()
+			var node: String = queue.pop_front()
+			var a: String = node.get_slice("#", 0)
+			var part := int(node.get_slice("#", 1))
 			if a == goal:
+				reached = node
 				break
-			for e in (open_here if a == _here() else _exits.get(a, [])):
-				if not came.has(e.to):
-					came[e.to] = a
-					queue.append(e.to)
+			for e in (open_here if node == start else _exits.get(a, [])):
+				if node != start and part >= 0 and _part_of(a, Vector2i(e.x, e.y)) not in [part, -1]:
+					continue
+				var nxt: String = e.to + "#" + str(_arrival_part(a, e))
+				if not came.has(nxt):
+					came[nxt] = node
+					via[nxt] = e
+					queue.append(nxt)
+		if reached != "":
+			var n2 := reached
+			while came[n2] != start:
+				n2 = came[n2]
+			came = {_here(): ""}
+			came[goal] = "x"
+			_first_hop = n2.get_slice("#", 0)
+		else:
+			came = {_here(): ""}
+			_first_hop = ""
 		if not came.has(goal) and goal == SOKAL and _here() == TOWN:
 			# Sokal Keep is reached by boat: the harbor master (event 2, 11,1), SOKAL, then
 			# the pier's end (event 1, 15,1). The area graph doesn't follow boats.
@@ -1422,9 +1444,7 @@ func _travel_hops(goal: String) -> void:
 		if not came.has(goal):
 			_issue("travel: no way from %s to %s" % [_here(), goal])
 			return
-		var next := goal
-		while came[next] != _here():
-			next = came[next]
+		var next := _first_hop
 		# The nearest open way out to `next`.
 		var map: GeoMap = main._maps[main._map_index].map
 		var best := {}
@@ -1485,6 +1505,9 @@ func _travel_hops(goal: String) -> void:
 			_issue("travel: the way out at %d,%d didn't lead to %s; trying another" % [best.x, best.y, next])
 			_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
 			continue
+		if BANDS.has(_here()):
+			# Learn which part of the band this way in arrives in.
+			_arrivals["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = _part_now()
 		if goal != TOWN and not _at_inn:
 			await _heal_if_low()
 
@@ -2326,6 +2349,9 @@ var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
 var _first_day := {}      # area -> game day first entered
 var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
 var _mark := -1           # the party's coins at the last ledger entry
+var _first_hop := ""             # the area travel heads for next
+var _arrivals := {}             # "from x,y dir" -> where in the band an exit arrived (learned)
+var _parts := {}                # band "set:block" -> {Vector2i: part id} (river-split parts)
 var _gate_picks: Array = []     # menu choices (1-based) on the way through the exit being used
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
@@ -2719,3 +2745,57 @@ func _top_level(m: PartyMember) -> int:
 	for x in m.raw.slice(0x96, 0x9E):
 		top = maxi(top, x)
 	return top
+
+
+## Wilderness bands: the parts the poisoned river and water split them into (flood fill with
+## the walk's own rules). -1 when not a band or unknown.
+const BANDS := {"6:25": 0, "7:26": 1, "8:27": 2}
+
+func _part_of(area: String, at: Vector2i) -> int:
+	if not BANDS.has(area):
+		return 0
+	if not _parts.has(area):
+		var ov = main._vm.overland
+		if ov == null:
+			return -1
+		var bx: int = ov.band_x(BANDS[area])
+		var label := {}
+		var id := 0
+		for y in OverlandMap.HEIGHT:
+			for x in 16:
+				var p := Vector2i(x, y)
+				if label.has(p) or not _walkable(ov, bx, p):
+					continue
+				var stack: Array[Vector2i] = [p]
+				label[p] = id
+				while not stack.is_empty():
+					var c: Vector2i = stack.pop_back()
+					for d in 4:
+						var q: Vector2i = c + DungeonView.DELTA[d]
+						if q.x < 0 or q.x > 15 or q.y < 0 or q.y >= OverlandMap.HEIGHT or label.has(q):
+							continue
+						if _walkable(ov, bx, q):
+							label[q] = id
+							stack.append(q)
+				id += 1
+		_parts[area] = label
+	return int(_parts[area].get(at, -1))
+
+
+func _walkable(ov, bx: int, p: Vector2i) -> bool:
+	var v: int = ov.value(p.x + bx, p.y)
+	return not (OverlandMap.water(v) or (OverlandMap.river(v) and main._vm.read_byte(0x4AA2) == 0))
+
+
+func _part_now() -> int:
+	if not main._vm.on_overland:
+		return 0
+	return _part_of(_here(), _overland_at())
+
+
+## The part of the destination an exit arrives in: learned, else unknown (-1, any).
+func _arrival_part(from: String, e: Dictionary) -> int:
+	if not BANDS.has(e.to):
+		return 0
+	var key := "%s %d,%d %d" % [from, e.x, e.y, e.dir]
+	return int(_arrivals.get(key, -1))
