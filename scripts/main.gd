@@ -373,6 +373,11 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "ending":                 # ending: plays the end-of-game screens
 			_vm.program = 8
 			_run_program()
+		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
+			var scr: GameScreen = _shop._scr if _shop.visible else _screen
+			if scr != null and scr.img != null:
+				scr.img.save_png(n.trim_prefix("screen="))
+			continue
 		elif n == "cells":                  # cells: where everyone stands in the fight on screen
 			print("   distance %d, party square %d,%d facing %d" % [_combat._distance, _combat._px, _combat._py, _combat._facing])
 			for k in 3:
@@ -1760,7 +1765,16 @@ func _on_party_menu_closed() -> void:
 ## Opens the shop for the script's TREASURE item list.
 func _open_shop() -> void:
 	var list_id: int = _vm.treasure[_vm.treasure.size() - 1] if not _vm.treasure.is_empty() else 255
-	_shop.open(_item_list(list_id), _party)
+	var stock := _item_list(list_id)
+	# As the original's shop lists them (lab, chat 10, New Phlan's arms shop): names built
+	# from the name words, plural with the count ("4 DARTS", the record says "4 Dart"), and
+	# a price of 0 shown as 1 ("10 ARROWS 1", "4 DARTS 1").
+	var names := ItemNames.shared(_game_path)
+	for it in stock:
+		it.name = names.name_of(it)
+		if it.price == 0:
+			it.price = 1
+	_shop.open(stock, _party)
 
 
 ## A TREASURE item list: an ITEM<n>.DAX block (this area's file first), in reverse of

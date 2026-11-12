@@ -539,7 +539,7 @@ func _hook() -> bool:
 					m.receive_gold(CharacterSheet._sale_price(it))
 					gear += CharacterSheet._sale_price(it)
 		print("   sold spare gear for %d gold" % gear)
-		shop._mode = "buy"
+		shop._mode = "menu"
 		shop._exit()
 		return true
 	if _want == "shop" and main._shop.visible:

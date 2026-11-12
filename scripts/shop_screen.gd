@@ -1,10 +1,17 @@
 class_name ShopScreen
 extends Control
-## The shop: the original's BUY VIEW POOL APPRAISE EXIT with modern controls.
-##   Up/Down or mouse: choose an item    Enter or double-click / BUY: buy it
-##   Left/Right: change buyer             P / POOL: gather the party's coins to the buyer
-##   V / VIEW: the buyer's sheet, whose item menu offers SELL (CharacterSheet.in_shop)
-##   A / APPRAISE: the buyer's gems and jewellery, one at a time, as the original (lab and
+## The shop, as the original shows it (Jeremy, 2026-11-12: every screen matches the original;
+## additions go on top as overlays). Two levels, as the lab showed them in New Phlan's arms shop:
+##   the adventure screen (view, party list, text box) with BUY VIEW POOL APPRAISE EXIT; the
+##     party list's selected member is the buyer (Up/Down);
+##   BUY: a page headed SHOP, 19 items a page (name, price in gold at column 30), the selected
+##     one white and the rest light green, menu "ITEMS: BUY NEXT PREV EXIT". It opens a line in,
+##     on the second item (HAND AXE; PREV shows BATTLE AXE, the first); NEXT and PREV turn a
+##     page (the last page ends on the last item).
+##   Menus as everywhere: the hot letter, or Left/Right and Enter.
+##   VIEW: the buyer's sheet, whose item menu offers SELL (CharacterSheet.in_shop)
+##   POOL: the party's coins to the buyer
+##   APPRAISE: the buyer's gems and jewellery, one at a time, as the original (lab and
 ##     GAME.OVR 0x26680, chat 8): "YOU HAVE A FINE COLLECTION OF:" n GEMS / n PIECES OF
 ##     JEWELRY, then GEMS JEWELRY EXIT; each appraised piece leaves the count, "THE GEM IS
 ##     VALUED AT n GP." (or JEWEL), then SELL (whole platinum for it, n / 5: the original
@@ -13,100 +20,59 @@ extends Control
 ##     jewellery 100 + Random(900) (1-10), 200 + Random(1000) (-20), 300 + Random(1500)
 ##     (-40), 500 + Random(2500) (-50), 1000 + Random(5000) (-70), 2000 + Random(6000)
 ##     (-90), 2000 + Random(10000).
-##   Esc / EXIT: leave
 ## Prices are in gold; the buyer pays from all their coins and the change is regrouped
 ## into the largest coins (checked against the original: 140 gold - 80 = 12 platinum).
+## Not yet as the original: its shop keeps no change under a gold piece (lab, chat 10:
+## 144 silver and 2 platinum paying 1 gold left 3 platinum, 1 gold); one case so far.
+## Not yet checked: the original's words after a purchase or when the money is short.
 
 signal closed
+
+const PAGE := 19
+const MENU := ["BUY", "VIEW", "POOL", "APPRAISE", "EXIT"]
+const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]
 
 var _items: Array[GameItem] = []
 var _party: Array[PartyMember] = []
 var _buyer := 0
-
-var _list: Tree
-var _who: Label
-var _note: Label
 ## The character sheet main uses, for VIEW (set by main).
 var sheet: CharacterSheet
-var _mode := "buy"       # buy, appraise (the collection), value (SELL / KEEP)
+var _mode := "menu"      # menu, list, appraise (the collection), value (SELL / KEEP)
 var _value := 0
 var _jewel := false
 var _rng := RandomNumberGenerator.new()
+var _cursor := 1         # the selected item
+var _top := 1            # the first item on the page
+var _pick := 0           # the highlighted menu item
+var _note := Label.new() # the text box's message (kept as a Label: the bot reads .text)
+var _scr: GameScreen
 
 
-func open(items: Array[GameItem], party: Array[PartyMember], title: String = "SHOP") -> void:
+func _init() -> void:
+	_note.visible = false
+	add_child(_note)
+
+
+func open(items: Array[GameItem], party: Array[PartyMember], _title: String = "SHOP") -> void:
 	_items = items
 	_party = party
 	_buyer = 0
-	_mode = "buy"
+	_mode = "menu"
+	_pick = 0
+	_note.text = ""
+	_cursor = mini(1, maxi(items.size() - 1, 0))
+	_top = _cursor
 	_rng.randomize()
-	_build(title)
-	_refresh()
+	if _scr == null:
+		_fill(self, 0)
+		var bg := ColorRect.new()
+		bg.color = Color.BLACK
+		_fill(bg, 0)
+		add_child(bg)
+		_scr = GameScreen.new()
+		add_child(_scr)
 	visible = true
-	_list.grab_focus()
-	# The original opens its list a line in, on the second item (lab, chat 10: New Phlan's
-	# arms shop shows HAND AXE first and selected; PREV brings BATTLE AXE, the first, into
-	# view). Checked in that one shop.
-	var root := _list.get_root()
-	if root != null and root.get_child_count() > 0:
-		root.get_child(mini(1, root.get_child_count() - 1)).select(0)
-
-
-func _build(title: String) -> void:
-	for c in get_children():
-		c.queue_free()
-	_fill(self, 0)
-	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.08, 0.97)
-	_fill(bg, 0)
-	add_child(bg)
-	var box := VBoxContainer.new()
-	_fill(box, 0)
-	box.offset_left = 48
-	box.offset_right = -48
-	box.offset_top = 24
-	box.offset_bottom = -24
-	box.add_theme_constant_override("separation", 12)
-	add_child(box)
-	var head := Label.new()
-	head.text = title
-	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	head.add_theme_font_size_override("font_size", 28)
-	box.add_child(head)
-	_list = Tree.new()
-	_list.columns = 2
-	_list.hide_root = true
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.set_column_expand(0, true)
-	_list.set_column_expand(1, false)
-	_list.set_column_custom_minimum_width(1, 140)
-	_list.add_theme_font_size_override("font_size", 20)
-	_list.item_activated.connect(_buy)
-	box.add_child(_list)
-	_who = Label.new()
-	_who.add_theme_font_size_override("font_size", 20)
-	box.add_child(_who)
-	_note = Label.new()
-	_note.add_theme_font_size_override("font_size", 18)
-	_note.modulate = Color(1, 0.85, 0.4)
-	box.add_child(_note)
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 16)
-	box.add_child(buttons)
-	for spec in [["◀", _prev_buyer], ["BUY", _buy], ["VIEW", _view], ["POOL", _pool], ["APPRAISE", _appraise],
-			["▶", _next_buyer], ["EXIT", _exit]]:
-		var b := Button.new()
-		b.text = spec[0]
-		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_size_override("font_size", 20)
-		b.pressed.connect(spec[1])
-		buttons.add_child(b)
-	var look := OverlayLook.new()
-	look.head = head
-	look.bodies = [_list, _who]
-	look.note = _note
-	look.menu = buttons
-	add_child(look)
+	_refresh()
 
 
 ## Stretches a control over its parent. (set_anchors_preset alone keeps the control's
@@ -123,30 +89,50 @@ static func _fill(c: Control, margin: int) -> void:
 
 
 func _refresh() -> void:
-	_list.clear()
-	var root := _list.create_item()
-	var member: PartyMember = _party[_buyer] if not _party.is_empty() else null
-	var wealth := member.wealth_copper() if member else 0
-	for it in _items:
-		var row := _list.create_item(root)
-		row.set_text(0, it.name)
-		row.set_text(1, str(it.price))
-		row.set_text_alignment(1, HORIZONTAL_ALIGNMENT_RIGHT)
-		if it.price * 200 > wealth:
-			row.set_custom_color(0, Color(0.55, 0.55, 0.55))
-			row.set_custom_color(1, Color(0.55, 0.55, 0.55))
-	if member:
-		_who.text = "Buyer: %s   %s   (worth %d gold)   encumbrance %d" % [
-			member.name, member.money_text(), wealth / 200, member.encumbrance()]
-	else:
-		_who.text = "No party loaded."
+	if _scr == null:
+		return
+	if _mode == "list":
+		_draw_list()
+		return
+	var menu: Array = MENU
+	if _mode == "appraise":
+		menu = ["GEMS", "JEWELRY", "EXIT"]
+	elif _mode == "value":
+		menu = ["SELL", "KEEP"]
+	var lines := PackedStringArray()
+	for l in _note.text.split("\n"):
+		lines.append_array(GameScreen.wrap(l, 38))
+	_scr.draw_walk(OverlayLook.last_view, _party, _buyer, "", lines, menu,
+		false, false, _pick)
+
+
+func _draw_list() -> void:
+	_scr.clear()
+	for c in 40:
+		_scr.tile(c, 0, 22)
+		_scr.tile(c, 23, 22)
+	for r in range(1, 23):
+		_scr.tile(0, r, 21)
+		_scr.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		_scr.tile(p.x, p.y, 20)
+	_scr.text(17, 1, "SHOP", GameScreen.WHITE)     # (lab: x 136, not centred)
+	for i in PAGE:
+		var k := _top + i
+		if k >= _items.size():
+			break
+		var it := _items[k]
+		var color := GameScreen.WHITE if k == _cursor else GameScreen.GREEN
+		_scr.text(1, 4 + i, it.name.to_upper().left(26), color)
+		var price := str(it.price)
+		_scr.text(31 - price.length(), 4 + i, price, color)
+	_scr.text(0, 24, "ITEMS:", 13)
+	_scr.menu_line(24, LIST_MENU, 7, _pick)
+	_scr.update()
 
 
 func _selected_index() -> int:
-	var sel := _list.get_selected()
-	if sel == null:
-		return -1
-	return sel.get_index()
+	return _cursor if _cursor >= 0 and _cursor < _items.size() else -1
 
 
 func _buy() -> void:
@@ -156,12 +142,12 @@ func _buy() -> void:
 	var it := _items[i]
 	var member := _party[_buyer]
 	if not member.pay_gold(it.price):
-		_note.text = "%s can't afford the %s (%d gold). POOL gathers the party's money." % [member.name, it.name, it.price]
+		_note.text = "NOT ENOUGH MONEY."
+		_refresh()
 		return
 	member.items.append(it.copy())
-	_note.text = "%s bought the %s." % [member.name, it.name]
+	_note.text = ""
 	_refresh()
-	_reselect(i)
 
 
 func _pool() -> void:
@@ -174,40 +160,44 @@ func _pool() -> void:
 		for c in 5:
 			to.money[c] += m.money[c]
 			m.money[c] = 0
-	_note.text = "The party's money is pooled with %s." % to.name
-	var i := _selected_index()
 	_refresh()
-	_reselect(i)
-
-
-func _prev_buyer() -> void:
-	_change_buyer(-1)
-
-
-func _next_buyer() -> void:
-	_change_buyer(1)
 
 
 func _change_buyer(step: int) -> void:
 	if _party.is_empty():
 		return
 	_buyer = (_buyer + step + _party.size()) % _party.size()
-	var i := _selected_index()
 	_note.text = ""
 	_refresh()
-	_reselect(i)
 
 
 func _reselect(i: int) -> void:
-	var root := _list.get_root()
-	if root == null or i < 0 or i >= root.get_child_count():
+	if i < 0 or i >= _items.size():
 		return
-	root.get_child(i).select(0)
+	_cursor = i
+	if _cursor < _top or _cursor >= _top + PAGE:
+		_top = clampi(_cursor, 0, maxi(_items.size() - PAGE, 0))
+	_refresh()
+
+
+func _page(step: int) -> void:
+	if step > 0:
+		_top = mini(_top + PAGE, maxi(_items.size() - PAGE, 0))
+	else:
+		_top = maxi(_top - PAGE, 0)
+	_cursor = _top
+	_refresh()
+
+
+func _move(step: int) -> void:
+	var c := clampi(_cursor + step, 0, maxi(_items.size() - 1, 0))
+	_reselect(c)
 
 
 func _exit() -> void:
-	if _mode != "buy":
-		_mode = "buy"
+	if _mode != "menu":
+		_mode = "menu"
+		_pick = clampi(_pick, 0, MENU.size() - 1)
 		_note.text = ""
 		_refresh()
 		return
@@ -216,7 +206,7 @@ func _exit() -> void:
 
 
 func _view() -> void:
-	if sheet == null or _party.is_empty() or _mode != "buy":
+	if sheet == null or _party.is_empty() or _mode != "menu":
 		return
 	if not sheet.closed.is_connected(_after_view):
 		sheet.closed.connect(_after_view)
@@ -225,10 +215,7 @@ func _view() -> void:
 
 func _after_view() -> void:
 	if visible:
-		var i := _selected_index()
 		_refresh()
-		_reselect(i)
-		_list.grab_focus()
 
 
 # --- APPRAISE -----------------------------------------------------------------------------
@@ -238,7 +225,7 @@ func _appraise() -> void:
 		return
 	var m := _party[_buyer]
 	if m.money[5] == 0 and m.money[6] == 0:
-		_mode = "buy"
+		_mode = "menu"
 		_note.text = "NO GEMS OR JEWELRY"
 		return
 	_mode = "appraise"
@@ -252,8 +239,9 @@ func _show_collection() -> void:
 		lines.append("%d GEM%s" % [m.money[5], "" if m.money[5] == 1 else "S"])
 	if m.money[6] > 0:
 		lines.append("%d PIECE%s OF JEWELRY" % [m.money[6], "" if m.money[6] == 1 else "S"])
-	lines.append("APPRAISE :   G GEMS   J JEWELRY   E EXIT")
 	_note.text = "\n".join(lines)
+	_pick = 0
+	_refresh()
 
 
 ## Appraises one gem (or piece of jewellery): it leaves the count and is valued.
@@ -266,7 +254,9 @@ func appraise_one(jewel: bool) -> int:
 	_jewel = jewel
 	_value = jewel_value(_rng) if jewel else gem_value(_rng)
 	_mode = "value"
-	_note.text = "THE %s IS VALUED AT %d GP.\nYOU CAN : S SELL   K KEEP" % ["JEWEL" if jewel else "GEM", _value]
+	_note.text = "THE %s IS VALUED AT %d GP." % ["JEWEL" if jewel else "GEM", _value]
+	_pick = 0
+	_refresh()
 	return _value
 
 
@@ -304,7 +294,7 @@ func settle(sell: bool) -> void:
 		_mode = "appraise"
 		_show_collection()
 	else:
-		_mode = "buy"
+		_mode = "menu"
 		_note.text = ""
 	_refresh()
 
@@ -326,40 +316,59 @@ static func appraised_item(jewel: bool, value: int) -> GameItem:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed():
+	if not visible or not event.is_pressed() or not event is InputEventKey:
 		return
-	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-	if _mode == "appraise":
-		if key == KEY_G:
-			appraise_one(false)
-		elif key == KEY_J:
-			appraise_one(true)
-		elif key == KEY_E or event.is_action("ui_cancel"):
-			_exit()
+	var key := (event as InputEventKey).keycode
+	var items: Array = MENU
+	match _mode:
+		"list": items = LIST_MENU
+		"appraise": items = ["GEMS", "JEWELRY", "EXIT"]
+		"value": items = ["SELL", "KEEP"]
+	var choice := ""
+	if key == KEY_ENTER or key == KEY_KP_ENTER:
+		choice = items[_pick]
+	elif key == KEY_LEFT or key == KEY_RIGHT:
+		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
-		get_viewport().set_input_as_handled()
-		return
-	if _mode == "value":
-		if key == KEY_S:
-			settle(true)
-		elif key == KEY_K:
-			settle(false)
-		get_viewport().set_input_as_handled()
-		return
-	if event.is_action("ui_cancel") or key == KEY_E:
-		_exit()
-	elif key == KEY_B:
-		_buy()      # the original's menu letters: B(UY), E(XIT) (lab, chat 10)
-	elif key == KEY_V:
-		_view()
-	elif key == KEY_A:
-		_appraise()
-	elif event.is_action("ui_left"):
-		_prev_buyer()
-	elif event.is_action("ui_right"):
-		_next_buyer()
-	elif event is InputEventKey and (event as InputEventKey).keycode == KEY_P:
-		_pool()
+	elif key == KEY_UP or key == KEY_DOWN:
+		var step := 1 if key == KEY_DOWN else -1
+		if _mode == "list":
+			_move(step)
+		elif _mode == "menu":
+			_change_buyer(step)
+	elif key == KEY_ESCAPE:
+		choice = "EXIT"
 	else:
-		return
+		for it in items:
+			if String(it).unicode_at(0) == key:
+				choice = it
 	get_viewport().set_input_as_handled()
+	if choice == "":
+		return
+	# The chosen item stays highlighted, and the index carries over to the next menu
+	# (lab, chat 10: EXIT, the fourth of the list's menu, leaves APPRAISE, the fourth of the
+	# shop's, highlighted).
+	_pick = items.find(choice)
+	match _mode:
+		"menu":
+			match choice:
+				"BUY":
+					_mode = "list"
+					_refresh()
+				"VIEW": _view()
+				"POOL": _pool()
+				"APPRAISE": _appraise()
+				"EXIT": _exit()
+		"list":
+			match choice:
+				"BUY": _buy()
+				"NEXT": _page(1)
+				"PREV": _page(-1)
+				"EXIT": _exit()
+		"appraise":
+			match choice:
+				"GEMS": appraise_one(false)
+				"JEWELRY": appraise_one(true)
+				"EXIT": _exit()
+		"value":
+			settle(choice == "SELL")
