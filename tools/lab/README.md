@@ -143,3 +143,26 @@ others from J:
   tests magic items and strength outside fights.
 - Our engine: `--battle-give=<member>:<item name>` gives a readied item from the game's lists
   before a test battle; `--battle-fight=<seed>:use` has each member use its first usable item.
+
+### Chat 8 additions (the playthrough bot)
+
+- `bot.sh [plan] [args]` runs the bot from a fresh copy of the project (`BOT_ID=a|b|...` gives each
+  run its own copy and its own `user://` folder, so two runs go side by side; `BOT_TIMEOUT` in
+  seconds, default 7200). Logs go wherever you send them (`> data/botNNa.log`). `botstop.sh` stops
+  every run (the engines run inside `botproj_*`, matched by working folder).
+- The bot needs the area graph: `sweep.sh --depth=2`, keep the EXIT lines (strip ` >n`, `sort -u`)
+  in `data/exits.txt`. Boats and the wilderness band's entrance menus aren't in it: the plan walks
+  those (`answers`, `tour x,y`, `expect a:b`).
+- Checkpoints: each `checkpoint <name>` line of the plan saves `user://bot_<name>.cfg` (in
+  `~/.local/share/godot/app_userdata/Gold Box Reforged bot X/`). `--resume=<cfg>:<name>` starts
+  another run from it. They are saves (game data): keep them in the git-ignored lab folder
+  (`data/checkpoints/`; chat 8's set is in the PC's `.lab/tmp/checkpoints_chat8.tgz`).
+- Plan commands added in chat 8: `modify` (every stat 18, 18/00 for fighters), `town` (the clerk,
+  selling gems, jewellery and spare gear, the temple, every training hall, the inn), `grind <hex
+  address> <value>` (camp and fight the interruptions until a script counter reaches the value: the
+  Slums' 0x4ABB = 254), `level <n>` (camp and fight until every player character is level n,
+  training as they qualify), `explore <events to skip>`.
+- `tools/areas.gd` prints each ECL block's first texts (to name areas); `tools/dis.gd <game folder>
+  <ecl file> <block>` prints a block disassembled (`-s res://tools/dis.gd`).
+- Watching a run: `tail -F log | grep --line-buffered ...`; don't put `cut` or `awk` (mawk buffers
+  its input) after it in a Monitor, or nothing arrives.

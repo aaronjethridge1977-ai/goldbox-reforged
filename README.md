@@ -8,7 +8,7 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
 
 ## Status
 
-**M6 (full playthrough) in progress.** The whole game's scripts run (every area, every opcode: `tools/sweep.gd`), with exploration, characters, combat, spells, magic items and monster powers built from the original's own data and code and checked against the original in a test lab (DOSBox beside our engine). `docs/coverage.md` lists every spell, usable item, script opcode and monster power with its state. A playthrough bot (`scripts/dev/bot.gd`) plays a new party through the game headless and logs what goes wrong.
+**M6 (full playthrough) in progress.** The whole game's scripts run (every area, every opcode: `tools/sweep.gd`), with exploration, characters, combat, spells, magic items and monster powers built from the original's own data and code and checked against the original in a test lab (DOSBox beside our engine). `docs/coverage.md` lists every spell, usable item, script opcode and monster power with its state. A playthrough bot (`scripts/dev/bot.gd`) plays a new party through the game headless and logs what goes wrong. At the end of chat 8 it clears the Slums (the clerk pays), Kuto's Well with its catacombs, Podol Plaza, Sokal Keep and Mendor's library; the area south of Podol Plaza and the gate to Valjevo are beyond its level 4 party, and the city's other areas (the graveyard, the buildings entered from outside the walls) still need routes through the wilderness band's menus.
 
 | # | Milestone | |
 |---|-----------|--|
