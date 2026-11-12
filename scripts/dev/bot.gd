@@ -945,12 +945,17 @@ func _monsters_ahead(start: int = -1) -> Array:
 ## Where event `ev` of the current area starts: the on-step entry's ON_GOTO on the event
 ## number (ECL memory 0x9800); -1 if not found.
 func _event_start(ev: int) -> int:
+	# The step script's event table: an ON_GOTO on the square's event number, kept at 0x9800
+	# by most areas and at 0x6E82 by others (the Textile House, the Temple of Bane, Valjevo:
+	# AND 127 of the square's info first). The longest such table is the one.
+	var best := {}
 	for p in main._vm.ecl.instructions:
 		var ins: Dictionary = main._vm.ecl.instructions[p]
-		if ins.op == "ON_GOTO" and int(ins.args[0].value) == 0x9800 and ins.args[0].type in [1, 2, 3, 5, 0x81]:
-			var k: int = 2 + ev
-			if k < ins.args.size():
-				return int(ins.args[k].value) - EclScript.BASE
+		if ins.op in ["ON_GOTO", "ON_GOSUB"] and int(ins.args[0].value) in [0x9800, 0x6E82] \
+				and ins.args[0].type in [1, 2, 3, 5, 0x81] and (best.is_empty() or ins.args.size() > best.args.size()):
+			best = ins
+	if not best.is_empty() and 2 + ev < best.args.size():
+		return int(best.args[2 + ev].value) - EclScript.BASE
 	return -1
 
 
@@ -1008,7 +1013,12 @@ func _event_odds(ev: int) -> float:
 		if first != null:
 			holds += (first.memorized.count(23) + first.memorized.count(49)) * int(row[1])
 	if holds > 0:
+		# HP against damage says nothing about this: one casting can end the fight. Two or
+		# more in the enemy's memory wait until the party's saves are better (every member at
+		# 6th level), one costs the odds a factor.
 		odds /= 1.0 + holds
+		if holds >= 2 and _lowest_level() < 6:
+			odds = minf(odds, 0.5)
 		print("   (event %d: %d Hold Person ahead; odds %.2f)" % [ev, holds, odds])
 	return odds
 
@@ -1424,11 +1434,34 @@ func _prepare() -> void:
 		return
 	# Where the area isn't safe to camp in (the plan's rest lines, from the Clue Book), a
 	# player rests at the inn rather than in monster country.
-	if _rest_rule() == "inn" and await _rest_safe():
-		return
+	if _rest_rule() == "inn":
+		# Every trip to the inn crosses monster country (the Textile House's ghouls), so a
+		# player goes only when worn down: cures from the cleric's memory first, then the
+		# inn when the party is hurt or its spells are mostly spent.
+		_cure_in_camp()
+		if not _worn_down():
+			return
+		if await _rest_safe():
+			return
 	await _memorize()
 	if _needs_rest():
 		await _heal()
+
+
+## Hurt (anyone down, or under 60% of the party's HP) or the casters' spells mostly spent.
+func _worn_down() -> bool:
+	if _hurt():
+		return true
+	var slots := 0
+	var left := 0
+	for m in main._party:
+		if m.status != PartyMember.STATUS_OKAY:
+			continue
+		for c in 2:
+			for l in 3:
+				slots += m.spell_slots[c][l]
+		left += m.memorized.filter(func(x): return x < PartyMember.LEARNING).size()
+	return slots > 0 and left * 2 < slots
 
 
 ## Walks to the inn, rests there and comes back to this square, when town is at most `hops`
@@ -1641,6 +1674,10 @@ func _town() -> void:
 func _heal_if_low() -> void:
 	if _wiped():
 		return
+	if _rest_rule() == "inn" and not _at_inn:
+		_cure_in_camp()
+		if not _worn_down():
+			return
 	for m in main._party:
 		if m.status != PartyMember.STATUS_OKAY or m.hp * 2 < m.hp_max:
 			await _heal()
