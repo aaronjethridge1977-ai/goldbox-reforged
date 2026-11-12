@@ -98,8 +98,19 @@ func run(plan_path: String) -> void:
 				break
 			_retries += 1
 			print("== back to checkpoint %s (try %d)" % [_checkpoint, _retries + 1])
-			_load(_checkpoint)
+			await _load(_checkpoint)
 			_pc = _checkpoint_pc
+			# Jeremy (chat 10): a fight that keeps beating the party means grinding up to one
+			# more level, the most efficient way, before trying again.
+			if _retries % 2 == 0 and _retries <= 6:
+				var area := _here()
+				var goal := _lowest_level() + 1
+				print("== two wipes here: grinding to level %d first (%s)" % [goal, GRIND_AREA])
+				_count("grinds")
+				await _travel(GRIND_AREA)
+				if _here() == GRIND_AREA:
+					await _level_up(goal)
+				await _travel(area)
 	print("\n== PLAYTHROUGH ENDED at plan line %d; %d issues" % [_pc, issues.size()])
 	for i in issues:
 		print("ISSUE ", i)
@@ -202,6 +213,21 @@ func _do(line: String) -> void:
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
 			_book("inn", before)
+			if _want == "inn" and main._message.text.contains("ENOUGH PLATINUM") and not _inn_retry:
+				# Nobody has a platinum piece (the coins went on training). A purchase gives its
+				# change in the largest coins (the original's way), so the richest buys a few
+				# arrows and pays the inn from the change.
+				_want = ""
+				_inn_retry = true
+				var rich := 0
+				for k in main._party.size():
+					if main._party[k].npc < 128 and main._party[k].wealth_copper() > main._party[rich].wealth_copper():
+						rich = k
+				print("   (no platinum for the inn: %s buys arrows for change)" % main._party[rich].name)
+				await _do("shop 13,8 | %d 10 Arrow" % rich)
+				await _do(line)
+				_inn_retry = false
+				return
 			if _want == "inn":
 				_issue("the inn didn't take us (%s); memorizing in camp here" % main._message.text.strip_edges())
 				_want = ""
@@ -1146,6 +1172,24 @@ func _plan_spell(cs: CombatSpells, i: int) -> Dictionary:
 			foes.append(j)
 	if foes.is_empty():
 		return {}
+	# Keep the spells when the fight is already won (a wave fight's next wave, the next event):
+	# the kobolds' first wave at the nomads' camp took eight Hold Persons and every Sleep, and
+	# the last battle found the casters empty (chat 10). Cures still go out.
+	var us: Array[PartyMember] = []
+	var them: Array[PartyMember] = []
+	for e in c.combatants:
+		if e.down:
+			continue
+		if e.team == me.team:
+			us.append(e.who)
+		elif not CombatSpells.held(e.who) and not e.get("fleeing", false):
+			them.append(e.who)
+	var easy := _odds(us, them, true) >= 4.0
+	if easy:
+		var cures: Array[int] = []
+		if 3 in list:
+			cures.append(3)
+		list = cures
 	# Area spells that leave enemies helpless.
 	for id in [21, 34]:
 		if not id in list:
@@ -1504,6 +1548,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 
 
 const TOWN := "3:0"
+## Where the bot grinds a level: Podol Plaza, whose patrols are sized to the party.
+const GRIND_AREA := "1:18"
 const SOKAL := "4:21"
 ## New Phlan's training halls (squares on the town map), the clerk, the temple and the inn.
 ## (Events 16 fighters 8,0, 12 clerics 5,0, 13 magic-users 7,0, 17 thieves 9,0; 6,0 is a sign.
@@ -2182,6 +2228,7 @@ var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley line
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
 var _inn_till_day := false
 var _resting_now := false
+var _inn_retry := false
 var _own_camp := false       # the camp open is the bot's own (ENCAMP), not a script's lodging
 var _travelling := false     # inside _travel    # resting in a script's lodging   # the inn's rest runs on until New Phlan's doors open
 var _last_said := ""
