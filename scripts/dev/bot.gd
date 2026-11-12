@@ -75,7 +75,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -284,6 +284,14 @@ func _do(line: String) -> void:
 				await main._tour(best)
 				await _settle()
 				await _heal_if_low()
+		"exit":
+			# exit <from set:block> <x>,<y> <N|E|S|W> <to set:block>: a map edge the area graph
+			# can't name (scripts that pick the next area from a table: the Temple of Bane).
+			_load_exits()
+			var xy := w[2].split(",")
+			if not _exits.has(w[1]):
+				_exits[w[1]] = []
+			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[3]), "entry": "move", "to": w[4]})
 		"gate":
 			# gate <from set:block> <x>,<y> <to set:block> <choice>: a way between areas that
 			# a menu opens (the band outside the walls: "EASTERN EDGE ... NORTH SOUTH BOAT").

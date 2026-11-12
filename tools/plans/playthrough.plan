@@ -46,6 +46,9 @@ gate 7:26 13,27 3:0 BOAT
 gate 7:26 12,26 4:10 GRAVEYARD
 gate 7:26 11,28 1:18 NORTH
 gate 7:26 11,28 4:2 SOUTH
+# The Temple of Bane's quarter leaves by a table the area graph can't read: its east edge,
+# where the band's eastern gate brings the party in, goes back out to the band.
+exit 1:24 15,4 E 7:26
 # Passing an edge on the way elsewhere: LEAVE (the gate's own choice comes first).
 answer 7:26 EDGE OF THE CITY|LEAVE
 
