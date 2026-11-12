@@ -2178,7 +2178,67 @@ func _event_picture(head: int, id: int) -> Image:
 			img.blit_rect(b, Rect2i(Vector2i.ZERO, b.get_size()), Vector2i(0, 40))
 		return img
 	var p := _find_picture("PIC", id)
-	return p if p != null else img
+	if p == null:
+		return img
+	_start_picture_animation(id)
+	return _anim_frames[0] if _anim_frames.size() > 1 else p
+
+
+# --- Animated event pictures ----------------------------------------------------------------
+# An event's PIC block with several frames animates in the view as in the original: the first
+# frame, then each later one laid over it by XOR (EgaPicture.xor_frames; lab, chat 10: the
+# camp's fire), each shown for its delay (units of about 0.11 s, as the camp fire measured).
+
+var _anim_frames: Array[Image] = []
+var _anim_delays: Array[int] = []
+var _anim_i := 0
+var _anim_timer: Timer
+
+
+func _start_picture_animation(id: int) -> void:
+	_anim_frames = []
+	_anim_delays = []
+	_anim_i = 0
+	if Engine.time_scale > 1.0:
+		return        # the lab's fast runs: no animation
+	var order := [_vm_file]
+	for n in range(1, 9):
+		if n != _vm_file:
+			order.append(n)
+	for n in order:
+		var name := "PIC%d.DAX" % n
+		if not _dax_cache.has(name):
+			_dax_cache[name] = DaxFile.open(_game_path.path_join(name))
+		var dax: DaxFile = _dax_cache[name]
+		if dax != null and dax.blocks.has(id):
+			var pic := EgaPicture.decode_animated(dax.blocks[id])
+			if pic == null or pic.frames.size() < 2:
+				return
+			_anim_frames = EgaPicture.xor_frames(dax.blocks[id])
+			_anim_delays = pic.delays
+			break
+	if _anim_frames.size() < 2:
+		return
+	if _anim_timer == null:
+		_anim_timer = Timer.new()
+		_anim_timer.one_shot = true
+		_anim_timer.timeout.connect(_next_picture_frame)
+		add_child(_anim_timer)
+	_anim_timer.start(_frame_seconds(0))
+
+
+func _frame_seconds(i: int) -> float:
+	return maxf(_anim_delays[i] if i < _anim_delays.size() else 2, 1) * CampScreen.ANIM_UNIT
+
+
+func _next_picture_frame() -> void:
+	if _anim_frames.size() < 2 or not _event_image in _anim_frames:
+		_anim_frames = []
+		return
+	_anim_i = (_anim_i + 1) % _anim_frames.size()
+	_event_image = _anim_frames[_anim_i]
+	_anim_timer.start(_frame_seconds(_anim_i))
+	_show()
 
 
 ## First frame of picture block `id` from PREFIX<n>.DAX, preferring the current script's file.

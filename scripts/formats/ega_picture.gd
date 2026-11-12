@@ -147,7 +147,9 @@ static func _palette_bytes() -> PackedByteArray:
 ## The pictures an animated PIC block shows, in turn: the first frame, then each later
 ## frame laid over it by exclusive-or of the colour numbers (the later frames hold only
 ## what changes). Checked in the lab, chat 10: the camp's fire (PIC 29) as the original
-## draws it is frame 0 XOR frame 1, pixel for pixel. Not for SPRIT blocks (whole frames).
+## draws it is frame 0 XOR frame 1, pixel for pixel. Each later frame goes over the first, not
+## over the one before (laid one on another, the boat's frames, PIC 41, turn to noise).
+## Not for SPRIT blocks (whole frames).
 static func xor_frames(block: PackedByteArray) -> Array[Image]:
 	var out: Array[Image] = []
 	var fr := frame_indices(block)
