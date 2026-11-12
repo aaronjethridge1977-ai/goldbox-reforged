@@ -481,6 +481,7 @@ var _words: PackedStringArray = []   # names and passwords the game has told the
 var _word_try := 0
 var _loot_turn := 0
 var _interrupted := false     # a tour was stopped after a fight that left the party hurt
+var _at_inn := false          # on a trip to the inn and back
 
 
 ## Hurt enough to stop and rest: anyone down, or the party below 60% of its HP.
@@ -930,7 +931,7 @@ func _travel(goal: String) -> void:
 			# only brings more patrols.)
 			if _interrupted:
 				_interrupted = false
-				if goal != TOWN:
+				if goal != TOWN and not _at_inn:
 					await _heal()
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
@@ -944,7 +945,7 @@ func _travel(goal: String) -> void:
 		if _here() == before:
 			_issue("travel: the way out at %d,%d didn't lead to %s" % [best.x, best.y, next])
 			return
-		if goal != TOWN:
+		if goal != TOWN and not _at_inn:
 			await _heal_if_low()
 
 
@@ -1115,20 +1116,22 @@ func _prepare() -> void:
 ## areas away and there is a way back (not Sokal Keep, reached by boat). True if done.
 func _rest_at_inn(hops: int) -> bool:
 	var area := _here()
-	if area == TOWN or _hops(area, TOWN) > hops or _hops(TOWN, area) > hops + 1:
+	if _at_inn or area == TOWN or _hops(area, TOWN) > hops or _hops(TOWN, area) > hops + 1:
 		return false
+	_at_inn = true      # not again from inside the trip (a rest on the way back)
 	var back: Vector2i = main._pos
 	print("   == to the inn to rest")
 	await _travel(TOWN)
-	if _here() != TOWN:
-		return false
-	await _do("inn 4,12")
-	await _travel(area)
-	if _here() != area:
-		return false
-	await main._tour(back)
-	await _settle()
-	return true
+	var ok := _here() == TOWN
+	if ok:
+		await _do("inn 4,12")
+		await _travel(area)
+		ok = _here() == area
+	if ok:
+		await main._tour(back)
+		await _settle()
+	_at_inn = false
+	return ok
 
 
 ## Events still on explore's list for this map (the one underfoot excluded).
@@ -1410,11 +1413,11 @@ func _heal() -> void:
 			await main._press("esc")
 			await main._press("e")
 		await _settle()
-		# Rests here keep being interrupted and the fights leave the party worse off: a
-		# player gives up camping and walks to the inn (when there is a way back).
+		# An interrupted rest: a player gives up camping among the monsters and walks to
+		# the inn (when there is a way back); north of Podol Plaza ghouls and wights come.
 		if hits[0] > 0:
 			interrupted += 1
-			if interrupted >= 2 and _hurt() and not _wiped():
+			if not _wiped():
 				_interrupted = false
 				if await _rest_at_inn(5):
 					return
@@ -1440,8 +1443,8 @@ func _memorize() -> void:
 	await _rest_in_camp(0)
 	main._camp.interrupted.disconnect(count)
 	await _settle()
-	# Interrupted and hurt: off to the inn rather than camping again among the monsters.
-	if hits[0] > 0 and _hurt() and not _wiped():
+	# Interrupted: off to the inn rather than camping again among the monsters.
+	if hits[0] > 0 and not _wiped():
 		_interrupted = false
 		await _rest_at_inn(5)
 	print("   memorized: %s" % " | ".join(main._party.map(func(m): return "%s %s" % [m.name, str(m.memorized)])))
