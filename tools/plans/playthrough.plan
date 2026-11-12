@@ -82,6 +82,21 @@ exit 8:27 2,20 W 7:26
 gate 7:26 12,11 7:17 ENTER
 gate 7:26 7,29 3:0 TAKE BOAT
 gate 8:27 9,29 3:0 YES
+# The sites, read from the bands' on-step tables (chat 10: row y values, counts, x values and a
+# site type per square; 6:25 0xADD6.., 7:26 0xB04A.., 8:27 0xABA6..), with each site's menu.
+gate 6:25 10,9 6:19 ENTER CAVE
+gate 6:25 12,31 6:1 ENTER
+gate 6:25 3,32 6:28 YES
+gate 7:26 6,16 7:22 ENTER
+gate 8:27 11,8 8:16 ENTER
+gate 8:27 6,15 8:13 LARGE
+# The western band joins the middle one at its edges as the middle joins the eastern.
+exit 7:26 2,12 W 6:25
+exit 7:26 2,16 W 6:25
+exit 7:26 2,20 W 6:25
+exit 6:25 15,12 E 7:26
+exit 6:25 15,16 E 7:26
+exit 6:25 15,20 E 7:26
 # The nomads (7:17): help them against the kobolds (the Clue Book: more experience and treasure
 # than fighting them). Talk at the camp, follow the guard, stay and fight, finish the kobolds.
 parley 7:17 THE NOMADS WAIT FOR YOU
@@ -218,14 +233,14 @@ explore
 checkpoint kovel
 town
 
-log 10. The eastern wilderness band (8:27): the kobolds' caves are entered from it
+log 10. The eastern wilderness band (8:27)
 travel 8:27
 explore
 checkpoint band3
 town
 
-log 11. The kobolds' caves (6:19, the enormous cave)
-travel 6:19
+log 11. The kobolds' caves (8:13, from 8:27 6,15: LARGE)
+travel 8:13
 explore
 checkpoint kobold_caves
 town
@@ -248,16 +263,16 @@ explore
 checkpoint pyramid2
 town
 
-log 13. Lizard Man Keep (8:13; no spells inside)
-travel 8:13
+log 13. The ruined castle (8:16, from 8:27 11,8)
+travel 8:16
 explore
 checkpoint lizard
 town
 
-log 8:16 (a wilderness site)
-travel 8:16
+log The enormous cave (6:19, from 6:25 10,9; a dragon is seen there)
+travel 6:19
 explore
-checkpoint site816
+checkpoint cave619
 town
 
 log 14. The Buccaneers' base (6:1: stampede the animals)

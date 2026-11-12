@@ -359,7 +359,7 @@ func _do(line: String) -> void:
 			var xy := w[2].split(",")
 			if not _exits.has(w[1]):
 				_exits[w[1]] = []
-			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": w[4].to_upper()})
+			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": " ".join(w.slice(4)).to_upper()})
 		"answer":
 			# answer <set:block> <words of the question>|<choice>: answer that question so.
 			var spec := " ".join(w.slice(2)).split("|")
