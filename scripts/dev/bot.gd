@@ -600,6 +600,12 @@ func _hook() -> bool:
 			var k: String = "YES" if _travelling else "NO"
 			await main._press(str(items.find(k) + 1))
 			return true
+		# An exit the sweep found behind menu choices ("DO YOU WANT TO LEAVE?" YES): its picks.
+		if not _gate_picks.is_empty() and _travelling:
+			var k: int = _gate_picks.pop_front()
+			print("   >> %d (the way out)" % k)
+			await main._press(str(k))
+			return true
 		# A gate travel is going through (gate lines): its choice.
 		if _gate_answer != "" and _gate_answer in items:
 			print("   >> %d (%s: the way to go)" % [items.find(_gate_answer) + 1, _gate_answer])
@@ -1325,10 +1331,19 @@ func _load_exits() -> void:
 		if w.size() < 9 or w[0] != "EXIT":
 			continue
 		var xy := w[3].split(",")
-		var to := w[7]
+		# "EXIT <from> ev<n> x,y <dir> <entry> [>choice ...] -> <to> at ...": the menu choices
+		# the sweep took on the way (1-based), then the area reached.
+		var arrow := w.find("->")
+		if arrow < 0 or arrow + 1 >= w.size():
+			continue
+		var picks: Array[int] = []
+		for k in range(6, arrow):
+			if w[k].begins_with(">"):
+				picks.append(int(w[k].substr(1)))
+		var to := w[arrow + 1]
 		if to.begins_with("0:"):
 			to = w[1].split(":")[0] + to.substr(1)     # NEW_ECL in the same data set
-		var e := {"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[4]), "entry": w[5], "to": to}
+		var e := {"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[4]), "entry": w[5], "to": to, "picks": picks}
 		if not _exits.has(w[1]):
 			_exits[w[1]] = []
 		_exits[w[1]].append(e)
@@ -1417,12 +1432,14 @@ func _travel_hops(goal: String) -> void:
 				if goal != TOWN and not _at_inn:
 					await _heal()
 			_gate_answer = String(best.get("answer", ""))
+			_gate_picks = Array(best.get("picks", []))
 			if main._vm.on_overland:
 				await _overland_walk(Vector2i(best.x, best.y))
 				await _settle()
 				if best.entry == "move" and _here() == before and _overland_at() == Vector2i(best.x, best.y):
 					await _overland_step(int(best.dir))     # over the band's edge
 				_gate_answer = ""
+				_gate_picks = []
 				if _here() == before:
 					_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
 				continue
@@ -1431,6 +1448,7 @@ func _travel_hops(goal: String) -> void:
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
 			_gate_answer = ""
+			_gate_picks = []
 			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
 				while int(main._facing) != int(best.dir):
 					await main._press("right")
@@ -2285,6 +2303,7 @@ var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
 var _first_day := {}      # area -> game day first entered
 var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
 var _mark := -1           # the party's coins at the last ledger entry
+var _gate_picks: Array = []     # menu choices (1-based) on the way through the exit being used
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
