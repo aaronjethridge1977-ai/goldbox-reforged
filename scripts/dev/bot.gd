@@ -1190,8 +1190,8 @@ func _grind(addr: int, value: int) -> void:
 func _lowest_level() -> int:
 	var low := 99
 	for m in main._party:
-		if m.status == PartyMember.STATUS_DEAD:
-			continue
+		if m.status == PartyMember.STATUS_DEAD or m.npc >= 128:
+			continue     # (hired NPCs aren't the bot's to train)
 		var top := 0
 		for x in m.raw.slice(0x96, 0x9E):
 			top = maxi(top, x)
@@ -1214,7 +1214,8 @@ func _level_up(goal: int) -> void:
 		if n % 5 == 0:
 			var purse := 0
 			for m in main._party:
-				purse += m.wealth_copper() / 200
+				if m.npc < 128:
+					purse += m.wealth_copper() / 200
 			print("   level: lowest %d (want %d), purse %d gold" % [_lowest_level(), goal, purse])
 		if not await _open_camp():
 			return
@@ -1277,6 +1278,8 @@ func _can_train() -> bool:
 	var t := ClassTables.shared(main._game_path)
 	var purse := 0
 	for m in main._party:
+		if m.npc >= 128:
+			continue
 		purse += m.wealth_copper() + (m.money[5] * 50 + m.money[6] * 500) * 200   # gems and jewellery at a guess
 		for it in m.items:
 			if not it.readied and not _keeper(it):
@@ -1284,7 +1287,7 @@ func _can_train() -> bool:
 	if purse < 1000 * 200 or purse < _purse_needed:
 		return false     # training costs 1000 gold; the party can't pay it yet
 	for m in main._party:
-		if m.status == PartyMember.STATUS_OKAY and _has_exp(m, t):
+		if m.status == PartyMember.STATUS_OKAY and m.npc < 128 and _has_exp(m, t):
 			return true
 	return false
 
@@ -1631,9 +1634,11 @@ static func _keeper(it: GameItem) -> bool:
 func _fund(i: int) -> void:
 	var m: PartyMember = main._party[i]
 	var t := ClassTables.shared(main._game_path)
-	if not _has_exp(m, t):
+	if m.npc >= 128 or not _has_exp(m, t):
 		return
 	for o in main._party:
+		if o.npc >= 128:
+			continue     # an NPC's money is its own
 		for coin in [4, 3, 2, 1, 0]:
 			while o != m and o.money[coin] > 0 and m.wealth_copper() < 1000 * 200:
 				o.money[coin] -= 1
