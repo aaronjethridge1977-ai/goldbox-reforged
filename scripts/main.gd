@@ -377,11 +377,14 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
 			var scr: GameScreen = _screen
-			for o in [_party_menu, _camp, _temple, _treasure, _shop, _party_menu._sheet, _camp._sheet, _treasure._sheet, _sheet]:
+			for o in [_combat, _combat._sheet, _party_menu, _camp, _temple, _treasure, _shop, _party_menu._sheet, _camp._sheet, _treasure._sheet, _sheet]:
 				if o != null and o.visible and o.get("_scr") != null:
 					scr = o._scr
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
+			continue
+		elif n.begins_with("combatseed="):  # combatseed=<n>: event fights roll from seed n (lab)
+			CombatScreen.dev_seed = int(n.trim_prefix("combatseed="))
 			continue
 		elif n == "autowin":                # autowin: the next scripted fight is won at once (dev)
 			_combat.dev_auto_win = true

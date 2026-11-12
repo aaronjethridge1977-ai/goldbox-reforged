@@ -177,3 +177,7 @@ others from J:
   New Phlan 13,9 N (Up twice reaches the arms shop).
 - The original: Home/End pick the character on the walking screen and in lists; a message
   stays about 0.7 s on row 24 (`timeit`-style polling of `lab.text(screen, 24)`).
+- `combatcmp.sh` does the same for the combat screen (`cap/c/`, save E: J moved to the Slums at
+  14,1 W, Up twice meets the orcs). `combatseed=<n>` fixes our fight's dice: seed 2 lets Thrender
+  act first, as in the capture. Combat captures: the menu, MOVE, VIEW and its ITEMS, AIM (self,
+  NEXT, MANUAL), USE, DONE, GUARDING, a cleric's menu and CAST page, DONE with BANDAGE.

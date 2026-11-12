@@ -132,7 +132,7 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	var open_ahead := Placement.encounter_distance(_field, px, py, facing, 2)
 	_distance = maxi(mini(open_ahead, max_distance) - advances, 0)
 	_load_monsters()
-	_start_fight(0, false)
+	_start_fight(dev_seed, false)
 	if dev_win_if.is_valid() and dev_win_if.call(rows):
 		dev_auto_win = true
 	if dev_auto_win and DevShortcuts.allowed():
@@ -353,11 +353,47 @@ func _build() -> void:
 	add_child(_prompt)
 	# The original's combat screen over all of it (F12 shows the developer layout).
 	_scr = GameScreen.new()
+	_scr.transparent_tiles = true
 	add_child(_scr)
+	_sheet = CharacterSheet.new()
+	_sheet.visible = false
+	_sheet.closed.connect(_after_sheet)
+	_sheet.spell_chosen.connect(_on_spell_chosen)
+	_sheet.item_used.connect(_on_item_used)
+	add_child(_sheet)
+	_flash_timer = Timer.new()
+	_flash_timer.one_shot = true
+	_flash_timer.timeout.connect(func() -> void:
+		_flash = ""
+		var then := _after_flash
+		_after_flash = Callable()
+		if then.is_valid():
+			then.call()
+		else:
+			_refresh())
+	add_child(_flash_timer)
 
 
 var _scr: GameScreen
 static var dev_view := false
+## Lab only: a fixed dice seed for event fights (main's combatseed= key), so a fight can be
+## replayed the way the original's capture went.
+static var dev_seed := 0
+## The original's controls (lab, chat 11): a menu, MOVE VIEW AIM USE [CAST] [TURN] QUICK DONE,
+## the hot letter or Enter on the lit item (the chosen item's place carries over to the next
+## menu); MOVE: "MOVE/ATTACK, MOVE LEFT = n" with the arrows and keypad stepping (Esc back);
+## AIM: "RANGE = n" above "AIM:" NEXT PREV MANUAL [TARGET] CENTER EXIT, the figure aimed at
+## shown on the right (TARGET only where the attack is allowed); MANUAL: "(USE CURSOR KEYS)"
+## TARGET CENTER EXIT; DONE: [GUARD] DELAY QUIT [BANDAGE] SPEED EXIT (GUARD not with a
+## missile weapon, BANDAGE only with someone dying; GUARD says GUARDING a moment).
+## VIEW, USE and CAST open the character sheet (CharacterSheet.open_combat).
+var _cmode := "menu"     # menu, move, done, aim, manual
+var _pick := 0
+var _flash := ""
+var _flash_timer: Timer
+var _after_flash := Callable()
+var _sheet: CharacterSheet
+const MAGENTA := 13
 
 
 ## The original's combat screen: rope frame (rows 0 and 22, columns 0, 22 and 39), the
@@ -386,7 +422,7 @@ func _draw_original(field: Image) -> void:
 		var m: PartyMember = e.who
 		g.text(23, 1, m.name.left(16), GameScreen.CYAN if e.team == 0 else GameScreen.YELLOW)
 		g.text(23, 3, "HITPOINTS", GameScreen.GREEN)
-		g.text(33, 3, str(m.hp), GameScreen.YELLOW)
+		g.text(33, 3, str(m.hp), GameScreen.YELLOW if m.hp < m.hp_max else GameScreen.GREEN)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
 		if m.weapon:
 			g.text(23, 7, m.weapon.name.to_upper().left(16), GameScreen.GREEN)
@@ -396,7 +432,7 @@ func _draw_original(field: Image) -> void:
 	for c in _combatants:
 		names[(c.who as PartyMember).name.to_upper()] = GameScreen.CYAN if c.team == 0 else GameScreen.YELLOW
 	var lines := []
-	if not _messages.is_empty():
+	if not _messages.is_empty() and not String(_messages[-1]).begins_with("ROUND "):
 		var msg := String(_messages[-1]).to_upper()
 		var rest := msg
 		while rest != "":
@@ -418,35 +454,26 @@ func _draw_original(field: Image) -> void:
 	if _casting != "choose":
 		for i in mini(lines.size(), 12):
 			g.text(23, 10 + i, lines[i][0], lines[i][1])
-	# Bottom line.
-	if _asking_continue:
+	# Bottom lines.
+	if _flash != "":
+		g.text(0, 24, _flash, GameScreen.GREEN)
+	elif _asking_continue:
 		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 17)
 	elif _combat != null and _result != 0:
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
-	elif _combat != null and _casting == "choose":
-		# The spells (or items) to choose from, the chosen one white.
-		g.text(23, 9, "USE WHICH?" if not _use_items.is_empty() else "CAST WHICH?", GameScreen.WHITE)
-		for k in mini(_spell_list.size(), 12):
-			var label := _use_items[k].name if k < _use_items.size() else _combat.magic.table.name_of(_spell_list[k])
-			g.text(23, 10 + k, label.to_upper().left(16), GameScreen.WHITE if k == _spell_index else GameScreen.CYAN)
-		g.menu_line(24, ["SELECT", "EXIT"])
-	elif _combat != null and (_casting == "aim" or _aiming):
-		g.menu_line(24, ["NEXT", "PREV", "TARGET", "EXIT"])
+	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
+		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
+		var prompt := "AIM:" if _cmode == "aim" else "(USE CURSOR KEYS)"
+		g.text(0, 24, prompt, MAGENTA)
+		var items := _bottom_menu()
+		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
 	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].quick:
-		var c: Dictionary = _combatants[_combat.active]
-		if c.moves / 2 > 0 and c.attacks > 0:
-			g.text(0, 23, "MOVE/ATTACK, MOVE LEFT = %d" % (c.moves / 2), GameScreen.GREEN)
-		# The original's line: CAST only for someone with spells ready, TURN for those who
-		# can turn undead (GUARD and BANDAGE are under DONE; G and B still work here).
-		var items := ["MOVE", "VIEW", "AIM", "USE"]
-		var who: PartyMember = c.who
-		if _combat.magic != null and not _combat.magic.castable(_combat.active).is_empty():
-			items.append("CAST")
-		if Combat.turn_level(who) > 0:
-			items.append("TURN")
-		items.append_array(["QUICK", "DONE"])
-		g.menu_line(24, items)
+		if _cmode == "move":
+			g.text(0, 24, "MOVE/ATTACK, MOVE LEFT = %d" % (_combatants[_combat.active].moves / 2), GameScreen.GREEN)
+		else:
+			var items := _bottom_menu()
+			g.menu_line(24, items, 0, _lit(items))
 	g.update()
 
 
@@ -601,6 +628,8 @@ func _advance() -> void:
 				_leave()
 		return
 	_selected = i
+	_cmode = "menu"
+	_aiming = false
 	_centre_on_selected()
 	_refresh()
 	if _combatants[i].quick:
@@ -638,35 +667,70 @@ func _after_player_action(what: String) -> void:
 
 
 # --- AIM ---------------------------------------------------------------------------------
-# The original's AIM: NEXT / PREV step through the figures nearest first, showing each
-# one's sheet and "RANGE = n"; TARGET (offered only when the shot is allowed) attacks it.
-# Modern controls: A aims, ←/→ or Tab change target, Enter attacks, Esc goes back.
+# The original's AIM (lab, chat 11): the aim starts on the figure whose turn it is (RANGE = 0),
+# NEXT / PREV step through the others nearest first, showing each one on the right with
+# "RANGE = n"; TARGET (offered only where the attack is allowed) attacks it; MANUAL moves a
+# cursor square with the arrows; CENTER brings the view to the aim; EXIT goes back. Spells
+# aim the same way (_aim_for "spell": TARGET picks the square or figure).
 
-func _start_aim() -> void:
+var _aim_for := "attack"      # attack or spell
+var _aim_cell := Vector2i.ZERO
+
+
+func _start_aim(purpose: String = "attack") -> void:
 	var me: int = _combat.active
-	_aim_list = []
+	_aim_for = purpose
+	_aim_list = [me]
+	var others: Array[int] = []
 	for j in _combatants.size():
-		if j != me and not _combatants[j].get("down", false) and _combatants[j].team != _combatants[me].team:
-			_aim_list.append(j)
-	if _aim_list.is_empty():
-		_on_message("NO TARGETS")
-		_refresh()
-		return
-	_aim_list.sort_custom(func(a, b): return _combat.range_of(_combatants[me], _combatants[a]) \
-		< _combat.range_of(_combatants[me], _combatants[b]))
+		if j != me and not _combatants[j].get("down", false):
+			others.append(j)
+	var offensive := purpose == "attack" or _combat.magic.table.field(_spell_id, 14) != 0
+	others.sort_custom(func(a, b):
+		var ra := _combat.range_of(_combatants[me], _combatants[a])
+		var rb := _combat.range_of(_combatants[me], _combatants[b])
+		if ra != rb:
+			return ra < rb
+		var fa: int = 0 if (_combatants[a].team != _combatants[me].team) == offensive else 1
+		var fb: int = 0 if (_combatants[b].team != _combatants[me].team) == offensive else 1
+		return fa < fb)
+	_aim_list.append_array(others)
 	_aiming = true
+	_cmode = "aim"
 	_aim_index = 0
+	if purpose == "spell" and _aim_list.size() > 1:
+		_aim_index = 1      # a spell aims at the nearest other figure first
 	_show_aim()
 
 
 func _show_aim() -> void:
 	_selected = _aim_list[_aim_index]
-	_centre_on_selected()
+	_aim_cell = _combatants[_selected].cell
+	_spell_cell = _aim_cell
+	if not _on_screen(_aim_cell):
+		_centre_on(_aim_cell)
 	_refresh()
+
+
+func _on_screen(cell: Vector2i) -> bool:
+	var d := cell - _view
+	return d.x >= 0 and d.y >= 0 and d.x < VIEW_CELLS and d.y < VIEW_CELLS
+
+
+func _centre_on(cell: Vector2i) -> void:
+	_view = cell - Vector2i(3, 3)
+
+
+func _aim_range() -> int:
+	if _combat == null or _combat.active < 0:
+		return 0
+	return _combat.range_between(_combatants[_combat.active].cell, _aim_cell)
 
 
 func _aim_why(j: int) -> String:
 	var me: int = _combat.active
+	if j == me or j < 0:
+		return "NO TARGET"
 	var m: PartyMember = _combatants[me].who
 	if m.weapon_ranged:
 		var why := _combat.why_not_shoot(me, j)
@@ -678,33 +742,137 @@ func _aim_why(j: int) -> String:
 	return "" if _combatants[me].attacks > 0 else "NO ATTACKS LEFT"
 
 
+## Whether TARGET is offered at the aim.
+func _can_target() -> bool:
+	if _aim_for == "spell":
+		return _combat.magic.why_not(_combat.active, _spell_id, _aim_cell) == ""
+	var who := _combat.occupant(_aim_cell)
+	return who >= 0 and _aim_why(who) == ""
+
+
+func _bottom_menu() -> Array:
+	match _cmode:
+		"aim":
+			return ["NEXT", "PREV", "MANUAL"] + (["TARGET"] if _can_target() else []) + ["CENTER", "EXIT"]
+		"manual":
+			return (["TARGET"] if _can_target() else []) + ["CENTER", "EXIT"]
+		"done":
+			var items := []
+			if _combat.can_guard():
+				items.append("GUARD")
+			items.append_array(["DELAY", "QUIT"])
+			if _combat.first_dying(_combatants[_combat.active].team) >= 0:
+				items.append("BANDAGE")
+			items.append_array(["SPEED", "EXIT"])
+			return items
+	var items := ["MOVE", "VIEW", "AIM", "USE"]
+	var c: Dictionary = _combatants[_combat.active]
+	var who: PartyMember = c.who
+	if _combat.magic != null and not _combat.magic.castable(_combat.active).is_empty():
+		items.append("CAST")
+	if Combat.turn_level(who) > 0:
+		items.append("TURN")
+	items.append_array(["QUICK", "DONE"])
+	return items
+
+
+func _lit(items: Array) -> int:
+	return _pick if _pick < items.size() else 0
+
+
+func _bevel(img: Image, at: Vector2i) -> void:
+	# The original's cursor square (lab): light grey, white along the top and the left two
+	# columns, black along the bottom and the right two columns.
+	img.fill_rect(Rect2i(at, Vector2i(CELL, CELL)), Color8(170, 170, 170))
+	img.fill_rect(Rect2i(at, Vector2i(CELL - 1, 1)), Color8(255, 255, 255))
+	img.fill_rect(Rect2i(at, Vector2i(2, CELL - 1)), Color8(255, 255, 255))
+	img.fill_rect(Rect2i(at + Vector2i(CELL - 2, 1), Vector2i(2, CELL - 1)), Color8(0, 0, 0))
+	img.fill_rect(Rect2i(at + Vector2i(1, CELL - 1), Vector2i(CELL - 1, 1)), Color8(0, 0, 0))
+	img.set_pixelv(at + Vector2i(CELL - 1, 0), Color8(0, 0, 0))
+	img.set_pixelv(at + Vector2i(0, CELL - 1), Color8(255, 255, 255))
+
+
+func _say(text: String, then: Callable = Callable()) -> void:
+	_flash = text
+	_after_flash = then
+	_flash_timer.start(CharacterSheet.MESSAGE_TIME)
+	print(text)
+	_refresh()
+
+
 func _aim_input(event: InputEvent, key: Key) -> void:
+	var items := _bottom_menu()
+	var choice := _menu_choice(event, key, items)
 	if event.is_action("ui_cancel"):
-		_aiming = false
-		_selected = _combat.active
-		_centre_on_selected()
-		_refresh()
-	elif event.is_action("ui_right") or key == KEY_TAB or key == KEY_N:
-		_aim_index = (_aim_index + 1) % _aim_list.size()
-		_show_aim()
-	elif event.is_action("ui_left") or key == KEY_P:
-		_aim_index = (_aim_index + _aim_list.size() - 1) % _aim_list.size()
-		_show_aim()
-	elif event.is_action("ui_accept") or key == KEY_T:
-		var j: int = _aim_list[_aim_index]
-		var why := _aim_why(j)
-		if why != "":
-			_on_message(why)
+		choice = "EXIT"
+	if _cmode == "manual":
+		var moves := {KEY_UP: Vector2i(0, -1), KEY_DOWN: Vector2i(0, 1), KEY_LEFT: Vector2i(-1, 0),
+			KEY_RIGHT: Vector2i(1, 0), KEY_HOME: Vector2i(-1, -1), KEY_PAGEUP: Vector2i(1, -1),
+			KEY_END: Vector2i(-1, 1), KEY_PAGEDOWN: Vector2i(1, 1), KEY_KP_8: Vector2i(0, -1),
+			KEY_KP_2: Vector2i(0, 1), KEY_KP_4: Vector2i(-1, 0), KEY_KP_6: Vector2i(1, 0),
+			KEY_KP_7: Vector2i(-1, -1), KEY_KP_9: Vector2i(1, -1), KEY_KP_1: Vector2i(-1, 1), KEY_KP_3: Vector2i(1, 1)}
+		if moves.has(key):
+			_aim_cell += moves[key]
+			_spell_cell = _aim_cell
+			var who := _combat.occupant(_aim_cell)
+			if who >= 0:
+				_selected = who
+			if not _on_screen(_aim_cell):
+				_centre_on(_aim_cell)
 			_refresh()
 			return
-		_aiming = false
-		_selected = _combat.active
-		var me: int = _combat.active
-		if (_combatants[me].who as PartyMember).weapon_ranged:
-			_combat.shoot(me, j)
-		else:
-			_combat.attack(me, j)
-		_after_player_action("attacked")
+	if choice == "":
+		return
+	_pick = items.find(choice)
+	match choice:
+		"NEXT":
+			_aim_index = (_aim_index + 1) % _aim_list.size()
+			_show_aim()
+		"PREV":
+			_aim_index = (_aim_index + _aim_list.size() - 1) % _aim_list.size()
+			_show_aim()
+		"MANUAL":
+			_cmode = "manual"
+			_refresh()
+		"CENTER":
+			_centre_on(_aim_cell)
+			_refresh()
+		"EXIT":
+			if _cmode == "manual":      # lab: MANUAL's EXIT goes back to the AIM menu
+				_cmode = "aim"
+				_refresh()
+				return
+			_aiming = false
+			_cmode = "menu"
+			if _aim_for == "spell":
+				_casting = ""
+			_selected = _combat.active
+			_centre_on_selected()
+			_refresh()
+		"TARGET":
+			var me: int = _combat.active
+			if _aim_for == "spell":
+				_spell_target()
+				return
+			var j := _combat.occupant(_aim_cell)
+			_aiming = false
+			_cmode = "menu"
+			_selected = me
+			if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
+				_combat.shoot(me, j)
+			else:
+				_combat.attack(me, j)
+			_after_player_action("attacked")
+
+
+## The hot letter or Enter on the lit item ("" for neither).
+func _menu_choice(event: InputEvent, key: Key, items: Array) -> String:
+	if event.is_action("ui_accept") and not items.is_empty():
+		return items[_lit(items)]
+	for it in items:
+		if key == OS.find_keycode_from_string(String(it).substr(0, 1)):
+			return it
+	return ""
 
 
 # --- CAST ---------------------------------------------------------------------------------
@@ -714,131 +882,95 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 # picks it; arrows move the aim, Tab jumps to the next figure, Enter casts (or picks a
 # figure, D when done picking), Esc aborts and the spell is kept.
 
-var _use_items: Array[GameItem] = []    # USE: the items behind _spell_list (empty for CAST)
+var _use_items: Array[GameItem] = []    # kept for the developer layout (empty)
 
 
-## USE: a readied item that casts a spell (potion, wand, scroll...), through the same
-## choose-and-aim steps as CAST; the item's charge is spent instead of a memorized spell.
+## USE: the items page on grey (READY lit); USE there on a readied item that casts a spell
+## (potion, wand, scroll...) aims it as CAST does, spending the item's charge.
 func _start_use() -> void:
-	if _combat.magic == null:
-		return
-	var m: PartyMember = _combatants[_combat.active].who
-	_spell_list = []
-	_use_items = []
-	for it in m.items:
-		if not it.readied:
-			continue
-		var id := CharacterSheet.item_spell(m, it)
-		if id > 0:
-			_spell_list.append(id)
-			_use_items.append(it)
-	if _spell_list.is_empty():
-		_on_message("NOTHING TO USE")
-		_refresh()
-		return
-	_casting = "choose"
-	_spell_index = 0
-	_refresh()
+	_sheet.open_combat(_party_view(), _active_index(), "use", 0)
 
 
+## CAST: the spells page on grey, "CHOOSE SPELL:" CAST EXIT.
 func _start_cast() -> void:
 	if _combat.magic == null:
 		return
-	_use_items = []
-	_spell_list = _combat.magic.castable(_combat.active)
-	if _spell_list.is_empty():
-		_on_message("NO SPELLS MEMORIZED")
-		_refresh()
-		return
-	_casting = "choose"
-	_spell_index = 0
+	_sheet.open_combat(_party_view(), _active_index(), "cast", 0)
+
+
+## The sheet's people: the active figure alone (its index 0).
+func _party_view() -> Array[PartyMember]:
+	var out: Array[PartyMember] = [_combatants[_combat.active].who]
+	return out
+
+
+func _active_index() -> int:
+	return 0
+
+
+func _after_sheet() -> void:
+	_pick = _sheet.last_pick
+	if _combat != null:
+		for c in _combatants:
+			(c.who as PartyMember).recalculate(_types)
 	_refresh()
 
 
-func _cast_input(event: InputEvent, key: Key) -> void:
-	var me: int = _combat.active
-	if _casting == "choose":
-		if event.is_action("ui_cancel"):
-			_casting = ""
-		elif event.is_action("ui_up") or event.is_action("ui_left"):
-			_spell_index = (_spell_index + _spell_list.size() - 1) % _spell_list.size()
-		elif event.is_action("ui_down") or event.is_action("ui_right"):
-			_spell_index = (_spell_index + 1) % _spell_list.size()
-		elif event.is_action("ui_accept"):
-			_spell_id = _spell_list[_spell_index]
-			_use_item = _use_items[_spell_index] if _spell_index < _use_items.size() else null
-			_spell_picks = []
-			if _combat.magic.aim_kind(_spell_id) == "self":
-				_finish_cast()
-				return
-			_casting = "aim"
-			_spell_cell = _combatants[me].cell
-			_aim_next_figure()
-		_refresh()
+func _on_spell_chosen(id: int) -> void:
+	if _combat == null or _combat.magic == null:
 		return
-	var moves := {KEY_UP: Vector2i(0, -1), KEY_DOWN: Vector2i(0, 1), KEY_LEFT: Vector2i(-1, 0),
-		KEY_RIGHT: Vector2i(1, 0), KEY_HOME: Vector2i(-1, -1), KEY_PAGEUP: Vector2i(1, -1),
-		KEY_END: Vector2i(-1, 1), KEY_PAGEDOWN: Vector2i(1, 1)}
-	if event.is_action("ui_cancel"):
-		_casting = ""
-		_selected = me
-	elif moves.has(key):
-		_spell_cell += moves[key]
-		_view = _spell_cell - Vector2i(3, 3)
-	elif key == KEY_TAB:
-		_aim_next_figure()
-	elif key == KEY_D and not _spell_picks.is_empty():
+	if not _combat.magic.castable(_combat.active).has(id):
+		_say("CAN'T CAST THAT NOW")
+		return
+	_begin_spell(id, null)
+
+
+func _on_item_used(it: GameItem) -> void:
+	var m: PartyMember = _combatants[_combat.active].who
+	var id := CharacterSheet.item_spell(m, it)
+	if id > 0 and _combat.magic != null:
+		_begin_spell(id, it)
+
+
+func _begin_spell(id: int, item: GameItem) -> void:
+	_spell_id = id
+	_use_item = item
+	_spell_picks = []
+	if _combat.magic.aim_kind(_spell_id) == "self":
+		_spell_cell = _combatants[_combat.active].cell
 		_finish_cast()
 		return
-	elif event.is_action("ui_accept"):
-		var why := _combat.magic.why_not(me, _spell_id, _spell_cell)
-		if why != "":
-			_on_message(why)
-		elif _combat.magic.aim_kind(_spell_id) == "area":
-			_finish_cast()
-			return
-		else:
-			var who := _combat.occupant(_spell_cell)
-			if who < 0:
-				_on_message("NO TARGET THERE")
-			elif who in _spell_picks:
-				_on_message("ALREADY BEEN TARGETED")
-			else:
-				_spell_picks.append(who)
-				if _spell_picks.size() >= _combat.magic.max_picks(_spell_id):
-					_finish_cast()
-					return
-	_refresh()
+	_casting = "aim"
+	_start_aim("spell")
 
 
-## Moves the aim to the next standing figure (nearest first), enemies before friends for
-## spells meant for enemies.
-func _aim_next_figure() -> void:
+## TARGET while aiming a spell: an area spell goes off at the square; others pick figures
+## (as many as the spell takes) and go off when the last is picked.
+func _spell_target() -> void:
 	var me: int = _combat.active
-	var offensive := _combat.magic.table.field(_spell_id, 14) != 0
-	var list: Array[int] = []
-	for j in _combatants.size():
-		if not _combatants[j].get("down", false):
-			list.append(j)
-	list.sort_custom(func(a, b):
-		var fa: int = 0 if (_combatants[a].team != _combatants[me].team) == offensive else 1
-		var fb: int = 0 if (_combatants[b].team != _combatants[me].team) == offensive else 1
-		if fa != fb:
-			return fa < fb
-		return _combat.range_of(_combatants[me], _combatants[a]) < _combat.range_of(_combatants[me], _combatants[b]))
-	if list.is_empty():
+	var why := _combat.magic.why_not(me, _spell_id, _aim_cell)
+	if why != "":
+		_say(why)
 		return
-	var at := _combat.occupant(_spell_cell)
-	var k := list.find(at)
-	var next: int = list[(k + 1) % list.size()] if k >= 0 else list[0]
-	_spell_cell = _combatants[next].cell
-	_selected = next
-	_centre_on_selected()
+	if _combat.magic.aim_kind(_spell_id) == "area":
+		_finish_cast()
+		return
+	var who := _combat.occupant(_aim_cell)
+	if who < 0:
+		_say("NO TARGET THERE")
+	elif who in _spell_picks:
+		_say("ALREADY BEEN TARGETED")
+	else:
+		_spell_picks.append(who)
+		if _spell_picks.size() >= _combat.magic.max_picks(_spell_id):
+			_finish_cast()
 
 
 func _finish_cast() -> void:
 	var me: int = _combat.active
 	_casting = ""
+	_aiming = false
+	_cmode = "menu"
 	_selected = me
 	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item)
 	_use_item = null
@@ -888,6 +1020,10 @@ func _refresh() -> void:
 			for k in CELL:
 				for edge in [Vector2i(k, 0), Vector2i(k, CELL - 1), Vector2i(0, k), Vector2i(CELL - 1, k)]:
 					img.set_pixelv(cur + edge, Color8(255, 255, 85))
+	if _cmode == "manual":
+		var mc := (_aim_cell - _view) * CELL
+		if mc.x >= 0 and mc.y >= 0 and mc.x < size and mc.y < size:
+			_bevel(img, mc)
 	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
@@ -895,9 +1031,8 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected:
-			var box := Rect2i(at, Vector2i(CELL, CELL))
-			img.fill_rect(box, Color8(170, 170, 170))
+		if i == _selected and _cmode != "manual":
+			_bevel(img, at)
 		if icon:
 			var src := icon
 			if Placement.DX[e.dir] < 0:
@@ -962,12 +1097,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-	if _aiming:
-		_aim_input(event, key)
+	if _sheet != null and _sheet.visible:
+		return
+	if _flash != "":
+		# A key ends the message at once.
+		_flash_timer.stop()
+		_flash_timer.timeout.emit()
 		get_viewport().set_input_as_handled()
 		return
-	if _casting != "":
-		_cast_input(event, key)
+	if _aiming:
+		_aim_input(event, key)
 		get_viewport().set_input_as_handled()
 		return
 	if _asking_continue:
@@ -1040,36 +1179,78 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	get_viewport().set_input_as_handled()
 	if _result != 0 or _combat.active < 0 or _combatants[_combat.active].quick:
 		return
-	if _STEP_KEYS.has(key):
-		_after_player_action(_combat.step(_STEP_KEYS[key]))
-	elif key == KEY_SPACE or key == KEY_D:
-		_combat.done()
-		_advance()
-	elif key == KEY_A:
-		_start_aim()
-	elif key == KEY_C:
-		_start_cast()
-	elif key == KEY_U:
-		_start_use()
-	elif key == KEY_G:
-		if _combat.can_guard():
-			_combat.guard(_combat.active, false)
+	if _cmode == "move":
+		if event.is_action("ui_cancel"):
+			_cmode = "menu"
+			_centre_on_selected()
+			_refresh()
+		elif _STEP_KEYS.has(key):
+			var what := _combat.step(_STEP_KEYS[key])
+			_after_player_action(what)
+			if _cmode == "move" and _combat.active == _selected and _combatants[_selected].moves <= 0:
+				_cmode = "menu"
+		return
+	var items := _bottom_menu()
+	var choice := _menu_choice(event, key, items)
+	if choice == "" and _cmode == "done" and event.is_action("ui_cancel"):
+		choice = "EXIT"
+	if choice == "":
+		# Modern extras (not in the original's menus): Space ends the turn.
+		if key == KEY_SPACE:
+			_combat.done()
+			_cmode = "menu"
+			_advance()
+		return
+	_pick = items.find(choice)
+	if _cmode == "done":
+		match choice:
+			"GUARD":
+				var shown := _messages.size()
+				_combat.guard(_combat.active, false)
+				# Lab: the original says only GUARDING on the bottom line, nothing on the right.
+				_messages = _messages.slice(0, shown)
+				_cmode = "menu"
+				_say("GUARDING", _advance)
+			"DELAY":
+				_cmode = "menu"
+				if _combat.delay():
+					_advance()
+				else:
+					_refresh()
+			"QUIT":
+				_combat.done()
+				_cmode = "menu"
+				_advance()
+			"BANDAGE":
+				_cmode = "menu"
+				if _combat.bandage():
+					_refresh()
+					_advance()
+			"SPEED":
+				pass      # the game's speed setting: not built
+			"EXIT":
+				_cmode = "menu"
+				_refresh()
+		return
+	match choice:
+		"MOVE":
+			_cmode = "move"
+			_refresh()
+		"VIEW":
+			_sheet.open_combat(_party_view(), 0, "view", _pick)
+		"AIM":
+			_start_aim()
+		"USE":
+			_start_use()
+		"CAST":
+			_start_cast()
+		"TURN":
+			_combat.turn_undead(_combat.active)
 			_refresh()
 			_advance()
-		else:
-			_on_message("CAN'T GUARD WITH A MISSILE WEAPON")
+		"QUICK":
+			_combatants[_combat.active].quick = true
+			_ai_timer.start(0.2)
+		"DONE":
+			_cmode = "done"
 			_refresh()
-	elif key == KEY_B:
-		if _combat.bandage():
-			_refresh()
-			_advance()
-		else:
-			_on_message("NOBODY NEEDS BANDAGING")
-			_refresh()
-	elif key == KEY_T and Combat.turn_level(_combatants[_combat.active].who) > 0:
-		_combat.turn_undead(_combat.active)
-		_refresh()
-		_advance()
-	elif key == KEY_Q:
-		_combatants[_combat.active].quick = true
-		_ai_timer.start(0.2)

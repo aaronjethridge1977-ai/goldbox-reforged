@@ -96,9 +96,22 @@ func put_glyph_px(x0: int, y0: int, g: int, color: int) -> void:
 					img.set_pixel(px, py, EGA[color])
 
 
+## The combat screens draw the frame tiles over their grey: black is left out (lab, chat 11).
+var transparent_tiles := false
+
+
 func tile(col: int, row: int, index: int) -> void:
-	if index < _tiles.size():
+	if index >= _tiles.size():
+		return
+	if not transparent_tiles:
 		img.blit_rect(_tiles[index], Rect2i(0, 0, 8, 8), Vector2i(col * 8, row * 8))
+		return
+	var t: Image = _tiles[index]
+	for y in 8:
+		for x in 8:
+			var c := t.get_pixel(x, y)
+			if c.r8 != 0 or c.g8 != 0 or c.b8 != 0:
+				img.set_pixel(col * 8 + x, row * 8 + y, c)
 
 
 ## A menu line: each item's first letter white, the rest green; the highlighted item

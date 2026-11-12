@@ -196,6 +196,16 @@ func next_turn() -> int:
 
 
 const ASK_CONTINUE := -2
+
+
+## DELAY (the original's DONE menu): the active combatant acts again after everyone else
+## this round, keeping what it has left. Once a round.
+func delay() -> bool:
+	if active < 0 or combatants[active].get("delayed_round", 0) == round_no:
+		return false
+	combatants[active].delayed_round = round_no
+	order.append(active)
+	return true
 var asked_round := -1
 
 

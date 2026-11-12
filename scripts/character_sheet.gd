@@ -44,6 +44,9 @@ extends Control
 ## Not compared yet: the combat-only USE question and what using an item prints.
 
 signal closed
+## In a fight: CAST chose a spell, or USE chose an item that casts one.
+signal spell_chosen(id: int)
+signal item_used(item: GameItem)
 
 ## Set once by the game: the item types (slots, hands, classes) and spell table.
 static var types: ItemTypes
@@ -76,6 +79,15 @@ var _question := ""      # the confirm page's line at row 21
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 var portrait := false    # opened from the party menu: the portrait shows
+## In a fight (lab, chat 11): VIEW offers ITEMS DROP EXIT (DROP lit: VIEW's place), the item
+## menu READY USE DROP HALVE JOIN EXIT. USE and CAST open their pages on the fight's grey
+## (the frame's black left out): USE the items page with READY lit; CAST the spells page,
+## "CHOOSE SPELL:" (magenta) CAST EXIT, the last spell chosen, Home/End to choose.
+var in_combat := false
+var grey := false
+## The lit menu item's place when the sheet closed (it carries over to the next menu).
+var last_pick := 0
+var _cast_cursor := 0
 
 var _scr: GameScreen
 var _timer: Timer
@@ -115,6 +127,31 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 		_build()
 	visible = true
 	_refresh()
+
+
+## In a fight: VIEW (black, the fight's menus), USE (the items page on grey) or CAST (the
+## spells page on grey, to choose a spell).
+func open_combat(people: Array[PartyMember], index: int, what: String, pick: int) -> void:
+	in_combat = true
+	grey = what != "view"
+	open(people, "COMBAT", index, false, pick)
+	if what == "use":
+		_mode = "items"
+		_cursor = 0
+		_pick = 0
+	elif what == "cast":
+		_mode = "cast"
+		_pick = 0
+		_cast_cursor = maxi(_spell_ids().size() - 1, 0)
+	_refresh()
+
+
+func _close() -> void:
+	last_pick = _pick
+	visible = false
+	in_combat = false
+	grey = false
+	closed.emit()
 
 
 func _build() -> void:
@@ -177,6 +214,9 @@ func _t(col: int, row: int, s: String, color: int) -> void:
 
 func _clear() -> void:
 	_scr.clear()
+	_scr.transparent_tiles = grey
+	if grey:
+		_scr.img.fill(GameScreen.EGA[8])
 	_rows = []
 	for r in 25:
 		_rows.append(" ".repeat(40))
@@ -330,8 +370,30 @@ func _draw_spells(m: PartyMember) -> void:
 		if rows[i][1] == 0:
 			_t(1, 5 + i, rows[i][0], MAGENTA)
 		else:
-			_t(3, 5 + i, String(rows[i][0]).to_upper(), GameScreen.WHITE if i == rows.size() - 1 else GameScreen.GREEN)
-	_t(1, 24, "EXIT", GameScreen.WHITE)
+			var lit := i == rows.size() - 1 if _mode != "cast" else i == _cast_row()
+			_t(3, 5 + i, String(rows[i][0]).to_upper(), GameScreen.WHITE if lit else GameScreen.GREEN)
+	if _mode != "cast":
+		_t(1, 24, "EXIT", GameScreen.WHITE)
+
+
+## The page row of the spell CAST has chosen (_cast_cursor counts spells only).
+func _cast_row() -> int:
+	var rows := _spell_rows(_who())
+	var k := 0
+	for i in rows.size():
+		if rows[i][1] != 0:
+			if k == _cast_cursor:
+				return i
+			k += 1
+	return -1
+
+
+func _spell_ids() -> Array[int]:
+	var out: Array[int] = []
+	for r in _spell_rows(_who()):
+		if r[1] != 0:
+			out.append(r[1])
+	return out
 
 
 ## The walking screen with a prompt (TRADE WITH WHOM?, TRADE TO?) and SELECT EXIT.
@@ -359,13 +421,17 @@ func _view_menu() -> Array:
 	var m := _who()
 	if _has_spells(m):
 		items.append("SPELLS")
-	items.append_array(["TRADE", "DROP", "EXIT"])
+	if not in_combat:
+		items.append("TRADE")
+	items.append_array(["DROP", "EXIT"])
 	return items
 
 
 func _item_menu() -> Array:
 	var m := _who()
 	var room := m != null and m.items.size() < MAX_ITEMS
+	if in_combat:
+		return ["READY", "USE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
 	if in_shop:
 		return ["READY", "TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "SELL", "ID", "EXIT"]
 	return ["READY", "USE", "TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
@@ -379,6 +445,8 @@ func _current_menu() -> Array:
 			return _item_menu()
 		"spells", "coin":
 			return ["EXIT"]
+		"cast":
+			return ["CAST", "EXIT"]
 		"whom", "coin_whom":
 			return ["SELECT", "EXIT"]
 		"confirm":
@@ -416,6 +484,10 @@ func _refresh() -> void:
 			_menu(["YES", "NO"], prompt.length() + 1)
 		"spells":
 			_draw_spells(m)
+		"cast":
+			_draw_spells(m)
+			_t(0, 24, "CHOOSE SPELL:", MAGENTA)
+			_menu(["CAST", "EXIT"], 14)
 		"whom":
 			_draw_whom("TRADE WITH WHOM?")
 		"coin_whom":
@@ -669,8 +741,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_index = (_index + (1 if key == KEY_END else _people.size() - 1)) % _people.size()
 			match choice:
 				"EXIT":
-					visible = false
-					closed.emit()
+					_close()
 					return
 				"ITEMS":
 					_mode = "items"
@@ -689,6 +760,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			if choice == "EXIT":
 				_mode = "view"
 			_refresh()
+		"cast":
+			var ids := _spell_ids()
+			if key == KEY_HOME and not ids.is_empty():
+				_cast_cursor = (_cast_cursor - 1 + ids.size()) % ids.size()
+			elif key == KEY_END and not ids.is_empty():
+				_cast_cursor = (_cast_cursor + 1) % ids.size()
+			elif choice == "EXIT" or cancel:
+				_close()
+				return
+			elif choice == "CAST" and not ids.is_empty():
+				var id: int = ids[clampi(_cast_cursor, 0, ids.size() - 1)]
+				_close()
+				spell_chosen.emit(id)
+				return
+			_refresh()
 		"items":
 			var it := _item()
 			if key == KEY_HOME and not m.items.is_empty():
@@ -696,6 +782,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif key == KEY_END and not m.items.is_empty():
 				_cursor = (_cursor + 1) % m.items.size()
 			elif choice == "EXIT":
+				if in_combat and grey:      # USE's page closes straight back to the fight
+					_close()
+					return
 				_mode = "view"
 			elif it == null:
 				pass
@@ -712,6 +801,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				_question = "FOR %d GOLD PIECES I'LL IDENTIFY YOUR %s" % [ID_PRICE, item_label(it).to_upper()]
 				_mode = "confirm"
 				_pick = 1
+			elif choice == "USE" and in_combat:
+				if not it.readied:
+					_say("MUST BE READIED")
+				elif item_spell(m, it) > 0:
+					_close()
+					item_used.emit(it)
+					return
 			elif choice == "USE":
 				var r := _use_item(m, it, false)
 				if r != "\u0001":
