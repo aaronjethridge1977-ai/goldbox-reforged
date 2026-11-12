@@ -49,6 +49,10 @@ var _mon_file := 1
 var _monster_teams: Array[int] = []
 ## Dev shortcut (M6, PlayBot): the next scripted fight is won at once. Debug builds only.
 var dev_auto_win := false
+## Dev only (M6): asked at each new round with the round number; true ends the fight as won
+## (the bot's stalemate rule: nobody has been hurt for many rounds).
+var dev_round_check: Callable
+var _dev_win_now := false
 var dev_win_if: Callable          # (rows) -> bool, asked as each scripted fight opens   # each loaded creature's 0x6C0C (0x80: fights for the party)
 var _encounters: Array = []      # [{monsters: [[id, count, picture]], text}]
 var _enc_index := 0
@@ -563,6 +567,9 @@ var _asking_continue := false
 
 
 func _on_message(text: String) -> void:
+	if text.begins_with("ROUND ") and dev_round_check.is_valid() and DevShortcuts.allowed() \
+			and dev_round_check.call(int(text.substr(6))):
+		_dev_win_now = true
 	_messages.append(text)
 	if _messages.size() > 6:
 		_messages = _messages.slice(_messages.size() - 6)
@@ -571,6 +578,11 @@ func _on_message(text: String) -> void:
 
 ## Moves on to whoever acts next; computer-controlled turns play out on a timer.
 func _advance() -> void:
+	if _dev_win_now:
+		_dev_win_now = false
+		for c in _combat.combatants:
+			if c.team == 1:
+				c.down = true
 	var i := _combat.next_turn()
 	if i == Combat.ASK_CONTINUE:
 		_asking_continue = true

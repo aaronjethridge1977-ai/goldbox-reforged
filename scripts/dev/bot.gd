@@ -61,6 +61,7 @@ func run(plan_path: String) -> void:
 	CombatSpells.party_planner = _plan_spell
 	Combat.party_judge = _judge_fight
 	main._combat.dev_win_if = _fight_opens
+	main._combat.dev_round_check = _stalemate
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
@@ -2664,6 +2665,34 @@ func _shortcut(kind: String, detail: String, why: String) -> void:
 	_shortcuts.append(entry)
 	_count("shortcut " + kind)
 	print("== SHORTCUT ", entry)
+
+
+## Called by the combat screen at each new round: a fight where nobody has lost or gained a
+## hit point for STALEMATE rounds (everyone guarding, the fleeing unable to get away: seen
+## in the kobold king's hall, 8:13, round 5363) is won by shortcut, logged, and listed for
+## the combat suite.
+const STALEMATE := 40
+var _stale_hp := -1
+var _stale_rounds := 0
+
+
+func _stalemate(round_no: int) -> bool:
+	var hp := 0
+	for c in main._combat._combat.combatants:
+		hp = hp * 31 % 1000003 + int(c.who.hp) + (1000 if c.down else 0)
+	if round_no <= 1 or hp != _stale_hp:
+		_stale_hp = hp
+		_stale_rounds = 0
+		return false
+	_stale_rounds += 1
+	if _stale_rounds < STALEMATE:
+		return false
+	_stale_rounds = 0
+	var key: String = _last_fight.get("key", "%s %d,%d" % [_here(), main._pos.x, main._pos.y])
+	_shortcut("win", key, "stalemate: no one hurt for %d rounds, round %d" % [STALEMATE, round_no])
+	_skipped_fights.append(key + " (stalemate)")
+	print("SKIPPED FIGHT ", key, " (stalemate)")
+	return true
 
 
 ## Called by the combat screen as each scripted fight opens: remembers it (for the fight that
