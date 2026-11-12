@@ -564,6 +564,13 @@ func _hook() -> bool:
 			main.tour_stop = true
 			if int(_asked[ask]) == 4:
 				_issue("the same question keeps coming at %s %s: %s" % [_here(), str(main._pos), ask.left(120)])
+			# A script asking over and over without the party moving (Kovel Mansion's
+			# trapped cabinet loops on its own): take the way out it offers.
+			for k in items.size():
+				if String(items[k]).begins_with("LEAVE"):
+					print("   >> %d (%s: asked too often)" % [k + 1, items[k]])
+					await main._press(str(k + 1))
+					return true
 		# Ladders and stairs to the area's other map: not while this map still has events to
 		# see (Kuto's Well: down the rungs, then 'CLIMB UP THE RUNGS?' at the bottom).
 		if "YES" in items and "NO" in items and (said.contains("CLIMB") or said.contains("STAIRS")):
