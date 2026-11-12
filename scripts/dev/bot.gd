@@ -914,9 +914,12 @@ func _travel(goal: String) -> void:
 			# A wandering monster can interrupt the walk: fight it out and try again.
 			if _wiped() or _here() != before:
 				break
+			# (On the way to the inn, push on: camping where the party is, Podol Plaza say,
+			# only brings more patrols.)
 			if _interrupted:
 				_interrupted = false
-				await _heal()
+				if goal != TOWN:
+					await _heal()
 			await main._tour(Vector2i(best.x, best.y))
 			await _settle()
 			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
@@ -929,7 +932,8 @@ func _travel(goal: String) -> void:
 		if _here() == before:
 			_issue("travel: the way out at %d,%d didn't lead to %s" % [best.x, best.y, next])
 			return
-		await _heal_if_low()
+		if goal != TOWN:
+			await _heal_if_low()
 
 
 ## Visits a square of every event in the area, nearest first (except the listed events),
