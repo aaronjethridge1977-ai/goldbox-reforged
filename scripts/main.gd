@@ -2407,8 +2407,10 @@ func _exit_tree() -> void:
 ## the current area when `block` < 0; pos.x < 0 keeps where the init put the party. Debug
 ## builds only. Returns false if refused.
 func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
-	if not DevShortcuts.allowed() or _vm.on_overland:
+	if not DevShortcuts.allowed():
 		return false
+	if _vm.on_overland and block < 0:
+		return false     # a square of the wilderness band: not supported
 	if block >= 0 and (block != _vm_block or file_no != _vm_file):
 		_enter_script(file_no, block)
 		if _vm.state == EclVM.State.MENU:

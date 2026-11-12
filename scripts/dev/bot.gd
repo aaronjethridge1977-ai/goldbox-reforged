@@ -1369,19 +1369,42 @@ func _travel(goal: String) -> void:
 			"travel found no way")
 
 
+## The ways out of this area the party can walk to from where it stands.
+func _open_exits() -> Array:
+	var map: GeoMap = main._maps[main._map_index].map
+	var out := []
+	for e in _exits.get(_here(), []):
+		if _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]):
+			continue
+		if not main._vm.on_overland and e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
+			continue
+		var at := Vector2i(e.x, e.y)
+		var here: Vector2i = _overland_at() if main._vm.on_overland else main._pos
+		if here == at:
+			out.append(e)
+			continue
+		var path: Array = _overland_path(at) if main._vm.on_overland else main._find_path(main._pos, at)
+		if path.size() > 0:
+			out.append(e)
+	return out
+
+
 func _travel_hops(goal: String) -> void:
 	_load_exits()
 	for hop in 12:
 		if _here() == goal or _wiped():
 			return
-		# Breadth first over areas.
+		# Breadth first over areas. From here only the ways out the party can walk to now
+		# (a band of the wilderness is split by the poisoned river: arriving on its west side
+		# from Podol Plaza, its east edge can't be reached).
+		var open_here := _open_exits()
 		var came := {_here(): ""}
 		var queue := [_here()]
 		while not queue.is_empty():
 			var a: String = queue.pop_front()
 			if a == goal:
 				break
-			for e in _exits.get(a, []):
+			for e in (open_here if a == _here() else _exits.get(a, [])):
 				if not came.has(e.to):
 					came[e.to] = a
 					queue.append(e.to)
