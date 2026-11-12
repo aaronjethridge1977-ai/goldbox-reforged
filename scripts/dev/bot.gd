@@ -41,6 +41,12 @@ var _pc := 0
 var _checkpoint := ""
 var _checkpoint_pc := 0
 var _retries := 0
+## M6 shortcuts: the last scripted fight opened ({key, area, at, monsters}), the fights to win
+## by shortcut (keys), and the log of every shortcut used and every fight it skipped.
+var _last_fight := {}
+var _win_fights: PackedStringArray = []
+var _shortcuts: Array = []
+var _skipped_fights: Array = []
 var _new_party: Array[PartyMember] = []
 var _rng := RandomNumberGenerator.new()
 var issues: PackedStringArray = []
@@ -51,6 +57,7 @@ func run(plan_path: String) -> void:
 	CombatSpells.party_casts = true
 	CombatSpells.party_planner = _plan_spell
 	Combat.party_judge = _judge_fight
+	main._combat.dev_win_if = _fight_opens
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
 	main.auto_hook = _hook
@@ -97,20 +104,20 @@ func run(plan_path: String) -> void:
 			if _checkpoint == "" or _retries >= 8:
 				break
 			_retries += 1
+			var beaten := _last_fight.duplicate()
 			print("== back to checkpoint %s (try %d)" % [_checkpoint, _retries + 1])
 			await _load(_checkpoint)
 			_pc = _checkpoint_pc
-			# Jeremy (chat 10): a fight that keeps beating the party means grinding up to one
-			# more level, the most efficient way, before trying again.
-			if _retries % 2 == 0 and _retries <= 6:
-				var area := _here()
-				var goal := _lowest_level() + 1
-				print("== two wipes here: grinding to level %d first (%s)" % [goal, GRIND_AREA])
-				_count("grinds")
-				await _travel(GRIND_AREA)
-				if _here() == GRIND_AREA:
-					await _level_up(goal)
-				await _travel(area)
+			# M6 (Jeremy, 2026-11-12): the bot doesn't need to win. A failure takes the
+			# smallest shortcut that works, logged, and the run moves on: first the party
+			# restored before trying again, then the fight that beat it won by shortcut (it
+			# goes on the list for the combat test suite). This replaced grinding a level.
+			if _retries == 1:
+				_shortcut("restore", DevShortcuts.restore(main._party), "wiped at plan line %d" % (_pc + 1))
+			elif not beaten.is_empty():
+				_shortcut("restore", DevShortcuts.restore(main._party), "wiped again")
+				_win_fights.append(beaten.key)
+				print("== the fight that beat the party will be won by shortcut: %s" % beaten.key)
 	print("\n== PLAYTHROUGH ENDED at plan line %d; %d issues" % [_pc, issues.size()])
 	for i in issues:
 		print("ISSUE ", i)
@@ -350,6 +357,8 @@ func _do(line: String) -> void:
 		"hire":
 			# hire <n>: how many hired NPCs the party takes on when the arena offers them.
 			_hire_wanted = int(w[1])
+		"shortcut":
+			await _shortcut_command(w)
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
@@ -1667,12 +1676,23 @@ func _lowest_level() -> int:
 
 func _level_up(goal: int) -> void:
 	var area := _here()
+	# A wipe while grinding goes back to the last save of the grind (taken at the start and
+	# after each training), so the levels already earned aren't lost.
+	_grind_save()
+	var reloads := 0
 	for n in 200:
+		if _wiped() and reloads < 4:
+			reloads += 1
+			_count("wipes")
+			_issue("party wiped while grinding in %s; back to the grind's last save" % area)
+			await _load("grind")
 		if _lowest_level() >= goal or _wiped():
 			break
 		if _can_train():
 			await _town()
 			await _travel(area)
+			if not _wiped():
+				_grind_save()
 		if _here() != area:
 			await _travel(area)
 			if _here() != area:
@@ -1699,6 +1719,11 @@ func _level_up(goal: int) -> void:
 		if _hurt() or _learning():
 			await _prepare()
 	print("   level: lowest %d" % _lowest_level())
+
+
+func _grind_save() -> void:
+	main._quick_save()
+	DirAccess.copy_absolute(main._save_path(), "user://bot_grind.cfg")
 
 
 ## New Phlan locks its shop, City Hall and more from hour 14 (0x49C9 >= 14, the town's
@@ -2311,7 +2336,8 @@ func _save_counters(path: String) -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify({"stats": _stats, "ledger": _ledger, "gems": _gem_ledger,
-			"first": _first_day, "trainings": Array(_trainings)}))
+			"first": _first_day, "trainings": Array(_trainings), "shortcuts": _shortcuts,
+			"skipped_fights": _skipped_fights}))
 
 
 func _load_counters(path: String) -> void:
@@ -2325,6 +2351,8 @@ func _load_counters(path: String) -> void:
 	_gem_ledger = d.get("gems", {})
 	_first_day = d.get("first", {})
 	_trainings = PackedStringArray(d.get("trainings", []))
+	_shortcuts = d.get("shortcuts", [])
+	_skipped_fights = d.get("skipped_fights", [])
 	print("== counters carried on from %s" % path)
 
 
@@ -2517,3 +2545,60 @@ func _load(name: String) -> void:
 		main._start_menu.visible = false
 	main._quick_load()
 	await _settle()
+
+
+# --- M6 dev shortcuts (DevShortcuts; logged, debug builds only) ---------------------------
+
+func _shortcut(kind: String, detail: String, why: String) -> void:
+	var entry := "%s day %d %s: %s (%s)" % [_here(), _day(), kind, detail if detail != "" else "nothing to do", why]
+	_shortcuts.append(entry)
+	_count("shortcut " + kind)
+	print("== SHORTCUT ", entry)
+
+
+## Called by the combat screen as each scripted fight opens: remembers it (for the fight that
+## beat the party) and says whether to win it by shortcut.
+func _fight_opens(rows: Array) -> bool:
+	var names: PackedStringArray = []
+	for r in rows:
+		names.append("%d x%d" % [int(r[0]), int(r[1])])
+	var key := "%s %d,%d [%s]" % [_here(), main._pos.x, main._pos.y, ", ".join(names)]
+	_last_fight = {"key": key}
+	if key in _win_fights:
+		_shortcut("win", key, "this fight beat the party twice")
+		_skipped_fights.append(key)
+		print("SKIPPED FIGHT ", key)
+		return true
+	return false
+
+
+## Plan command: shortcut restore | level [member|all] | win | teleport <file:block> x,y <dir>
+func _shortcut_command(w: PackedStringArray) -> void:
+	match w[1] if w.size() > 1 else "":
+		"restore":
+			_shortcut("restore", DevShortcuts.restore(main._party), "the plan")
+		"level":
+			for m in main._party:
+				if m.npc >= 128 or (w.size() > 2 and w[2] != "all" and m.name != w[2]):
+					continue
+				var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
+					RandomNumberGenerator.new(), _pick_spell)
+				_shortcut("level", "%s %s" % [m.name, got if got != "" else "at the cap"], "the plan")
+		"win":
+			main._combat.dev_auto_win = true
+			_shortcut("win", "the next fight", "the plan")
+		"teleport":
+			var a := w[2].split(":")
+			var xy := w[3].split(",")
+			var ok: bool = main.dev_teleport(int(a[0]), int(a[1]), Vector2i(int(xy[0]), int(xy[1])), "NESW".find(w[4]))
+			await _settle()
+			_shortcut("teleport", "%s %s %s%s" % [w[2], w[3], w[4], "" if ok else " REFUSED"], "the plan")
+		_:
+			_issue("shortcut: unknown kind in '%s'" % " ".join(w))
+
+
+func _pick_spell(offered: Array) -> int:
+	for id in LEARN_ORDER:
+		if id in offered:
+			return id
+	return offered[0]

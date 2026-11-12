@@ -196,6 +196,9 @@ func _ready() -> void:
 		# --fast: the lab's long tours run every pause and fight step 25 times faster.
 		if arg == "--fast":
 			Engine.time_scale = 25.0
+		# --coverage=<file>: record which parts of the event scripts run (M6). Dev builds only.
+		if arg.begins_with("--coverage=") and OS.is_debug_build():
+			_vm.coverage = ScriptCoverage.new(arg.trim_prefix("--coverage="))
 	for file_name in GameData.list_files(_game_path, "DAX"):
 		if battle_only and not file_name.begins_with("GEO"):
 			continue
@@ -1171,7 +1174,7 @@ func _quick_load() -> void:
 	_vm_block = cfg.get_value("script", "block", -1)
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % _vm_file))
 	if ecl != null and ecl.blocks.has(_vm_block):
-		_vm.load_script(ecl.blocks[_vm_block])
+		_vm.load_script(ecl.blocks[_vm_block], "%d:%d" % [_vm_file, _vm_block])
 	var memory: PackedByteArray = cfg.get_value("script", "memory", PackedByteArray())
 	if memory.size() == _vm.mem.size():
 		_vm.mem = memory
@@ -1865,7 +1868,7 @@ func _start_event_fight() -> void:
 	_vm.duel = 0
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
-		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents)
+		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams)
 
 
 var _duelist: PartyMember = null
@@ -2039,7 +2042,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
-	_vm.load_script(ecl.blocks[block_id])
+	_vm.load_script(ecl.blocks[block_id], "%d:%d" % [file_no, block_id])
 	# Entering an area zeroes ECL 0x4A00-0x4A1F, the scripts' per-visit bytes (the Slums'
 	# greeting 0x4A00, Sokal Keep's dead elf, City Hall's "visited this time" 0x4A01 that
 	# keeps the clerk from looking for rewards). 0x4A20-0x4AFF carries over from area to
@@ -2371,3 +2374,27 @@ func _area_picture() -> Image:
 	var tip := DungeonView.DELTA[_facing]
 	im.set_pixel(clampi(px + tip.x * 2, 0, 87), clampi(py + tip.y * 2, 0, 87), GameScreen.EGA[15])
 	return im
+
+
+func _exit_tree() -> void:
+	if _vm != null and _vm.coverage != null:
+		_vm.coverage.save()
+
+
+## Dev shortcut (M6, PlayBot): moves the party to `pos` facing `facing` in script block
+## `block` of ECL<file> (entering it, with its init, when it isn't the current one), or in
+## the current area when `block` < 0. Debug builds only. Returns false if refused.
+func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
+	if not DevShortcuts.allowed() or _vm.on_overland:
+		return false
+	if block >= 0 and (block != _vm_block or file_no != _vm_file):
+		_enter_script(file_no, block)
+		if _vm.state == EclVM.State.MENU:
+			return false
+	_pos = pos
+	_facing = (facing & 3) as DungeonView.Dir
+	_sync_position_to_vm(_facing)
+	_walls_for = -1
+	_pending_move = -1
+	_after_vm()
+	return true

@@ -46,6 +46,10 @@ var _px := 0
 var _py := 0
 var _distance := 0
 var _mon_file := 1
+var _monster_teams: Array[int] = []
+## Dev shortcut (M6, PlayBot): the next scripted fight is won at once. Debug builds only.
+var dev_auto_win := false
+var dev_win_if: Callable          # (rows) -> bool, asked as each scripted fight opens   # each loaded creature's 0x6C0C (0x80: fights for the party)
 var _encounters: Array = []      # [{monsters: [[id, count, picture]], text}]
 var _enc_index := 0
 var _pictures: Array[int] = []   # icon id for each of _monsters
@@ -111,9 +115,11 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 ## SPRITE_START / SPRITE_ADVANCE. Emits `finished` when it is over.
 func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int,
-		morale_base: int = 99, surprise: int = 0, extra: Array[PartyMember] = []) -> void:
+		morale_base: int = 99, surprise: int = 0, extra: Array[PartyMember] = [],
+		teams: Array[int] = []) -> void:
 	open_test(game_path, map, px, py, facing, party, mon_file, null)
 	_extra_monsters = extra
+	_monster_teams = teams
 	_event_fight = true
 	_morale_base = morale_base
 	_surprise = surprise
@@ -123,6 +129,14 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_distance = maxi(mini(open_ahead, max_distance) - advances, 0)
 	_load_monsters()
 	_start_fight(0, false)
+	if dev_win_if.is_valid() and dev_win_if.call(rows):
+		dev_auto_win = true
+	if dev_auto_win and DevShortcuts.allowed():
+		# Dev shortcut (M6): the enemies fall at once; experience and treasure as for a win.
+		for c in _combat.combatants:
+			if c.team == 1:
+				c.down = true
+	dev_auto_win = false
 	_advance()
 
 
@@ -451,6 +465,8 @@ func _load_monsters() -> void:
 				var m := first if i == 0 else first.clone()
 				if i > 0:
 					m.recalculate(_types)
+				var k := _monsters.size()
+				m.script_team = _monster_teams[k] if k < _monster_teams.size() else 0
 				_monsters.append(m)
 				_pictures.append(int(row[2]))
 	for m in _extra_monsters:
@@ -471,8 +487,20 @@ func _load_monsters() -> void:
 func _place() -> void:
 	_combatants.clear()
 	var placer := Placement.new(_field, _px, _py)
-	var party_sizes := _party.map(func(m): return Combat.foot_size(m))
-	var party_cells := placer.place_team(_party.size(), _facing, Vector2i.ZERO, true, party_sizes)
+	# Monsters a script set to 0x80 (LOAD_CHAR past the party; Hassad's nomads) fight on the
+	# party's side, computer-run, and stand with it.
+	var allies: Array[PartyMember] = []
+	var foes: Array[PartyMember] = []
+	var foe_pictures: Array = []
+	for i in _monsters.size():
+		if _monsters[i].script_team == 0x80:
+			allies.append(_monsters[i])
+		else:
+			foes.append(_monsters[i])
+			foe_pictures.append(_pictures[i])
+	var side_list: Array = _party + allies
+	var party_sizes := side_list.map(func(m): return Combat.foot_size(m))
+	var party_cells := placer.place_team(side_list.size(), _facing, Vector2i.ZERO, true, party_sizes)
 	var party_dir: int = Placement.FACING_TO_DIR[_facing]
 	for i in _party.size():
 		if party_cells[i].x < 0:
@@ -481,15 +509,22 @@ func _place() -> void:
 		var side := 1 if _party[i].script_team == 0x81 else 0
 		_combatants.append({"who": _party[i], "team": side, "cell": party_cells[i],
 			"icon": _art.character_icon(_party[i]), "dir": party_dir})
+	for i in range(_party.size(), side_list.size()):
+		if party_cells[i].x < 0:
+			continue
+		var k := _monsters.find(side_list[i])
+		_combatants.append({"who": side_list[i], "team": 0, "cell": party_cells[i],
+			"icon": _art.monster_icon(_mon_file, _pictures[k]) if _pictures[k] >= 0 else _art.character_icon(side_list[i]),
+			"dir": party_dir})
 	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
-	var mon_sizes := _monsters.map(func(m): return Combat.foot_size(m))
-	var mon_cells := placer.place_team(_monsters.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
-	for i in _monsters.size():
+	var mon_sizes := foes.map(func(m): return Combat.foot_size(m))
+	var mon_cells := placer.place_team(foes.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
+	for i in foes.size():
 		if mon_cells[i].x < 0:
 			continue
-		var icon: Variant = _art.character_icon(_monsters[i]) if _pictures[i] < 0 \
-			else _art.monster_icon(_mon_file, _pictures[i])
-		_combatants.append({"who": _monsters[i], "team": 1, "cell": mon_cells[i],
+		var icon: Variant = _art.character_icon(foes[i]) if foe_pictures[i] < 0 \
+			else _art.monster_icon(_mon_file, foe_pictures[i])
+		_combatants.append({"who": foes[i], "team": 1, "cell": mon_cells[i],
 			"icon": icon, "dir": (party_dir + 4) % 8})
 
 

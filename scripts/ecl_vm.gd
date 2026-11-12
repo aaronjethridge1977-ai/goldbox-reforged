@@ -63,6 +63,11 @@ var sprite_id := -1
 var sprite_distance := 0
 ## Monsters loaded for the next COMBAT: [[monster id, count, picture id], ...].
 var monsters: Array = []
+## Each creature LOAD_MON loaded, in order: its 0x6C0C (0x80 fights for the party). LOAD_CHAR
+## past the party selects them, as the original's list of players and monsters (Hassad's
+## nomads, 7:17: LOAD_CHAR party size + n, 0x6C0C = 128).
+var monster_teams: Array[int] = []
+var selected_creature := -1
 ## Encounter distance: the maximum from SPRITE_START, less one per SPRITE_ADVANCE.
 var encounter_max := 2
 var encounter_advances := 0
@@ -119,6 +124,11 @@ var npc_requests: Array = []
 
 var _menu_dest := {}             # operand the menu choice is written to
 var _rng := RandomNumberGenerator.new()
+## Dev only (--coverage=): records which instructions, branches and menu choices ran.
+var coverage: ScriptCoverage = null
+var block_key := ""              # "file:block" of the loaded script, for coverage
+var _at := 0                     # offset of the instruction running now
+var _menu_at := -1               # offset of the instruction whose menu is open
 
 
 func _init() -> void:
@@ -127,7 +137,8 @@ func _init() -> void:
 
 
 ## Loads a script block and copies its code into memory at EclScript.BASE.
-func load_script(block: PackedByteArray) -> void:
+func load_script(block: PackedByteArray, key: String = "") -> void:
+	block_key = key
 	ecl = EclScript.decode(block)
 	for i in ecl.code.size():
 		if EclScript.BASE + i < mem.size():
@@ -192,6 +203,11 @@ func answer_input(text: String) -> State:
 func choose(index: int) -> State:
 	if state != State.MENU:
 		return state
+	if coverage != null and _menu_kind != "who" and menu.size() > 1:
+		var c := index
+		if _menu_kind == "encounter" and index == 3 and encounter_distance == 0:
+			c = 4      # PARLAY sits where ADVANCE would be
+		coverage.branch(block_key, _menu_at, "c%d" % c)
 	if _menu_kind == "encounter":
 		menu = []
 		_menu_kind = ""
@@ -256,6 +272,7 @@ func end_combat(result: int) -> State:
 		return state
 	write_byte(COMBAT_RESULT, result)
 	monsters = []
+	monster_teams = []
 	treasure = []
 	state = State.RUNNING
 	return run()
@@ -280,6 +297,9 @@ func run(max_steps: int = 20000) -> State:
 		if ins.is_empty():
 			_fail("cannot decode instruction at %04X" % (pc + EclScript.BASE))
 			break
+		_at = pc
+		if coverage != null:
+			coverage.hit(block_key, pc, ecl.instructions.has(pc))
 		var next := pc + int(ins["size"])
 		pc = next
 		_exec(ins)
@@ -328,6 +348,8 @@ func selected_member() -> PartyMember:
 func _char_get(off: int) -> int:
 	if off == 0x2B1 or off == 0x2B4:
 		return maxi(selected, 0)
+	if selected < 0 and selected_creature >= 0 and off == 0x10C:
+		return monster_teams[selected_creature]
 	var m := selected_member()
 	if off == 0x2CF:
 		return charisma_bonus(m.stats[5] if m != null and m.stats.size() > 5 else 0)
@@ -360,6 +382,9 @@ func _char_get(off: int) -> int:
 
 
 func _char_set(off: int, v: int) -> bool:
+	if selected < 0 and selected_creature >= 0 and off == 0x10C:
+		monster_teams[selected_creature] = v
+		return true
 	var m := selected_member()
 	if m == null:
 		return false
@@ -414,6 +439,8 @@ func _load_char(v: int) -> void:
 	_dismiss = false
 	var i := v & 0x7F
 	selected = i if i < party.size() else -1
+	var k := i - party.size()
+	selected_creature = k if k >= 0 and k < monster_teams.size() else -1
 
 
 ## Damage from a script (traps, green slime, falling...), as the original applies it:
@@ -733,7 +760,10 @@ func _exec(ins: Dictionary) -> void:
 		"COMPARE_AND":
 			compare = 0 if (_value(a[0]) == _value(a[1]) and _value(a[2]) == _value(a[3])) else 1
 		"IF_EQ", "IF_NE", "IF_LT", "IF_GT", "IF_LE", "IF_GE":
-			if not _test(op):
+			var passed := _test(op)
+			if coverage != null:
+				coverage.branch(block_key, _at, "T" if passed else "F")
+			if not passed:
 				var skipped := ecl._read(pc)
 				if not skipped.is_empty():
 					pc += int(skipped["size"])
@@ -802,6 +832,7 @@ func _exec(ins: Dictionary) -> void:
 		"CLEAR_MON":
 			sprite_id = -1
 			monsters = []
+			monster_teams = []
 		"DELAY":
 			state = State.WAIT
 		"PICTURE":
@@ -821,7 +852,10 @@ func _exec(ins: Dictionary) -> void:
 			_pause_for_menu(a[0], items)
 		"ON_GOTO", "ON_GOSUB":
 			var index := _value(a[0])
-			if index >= 0 and index < _value(a[1]) and index + 2 < a.size():
+			var inside := index >= 0 and index < _value(a[1]) and index + 2 < a.size()
+			if coverage != null:
+				coverage.branch(block_key, _at, str(index) if inside else "out")
+			if inside:
 				if op == "ON_GOSUB":
 					stack.append(pc)
 				_jump(a[index + 2])
@@ -899,6 +933,9 @@ func _exec(ins: Dictionary) -> void:
 		"LOAD_MON":
 			if monsters.size() < 63:
 				monsters.append([_value(a[0]), maxi(_value(a[1]), 1), _value(a[2])])
+				for n in maxi(_value(a[1]), 1):
+					if monster_teams.size() < 63:
+						monster_teams.append(0)
 		"DAMAGE":
 			_damage(a)
 		"GIVE_EXP":
@@ -1077,5 +1114,6 @@ func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	# One item is a "press to continue" prompt; its choice is not stored.
 	_menu_dest = dest
 	_menu_kind = ""
+	_menu_at = _at
 	menu = items
 	state = State.MENU
