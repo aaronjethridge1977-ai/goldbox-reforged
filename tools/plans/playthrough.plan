@@ -74,15 +74,16 @@ explore
 checkpoint library
 town
 
-log 4:2 (north of Podol Plaza)
-travel 4:2
-explore
-checkpoint area4_2
-town
-
 log 2:9 (towards Valjevo)
 travel 2:9
 explore
 checkpoint area2_9
+town
+
+# North of Podol Plaza: its rests bring ghouls and wights; after 2:9 and more training.
+log 4:2 (north of Podol Plaza)
+travel 4:2
+explore
+checkpoint area4_2
 town
 stop
