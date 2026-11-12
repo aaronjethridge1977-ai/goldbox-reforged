@@ -923,7 +923,7 @@ func _travel(goal: String) -> void:
 			return
 		print("   travel %s -> %s by %d,%d %s" % [_here(), next, best.x, best.y, "NESW"[best.dir]])
 		var before := _here()
-		for attempt in 3:
+		for attempt in 6:
 			# A wandering monster can interrupt the walk: fight it out and try again.
 			if _wiped() or _here() != before:
 				break
