@@ -563,6 +563,14 @@ func _auto_handle() -> bool:
 	if _lost:
 		return false
 	if _busy:
+		if _timer.is_stopped():
+			# Busy with nothing to end it (seen on the wilderness, lizard men at 8:27 34,20:
+			# a bot run sat here 40 minutes). Say so, and go on as the timer would.
+			print("!! busy with no timer running: ", _state_line())
+			if _vm.state == EclVM.State.WAIT or not _walk_path.is_empty():
+				_on_timer()
+			else:
+				_busy = false
 		return true
 	var text := _message.text.strip_edges()
 	if _vm.state == EclVM.State.MENU:
