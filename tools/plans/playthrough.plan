@@ -80,8 +80,8 @@ explore
 checkpoint area2_9
 town
 
-# North of Podol Plaza: its rests bring ghouls and wights; after 2:9 and more training.
-log 4:2 (north of Podol Plaza)
+# South of Podol Plaza: its rests bring ghouls and wights; after 2:9 and more training.
+log 4:2 (south of Podol Plaza)
 travel 4:2
 explore
 checkpoint area4_2
