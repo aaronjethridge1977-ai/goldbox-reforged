@@ -74,9 +74,18 @@ explore
 checkpoint library
 town
 
+# Experience before the rest of the city: Podol Plaza's patrols interrupt every rest
+# and are sized to the party.
+log Podol Plaza for experience
+travel 1:18
+level 6
+checkpoint level6
+town
+
+# The gate (event 13, 7,6) opens on ten level 6 magic-users and more: Valjevo, much later.
 log 2:9 (towards Valjevo)
 travel 2:9
-explore
+explore 13
 checkpoint area2_9
 town
 

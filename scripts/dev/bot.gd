@@ -203,6 +203,11 @@ func _do(line: String) -> void:
 			# them until the script's counter reaches the value (the Slums: 0x4ABB, 25 wins
 			# make it 254, which the clerk's reward and the end of the patrols read).
 			await _grind(w[1].hex_to_int(), int(w[2]))
+		"level":
+			# level <n>: camp here, fighting what interrupts (Podol Plaza's patrols, sized
+			# to the party), training in town as each character qualifies, until everyone
+			# is at least level n (a player's way to get strong enough for the next area).
+			await _level_up(int(w[1]))
 		"explore":
 			await _explore(w.slice(1))
 		"memorize":
@@ -1167,6 +1172,50 @@ func _grind(addr: int, value: int) -> void:
 		if _hurt():
 			await _prepare()
 	print("   grind: 0x%X = %d" % [addr, main._vm.read_byte(addr)])
+
+
+func _lowest_level() -> int:
+	var low := 99
+	for m in main._party:
+		if m.status == PartyMember.STATUS_DEAD:
+			continue
+		var top := 0
+		for x in m.raw.slice(0x96, 0x9E):
+			top = maxi(top, x)
+		low = mini(low, top)
+	return low
+
+
+func _level_up(goal: int) -> void:
+	var area := _here()
+	for n in 80:
+		if _lowest_level() >= goal or _wiped():
+			break
+		if _can_train():
+			await _town()
+			await _travel(area)
+		if _here() != area:
+			await _travel(area)
+			if _here() != area:
+				return
+		if n % 5 == 0:
+			print("   level: lowest %d (want %d)" % [_lowest_level(), goal])
+		if not await _open_camp():
+			return
+		var camp: CampScreen = main._camp
+		camp._rest_menu()
+		camp._to_rest = 288
+		camp._start_rest()
+		while camp.visible and camp._resting:
+			await get_tree().process_frame
+		if camp.visible:
+			await main._press("esc")
+			if camp.visible:
+				await main._press("e")
+		await _settle()
+		if _hurt() or _learning():
+			await _prepare()
+	print("   level: lowest %d" % _lowest_level())
 
 
 ## New Phlan locks its shop, City Hall and more from hour 14 (0x49C9 >= 14, the town's
