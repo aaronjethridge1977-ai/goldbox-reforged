@@ -375,6 +375,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_run_program()
 		elif n == "cells":                  # cells: where everyone stands in the fight on screen
 			print("   distance %d, party square %d,%d facing %d" % [_combat._distance, _combat._px, _combat._py, _combat._facing])
+			for k in 3:
+				print("   side of %d,%d facing %d: %d" % [_combat._px + k * Placement.SQUARE_STEP[_combat._facing].x,
+					_combat._py + k * Placement.SQUARE_STEP[_combat._facing].y, _combat._facing,
+					_combat._field.side(_combat._px + k * Placement.SQUARE_STEP[_combat._facing].x, _combat._py + k * Placement.SQUARE_STEP[_combat._facing].y, _combat._facing)])
 			for c in _combat._combatants:
 				print("   %s %-16s %d,%d" % ["party  " if c.team == 0 else "monster", c.who.name, c.cell.x, c.cell.y])
 			continue
