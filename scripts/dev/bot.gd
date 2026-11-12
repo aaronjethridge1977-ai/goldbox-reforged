@@ -595,6 +595,13 @@ func _hook() -> bool:
 			print("   >> %d (no surrender)" % (fight + 1))
 			await main._press(str(fight + 1))
 			return true
+		# "YOU ARE ABOUT TO LEAVE THIS AREA. DO YOU WANT TO RETURN?" (stepping out into the
+		# band): LEAVE on the way somewhere, RETURN while exploring.
+		if said.contains("ABOUT TO LEAVE THIS AREA") and "RETURN" in items and "LEAVE" in items:
+			var k: String = "LEAVE" if _travelling else "RETURN"
+			print("   >> %d (%s)" % [items.find(k) + 1, k])
+			await main._press(str(items.find(k) + 1))
+			return true
 		# "BACK INTO THE WILDERNESS?": yes on the way out, no while exploring.
 		if said.contains("BACK INTO THE WILDERNESS") and "YES" in items and "NO" in items:
 			var k: String = "YES" if _travelling else "NO"
