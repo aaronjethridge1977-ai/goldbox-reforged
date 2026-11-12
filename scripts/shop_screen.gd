@@ -44,9 +44,12 @@ func open(items: Array[GameItem], party: Array[PartyMember], title: String = "SH
 	_refresh()
 	visible = true
 	_list.grab_focus()
+	# The original opens its list a line in, on the second item (lab, chat 10: New Phlan's
+	# arms shop shows HAND AXE first and selected; PREV brings BATTLE AXE, the first, into
+	# view). Checked in that one shop.
 	var root := _list.get_root()
 	if root != null and root.get_child_count() > 0:
-		root.get_child(0).select(0)
+		root.get_child(mini(1, root.get_child_count() - 1)).select(0)
 
 
 func _build(title: String) -> void:
@@ -343,8 +346,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			settle(false)
 		get_viewport().set_input_as_handled()
 		return
-	if event.is_action("ui_cancel"):
+	if event.is_action("ui_cancel") or key == KEY_E:
 		_exit()
+	elif key == KEY_B:
+		_buy()      # the original's menu letters: B(UY), E(XIT) (lab, chat 10)
 	elif key == KEY_V:
 		_view()
 	elif key == KEY_A:

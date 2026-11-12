@@ -63,6 +63,8 @@ func _init() -> void:
 		theirs[_name(d)] = {"record": d, "items": items}
 	var ours := {}
 	for m in cfg.get_value("party", "members", []):
+		if not m.has("record"):
+			continue
 		var items := PackedByteArray()
 		for it in m.get("items", []):
 			items.append_array(it)
