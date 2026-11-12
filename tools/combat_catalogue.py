@@ -29,6 +29,9 @@ from coverage import POWERS, spell_table  # noqa: E402
 # "file:id" -> (state, note). States: compared (a scenario matched the original in the lab),
 # differs (a scenario found a difference: the note says which, and the bug), partial.
 COMPARED = {
+    "7:41": ("partial", "as allies in the last camp battle (lab save D, 2026-11-12): side and starting place beside the party match the original"),
+    "7:42": ("partial", "as 7:41"),
+    "7:123": ("differs", "last camp battle at 1,14 W, 53 kobolds (lab save D): the original starts them around the party, next to it; ours places them all 2 squares west (5-16 vs the party's 26-31). Placement of a big group near a map edge: to trace"),
 }
 
 
