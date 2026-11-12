@@ -84,7 +84,8 @@ gate 7:26 7,29 3:0 TAKE BOAT
 gate 8:27 9,29 3:0 YES
 # The sites, read from the bands' on-step tables (chat 10: row y values, counts, x values and a
 # site type per square; 6:25 0xADD6.., 7:26 0xB04A.., 8:27 0xABA6..), with each site's menu.
-gate 6:25 10,9 6:19 ENTER CAVE
+# (6:25 10,9 ENTER CAVE leads only to Diogenes at the cave mouth (6:19), and back out:
+# left out of the graph, chat 11, or travel tries it as a way across the band.)
 gate 6:25 12,31 6:1 ENTER
 gate 6:25 3,32 6:28 YES
 gate 7:26 6,16 7:22 ENTER
@@ -269,11 +270,10 @@ explore
 checkpoint lizard
 town
 
-log The enormous cave (6:19, from 6:25 10,9; a dragon is seen there)
-travel 6:19
-explore
-checkpoint cave619
-town
+log The enormous cave (6:19, from 6:25 10,9): Diogenes the silver dragon only talks at its mouth
+# (chat 11: ASK DRAGON FOR ADVICE sends the party for the kobolds' silver bottle, then the
+# party is back outside; there is no area to explore, and travel 6:19 went round and round).
+# The bands' explore passes the cave's menu; the bottle and the dragon's next quest come later.
 
 log 14. The Buccaneers' base (6:1: stampede the animals)
 travel 6:1

@@ -45,8 +45,13 @@ func render(map: GeoMap, walls: WallSet, x: int, y: int, facing: int) -> PackedB
 				if w > 0 and w <= walls.walls.size():
 					var wall: Dictionary = walls.walls[w - 1]
 					_blit_part(px, wall, distance * 3 + placement, tx, slot)
-					# Far walls ahead are one tile wide; a filler joins them to the next wall.
-					if distance == 0 and placement == 0 and i + 1 < values.size() and values[i + 1] > 0:
+					# Far walls ahead are one tile wide, with the wall's filler in the gap on the
+					# side away from the centre (the centre wall: both sides), whether or not a
+					# wall stands beyond it (lab, chat 11: 23 views in the Slums and New Phlan;
+					# at 9,7 W the gap left of the centre shows the centre wall's filler).
+					if distance == 0 and placement == 0 and i <= 3 and i > 0:
+						_blit_part(px, wall, WallSet.FILLER, tx - 1, slot)
+					if distance == 0 and placement == 0 and i >= 3 and i + 1 < values.size():
 						_blit_part(px, wall, WallSet.FILLER, tx + 1, slot)
 				tx += SPACING[slot]
 	return px

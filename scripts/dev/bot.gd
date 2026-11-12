@@ -1498,8 +1498,12 @@ func _travel_hops(goal: String) -> void:
 					await _overland_step(int(best.dir))     # over the band's edge
 				_gate_answer = ""
 				_gate_picks = []
-				if _here() == before:
+				# Only a way out the party stood on and that kept it here is bad; a walk cut
+				# short by an encounter is tried again (chat 11: 6:25 12,31, the Buccaneers'
+				# base, was given up after a fight with giant snakes on the way).
+				if _here() == before and _overland_at() == Vector2i(best.x, best.y):
 					_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
+					break
 				continue
 			if main._pos == Vector2i(best.x, best.y) and (_gate_answer != "" or best.entry == "step"):
 				await _step_off()     # its event runs on stepping onto the square
