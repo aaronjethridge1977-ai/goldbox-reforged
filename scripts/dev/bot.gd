@@ -284,6 +284,16 @@ func _do(line: String) -> void:
 				await main._tour(best)
 				await _settle()
 				await _heal_if_low()
+		"campday":
+			# campday <n>: camp here n days whatever comes (a script that moves on when the
+			# party rests: the nomads' kobold attack), fighting each interruption.
+			for d in int(w[1]):
+				if _wiped() or not await _open_camp():
+					break
+				await _rest_in_camp(1)
+				await _settle()
+				if _hurt():
+					_cure_in_camp()
 		"exit":
 			# exit <from set:block> <x>,<y> <N|E|S|W> <to set:block>: a map edge the area graph
 			# can't name (scripts that pick the next area from a table: the Temple of Bane).
@@ -524,6 +534,11 @@ func _hook() -> bool:
 			print("   >> %d (no surrender)" % (fight + 1))
 			await main._press(str(fight + 1))
 			return true
+		# "BACK INTO THE WILDERNESS?": yes on the way out, no while exploring.
+		if said.contains("BACK INTO THE WILDERNESS") and "YES" in items and "NO" in items:
+			var k: String = "YES" if _travelling else "NO"
+			await main._press(str(items.find(k) + 1))
+			return true
 		# A gate travel is going through (gate lines): its choice.
 		if _gate_answer != "" and _gate_answer in items:
 			print("   >> %d (%s: the way to go)" % [items.find(_gate_answer) + 1, _gate_answer])
@@ -600,6 +615,26 @@ func _hook() -> bool:
 		return true
 	if _want == "inn" and main._vm.state == EclVM.State.MENU and main._message.text.contains("TO REST HERE"):
 		await main._press("1")
+		return true
+	if not main._camp.visible:
+		_own_camp = false
+	if _want == "" and main._camp.visible and not _own_camp and not _resting_now and not main._camp._resting:
+		# A script's own lodging (the nomads' hut: "HERE YOU MAY REST", then the headman's
+		# morning): a night's rest, and long enough to memorize.
+		_resting_now = true
+		_pick_spells()
+		var camp: CampScreen = main._camp
+		camp._rest_menu()
+		camp._to_rest = maxi(camp._to_rest, 10 * 12)
+		_start_rest(camp)
+		while camp.visible and camp._resting:
+			await get_tree().process_frame
+		if camp.visible:
+			await main._press("esc")
+			if camp.visible:
+				await main._press("e")
+		_resting_now = false
+		print("   (rested in the lodging the script gave)")
 		return true
 	if _want == "inn" and main._camp.visible:
 		_want = ""
@@ -849,6 +884,16 @@ func _encounter_choice() -> int:
 	var ours := p_hp * p_dmg
 	var theirs := m_hp * m_dmg
 	var ratio := ours / maxf(theirs, 0.01)
+	# Spellcasters' blasts and holds aren't in HP against damage: one round of driders' three
+	# Fireballs and a Stinking Cloud downed a level 4 party (chat 10). Each such spell in the
+	# enemies' memory cuts the odds.
+	var blasts := 0
+	for e in mons:
+		for id in e.memorized:
+			if id in [47, 51, 34, 23, 49, 21]:
+				blasts += 1
+	if blasts > 0:
+		ratio /= 1.0 + 1.5 * blasts
 	_judged = "%d %s, %d asleep; party %d HP x %.1f vs %d HP x %.1f: %.2f" % [mons.size(), mons[0].name,
 		slept, int(p_hp), p_dmg, int(m_hp), m_dmg, ratio]
 	if ratio < 1.5:
@@ -1216,6 +1261,12 @@ func _here() -> String:
 
 ## Walks from area to area (shortest number of areas) to `goal` ("set:block").
 func _travel(goal: String) -> void:
+	_travelling = true
+	await _travel_hops(goal)
+	_travelling = false
+
+
+func _travel_hops(goal: String) -> void:
 	_load_exits()
 	for hop in 12:
 		if _here() == goal or _wiped():
@@ -1281,7 +1332,11 @@ func _travel(goal: String) -> void:
 			if main._vm.on_overland:
 				await _overland_walk(Vector2i(best.x, best.y))
 				await _settle()
+				if best.entry == "move" and _here() == before and _overland_at() == Vector2i(best.x, best.y):
+					await _overland_step(int(best.dir))     # over the band's edge
 				_gate_answer = ""
+				if _here() == before:
+					_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
 				continue
 			if main._pos == Vector2i(best.x, best.y) and _gate_answer != "":
 				await _step_off()
@@ -1816,6 +1871,7 @@ func _needs_rest() -> bool:
 
 func _open_camp() -> bool:
 	await _settle()
+	_own_camp = true
 	if not main._camp.visible:
 		await main._press("e")
 		for i in 10:
@@ -2124,7 +2180,10 @@ var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
-var _inn_till_day := false   # the inn's rest runs on until New Phlan's doors open
+var _inn_till_day := false
+var _resting_now := false
+var _own_camp := false       # the camp open is the bot's own (ENCAMP), not a script's lodging
+var _travelling := false     # inside _travel    # resting in a script's lodging   # the inn's rest runs on until New Phlan's doors open
 var _last_said := ""
 var _rest_rules := {}     # area -> {rule, addr, value}
 
@@ -2404,6 +2463,7 @@ func _summoned() -> void:
 
 
 func _load(name: String) -> void:
+	_bad_exits.clear()
 	DirAccess.copy_absolute("user://bot_%s.cfg" % name, main._save_path())
 	main._lost = false
 	if main._start_menu != null:

@@ -49,6 +49,26 @@ gate 7:26 11,28 4:2 SOUTH
 # The Temple of Bane's quarter leaves by a table the area graph can't read: its east edge,
 # where the band's eastern gate brings the party in, goes back out to the band.
 exit 1:24 15,4 E 7:26
+# The wilderness bands join at their edges (the band's on-move script: x 15 going east from
+# 7:26 is 8:27, x 2 going west is 6:25; and back). The bands' sites, probed from their scripts:
+# the nomad camp 7:26 12,11 (ENTER), the boats home 7:26 7,29 and 8:27 9,29, the kobolds'
+# caves 8:27 6,15 and 3,18.
+exit 7:26 15,12 E 8:27
+exit 7:26 15,16 E 8:27
+exit 7:26 15,20 E 8:27
+exit 8:27 2,12 W 7:26
+exit 8:27 2,16 W 7:26
+exit 8:27 2,20 W 7:26
+gate 7:26 12,11 7:17 ENTER
+gate 7:26 7,29 3:0 TAKE BOAT
+gate 8:27 9,29 3:0 YES
+# The nomads (7:17): help them against the kobolds (the Clue Book: more experience and treasure
+# than fighting them). Talk at the camp, follow the guard, stay and fight, finish the kobolds.
+parley 7:17 THE NOMADS WAIT FOR YOU
+answer 7:17 YOU TRIP ON A WIRE|ADVANCE CAUTIOUSLY
+answer 7:17 FOLLOW THE GUARD|FOLLOW THE GUARD
+answer 7:17 WHAT IS YOUR DECISION|STAY AND FIGHT
+answer 7:17 WHAT SAY WE FINISH THIS TOGETHER|DESTROY THE KOBOLDS
 # Passing an edge on the way elsewhere: LEAVE (the gate's own choice comes first).
 answer 7:26 EDGE OF THE CITY|LEAVE
 
@@ -134,6 +154,16 @@ log 7. Cadorna Textile House (4:2): Cadorna's commission (east door of City Hall
 travel 4:2
 explore
 checkpoint textile
+town
+
+log 9. The wilderness first (Jeremy, chat 10: Mace's five Hold Persons wiped a level 4 party
+# four times): the nomads (7:17) for the clerk's commission, then the kobolds.
+travel 7:17
+explore
+# Staying with the nomads: the kobolds come while the party rests in the camp.
+campday 3
+explore
+checkpoint nomads
 town
 
 log 8. The Wealthy Area and the Temple of Bane (1:24): Bishop Braccio's commission
