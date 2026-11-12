@@ -84,4 +84,8 @@ func set_door(x: int, y: int, side: int, value: int) -> void:
 
 
 func flag(x: int, y: int) -> int:
+	# Off the map (the wilderness bands are 16 x 36 and keep their place in the same
+	# x, y): no event there.
+	if x < 0 or y < 0 or x >= SIZE or y >= SIZE:
+		return 0
 	return flags[y * SIZE + x]

@@ -1422,6 +1422,10 @@ func _step_into(next: Vector2i) -> void:
 	_vm.write_byte(DOOR_TRY_BASH, 1)
 	_vm.write_byte(DOOR_TRY_PICK, 1)
 	_vm.write_byte(DOOR_TRY_KNOCK, 1)
+	# The original keeps the square left behind at 0x49F0/0x49F1 (lab, chat 10: saves F and
+	# G after steps 13,9 -> 13,8 and 13,8 -> 13,9); scripts move the party back to it.
+	_vm.write_byte(EclVM.PREVIOUS_X, _pos.x)
+	_vm.write_byte(EclVM.PREVIOUS_Y, _pos.y)
 	_pos = next
 	_pass_time(GameClock.TEN_MINUTES if _searching else GameClock.MINUTE, 1)
 	if _vm.ecl != null:

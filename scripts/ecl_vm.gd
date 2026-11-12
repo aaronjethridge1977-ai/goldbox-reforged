@@ -31,6 +31,9 @@ const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan'
 
 const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move moves to the next area)
 const FILE_SET := 0x6E12        # data set (ECLn, GEOn, ...) of the block the next NEW_ECL loads
+const AREA_MAP_ID := 0x49C5     # the map LOAD_AREA_MAP loaded (scripts test it)
+const PREVIOUS_X := 0x49F0      # the square the party stood on before its last step
+const PREVIOUS_Y := 0x49F1      #   (scripts put the party back there: "you are pushed back")
 const PARTY_SIZE := 0x6E3E     # how many are in the party (the finale's vote, hirelings' room)
 const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (read by PROGRAM 0)
 # The wilderness (see OverlandMap): the party's square, and its heading as the on-move
@@ -906,6 +909,11 @@ func _exec(ins: Dictionary) -> void:
 			state = State.NEW_ECL
 		"LOAD_AREA_MAP":
 			area_map = [_value(a[0]), _value(a[1]), _value(a[2])]
+			# The original keeps the loaded map's id at 0x49C5 (lab, chat 10: save F in New
+			# Phlan has 0, save J from the Slums 20); scripts test it (the Wealthy Area's
+			# 31 is the Temple of Bane's map, 1:24 0x993D, 0x99C7).
+			if area_map[0] < 127:
+				write_byte(AREA_MAP_ID, area_map[0])
 			# 4,4,0 / 5,5,0 / 6,6,0: the wilderness, one of its three bands; a map of
 			# its own (mode 0 or 2) means a 3D area.
 			if area_map[0] == area_map[1] and area_map[0] >= 4 and area_map[0] <= 6 and area_map[2] == 0:
