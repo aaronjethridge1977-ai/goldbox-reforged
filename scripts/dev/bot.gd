@@ -465,6 +465,7 @@ var _asked := {}      # script questions answered, by text and choices
 var _visited := {}    # "map:event" explored in this area's explore
 var _ladders := {}    # "map:event" ladders and stairs left for last
 var _no_route := {}   # "map:event" explore found no way to
+var _todo_now := {}   # the current explore pass's list of events still to visit
 var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
@@ -994,6 +995,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			deferred[ev] = todo[ev]
 			todo.erase(ev)
 	var map_now: int = main._map_index
+	_todo_now = todo
 	while not todo.is_empty() and not _wiped() and _here() == area and main._map_index == map_now:
 		var best := -1
 		var best_len := 1 << 20
@@ -1011,6 +1013,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 						ladders[lev] = Vector2i(x, y)
 			if not ladders.is_empty():
 				todo = ladders
+				_todo_now = todo
 				for lev in ladders:
 					_ladders.erase("%d:%d" % [map_now, lev])
 				ladders = {}
@@ -1073,9 +1076,10 @@ func _prepare() -> void:
 	_pick_spells()
 	if not _learning() and not _needs_rest():
 		return
-	# Near town, a player rests at the inn rather than in monster country.
+	# Near town (three areas: Podol Plaza's rests are interrupted every time), a player rests
+	# at the inn rather than in monster country.
 	var area := _here()
-	if area != TOWN and _hops(area, TOWN) <= 2:
+	if area != TOWN and _hops(area, TOWN) <= 3:
 		var back: Vector2i = main._pos
 		print("   == to the inn to rest")
 		await _travel(TOWN)
@@ -1091,20 +1095,15 @@ func _prepare() -> void:
 		await _heal()
 
 
-## Events on the current map not yet visited by this explore (the one underfoot excluded).
+## Events still on explore's list for this map (the one underfoot excluded).
 func _unvisited_here() -> int:
 	var map: GeoMap = main._maps[main._map_index].map
 	var here := map.flag(main._pos.x, main._pos.y) & 127
-	var seen := {}
-	for y in GeoMap.SIZE:
-		for x in GeoMap.SIZE:
-			var ev := map.flag(x, y) & 127
-			if ev == 0 or ev == here or seen.has(ev) or _visited.has("%d:%d" % [main._map_index, ev]) \
-					or _no_route.has("%d:%d" % [main._map_index, ev]):
-				continue
-			if main._find_path(main._pos, Vector2i(x, y)).size() > 0:
-				seen[ev] = true
-	return seen.size()
+	var n := 0
+	for ev in _todo_now:
+		if int(ev) != here:
+			n += 1
+	return n
 
 
 func _grind(addr: int, value: int) -> void:
