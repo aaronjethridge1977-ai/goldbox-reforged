@@ -22,6 +22,9 @@ rest 4:10 inn
 # Encounters the Clue Book settles by talking: Ferran Martinez in Sokal Keep (a spectre that
 # drains two levels a hit) gives his story and the word for the library.
 parley 4:21 A PALE FORM RISES
+# People the Clue Book says not to take along: the library's madman (trouble in town).
+answer 2:15 QUITE MAD|NO
+answer 2:15 DO YOU INSIST HE COME|NO
 
 # The Slums (any room whose fight is won), Sokal Keep (after four patrols), the library
 # (except the garden) and the wilderness: camp.
@@ -79,16 +82,16 @@ explore
 checkpoint kuto
 town
 
-log The Slums' trolls and ogres (16), at level 3 or more
+log The Slums' trolls and ogres (event 20, 0,14), at level 3 or more: the 25th win
 travel 2:20
-explore
+explore +20
 checkpoint slums3
 town
 
 log 5. Mendor's library and the garden (2:15)
 # Strategy change 4: a mirror for each front-liner against the basilisk (General Items,
 # New Phlan event 19, 15,8), and more arrows (arms and armour, 13,8).
-shop 15,8 | 0 Mirror | 1 Mirror | 2 Mirror | 3 Mirror | 4 Mirror | 5 Mirror
+shop 15,8 | 0 Brass Mirror | 1 Brass Mirror | 2 Brass Mirror | 3 Brass Mirror | 4 Brass Mirror | 5 Brass Mirror
 shop 13,8 | 4 10 Arrow | 4 10 Arrow
 travel 2:15
 explore
@@ -99,6 +102,18 @@ log 6. Podol Plaza (1:18), disguised, on the clerk's secret mission
 travel 1:18
 explore
 checkpoint podol
+town
+
+log 5b. The library again: the wizard-locked stacks (Knock), searching for the council's books
+travel 2:15
+explore
+search on
+revisit 2 4
+revisit 3 4
+revisit 4 4
+revisit 5 4
+search off
+checkpoint library2
 town
 
 log 7. Cadorna Textile House (4:2): Cadorna's commission (east door of City Hall)

@@ -75,7 +75,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -255,6 +255,41 @@ func _do(line: String) -> void:
 				"value": int(w[4]) if w.size() > 4 else 0}
 		"status":
 			_report()
+		"search":
+			# search on|off: SEARCH mode as the original's (steps take 10 minutes; some scripts,
+			# the library's stacks, only give what they hide to a searching party).
+			main._searching = w[1] == "on"
+			main._vm.write_byte(main.SEARCH_FLAG, 1 if main._searching else 0)
+		"revisit":
+			# revisit <event> <times>: walk onto that event's nearest square again and again
+			# (off and back on), playing whatever it gives (the library's stacks: one book a visit).
+			for n in int(w[2]):
+				if _wiped():
+					break
+				var map: GeoMap = main._maps[main._map_index].map
+				var best := Vector2i(-1, -1)
+				var best_len := 1 << 20
+				for y in GeoMap.SIZE:
+					for x in GeoMap.SIZE:
+						if map.flag(x, y) & 127 == int(w[1]):
+							var path: Array = main._find_path(main._pos, Vector2i(x, y))
+							if path.size() > 0 and path.size() < best_len:
+								best = Vector2i(x, y)
+								best_len = path.size()
+				if best.x < 0:
+					_issue("revisit: no way to event %s" % w[1])
+					break
+				if main._pos == best:
+					await _step_off()
+				await main._tour(best)
+				await _settle()
+				await _heal_if_low()
+		"answer":
+			# answer <set:block> <words of the question>|<choice>: answer that question so.
+			var spec := " ".join(w.slice(2)).split("|")
+			if not _answer_rules.has(w[1]):
+				_answer_rules[w[1]] = []
+			_answer_rules[w[1]].append([spec[0].strip_edges(), spec[1].strip_edges().to_upper()])
 		"parley":
 			# parley <set:block> <words of the encounter's text>: PARLAY there, not COMBAT.
 			if not _parley_cues.has(w[1]):
@@ -473,6 +508,12 @@ func _hook() -> bool:
 			print("   >> %d (no surrender)" % (fight + 1))
 			await main._press(str(fight + 1))
 			return true
+		# The plan's answers to particular questions (answer <area> <text>|<choice>).
+		for rule in _answer_rules.get(_here(), []):
+			if said.contains(rule[0]) and rule[1] in items:
+				print("   >> %d (%s: the plan's answer)" % [items.find(rule[1]) + 1, rule[1]])
+				await main._press(str(items.find(rule[1]) + 1))
+				return true
 		# PARLAY's manner (HAUGHTY SLY NICE MEEK ABUSIVE): NICE, as the Clue Book advises with
 		# anyone not plainly hostile (Ohlo fights the HAUGHTY and the ABUSIVE and offers his
 		# commission to the NICE and the MEEK).
@@ -483,10 +524,11 @@ func _hook() -> bool:
 			return true
 		# Podol Plaza's gate (STRIDE BOLDLY / DISGUISE / SNEAK): the Clue Book goes in
 		# disguised, on the clerk's secret mission.
-		if "DISGUISE" in items:
-			print("   >> %d (DISGUISE)" % (items.find("DISGUISE") + 1))
-			await main._press(str(items.find("DISGUISE") + 1))
-			return true
+		for k in items.size():
+			if String(items[k]).begins_with("DISGUISE"):
+				print("   >> %d (DISGUISE)" % (k + 1))
+				await main._press(str(k + 1))
+				return true
 		if "ACCEPT THE COMMISSION" in items:
 			print("   >> 1 (accepting the commission)")
 			await main._press("1")
@@ -1274,8 +1316,11 @@ func _explore_pass(skip: Array) -> Dictionary:
 		_ladder_ok = true
 	var deferred := {}
 	for ev in todo.keys():
-		# Event fights come without a menu to flee by: wait for clear odds.
+		# Event fights come without a menu to flee by: wait for clear odds ("+n" in the
+		# plan's list takes event n on whatever the odds, when the plan judges it ready).
 		var odds := 0.0 if str(ev) in skip else _event_odds(ev)
+		if ("+%d" % ev) in skip:
+			odds = 99.0
 		if odds < 2.0:
 			print("   explore: event %d deferred (odds %.2f)" % [ev, odds])
 			deferred[ev] = todo[ev]
@@ -1792,7 +1837,11 @@ func _cure_in_camp() -> int:
 ## What the bot memorizes, by class and level, in turn: clerics Cure Light Wounds twice to
 ## a Bless; Hold Person; Prayer. Magic-users Sleep and Magic Missile; Stinking Cloud;
 ## Fireball, Haste, Lightning Bolt.
-const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [34, 32], [47, 48, 51]]]
+## A magic-user's new spell at training, in order of want: Magic Missile, Sleep, Knock (the
+## library's wizard-locked doors), Stinking Cloud, Invisibility, Mirror Image, Fireball,
+## Haste, Lightning Bolt, Hold Person, Dispel Magic, Slow.
+const LEARN_ORDER := [15, 21, 31, 34, 30, 32, 47, 48, 51, 49, 46, 55]
+const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [31, 34, 32], [47, 48, 51]]]
 
 
 func _memorize() -> void:
@@ -1891,7 +1940,12 @@ func _train() -> void:
 		if pm._mode == "confirm_train":
 			pm._do_train()
 			if pm._mode == "learn":
-				pm._learn_selected() if pm.has_method("_learn_selected") else await main._press("enter")
+				# The spell a player wants next (LEARN_ORDER), else the first offered.
+				for id in LEARN_ORDER:
+					if pm._list.has(id):
+						pm._cursor = pm._list.find(id)
+						break
+				await main._press("enter")
 			_book("training", before)
 			var m: PartyMember = main._party[i]
 			_trainings.append("%s %s day %d" % [m.name, "/".join(Array(m.raw.slice(0x96, 0x9E)).filter(func(x): return x > 0).map(func(x): return str(x))), _day()])
@@ -1986,6 +2040,7 @@ var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
 var _first_day := {}      # area -> game day first entered
 var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
 var _mark := -1           # the party's coins at the last ledger entry
+var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
 var _inn_till_day := false   # the inn's rest runs on until New Phlan's doors open
@@ -2159,9 +2214,11 @@ func _clerk() -> void:
 
 ## A summons inside City Hall (the clerk sets 254: Cadorna 0x4A97 east, his pouch 0x4A98
 ## and Lord Urslingen 0x4A99 south, the council 0x4A9A): back in, to that room's event
-## (City Hall's events 5-8; 9 is the guard who turns the uninvited away).
+## (City Hall's events 30-33; 34 is the guard who turns the uninvited away).
 func _summoned() -> void:
-	var want := {0x4A97: 5, 0x4A98: 6, 0x4A99: 7, 0x4A9A: 8}
+	# City Hall's squares carry events 26-34 on New Phlan's map (its script subtracts 26):
+	# Cadorna's chambers 30, his pouch 31, Lord Urslingen 32, the council 33.
+	var want := {0x4A97: 30, 0x4A98: 31, 0x4A99: 32, 0x4A9A: 33}
 	await main._tour(Vector2i(4, 4))
 	await _settle()
 	await main._tour(Vector2i(4, 5))

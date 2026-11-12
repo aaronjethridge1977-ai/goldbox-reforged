@@ -587,7 +587,7 @@ func _auto_handle() -> bool:
 		_door_tries[key] = tries + 1
 		if tries < 6:
 			for c in ["P", "K", "B"]:
-				if c in _door_options:
+				if c in _door_options and (c != "K" or _knock_caster() != null):
 					print("   LOCKED -> %s (try %d)" % [c, tries + 1])
 					_door_retry = true
 					await _press(c.to_lower())
