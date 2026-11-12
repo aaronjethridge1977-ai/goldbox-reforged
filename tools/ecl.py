@@ -45,7 +45,7 @@ OPS = {
     0x49: ("UNKNOWN_49", 6, -1), 0x4A: ("UNKNOWN_4A", 0, -1), 0x4B: ("UNKNOWN_4B", 1, -1),
     0x4C: ("PICTURE2", 2, -1),
 }
-STOPS = {"EXIT", "RETURN", "GOTO", "NEW_ECL", "UNUSED_1F", "ON_GOTO"}
+STOPS = {"EXIT", "RETURN", "GOTO", "NEW_ECL", "UNUSED_1F"}  # ON_GOTO falls through past its list
 
 
 def text(packed: bytes) -> str:

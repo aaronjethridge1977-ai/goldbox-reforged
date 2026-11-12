@@ -59,6 +59,10 @@ func _init() -> void:
 			else:
 				entered += 1
 			var r := _measure(ecl, c)
+			var extra := 0      # ran, but the decoder doesn't reach it (judged now, not when recorded)
+			for o in c.ins:
+				if not ecl.instructions.has(int(o)):
+					extra += 1
 			for i in 8:
 				totals[i] += r.counts[i]
 			if not c.ins.is_empty() or not only.is_empty():
@@ -67,7 +71,7 @@ func _init() -> void:
 				print("%-6s %-26s %14s %14s %12s %12s %s" % [key, name.replace("\n", " "),
 					_pct(r.counts[0], r.counts[1]), _pct(r.counts[2], r.counts[3]),
 					_pct(r.counts[4], r.counts[5]), _pct(r.counts[6], r.counts[7]),
-					str(c.extra.size()) if not c.extra.is_empty() else ""])
+					str(extra) if extra > 0 else ""])
 			if key == missed:
 				for line in r.missed:
 					print("   missed ", line)

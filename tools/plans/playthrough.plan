@@ -69,6 +69,10 @@ answer 7:17 YOU TRIP ON A WIRE|ADVANCE CAUTIOUSLY
 answer 7:17 FOLLOW THE GUARD|FOLLOW THE GUARD
 answer 7:17 WHAT IS YOUR DECISION|STAY AND FIGHT
 answer 7:17 WHAT SAY WE FINISH THIS TOGETHER|DESTROY THE KOBOLDS
+# Merchants met in the wilderness are travellers, not enemies: talk to them.
+parley 7:26 YOU SPOT A GROUP OF MERCHANTS
+parley 8:27 YOU SPOT A GROUP OF MERCHANTS
+parley 6:25 YOU SPOT A GROUP OF MERCHANTS
 # Passing an edge on the way elsewhere: LEAVE (the gate's own choice comes first).
 answer 7:26 EDGE OF THE CITY|LEAVE
 

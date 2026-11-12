@@ -49,8 +49,9 @@ const OPS := {
 	0x49: ["UNKNOWN_49", 6, -1], 0x4A: ["UNKNOWN_4A", 0, -1], 0x4B: ["UNKNOWN_4B", 1, -1],
 	0x4C: ["PICTURE2", 2, -1],
 }
-## Opcodes after which execution does not continue with the next instruction.
-const STOPS := ["EXIT", "RETURN", "GOTO", "NEW_ECL", "UNUSED_1F", "ON_GOTO"]
+## Opcodes after which execution does not continue with the next instruction. (ON_GOTO does:
+## an index past its list falls through, as the nomads' camp shows, 7:17 0xA384 with 3.)
+const STOPS := ["EXIT", "RETURN", "GOTO", "NEW_ECL", "UNUSED_1F"]
 
 var code: PackedByteArray
 ## Decoded instructions by offset: {offset: {"op": name, "args": [{"type", "value"}], "size"}}
@@ -192,28 +193,56 @@ func _follow() -> void:
 		if ins.op == "GOTO":
 			work.append(int(ins.args[0].value) - BASE)
 		p += int(ins["size"])
-	while not work.is_empty():
-		p = work.pop_back()
-		while p >= 0 and p < code.size() and not instructions.has(p):
-			var ins := _read(p)
-			if ins.is_empty():
-				break
-			instructions[p] = ins
-			var op: String = ins.op
-			if op == "GOTO" or op == "GOSUB":
-				work.append(int(ins.args[0].value) - BASE)
-			elif op == "ON_GOTO" or op == "ON_GOSUB":
-				for i in range(2, ins.args.size()):
-					work.append(int(ins.args[i].value) - BASE)
-			var next := p + int(ins["size"])
-			if op.begins_with("IF_"):
-				# A failed test skips the next instruction.
-				var skipped := _read(next)
-				if not skipped.is_empty():
-					work.append(next + int(skipped["size"]))
-			if op in STOPS:
-				break
-			p = next
+	# An ON_GOTO falls through when its index is past the list; most never do, and what
+	# follows them is often a table. So a fall-through is followed only on trial: kept if its
+	# run decodes cleanly to a stop, dropped otherwise (2:15 0x9AEE runs into its data).
+	var weak: Array[int] = []
+	while not work.is_empty() or not weak.is_empty():
+		if not work.is_empty():
+			_walk(work.pop_back(), instructions, work, weak)
+			continue
+		var w: int = weak.pop_back()
+		if instructions.has(w):
+			continue
+		var kept := errors.size()
+		var trial := {}
+		var more: Array[int] = []
+		var more_weak: Array[int] = []
+		if _walk(w, trial, more, more_weak):
+			instructions.merge(trial)
+			work.append_array(more)
+			weak.append_array(more_weak)
+		else:
+			errors.resize(kept)
+
+
+## Decodes a straight run from `p` into `into` until a stop or known code, queueing jump
+## targets on `work` and ON_GOTO fall-throughs on `weak`. False if a decode failed.
+func _walk(p: int, into: Dictionary, work: Array[int], weak: Array[int]) -> bool:
+	while p >= 0 and p < code.size() and not instructions.has(p) and not into.has(p):
+		var ins := _read(p)
+		if ins.is_empty():
+			return false
+		into[p] = ins
+		var op: String = ins.op
+		if op == "GOTO" or op == "GOSUB":
+			work.append(int(ins.args[0].value) - BASE)
+		elif op == "ON_GOTO" or op == "ON_GOSUB":
+			for i in range(2, ins.args.size()):
+				work.append(int(ins.args[i].value) - BASE)
+		var next := p + int(ins["size"])
+		if op.begins_with("IF_"):
+			# A failed test skips the next instruction.
+			var skipped := _read(next)
+			if not skipped.is_empty():
+				work.append(next + int(skipped["size"]))
+		if op in STOPS:
+			return true
+		if op == "ON_GOTO":
+			weak.append(next)
+			return true
+		p = next
+	return true
 
 
 func _read(p: int) -> Dictionary:
