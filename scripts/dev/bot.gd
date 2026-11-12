@@ -601,7 +601,7 @@ func _hook() -> bool:
 			await main._press(str(items.find(k) + 1))
 			return true
 		# An exit the sweep found behind menu choices ("DO YOU WANT TO LEAVE?" YES): its picks.
-		if not _gate_picks.is_empty() and _travelling:
+		if not _gate_picks.is_empty() and _travelling and main._pos == _gate_square:
 			var k: int = _gate_picks.pop_front()
 			print("   >> %d (the way out)" % k)
 			await main._press(str(k))
@@ -1476,6 +1476,7 @@ func _travel_hops(goal: String) -> void:
 					await _heal()
 			_gate_answer = String(best.get("answer", ""))
 			_gate_picks = Array(best.get("picks", []))
+			_gate_square = Vector2i(best.x, best.y)
 			if main._vm.on_overland:
 				await _overland_walk(Vector2i(best.x, best.y))
 				await _settle()
@@ -2352,7 +2353,8 @@ var _mark := -1           # the party's coins at the last ledger entry
 var _first_hop := ""             # the area travel heads for next
 var _arrivals := {}             # "from x,y dir" -> where in the band an exit arrived (learned)
 var _parts := {}                # band "set:block" -> {Vector2i: part id} (river-split parts)
-var _gate_picks: Array = []     # menu choices (1-based) on the way through the exit being used
+var _gate_picks: Array = []
+var _gate_square := Vector2i(-1, -1)   # the exit square those choices belong to     # menu choices (1-based) on the way through the exit being used
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
