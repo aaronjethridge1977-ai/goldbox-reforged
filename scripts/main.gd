@@ -466,6 +466,7 @@ func _tour(goal: Vector2i) -> void:
 	var steps := 0
 	var deadline := Time.get_ticks_msec() + 600000
 	_said = ""
+	_door_tries.clear()     # a few tries at each locked door per walk
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 		if _lost:
@@ -1481,6 +1482,28 @@ func _sync_position_to_vm(direction: int) -> void:
 ## Scripts can move the party (a guided tour, a trap door): adopt what they wrote.
 ## A target reachable on foot is walked to step by step, as the original does; anything
 ## else is a jump.
+## A script that loads another map of the area part way through (Kuto's Well: down the rungs
+## to the catacombs, LOAD_AREA_MAP 32; up again, 29) moves the party onto that map, as an
+## area's init does (_enter_script).
+func _follow_area_map() -> void:
+	if _vm.on_overland or _vm.area_map.is_empty() or _vm.area_map == _area_map_seen:
+		return
+	_area_map_seen = _vm.area_map.duplicate()
+	if int(_vm.area_map[0]) >= 127:
+		return
+	for i in _maps.size():
+		if _maps[i].id == int(_vm.area_map[0]):
+			if i != _map_index:
+				_map_index = i
+				_vm_map = i
+				_walls_for = -1
+				_jump_next = true
+			return
+
+
+var _area_map_seen := []
+
+
 func _adopt_position_from_vm() -> void:
 	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
 	if now == _synced or _vm.state == EclVM.State.NEW_ECL:
@@ -1572,6 +1595,7 @@ func _on_timer() -> void:
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
 func _after_vm() -> void:
+	_follow_area_map()
 	if not _vm.npc_requests.is_empty():
 		_add_npcs()
 	if _vm.party_changed:
@@ -2047,6 +2071,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 				_maps[i].map = GeoMap.decode(_maps[i].block)
 				_vm_map = i
 				break
+	_area_map_seen = _vm.area_map.duplicate()
 	_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 	_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_synced = Vector3i(_pos.x, _pos.y, int(_facing))

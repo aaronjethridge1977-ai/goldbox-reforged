@@ -72,6 +72,11 @@ func run(plan_path: String) -> void:
 				break
 			DirAccess.copy_absolute(file, "user://bot_%s.cfg" % name)
 			_load_counters(file.get_basename() + ".json")
+			# The plan's standing rules above the checkpoint still hold.
+			for i in at:
+				var rule := lines[i].strip_edges()
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire"]:
+					await _do(rule)
 			_pc = at
 			_checkpoint = name
 			_checkpoint_pc = at
@@ -250,6 +255,11 @@ func _do(line: String) -> void:
 				"value": int(w[4]) if w.size() > 4 else 0}
 		"status":
 			_report()
+		"parley":
+			# parley <set:block> <words of the encounter's text>: PARLAY there, not COMBAT.
+			if not _parley_cues.has(w[1]):
+				_parley_cues[w[1]] = []
+			_parley_cues[w[1]].append(" ".join(w.slice(2)))
 		"hire":
 			# hire <n>: how many hired NPCs the party takes on when the arena offers them.
 			_hire_wanted = int(w[1])
@@ -270,7 +280,7 @@ func _do(line: String) -> void:
 			print("==== ", " ".join(w.slice(1)))
 		_:
 			_issue("unknown plan command: " + line)
-	print("   ", main._state_line())
+	print("   ", main._state_line(), " map ", main._maps[main._map_index].id)
 
 
 ## Waits until nothing is open or running, playing it out with the tour's policy.
@@ -331,6 +341,11 @@ func _hook() -> bool:
 		_fight_noted = false
 	if main._vm.state == EclVM.State.MENU and main._vm._menu_kind == "encounter" and not main._combat.visible:
 		var k := _encounter_choice()
+		# Encounters the Clue Book says to talk to (Ferran Martinez...): PARLAY.
+		for cue in _parley_cues.get(_here(), []):
+			if said.contains(cue) and "PARLAY" in Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper()):
+				k = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper()).find("PARLAY") + 1
+				_judged = "the plan parleys here (%s)" % cue
 		if k == 3:
 			_count("avoided")
 		print("   >> %d (encounter: %s)" % [k, _judged])
@@ -355,8 +370,10 @@ func _hook() -> bool:
 			var before := _coin()
 			var gems_before := _gems()
 			t._share()
-			_book("treasure", before)
-			_gem_ledger["treasure"] = int(_gem_ledger.get("treasure", 0)) + _gems() - gems_before
+			# City Hall's rewards come through a treasure screen too.
+			var source := "rewards" if _here() == "3:8" else "treasure"
+			_book(source, before)
+			_gem_ledger[source] = int(_gem_ledger.get(source, 0)) + _gems() - gems_before
 			# Items: only what a player carries off (magic, scrolls, potions, wands...), not
 			# every orc's spear.
 			for n in 60:
@@ -580,37 +597,69 @@ func _ready_all() -> void:
 		m.recalculate(types)
 		for round_no in 2:
 			for it in m.items.duplicate():
-				if it.readied or it.cursed:
+				if _try_ready(m, it, 0.01):
+					print("   ready: %s readies %s" % [m.name, it.name])
+	# Then hand spare weapons and armour round (TRADE): a player gives the cleric's spare
+	# sword to the fighter. Hired NPCs neither give nor take.
+	for m in main._party:
+		if m.npc >= 128:
+			continue
+		for it in m.items.duplicate():
+			if it.readied or it.cursed or not _swappable(it):
+				continue
+			for o in main._party:
+				if o == m or o.npc >= 128 or o.status != PartyMember.STATUS_OKAY:
 					continue
-				var slot := types.slot(it.type)
-				if not slot in [ItemTypes.SLOT_WEAPON, ItemTypes.SLOT_SHIELD, ItemTypes.SLOT_ARMOR]:
-					continue
-				if slot == ItemTypes.SLOT_WEAPON and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
-					continue
-				# What has to come off for it: the same slot; a shield and a two-handed weapon.
-				var off: Array[GameItem] = []
-				for o in m.items:
-					if not o.readied or o == it:
-						continue
-					var os := types.slot(o.type)
-					if os == slot or (slot == ItemTypes.SLOT_WEAPON and os == ItemTypes.SLOT_SHIELD and types.hands(it.type) >= 2) \
-							or (slot == ItemTypes.SLOT_SHIELD and os == ItemTypes.SLOT_WEAPON and types.hands(o.type) >= 2):
-						off.append(o)
-				if off.any(func(o): return o.cursed):
-					continue
-				var score := _gear_score(m)
-				for o in off:
-					sheet._ready_item(m, o)
-				sheet._ready_item(m, it)
-				m.recalculate(types)
-				if it.readied and _gear_score(m) > score + 0.01:
-					print("   ready: %s readies %s (was %s)" % [m.name, it.name, ", ".join(off.map(func(o): return o.name))])
-					continue
-				if it.readied:
-					sheet._ready_item(m, it)
-				for o in off:
-					sheet._ready_item(m, o)
-				m.recalculate(types)
+				m.items.erase(it)
+				o.items.append(it)
+				if _try_ready(o, it, 0.5):
+					print("   trade: %s gives %s to %s, who readies it" % [m.name, it.name, o.name])
+					m.recalculate(types)
+					break
+				o.items.erase(it)
+				m.items.append(it)
+
+
+func _swappable(it: GameItem) -> bool:
+	var types: ItemTypes = main._types
+	var slot := types.slot(it.type)
+	if not slot in [ItemTypes.SLOT_WEAPON, ItemTypes.SLOT_SHIELD, ItemTypes.SLOT_ARMOR]:
+		return false
+	return not (slot == ItemTypes.SLOT_WEAPON and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN))
+
+
+## Readies `it` on m in place of what holds its slot (a shield and a two-handed weapon
+## exclude each other) when that raises m's gear score by more than `gain`; else puts
+## everything back. True if it was kept.
+func _try_ready(m: PartyMember, it: GameItem, gain: float) -> bool:
+	var sheet: CharacterSheet = main._sheet
+	var types: ItemTypes = main._types
+	if it.readied or it.cursed or not _swappable(it):
+		return false
+	var slot := types.slot(it.type)
+	var off: Array[GameItem] = []
+	for o in m.items:
+		if not o.readied or o == it:
+			continue
+		var os := types.slot(o.type)
+		if os == slot or (slot == ItemTypes.SLOT_WEAPON and os == ItemTypes.SLOT_SHIELD and types.hands(it.type) >= 2) \
+				or (slot == ItemTypes.SLOT_SHIELD and os == ItemTypes.SLOT_WEAPON and types.hands(o.type) >= 2):
+			off.append(o)
+	if off.any(func(o): return o.cursed):
+		return false
+	var score := _gear_score(m)
+	for o in off:
+		sheet._ready_item(m, o)
+	sheet._ready_item(m, it)
+	m.recalculate(types)
+	if it.readied and _gear_score(m) > score + gain:
+		return true
+	if it.readied:
+		sheet._ready_item(m, it)
+	for o in off:
+		sheet._ready_item(m, o)
+	m.recalculate(types)
+	return false
 
 
 ## How good a member's readied gear is: expected melee damage a round against AC 5, plus
@@ -1051,6 +1100,7 @@ func _plan_spell(cs: CombatSpells, i: int) -> Dictionary:
 # The area graph comes from tools/sweep.gd's EXIT lines (where each square's on-move or
 # on-step script leads), kept in the lab folder: --exits=<file>.
 
+var _bad_exits := {}   # "area x,y dir" ways out that didn't work
 var _exits := {}     # "set:block" -> [{x, y, dir, entry, to}]
 
 
@@ -1118,7 +1168,7 @@ func _travel(goal: String) -> void:
 		var best := {}
 		var best_len := 1 << 20
 		for e in _exits.get(_here(), []):
-			if e.to != next:
+			if e.to != next or _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]):
 				continue
 			if e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
 				continue
@@ -1151,8 +1201,11 @@ func _travel(goal: String) -> void:
 		if _wiped():
 			return
 		if _here() == before:
-			_issue("travel: the way out at %d,%d didn't lead to %s" % [best.x, best.y, next])
-			return
+			# The graph's way out didn't work from here (a one-way edge, a script that turns
+			# the party back): try the next nearest.
+			_issue("travel: the way out at %d,%d didn't lead to %s; trying another" % [best.x, best.y, next])
+			_bad_exits["%s %d,%d %d" % [before, best.x, best.y, best.dir]] = true
+			continue
 		if goal != TOWN and not _at_inn:
 			await _heal_if_low()
 
@@ -1623,7 +1676,7 @@ func _party_report() -> void:
 	for m in main._party:
 		print("   %-12s %s lv %s xp %d hp %d/%d AC %d THAC0 %d gp %d items %s" % [m.name, m.status_name(),
 			str(Array(m.raw.slice(0x96, 0x9E)).filter(func(x): return x > 0)), m.experience, m.hp, m.hp_max,
-			m.ac, m.thac0, m.wealth_copper() / 200, ", ".join(m.items.map(func(it): return it.name))])
+			m.ac, m.thac0, m.wealth_copper() / 200, ", ".join(m.items.map(func(it): return ("*" if it.readied else "") + it.name + (" (%+d)" % it.plus if it.plus != 0 else "")))])
 
 
 # --- Camp ---------------------------------------------------------------------------------
@@ -1867,8 +1920,17 @@ func _missile_kit(m: PartyMember, it: GameItem) -> bool:
 	var types: ItemTypes = main._types
 	if it.type == ItemTypes.TYPE_ARROW or it.type == ItemTypes.TYPE_QUARREL:
 		return true
-	return types.slot(it.type) == ItemTypes.SLOT_WEAPON and (m.class_flags & types.class_flags(it.type)) != 0 \
-		and types.flags(it.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN) != 0
+	var missile := func(x: GameItem) -> bool:
+		return types.slot(x.type) == ItemTypes.SLOT_WEAPON and (m.class_flags & types.class_flags(x.type)) != 0 \
+			and types.flags(x.type) & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN) != 0
+	if not missile.call(it):
+		return false
+	# Only the best one each (the highest plus, then the dearest): the rest are sold.
+	for o in m.items:
+		if o != it and missile.call(o) and (o.plus > it.plus or (o.plus == it.plus and o.price > it.price) \
+				or (o.plus == it.plus and o.price == it.price and m.items.find(o) < m.items.find(it))):
+			return false
+	return true
 
 
 ## Magic and the things a player keeps (scrolls, potions, wands, books...): never sold.
@@ -1924,6 +1986,7 @@ var _gem_ledger := {}     # source -> gems and jewellery gained (pieces)
 var _first_day := {}      # area -> game day first entered
 var _trainings: PackedStringArray = []   # "<name> <levels> day <n>"
 var _mark := -1           # the party's coins at the last ledger entry
+var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
 var _inn_till_day := false   # the inn's rest runs on until New Phlan's doors open
 var _last_said := ""
@@ -2077,8 +2140,6 @@ func _clerk() -> void:
 		return
 	await _wait_for_day()
 	for visit in 2:
-		var before := _coin()
-		var gems := _gems()
 		await main._tour(Vector2i(4, 4))
 		await _settle()
 		await main._tour(Vector2i(4, 5))
@@ -2088,8 +2149,6 @@ func _clerk() -> void:
 		await main._press("up")
 		await _settle()
 		await _travel(TOWN)
-		_book("rewards", before)
-		_gem_ledger["rewards"] = int(_gem_ledger.get("rewards", 0)) + _gems() - gems
 		if visit == 0 and [0x4A97, 0x4A98, 0x4A99, 0x4A9A].any(func(a): return main._vm.read_byte(a) == 254):
 			await _summoned()
 	var flags := []

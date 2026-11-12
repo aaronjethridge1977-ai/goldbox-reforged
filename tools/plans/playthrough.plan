@@ -8,7 +8,7 @@
 # still sends the party to the inn when there is a way back.
 rest 3:0 inn
 # Kuto's Well: nowhere until Norris is beaten (camp in the catacombs after).
-rest 8:29 inn
+rest 8:29 inn 4A24 255
 # Podol Plaza: the inn until the block is quiet (0x4AE7 = 254 after nine patrols won).
 rest 1:18 inn 4AE7 254
 # The Textile House: not until the ogre leader and ten random fights are beaten.
@@ -19,6 +19,10 @@ rest 1:24 inn
 rest 3:14 inn
 # Valhingen Graveyard: not until cleared.
 rest 4:10 inn
+# Encounters the Clue Book settles by talking: Ferran Martinez in Sokal Keep (a spectre that
+# drains two levels a hit) gives his story and the word for the library.
+parley 4:21 A PALE FORM RISES
+
 # The Slums (any room whose fight is won), Sokal Keep (after four patrols), the library
 # (except the garden) and the wilderness: camp.
 
