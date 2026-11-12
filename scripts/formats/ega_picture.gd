@@ -144,6 +144,33 @@ static func _palette_bytes() -> PackedByteArray:
 	return PackedByteArray(PALETTE_RGB)
 
 
+## The pictures an animated PIC block shows, in turn: the first frame, then each later
+## frame laid over it by exclusive-or of the colour numbers (the later frames hold only
+## what changes). Checked in the lab, chat 10: the camp's fire (PIC 29) as the original
+## draws it is frame 0 XOR frame 1, pixel for pixel. Not for SPRIT blocks (whole frames).
+static func xor_frames(block: PackedByteArray) -> Array[Image]:
+	var out: Array[Image] = []
+	var fr := frame_indices(block)
+	if fr.is_empty():
+		return out
+	var base: Dictionary = fr[0]
+	var rgb := _palette_bytes()
+	for f in fr:
+		var w: int = base.w
+		var h: int = base.h
+		var px := PackedByteArray()
+		px.resize(w * h * 3)
+		for i in w * h:
+			var c: int = base.px[i]
+			if f != base and i < f.px.size():
+				c ^= f.px[i]
+			px[i * 3] = rgb[c * 3]
+			px[i * 3 + 1] = rgb[c * 3 + 1]
+			px[i * 3 + 2] = rgb[c * 3 + 2]
+		out.append(Image.create_from_data(w, h, false, Image.FORMAT_RGB8, px))
+	return out
+
+
 ## Frames of an animated block as colour indices, for compositing over the 3D view:
 ## [{"w", "h", "x", "y", "px": PackedByteArray (w*h)}]; x and y are the header's
 ## position in 8-pixel tiles.

@@ -2107,7 +2107,8 @@ func _heal() -> void:
 		days += 1
 		if camp.visible:
 			await main._press("esc")
-			await main._press("e")
+			if camp.visible:
+				await main._press("e")
 		await _settle()
 		# An interrupted rest: a player gives up camping among the monsters and walks to
 		# the inn (when there is a way back); north of Podol Plaza ghouls and wights come.

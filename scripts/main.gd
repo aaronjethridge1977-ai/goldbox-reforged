@@ -138,7 +138,8 @@ func _ready() -> void:
 	_camp = CampScreen.new()
 	_camp.visible = false
 	_camp.closed.connect(_on_camp_closed)
-	_camp.save_requested.connect(_quick_save)
+	_camp.save_requested.connect(func(_letter: String) -> void: _quick_save())
+	_camp.time_passed.connect(_on_camp_rested)
 	_camp.interrupted.connect(_on_rest_interrupted)
 	add_child(_camp)
 	_party_menu = PartyMenu.new()
@@ -375,7 +376,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
 			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible \
-				else (_temple._scr if _temple.visible else _screen))
+				else (_temple._scr if _temple.visible else (_camp._scr if _camp.visible else _screen)))
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue
@@ -664,7 +665,7 @@ func _state_line() -> String:
 	if _party_menu.visible:
 		text = _party_menu.screen_text()
 	elif _camp.visible:
-		text = "%s | %s | %s | %s" % [_camp._head.text, _camp._party_label.text.replace("\n", " / ").left(140), _camp._note.text, _camp._menu.text.left(30)]
+		text = _camp.state_text()
 	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
 	if _vm.on_overland:
 		place = "wild " + _overland_place()
@@ -1609,7 +1610,7 @@ func _on_timer() -> void:
 				_held_message = ""
 			if _vm.state == EclVM.State.WAIT:
 				_busy = true
-				_timer.start(DELAY_SECONDS * [0.5, 1.0, 2.0][CampScreen.speed])
+				_timer.start(DELAY_SECONDS * CampScreen.delay_scale())
 		else:
 			_timer.start(WALK_STEP_SECONDS)
 		_show()
@@ -1657,7 +1658,7 @@ func _after_vm() -> void:
 		EclVM.State.WAIT:
 			if not _busy:
 				_busy = true
-				_timer.start(DELAY_SECONDS * [0.5, 1.0, 2.0][CampScreen.speed])
+				_timer.start(DELAY_SECONDS * CampScreen.delay_scale())
 			return
 		EclVM.State.MENU:
 			var lines := PackedStringArray()
@@ -1821,6 +1822,7 @@ func _make_camp() -> void:
 	for m in _party:
 		m.recalculate(_types)
 	_camp.spells = SpellTable.shared(_game_path)
+	_camp.place = _place_line()
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
 
 
@@ -2364,14 +2366,9 @@ func _draw_screen() -> void:
 	var view := _view_img
 	if _area_view and not _vm.on_overland:
 		view = _area_picture()
-	var place := "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
-	if _vm.read_byte(NO_COORDINATES) != 0:
-		# Where an area's script sets 0x49FB (Valjevo's castle, the pyramid, the graveyard,
-		# Sokal Keep...) the original shows no square (START.EXE 0x35A6, lab chat 6).
-		place = "%s %s" % ["NESW"[_facing], GameClock.text(_vm)]
+	var place := _place_line()
 	var wild := _vm.on_overland and _event_image == null and not _area_view
 	if _vm.on_overland:
-		place = _overland_place()
 		menu.erase("AREA")
 	if _searching:
 		place += " SEARCHING"
@@ -2443,3 +2440,20 @@ func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 	_pending_move = -1
 	_after_vm()
 	return true
+
+
+## The place line under the view: square, facing and time ("14,5 S 10:56").
+func _place_line() -> String:
+	if _vm.on_overland:
+		return _overland_place()
+	if _vm.read_byte(NO_COORDINATES) != 0:
+		# Where an area's script sets 0x49FB (Valjevo's castle, the pyramid, the graveyard,
+		# Sokal Keep...) the original shows no square (START.EXE 0x35A6, lab chat 6).
+		return "%s %s" % ["NESW"[_facing], GameClock.text(_vm)]
+	return "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
+
+
+## A rest in camp is done: the clock moves on (the camp has already run the effects).
+func _on_camp_rested(minutes: int) -> void:
+	GameClock.add_minutes(_vm, minutes)
+	_camp.place = _place_line()
