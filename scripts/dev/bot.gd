@@ -368,13 +368,17 @@ func _hook() -> bool:
 		# Ladders and stairs to the area's other map: not while this map still has events to
 		# see (Kuto's Well: down the rungs, then 'CLIMB UP THE RUNGS?' at the bottom).
 		if "YES" in items and "NO" in items and (said.contains("CLIMB") or said.contains("STAIRS")):
+			# Only when explore is going for the ladder on purpose (its last stop on a map,
+			# or the way back up); passing the well on the way elsewhere is a NO.
 			var left := _unvisited_here()
-			var k: int = items.find("NO") if left > 0 else items.find("YES")
+			var k: int = items.find("YES") if left == 0 and _ladder_ok else items.find("NO")
+			if items[k] == "YES":
+				_ladder_ok = false
 			var key := "%d:%d" % [main._map_index, main._maps[main._map_index].map.flag(main._pos.x, main._pos.y) & 127]
-			if left > 0:
+			if items[k] == "NO" and left > 0:
 				_visited.erase(key)       # come back to it last
 				_ladders[key] = true
-			else:
+			elif items[k] == "YES":
 				_ladders.erase(key)
 			print("   >> %d (%s: %d events left on this map)" % [k + 1, items[k], left])
 			await main._press(str(k + 1))
@@ -466,6 +470,7 @@ var _visited := {}    # "map:event" explored in this area's explore
 var _ladders := {}    # "map:event" ladders and stairs left for last
 var _no_route := {}   # "map:event" explore found no way to
 var _todo_now := {}   # the current explore pass's list of events still to visit
+var _ladder_ok := false   # explore is going for a ladder on purpose
 var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
@@ -963,6 +968,8 @@ func _explore(later: Array) -> void:
 		if main._map_index == start_map or _wiped() or _here() != area or not arrivals.has(main._map_index):
 			break
 		print("   explore: back to map %d by %s" % [start_map, arrivals[main._map_index]])
+		_todo_now = {}
+		_ladder_ok = true
 		await main._tour(arrivals[main._map_index])
 		await _settle()
 
@@ -983,9 +990,10 @@ func _explore_pass(skip: Array) -> Dictionary:
 		if _ladders.has("%d:%d" % [main._map_index, ev]):
 			ladders[ev] = todo[ev]
 			todo.erase(ev)
-	if todo.is_empty():
+	if todo.is_empty() and not ladders.is_empty():
 		todo = ladders
 		ladders = {}
+		_ladder_ok = true
 	var deferred := {}
 	for ev in todo.keys():
 		# Event fights come without a menu to flee by: wait for clear odds.
@@ -996,6 +1004,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			todo.erase(ev)
 	var map_now: int = main._map_index
 	_todo_now = todo
+	_ladder_ok = false
 	while not todo.is_empty() and not _wiped() and _here() == area and main._map_index == map_now:
 		var best := -1
 		var best_len := 1 << 20
@@ -1013,7 +1022,8 @@ func _explore_pass(skip: Array) -> Dictionary:
 						ladders[lev] = Vector2i(x, y)
 			if not ladders.is_empty():
 				todo = ladders
-				_todo_now = todo
+				_todo_now = {}         # nothing else left on this map
+				_ladder_ok = true
 				for lev in ladders:
 					_ladders.erase("%d:%d" % [map_now, lev])
 				ladders = {}
