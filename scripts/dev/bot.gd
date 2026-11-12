@@ -47,6 +47,7 @@ var _last_fight := {}
 var _win_fights: PackedStringArray = []
 var _shortcuts: Array = []
 var _skipped_fights: Array = []
+var _expected_level := {}       # area -> the level the game expects there (plan: level)
 var _new_party: Array[PartyMember] = []
 var _rng := RandomNumberGenerator.new()
 var issues: PackedStringArray = []
@@ -82,7 +83,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit", "level"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -263,7 +264,12 @@ func _do(line: String) -> void:
 			# is at least level n (a player's way to get strong enough for the next area).
 			await _level_up(int(w[1]))
 		"explore":
+			await _keep_level()
 			await _explore(w.slice(1))
+		"level":
+			# level <set:block> <n>: the level the game expects of a party there (M6: the
+			# party is kept near it, since some encounters scale with the party).
+			_expected_level[w[1]] = int(w[2])
 		"memorize":
 			await _memorize()
 		"train":
@@ -2602,3 +2608,40 @@ func _pick_spell(offered: Array) -> int:
 		if id in offered:
 			return id
 	return offered[0]
+
+
+## M6: a member more than one level below what the area expects (its best class, as multi-class
+## characters run behind) first trains normally if it can; what's still missing is granted by
+## shortcut, logged.
+func _keep_level() -> void:
+	var want: int = int(_expected_level.get(_here(), 0)) - 1
+	if want <= 0:
+		return
+	var behind := func() -> Array:
+		var out := []
+		for m in main._party:
+			if m.npc < 128 and m.status == PartyMember.STATUS_OKAY and _top_level(m) < want:
+				out.append(m)
+		return out
+	if behind.call().is_empty():
+		return
+	if _can_train():
+		var area := _here()
+		await _town()
+		await _travel(area)
+	for m in behind.call():
+		for k in 8:
+			if _top_level(m) >= want:
+				break
+			var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
+				RandomNumberGenerator.new(), _pick_spell)
+			if got == "":
+				break
+			_shortcut("level", "%s to %s" % [m.name, got], "%s expects level %d" % [_here(), want + 1])
+
+
+func _top_level(m: PartyMember) -> int:
+	var top := 0
+	for x in m.raw.slice(0x96, 0x9E):
+		top = maxi(top, x)
+	return top

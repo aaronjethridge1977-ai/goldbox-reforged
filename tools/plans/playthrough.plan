@@ -19,6 +19,26 @@ rest 1:24 inn
 rest 3:14 inn
 # Valhingen Graveyard: not until cleared.
 rest 4:10 inn
+# The level the game expects of a party in each area (research/pool-of-radiance-strategy.md,
+# section 4: Claude's estimates from the guides, the low end of each range). M6: a member more
+# than one level below it trains, or gets the level by shortcut (logged).
+level 2:20 1
+level 4:21 2
+level 8:29 3
+level 2:15 3
+level 1:18 3
+level 4:2 4
+level 1:24 5
+level 3:14 5
+level 7:17 5
+level 8:27 5
+level 4:10 6
+level 2:9 7
+level 5:3 7
+level 5:4 7
+level 5:5 7
+level 5:6 7
+level 5:7 7
 # Encounters the Clue Book settles by talking: Ferran Martinez in Sokal Keep (a spectre that
 # drains two levels a hit) gives his story and the word for the library.
 parley 4:21 A PALE FORM RISES
