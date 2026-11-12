@@ -292,10 +292,12 @@ func _hook() -> bool:
 		await main._press(str(k))
 		return true
 	if main._vm.state == EclVM.State.MENU and main._message.text.contains("WHO WILL PAY") and main._vm.menu.size() == main._party.size():
-		var best := 0
+		# NPCs won't pay ("THAT PERSON WON'T PAY.": 0x6BB8 is 128 and up).
+		var best := -1
 		for i in main._party.size():
-			if main._party[i].money[4] > main._party[best].money[4]:
+			if main._party[i].npc < 128 and (best < 0 or main._party[i].money[4] > main._party[best].money[4]):
 				best = i
+		best = maxi(best, 0)
 		print("   >> %d (most platinum: %d)" % [best + 1, main._party[best].money[4]])
 		await main._press(str(best + 1))
 		return true
@@ -1188,7 +1190,7 @@ func _lowest_level() -> int:
 
 func _level_up(goal: int) -> void:
 	var area := _here()
-	for n in 80:
+	for n in 200:
 		if _lowest_level() >= goal or _wiped():
 			break
 		if _can_train():
@@ -1199,7 +1201,10 @@ func _level_up(goal: int) -> void:
 			if _here() != area:
 				return
 		if n % 5 == 0:
-			print("   level: lowest %d (want %d)" % [_lowest_level(), goal])
+			var purse := 0
+			for m in main._party:
+				purse += m.wealth_copper() / 200
+			print("   level: lowest %d (want %d), purse %d gold" % [_lowest_level(), goal, purse])
 		if not await _open_camp():
 			return
 		var camp: CampScreen = main._camp
