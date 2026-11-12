@@ -66,6 +66,13 @@ func run(plan_path: String) -> void:
 	lines = text.split("\n")
 	main.auto_hook = _hook
 	main._camp.interrupted.connect(func(): _count("interrupted"))
+	# Watchdog: the game's state every 2 real minutes, so a run that goes quiet shows where.
+	var watch := Timer.new()
+	watch.wait_time = 120.0
+	watch.ignore_time_scale = true
+	watch.timeout.connect(func() -> void: print("   [watch] ", main._state_line()))
+	add_child(watch)
+	watch.start()
 	# --resume=<quick save file>:<checkpoint name>: start from another run's checkpoint,
 	# at the plan line after "checkpoint <name>" (the lab keeps them; game data, not in git).
 	for arg in OS.get_cmdline_user_args():
@@ -2265,7 +2272,7 @@ func _train() -> void:
 		else:
 			print("   %s: %s" % [main._party[i].name, pm._note.text])
 	_training = false
-	await main._press("esc")
+	await main._press("b")         # BEGIN ADVENTURING
 	await _settle()
 
 

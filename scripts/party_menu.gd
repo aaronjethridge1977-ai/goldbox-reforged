@@ -1,22 +1,36 @@
 class_name PartyMenu
 extends Control
 ## The party menu the scripts open with PROGRAM 0: the training halls (each room writes its
-## class bits to 0x6DA8 first) and the start of the game. Pool of Radiance's items, in its
-## order: CREATE NEW CHARACTER, DROP CHARACTER, MODIFY CHARACTER, TRAIN CHARACTER (only
-## where a hall trains), VIEW CHARACTER, ADD CHARACTER TO PARTY, REMOVE CHARACTER FROM
-## PARTY, SAVE CURRENT GAME, BEGIN ADVENTURING. Home/End (or Up/Down) pick the character;
-## the first letter runs an item.
+## class bits to 0x6DA8 first) and the start of the game. Drawn as the original draws it
+## (Jeremy, 2026-11-12: every screen matches the original).
 ##
-## Training follows PartyMember.training_plan/train: "<NAME> WILL BECOME:" with "A LEVEL n
-## <CLASS>" lines, "DO YOU WISH TO TRAIN?" (Y/N), "CONGRATULATIONS...", and a magic-user who
-## gained a level then picks one new spell.
+## From the lab (chat 10, New Phlan's fighters' hall, save H): a page framed in rope (rows 0
+## and 23), the party at column 1 ("NAME", "AC" at 33, "HP" at 37; the chosen member white,
+## the others cyan; Home/End choose), the functions from row 12 at column 2 with their first
+## letters white, "CHOOSE A FUNCTION" (magenta) on row 24 and no item lit:
+## CREATE NEW CHARACTER, DROP CHARACTER, MODIFY CHARACTER, TRAIN CHARACTER (in a hall),
+## VIEW CHARACTER, ADD CHARACTER TO PARTY, REMOVE CHARACTER FROM PARTY, SAVE CURRENT GAME,
+## BEGIN ADVENTURING, EXIT TO DOS.
+## - TRAIN: "<NAME>" (cyan) "WILL BECOME:" at row 4 column 4, "A LEVEL n <CLASS>" at row 5
+##   column 10, "DO YOU WISH TO TRAIN?" (magenta) YES NO with NO lit; YES: "CONGRATULATIONS..."
+##   (green, row 24) for a moment, then the menu. One who can't train (too little experience
+##   or money): nothing happens. Then a magic-user who gained a level picks a new spell.
+## - DROP: "DROP <NAME> FOREVER?" (yellow) YES NO, NO lit. REMOVE: at once, no question.
+## - ADD: the waiting characters listed from row 2 at column 1, "ADD A CHARACTER:" ADD EXIT.
+## - SAVE: "SAVE WHICH GAME:" A to J. EXIT TO DOS: "QUIT TO DOS" (yellow) YES NO, NO lit.
+## - MODIFY for one who has adventured: nothing happens.
+## Not yet seen in the original: the spell-learning page (drawn as the camp's spell lists).
 ## Removed characters wait in the roster (saved with the game) and ADD brings them back;
-## DROP removes one for good. CREATE runs CharacterCreator; the new character waits in
-## the roster for ADD, as the original keeps it on disk until added. MODIFY runs
-## CharacterModify for a character with no experience yet.
+## DROP removes one for good. CREATE runs CharacterCreator; MODIFY runs CharacterModify for a
+## character with no experience yet.
 
 signal closed
-signal save_requested
+signal save_requested(letter: String)
+
+const MAGENTA := 13
+const PROMPT := 14
+const YES_NO := ["YES", "NO"]
+const LETTERS := ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 
 var party: Array[PartyMember] = []
 var roster: Array[PartyMember] = []   # characters removed from the party
@@ -29,17 +43,20 @@ var _creator: CharacterCreator
 var _modifier: CharacterModify
 
 var _sel := 0
-var _mode := "menu"                    # menu, confirm_train, confirm_drop, learn, add
+var _mode := "menu"   # menu, confirm_train, congrats, confirm_drop, quit, save, learn, add
+var _pick := 1
 var _plan: Array[int] = []
 var _cursor := 0
 var _list: Array[int] = []
-var _head: Label
-var _party_label: Label
-var _items_label: Label
-var _note: Label
-var _menu: Label
+var _scr: GameScreen
+var _note := Label.new()               # what happened, for the bot's log
 var _sheet: CharacterSheet
 var _rng := RandomNumberGenerator.new()
+
+
+func _init() -> void:
+	_note.visible = false
+	add_child(_note)
 
 
 func open(members: Array[PartyMember], mask: int) -> void:
@@ -47,88 +64,123 @@ func open(members: Array[PartyMember], mask: int) -> void:
 	hall_mask = mask
 	_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
 	_rng.randomize()
-	if _head == null:
+	if _scr == null:
 		_build()
 	_note.text = ""
-	_show_menu()
 	visible = true
+	_show_menu()
 
 
 func _build() -> void:
 	ShopScreen._fill(self, 0)
 	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.08, 0.97)
+	bg.color = Color.BLACK
 	ShopScreen._fill(bg, 0)
 	add_child(bg)
-	var box := VBoxContainer.new()
-	ShopScreen._fill(box, 0)
-	box.offset_left = 48
-	box.offset_right = -48
-	box.offset_top = 24
-	box.offset_bottom = -24
-	box.add_theme_constant_override("separation", 14)
-	add_child(box)
-	_head = Label.new()
-	_head.add_theme_font_size_override("font_size", 26)
-	_head.add_theme_color_override("font_color", Color8(85, 255, 85))
-	box.add_child(_head)
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
-	_party_label = Label.new()
-	_party_label.add_theme_font_size_override("font_size", 20)
-	_party_label.add_theme_font_override("font", mono)
-	box.add_child(_party_label)
-	_items_label = Label.new()
-	_items_label.add_theme_font_size_override("font_size", 20)
-	_items_label.add_theme_font_override("font", mono)
-	_items_label.add_theme_color_override("font_color", Color8(85, 255, 85))
-	box.add_child(_items_label)
-	_note = Label.new()
-	_note.add_theme_font_size_override("font_size", 20)
-	_note.modulate = Color(1, 0.85, 0.4)
-	_note.autowrap_mode = TextServer.AUTOWRAP_WORD
-	box.add_child(_note)
-	_menu = Label.new()
-	_menu.add_theme_font_size_override("font_size", 20)
-	box.add_child(_menu)
-	var look := OverlayLook.new()
-	look.head = _head
-	look.bodies = [_party_label, _items_label]
-	look.note = _note
-	look.menu = _menu
-	add_child(look)
+	_scr = GameScreen.new()
+	add_child(_scr)
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
+	_sheet.visibility_changed.connect(func() -> void:
+		if not _sheet.visible and visible:
+			_refresh())
 	add_child(_sheet)
 
 
-func _refresh_party() -> void:
-	var lines := PackedStringArray(["  %-16s AC  HP" % "NAME"])
-	for i in party.size():
-		var m := party[i]
-		lines.append("%s %-16s %2d  %2d" % [">" if i == _sel else " ", m.name, m.ac, m.hp])
-	_party_label.text = "\n".join(lines)
-
-
 func _items() -> Array:
-	var out := [["C", "CREATE NEW CHARACTER"], ["D", "DROP CHARACTER"], ["M", "MODIFY CHARACTER"]]
+	var out := ["CREATE NEW CHARACTER", "DROP CHARACTER", "MODIFY CHARACTER"]
 	if hall_mask > 0:
-		out.append(["T", "TRAIN CHARACTER"])
-	out.append_array([["V", "VIEW CHARACTER"], ["A", "ADD CHARACTER TO PARTY"],
-		["R", "REMOVE CHARACTER FROM PARTY"], ["S", "SAVE CURRENT GAME"], ["B", "BEGIN ADVENTURING"]])
+		out.append("TRAIN CHARACTER")
+	out.append_array(["VIEW CHARACTER", "ADD CHARACTER TO PARTY", "REMOVE CHARACTER FROM PARTY",
+		"SAVE CURRENT GAME", "BEGIN ADVENTURING", "EXIT TO DOS"])
 	return out
+
+
+# --- Drawing ------------------------------------------------------------------------------
+
+func _frame() -> void:
+	_scr.clear()
+	for c in 40:
+		_scr.tile(c, 0, 22)
+		_scr.tile(c, 23, 22)
+	for r in range(1, 23):
+		_scr.tile(0, r, 21)
+		_scr.tile(39, r, 21)
+	for r in [0, 23]:
+		_scr.tile(0, r, 20)
+		_scr.tile(39, r, 20)
+
+
+func _draw_party() -> void:
+	_scr.text(1, 2, "NAME", GameScreen.WHITE)
+	_scr.text(33, 2, "AC", GameScreen.WHITE)
+	_scr.text(37, 2, "HP", GameScreen.WHITE)
+	for i in mini(party.size(), 8):
+		var m: PartyMember = party[i]
+		var down := m.status >= PartyMember.STATUS_UNCONSCIOUS or m.hp <= 0
+		_scr.text(1, 4 + i, m.name.left(15), GameScreen.WHITE if i == _sel else (GameScreen.RED if down else GameScreen.CYAN))
+		var ac := str(m.ac)
+		_scr.text(35 - ac.length(), 4 + i, ac, GameScreen.GREEN)
+		var hp := str(m.hp)
+		_scr.text(39 - hp.length(), 4 + i, hp, GameScreen.GREEN if m.hp >= m.hp_max else GameScreen.YELLOW)
+
+
+func _refresh() -> void:
+	if _scr == null or not visible:
+		return
+	_frame()
+	match _mode:
+		"confirm_train", "congrats":
+			var m := _who()
+			_scr.text(4, 4, m.name, GameScreen.CYAN)
+			_scr.text(5 + m.name.length(), 4, "WILL BECOME:", GameScreen.GREEN)
+			for i in _plan.size():
+				var c := _plan[i]
+				var line := ("A LEVEL %d %s" if i == 0 else "AND A LEVEL %d %s") % [m.level_in(c) + (0 if _mode == "congrats" else 1), ClassTables.CLASS_NAMES[c]]
+				_scr.text(10 if i == 0 else 6, 5 + i, line, GameScreen.GREEN)
+			if _mode == "confirm_train":
+				_scr.text(0, 24, "DO YOU WISH TO TRAIN?", MAGENTA)
+				_scr.menu_line(24, YES_NO, 22, _pick)
+			else:
+				_scr.text(0, 24, "CONGRATULATIONS...", GameScreen.GREEN)
+		"add":
+			for i in roster.size():
+				_scr.text(1, 2 + i, roster[i].name, GameScreen.WHITE if i == _cursor else GameScreen.CYAN)
+			_scr.text(0, 24, "ADD A CHARACTER:", MAGENTA)
+			_scr.menu_line(24, ["ADD", "EXIT"], 17, _pick)
+		"learn":
+			_scr.text(1, 1, "LEARN WHICH SPELL?", GameScreen.WHITE)
+			for i in _list.size():
+				_scr.text(3, 4 + i, spells.names[_list[i]].to_upper(), GameScreen.WHITE if i == _cursor else GameScreen.GREEN)
+			_scr.text(0, 24, "CHOOSE SPELL:", MAGENTA)
+			_scr.menu_line(24, ["LEARN"], 14, 0)
+		_:
+			_draw_party()
+			var items := _items()
+			for i in items.size():
+				_scr.menu_line(12 + i, [items[i]], 2, -1)
+			match _mode:
+				"menu":
+					_scr.text(0, 24, "CHOOSE A FUNCTION", MAGENTA)
+				"confirm_drop":
+					var q := "DROP %s FOREVER?" % _who().name
+					_scr.text(0, 24, q, PROMPT)
+					_scr.menu_line(24, YES_NO, q.length() + 1, _pick)
+				"quit":
+					_scr.text(0, 24, "QUIT TO DOS", PROMPT)
+					_scr.menu_line(24, YES_NO, 12, _pick)
+				"save":
+					_scr.text(0, 24, "SAVE WHICH GAME:", MAGENTA)
+					_scr.menu_line(24, LETTERS, 17, -1)
+	_scr.update()
 
 
 func _show_menu() -> void:
 	_mode = "menu"
-	_head.text = "PARTY"
-	_refresh_party()
-	var lines := PackedStringArray()
-	for it in _items():
-		lines.append(it[1])
-	_items_label.text = "\n".join(lines)
-	_menu.text = "CHOOSE A FUNCTION   (first letter; Home/End or ↑/↓ pick the character)"
+	_refresh()
 
+
+# --- Actions (the bot calls these too) ----------------------------------------------------
 
 func _create() -> void:
 	if _creator == null:
@@ -169,17 +221,13 @@ func _train() -> void:
 		return
 	var plan := m.training_plan(tables, hall_mask)
 	if plan.has("error"):
-		_note.text = plan.error
+		_note.text = plan.error       # the original says nothing
 		return
 	_plan.assign(plan.classes)
-	var lines := PackedStringArray([m.name + " WILL BECOME:"])
-	for i in _plan.size():
-		var c := _plan[i]
-		lines.append(("    A LEVEL %d %s" if i == 0 else "AND A LEVEL %d %s") % [m.level_in(c) + 1, ClassTables.CLASS_NAMES[c]])
-	_items_label.text = "\n".join(lines)
 	_note.text = ""
-	_menu.text = "DO YOU WISH TO TRAIN?  Y/N"
+	_pick = 1                          # NO lit (lab)
 	_mode = "confirm_train"
+	_refresh()
 
 
 func _do_train() -> void:
@@ -191,116 +239,136 @@ func _do_train() -> void:
 		if not _list.is_empty():
 			_cursor = 0
 			_mode = "learn"
-			_show_learn()
+			_refresh()
 			return
-	_show_menu()
+	_mode = "congrats"
+	_refresh()
+	await get_tree().create_timer(0.6 * CampScreen.delay_scale()).timeout
+	if _mode == "congrats":
+		_show_menu()
 
 
-func _show_learn() -> void:
-	var lines := PackedStringArray(["LEARN WHICH SPELL?"])
-	for i in _list.size():
-		lines.append("%s %s" % [">" if i == _cursor else " ", spells.names[_list[i]].to_upper()])
-	_items_label.text = "\n".join(lines)
-	_menu.text = "↑/↓ choose   Enter learn"
-
-
-func _show_add() -> void:
-	var lines := PackedStringArray(["ADD WHICH CHARACTER?"])
-	for i in roster.size():
-		lines.append("%s %s" % [">" if i == _cursor else " ", roster[i].name])
-	if roster.is_empty():
-		lines.append("  (NO ONE IS WAITING)")
-	_items_label.text = "\n".join(lines)
-	_menu.text = "↑/↓ choose   Enter add   Esc back"
-
-
-## What the screen shows below the party (for the lab's headless checks).
+## What the screen shows (for the lab's headless checks).
 func screen_text() -> String:
-	return "%s | %s | %s" % [_items_label.text if _mode != "menu" else "", _note.text, _menu.text]
+	return "%s | %s" % [_mode, _note.text]
 
 
-func _pick(d: int) -> void:
+func _pick_member(d: int) -> void:
 	if party.is_empty():
 		return
 	_sel = (_sel + d + party.size()) % party.size()
-	_refresh_party()
+	_refresh()
 
+
+# --- Keys ---------------------------------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed() or _sheet.visible or (_creator != null and _creator.visible) \
-			or (_modifier != null and _modifier.visible):
+	if not visible or not event.is_pressed() or not event is InputEventKey or _sheet.visible \
+			or (_creator != null and _creator.visible) or (_modifier != null and _modifier.visible):
 		return
 	get_viewport().set_input_as_handled()
-	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-	var cancel := event.is_action("ui_cancel")
-	var up := event.is_action("ui_up") or key == KEY_HOME
-	var down := event.is_action("ui_down") or key == KEY_END
-	var accept := event.is_action("ui_accept")
+	var key := (event as InputEventKey).keycode
+	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
+	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
+	var enter := key in [KEY_ENTER, KEY_KP_ENTER]
+	var esc := key == KEY_ESCAPE
 	match _mode:
 		"menu":
 			if up or down:
-				_pick(-1 if up else 1)
-				_note.text = ""
-			elif key == KEY_T and hall_mask > 0:
-				_train()
-			elif key == KEY_V and _who() != null:
-				_sheet.open(party, "PARTY", _sel)
-			elif key == KEY_S:
-				save_requested.emit()
-				_note.text = "GAME SAVED."
-			elif key == KEY_R and party.size() > 1:
-				roster.append(party[_sel])
-				party.remove_at(_sel)
-				_sel = mini(_sel, party.size() - 1)
+				_pick_member(-1 if up else 1)
+				return
+			for it in _items():
+				if String(it).unicode_at(0) == key:
+					_function(it)
+					return
+		"confirm_train", "confirm_drop", "quit":
+			var yes := key == KEY_Y or (enter and _pick == 0)
+			var no := key == KEY_N or esc or (enter and _pick == 1)
+			if key == KEY_LEFT or key == KEY_RIGHT:
+				_pick = 1 - _pick
+				_refresh()
+			elif yes:
+				match _mode:
+					"confirm_train": _do_train()
+					"confirm_drop":
+						party.remove_at(_sel)
+						_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
+						_show_menu()
+					"quit": get_tree().quit()
+			elif no:
 				_show_menu()
-			elif key == KEY_A:
-				_cursor = 0
-				_mode = "add"
-				_show_add()
-			elif key == KEY_D and party.size() > 1:
-				_menu.text = "DROP FROM PARTY? %s WILL BE GONE FOR GOOD.  Y/N" % _who().name
-				_mode = "confirm_drop"
-			elif key == KEY_C and game_path != "":
-				_create()
-			elif key == KEY_M and _who() != null and game_path != "":
-				if _who().experience > 0:
-					_note.text = "%s HAS ADVENTURED: TOO LATE TO MODIFY." % _who().name
-				else:
-					_modify()
-			elif (key == KEY_B or cancel) and not party.is_empty():
-				visible = false
-				closed.emit()
-		"confirm_train":
-			if key == KEY_Y:
-				_do_train()
-			elif key == KEY_N or cancel:
+		"save":
+			if esc:
 				_show_menu()
-		"confirm_drop":
-			if key == KEY_Y:
-				party.remove_at(_sel)
-				_sel = mini(_sel, party.size() - 1)
-			_show_menu()
+				return
+			for l in LETTERS:
+				if String(l).unicode_at(0) == key:
+					save_requested.emit(l)
+					_note.text = "GAME SAVED."
+					_show_menu()
 		"learn":
-			if up:
-				_cursor = (_cursor - 1 + _list.size()) % _list.size()
-				_show_learn()
-			elif down:
-				_cursor = (_cursor + 1) % _list.size()
-				_show_learn()
-			elif accept:
+			if up or down:
+				_cursor = (_cursor + (1 if down else -1) + _list.size()) % _list.size()
+				_refresh()
+			elif enter or key == KEY_L:
 				_who().spell_book[_list[_cursor] - 1] = 1
 				_note.text = "%s LEARNS %s." % [_who().name, spells.names[_list[_cursor]].to_upper()]
 				_show_menu()
 		"add":
-			if up and not roster.is_empty():
-				_cursor = (_cursor - 1 + roster.size()) % roster.size()
-				_show_add()
-			elif down and not roster.is_empty():
-				_cursor = (_cursor + 1) % roster.size()
-				_show_add()
-			elif accept and not roster.is_empty() and party.size() < 6:
-				party.append(roster[_cursor])
-				roster.remove_at(_cursor)
+			if (up or down) and not roster.is_empty():
+				_cursor = (_cursor + (1 if down else -1) + roster.size()) % roster.size()
+				_refresh()
+			elif key == KEY_LEFT or key == KEY_RIGHT:
+				_pick = 1 - _pick
+				_refresh()
+			elif key == KEY_A or (enter and _pick == 0):
+				if not roster.is_empty() and party.size() < 6:
+					party.append(roster[_cursor])
+					roster.remove_at(_cursor)
+					_sel = party.size() - 1      # lab: the one added is chosen
 				_show_menu()
-			elif cancel:
+			elif key == KEY_E or esc or (enter and _pick == 1):
 				_show_menu()
+
+
+func _function(item: String) -> void:
+	match item:
+		"CREATE NEW CHARACTER":
+			if game_path != "":
+				_create()
+		"DROP CHARACTER":
+			if party.size() > 1:
+				_pick = 1
+				_mode = "confirm_drop"
+				_refresh()
+		"MODIFY CHARACTER":
+			if _who() != null and game_path != "" and _who().experience == 0:
+				_modify()
+		"TRAIN CHARACTER":
+			_train()
+		"VIEW CHARACTER":
+			if _who() != null:
+				_sheet.open(party, "PARTY", _sel)
+		"ADD CHARACTER TO PARTY":
+			if not roster.is_empty():
+				_cursor = 0
+				_pick = 0
+				_mode = "add"
+				_refresh()
+		"REMOVE CHARACTER FROM PARTY":
+			if party.size() > 1:
+				roster.append(party[_sel])
+				party.remove_at(_sel)
+				_sel = mini(_sel, party.size() - 1)
+				_show_menu()
+		"SAVE CURRENT GAME":
+			_mode = "save"
+			_refresh()
+		"BEGIN ADVENTURING":
+			if not party.is_empty():
+				visible = false
+				closed.emit()
+		"EXIT TO DOS":
+			_pick = 1
+			_mode = "quit"
+			_refresh()

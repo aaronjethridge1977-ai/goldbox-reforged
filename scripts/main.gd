@@ -145,7 +145,7 @@ func _ready() -> void:
 	_party_menu = PartyMenu.new()
 	_party_menu.visible = false
 	_party_menu.closed.connect(_on_party_menu_closed)
-	_party_menu.save_requested.connect(_quick_save)
+	_party_menu.save_requested.connect(func(_letter: String) -> void: _quick_save())
 	add_child(_party_menu)
 	_temple = TempleScreen.new()
 	_temple.visible = false
@@ -376,7 +376,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
 			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible \
-				else (_temple._scr if _temple.visible else (_camp._scr if _camp.visible else _screen)))
+				else (_temple._scr if _temple.visible else (_camp._scr if _camp.visible else (_party_menu._scr if _party_menu.visible else _screen))))
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue
@@ -603,6 +603,9 @@ func _auto_handle() -> bool:
 			return true
 		print("   (screen open: leaving %s)" % ", ".join([[_temple, "temple"], [_camp, "camp"],
 			[_party_menu, "party menu"], [_sheet, "sheet"]].filter(func(p): return p[0].visible).map(func(p): return p[1])))
+		if _party_menu.visible and not _sheet.visible:
+			await _press("b")          # BEGIN ADVENTURING
+			return true
 		await _press("esc")
 		if _temple.visible or _camp.visible or _party_menu.visible or _sheet.visible:
 			await _press("e")
