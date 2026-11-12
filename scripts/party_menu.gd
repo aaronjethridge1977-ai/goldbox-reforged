@@ -348,7 +348,7 @@ func _function(item: String) -> void:
 			_train()
 		"VIEW CHARACTER":
 			if _who() != null:
-				_sheet.open(party, "PARTY", _sel)
+				_sheet.open(party, "PARTY", _sel, false, 0, true)
 		"ADD CHARACTER TO PARTY":
 			if not roster.is_empty():
 				_cursor = 0

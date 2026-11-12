@@ -771,8 +771,8 @@ func recalculate(types: ItemTypes) -> void:
 ## Coins on hand, in copper.
 func wealth_copper() -> int:
 	var total := 0
-	for i in 5:
-		total += money[i] * COIN_VALUE[i]
+	for i in 7:
+		total += money[i]     # gems and jewelry weigh 1 each too (lab chat 11: save I) * COIN_VALUE[i]
 	return total
 
 
@@ -817,12 +817,12 @@ func receive_gold(gold: int) -> void:
 	money[3] += gold % 5
 
 
-## Encumbrance in coins: every coin weighs 1, plus item weights (stacks count each piece).
+## Encumbrance in coins: every coin, gem and piece of jewelry weighs 1, plus item weights (stacks count each piece).
 ## Matches the record's cached weight on all six shipped characters.
 func encumbrance() -> int:
 	var total := 0
-	for i in 5:
-		total += money[i]
+	for i in 7:
+		total += money[i]     # gems and jewelry weigh 1 each too (lab chat 11: save I)
 	for it in items:
 		total += it.total_weight()
 	return total

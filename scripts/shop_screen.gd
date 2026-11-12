@@ -209,7 +209,7 @@ func _view() -> void:
 		return
 	if not sheet.closed.is_connected(_after_view):
 		sheet.closed.connect(_after_view)
-	sheet.open(_party, "SHOP", _buyer, true)
+	sheet.open(_party, "SHOP", _buyer, true, 1, true)
 
 
 func _after_view() -> void:

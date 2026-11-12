@@ -179,6 +179,7 @@ func _ready() -> void:
 	GameScreen.load_art(_game_path)
 	CharacterSheet.types = _types
 	CharacterSheet.spells = SpellTable.shared(_game_path)
+	CharacterSheet.game_path = _game_path
 	for i in range(1, 7):
 		var m := PartyMember.load_files(_game_path.path_join("CHRDATA%d.SAV" % i), _game_path.path_join("CHRDATA%d.ITM" % i))
 		if m != null:
@@ -375,8 +376,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_vm.program = 8
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
-			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible \
-				else (_temple._scr if _temple.visible else (_camp._scr if _camp.visible else (_party_menu._scr if _party_menu.visible else _screen))))
+			var scr: GameScreen = _screen
+			for o in [_party_menu, _camp, _temple, _treasure, _shop, _party_menu._sheet, _camp._sheet, _treasure._sheet, _sheet]:
+				if o != null and o.visible and o.get("_scr") != null:
+					scr = o._scr
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue
@@ -438,8 +441,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var a := n.trim_prefix("xp=").split(":")
 			_party[int(a[0])].experience = int(a[1])
 		elif n.begins_with("sheet="):       # sheet=<index>: what the character sheet shows
-			print(_sheet._body.text if _sheet.visible else "(sheet closed)")
-			print("   foot: " + (_sheet._foot.text if _sheet.visible else ""))
+			for sh in [_sheet, _camp._sheet, _party_menu._sheet]:
+				if sh != null and sh.visible:
+					print(sh.screen_text())
 			continue
 		elif n == "party":
 			for m in _party:
@@ -735,6 +739,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show()
 			return
+		if (key == KEY_HOME or key == KEY_END) and not _party.is_empty():
+			# Home/End move the selected character up and down the party (lab, chat 11).
+			_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) + (1 if key == KEY_END else -1), _party.size())
+			get_viewport().set_input_as_handled()
+			_show()
+			return
 		if key == KEY_F2:
 			_quick_save()
 			get_viewport().set_input_as_handled()
@@ -744,7 +754,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_V:
 			for m in _party:
 				m.recalculate(_types)
-			_sheet.open(_party, "PARTY")
+			_sheet.open(_party, "PARTY", clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), false, 2)
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_B:

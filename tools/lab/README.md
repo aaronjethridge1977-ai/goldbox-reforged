@@ -166,3 +166,14 @@ others from J:
   <ecl file> <block>` prints a block disassembled (`-s res://tools/dis.gd`).
 - Watching a run: `tail -F log | grep --line-buffered ...`; don't put `cut` or `awk` (mawk buffers
   its input) after it in a Monitor, or nothing arrives.
+
+### Chat 11 additions (screens in the original's form)
+
+- `cmp.py orig.png ours.png` prints the differing 8x8 cells of two 320x200 captures.
+- `fast.sh --keys=...` copies the repo's scripts into `proj` (no full check) and runs ours.
+- `sheetcmp.sh` replays each original VIEW capture (`cap/v/`, kept in `.lab`) in ours with the
+  same keys (`screen=` saves the open screen) and compares them. Saves: I is J with Thrender
+  holding every coin type and 16 items and Bakshi with spells of two levels; G is J moved to
+  New Phlan 13,9 N (Up twice reaches the arms shop).
+- The original: Home/End pick the character on the walking screen and in lists; a message
+  stays about 0.7 s on row 24 (`timeit`-style polling of `lab.text(screen, 24)`).

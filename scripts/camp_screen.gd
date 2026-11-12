@@ -828,7 +828,7 @@ func _act(choice: String) -> void:
 		"camp":
 			match choice:
 				"SAVE": _to_menu("save", SAVE_LETTERS)
-				"VIEW": _sheet.open(_party, "PARTY", _sel)
+				"VIEW": _sheet.open(_party, "PARTY", _sel, false, 1)
 				"MAGIC":
 					if spells != null:
 						_magic_menu()
