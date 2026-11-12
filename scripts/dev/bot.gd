@@ -998,6 +998,18 @@ func _event_odds(ev: int) -> float:
 	var odds := _odds(us, mons, false)
 	for i in us.size():
 		us[i].hp = hp[i]
+	# Enemy casters with Hold Person (cleric 23, magic-user 49): each casting can leave three
+	# of the party helpless, and a helpless figure dies at the next blow (lab, chat 10: the
+	# original's Grishnak, 200 HP party members slain one blow each). The party's odds count
+	# those spells as the fight's real danger.
+	var holds := 0
+	for row in rows:
+		var first := PartyMember.load_monster(main._game_path, maxi(main._vm_file, 1), int(row[0]))
+		if first != null:
+			holds += (first.memorized.count(23) + first.memorized.count(49)) * int(row[1])
+	if holds > 0:
+		odds /= 1.0 + holds
+		print("   (event %d: %d Hold Person ahead; odds %.2f)" % [ev, holds, odds])
 	return odds
 
 
