@@ -474,7 +474,7 @@ func _hook() -> bool:
 		print("   >> %d (most platinum: %d)" % [best + 1, main._party[best].money[4]])
 		await main._press(str(best + 1))
 		return true
-	if main._treasure.visible and main._treasure._page == 1 and not main._treasure._amount_box.visible \
+	if main._treasure.visible and main._treasure._page == 1 and not main._treasure._amount_open \
 			and not main._treasure._asking_exit:
 		if not _looted:
 			# A player takes the money (SHARE) and every item, handed round the party.
@@ -499,14 +499,7 @@ func _hook() -> bool:
 					break
 				t._who = _loot_turn % main._party.size()
 				_loot_turn += 1
-				t._refresh()
-				var root: TreeItem = t._list.get_root()
-				for row in root.get_children():
-					if row.get_metadata(0) == pick:
-						row.select(0)
-				var items_before: int = t._spoils.items.size()
-				t._take()
-				if t._spoils.items.size() == items_before:
+				if not t._take_item(pick):
 					break
 				print("   loot: %s" % t._note.text)
 			_ready_all()

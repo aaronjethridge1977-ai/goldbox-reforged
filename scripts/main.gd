@@ -374,9 +374,12 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_vm.program = 8
 			_run_program()
 		elif n.begins_with("screen="):      # screen=<png>: the open overlay's 320x200 picture (headless)
-			var scr: GameScreen = _shop._scr if _shop.visible else _screen
+			var scr: GameScreen = _shop._scr if _shop.visible else (_treasure._scr if _treasure.visible else _screen)
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
+			continue
+		elif n == "autowin":                # autowin: the next scripted fight is won at once (dev)
+			_combat.dev_auto_win = true
 			continue
 		elif n == "cells":                  # cells: where everyone stands in the fight on screen
 			print("   distance %d, party square %d,%d facing %d" % [_combat._distance, _combat._px, _combat._py, _combat._facing])
@@ -581,7 +584,7 @@ func _auto_handle() -> bool:
 			await _press("q")
 		return true
 	if _treasure.visible:
-		if _treasure._amount_box.visible:
+		if _treasure._amount_open:
 			await _press("esc")
 		elif _treasure._page == 0:
 			await _press("enter")
@@ -1986,6 +1989,7 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	var share := spoils.award(standing)
 	for m in _party:
 		m.recalculate(_types)
+	_treasure.picture = _event_picture(255, 1)     # the chest (lab: PIC block 1)
 	_treasure.open(spoils, _party, won_text, share)
 
 

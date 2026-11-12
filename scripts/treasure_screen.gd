@@ -1,229 +1,231 @@
 class_name TreasureScreen
 extends Control
-## After a won fight or a treasure find: the results, then the treasure on the ground.
-##
-## As the original shows it (checked in the lab after the Slums orcs): first "THE PARTY HAS
-## WON." (or "THE PARTY HAS FOUND TREASURE!") and "EACH CHARACTER RECEIVES n EXPERIENCE
-## POINTS."; then, if anything was left, the party list with VIEW TAKE POOL SHARE EXIT.
-## TAKE picks money (a coin type, then how much) or items (the "LOOT" list); POOL puts
-## everyone's money on the pile; SHARE splits the pile's money evenly (the remainder one
-## coin at a time from the first character); EXIT with treasure left asks
-## "THERE IS STILL TREASURE LEFT. DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?".
-## Modern controls, as in the shop: one list holds the pile's money and items.
-##   Up/Down: choose   Enter or T: take   Left/Right: change character   V: view
-##   P: pool   S: share   Esc or E: exit
+## After a won fight or a treasure find: the results, then the treasure on the ground, as the
+## original shows them (Jeremy, 2026-11-12: every screen matches the original). Screens and
+## keys from the lab (chat 10: a quick fight with the Slums' orcs, save I):
+##   results: "THE PARTY HAS WON." (or "THE PARTY HAS FOUND TREASURE!") and "EACH CHARACTER
+##     RECEIVES n EXPERIENCE POINTS.", Enter to go on. (Layout not yet compared.)
+##   the treasure: the adventure screen with the chest (picture 1 of the area's PIC file), the
+##     party list (Up/Down: who takes), no place line, VIEW TAKE POOL SHARE EXIT;
+##   TAKE: the same screen, "TAKE:" then MONEY ITEMS EXIT;
+##   MONEY: a framed page listing the coins on the pile ("SILVER 732", from row 2, column 2;
+##     copper first), the chosen one white; "SELECT TYPE OF COIN" then EXIT; Enter picks the
+##     coin, then "HOW MUCH SILVER WILL YOU TAKE? " and the number typed in white;
+##   ITEMS: the LOOT page (title at column 17, items from row 4), "ITEMS:" then TAKE EXIT;
+##   EXIT with treasure left: "THERE IS STILL TREASURE LEFT." (light green) "DO YOU WANT TO
+##     GO BACK AND CLAIM YOUR TREASURE?" (white), YES NO.
+## Menus as everywhere: the hot letter, or Left/Right and Enter; the chosen item stays lit
+## and its place carries over to the next menu (EXIT from LOOT leaves ITEMS lit).
+## POOL puts everyone's money on the pile; SHARE splits the pile's money evenly (the
+## remainder one coin at a time from the first character).
 ## Not yet: the original's load and item-count limits when taking.
 
 signal closed
 
 const MONEY_LABELS := ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS", "JEWELRY"]
+const MENU := ["VIEW", "TAKE", "POOL", "SHARE", "EXIT"]
+const TAKE_MENU := ["MONEY", "ITEMS", "EXIT"]
+const LIST_MENU := ["TAKE", "EXIT"]
+const ASK_MENU := ["YES", "NO"]
+
+## The chest picture main sets before opening (88 x 88).
+var picture: Image
 
 var _spoils: Spoils
 var _party: Array[PartyMember] = []
 var _who := 0
-var _page := 0               # 0 results, 1 treasure
-var _asking_exit := false
+var _mode := "results"   # results, menu, take, coins, amount, items, ask_exit
+var _pick := 0
+var _cursor := 0         # the chosen coin or item
 var _amount_coin := -1
-
-var _head: Label
-var _party_label: Label
-var _list: Tree
-var _note: Label
-var _amount_box: HBoxContainer
-var _amount_label: Label
-var _amount: LineEdit
-var _buttons: HBoxContainer
+var _typed := ""
+var _won_text := ""
+var _share_xp := 0
+var _note := Label.new() # the last thing that happened (the bot logs it)
+var _scr: GameScreen
 var _sheet: CharacterSheet
+
+# The bot and main look at these (kept from the old screen).
+var _page: int:
+	get: return 0 if _mode == "results" else 1
+var _asking_exit: bool:
+	get: return _mode == "ask_exit"
+var _amount_open: bool:
+	get: return _mode == "amount"
+
+
+func _init() -> void:
+	_note.visible = false
+	add_child(_note)
 
 
 func open(spoils: Spoils, party: Array[PartyMember], won_text: String, share: int) -> void:
 	_spoils = spoils
 	_party = party
 	_who = 0
-	_page = 0
-	_asking_exit = false
-	_amount_coin = -1
-	if _head == null:
-		_build()
-	_head.text = "%s\n\nEACH CHARACTER RECEIVES %d\nEXPERIENCE POINTS." % [won_text, share]
-	_party_label.text = ""
-	_list.visible = false
-	_buttons.visible = false
-	_amount_box.visible = false
-	_note.text = "PRESS ENTER TO CONTINUE"
+	_mode = "results"
+	_pick = 0
+	_won_text = won_text
+	_share_xp = share
+	_note.text = ""
+	if _scr == null:
+		ShopScreen._fill(self, 0)
+		var bg := ColorRect.new()
+		bg.color = Color.BLACK
+		ShopScreen._fill(bg, 0)
+		add_child(bg)
+		_scr = GameScreen.new()
+		add_child(_scr)
+		_sheet = CharacterSheet.new()
+		_sheet.visible = false
+		add_child(_sheet)
 	visible = true
-
-
-func _build() -> void:
-	ShopScreen._fill(self, 0)
-	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.08, 0.97)
-	ShopScreen._fill(bg, 0)
-	add_child(bg)
-	var box := VBoxContainer.new()
-	ShopScreen._fill(box, 0)
-	box.offset_left = 48
-	box.offset_right = -48
-	box.offset_top = 24
-	box.offset_bottom = -24
-	box.add_theme_constant_override("separation", 12)
-	add_child(box)
-	_head = Label.new()
-	_head.add_theme_font_size_override("font_size", 26)
-	_head.add_theme_color_override("font_color", Color8(85, 255, 85))
-	box.add_child(_head)
-	_party_label = Label.new()
-	_party_label.add_theme_font_size_override("font_size", 20)
-	var mono := SystemFont.new()
-	mono.font_names = PackedStringArray(["Consolas", "Courier New", "monospace"])
-	_party_label.add_theme_font_override("font", mono)
-	box.add_child(_party_label)
-	_list = Tree.new()
-	_list.columns = 1
-	_list.hide_root = true
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_list.add_theme_font_size_override("font_size", 20)
-	_list.item_activated.connect(_take)
-	box.add_child(_list)
-	_amount_box = HBoxContainer.new()
-	_amount_label = Label.new()
-	_amount_label.add_theme_font_size_override("font_size", 20)
-	_amount_box.add_child(_amount_label)
-	_amount = LineEdit.new()
-	_amount.custom_minimum_size = Vector2(160, 0)
-	_amount.text_submitted.connect(_amount_entered)
-	_amount_box.add_child(_amount)
-	box.add_child(_amount_box)
-	_note = Label.new()
-	_note.add_theme_font_size_override("font_size", 18)
-	_note.modulate = Color(1, 0.85, 0.4)
-	_note.autowrap_mode = TextServer.AUTOWRAP_WORD
-	box.add_child(_note)
-	_buttons = HBoxContainer.new()
-	_buttons.add_theme_constant_override("separation", 16)
-	box.add_child(_buttons)
-	for spec in [["◀", _prev], ["VIEW", _view], ["TAKE", _take], ["POOL", _pool],
-			["SHARE", _share], ["▶", _next], ["EXIT", _exit]]:
-		var b := Button.new()
-		b.text = spec[0]
-		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_size_override("font_size", 20)
-		b.pressed.connect(spec[1])
-		_buttons.add_child(b)
-	var look := OverlayLook.new()
-	look.head = _head
-	look.bodies = [_party_label, _list, _amount_label]
-	look.note = _note
-	look.menu = _buttons
-	add_child(look)
-	_sheet = CharacterSheet.new()
-	_sheet.visible = false
-	add_child(_sheet)
+	_refresh()
 
 
 func _show_treasure() -> void:
-	_page = 1
-	_head.text = "TREASURE"
-	_list.visible = true
-	_buttons.visible = true
-	_note.text = ""
+	_mode = "menu"
+	_pick = 0
 	_refresh()
-	_list.grab_focus()
-	_reselect(0)
 
+
+# --- Drawing ----------------------------------------------------------------------------
 
 func _refresh() -> void:
-	var lines := PackedStringArray(["%-16s AC  HP" % "NAME"])
-	for i in _party.size():
-		var m := _party[i]
-		lines.append("%s%-16s %2d  %2d" % ["> " if i == _who else "  ", m.name, m.ac, m.hp])
-	_party_label.text = "\n".join(lines)
-	_list.clear()
-	var root := _list.create_item()
-	for c in range(6, -1, -1):
+	if _scr == null:
+		return
+	match _mode:
+		"results":
+			_page_frame()
+			_scr.text(1, 3, _won_text, GameScreen.WHITE)
+			_scr.text(1, 5, "EACH CHARACTER RECEIVES %d" % _share_xp, GameScreen.WHITE)
+			_scr.text(1, 6, "EXPERIENCE POINTS.", GameScreen.WHITE)
+			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.GREEN)
+			_scr.update()
+		"menu":
+			_walk(MENU, PackedStringArray())
+		"take":
+			_walk(TAKE_MENU, PackedStringArray(), "TAKE:")
+		"ask_exit":
+			_walk(ASK_MENU, PackedStringArray())
+			_ask_text()
+			_scr.update()
+		"coins", "amount":
+			_page_frame()
+			var kinds := _coin_kinds()
+			for i in kinds.size():
+				var c: int = kinds[i]
+				var lit := _mode == "coins" and i == _cursor
+				_scr.text(2, 2 + i, "%s %d" % [MONEY_LABELS[c], _spoils.money[c]],
+					GameScreen.WHITE if lit else GameScreen.GREEN)
+			if _mode == "coins":
+				_scr.text(0, 24, "SELECT TYPE OF COIN", 13)
+				_scr.menu_line(24, ["EXIT"], 20, 0)
+			else:
+				var ask := "HOW MUCH %s WILL YOU TAKE? " % MONEY_LABELS[_amount_coin]
+				_scr.text(0, 24, ask, GameScreen.GREEN)
+				_scr.text(ask.length(), 24, _typed, GameScreen.WHITE)
+			_scr.update()
+		"items":
+			_page_frame()
+			_scr.text(17, 1, "LOOT", GameScreen.WHITE)
+			var top := clampi(_cursor - 18, 0, maxi(_spoils.items.size() - 19, 0))
+			for i in 19:
+				var k := top + i
+				if k >= _spoils.items.size():
+					break
+				var it := _spoils.items[k]
+				var name := (it.name if it.name != "" else "ITEM").to_upper()
+				_scr.text(1, 4 + i, name.left(38), GameScreen.WHITE if k == _cursor else GameScreen.GREEN)
+			_scr.text(0, 24, "ITEMS:", 13)
+			_scr.menu_line(24, LIST_MENU, 7, _pick)
+			_scr.update()
+
+
+func _walk(menu: Array, lines: PackedStringArray, label: String = "") -> void:
+	_scr.draw_walk(picture, _party, _who, "", lines, [], false, false, 0)
+	if label != "":
+		_scr.text(0, 24, label, 13)
+		_scr.menu_line(24, menu, label.length() + 1, _pick)
+	else:
+		_scr.menu_line(24, menu, 0, _pick)
+	_scr.update()
+
+
+## "THERE IS STILL TREASURE LEFT." in light green, the question in white, wrapped together.
+func _ask_text() -> void:
+	var words := []
+	for w in "THERE IS STILL TREASURE LEFT.".split(" "):
+		words.append([w, GameScreen.GREEN])
+	words.append(["", GameScreen.GREEN])     # the original's two spaces after the full stop
+	for w in "DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?".split(" "):
+		words.append([w, GameScreen.WHITE])
+	var col := 1
+	var row := 17
+	for p in words:
+		var w: String = p[0]
+		if col > 1 and col + w.length() > 39:
+			col = 1
+			row += 1
+		_scr.text(col, row, w, p[1])
+		col += w.length() + 1
+
+
+func _page_frame() -> void:
+	_scr.clear()
+	for c in 40:
+		_scr.tile(c, 0, 22)
+		_scr.tile(c, 23, 22)
+	for r in range(1, 23):
+		_scr.tile(0, r, 21)
+		_scr.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		_scr.tile(p.x, p.y, 20)
+
+
+func _coin_kinds() -> Array:
+	var out := []
+	for c in 7:
 		if _spoils.money[c] > 0:
-			var row := _list.create_item(root)
-			row.set_text(0, "%s %d" % [MONEY_LABELS[c], _spoils.money[c]])
-			row.set_metadata(0, -1 - c)
-	for i in _spoils.items.size():
-		var row := _list.create_item(root)
-		var it := _spoils.items[i]
-		row.set_text(0, (it.name if it.name != "" else "(item type %d)" % it.type).to_upper())
-		row.set_metadata(0, i)
-	if not _spoils.has_treasure():
-		var row := _list.create_item(root)
-		row.set_text(0, "(nothing left)")
-		row.set_metadata(0, null)
-		row.set_selectable(0, false)
+			out.append(c)
+	return out
 
 
-func _selected() -> Variant:
-	var sel := _list.get_selected()
-	return sel.get_metadata(0) if sel else null
+# --- Actions (the bot calls these too) ----------------------------------------------------
 
-
-func _reselect(i: int) -> void:
-	var root := _list.get_root()
-	if root == null or root.get_child_count() == 0:
-		return
-	root.get_child(clampi(i, 0, root.get_child_count() - 1)).select(0)
-
-
-func _take() -> void:
-	if _page != 1 or _party.is_empty():
-		return
-	var what: Variant = _selected()
-	if what == null:
-		return
+## Takes item `i` from the pile for the chosen character.
+func _take_item(i: int) -> bool:
+	if i < 0 or i >= _spoils.items.size() or _party.is_empty():
+		return false
 	var m := _party[_who]
-	if int(what) < 0:
-		_amount_coin = -1 - int(what)
-		_amount_label.text = "HOW MUCH %s WILL YOU TAKE? " % MONEY_LABELS[_amount_coin]
-		_amount.text = str(_spoils.money[_amount_coin])
-		_amount_box.visible = true
-		_amount.grab_focus()
-		_amount.select_all()
-		return
-	var it: GameItem = _spoils.items[int(what)]
-	_spoils.items.remove_at(int(what))
+	var it: GameItem = _spoils.items[i]
+	_spoils.items.remove_at(i)
 	m.items.append(it)
 	_note.text = "%s TAKES THE %s." % [m.name, it.name.to_upper()]
-	var keep := _list.get_selected().get_index() if _list.get_selected() else 0
+	_cursor = clampi(_cursor, 0, maxi(_spoils.items.size() - 1, 0))
 	_refresh()
-	_reselect(keep)
+	return true
 
 
-func _amount_entered(text: String) -> void:
-	if _amount_coin < 0:
-		return
-	var n := clampi(text.to_int(), 0, _spoils.money[_amount_coin])
-	var m := _party[_who]
-	m.money[_amount_coin] += n
-	_spoils.money[_amount_coin] -= n
-	_note.text = "%s TAKES %d %s." % [m.name, n, MONEY_LABELS[_amount_coin]]
-	_amount_coin = -1
-	_amount_box.visible = false
-	_refresh()
-	_list.grab_focus()
-	_reselect(0)
+func _take_money(c: int, n: int) -> void:
+	n = clampi(n, 0, _spoils.money[c])
+	_party[_who].money[c] += n
+	_spoils.money[c] -= n
+	_note.text = "%s TAKES %d %s." % [_party[_who].name, n, MONEY_LABELS[c]]
 
 
 func _pool() -> void:
-	if _page != 1:
-		return
 	for m in _party:
 		for c in 7:
 			_spoils.money[c] += m.money[c]
 			m.money[c] = 0
-	_note.text = "THE PARTY'S MONEY IS POOLED."
 	_refresh()
-	_reselect(0)
 
 
 ## Splits the pile's money evenly; the remainder goes one coin at a time from the first
 ## character, as the original does it.
 func _share() -> void:
-	if _page != 1 or _party.is_empty():
+	if _party.is_empty():
 		return
 	var n := _party.size()
 	for c in range(6, -1, -1):
@@ -235,41 +237,20 @@ func _share() -> void:
 				m.money[c] += 1
 				rest -= 1
 		_spoils.money[c] = 0
-	_note.text = "THE MONEY IS SHARED."
 	_refresh()
-	_reselect(0)
 
 
 func _view() -> void:
-	if _page != 1 or _party.is_empty():
+	if _party.is_empty():
 		return
 	_sheet.open(_party, "PARTY", _who)
 
 
-func _prev() -> void:
-	if _party.is_empty():
-		return
-	_who = (_who + _party.size() - 1) % _party.size()
-	_refresh_keep()
-
-
-func _next() -> void:
-	if _party.is_empty():
-		return
-	_who = (_who + 1) % _party.size()
-	_refresh_keep()
-
-
-func _refresh_keep() -> void:
-	var keep := _list.get_selected().get_index() if _list.get_selected() else 0
-	_refresh()
-	_reselect(keep)
-
-
 func _exit() -> void:
-	if _page == 1 and _spoils.has_treasure() and not _asking_exit:
-		_asking_exit = true
-		_note.text = "THERE IS STILL TREASURE LEFT.  DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?   Y / N"
+	if _spoils.has_treasure():
+		_mode = "ask_exit"
+		_pick = 0
+		_refresh()
 		return
 	_close()
 
@@ -279,47 +260,118 @@ func _close() -> void:
 	closed.emit()
 
 
+# --- Keys ---------------------------------------------------------------------------------
+
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or not event.is_pressed() or _sheet.visible:
+	if not visible or not event.is_pressed() or not event is InputEventKey or (_sheet != null and _sheet.visible):
 		return
-	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-	if _amount_box.visible:
-		if event.is_action("ui_cancel"):
-			_amount_coin = -1
-			_amount_box.visible = false
-			_list.grab_focus()
-			get_viewport().set_input_as_handled()
-		return
-	if _page == 0:
-		if event.is_action("ui_accept") or event.is_action("ui_cancel"):
+	var key := (event as InputEventKey).keycode
+	get_viewport().set_input_as_handled()
+	if _mode == "results":
+		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_SPACE]:
 			if _spoils.has_treasure():
 				_show_treasure()
 			else:
 				_close()
-			get_viewport().set_input_as_handled()
 		return
-	if _asking_exit:
-		if key == KEY_N:
-			_close()
-		elif key == KEY_Y or event.is_action("ui_cancel"):
-			_asking_exit = false
-			_note.text = ""
-		get_viewport().set_input_as_handled()
+	if _mode == "amount":
+		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
+			_typed += char(key)
+		elif key == KEY_BACKSPACE:
+			_typed = _typed.left(-1)
+		elif key in [KEY_ENTER, KEY_KP_ENTER]:
+			_take_money(_amount_coin, _typed.to_int())
+			_mode = "coins"
+			_cursor = 0
+			if _coin_kinds().is_empty():
+				_mode = "take"
+		elif key == KEY_ESCAPE:
+			_mode = "coins"
+		_refresh()
 		return
-	if event.is_action("ui_cancel") or key == KEY_E:
-		_exit()
-	elif event.is_action("ui_left"):
-		_prev()
-	elif event.is_action("ui_right"):
-		_next()
-	elif key == KEY_T:
-		_take()
-	elif key == KEY_V:
-		_view()
-	elif key == KEY_P:
-		_pool()
-	elif key == KEY_S:
-		_share()
+	var items: Array = MENU
+	match _mode:
+		"take": items = TAKE_MENU
+		"items": items = LIST_MENU
+		"coins": items = ["EXIT"]
+		"ask_exit": items = ASK_MENU
+	var choice := ""
+	if key in [KEY_ENTER, KEY_KP_ENTER]:
+		choice = items[clampi(_pick, 0, items.size() - 1)]
+		if _mode == "coins":
+			choice = "COIN"
+	elif key == KEY_LEFT or key == KEY_RIGHT:
+		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
+		_refresh()
+		return
+	elif key == KEY_UP or key == KEY_DOWN:
+		var step := 1 if key == KEY_DOWN else -1
+		if _mode in ["menu", "take"]:
+			_who = (_who + step + _party.size()) % maxi(_party.size(), 1)
+		elif _mode == "coins":
+			_cursor = clampi(_cursor + step, 0, maxi(_coin_kinds().size() - 1, 0))
+		elif _mode == "items":
+			_cursor = clampi(_cursor + step, 0, maxi(_spoils.items.size() - 1, 0))
+		_refresh()
+		return
+	elif key == KEY_ESCAPE:
+		choice = "EXIT" if "EXIT" in items else "NO"
 	else:
+		for it in items:
+			if String(it).unicode_at(0) == key:
+				choice = it
+	if choice == "":
 		return
-	get_viewport().set_input_as_handled()
+	if choice != "COIN":
+		_pick = items.find(choice)
+	match _mode:
+		"menu":
+			match choice:
+				"VIEW": _view()
+				"TAKE":
+					_mode = "take"
+					_refresh()
+				"POOL": _pool()
+				"SHARE": _share()
+				"EXIT": _exit()
+		"take":
+			match choice:
+				"MONEY":
+					if _spoils.has_money():
+						_mode = "coins"
+						_cursor = 0
+						_refresh()
+				"ITEMS":
+					if not _spoils.items.is_empty():
+						_mode = "items"
+						_cursor = 0
+						_refresh()
+				"EXIT":
+					_mode = "menu"
+					_refresh()
+		"coins":
+			if choice == "COIN":
+				var kinds := _coin_kinds()
+				if _cursor < kinds.size():
+					_amount_coin = kinds[_cursor]
+					_typed = ""
+					_mode = "amount"
+			else:
+				_mode = "take"
+			_refresh()
+		"items":
+			match choice:
+				"TAKE":
+					_take_item(_cursor)
+					if _spoils.items.is_empty():
+						_mode = "take"
+						_refresh()
+				"EXIT":
+					_mode = "take"
+					_refresh()
+		"ask_exit":
+			if choice == "YES":
+				_mode = "menu"
+				_refresh()
+			else:
+				_close()
