@@ -3183,7 +3183,7 @@ var _cover_ran := {}
 
 
 func _cover_taken(key: String) -> bool:
-	if _cover_all:
+	if _cover_all or key.contains("@"):
 		return false
 	var a := key.split("|")
 	var b: Dictionary = main._vm.coverage.blocks.get(a[0], {})
@@ -3217,6 +3217,11 @@ func _cover_choice(choice: int) -> void:
 			if vm._menu_kind == "encounter" and j == 3 and vm.encounter_distance == 0:
 				c = 4
 			var key := "%s|%d:c%d" % [vm.block_key, vm._menu_at, c]
+			# A menu in a subroutine (5:5's YES/NO at 0x9A1D, called by several events): its
+			# choice taken from one caller says nothing of another's, so each caller gets its
+			# own job (run once a run; coverage can't tell callers apart).
+			if not vm.stack.is_empty():
+				key += "@%d" % vm.stack.back()
 			if _cover_queued.has(key) or _cover_taken(key):
 				continue
 			_cover_queued[key] = true

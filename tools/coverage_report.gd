@@ -11,6 +11,7 @@ extends SceneTree
 ## ON_GOSUB target), menu choices made (each item of each menu, the encounter menu's five,
 ## PARLAY's five), flag writes run (instructions writing ECL 0x4A00-0x4AFF, the area and
 ## quest bytes), and "extra" (instructions that ran but the decoder never reached: a bug).
+## Branch outcomes and choices no state can take ("dead": _dead) are left out of the counts.
 ## --missed=<block> lists that block's branch outcomes and choices never taken, with the
 ## instruction text, for working out why.
 ## --critical=<block> (chat 14, the per-area done criteria of 2026-11-13): the story-critical
@@ -79,7 +80,7 @@ func _init() -> void:
 				print("%-6s %-26s %14s %14s %12s %12s %s" % [key, name.replace("\n", " "),
 					_pct(r.counts[0], r.counts[1]), _pct(r.counts[2], r.counts[3]),
 					_pct(r.counts[4], r.counts[5]), _pct(r.counts[6], r.counts[7]),
-					str(extra) if extra > 0 else ""])
+					(str(extra) if extra > 0 else "") + ("  dead %d" % r.dead if r.dead > 0 else "")])
 			if key == missed:
 				for line in r.missed:
 					print("   missed ", line)
@@ -103,6 +104,8 @@ static func _pct(a: int, b: int) -> String:
 func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 	var counts := [0, 0, 0, 0, 0, 0, 0, 0]
 	var missed: PackedStringArray = []
+	var dead := _dead(ecl)
+	var dead_n := 0
 	for off in ecl.offsets():
 		var ins: Dictionary = ecl.instructions[off]
 		var op: String = ins.op
@@ -127,12 +130,18 @@ func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 			for i in 5:
 				choices.append("c%d" % i)
 		for o in outcomes:
+			if dead.has("%d:%s" % [off, o]):
+				dead_n += 1
+				continue
 			counts[3] += 1
 			if c.br.has("%d:%s" % [off, o]):
 				counts[2] += 1
 			else:
 				missed.append("%04X %s -> %s" % [off + EclScript.BASE, op, o])
 		for o in choices:
+			if dead.has("%d:%s" % [off, o]):
+				dead_n += 1
+				continue
 			counts[5] += 1
 			if c.br.has("%d:%s" % [off, o]):
 				counts[4] += 1
@@ -144,7 +153,71 @@ func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 				counts[7] += 1
 				if ran:
 					counts[6] += 1
-	return {"counts": counts, "missed": missed}
+	return {"counts": counts, "missed": missed, "dead": dead_n}
+
+
+## Chat 14: branch outcomes and choices no game state can take (left out of "reachable", as the
+## done criteria of 2026-11-13 say), worked out from the encounter rules (EclVM._encounter_choice):
+## an ENCOUNTER_MENU's five reactions decide which outcomes its choices can give (0 the
+## monsters leave: only a reaction 2; 1 a fight; 2 the party gets away: FLEE; 3 talk: PARLAY,
+## or WAIT/ADVANCE where the reaction is 4); an ON_GOTO/ON_GOSUB right after it on the same
+## variable can't take an outcome no choice gives. And where the menu's distance is 0, ADVANCE
+## (choice 3) is never offered (PARLAY stands in its place).
+func _dead(ecl: EclScript) -> Dictionary:
+	var out := {}
+	var offs: Array = ecl.offsets()
+	for i in offs.size():
+		var ins: Dictionary = ecl.instructions[offs[i]]
+		if ins.op != "ENCOUNTER_MENU" or ins.args.size() < 9:
+			continue
+		var lit := true
+		for k in [1, 4, 5, 6, 7, 8]:
+			if int(ins.args[k].type) != 0:
+				lit = false
+		if not lit:
+			continue
+		var at_zero := int(ins.args[1].value) == 0
+		if at_zero:
+			out["%d:c3" % offs[i]] = true
+		var can := {}
+		for ch in 5:
+			if ch == 3 and at_zero:
+				continue
+			match int(ins.args[4 + ch].value):
+				0:
+					can[1] = true
+					if ch == 2:
+						can[2] = true
+				1, 3:
+					if ch == 0:
+						can[1] = true
+					elif ch == 2:
+						can[2] = true
+					elif ch == 4:
+						can[3] = true
+				2:
+					can[0] = true
+					if ch == 0:
+						can[1] = true
+				4:
+					if ch == 0:
+						can[1] = true
+					elif ch == 2:
+						can[2] = true
+					else:
+						can[3] = true
+		if i + 1 >= offs.size():
+			continue
+		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		if not nxt.op in ["ON_GOTO", "ON_GOSUB"] or nxt.args.is_empty():
+			continue
+		var dest: Dictionary = ins.args[3]
+		if int(nxt.args[0].type) != int(dest.type) or int(nxt.args[0].value) != int(dest.value):
+			continue
+		for k in nxt.args.size() - 2:
+			if not can.has(k):
+				out["%d:%d" % [offs[i + 1], k]] = true
+	return out
 
 
 static func _choice_name(ins: Dictionary, op: String, i: int) -> String:

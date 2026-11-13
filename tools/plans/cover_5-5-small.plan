@@ -1,4 +1,5 @@
-# Coverage run, second party: two members only (the false Tyranthraxus collapses before a weak party: 0xA9E8).
+# Coverage run, second party: one member only (the false Tyranthraxus collapses before a party
+# whose strength plus the leader's charisma bonus is under 85: 0xA9DA; six members, or two, reach it).
 # From the main line's checkpoint after 5:4 (the story flags as a player has them: Cadorna
 # freed, RHODIA known), through the gate as a player goes in; the party is at the level the
 # game expects there (7).
@@ -6,7 +7,7 @@ rules playthrough.plan
 start chat13a_latest/valjevo4
 travel 5:5
 expect 5:5
-shortcut keep 2
+shortcut keep 1
 cover 5:5 60 all
 status
 stop
