@@ -179,6 +179,13 @@ func next_turn() -> int:
 				asked_round = round_no
 				return ASK_CONTINUE
 			start_round()
+			# A round where no one can act (everyone left asleep, held or choking, chat 13:
+			# the driders' Sleep and Stinking Cloud) still passes: the effects wear off and the
+			# dying bleed, round by round, until someone acts or the fight is decided.
+			var idle := 0
+			while order.is_empty() and outcome() == 0 and idle < 500:
+				idle += 1
+				start_round()
 			if order.is_empty():
 				return -1
 		active = order.pop_front()

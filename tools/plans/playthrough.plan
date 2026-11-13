@@ -361,12 +361,49 @@ checkpoint buccaneers
 town
 
 log 15. The Zhentil Keep outpost (6:28): escape fast
+# Chat 13, from ECL6 block 28 (the step script's events are 0-based: 1 the front gate 7,0/8,0,
+# 2 the guards outside the quarters 4,0, 3 the quarters 5,0, 4 the climbable wall 14,3 1,7 1,8
+# 6,14, 5 the commandant's men 4,1). The riders at 6:25 3,32 (YES) bring the party to the gate;
+# stepping on 7,0 starts the escort: the commandant takes the papers, the tour, the quarters
+# (5,0). Back on 5,0: RELAX until dinner (WALK AROUND only meets the guards at 4,0). Dinner
+# takes three topics (one each; a topic used twice ends it): CITY (OLD: the Tirantikus
+# legend, then TROUBLE and DON'T TALK), MAGIC (MENTION POOL OF RADIANCE: journal 46), POLITICS
+# (DON'T KNOW). Then the night: SLEEP WITH A WATCH (asleep, the four guards hit first), two
+# fights, an alarm (0x4A17: each step may bring more guards, bigger each time). Out by the gate
+# (stepping off 7,0/8,0 north) or over the wall (14,3 and the others): 0x4AB4 = 253; back at 3,32 the band makes it 254, which the
+# clerk rewards (index 14, "COMPLETED YOUR MISSION SO SWIFTLY", 0x4ABE = 254: Urslingen next).
+# ATTACK at 4,0 (0x4A0E) plays the commandant's fights instead; the Clue Book says don't.
+# The sweep's exits at 4,0 (ATTACK, then SURRENDER: stripped and thrown out) are left out of
+# the lab's exits.txt. No camping inside: a rest before the night goes straight to dinner, after it to the guards.
+rest 6:28 inn
+answer 6:28 WALK AROUND OR WILL YOU JUST RELAX|RELAX
+answer 6:28 WHAT WILL YOU TALK ABOUT|CITY
+answer 6:28 NEW OR OLD PHLAN|OLD
+answer 6:28 ANY TROUBLE WITH TYRANTHRAXUS|TROUBLE
+answer 6:28 HOW STRONG ARE THEY|DON'T TALK
+answer 6:28 NEXT TOPIC OF DISSCUSION|MAGIC,POLITICS
+answer 6:28 UNIQUE MAGICAL ITEMS OR PLACES|MENTION POOL OF RADIANCE
+answer 6:28 ULRICH EBERHARD|DON'T KNOW
+answer 6:28 IT IS NIGHT AND YOU ARE IN YOUR QUARTERS|SLEEP WITH A WATCH
+answer 6:28 RETURN TO THEM NOW|RETURN
+answer 6:28 THE WALL IS CLIMBABLE|CLIMB OVER WALL
+answer 6:28 SURRENDER OR DIE|ATTACK
 travel 6:28
-explore
+expect 6:28
+# The escort leaves the party on 5,0 facing east; the quarters' menu comes on the next arrival.
+tour 6,0
+tour 5,0
 checkpoint zhentil
 town
 
 log 16. Valhingen Graveyard (4:10), with the council's weapons
+# Chat 13, from ECL4 block 10: the man in mystic robes is the evil magic-user the Clue Book
+# says not to take (SEND HIM AWAY: he fights). The black marble crypt: read the scroll
+# (journal 43), SANCTIFY the coffin (0x4A43 = 251: the vampire, beaten in his lair, comes back
+# weaker there). The paladin's wraith: STAY (fight it for the paladin's gear).
+answer 4:10 LET HIM JOIN THE PARTY OR SEND HIM AWAY|SEND HIM AWAY
+answer 4:10 WHAT DO YOU WANT TO DO TO IT|SANCTIFY
+answer 4:10 I GUARD HIS REMAINS|STAY
 travel 4:10
 explore
 checkpoint graveyard
