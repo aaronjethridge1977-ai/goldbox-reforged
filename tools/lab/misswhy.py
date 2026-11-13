@@ -12,6 +12,7 @@ The guesses are a start for the reasons docs/coverage-areas.md gives, not the re
   menu        a menu's answer (MENU_*, ENCOUNTER_MENU, INPUT_*)
   flag        a flag byte written with constants here: the listed values
   outside     nothing in this area writes it: another area, or the engine
+  (and the engine's own bytes by name: facing, square, wall ahead, searching, surprise...)
 """
 import re
 import sys
@@ -45,6 +46,11 @@ def kind(addr, near):
     x = int(addr.strip("[]"), 16)
     if 0x49C6 <= x <= 0x49CA:
         return "clock"
+    named = {0xC04B: "party x", 0xC04C: "party y", 0xC04D: "facing", 0xC04E: "wall ahead",
+             0xC04F: "square", 0x6DCA: "searching", 0x6DCB: "surprise", 0x49F2: "area loaded",
+             0x6DD5: "leaving the map", 0x49C5: "map loaded"}
+    if x in named:
+        return named[x]
     if x == 0x6DC7:
         return "fight"
     if 0x6B00 <= x <= 0x6DBF or x in (0x6E3E, 0x6DCF):

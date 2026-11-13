@@ -1286,7 +1286,7 @@ func load_original_save(letter: String) -> bool:
 	_vm.write_byte(EclVM.PARTY_X, s[0x3201])
 	_vm.write_byte(EclVM.PARTY_Y, s[0x3202])
 	_vm.write_byte(EclVM.PARTY_DIR, s[0x3203] / 2)
-	_enter_script(set_no, block_id, true, false)
+	_enter_script(set_no, block_id, true, false, true)
 	# Back to the saved state after the area's init: flags, the script's tables, the square.
 	flags.call()
 	var code_len := EclScript.decode(ecl.blocks[block_id]).code.size()
@@ -2253,7 +2253,7 @@ func _ensure_area_script() -> void:
 
 
 ## Switches to another ECL block (NEW_ECL or area change) and runs its init.
-func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false) -> void:
+func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false, loading: bool = false) -> void:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
 	if ecl == null or not ecl.blocks.has(block_id):
 		# Look in the other script files.
@@ -2290,9 +2290,12 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# Slums, saved again: 0x4A00-0x4A1F were 0 (0x4A17 = 1, set by New Phlan's init) and
 	# 0x4A20-0x4A3F still 0x11; leaving City Hall and coming back made the clerk check for
 	# rewards again. Chat 6's evidence agrees (Kuto's Well's 0x4A23 survived trips away).
-	# A loaded save writes its own values back.
-	for a in range(0x4A00, 0x4A20):
-		_vm.write_byte(a, 0)
+	# A loaded save keeps them for its init (lab, chat 16: a game saved down Kuto's Well, 0x4A10 = 1,
+	# loads in the original down the well: 8:29's init loads map 32 when 0x4A10 is 1; zeroed, it
+	# loaded the top, map 29).
+	if not loading:
+		for a in range(0x4A00, 0x4A20):
+			_vm.write_byte(a, 0)
 	if arrive:
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)
@@ -2731,6 +2734,26 @@ func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 
 ## Dev (M6 coverage runs): the game's state between steps, in memory: place, script (its
 ## memory, dice and any open menu), party. Debug builds only.
+## Lab (chat 16): the game saved here and loaded again, as load_original_save does it: the
+## area's init runs with the saved flags (0x4900-0x52FF, the per-visit bytes too), then the
+## flags and the square go back as saved. Scripts test for it (0x49F2 already this block).
+func dev_reload() -> bool:
+	if _vm.ecl == null or _vm.on_overland or _busy or not _vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+		return false
+	var saved := _vm.mem.slice(0x4900, 0x5300)
+	var at := _pos
+	var facing := int(_facing)
+	_enter_script(_vm_file, _vm_block, true, false, true)
+	for i in saved.size():
+		_vm.mem[0x4900 + i] = saved[i]
+	_pos = at
+	_facing = facing as DungeonView.Dir
+	_sync_position_to_vm(_facing)
+	_vm.state = EclVM.State.DONE
+	_show()
+	return true
+
+
 func dev_snapshot() -> Dictionary:
 	if not DevShortcuts.allowed():
 		return {}

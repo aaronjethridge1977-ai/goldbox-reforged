@@ -3629,6 +3629,14 @@ func _cover_walk(deadline: int, again := false) -> void:
 			await _settle()
 			await _cover_recover(base, "resting")
 		_cover_resting = false
+		# Chat 16: saved and loaded here (the area's init with the area already up: 5:4's
+		# 0x9B73, 8:29's well bottom, 6:28's 0xB6CD).
+		main.dev_restore(base)
+		await _settle()
+		if main.dev_reload():
+			print("   saved and loaded at %s" % main._pos)
+			await _settle()
+			await _cover_recover(base, "loading a game saved here")
 		# Each edge of the map, once from each part: the next map of the area, or the way out.
 		for side in 4:
 			if Time.get_ticks_msec() >= deadline:
