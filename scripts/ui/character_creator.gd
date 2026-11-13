@@ -87,7 +87,65 @@ func _choose(value: int) -> void:
 			_show_list("align")
 		"align":
 			_record = _rules.start_record(_race, _sex, _class, value, _rng)
+			if matched_portraits():
+				_match_portrait()
 			_reroll()
+
+
+# ---------------------------------------------------------------- matched portraits (QoL)
+
+const SETTINGS_KEY := "matched_portraits"
+
+
+## SETTINGS: PORTRAITS MATCHED (an addition, on unless turned off) or ORIGINAL (every new
+## character starts on the first head and body, as the original's).
+static func matched_portraits() -> bool:
+	var c := ConfigFile.new()
+	if c.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(c.get_value("qol", SETTINGS_KEY, true))
+
+
+static func save_matched_portraits(on: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", SETTINGS_KEY, on)
+	c.save(GameData.SETTINGS_PATH)
+
+
+## Starts the portrait on a head and body that fit the character's sex, race and class
+## (PoolRadPortraits' tags; a random one among equally good fits). H and B still cycle
+## through every picture.
+func _match_portrait() -> void:
+	var sex := "F" if _sex == 1 else "M"
+	var race := _rules.race_name(_race).strip_edges().to_upper()
+	var classes := _rules.class_name_of(_class).strip_edges().to_upper().split("/")
+	var heads: Array = []
+	var best := -1
+	for i in PoolRadPortraits.HEADS:
+		var t: Dictionary = PoolRadPortraits.HEADS[i]
+		var score := (4 if t.sex == sex else (2 if t.sex == "" else 0)) + (2 if race in t.races else 0)
+		if score > best:
+			best = score
+			heads = []
+		if score == best:
+			heads.append(i)
+	var bodies: Array = []
+	best = -1
+	for i in PoolRadPortraits.BODIES:
+		var t: Dictionary = PoolRadPortraits.BODIES[i]
+		var fit := 0
+		for c in classes:
+			if c in t.classes:
+				fit += 1
+		var score := fit * 4 + (2 if t.sex == sex else (1 if t.sex == "" else 0))
+		if score > best:
+			best = score
+			bodies = []
+		if score == best:
+			bodies.append(i)
+	_head = int(heads[_rng.randi_range(0, heads.size() - 1)]) - 1
+	_body = int(bodies[_rng.randi_range(0, bodies.size() - 1)]) - 1
 
 
 func _reroll() -> void:
