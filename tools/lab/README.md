@@ -233,6 +233,18 @@ others from J:
   counts the story-critical instructions (ways in and out, set fights, quest flags
   0x4A20-0x4AFF) and lists those not run. `BRANCHES=<file>` names the shadow file to merge.
   Give the coverage file as an absolute path (the report runs inside `proj`).
+- In a coverage run ladders and stairs are always taken (the area's other level); a menu inside
+  a subroutine (a shared YES/NO) queues its other choice once per caller (`key@<return address>`);
+  `cover <area> <minutes> all` replays every other choice whether taken before or not (variant
+  runs: `cover_5-5-small.plan`, one member, for the false Tyranthraxus's collapse).
+- The report leaves "dead" outcomes out of its counts: an ON_GOTO right after an ENCOUNTER_MENU
+  can't take an outcome no choice gives under the menu's reactions, and ADVANCE isn't offered
+  at distance 0 (`dead n` in the last column).
+- `cover_all.sh <area> ...` runs areas two at a time (`runcover.sh <area>`: its own
+  `data/cov_<area>.json`, started from `data/coverage.json`, log `data/cover_<area>.log`;
+  `ROUND=n` adds `_r<n>`); `covsum.sh` prints one line per area; `merge_cov.py` unions them.
+  Results by area: `docs/coverage-areas.md`; fights won by shortcut: `docs/cover-fights.md`
+  (`cover_fights.py <logs>`).
 - Travel knows the parts of a dungeon area (squares that reach each other on foot on the area's
   own map): an exit is only used from the part it is in, and an arrival is placed in the part
   of the square the sweep arrived on (`-> <to> at x,y,dir`).
