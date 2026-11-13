@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 5:7, from the main line's checkpoint "valjevo6" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat13a_latest/valjevo6
+travel 5:7
+expect 5:7
+cover 5:7 75
+status
+stop

@@ -3,7 +3,7 @@
 # freed, RHODIA known), through the gate as a player goes in; the party is at the level the
 # game expects there (7).
 rules playthrough.plan
-start valjevo4
+start chat13a_latest/valjevo4
 travel 5:5
 expect 5:5
 shortcut keep 2

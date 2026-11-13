@@ -72,6 +72,11 @@ gate 7:26 11,28 4:2 SOUTH
 # The Temple of Bane's quarter leaves by a table the area graph can't read: its east edge,
 # where the band's eastern gate brings the party in, goes back out to the band.
 exit 1:24 15,4 E 7:26
+# Valjevo's tower (chat 14, the 5:5 coverage run): the inner castle's stairs up (event 4 facing
+# east: 0x9B28; on map 3 at 13,15) lead to 5:7 at 5,7, and 5:7's stairs at 5,7 west lead down.
+# The sweep never found them (a step script's facing test), so travel teleported there.
+exit 5:5 13,15 E 5:7
+exit 5:7 5,7 W 5:5
 # The wilderness bands join at their edges (the band's on-move script: x 15 going east from
 # 7:26 is 8:27, x 2 going west is 6:25; and back). The bands' sites, probed from their scripts:
 # the nomad camp 7:26 12,11 (ENTER), the boats home 7:26 7,29 and 8:27 9,29, the kobolds'

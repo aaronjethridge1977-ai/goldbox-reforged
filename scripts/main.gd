@@ -1552,6 +1552,21 @@ func _finish_move(direction: int) -> void:
 		# The on-move script stopped the step. If it moved the party itself (Valjevo's tower
 		# stairs: 3,6 south down to 3,8), the square it put them on runs its event, as in
 		# the original (lab, chat 13: the audience hall's text comes at once).
+		# (Chat 14: where a walking route joins the two squares, _adopt_position_from_vm had
+		# started an animated walk there and _pos was still the old square, so the event never
+		# ran; whether a route existed depended on the bot's closed steps, which is why the
+		# bot's arrival in the audience hall sometimes didn't run it. The move is a jump.)
+		var moved_to := Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
+		if _vm.ecl != null and _step_from.x >= 0 and moved_to != _step_from and not _vm.on_overland \
+				and not _walk_path.is_empty():
+			_walk_path.clear()
+			_timer.stop()
+			_busy = false
+			_pos = moved_to
+			_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
+			if _held_message != "":
+				_message.text = _held_message
+				_held_message = ""
 		if _vm.ecl != null and _step_from.x >= 0 and _pos != _step_from and not _vm.on_overland:
 			_step_from = Vector2i(-1, -1)
 			_sync_position_to_vm(_facing)

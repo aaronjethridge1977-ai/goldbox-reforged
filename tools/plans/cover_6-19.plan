@@ -1,0 +1,13 @@
+# Coverage run (M6, method of 2026-11-13): 6:19, from the main line's checkpoint "buccaneers" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+expect_level 6:19 7
+start chat13a_latest/buccaneers
+# The cave mouth (Diogenes) is left out of the area graph (chat 11): its gate here. The mouth
+# turns a party out (the cover run starts outside and comes in by its ways in).
+gate 6:25 10,9 6:19 ENTER CAVE
+travel 6:25
+expect 6:25
+cover 6:19 75
+status
+stop

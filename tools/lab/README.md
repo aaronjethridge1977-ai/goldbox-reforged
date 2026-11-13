@@ -226,7 +226,7 @@ others from J:
   closing `==== COVER ... done: {...}` line are the log's landmarks.
 - Cover plans are `tools/plans/cover_<set>-<block>[-variant].plan`: `rules playthrough.plan`
   (the standing answers), `start <checkpoint>` (from `--checkpoints=`, which `bot.sh` sets to
-  `data/checkpoints/chat13a_latest`; `start chat10a_latest/slums` reaches another set), travel,
+  `data/checkpoints`: `start chat13a_latest/valjevo4`, `start chat10a_latest/slums`), travel,
   `cover`. The party is raised to the area's `expect_level` by the level shortcut (logged).
   `shortcut keep <n>` keeps the first n members (scripts that branch on the party's strength).
 - `covreport.sh <abs coverage file> --areas=5:5 --missed=5:5 --critical=5:5`: `--critical`

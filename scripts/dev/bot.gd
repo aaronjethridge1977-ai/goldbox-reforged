@@ -3140,8 +3140,8 @@ func _cover(area: String, minutes: int) -> void:
 	main.dev_choice_hook = _cover_choice
 	main.dev_typed_hook = _cover_typed
 	var deadline := Time.get_ticks_msec() + minutes * 60000
-	if _here() != area:
-		_issue("cover %s: the party is in %s" % [area, _here()])
+	if false:
+		pass
 	else:
 		_cover_level()
 		print("==== COVER %s: walking every map" % area)
@@ -3185,9 +3185,12 @@ var _cover_exits_used := {}    # such steps that took the party away: walks keep
 func _cover_step(direction: int) -> void:
 	_cover_path = []
 	_cover_dir = direction
-	if main._vm.block_key == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+	if main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+		# (Outside the area too: a step into it can open its arrival menu, Diogenes's magic
+		# mouth; only the area's own menus queue jobs.)
 		_cover_snap = main.dev_snapshot()
-		_cover_last_step = "%d:%d,%d,%d" % [main._map_index, main._pos.x, main._pos.y, direction]
+		if main._vm.block_key == _cover_area:
+			_cover_last_step = "%d:%d,%d,%d" % [main._map_index, main._pos.x, main._pos.y, direction]
 	else:
 		_cover_snap = {}
 
@@ -3232,7 +3235,12 @@ func _cover_typed(text: String) -> void:
 ## fight is won by shortcut; the other choices are queued).
 func _cover_hook() -> bool:
 	var vm: EclVM = main._vm
-	if _here() != _cover_area and _here() != "0:0":
+	if _here() == _cover_area and _cover_going_in:
+		# In: the way's answers are spent (Diogenes's mouth puts the party back on the
+		# band's cave square, whose menu would send it in again and again).
+		_gate_answer = ""
+		_gate_picks = []
+	if _here() != _cover_area and _here() != "0:0" and not _cover_going_in:
 		# Out of the area (stairs, a gate, a teleporter on the way): the walk ends there;
 		# the coverage run puts the party back.
 		main.tour_stop = true
@@ -3328,11 +3336,57 @@ func _cover_job(job: Dictionary) -> void:
 ## once, from wherever the party first arrives in it: another map of the area, or another part
 ## of this one (a tower room reached from the next map), joins the queue.
 func _cover_walk(deadline: int) -> void:
-	var arrivals: Array = [main.dev_snapshot()]
+	var start: Dictionary = main.dev_snapshot()
+	# Outside the area (an area that turns a party out at once, Diogenes's cave mouth): only
+	# the ways in.
+	var arrivals: Array = [start] if _here() == _cover_area else []
 	var seen := {}
 	_cover_done = {}
 	_cover_probed = {}
-	while not arrivals.is_empty() and Time.get_ticks_msec() < deadline:
+	var ways_in := _cover_ways_in()
+	while Time.get_ticks_msec() < deadline:
+		if arrivals.is_empty():
+			# Every way into the area the graph knows, once each (Valjevo's outer castle runs
+			# one script over several maps: which map and part the party lands in depends on
+			# the way it came): from the next area, walk it in for real.
+			if ways_in.is_empty():
+				break
+			var e: Dictionary = ways_in.pop_front()
+			main.dev_restore(start)
+			await _settle()
+			print("== COVER way in from %s at %d,%d %s" % [e.from, e.x, e.y, "NESW"[e.dir]])
+			_cover_going_in = true
+			await _travel(e.from)
+			_cover_going_in = false
+			if _here() != e.from or _wiped():
+				continue
+			if not main._vm.on_overland and (e.entry == "gate" or main._pos == Vector2i(e.x, e.y)):
+				await _step_off()
+			_gate_answer = String(e.get("answer", ""))
+			_gate_picks = Array(e.get("picks", []))
+			_gate_square = Vector2i(e.x, e.y)
+			_travelling = true
+			_cover_going_in = true
+			main.tour_stop = false
+			if main._vm.on_overland:
+				await _overland_walk(Vector2i(e.x, e.y))
+			else:
+				await main._tour(Vector2i(e.x, e.y))
+			_cover_going_in = false
+			await _settle()
+			if _here() == e.from and e.entry == "move" and main._pos == Vector2i(e.x, e.y):
+				await _cover_face(int(e.dir))
+				await main._press("up")
+				await _settle()
+			_travelling = false
+			_gate_answer = ""
+			_gate_picks = []
+			if _here() == _cover_area and not _wiped() and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+				print("   came in on map %d at %s" % [main._maps[main._map_index].id, main._pos])
+				arrivals.append(main.dev_snapshot())
+			else:
+				print("   (that way in ends in %s at %s)" % [_here(), main._pos])
+			continue
 		var arrival: Dictionary = arrivals.pop_front()
 		main.dev_restore(arrival)
 		await _settle()
@@ -3376,6 +3430,30 @@ func _cover_walk(deadline: int) -> void:
 		await _settle()
 
 
+## The graph's ways into the cover area, one per area and arrival square (up to 12).
+func _cover_ways_in() -> Array:
+	_load_exits()
+	var out: Array = []
+	var keys := {}
+	for from in _exits:
+		if from == _cover_area:
+			continue
+		for e in _exits[from]:
+			if e.to != _cover_area:
+				continue
+			# A map edge leads in all along it: one try a side; a square (stairs, a door, a
+			# gate) is a way of its own.
+			var k := "%s %s" % [from, "NESW"[int(e.dir)]] if e.entry == "move" else "%s %d,%d" % [from, e.x, e.y]
+			if keys.has(k):
+				continue
+			keys[k] = true
+			var w: Dictionary = e.duplicate()
+			w["from"] = from
+			out.append(w)
+	return out.slice(0, 12)
+
+
+var _cover_going_in := false   # travelling round to a way in: walks outside the area go on
 var _cover_done := {}     # "map:event" visited in this coverage run
 var _cover_probed := {}   # "map:event" walked to through walls already
 
@@ -3535,6 +3613,18 @@ func _cover_map(deadline: int) -> Array:
 			await main._tour(best_sq)
 			await _settle()
 			await _cover_recover(here, "coming back to event %d" % best)
+		# And once with SEARCH on (scripts test 0x6DCA: Valjevo's loose stone, hidden treasure).
+		if Time.get_ticks_msec() < deadline:
+			main.dev_restore(here)
+			await _settle()
+			main._searching = true
+			main._vm.write_byte(main.SEARCH_FLAG, 1)
+			await _step_off()
+			await main._tour(best_sq)
+			await _settle()
+			main._searching = false
+			main._vm.write_byte(main.SEARCH_FLAG, 0)
+			await _cover_recover(here, "searching at event %d" % best)
 		main.dev_restore(here)
 		await _settle()
 	return found
