@@ -342,6 +342,18 @@ log The enormous cave (6:19, from 6:25 10,9): Diogenes the silver dragon only ta
 # The bands' explore passes the cave's menu; the bottle and the dragon's next quest come later.
 
 log 14. The Buccaneers' base (6:1: stampede the animals)
+# Chat 12: the Bivant heir is the boy with the heart-shaped birthmark in the slave pen (7,7;
+# its gate 7,6). Release the animals first (11,6: the guards leave their posts, 0x4A04 = 255),
+# then into the pen and GET HIM (0x4AA9 = 254). The other ways: beat the pen's guards, or buy
+# the boy from the captain with the seedy man's pass; explore plays what is left.
+answer 6:1 THE ANIMALS ARE RESTLESS|RELEASE ANIMALS
+answer 6:1 STANDING NEAR YOU IS THE YOUNG BOY|GET HIM
+answer 6:1 HOW WILL YOU RESCUE THE BOY|SNEAK INTO PEN
+travel 6:1
+tour 11,6
+tour 7,7
+checkpoint heir
+town
 travel 6:1
 explore
 checkpoint buccaneers

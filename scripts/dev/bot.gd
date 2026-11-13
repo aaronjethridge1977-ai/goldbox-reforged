@@ -256,6 +256,15 @@ func _do(line: String) -> void:
 				await _do(line)
 				_inn_retry = false
 				return
+			if _want == "inn" and main._pos != Vector2i(int(a[0]), int(a[1])) and not _inn_retry and not _wiped():
+				# The walk stopped short (a fight on the way, or a stop left from the trip home:
+				# chat 12, five members at 0 HP camped instead and set out again): once more.
+				_want = ""
+				_inn_retry = true
+				main.tour_stop = false
+				await _do(line)
+				_inn_retry = false
+				return
 			if _want == "inn":
 				_issue("the inn didn't take us (%s); memorizing in camp here" % main._message.text.strip_edges())
 				_want = ""
