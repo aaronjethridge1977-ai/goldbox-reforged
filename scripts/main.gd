@@ -1393,6 +1393,7 @@ func _try_move(direction: int) -> void:
 		var off := next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE
 		_vm.write_byte(EclVM.LEAVING_MAP, 1 if off and open else 0)
 		_vm.clear_output()
+		_step_from = _pos
 		_vm.start(0)
 		_pending_move = direction
 		_after_vm()
@@ -1521,9 +1522,24 @@ func _door_choice(c: String) -> void:
 
 
 ## Completes a move once the on-move script has finished without refusing it.
+var _step_from := Vector2i(-1, -1)   # where the party stood when the step's on-move script began
+var _arrival_on_move := false        # an arrival's on-move script is paused (a menu) or running
+
+
 func _finish_move(direction: int) -> void:
 	_pending_move = -1
 	if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
+		# The on-move script stopped the step. If it moved the party itself (Valjevo's tower
+		# stairs: 3,6 south down to 3,8), the square it put them on runs its event, as in
+		# the original (lab, chat 13: the audience hall's text comes at once).
+		if _vm.ecl != null and _step_from.x >= 0 and _pos != _step_from and not _vm.on_overland:
+			_step_from = Vector2i(-1, -1)
+			_sync_position_to_vm(_facing)
+			var keep := _vm.text
+			_vm.start(1)
+			if _vm.text == "" and not _vm.text_changed:
+				_vm.text = keep
+			_after_vm()
 		return
 	if _vm.on_overland:
 		_overland_step(direction)
@@ -1828,6 +1844,12 @@ func _after_vm() -> void:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		_finish_move(_pending_move)
+	elif _arrival_on_move and _vm.state == EclVM.State.DONE:
+		# The arrival's on-move script is done (see _enter_script): a stop with the party moved
+		# runs the new square's event, as at the end of a step.
+		_arrival_on_move = false
+		if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
+			_finish_move(int(_facing))
 
 
 ## NPC_ADD: the monster record joins the party as an NPC (the computer runs them in
@@ -2201,6 +2223,8 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		return
 	_vm_file = file_no
 	_vm_block = block_id
+	_step_from = Vector2i(-1, -1)
+	_arrival_on_move = false
 	# Only a step through the map's edge (the leaving script's CALL 0xC01E) carries on; a
 	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
 	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
@@ -2262,6 +2286,8 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 			# at once, before the square's own event). What it shows ends the step there;
 			# a stop it sets keeps the party on the arrival square.
 			var before := _vm.text
+			_step_from = _pos
+			_arrival_on_move = true
 			_vm.start(0)
 			if _vm.read_byte(EclVM.MOVEMENT_BLOCK) != 0:
 				carry = -1
@@ -2269,6 +2295,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 			if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
 				_after_vm()
 				return
+			_arrival_on_move = false
 			_vm.text = before
 			_sync_position_to_vm(_facing)
 		var keep := _vm.text

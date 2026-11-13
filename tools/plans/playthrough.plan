@@ -515,12 +515,8 @@ tour 3,6
 face S
 answer 5:7 GO DOWN THESE STAIRS|YES
 step
-# The stairs put the party on 3,8 without its event (ours; not checked in the lab): east to
-# 4,8 and back (north from 3,8 is the stairs up again).
-face E
-step
-face W
-step
+# Arriving down the stairs runs the hall's event at once (lab, chat 13). If the party falls
+# there, explore takes it back in.
 explore
 checkpoint valjevo7
 town
