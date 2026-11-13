@@ -635,6 +635,7 @@ func _hook() -> bool:
 			var k: int = items.find("YES") if left == 0 and _ladder_ok else items.find("NO")
 			if items[k] == "YES":
 				_ladder_ok = false
+				_climbed = true
 			var key := "%d:%d" % [main._map_index, main._maps[main._map_index].map.flag(main._pos.x, main._pos.y) & 127]
 			if items[k] == "NO" and left > 0:
 				_visited.erase(key)       # come back to it last
@@ -929,6 +930,7 @@ var _ladders := {}    # "map:event" ladders and stairs left for last
 var _no_route := {}   # "map:event" explore found no way to
 var _todo_now := {}   # the current explore pass's list of events still to visit
 var _ladder_ok := false   # explore is going for a ladder on purpose
+var _climbed := false     # explore took stairs or a ladder (YES) since the last pass
 var _purse_needed := 0   # after a town round that trained nobody: the purse to come back with
 var _words: PackedStringArray = []   # names and passwords the game has told the party
 var _word_try := 0
@@ -1627,6 +1629,7 @@ func _explore_areas(later: Array) -> void:
 	_no_route = {}
 	var arrivals := {}       # map index -> the square the party arrived on there
 	var trips := 0
+	_climbed = false
 	for n in 12:
 		var map_before: int = main._map_index
 		var deferred: Dictionary = await _explore_pass(later if n == 0 else [])
@@ -1636,6 +1639,11 @@ func _explore_areas(later: Array) -> void:
 			if not arrivals.has(main._map_index):
 				arrivals[main._map_index] = main._pos
 			continue     # a ladder or stair took the party to the area's other map: explore it
+		if _climbed and n < 11:
+			# Stairs that stay on the same map (Valjevo's towers, chat 13): what had no route
+			# from below may have one from here.
+			_climbed = false
+			continue
 		if deferred.is_empty():
 			break
 		if not _can_train() or trips >= 3 or not _round_trip(area):

@@ -470,6 +470,8 @@ town
 
 log 18c. Valjevo Castle (5:5)
 travel 5:5
+# 12,7 (event 31) is the way back out to 5:3: the rest of the inner castle first.
+explore 31
 explore
 checkpoint valjevo5
 town
@@ -482,6 +484,8 @@ town
 
 log 18e. Valjevo Castle and Tyranthraxus (5:7)
 travel 5:7
+# The audience hall (event 8) ends the game: the rest of the inner tower first.
+explore 8
 explore
 checkpoint valjevo7
 town

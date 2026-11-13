@@ -195,3 +195,18 @@ others from J:
   the door (0x4A4F); the tour now searches, steps off and back on, up to six tries per door.
 - `data/exits.txt`: the sweep's picks for 7:22 14,7 (the rocks room) were recorded on the first
   visit's flash and come out as GO BACK later; the lab copy keeps that exit without picks.
+
+### Chat 13 additions
+
+- Runs side by side: `BOT_ID=b BOT_COVERAGE=$PWD/data/coverage_b.json BOT_BRANCHES=$PWD/data/branches_b.json`
+  (start from copies of the main files), then `merge_cov.py <out> <in>...` unions them. Set
+  `BOT_TIMEOUT` for long runs (default 7200 s). Coverage is saved every two minutes and on exit
+  (a run stopped by `timeout` still saves).
+- `settle2.py` is `settle.py` that also prints each "EACH CHARACTER RECEIVES n EXPERIENCE
+  POINTS" screen (experience checks against ours).
+- Plan: `restuntil <hour>` rests in camp to that hour (Stojanow's trader comes before 14:00).
+  A `parley` cue also matches the text shown just before a bare encounter menu.
+- Lab saves: C is J moved by `mksave.py` as each check needs (Podol Plaza with `4AB0=1`,
+  Sokal Keep 8,14, the Zhentil outpost `strong`); remake it before use.
+- `data/exits.txt`: 6:28's exits at 4,0 (ATTACK, then SURRENDER: stripped and thrown out) and
+  5:3's 0,11 W (it lands in a walled-off part of 5:6 with no way on) are left out.
