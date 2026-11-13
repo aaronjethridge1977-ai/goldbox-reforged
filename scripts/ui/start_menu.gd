@@ -8,7 +8,7 @@ extends Control
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
 ##   SETTINGS        the additions that can be turned off (the automap)
-##   CREDITS         Gold Box Reforged's credits and the Godot license
+##   ABOUT           Gold Box Reforged's credits and the Godot license
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
 
@@ -184,7 +184,7 @@ func _show_menu() -> void:
 	_items.append("NEW GAME")
 	_items.append("PARTY CREATION")
 	_items.append("SETTINGS")
-	_items.append("CREDITS")
+	_items.append("ABOUT")
 	_items.append("EXIT")
 	_sel = clampi(_sel, 0, _items.size() - 1)
 	_draw()
@@ -296,7 +296,7 @@ func _pick(item: String) -> void:
 		"SETTINGS":
 			_stage = "settings"
 			_draw()
-		"CREDITS":
+		"ABOUT":
 			_stage = "credits"
 			_pages = Credits.pages()
 			_page = 0
