@@ -72,7 +72,9 @@ func run(plan_path: String) -> void:
 	watch.wait_time = 120.0
 	watch.ignore_time_scale = true
 	watch.timeout.connect(func() -> void:
-		print("   [watch] ", main._state_line())
+		print("   [watch] ", main._state_line(), "  (busy %s, timer %s, walk %d, combat %s, camp %s)" % [
+			main._busy, "stopped" if main._timer.is_stopped() else "running", main._walk_path.size(),
+			main._combat.visible, main._camp.visible])
 		# Coverage on disk every two minutes too (chat 13: a run stopped by its time limit
 		# never reached _exit_tree, which is where it was saved).
 		if main._vm != null and main._vm.coverage != null:
@@ -1633,6 +1635,11 @@ func _explore(later: Array) -> void:
 
 
 func _explore_areas(later: Array) -> void:
+	if main._vm.on_overland:
+		# A band's squares are its sites (gates and site tables), not a dungeon map's events;
+		# the tour can't walk to them (chat 13: it wandered 8:27 for an hour).
+		print("   explore: %s is wilderness; its sites come by travel and gates" % _here())
+		return
 	var area := _here()
 	var start_map: int = main._map_index
 	_visited = {}

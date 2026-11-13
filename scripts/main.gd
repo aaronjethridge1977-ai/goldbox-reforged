@@ -533,15 +533,20 @@ func _tour(goal: Vector2i) -> void:
 			print("   no route from %s" % _pos)
 			return
 		var d := DungeonView.DELTA.find(path[1] - _pos)
-		while int(_facing) != d:
-			await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
 		var before := _pos
 		var area_before := "%d:%d" % [_vm_file, _vm_block]
-		await _press("up")
+		if _vm.on_overland:
+			# In the wilderness the arrows move the party that way; they don't turn it (chat 13:
+			# turning right towards a square to the north walked the party east for an hour).
+			await _press(["up", "right", "down", "left"][d])
+		else:
+			while int(_facing) != d:
+				await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
+			await _press("up")
 		for i in 60:
 			await get_tree().process_frame
 		if _pos == before and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
-				and not _combat.visible and _message.text.strip_edges() == "":
+				and not _combat.visible and _message.text.strip_edges() == "" and not _vm.on_overland:
 			# A step the area's script refuses without a word may be a secret door not found
 			# yet (Yarash's pyramid: the step script rolls for each member on arrival, better
 			# when SEARCHing; 0x4A4F holds the doors found). Search, step off and back on, and
@@ -570,6 +575,10 @@ func _tour(goal: Vector2i) -> void:
 ## Lab: steps off `at` (not towards `blocked`) and back on with SEARCH on, so the square's
 ## script looks for a secret door again; SEARCH goes back as it was. False if it can't.
 func _search_again(at: Vector2i, blocked: int) -> bool:
+	if _vm.on_overland:
+		# The wilderness has no secret doors, and its arrows move rather than turn (chat 13:
+		# the turning loop below walked a party east across 8:27 for an hour).
+		return false
 	var was := _searching
 	_searching = true
 	_vm.write_byte(SEARCH_FLAG, 1)
