@@ -501,9 +501,9 @@ log 18e. Valjevo Castle and Tyranthraxus (5:7)
 travel 5:7
 # The audience hall (event 8) ends the game: the rest of the inner tower first. The party
 # arrives from 5:5 at the foot of the tower's stairs (5,7); every way on is up the stairs
-# (the step script's table at 0x9ACC), and down goes back to 5:5.
+# (the step script's table at 0x9ACC); down (back toward the hall and 5:5) is left to explore,
+# which goes down once a floor is done.
 answer 5:7 GO UP THESE STAIRS|YES
-answer 5:7 GO DOWN THESE STAIRS|NO
 explore 8
 explore
 checkpoint valjevo7
