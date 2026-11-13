@@ -208,18 +208,58 @@ func _dead(ecl: EclScript) -> Dictionary:
 						can[2] = true
 					else:
 						can[3] = true
-		if i + 1 >= offs.size():
+		# Chat 15: the ON_GOTO may come a few instructions later (5:4 puts WRITE_MEM 255,
+		# [6DE1] between), as long as nothing between writes the menu's variable.
+		var dest: Dictionary = ins.args[3]
+		var j := i + 1
+		while j < offs.size() and j <= i + 3:
+			var mid: Dictionary = ecl.instructions[offs[j]]
+			if mid.op in ["ON_GOTO", "ON_GOSUB"]:
+				break
+			if mid.op == "GOSUB" and not mid.args.is_empty() and _sub_keeps(ecl, int(mid.args[0].value) - EclScript.BASE, dest):
+				j += 1
+				continue
+			if not mid.op in ["WRITE_MEM", "PRINT", "PRINT_CLEAR", "PICTURE", "SPRITE_OFF", "DELAY", "CLEAR_BOX"]:
+				j = offs.size()
+				break
+			if mid.op == "WRITE_MEM" and mid.args.size() > 1 and int(mid.args[1].type) == int(dest.type) \
+					and int(mid.args[1].value) == int(dest.value):
+				j = offs.size()
+				break
+			j += 1
+		if j >= offs.size():
 			continue
-		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		var nxt: Dictionary = ecl.instructions[offs[j]]
 		if not nxt.op in ["ON_GOTO", "ON_GOSUB"] or nxt.args.is_empty():
 			continue
-		var dest: Dictionary = ins.args[3]
 		if int(nxt.args[0].type) != int(dest.type) or int(nxt.args[0].value) != int(dest.value):
 			continue
 		for k in nxt.args.size() - 2:
 			if not can.has(k):
-				out["%d:%d" % [offs[i + 1], k]] = true
+				out["%d:%d" % [offs[j], k]] = true
 	return out
+
+
+## Chat 15: whether a subroutine (straight on from `at` to its RETURN; IFs only skip one
+## instruction) leaves `dest` alone: no write to it, no call or jump on the way.
+func _sub_keeps(ecl: EclScript, at: int, dest: Dictionary) -> bool:
+	var offs: Array = ecl.offsets()
+	var i := offs.find(at)
+	if i < 0:
+		return false
+	for n in 40:
+		if i + n >= offs.size():
+			return false
+		var ins: Dictionary = ecl.instructions[offs[i + n]]
+		if ins.op == "RETURN":
+			return true
+		if ins.op in ["GOSUB", "GOTO", "ON_GOTO", "ON_GOSUB", "EXIT", "NEW_ECL"]:
+			return false
+		if WRITES.has(ins.op) and int(WRITES[ins.op]) < ins.args.size():
+			var d: Dictionary = ins.args[int(WRITES[ins.op])]
+			if int(d.type) == int(dest.type) and int(d.value) == int(dest.value):
+				return false
+	return false
 
 
 ## Chat 15: the bits of each flag byte (0x4A00-0x4AFF) any script of any data set can set:

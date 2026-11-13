@@ -1,0 +1,10 @@
+# Chat 15: the same run replaying every other choice, each event walked to from the arrival ("fresh").
+# Coverage run (M6, method of 2026-11-13): 2:20, from the main line's checkpoint "chat10a_latest/shopped" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat10a_latest/shopped
+travel 2:20
+expect 2:20
+cover 2:20 40 all fresh
+status
+stop

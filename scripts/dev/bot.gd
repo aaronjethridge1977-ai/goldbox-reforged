@@ -466,9 +466,14 @@ func _do(line: String) -> void:
 			# real from a snapshot of the step that led to it.
 			# "all" after the minutes: every other choice is played, taken before or not
 			# (a variant run, a smaller party, whose answers lead elsewhere).
-			_cover_all = w.size() > 3 and w[3] == "all"
+			# "fresh" (chat 15): each event is walked to from the part's arrival, not from where
+			# the last one left the party (an alarm raised by one fight changes every event
+			# after it: 5:4's fighter only comes out while the alarm is off).
+			_cover_all = "all" in w.slice(3)
+			_cover_fresh = "fresh" in w.slice(3)
 			await _cover(w[1], int(w[2]) if w.size() > 2 else 60)
 			_cover_all = false
+			_cover_fresh = false
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
@@ -3136,6 +3141,7 @@ func _arrival_part(from: String, e: Dictionary) -> int:
 
 var _cover_area := ""
 var _cover_snap := {}          # the game as the current step began (in the area only)
+var _cover_fresh := false      # chat 15: each event walked to from the part's arrival
 var _cover_flee_next := false  # chat 15: the next set fight is fled (a flee job)
 var _cover_target := Vector2i(-1, -1)   # chat 15: the square the walk is going to
 var _cover_resting := false    # chat 15: the menus now come from a rest, not a step
@@ -3736,7 +3742,11 @@ func _cover_map(deadline: int) -> Array:
 	for k in _cover_done:
 		if int(k.get_slice(":", 0)) == mi:
 			done[int(k.get_slice(":", 1))] = true
+	var arrival: Dictionary = main.dev_snapshot()
 	while Time.get_ticks_msec() < deadline:
+		if _cover_fresh:
+			main.dev_restore(arrival)
+			await _settle()
 		# The nearest event not yet visited.
 		var best := -1
 		var best_sq := Vector2i(-1, -1)
@@ -3841,19 +3851,27 @@ func _cover_map(deadline: int) -> Array:
 			await _settle()
 			await _cover_recover(here, "coming back to event %d" % best)
 		# And once with SEARCH on (scripts test 0x6DCA: Valjevo's loose stone, hidden treasure).
+		# Chat 15: four times in a row, without going back between (what a search found the
+		# first time is "already found" the next: 5:4's reports), the dice rerolled each time
+		# (the reports are a roll of 10).
 		if Time.get_ticks_msec() < deadline:
 			main.dev_restore(here)
 			await _settle()
-			main._searching = true
-			main._vm.write_byte(main.SEARCH_FLAG, 1)
-			await _step_off()
-			_cover_target = best_sq
-			await main._tour(best_sq)
-			_cover_target = Vector2i(-1, -1)
-			await _settle()
-			main._searching = false
-			main._vm.write_byte(main.SEARCH_FLAG, 0)
-			await _cover_recover(here, "searching at event %d" % best)
+			for k in 4:
+				if Time.get_ticks_msec() >= deadline or _here() != _cover_area or main._map_index != mi:
+					break
+				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+				main._searching = true
+				main._vm.write_byte(main.SEARCH_FLAG, 1)
+				await _step_off()
+				_cover_target = best_sq
+				await main._tour(best_sq)
+				_cover_target = Vector2i(-1, -1)
+				await _settle()
+				main._searching = false
+				main._vm.write_byte(main.SEARCH_FLAG, 0)
+				if await _cover_recover(here, "searching at event %d" % best):
+					break
 		main.dev_restore(here)
 		await _settle()
 	return found

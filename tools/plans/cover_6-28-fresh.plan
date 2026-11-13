@@ -1,0 +1,11 @@
+# Chat 15: the same run replaying every other choice, each event walked to from the arrival ("fresh").
+# Coverage run (M6, method of 2026-11-13): 6:28, from the main line's checkpoint "chat13a_latest/buccaneers" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+expect_level 6:28 6
+start chat13a_latest/buccaneers
+travel 6:28
+expect 6:28
+cover 6:28 40 all fresh
+status
+stop

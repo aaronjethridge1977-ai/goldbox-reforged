@@ -738,9 +738,11 @@ func _auto_handle() -> bool:
 					if String(_vm.menu[i]).strip_edges().to_upper() in ["NO", "LEAVE", "EXIT", "QUIT", "DONE"]:
 						k = str(i + 1)
 						way_out = true
-				if not way_out:
+				if not way_out or int(_menu_seen[key]) > 5:
 					# No way out offered (WHO WILL OPEN IT? asked again while the first member
-					# can't: chat 13, Valjevo's trap door): the next choice each time.
+					# can't: chat 13, Valjevo's trap door), or the way out only asks again (chat 15:
+					# 7:23's "DO YOU REALLY MEAN NOKNOK?", where NO asks for the word again): the
+					# next choice each time.
 					k = str((int(_menu_seen[key]) - 1) % mini(_vm.menu.size(), 9) + 1)
 		if not one:
 			print("   >> ", k)

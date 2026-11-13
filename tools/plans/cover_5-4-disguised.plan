@@ -2,12 +2,15 @@
 # set by 5:6 at 0x99BC when the party says YES) and with the shrines untouched (0x4A6A & 3 = 0:
 # 5:4 clears the disguise on every step otherwise). The patrols then ask "WHAT ARE YOU DOING
 # HERE?" and the password (HARASH) and authority (TYRANTHRAXUS) questions come up. The flag is
-# set by shortcut (logged) on the main line's checkpoint before 5:4, "valjevo3".
+# set by shortcut (logged) on the main line's checkpoint before 5:4, "valjevo3"; so is Cadorna's
+# fate (0x4ABE, 255 once settled) back to unsettled, for the evidence at 0xADA6. Each event is
+# walked to from the arrival ("fresh"), so the alarm one fight raises doesn't hide the rest.
 rules playthrough.plan
 start chat13a_latest/valjevo3
 shortcut flag 4A65 or 1 the disguise from 5:6's woman, as a player who says YES wears it
+shortcut flag 4ABE set 0 Cadorna's fate not yet settled (a player who came to Valjevo before the textile house)
 travel 5:4
 expect 5:4
-cover 5:4 40 all
+cover 5:4 40 all fresh
 status
 stop
