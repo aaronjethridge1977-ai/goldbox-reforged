@@ -292,3 +292,26 @@ others from J:
   menu's variable alone) between the menu and its ON_GOTO.
 - The runs are frame-bound (about 10% CPU each): `NOWAIT=1 P=3 cover_q.sh ...` runs three at once
   beside another queue.
+
+### Chat 16 additions
+
+- **Speed:** headless Godot runs in low-processor mode, which sleeps 6.9 ms a frame (145 frames a
+  second): that, not the work, held every bot run to about 10% of a core. `--fast` now turns it off
+  (`OS.low_processor_usage_mode`), so a run takes all of a core and goes about 30 times faster
+  (4:21's `-all` run: 52 s, was 1628 s, the same jobs and squares). `--frame-sleep` keeps the old
+  pacing. The bot's `_settle` limits are real time now (140 s, and a quiet window of 70 ms), as
+  they were in frames before: counted in frames, 6:28's guided tour outran them. The cloud
+  workspace has two cores: `P=2`. `GODOT_ARGS=--print-fps ./bot.sh ...` shows the frame rate.
+- Coverage runs visit every square of every event (scripts tell an event's squares apart by
+  position), and come back onto each from every open side in turn (at least three times, dice
+  rerolled), so the party arrives facing each way (6:1's slave pen tests the wall ahead, 0xC04E).
+- Loot: the bot keeps the item types some script looks for (FIND_ITEM 74, 75, 82, 91: 6:1's
+  captain's pass, bought from the seedy man, has no price and was left on the treasure screen).
+- Report: a flag byte's possible values come from every write to it (WRITE_MEM constants,
+  indexed constant writes; anything else makes it "any"); 0x4A00-0x4A1F are zeroed on entering an
+  area, so only the area's own writes count for them. A COMPARE with a constant that every
+  possible value answers the same way makes the IF's other outcome dead (4:21's "if the visit
+  flag is over 1, reset it", where nothing writes more than 1).
+- `misswhy.py <listing> < missctx output` puts a first guess before each missed branch: unreached,
+  roll, counter, clock, fight, party, menu, a flag's written values, or "outside" (nothing in the
+  area writes it). `missctx.sh` leaves the listing in `/tmp/dis_<area>.txt`.

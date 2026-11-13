@@ -1,0 +1,11 @@
+# Chat 16: 3:11 with every other choice replayed (the city watch's FIGHT, so its flee job comes).
+# Coverage run (M6, method of 2026-11-13): 3:11, from the main line's checkpoint "chat10a_latest/shopped" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+expect_level 3:11 2
+start chat10a_latest/shopped
+travel 3:11
+expect 3:11
+cover 3:11 40 all
+status
+stop

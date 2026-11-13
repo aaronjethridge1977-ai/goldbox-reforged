@@ -496,12 +496,15 @@ func _do(line: String) -> void:
 
 ## Waits until nothing is open or running, playing it out with the tour's policy.
 func _settle() -> void:
-	var guard := 0
-	while guard < 20000:
-		guard += 1
+	# Chat 16: the limits are real time, not frames. Headless runs used to sleep 6.9 ms a frame
+	# (145 frames a second); with --fast that sleep is gone, and 20000 frames ran out in 3 s,
+	# in the middle of 6:28's guided tour. 140 s and 70 ms are what the frame counts were.
+	var deadline := Time.get_ticks_msec() + 140000
+	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 		if not await main._auto_handle():
-			for i in 10:
+			var quiet := Time.get_ticks_msec() + 70
+			while Time.get_ticks_msec() < quiet:
 				await get_tree().process_frame
 			if not await main._auto_handle():
 				return
@@ -2455,6 +2458,7 @@ func _train() -> void:
 	await _settle()
 
 
+const QUEST_ITEM_TYPES := [74, 75, 82, 91]
 const LOOT_WORDS := ["SCROLL", "POTION", "WAND", "RING", "NECKLACE", "BRACERS", "GAUNTLETS", "CLOAK",
 	"DUST", "JAVELIN", "MANUAL", "GEM", "JEWEL", "HOLY", "MIRROR", "BOOK", "TOME", "MAP", "STAFF OF", "ROD", "KEY"]
 
@@ -2488,6 +2492,11 @@ func _missile_kit(m: PartyMember, it: GameItem) -> bool:
 ## Magic and the things a player keeps (scrolls, potions, wands, books...): never sold.
 static func _keeper(it: GameItem) -> bool:
 	if it.plus != 0 or it.name.contains("+"):
+		return true
+	# The item types some script looks for (every FIND_ITEM in Pool of Radiance's ECL1-8):
+	# a player keeps those. Chat 16: 6:1's captain's pass (91), bought from the seedy man,
+	# has no price and no magic word, so the bot left it on the treasure screen.
+	if it.type in QUEST_ITEM_TYPES:
 		return true
 	var up := it.name.to_upper()
 	for w in LOOT_WORDS:
@@ -3546,7 +3555,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 					_cover_groups_in[group] = true
 				arrivals.append(main.dev_snapshot())
 			else:
-				print("   (that way in ends in %s at %s)" % [_here(), main._pos])
+				print("   (that way in ends in %s at %s: %s, vm %d)" % [_here(), main._pos, main._state_line(), main._vm.state])
 			continue
 		var arrival: Dictionary = arrivals.pop_front()
 		main.dev_restore(arrival)
@@ -3676,7 +3685,7 @@ var _cover_groups_in := {}     # chat 15: way-in groups (parts) already reached 
 
 
 var _cover_going_in := false   # travelling round to a way in: walks outside the area go on
-var _cover_done := {}     # "map:event" visited in this coverage run
+var _cover_done := {}     # "map:x,y" event squares visited in this coverage run
 var _cover_probed := {}   # "map:event" walked to through walls already
 
 
@@ -3730,18 +3739,18 @@ func _cover_map(deadline: int) -> Array:
 	var mi: int = main._map_index
 	var map: GeoMap = main._maps[mi].map
 	var found: Array = []
-	var todo := {}
+	# Chat 16: every square of every event, not one square an event: scripts tell an event's
+	# squares apart by position (6:1's 0x9A0F turns the square into one of 13 cases).
+	var todo := {}       # square -> event
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
 			if ev != 0:
-				if not todo.has(ev):
-					todo[ev] = []
-				todo[ev].append(Vector2i(x, y))
-	var done := {}
+				todo[Vector2i(x, y)] = ev
+	var done := {}       # squares visited ("x,y")
 	for k in _cover_done:
 		if int(k.get_slice(":", 0)) == mi:
-			done[int(k.get_slice(":", 1))] = true
+			done[k.get_slice(":", 1)] = true
 	var arrival: Dictionary = main.dev_snapshot()
 	var regions_found := {_region_id(main._pos): true}
 	while Time.get_ticks_msec() < deadline:
@@ -3752,29 +3761,27 @@ func _cover_map(deadline: int) -> Array:
 		var best := -1
 		var best_sq := Vector2i(-1, -1)
 		var best_len := 1 << 20
-		for ev in todo:
-			if done.has(ev):
+		for sq: Vector2i in todo:
+			if done.has("%d,%d" % [sq.x, sq.y]):
 				continue
-			for sq in todo[ev]:
-				var path: Array = main._find_path(main._pos, sq)
-				var n := 0 if main._pos == sq else path.size()
-				if (n > 0 or main._pos == sq) and n < best_len:
-					best = ev
-					best_sq = sq
-					best_len = n
+			var path: Array = main._find_path(main._pos, sq)
+			var n := 0 if main._pos == sq else path.size()
+			if (n > 0 or main._pos == sq) and n < best_len:
+				best = todo[sq]
+				best_sq = sq
+				best_len = n
 		var probe := false
 		if best < 0:
 			# No walking route: the nearest by straight distance, by trying the walls on the
 			# way (a hedge to cut through, a wall the area's script lets the party pass).
-			for ev in todo:
-				if done.has(ev) or _cover_probed.has("%d:%d" % [mi, ev]):
+			for sq: Vector2i in todo:
+				if done.has("%d,%d" % [sq.x, sq.y]) or _cover_probed.has("%d:%d" % [mi, todo[sq]]):
 					continue
-				for sq in todo[ev]:
-					var n: int = absi(sq.x - main._pos.x) + absi(sq.y - main._pos.y)
-					if n < best_len:
-						best = ev
-						best_sq = sq
-						best_len = n
+				var n: int = absi(sq.x - main._pos.x) + absi(sq.y - main._pos.y)
+				if n < best_len:
+					best = todo[sq]
+					best_sq = sq
+					best_len = n
 			probe = true
 		if best < 0:
 			break
@@ -3782,8 +3789,8 @@ func _cover_map(deadline: int) -> Array:
 			# Through the walls only once an event; arriving in another part may reach it.
 			_cover_probed["%d:%d" % [mi, best]] = true
 		else:
-			done[best] = true
-			_cover_done["%d:%d" % [mi, best]] = true
+			done["%d,%d" % [best_sq.x, best_sq.y]] = true
+			_cover_done["%d:%d,%d" % [mi, best_sq.x, best_sq.y]] = true
 		# Steps the tour gave up on (a hedge answered NO by the menu-loop rule) are tried
 		# again; only the steps that took the party away stay closed.
 		main._refused = _cover_exits_used.duplicate()
@@ -3817,8 +3824,8 @@ func _cover_map(deadline: int) -> Array:
 			print("   (didn't reach %s: at %s)" % [best_sq, main._pos])
 			_cover_new_part(regions_found, found, "walking to event %d" % best)
 			continue
-		done[best] = true
-		_cover_done["%d:%d" % [mi, best]] = true
+		done["%d,%d" % [best_sq.x, best_sq.y]] = true
+		_cover_done["%d:%d,%d" % [mi, best_sq.x, best_sq.y]] = true
 		_cover_log.squares += 1
 		_cover_heal()
 		var here: Dictionary = main.dev_snapshot()
@@ -3841,14 +3848,26 @@ func _cover_map(deadline: int) -> Array:
 		# Chat 15: three times, the script's dice rerolled each time (a restore brings the same
 		# dice back, so a RANDOM in the event would always come out the same: New Phlan's
 		# pickpocket, the gambling wheel).
-		for k in 3:
+		# Chat 16: from each open side in turn (at least three times), so the party arrives
+		# facing each way: scripts test the wall ahead (6:1's slave pen: 0xC04E = 8) and the facing.
+		var sides: Array = []
+		for dd in DungeonView.DELTA:
+			var nb: Vector2i = best_sq + dd
+			if nb.x >= 0 and nb.y >= 0 and nb.x < GeoMap.SIZE and nb.y < GeoMap.SIZE \
+					and main._find_path(best_sq, nb).size() == 2:
+				sides.append(nb)
+		for k in maxi(3, sides.size()):
 			if Time.get_ticks_msec() >= deadline:
 				break
 			main.dev_restore(here)
 			await _settle()
 			if k > 0:
 				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
-			await _step_off()
+			if sides.is_empty():
+				await _step_off()
+			else:
+				await main._tour(sides[k % sides.size()])
+				await _settle()
 			_cover_target = best_sq
 			await main._tour(best_sq)
 			_cover_target = Vector2i(-1, -1)

@@ -198,6 +198,11 @@ func _ready() -> void:
 		# --fast: the lab's long tours run every pause and fight step 25 times faster.
 		if arg == "--fast":
 			Engine.time_scale = 25.0
+			# Headless runs sleep 6.9 ms a frame (low-processor mode): about 145 frames a second,
+			# which held every lab run to 10% of a core. --fast lifts it (chat 16).
+			if not "--frame-sleep" in OS.get_cmdline_user_args():
+				OS.low_processor_usage_mode = false
+				OS.low_processor_usage_mode_sleep_usec = 0
 		# --coverage=<file>: record which parts of the event scripts run (M6). Dev builds only.
 		if arg.begins_with("--coverage=") and OS.is_debug_build():
 			_vm.coverage = ScriptCoverage.new(arg.trim_prefix("--coverage="))

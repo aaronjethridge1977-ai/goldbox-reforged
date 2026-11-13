@@ -46,6 +46,7 @@ func _init() -> void:
 	if game_path == "":
 		game_path = GameData.find_game_path()
 	_settable = _settable_bits(game_path)
+	_values = _flag_values(game_path)
 	var cov := ScriptCoverage.new(cov_path)
 	var totals := [0, 0, 0, 0, 0, 0, 0, 0]   # ins run/all, branches, choices, flags
 	var entered := 0
@@ -168,6 +169,7 @@ func _dead(ecl: EclScript) -> Dictionary:
 	var out := {}
 	var offs: Array = ecl.offsets()
 	_dead_never_set(ecl, offs, out)
+	_dead_values(ecl, offs, out)
 	for i in offs.size():
 		var ins: Dictionary = ecl.instructions[offs[i]]
 		if ins.op != "ENCOUNTER_MENU" or ins.args.size() < 9:
@@ -351,6 +353,142 @@ func _dead_never_set(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 		# The test always sees 0 (equal): EQ, LE and GE hold; NE, LT and GT don't.
 		var holds: bool = nxt.op in ["IF_EQ", "IF_LE", "IF_GE"]
 		out["%d:%s" % [offs[i + 1], "F" if holds else "T"]] = true
+
+
+## Chat 16: the values each flag byte (0x4A00-0x4AFF) can hold, from every script of every
+## data set: 0 (a new game), each constant a WRITE_MEM puts there, each constant an indexed
+## WRITE_MEM_BASE_OFF from a base in the range can put anywhere above it. Any other write (a
+## sum, a counter, a copy, OR/AND, a menu's answer, any instruction not known to only read)
+## makes the byte "any" (absent from the result; COPY_MEM makes everything from there up "any").
+var _values := {}
+const READ_ONLY := ["COMPARE", "COMPARE_AND", "ON_GOTO", "ON_GOSUB", "PRINT", "PRINT_CLEAR",
+	"LOAD_MON", "LOAD_CHAR", "IF_EQ", "IF_NE", "IF_LT", "IF_GT", "IF_LE", "IF_GE"]
+
+
+static func _is_byte_mem(a: Dictionary) -> bool:
+	return int(a.type) in [0x01, 0x05]
+
+
+static func _is_value(a: Dictionary) -> bool:
+	return int(a.type) in [0x00, 0x02, 0x04]
+
+
+func _flag_values(game_path: String) -> Dictionary:
+	var all: Array = []
+	for n in range(1, 9):
+		var dax := DaxFile.open(game_path.path_join("ECL%d.DAX" % n))
+		if dax == null:
+			continue
+		for id in dax.ids():
+			all.append(EclScript.decode(dax.blocks[id]))
+	return _values_of(all)
+
+
+## The values each flag byte can hold, from the writes of these scripts (see _flag_values).
+func _values_of(ecls: Array) -> Dictionary:
+	var vals := {}       # byte -> {value: true}
+	var any := {}        # bytes that can hold anything
+	var low_any := FLAGS_HI + 1    # from here up, anything (COPY_MEM, indexed non-constant writes)
+	var spread := {}     # constants an indexed write can put at or above a base: base -> [values]
+	if true:
+		for ecl: EclScript in ecls:
+			for off in ecl.offsets():
+				var ins: Dictionary = ecl.instructions[off]
+				var op: String = ins.op
+				var a: Array = ins.args
+				if op in READ_ONLY:
+					continue
+				if op == "WRITE_MEM" and a.size() >= 2 and _in_flags(a[1]):
+					var x := int(a[1].value)
+					if int(a[1].type) in [0x01, 0x05, 0x81] and _is_value(a[0]):
+						vals.get_or_add(x, {})[int(a[0].value) & 0xFF] = true
+					elif int(a[1].type) == 0x03 and _is_value(a[0]):
+						vals.get_or_add(x, {})[int(a[0].value) & 0xFF] = true
+						vals.get_or_add(x + 1, {})[(int(a[0].value) >> 8) & 0xFF] = true
+					elif int(a[0].type) in [0x80, 0x81]:
+						low_any = mini(low_any, x)       # a string: the bytes after it too
+					else:
+						any[x] = true
+						any[x + 1] = true
+					continue
+				if op == "WRITE_MEM_BASE_OFF" and a.size() >= 2 and int(a[1].value) <= FLAGS_HI \
+						and int(a[1].value) + 255 >= FLAGS_LO:
+					if _is_value(a[0]):
+						spread.get_or_add(int(a[1].value), []).append(int(a[0].value) & 0xFF)
+					else:
+						low_any = mini(low_any, maxi(int(a[1].value), FLAGS_LO))
+					continue
+				for k in a.size():
+					var d: Dictionary = a[k]
+					if int(d.type) in [0x01, 0x03, 0x05, 0x81] and int(d.value) <= FLAGS_HI \
+							and int(d.value) + (255 if op == "COPY_MEM" else 1) >= FLAGS_LO:
+						if op == "COPY_MEM":
+							low_any = mini(low_any, maxi(int(d.value), FLAGS_LO))
+						elif (op in ["ADD", "SUBTRACT", "MULTIPLY", "DIVIDE", "AND", "OR"] and k != 2) \
+								or (op in ["RANDOM", "RANDOM0"] and k != 1):
+							pass        # a source, not the destination
+						else:
+							any[int(d.value)] = true
+							any[int(d.value) + 1] = true
+	var out := {}
+	for x in range(FLAGS_LO, FLAGS_HI + 1):
+		if any.has(x) or x >= low_any:
+			continue
+		var s: Dictionary = vals.get(x, {}).duplicate()
+		s[0] = true
+		for base in spread:
+			if int(base) <= x and x <= int(base) + 255:
+				for v in spread[base]:
+					s[v] = true
+		out[x] = s
+	return out
+
+
+static func _in_flags(a: Dictionary) -> bool:
+	return int(a.value) >= FLAGS_LO and int(a.value) <= FLAGS_HI
+
+
+## Chat 16: COMPARE of a flag byte with a constant, then an IF: where every value the byte can
+## hold (_flag_values) gives the same answer, the other outcome is dead. 4:21's stable and shops
+## clamp their visit flags ("IF [4A0D] > 1, set it to 0"), and nothing ever writes more than 1.
+func _dead_values(ecl: EclScript, offs: Array, out: Dictionary) -> void:
+	var local := {}
+	for i in offs.size() - 1:
+		var ins: Dictionary = ecl.instructions[offs[i]]
+		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		if ins.op != "COMPARE" or not String(nxt.op).begins_with("IF_") or ins.args.size() < 2:
+			continue
+		var a: Array = ins.args
+		var mem := -1
+		if _is_byte_mem(a[0]) and _is_value(a[1]) and _in_flags(a[0]):
+			mem = 0
+		elif _is_byte_mem(a[1]) and _is_value(a[0]) and _in_flags(a[1]):
+			mem = 1
+		var x := int(a[mem].value)
+		# 0x4A00-0x4A1F are zeroed on entering an area (research/pool-of-radiance-formats.md,
+		# "Area memory, corrected again"): only this area's own scripts write them in a visit.
+		var vals: Dictionary = _values
+		if x < 0x4A20:
+			if local.is_empty():
+				local = _values_of([ecl])
+			vals = local
+		if not vals.has(x):
+			continue
+		var c := int(a[1 - mem].value)
+		var seen := {}
+		for v in vals[x]:
+			var cmp: int = (int(v) - c) if mem == 0 else (c - int(v))
+			var holds := false
+			match String(nxt.op):
+				"IF_EQ": holds = cmp == 0
+				"IF_NE": holds = cmp != 0
+				"IF_LT": holds = cmp < 0
+				"IF_GT": holds = cmp > 0
+				"IF_LE": holds = cmp <= 0
+				"IF_GE": holds = cmp >= 0
+			seen[holds] = true
+		if seen.size() == 1:
+			out["%d:%s" % [offs[i + 1], "F" if seen.has(true) else "T"]] = true
 
 
 static func _choice_name(ins: Dictionary, op: String, i: int) -> String:
