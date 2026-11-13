@@ -349,13 +349,14 @@ log 14. The Buccaneers' base (6:1: stampede the animals)
 answer 6:1 THE ANIMALS ARE RESTLESS|RELEASE ANIMALS
 answer 6:1 STANDING NEAR YOU IS THE YOUNG BOY|GET HIM
 answer 6:1 HOW WILL YOU RESCUE THE BOY|SNEAK INTO PEN
+# The band's entrance (6:25 12,31) opens only while 0x4AA9 is 0: after the rescue the base is
+# closed for good, so the rest of it comes first.
 travel 6:1
+checkpoint buccaneers0
+explore
 tour 11,6
 tour 7,7
 checkpoint heir
-town
-travel 6:1
-explore
 checkpoint buccaneers
 town
 
