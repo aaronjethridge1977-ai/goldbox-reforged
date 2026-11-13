@@ -628,6 +628,11 @@ var _menu_seen := {}
 ## over (return true when it handled the moment itself).
 var auto_hook: Callable = Callable()
 var _shadow: ShadowExplorer = null     # dev: tries the choices not taken (--branches=)
+## Dev (M6 coverage runs, chat 14): a harness records each step and the choices that follow it,
+## and later puts the game back (dev_snapshot / dev_restore) to play another choice for real.
+var dev_step_hook: Callable = Callable()     # (direction) as a step starts in walk mode
+var dev_choice_hook: Callable = Callable()   # (choice) as a script menu takes a choice
+var dev_typed_hook: Callable = Callable()    # (text) as a script's question takes an answer
 
 
 ## Lab: plays whatever is on screen with the tour's policy (Enter on prompts, quick fights,
@@ -821,6 +826,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			if choice >= 0 and choice < _vm.menu.size():
 				_menu_sel = choice   # the original keeps the highlight where the last choice was
 				_message.text = ""
+				if dev_choice_hook.is_valid():
+					dev_choice_hook.call(choice)
 				_vm.choose(choice)
 				_after_vm()
 			get_viewport().set_input_as_handled()
@@ -1009,6 +1016,8 @@ func _on_typed(text: String) -> void:
 	_typed.visible = false
 	_typed.release_focus()
 	if _vm.state == EclVM.State.INPUT:
+		if dev_typed_hook.is_valid():
+			dev_typed_hook.call(text)
 		_vm.answer_input(text)
 		_after_vm()
 		_show()
@@ -1385,6 +1394,8 @@ func _items_from(records: Array) -> Array[GameItem]:
 ## A step: the area's on-move script runs first (it can refuse the move, e.g. a locked
 ## door), then the party moves and the on-step script runs for the new square.
 func _try_move(direction: int) -> void:
+	if dev_step_hook.is_valid():
+		dev_step_hook.call(direction)
 	_event_image = null
 	_message.text = ""
 	if _vm.on_overland:
@@ -2688,6 +2699,72 @@ func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 	_walls_for = -1
 	_pending_move = -1
 	_after_vm()
+	return true
+
+
+## Dev (M6 coverage runs): the game's state between steps, in memory: place, script (its
+## memory, dice and any open menu), party. Debug builds only.
+func dev_snapshot() -> Dictionary:
+	if not DevShortcuts.allowed():
+		return {}
+	var members: Array = []
+	for m in _party:
+		members.append(m.clone())
+	return {"map_index": _map_index, "pos": _pos, "facing": int(_facing), "file": _vm_file,
+		"block": _vm_block, "vm": _vm.fork(null), "party": members, "searching": _searching}
+
+
+## Dev (M6 coverage runs): takes menu choice `i` as the keys would (any menu, any length).
+func dev_choose(i: int) -> void:
+	if _vm.state != EclVM.State.MENU or i < 0 or i >= _vm.menu.size():
+		return
+	_menu_sel = i
+	_message.text = ""
+	if dev_choice_hook.is_valid():
+		dev_choice_hook.call(i)
+	_vm.choose(i)
+	_after_vm()
+	_show()
+
+
+## Puts the game back to a dev_snapshot (the snapshot stays as it was, for another use).
+func dev_restore(s: Dictionary) -> bool:
+	if not DevShortcuts.allowed() or s.is_empty():
+		return false
+	_timer.stop()
+	_busy = false
+	_walk_path.clear()
+	_held_message = ""
+	_pending_move = -1
+	_event_image = null
+	_message.text = ""
+	_lost = false
+	tour_stop = false
+	for o in [_shop, _treasure, _camp, _temple, _party_menu, _sheet]:
+		if o != null:
+			o.visible = false
+	_mode = Mode.WALK
+	_map_index = int(s.map_index)
+	_vm_map = _map_index
+	_walls_for = -1
+	_vm_file = int(s.file)
+	_vm_block = int(s.block)
+	_vm.copy_from(s.vm)
+	var members: Array[PartyMember] = []
+	for m in s.party:
+		var c: PartyMember = (m as PartyMember).clone()
+		c.recalculate(_types)
+		members.append(c)
+	_party.assign(members)
+	_vm.party = _party
+	_pos = s.pos
+	_facing = int(s.facing) as DungeonView.Dir
+	_searching = bool(s.searching)
+	_step_from = Vector2i(-1, -1)
+	_arrival_on_move = false
+	_synced = Vector3i(-1, -1, -1)
+	_sync_position_to_vm(_facing)
+	_show()
 	return true
 
 

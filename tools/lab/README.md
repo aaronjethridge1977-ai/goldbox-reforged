@@ -210,3 +210,29 @@ others from J:
   Sokal Keep 8,14, the Zhentil outpost `strong`); remake it before use.
 - `data/exits.txt`: 6:28's exits at 4,0 (ATTACK, then SURRENDER: stripped and thrown out) and
   5:3's 0,11 W (it lands in a walled-off part of 5:6 with no way on) are left out.
+
+### Chat 14 additions (coverage runs, area by area)
+
+- `cover <set:block> [minutes]` (plan command): a coverage run of one area, as decided
+  2026-11-13. Every map and every part of a map the block runs on (5:5 runs on maps 3-6), each
+  event square visited (through walls the script lets the party pass when there is no walking
+  route: the inner castle's hedges), then a step from it in each direction and a second arrival
+  (the "already done" side); a rest and a step off each edge per part. Every fight is won at
+  once by shortcut (`COVER FIGHT` lines, for the combat suite); the party is restored between
+  events. At each menu each choice no run has taken is queued; afterwards each is played for
+  real from an in-memory snapshot of the step that led there (`main.dev_snapshot` /
+  `dev_restore`): the same step, the same answers, then that choice, and on with the bot's
+  policy. A typed answer also queues a wrong one (`XYZZY`). `COVER JOB`, `COVER WIPE` and the
+  closing `==== COVER ... done: {...}` line are the log's landmarks.
+- Cover plans are `tools/plans/cover_<set>-<block>[-variant].plan`: `rules playthrough.plan`
+  (the standing answers), `start <checkpoint>` (from `--checkpoints=`, which `bot.sh` sets to
+  `data/checkpoints/chat13a_latest`; `start chat10a_latest/slums` reaches another set), travel,
+  `cover`. The party is raised to the area's `expect_level` by the level shortcut (logged).
+  `shortcut keep <n>` keeps the first n members (scripts that branch on the party's strength).
+- `covreport.sh <abs coverage file> --areas=5:5 --missed=5:5 --critical=5:5`: `--critical`
+  counts the story-critical instructions (ways in and out, set fights, quest flags
+  0x4A20-0x4AFF) and lists those not run. `BRANCHES=<file>` names the shadow file to merge.
+  Give the coverage file as an absolute path (the report runs inside `proj`).
+- Travel knows the parts of a dungeon area (squares that reach each other on foot on the area's
+  own map): an exit is only used from the part it is in, and an arrival is placed in the part
+  of the square the sweep arrived on (`-> <to> at x,y,dir`).

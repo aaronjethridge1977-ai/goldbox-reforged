@@ -433,6 +433,38 @@ func _do(line: String) -> void:
 			_hire_wanted = int(w[1])
 		"shortcut":
 			await _shortcut_command(w)
+		"rules":
+			# rules <plan file>: the standing rules of another plan (answer, parley, fight, rest,
+			# gate, exit, hire, expect_level lines), for a coverage plan that starts mid-game.
+			var text := FileAccess.get_file_as_string("res://tools/plans/" + w[1])
+			for rule in text.split("\n"):
+				rule = rule.strip_edges()
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "expect_level"]:
+					await _do(rule)
+		"start":
+			# start <checkpoint name>: load bot_<name>.cfg from the folder given by
+			# --checkpoints=<folder> (the lab keeps the main line's checkpoints; game data).
+			var folder := ""
+			for arg in OS.get_cmdline_user_args():
+				if arg.begins_with("--checkpoints="):
+					folder = arg.trim_prefix("--checkpoints=")
+			# (<folder>/<name>: a checkpoint from an earlier run's set, e.g. chat10a_latest/slums)
+			var file := folder.path_join(w[1].get_base_dir()).path_join("bot_%s.cfg" % w[1].get_file())
+			if not FileAccess.file_exists(file):
+				_issue("start: no checkpoint %s" % file)
+				_pc = lines.size()
+				return
+			DirAccess.copy_absolute(file, "user://bot_%s.cfg" % w[1].get_file())
+			_load_counters(file.get_basename() + ".json")
+			_checkpoint = w[1].get_file()
+			_checkpoint_pc = _pc
+			await _load(w[1].get_file())
+		"cover":
+			# cover <set:block> [minutes]: a coverage run of that area (M6, method of
+			# 2026-11-13): every event square from every side on every map of the area, fights
+			# won at once by logged shortcut, and every menu choice not yet taken played for
+			# real from a snapshot of the step that led to it.
+			await _cover(w[1], int(w[2]) if w.size() > 2 else 60)
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
@@ -469,6 +501,8 @@ func _settle() -> void:
 ## The tour's policy, with the party's own judgement where it matters: in fights everyone
 ## on Quick (the computer fights for them, as the original's QUICK does).
 func _hook() -> bool:
+	if _cover_area != "" and await _cover_hook():
+		return true
 	# Names and passwords the game tells the party ("SPEAK MY NAME, OHLO."), for when a
 	# script asks for a word.
 	var said: String = main._message.text
@@ -1438,6 +1472,12 @@ func _load_exits() -> void:
 		if to.begins_with("0:"):
 			to = w[1].split(":")[0] + to.substr(1)     # NEW_ECL in the same data set
 		var e := {"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[4]), "entry": w[5], "to": to, "picks": picks}
+		# "... -> <to> at x,y,dir": where the sweep arrived (the part of the area it lands in).
+		var at := w.find("at", arrow)
+		if at > 0 and at + 1 < w.size() and w[at + 1].count(",") == 2:
+			var axy := w[at + 1].split(",")
+			e["ax"] = int(axy[0])
+			e["ay"] = int(axy[1])
 		if not _exits.has(w[1]):
 			_exits[w[1]] = []
 		_exits[w[1]].append(e)
@@ -2896,6 +2936,17 @@ func _shortcut_command(w: PackedStringArray) -> void:
 			else:
 				main._combat.dev_auto_win = true
 				_shortcut("win", "the next fight", "the plan")
+		"keep":
+			# shortcut keep <n>: only the first n members go on (a coverage run's smaller
+			# party, for the branches a script takes on the party's strength).
+			var n := int(w[2])
+			var gone: PackedStringArray = []
+			while main._party.size() > n:
+				gone.append(main._party[main._party.size() - 1].name)
+				main._party.remove_at(main._party.size() - 1)
+			main._vm.party = main._party
+			main._show()
+			_shortcut("keep", "%d members (left out %s)" % [n, ", ".join(gone)], "the plan")
 		"teleport":
 			var a := w[2].split(":")
 			var xy := w[3].split(",")
@@ -2956,7 +3007,7 @@ const BANDS := {"6:25": 0, "7:26": 1, "8:27": 2}
 
 func _part_of(area: String, at: Vector2i) -> int:
 	if not BANDS.has(area):
-		return 0
+		return _dungeon_part(area, at)
 	if not _parts.has(area):
 		var ov = main._vm.overland
 		if ov == null:
@@ -2992,13 +3043,559 @@ func _walkable(ov, bx: int, p: Vector2i) -> bool:
 
 func _part_now() -> int:
 	if not main._vm.on_overland:
-		return 0
+		var a := _here().split(":")
+		if main._maps[main._map_index].id != int(a[1]):
+			return -1       # on another of the area's maps: parts unknown
+		return _part_of(_here(), main._pos)
 	return _part_of(_here(), _overland_at())
+
+
+## Chat 14 (region-aware travel): a dungeon area's parts are the squares that can reach each
+## other on foot through open sides and doors of the area's own map (the GEO block with the
+## script's number; areas whose script runs on other maps have no parts: -1, any). Two ways
+## into one area can land in parts with no way between them (5:3's 0,11 west lands in a
+## walled-off corner of 5:6).
+var _dungeon_parts := {}
+
+
+func _dungeon_part(area: String, at: Vector2i) -> int:
+	if not _dungeon_parts.has(area):
+		var a := area.split(":")
+		var map: GeoMap = null
+		var ecl: EclScript = main._script(int(a[0]), int(a[1]))
+		for m in main._maps:
+			if String(m.file) == "GEO%s.DAX" % a[0] and int(m.id) == int(a[1]) and ecl != null and ecl.loads_map(int(a[1])):
+				map = m.map
+		var label := {}
+		if map != null:
+			var id := 0
+			for y in GeoMap.SIZE:
+				for x in GeoMap.SIZE:
+					var p := Vector2i(x, y)
+					if label.has(p):
+						continue
+					var stack: Array[Vector2i] = [p]
+					label[p] = id
+					while not stack.is_empty():
+						var c: Vector2i = stack.pop_back()
+						for d in 4:
+							if map.wall(c.x, c.y, d) > 0 and map.door(c.x, c.y, d) == 0:
+								continue
+							var q: Vector2i = c + DungeonView.DELTA[d]
+							if q.x < 0 or q.y < 0 or q.x >= GeoMap.SIZE or q.y >= GeoMap.SIZE or label.has(q):
+								continue
+							label[q] = id
+							stack.append(q)
+					id += 1
+		_dungeon_parts[area] = label
+	return int(_dungeon_parts[area].get(at, -1))
 
 
 ## The part of the destination an exit arrives in: learned, else unknown (-1, any).
 func _arrival_part(from: String, e: Dictionary) -> int:
 	if not BANDS.has(e.to):
-		return 0
+		# A dungeon: the part of the square the sweep arrived on.
+		if e.has("ax"):
+			return _part_of(e.to, Vector2i(int(e.ax), int(e.ay)))
+		return -1
 	var key := "%s %d,%d %d" % [from, e.x, e.y, e.dir]
 	return int(_arrivals.get(key, -1))
+
+
+
+# --- M6 coverage runs, area by area (decided 2026-11-13; chat 14) --------------------------
+#
+# A coverage run plays one area (one script block) as thoroughly as it can, for real: every
+# event square of every map the block runs on, entered and then left in each of the four
+# directions (so each square's on-move branches run); a rest on each map (the rest and
+# interrupted-rest entries); and at every script menu, each choice not yet taken in any run
+# is queued as a job. A job puts the game back to the snapshot taken as the step that led to
+# the menu began (main.dev_snapshot), takes the same step, gives the same answers up to that
+# menu and then the other choice, and plays on from there with the bot's usual policy (its
+# own menus queue more jobs). A typed answer queues a wrong one too. Every fight is won at once
+# by shortcut and logged for the combat suite ("COVER FIGHT"); a party that falls anyway (a
+# trap, a script's damage) is put back as it was before that move ("COVER WIPE", a finding).
+
+var _cover_area := ""
+var _cover_snap := {}          # the game as the current step began (in the area only)
+var _cover_dir := -1           # that step's direction
+var _cover_path: Array = []    # the answers given since: {"c": i, "at": menu offset} / {"t": text}
+var _cover_jobs: Array = []
+var _cover_queued := {}
+var _cover_forced: Array = []  # a job's answers still to give
+var _cover_fights: PackedStringArray = []
+var _cover_log := {"jobs": 0, "diverged": 0, "wipes": 0, "squares": 0, "tries": 0, "maps": 0}
+
+
+func _cover(area: String, minutes: int) -> void:
+	_cover_area = area
+	_cover_jobs = []
+	_cover_queued = {}
+	_cover_exits_used = {}
+	_cover_fights = []
+	_cover_log = {"jobs": 0, "diverged": 0, "wipes": 0, "squares": 0, "tries": 0, "maps": 0}
+	var win_if: Callable = main._combat.dev_win_if
+	main._combat.dev_win_if = _cover_fight
+	main.dev_step_hook = _cover_step
+	main.dev_choice_hook = _cover_choice
+	main.dev_typed_hook = _cover_typed
+	var deadline := Time.get_ticks_msec() + minutes * 60000
+	if _here() != area:
+		_issue("cover %s: the party is in %s" % [area, _here()])
+	else:
+		_cover_level()
+		print("==== COVER %s: walking every map" % area)
+		var start: Dictionary = main.dev_snapshot()
+		await _cover_walk(deadline)
+		print("==== COVER %s: %d menu choices queued" % [area, _cover_jobs.size()])
+		var done := 0
+		while not _cover_jobs.is_empty() and Time.get_ticks_msec() < deadline:
+			var job: Dictionary = _cover_jobs.pop_front()
+			if _cover_taken(job.key):
+				continue
+			done += 1
+			await _cover_job(job)
+		if not _cover_jobs.is_empty():
+			_issue("cover %s: out of time with %d choices still queued" % [area, _cover_jobs.size()])
+		_cover_log.jobs = done
+		main.dev_restore(start)
+		await _settle()
+	main.dev_step_hook = Callable()
+	main.dev_choice_hook = Callable()
+	main.dev_typed_hook = Callable()
+	main._combat.dev_win_if = win_if
+	print("==== COVER %s done: %s" % [area, str(_cover_log)])
+	for f in _cover_fights:
+		print("COVER FIGHT ", f)
+	_cover_area = ""
+	main._vm.coverage.save()
+
+
+## Whether a queued choice has run since it was queued (in this run or another).
+func _cover_taken(key: String) -> bool:
+	var a := key.split("|")
+	var b: Dictionary = main._vm.coverage.blocks.get(a[0], {})
+	return b.has("br") and b.br.has(a[1])
+
+
+var _cover_last_step := ""     # "map:x,y,dir" of the last step begun in the area
+var _cover_exits_used := {}    # such steps that took the party away: walks keep off them
+
+
+func _cover_step(direction: int) -> void:
+	_cover_path = []
+	_cover_dir = direction
+	if main._vm.block_key == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+		_cover_snap = main.dev_snapshot()
+		_cover_last_step = "%d:%d,%d,%d" % [main._map_index, main._pos.x, main._pos.y, direction]
+	else:
+		_cover_snap = {}
+
+
+func _cover_choice(choice: int) -> void:
+	var vm: EclVM = main._vm
+	if not _cover_snap.is_empty() and vm.block_key == _cover_area and vm._menu_kind != "who" and vm.menu.size() > 1:
+		for j in vm.menu.size():
+			if j == choice:
+				continue
+			var c := j
+			if vm._menu_kind == "encounter" and j == 3 and vm.encounter_distance == 0:
+				c = 4
+			var key := "%s|%d:c%d" % [vm.block_key, vm._menu_at, c]
+			if _cover_queued.has(key) or _cover_taken(key):
+				continue
+			_cover_queued[key] = true
+			var path := _cover_path.duplicate(true)
+			path.append({"c": j, "at": vm._menu_at})
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key,
+				"what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
+	_cover_path.append({"c": choice, "at": vm._menu_at})
+
+
+const WRONG_WORD := "XYZZY"
+
+
+func _cover_typed(text: String) -> void:
+	var vm: EclVM = main._vm
+	if not _cover_snap.is_empty() and vm.block_key == _cover_area and text != WRONG_WORD:
+		var key := "%s|%d:wrong" % [vm.block_key, vm._at]
+		if not _cover_queued.has(key):
+			_cover_queued[key] = true
+			var path := _cover_path.duplicate(true)
+			path.append({"t": WRONG_WORD})
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key,
+				"what": "%04X typed %s" % [vm._at + EclScript.BASE, WRONG_WORD]})
+	_cover_path.append({"t": text})
+
+
+## The bot's hook in a coverage run: a job's answers first; then COMBAT at encounters (the
+## fight is won by shortcut; the other choices are queued).
+func _cover_hook() -> bool:
+	var vm: EclVM = main._vm
+	if _here() != _cover_area and _here() != "0:0":
+		# Out of the area (stairs, a gate, a teleporter on the way): the walk ends there;
+		# the coverage run puts the party back.
+		main.tour_stop = true
+	if not _cover_forced.is_empty() and vm.state in [EclVM.State.MENU, EclVM.State.INPUT]:
+		var f: Dictionary = _cover_forced.pop_front()
+		if f.has("t") and vm.state == EclVM.State.INPUT:
+			print("   >> typed %s (coverage job)" % f.t)
+			main._on_typed(f.t)
+			return true
+		if f.has("c") and vm.state == EclVM.State.MENU and int(f.at) == vm._menu_at and int(f.c) < vm.menu.size():
+			print("   >> %d (%s: coverage job)" % [int(f.c) + 1, String(vm.menu[int(f.c)]).strip_edges()])
+			main.dev_choose(int(f.c))
+			return true
+		_cover_log.diverged += 1
+		print("   (coverage job: the game went another way at %04X; playing on)" % (vm._at + EclScript.BASE))
+		_cover_forced = []
+	if vm.state == EclVM.State.MENU and vm._menu_kind == "encounter" and not main._combat.visible \
+			and vm.block_key == _cover_area:
+		var items: Array = Array(vm.menu).map(func(x): return String(x).strip_edges().to_upper())
+		if "COMBAT" in items:
+			print("   >> %d (encounter: COMBAT, coverage run)" % (items.find("COMBAT") + 1))
+			main.dev_choose(items.find("COMBAT"))
+			return true
+	return false
+
+
+func _cover_fight(rows: Array) -> bool:
+	var names: PackedStringArray = []
+	for r in rows:
+		names.append("%d x%d" % [int(r[0]), int(r[1])])
+	var key := "%s map %d %d,%d [%s]" % [_here(), main._maps[main._map_index].id, main._pos.x, main._pos.y, ", ".join(names)]
+	if not key in _cover_fights:
+		_cover_fights.append(key)
+	_count("shortcut win")
+	print("   (coverage run: fight won by shortcut: %s)" % key)
+	return true
+
+
+## The party at the level the game expects in the area (expect_level), by the level shortcut
+## (logged): a coverage run's party, not the story run's (decided 2026-11-13).
+func _cover_level() -> void:
+	var want: int = int(_expected_level.get(_cover_area, 0))
+	for m in main._party:
+		if m.npc >= 128:
+			continue
+		for k in 12:
+			if _top_level(m) >= want:
+				break
+			var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
+				RandomNumberGenerator.new(), _pick_spell)
+			if got == "":
+				break
+			_shortcut("level", "%s to %s" % [m.name, got], "coverage run: %s expects level %d" % [_cover_area, want])
+
+
+## Anyone dead, down or hurt is put right by the restore shortcut (logged), so every event is
+## met by the whole party at full strength.
+func _cover_heal() -> void:
+	for m in main._party:
+		if m.status != PartyMember.STATUS_OKAY or m.hp < m.hp_max / 2:
+			_shortcut("restore", DevShortcuts.restore(main._party), "coverage run")
+			return
+
+
+## A step or walk is over: a fallen party goes back as it was (logged), so the run goes on.
+func _cover_recover(back: Dictionary, what: String) -> bool:
+	if not _wiped():
+		return false
+	_cover_log.wipes += 1
+	print("== COVER WIPE %s (%s): back to the snapshot" % [what, main._state_line()])
+	main.dev_restore(back)
+	await _settle()
+	return true
+
+
+func _cover_job(job: Dictionary) -> void:
+	print("\n== COVER JOB %s: %s (%d answers, then this)" % [job.key, job.what, job.path.size() - 1])
+	main.dev_restore(job.snap)
+	_cover_forced = job.path.duplicate(true)
+	_cover_snap = {}
+	main._try_move(int(job.dir))
+	await _settle()
+	if not _cover_forced.is_empty():
+		_cover_log.diverged += 1
+		print("   (coverage job: %d answers not used; the menu never came)" % _cover_forced.size())
+		_cover_forced = []
+	await _cover_recover(job.snap, "job " + String(job.key))
+	print("   job ends: ", main._state_line())
+
+
+## Every map the area's script runs on: its events, each square from every side, a rest, and
+## a step off each edge. Each part of a map (squares that reach each other on foot) is walked
+## once, from wherever the party first arrives in it: another map of the area, or another part
+## of this one (a tower room reached from the next map), joins the queue.
+func _cover_walk(deadline: int) -> void:
+	var arrivals: Array = [main.dev_snapshot()]
+	var seen := {}
+	_cover_done = {}
+	_cover_probed = {}
+	while not arrivals.is_empty() and Time.get_ticks_msec() < deadline:
+		var arrival: Dictionary = arrivals.pop_front()
+		main.dev_restore(arrival)
+		await _settle()
+		var mi: int = main._map_index
+		var region := "%d:%d" % [mi, _region_id(main._pos)]
+		if seen.has(region):
+			continue
+		seen[region] = true
+		_cover_log.maps += 1
+		print("== COVER map %d part %s (%s) from %s" % [main._maps[mi].id, region, _here(), main._pos])
+		var found: Array = await _cover_map(deadline)
+		arrivals.append_array(found)
+		var base: Dictionary = main.dev_snapshot()
+		# A rest here (the area's rest entries and its patrols).
+		if await _open_camp():
+			await _rest_in_camp(1)
+			await _settle()
+			await _cover_recover(base, "resting")
+		# Each edge of the map, once from each part: the next map of the area, or the way out.
+		for side in 4:
+			if Time.get_ticks_msec() >= deadline:
+				break
+			main.dev_restore(base)
+			await _settle()
+			var sq := _cover_edge(side)
+			if sq.x < 0:
+				continue
+			await main._tour(sq)
+			await _settle()
+			if main._pos != sq or main._map_index != mi or _here() != _cover_area:
+				continue
+			await _cover_face(side)
+			await main._press("up")
+			await _settle()
+			if await _cover_recover(base, "edge"):
+				continue
+			print("   edge %s of map %d: now %s map %d at %s" % ["NESW"[side], main._maps[mi].id, _here(), main._maps[main._map_index].id, main._pos])
+			if _here() == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+				arrivals.append(main.dev_snapshot())
+		main.dev_restore(base)
+		await _settle()
+
+
+var _cover_done := {}     # "map:event" visited in this coverage run
+var _cover_probed := {}   # "map:event" walked to through walls already
+
+
+## The part of the current map `at` is in: the lowest square index it reaches on foot.
+func _region_id(at: Vector2i) -> int:
+	var map: GeoMap = main._maps[main._map_index].map
+	var seen := {at: true}
+	var stack: Array[Vector2i] = [at]
+	var low := at.y * 16 + at.x
+	while not stack.is_empty():
+		var c: Vector2i = stack.pop_back()
+		low = mini(low, c.y * 16 + c.x)
+		for d in 4:
+			if map.wall(c.x, c.y, d) > 0 and map.door(c.x, c.y, d) == 0:
+				continue
+			var q: Vector2i = c + DungeonView.DELTA[d]
+			if q.x < 0 or q.y < 0 or q.x >= GeoMap.SIZE or q.y >= GeoMap.SIZE or seen.has(q):
+				continue
+			seen[q] = true
+			stack.append(q)
+	return low
+
+
+## The nearest square on `side`'s edge of the map with that side open (-1,-1: none reachable).
+func _cover_edge(side: int) -> Vector2i:
+	var map: GeoMap = main._maps[main._map_index].map
+	var best := Vector2i(-1, -1)
+	var best_len := 1 << 20
+	for i in GeoMap.SIZE:
+		var sq: Vector2i = [Vector2i(i, 0), Vector2i(15, i), Vector2i(i, 15), Vector2i(0, i)][side]
+		if map.wall(sq.x, sq.y, side) != 0 and map.door(sq.x, sq.y, side) == 0:
+			continue
+		var path: Array = main._find_path(main._pos, sq)
+		if (path.size() > 0 or main._pos == sq) and path.size() < best_len:
+			best = sq
+			best_len = path.size()
+	return best
+
+
+func _cover_face(d: int) -> void:
+	for i in 4:
+		if int(main._facing) == d:
+			return
+		await main._press("right")
+
+
+## This map's events: the nearest square of each, reached by walking (whatever happens on the
+## way plays), then a step from it in each direction, each from the same arrival. Returns
+## snapshots of other maps of the area that events took the party to.
+func _cover_map(deadline: int) -> Array:
+	var mi: int = main._map_index
+	var map: GeoMap = main._maps[mi].map
+	var found: Array = []
+	var todo := {}
+	for y in GeoMap.SIZE:
+		for x in GeoMap.SIZE:
+			var ev := map.flag(x, y) & 127
+			if ev != 0:
+				if not todo.has(ev):
+					todo[ev] = []
+				todo[ev].append(Vector2i(x, y))
+	var done := {}
+	for k in _cover_done:
+		if int(k.get_slice(":", 0)) == mi:
+			done[int(k.get_slice(":", 1))] = true
+	while Time.get_ticks_msec() < deadline:
+		# The nearest event not yet visited.
+		var best := -1
+		var best_sq := Vector2i(-1, -1)
+		var best_len := 1 << 20
+		for ev in todo:
+			if done.has(ev):
+				continue
+			for sq in todo[ev]:
+				var path: Array = main._find_path(main._pos, sq)
+				var n := 0 if main._pos == sq else path.size()
+				if (n > 0 or main._pos == sq) and n < best_len:
+					best = ev
+					best_sq = sq
+					best_len = n
+		var probe := false
+		if best < 0:
+			# No walking route: the nearest by straight distance, by trying the walls on the
+			# way (a hedge to cut through, a wall the area's script lets the party pass).
+			for ev in todo:
+				if done.has(ev) or _cover_probed.has("%d:%d" % [mi, ev]):
+					continue
+				for sq in todo[ev]:
+					var n: int = absi(sq.x - main._pos.x) + absi(sq.y - main._pos.y)
+					if n < best_len:
+						best = ev
+						best_sq = sq
+						best_len = n
+			probe = true
+		if best < 0:
+			break
+		if probe:
+			# Through the walls only once an event; arriving in another part may reach it.
+			_cover_probed["%d:%d" % [mi, best]] = true
+		else:
+			done[best] = true
+			_cover_done["%d:%d" % [mi, best]] = true
+		# Steps the tour gave up on (a hedge answered NO by the menu-loop rule) are tried
+		# again; only the steps that took the party away stay closed.
+		main._refused = _cover_exits_used.duplicate()
+		var pre: Dictionary = main.dev_snapshot()
+		print("   cover: event %d at %s%s" % [best, best_sq, " (no route: trying the walls)" if probe else ""])
+		if main._pos == best_sq:
+			await _step_off()
+			await _settle()
+		if probe:
+			await _cover_probe(best_sq)
+		else:
+			await main._tour(best_sq)
+		await _settle()
+		if await _cover_recover(pre, "walking to event %d" % best):
+			continue
+		if _here() != _cover_area or main._map_index != mi:
+			if _here() == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+				found.append(main.dev_snapshot())
+			print("   (event %d took the party to %s map %d; back, and not that way again: %s)" % [best, _here(),
+				main._maps[main._map_index].id, _cover_last_step])
+			# The step that left (stairs, a gate) is closed to the walks that follow; it was
+			# taken once, and the four steps from its own square try it again on purpose.
+			if _cover_last_step != "":
+				_cover_exits_used[_cover_last_step] = true
+			main.dev_restore(pre)
+			await _settle()
+			continue
+		if main._pos != best_sq:
+			print("   (didn't reach %s: at %s)" % [best_sq, main._pos])
+			continue
+		done[best] = true
+		_cover_done["%d:%d" % [mi, best]] = true
+		_cover_log.squares += 1
+		_cover_heal()
+		var here: Dictionary = main.dev_snapshot()
+		for d in 4:
+			if Time.get_ticks_msec() >= deadline:
+				break
+			main.dev_restore(here)
+			await _settle()
+			await _cover_face(d)
+			await main._press("up")
+			await _settle()
+			_cover_log.tries += 1
+			if await _cover_recover(here, "stepping %s from event %d" % ["NESW"[d], best]):
+				continue
+			if _here() == _cover_area and main._map_index != mi and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+				found.append(main.dev_snapshot())
+		# And once more onto the square, now that its event has run (the "already done" side).
+		if Time.get_ticks_msec() < deadline:
+			main.dev_restore(here)
+			await _settle()
+			await _step_off()
+			await main._tour(best_sq)
+			await _settle()
+			await _cover_recover(here, "coming back to event %d" % best)
+		main.dev_restore(here)
+		await _settle()
+	return found
+
+
+## Walks toward `goal` through walls where the game allows it: the cheapest way counting each
+## wall as 25 steps, trying each step; a step the game refuses closes that side and the way is
+## worked out again.
+func _cover_probe(goal: Vector2i) -> void:
+	var refused := {}
+	var mi: int = main._map_index
+	for n in 150:
+		if main._pos == goal or _here() != _cover_area or main._map_index != mi or _wiped():
+			return
+		var d := _probe_step(main._pos, goal, refused)
+		if d < 0:
+			print("   (no way at all to %s)" % goal)
+			return
+		var before: Vector2i = main._pos
+		main._menu_seen.clear()      # each wall's question is new (a hedge on each side)
+		await _cover_face(d)
+		await main._press("up")
+		await _settle()
+		if main._pos == before:
+			refused["%d,%d,%d" % [before.x, before.y, d]] = true
+		elif not _wiped():
+			_cover_heal()
+
+
+## The first step's direction on the cheapest way from `a` to `b` (walls cost 25; refused
+## sides are closed), or -1.
+func _probe_step(a: Vector2i, b: Vector2i, refused: Dictionary) -> int:
+	var map: GeoMap = main._maps[main._map_index].map
+	var dist := {b: 0}
+	var open := [b]
+	# Costs from the goal back, so the answer is the neighbour of `a` with the least.
+	while not open.is_empty():
+		var bi := 0
+		for i in open.size():
+			if int(dist[open[i]]) < int(dist[open[bi]]):
+				bi = i
+		var c: Vector2i = open[bi]
+		open.remove_at(bi)
+		for d in 4:
+			var p: Vector2i = c - DungeonView.DELTA[d]       # a square whose step d reaches c
+			if p.x < 0 or p.y < 0 or p.x >= GeoMap.SIZE or p.y >= GeoMap.SIZE:
+				continue
+			if refused.has("%d,%d,%d" % [p.x, p.y, d]) or _cover_exits_used.has("%d:%d,%d,%d" % [main._map_index, p.x, p.y, d]):
+				continue
+			var cost := 1 if map.wall(p.x, p.y, d) == 0 or map.door(p.x, p.y, d) != 0 else 25
+			var nd: int = int(dist[c]) + cost
+			if not dist.has(p) or nd < int(dist[p]):
+				dist[p] = nd
+				open.append(p)
+	var best := -1
+	var best_cost := 1 << 20
+	for d in 4:
+		var q: Vector2i = a + DungeonView.DELTA[d]
+		if dist.has(q) and not refused.has("%d,%d,%d" % [a.x, a.y, d]) and not _cover_exits_used.has("%d:%d,%d,%d" % [main._map_index, a.x, a.y, d]):
+			var cost: int = int(dist[q]) + (1 if map.wall(a.x, a.y, d) == 0 or map.door(a.x, a.y, d) != 0 else 25)
+			if cost < best_cost:
+				best_cost = cost
+				best = d
+	return best

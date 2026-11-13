@@ -222,6 +222,8 @@ func clone() -> PartyMember:
 	m.money = money.duplicate()
 	m.memorized = memorized.duplicate()
 	m.affects = affects.duplicate(true)
+	m.spell_book = spell_book.duplicate()
+	m.npc = npc
 	for it in items:
 		var c := GameItem.from_record(it.to_record())
 		c.name = it.name

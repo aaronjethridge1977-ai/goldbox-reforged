@@ -147,42 +147,56 @@ func _init() -> void:
 ## (members are cloned); it records into `cov`.
 func fork(cov: ScriptCoverage) -> EclVM:
 	var f := EclVM.new()
-	f.mem = mem.duplicate()
-	f.ecl = ecl
-	f.state = state
-	f.pc = pc
-	f.stack.assign(stack)
-	f.compare = compare
+	f.copy_from(self)
 	f.square_info = square_info
 	f.open_ahead = open_ahead
-	f.menu = menu.duplicate()
-	f._menu_kind = _menu_kind
-	f._enc = _enc.duplicate(true)
-	f._menu_dest = _menu_dest.duplicate()
-	f._parlay_values = _parlay_values.duplicate()
-	f.encounter_distance = encounter_distance
-	f.encounter_advances = encounter_advances
-	f.encounter_max = encounter_max
-	f.monsters = monsters.duplicate(true)
-	f.monster_teams.assign(monster_teams)
-	f.selected = selected
-	f.selected_creature = selected_creature
-	f._input_dest = _input_dest.duplicate()
-	f.input_max = input_max
-	f.input_numeric = input_numeric
-	f.overland = overland
-	f.overland_band = overland_band
-	f.on_overland = on_overland
 	f.tables = tables
 	var copies: Array = []
 	for m in party:
 		copies.append((m as PartyMember).clone())
 	f.party = copies
-	f.block_key = block_key
-	f._at = _at
-	f._menu_at = _menu_at
 	f.coverage = cov
 	return f
+
+
+## Dev (M6 coverage runs): takes over `src`'s script state (memory, the running script, an
+## open menu, its dice), keeping this VM's own party, coverage and callbacks. A coverage run
+## puts the game back to a snapshot this way.
+func copy_from(src: EclVM) -> void:
+	mem = src.mem.duplicate()
+	ecl = src.ecl
+	state = src.state
+	pc = src.pc
+	stack.assign(src.stack)
+	compare = src.compare
+	menu = src.menu.duplicate()
+	menu_vertical = src.menu_vertical
+	menu_question = src.menu_question
+	_menu_kind = src._menu_kind
+	_enc = src._enc.duplicate(true)
+	_menu_dest = src._menu_dest.duplicate()
+	_parlay_values = src._parlay_values.duplicate()
+	encounter_distance = src.encounter_distance
+	encounter_advances = src.encounter_advances
+	encounter_max = src.encounter_max
+	monsters = src.monsters.duplicate(true)
+	monster_teams.assign(src.monster_teams)
+	selected = src.selected
+	selected_creature = src.selected_creature
+	_input_dest = src._input_dest.duplicate()
+	input_max = src.input_max
+	input_numeric = src.input_numeric
+	overland = src.overland
+	overland_band = src.overland_band
+	on_overland = src.on_overland
+	block_key = src.block_key
+	_at = src._at
+	_menu_at = src._menu_at
+	stepped_through = src.stepped_through
+	new_ecl = src.new_ecl
+	area_map = src.area_map.duplicate()
+	area_deco = src.area_deco.duplicate()
+	_rng.state = src._rng.state
 
 
 ## Loads a script block and copies its code into memory at EclScript.BASE.
@@ -948,8 +962,8 @@ func _exec(ins: Dictionary) -> void:
 			# As the original: a d6 for each side against (d + 2 - a) and (b + 2 - c); the
 			# monsters' surprise wins when both come up (names from ssi-engine: the result
 			# is COMBAT_IS_AMBUSH; rules as documented by Pilgrim's reconstruction).
-			var party_roll := randi_range(1, 6)
-			var mon_roll := randi_range(1, 6)
+			var party_roll := _rng.randi_range(1, 6)
+			var mon_roll := _rng.randi_range(1, 6)
 			var result := 0
 			if party_roll <= _value(a[3]) + 2 - _value(a[0]):
 				result = 1

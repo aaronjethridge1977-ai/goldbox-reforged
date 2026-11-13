@@ -1,0 +1,11 @@
+# Coverage run (M6, method of 2026-11-13): Valjevo's inner castle, 5:5.
+# From the main line's checkpoint after 5:4 (the story flags as a player has them: Cadorna
+# freed, RHODIA known), through the gate as a player goes in; the party is at the level the
+# game expects there (7).
+rules playthrough.plan
+start valjevo4
+travel 5:5
+expect 5:5
+cover 5:5 90
+status
+stop

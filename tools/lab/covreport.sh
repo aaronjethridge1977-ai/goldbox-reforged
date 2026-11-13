@@ -9,8 +9,8 @@ rm -rf tools && mkdir tools && cp $S/tools/*.gd tools/ && rm -rf scripts && cp -
 G=$L/godot/Godot_v4.7.2-stable_linux.x86_64
 echo "== played"
 timeout 120 $G --headless --path . --script res://tools/coverage_report.gd -- --game-path=$L/game --coverage=$C "$@" 2>&1 | grep -v "^\s*at:\|^WARNING\|^Godot"
-if [ -f $L/data/branches.json ]; then
-	python3 - "$C" $L/data/branches.json $L/data/merged.json <<'PY'
+if [ -f ${BRANCHES:-$L/data/branches.json} ]; then
+	python3 - "$C" ${BRANCHES:-$L/data/branches.json} $L/data/merged.json <<'PY'
 import json, sys
 out = {}
 for f in sys.argv[1:3]:
