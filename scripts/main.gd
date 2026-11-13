@@ -719,9 +719,15 @@ func _auto_handle() -> bool:
 		if not one and _tour_answers.is_empty():
 			_menu_seen[key] = int(_menu_seen.get(key, 0)) + 1
 			if int(_menu_seen[key]) > 2:
+				var way_out := false
 				for i in _vm.menu.size():
 					if String(_vm.menu[i]).strip_edges().to_upper() in ["NO", "LEAVE", "EXIT", "QUIT", "DONE"]:
 						k = str(i + 1)
+						way_out = true
+				if not way_out:
+					# No way out offered (WHO WILL OPEN IT? asked again while the first member
+					# can't: chat 13, Valjevo's trap door): the next choice each time.
+					k = str((int(_menu_seen[key]) - 1) % mini(_vm.menu.size(), 9) + 1)
 		if not one:
 			print("   >> ", k)
 		await _press(k)

@@ -505,6 +505,22 @@ travel 5:7
 # which goes down once a floor is done.
 answer 5:7 GO UP THESE STAIRS|YES
 explore 8
+# The step script's stair table (0x99DA.., two bytes past the listing): from 5,7 west down to
+# 5:5, east down to 11,7; 5,6 north up to 5,4 and back; 11,7 west up to 5,7; 3,6 south down to
+# the audience hall at 3,8, and back north. So: up from 5,6, across to 3,6, then south.
+tour 5,6
+face N
+step
+tour 3,6
+face S
+answer 5:7 GO DOWN THESE STAIRS|YES
+step
+# The stairs put the party on 3,8 without its event (ours; not checked in the lab): east to
+# 4,8 and back (north from 3,8 is the stairs up again).
+face E
+step
+face W
+step
 explore
 checkpoint valjevo7
 town
