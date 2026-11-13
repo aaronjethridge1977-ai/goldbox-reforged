@@ -504,6 +504,7 @@ travel 5:7
 # (the step script's table at 0x9ACC); down (back toward the hall and 5:5) is left to explore,
 # which goes down once a floor is done.
 answer 5:7 GO UP THESE STAIRS|YES
+fight 5:7 TWO GUARDS MOVE TO BAR YOUR PATH
 explore 8
 # The step script's stair table (0x99DA.., two bytes past the listing): from 5,7 west down to
 # 5:5, east down to 11,7; 5,6 north up to 5,4 and back; 11,7 west up to 5,7; 3,6 south down to

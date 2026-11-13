@@ -101,7 +101,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "hire", "answer", "gate", "exit", "expect_level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "expect_level"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -415,6 +415,12 @@ func _do(line: String) -> void:
 			if not _answer_rules.has(w[1]):
 				_answer_rules[w[1]] = []
 			_answer_rules[w[1]].append([spec[0].strip_edges(), spec[1].strip_edges().to_upper(), 0])
+		"fight":
+			# fight <set:block> <words of the encounter's text>: COMBAT there (a story fight the
+			# bot's odds would flee: Tyranthraxus's guards). Lost twice, it goes by shortcut.
+			if not _fight_cues.has(w[1]):
+				_fight_cues[w[1]] = []
+			_fight_cues[w[1]].append(" ".join(w.slice(2)))
 		"parley":
 			# parley <set:block> <words of the encounter's text>: PARLAY there, not COMBAT.
 			if not _parley_cues.has(w[1]):
@@ -512,6 +518,10 @@ func _hook() -> bool:
 		var heard := said
 		if said.split("\n")[0].strip_edges() == "" or said.strip_edges().begins_with("1) COMBAT"):
 			heard = _said_before
+		for cue in _fight_cues.get(_here(), []):
+			if heard.contains(cue) and "COMBAT" in offered:
+				k = offered.find("COMBAT") + 1
+				_judged = "the plan fights here (%s)" % cue
 		for cue in _parley_cues.get(_here(), []):
 			if heard.contains(cue) and "PARLAY" in offered:
 				k = offered.find("PARLAY") + 1
@@ -1631,9 +1641,12 @@ func _explore_areas(later: Array) -> void:
 	var arrivals := {}       # map index -> the square the party arrived on there
 	var trips := 0
 	_climbed = false
+	var after_town := false
 	for n in 12:
 		var map_before: int = main._map_index
-		var deferred: Dictionary = await _explore_pass(later if n == 0 else [])
+		# The plan's skipped events stay skipped on the passes that follow a ladder or stairs
+		# (only a pass after a trip to town takes them on).
+		var deferred: Dictionary = await _explore_pass(later if n == 0 or not after_town else [])
 		if _wiped() or _here() != area:
 			return
 		if main._map_index != map_before:
@@ -1651,6 +1664,7 @@ func _explore_areas(later: Array) -> void:
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
 			break
 		trips += 1
+		after_town = true
 		await _town()
 		await _travel(area)
 		if _here() != area:
@@ -2477,6 +2491,7 @@ var _gate_square := Vector2i(-1, -1)   # the exit square those choices belong to
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
+var _fight_cues := {}        # area -> encounter texts to fight at (fight lines)
 var _said_before := ""        # the last text shown before the current menu
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
 var _inn_till_day := false
