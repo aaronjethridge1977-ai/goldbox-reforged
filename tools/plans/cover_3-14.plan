@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 3:14, from the main line's checkpoint "chat10a_latest/library2" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat10a_latest/library2
+travel 3:14
+expect 3:14
+cover 3:14 75
+status
+stop

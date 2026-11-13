@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 8:16, from the main line's checkpoint "chat12a_latest/pyramid3" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat12a_latest/pyramid3
+travel 8:16
+expect 8:16
+cover 8:16 75
+status
+stop

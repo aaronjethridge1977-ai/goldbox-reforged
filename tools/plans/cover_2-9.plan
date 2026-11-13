@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 2:9, from the main line's checkpoint "chat13a_latest/graveyard" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat13a_latest/graveyard
+travel 2:9
+expect 2:9
+cover 2:9 75
+status
+stop

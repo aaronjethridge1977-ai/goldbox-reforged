@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 4:10, from the main line's checkpoint "chat13a_latest/zhentil" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat13a_latest/zhentil
+travel 4:10
+expect 4:10
+cover 4:10 75
+status
+stop

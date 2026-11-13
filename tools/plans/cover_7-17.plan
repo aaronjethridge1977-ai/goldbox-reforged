@@ -1,0 +1,9 @@
+# Coverage run (M6, method of 2026-11-13): 7:17, from the main line's checkpoint "chat10a_latest/textile" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat10a_latest/textile
+travel 7:17
+expect 7:17
+cover 7:17 75
+status
+stop

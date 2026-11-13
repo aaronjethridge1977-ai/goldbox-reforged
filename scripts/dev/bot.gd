@@ -464,7 +464,11 @@ func _do(line: String) -> void:
 			# 2026-11-13): every event square from every side on every map of the area, fights
 			# won at once by logged shortcut, and every menu choice not yet taken played for
 			# real from a snapshot of the step that led to it.
+			# "all" after the minutes: every other choice is played, taken before or not
+			# (a variant run, a smaller party, whose answers lead elsewhere).
+			_cover_all = w.size() > 3 and w[3] == "all"
 			await _cover(w[1], int(w[2]) if w.size() > 2 else 60)
+			_cover_all = false
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
@@ -3131,6 +3135,7 @@ func _cover(area: String, minutes: int) -> void:
 	_cover_area = area
 	_cover_jobs = []
 	_cover_queued = {}
+	_cover_ran = {}
 	_cover_exits_used = {}
 	_cover_fights = []
 	_cover_log = {"jobs": 0, "diverged": 0, "wipes": 0, "squares": 0, "tries": 0, "maps": 0}
@@ -3151,8 +3156,9 @@ func _cover(area: String, minutes: int) -> void:
 		var done := 0
 		while not _cover_jobs.is_empty() and Time.get_ticks_msec() < deadline:
 			var job: Dictionary = _cover_jobs.pop_front()
-			if _cover_taken(job.key):
+			if _cover_taken(job.key) or _cover_ran.has(job.key):
 				continue
+			_cover_ran[job.key] = true
 			done += 1
 			await _cover_job(job)
 		if not _cover_jobs.is_empty():
@@ -3172,7 +3178,13 @@ func _cover(area: String, minutes: int) -> void:
 
 
 ## Whether a queued choice has run since it was queued (in this run or another).
+var _cover_all := false
+var _cover_ran := {}
+
+
 func _cover_taken(key: String) -> bool:
+	if _cover_all:
+		return false
 	var a := key.split("|")
 	var b: Dictionary = main._vm.coverage.blocks.get(a[0], {})
 	return b.has("br") and b.br.has(a[1])
@@ -3257,6 +3269,16 @@ func _cover_hook() -> bool:
 		_cover_log.diverged += 1
 		print("   (coverage job: the game went another way at %04X; playing on)" % (vm._at + EclScript.BASE))
 		_cover_forced = []
+	if vm.state == EclVM.State.MENU and vm.block_key == _cover_area and vm._menu_kind != "encounter":
+		# Ladders and stairs: up or down, always (the other map of the area is the point; the
+		# walk comes back by the snapshot). The explore rule saves them for last.
+		var said: String = main._message.text
+		var opts: Array = Array(vm.menu).map(func(x): return String(x).strip_edges().to_upper())
+		if "YES" in opts and "NO" in opts and (said.contains("CLIMB") or said.contains("STAIRS") \
+				or said.contains("LADDER") or said.contains("GO DOWN") or said.contains("GO UP")):
+			print("   >> %d (YES: coverage run, the other level)" % (opts.find("YES") + 1))
+			main.dev_choose(opts.find("YES"))
+			return true
 	if vm.state == EclVM.State.MENU and vm._menu_kind == "encounter" and not main._combat.visible \
 			and vm.block_key == _cover_area:
 		var items: Array = Array(vm.menu).map(func(x): return String(x).strip_edges().to_upper())
@@ -3359,6 +3381,7 @@ func _cover_walk(deadline: int) -> void:
 			await _travel(e.from)
 			_cover_going_in = false
 			if _here() != e.from or _wiped():
+				print("   (couldn't get to %s: in %s at %s)" % [e.from, _here(), main._pos])
 				continue
 			if not main._vm.on_overland and (e.entry == "gate" or main._pos == Vector2i(e.x, e.y)):
 				await _step_off()

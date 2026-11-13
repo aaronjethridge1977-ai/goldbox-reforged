@@ -1,0 +1,10 @@
+# Coverage run (M6, method of 2026-11-13): 8:13, from the main line's checkpoint "chat10a_latest/band3" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+expect_level 8:13 6
+start chat10a_latest/band3
+travel 8:13
+expect 8:13
+cover 8:13 75
+status
+stop

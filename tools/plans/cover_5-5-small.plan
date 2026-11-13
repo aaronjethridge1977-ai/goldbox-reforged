@@ -7,6 +7,6 @@ start chat13a_latest/valjevo4
 travel 5:5
 expect 5:5
 shortcut keep 2
-cover 5:5 60
+cover 5:5 60 all
 status
 stop
