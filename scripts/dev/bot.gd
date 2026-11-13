@@ -47,6 +47,7 @@ var _last_fight := {}
 var _win_fights: PackedStringArray = []
 var _shortcuts: Array = []
 var _skipped_fights: Array = []
+var _win_at: Array = []    # the plan's "shortcut win <n> at ...": [{n, at, ev, area}]
 var _expected_level := {}
 var _event_now := ""            # the event explore is walking to ("area map:event")
 var _skip_events := {}          # events passed by shortcut after they beat the party twice       # area -> the level the game expects there (plan: level)
@@ -2720,6 +2721,18 @@ func _fight_opens(rows: Array) -> bool:
 		names.append("%d x%d" % [int(r[0]), int(r[1])])
 	var key := "%s %d,%d [%s]" % [_here(), main._pos.x, main._pos.y, ", ".join(names)]
 	_last_fight = {"key": key}
+	var ev_here: int = main._maps[main._map_index].map.flag(main._pos.x, main._pos.y) & 127
+	var rule := {}
+	for r in _win_at:
+		if int(r.n) > 0 and r.area == _here() and (r.at == main._pos or (int(r.ev) >= 0 and int(r.ev) == ev_here)):
+			rule = r
+			break
+	if not rule.is_empty():
+		rule.n = int(rule.n) - 1
+		_shortcut("win", key, "the plan (a story event the party can't win)")
+		_skipped_fights.append(key)
+		print("SKIPPED FIGHT ", key)
+		return true
 	if key in _win_fights:
 		_shortcut("win", key, "this fight beat the party twice")
 		_skipped_fights.append(key)
@@ -2741,8 +2754,23 @@ func _shortcut_command(w: PackedStringArray) -> void:
 					RandomNumberGenerator.new(), _pick_spell)
 				_shortcut("level", "%s %s" % [m.name, got if got != "" else "at the cap"], "the plan")
 		"win":
-			main._combat.dev_auto_win = true
-			_shortcut("win", "the next fight", "the plan")
+			# shortcut win [<n> at <x>,<y> | at ev<k>]: the next fight, or the next n scripted
+			# fights that open with the party on that square or on that event's squares (a
+			# story event of several fights).
+			if w.size() > 4 and w[3] == "at":
+				# at <x>,<y> (a square) or at ev<n> (any square of that event)
+				var at := Vector2i(-1, -1)
+				var ev := -1
+				if w[4].begins_with("ev"):
+					ev = int(w[4].substr(2))
+				else:
+					var xy := w[4].split(",")
+					at = Vector2i(int(xy[0]), int(xy[1]))
+				_win_at.append({"n": int(w[2]), "at": at, "ev": ev, "area": _here()})
+				print("   (shortcut: the next %s fights at %s %s are won)" % [w[2], _here(), w[4]])
+			else:
+				main._combat.dev_auto_win = true
+				_shortcut("win", "the next fight", "the plan")
 		"teleport":
 			var a := w[2].split(":")
 			var xy := w[3].split(",")

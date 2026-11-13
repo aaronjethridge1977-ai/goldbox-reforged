@@ -246,6 +246,21 @@ explore
 checkpoint kobold_caves
 town
 
+# Chat 11: the kobolds' commission (0x4AB6) needs the king's story: the throne room (event 9,
+# 4,3: three fights in a row, the horde, the ballista and the envoys; 0x4A8D 0 -> 4), his
+# quarters (event 20, 7,2: 4 -> 5) and his spiked pit (event 11, 10,1: 5 -> 6, 0x4AB6 = 254).
+# Explore leaves the throne room as unwinnable, so without it the clerk never gets past the
+# kobolds, the pollution and the lizardmen to the Bivant commission (0x4A8C) that opens the
+# Buccaneers' base (6:25 12,31). Won by shortcut (logged) when the party can't.
+log 11b. The kobold king
+travel 8:13
+shortcut win 3 at ev9
+shortcut win 1 at ev20
+tour 7,2
+tour 10,1
+checkpoint kobold_king
+town
+
 log The western wilderness band (6:25)
 travel 6:25
 explore

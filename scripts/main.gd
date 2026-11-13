@@ -413,6 +413,14 @@ func _replay_keys(names: PackedStringArray) -> void:
 			load_original_save(n.trim_prefix("load="))
 		elif n.begins_with("say="):         # say=<text> answers INPUT_STRING / INPUT_NUMBER
 			_on_typed(n.trim_prefix("say="))
+		elif n.begins_with("peek="):        # peek=<hex address>:<count> prints ECL memory bytes (lab)
+			var a := n.trim_prefix("peek=").split(":")
+			var at := a[0].hex_to_int()
+			var out := PackedStringArray()
+			for k in (int(a[1]) if a.size() > 1 else 16):
+				out.append(str(_vm.read_byte(at + k)))
+			print("   peek %X: %s" % [at, " ".join(out)])
+			continue
 		elif n.begins_with("mem="):         # mem=<hex address>:<value> writes ECL memory
 			var a := n.trim_prefix("mem=").split(":")
 			_vm.write_byte(a[0].hex_to_int(), int(a[1]))
