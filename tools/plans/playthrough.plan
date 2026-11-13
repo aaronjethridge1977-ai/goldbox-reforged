@@ -84,6 +84,10 @@ gate 7:26 7,29 3:0 TAKE BOAT
 gate 8:27 9,29 3:0 YES
 # The sites, read from the bands' on-step tables (chat 10: row y values, counts, x values and a
 # site type per square; 6:25 0xADD6.., 7:26 0xB04A.., 8:27 0xABA6..), with each site's menu.
+# Walking past the dragon's cave (6:25 10,9) the plan says IGNORE CAVE (chat 11: entering it
+# on every pass sent the bot in and out of Diogenes' cave mouth for hours).
+answer 6:25 SEE A LARGE CAVE|IGNORE CAVE
+answer 6:25 DISAPPEARS INTO A CAVE|IGNORE CAVE
 # (6:25 10,9 ENTER CAVE leads only to Diogenes at the cave mouth (6:19), and back out:
 # left out of the graph, chat 11, or travel tries it as a way across the band.)
 gate 6:25 12,31 6:1 ENTER
