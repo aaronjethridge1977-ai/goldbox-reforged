@@ -438,6 +438,21 @@ step
 # the gate passage (7,6-7,10) and the outside, where the bugbears still wait; then the rest.
 explore 3 4 5 6 7 8 9 12 13
 explore 3
+# The towers' upper floors (the mages at 4,7 and 11,7): a step south out of each guard room
+# (4,5 and 11,5) asks GO UPSTAIRS (the step script's table at 0x9D12/0x9D1A, read two bytes
+# past the listing's addresses); a step north from 4,7 / 11,7 asks GO DOWNSTAIRS.
+answer 2:9 WANT TO GO UPSTAIRS|YES
+answer 2:9 WANT TO GO DOWNSTAIRS|YES
+tour 4,5
+face S
+step
+face N
+step
+tour 11,5
+face S
+step
+face N
+step
 checkpoint stojanow
 town
 

@@ -628,7 +628,8 @@ func _hook() -> bool:
 					return true
 		# Ladders and stairs to the area's other map: not while this map still has events to
 		# see (Kuto's Well: down the rungs, then 'CLIMB UP THE RUNGS?' at the bottom).
-		if "YES" in items and "NO" in items and (said.contains("CLIMB") or said.contains("STAIRS")):
+		var planned: bool = Array(_answer_rules.get(_here(), [])).any(func(r): return said.contains(String(r[0])))
+		if "YES" in items and "NO" in items and (said.contains("CLIMB") or said.contains("STAIRS")) and not planned:
 			# Only when explore is going for the ladder on purpose (its last stop on a map,
 			# or the way back up); passing the well on the way elsewhere is a NO.
 			var left := _unvisited_here()
