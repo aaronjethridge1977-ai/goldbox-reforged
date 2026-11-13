@@ -1,6 +1,7 @@
 #!/bin/bash
 # missctx.sh <set-block e.g. 5-4> [cov file]: each missed branch of the area with the two
-# instructions before it (from tools/ecl.py dis), for working out the reasons.
+# instructions before it (from tools/ecl.py dis), for working out the reasons, with misswhy.py's
+# first guess in front (chat 16).
 L=/home/claude/lab; a=$1; s=${a%-*}; b=${a#*-}; f=${2:-$L/data/cov_$a.json}
 python3 /home/claude/goldbox-reforged/tools/ecl.py dis $L/game/ECL$s.DAX $b > /tmp/dis_$a.txt
 $L/covreport.sh $(readlink -f $f) --areas=$s:$b --missed=$s:$b 2>&1 | sed -n '/== played$/,/Overall/p' | grep "missed" | python3 -c "
@@ -12,4 +13,4 @@ for m in sys.stdin:
     i=idx.get(off)
     ctx=' | '.join(re.sub(r'\s+',' ',lines[j][6:])[:70] for j in range(max(0,i-2),i) if not lines[j].startswith(';')) if i is not None else ''
     print('%-46s  %s' % (m.replace('missed ',''), ctx))
-"
+" | python3 $L/misswhy.py /tmp/dis_$a.txt

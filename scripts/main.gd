@@ -1680,6 +1680,11 @@ func _sync_position_to_vm(direction: int) -> void:
 	_vm.write_byte(EclVM.PARTY_Y, _pos.y)
 	_vm.write_byte(EclVM.PARTY_DIR, direction)
 	_vm.write_byte(EclVM.SQUARE_INFO, map.flag(_pos.x, _pos.y))
+	# The wall ahead, from where the party stands now: the step script after a move sees the
+	# new square's wall in the facing direction. Lab, chat 16: the original shows 6:1's slave
+	# pen ("YOU ARE JUST OUTSIDE A PEN", which tests 0xC04E = 8) on arriving at 6,9 facing N,
+	# where the pen's wall is ahead; we had kept the wall of the square stepped from.
+	_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
 	_synced = Vector3i(_pos.x, _pos.y, direction)
 
 

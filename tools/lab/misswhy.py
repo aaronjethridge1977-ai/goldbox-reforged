@@ -61,6 +61,8 @@ def kind(addr, near):
         return "counter"
     if ops == {"WRITE_MEM"}:
         vals = sorted({al[0] for _, _, al in w})
+        if any(v.startswith("[") for v in vals):
+            return "copy of " + "/".join(v for v in vals if v.startswith("["))
         return "flag " + "/".join(vals[:6])
     return "+".join(sorted(ops)).lower()
 

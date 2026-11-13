@@ -3241,6 +3241,7 @@ func _cover(area: String, minutes: int) -> void:
 ## Whether a queued choice has run since it was queued (in this run or another).
 var _cover_all := false
 var _cover_ran := {}
+var _cover_looking := false    # LOOK is running (its menus' jobs look again rather than step)
 
 
 func _cover_taken(key: String) -> bool:
@@ -3289,7 +3290,7 @@ func _cover_choice(choice: int) -> void:
 			var path := _cover_path.duplicate(true)
 			path.append({"c": j, "at": vm._menu_at})
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,
-				"what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
+				"look": _cover_looking, "what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
 	_cover_path.append({"c": choice, "at": vm._menu_at})
 
 
@@ -3305,7 +3306,7 @@ func _cover_typed(text: String) -> void:
 			var path := _cover_path.duplicate(true)
 			path.append({"t": WRONG_WORD})
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key,
-				"what": "%04X typed %s" % [vm._at + EclScript.BASE, WRONG_WORD]})
+				"rest": _cover_resting, "look": _cover_looking, "what": "%04X typed %s" % [vm._at + EclScript.BASE, WRONG_WORD]})
 	_cover_path.append({"t": text})
 
 
@@ -3376,7 +3377,7 @@ func _cover_fight(rows: Array) -> bool:
 		if not _cover_queued.has(key):
 			_cover_queued[key] = true
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": _cover_path.duplicate(true),
-				"key": key, "rest": _cover_resting, "flee": true,
+				"key": key, "rest": _cover_resting, "flee": true, "look": _cover_looking,
 				"what": "%04X COMBAT fled" % [vm._at + EclScript.BASE]})
 	var names: PackedStringArray = []
 	for r in rows:
@@ -3445,6 +3446,9 @@ func _cover_job(job: Dictionary) -> void:
 			await _settle()
 			if _cover_forced.size() < job.path.size():
 				break
+	elif job.get("look", false):
+		await _cover_face(int(job.dir))
+		await main._press("l")
 	else:
 		main._try_move(int(job.dir))
 	await _settle()
@@ -3844,6 +3848,26 @@ func _cover_map(deadline: int) -> Array:
 				_cover_new_part(regions_found, found, "stepping %s from event %d" % ["NESW"[d], best])
 			if _here() == _cover_area and main._map_index != mi and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 				found.append(main.dev_snapshot())
+		# Chat 16: LOOK facing each way. LOOK runs the area's search entry from where the party
+		# faces, and scripts test the wall ahead there (6:1's slave pen: the boy and the
+		# merchant come only to a party looking at the pen, 0xC04E = 8).
+		for d in 4:
+			if Time.get_ticks_msec() >= deadline:
+				break
+			main.dev_restore(here)
+			await _settle()
+			await _cover_face(d)
+			# Menus LOOK brings queue jobs that look again (as a step's do with the step).
+			_cover_snap = main.dev_snapshot()
+			_cover_path = []
+			_cover_dir = d
+			_cover_looking = true
+			await main._press("l")
+			await _settle()
+			_cover_looking = false
+			_cover_snap = {}
+			_cover_log.tries += 1
+			await _cover_recover(here, "looking %s at event %d" % ["NESW"[d], best])
 		# And once more onto the square, now that its event has run (the "already done" side).
 		# Chat 15: three times, the script's dice rerolled each time (a restore brings the same
 		# dice back, so a RANDOM in the event would always come out the same: New Phlan's
