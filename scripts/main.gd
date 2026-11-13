@@ -647,6 +647,10 @@ func _auto_handle() -> bool:
 			_shadow.explore(_vm)
 	if auto_hook.is_valid() and await auto_hook.call():
 		return true
+	if _ending != null and _ending.visible:
+		# The closing pictures (PROGRAM 8 after Tyranthraxus): page through them.
+		await _press("enter")
+		return true
 	if _combat.visible:
 		if _combat._asking_continue:
 			print("   CONTINUE BATTLE -> N")

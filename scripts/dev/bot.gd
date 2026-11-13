@@ -2818,6 +2818,10 @@ func _fight_opens(rows: Array) -> bool:
 		print("SKIPPED FIGHT ", key)
 		return true
 	if key in _win_fights:
+		# Once: the same patrol coming again (chat 13: Valjevo's giant patrol interrupting
+		# every rest in 5:4 was won by shortcut 180 times) is fought again, and earns a
+		# shortcut only by beating the party twice more.
+		_win_fights.erase(key)
 		_shortcut("win", key, "this fight beat the party twice")
 		_skipped_fights.append(key)
 		print("SKIPPED FIGHT ", key)
