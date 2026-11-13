@@ -315,3 +315,17 @@ others from J:
 - `misswhy.py <listing> < missctx output` puts a first guess before each missed branch: unreached,
   roll, counter, clock, fight, party, menu, a flag's written values, or "outside" (nothing in the
   area writes it). `missctx.sh` leaves the listing in `/tmp/dis_<area>.txt`.
+- Coverage walks also LOOK facing each way at every event square (LOOK runs the step script from
+  where the party faces); a menu LOOK brings queues jobs that look again.
+- A flee job flees only the fight it was queued for (`flee_at`); before, it fled the first fight it
+  met, so chained fights (6:28's guard waves, then the commandant) never had their own fled side.
+- A typed answer: the word the script compares just ahead is worked out through the numeric
+  COMPAREs and IFs on the way (4:21's patrol wants SHESTNI unless 0x4A26 is 255, then SAMOSUD).
+- `_settle`'s quiet window is 15 ms and at least 10 frames (`QUIET_MS`).
+- `runcover.sh` gives each variant its own project copy (`BOT_ID=<area><suffix>`); two variants of
+  one area still share `data/cov_<area>.json`, so don't run them at the same time (the last to
+  save wins).
+- The bands' plans replay every choice (`all`): the plan's IGNORE CAVE had kept 6:25's caves (the
+  boars, the anhkheg, the thri-kreen) from ever being walked once ENTER CAVE had been taken once.
+- `walls.gd` (copy into `proj/` as `_walls.gd`): `godot --headless --path . --script res://_walls.gd --
+  <GEOn.DAX> <block> <event|-1>` lists event squares and their walls.

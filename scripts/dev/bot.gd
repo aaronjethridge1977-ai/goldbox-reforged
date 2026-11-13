@@ -1309,15 +1309,36 @@ func _event_odds(ev: int) -> float:
 func _word_ahead() -> String:
 	var vm: EclVM = main._vm
 	var p: int = vm.pc
-	for n in 8:
+	# Chat 16: numeric COMPAREs on the way are worked out from memory and their IFs followed
+	# (4:21's patrol wants SHESTNI unless 0x4A26 is 255, then SAMOSUD: the first literal ahead
+	# was always typed).
+	var cmp := 0
+	for n in 12:
 		var ins: Dictionary = vm.ecl._read(p)
 		if ins.is_empty():
 			break
-		if String(ins.op) in ["COMPARE", "WRITE_MEM"]:
-			for a in ins.args:
-				if int(a.type) == 0x80 and String(a.value).strip_edges() != "":
-					return String(a.value).strip_edges()
-		if String(ins.op) in ["EXIT", "RETURN"]:
+		var op := String(ins.op)
+		var a: Array = ins.args
+		if op == "COMPARE" and a.size() >= 2 and int(a[0].type) != 0x80 and int(a[1].type) != 0x80 \
+				and int(a[0].type) != 0x81 and int(a[1].type) != 0x81:
+			cmp = vm._value(a[0]) - vm._value(a[1])
+			p += int(ins.size)
+			continue
+		if op.begins_with("IF_"):
+			var holds: bool = {"IF_EQ": cmp == 0, "IF_NE": cmp != 0, "IF_LT": cmp < 0, "IF_GT": cmp > 0,
+				"IF_LE": cmp <= 0, "IF_GE": cmp >= 0}.get(op, true)
+			p += int(ins.size)
+			if not holds:
+				var skipped: Dictionary = vm.ecl._read(p)
+				if skipped.is_empty():
+					break
+				p += int(skipped.size)
+			continue
+		if op in ["COMPARE", "WRITE_MEM"]:
+			for x in a:
+				if int(x.type) == 0x80 and String(x.value).strip_edges() != "":
+					return String(x.value).strip_edges()
+		if op in ["EXIT", "RETURN", "GOTO"]:
 			break
 		p += int(ins.size)
 	return ""
