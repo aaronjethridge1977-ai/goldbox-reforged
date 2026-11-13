@@ -38,6 +38,10 @@ func open(path: String) -> void:
 	game_path = path
 	_rules = CreationRules.shared(path)
 	_rng.randomize()
+	# Lab, 2026-11-13: the original starts every new character on the first head and body,
+	# whatever the character before it picked.
+	_head = 0
+	_body = 0
 	ShopScreen._fill(self, 0)
 	if _screen == null:
 		var bg := ColorRect.new()
