@@ -1,6 +1,7 @@
 class_name StartMenu
 extends Control
-## The way into the game: the title picture, then a menu in the original's font and frame.
+## The way into the game: the SSI / AD&D logo (first launch only), the title picture, then a menu
+## in the original's font and frame. Each picture draws in from the top as the original's does.
 ##   CONTINUE        the quick save (F2), when there is one
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
@@ -18,6 +19,18 @@ var _stage := "title"
 var _items: Array = []
 var _sel := 0
 var _saves: Array[String] = []
+# Lab, 2026-11-13 (DOSBox at GOG's speed, cycles=auto = 3000): TITLE.DAX block 1 (SSI presents,
+# AD&D) draws top to bottom in about 0.4 s and stays about 7 s, then block 2 (the title) draws the
+# same way. A key cuts the logo's wait short.
+const WIPE_SECS := 0.4
+const LOGO_SECS := 7.0
+static var _intro_done := false
+var _logo_pic: Image
+var _title_pic: Image
+var _wipe_src: Image
+var _wipe_img: Image
+var _wipe_t := -1.0
+var _logo_t := 0.0
 
 
 func open(path: String, quick: bool) -> void:
@@ -39,18 +52,70 @@ func open(path: String, quick: bool) -> void:
 		ShopScreen._fill(_screen, 0)
 		add_child(_screen)
 	var dax := DaxFile.open(game_path.path_join("TITLE.DAX"))
-	if dax != null and dax.blocks.has(2):
-		var pic := EgaPicture.decode(dax.blocks[2])
-		if pic != null:
-			_title.texture = ImageTexture.create_from_image(pic.frames[0])
+	_logo_pic = _title_block(dax, 1)
+	_title_pic = _title_block(dax, 2)
 	_saves.clear()
 	for c in "ABCDEFGHIJ":
 		if FileAccess.file_exists(game_path.path_join("SAVGAM%s.DAT" % c)):
 			_saves.append(c)
-	_stage = "title"
 	_title.visible = true
 	_screen.visible = false
 	visible = true
+	if not _intro_done and _logo_pic != null:
+		_intro_done = true
+		_stage = "logo"
+		_logo_t = 0.0
+		_wipe_in(_logo_pic)
+	else:
+		_intro_done = true
+		_start_title()
+
+
+func _title_block(dax: DaxFile, id: int) -> Image:
+	if dax == null or not dax.blocks.has(id):
+		return null
+	var pic := EgaPicture.decode(dax.blocks[id])
+	return pic.frames[0] if pic != null else null
+
+
+func _start_title() -> void:
+	_stage = "title"
+	_wipe_in(_title_pic)
+
+
+## Show a picture drawing in from the top, as the original draws its title screens.
+func _wipe_in(pic: Image) -> void:
+	_wipe_src = pic
+	if pic == null:
+		_title.texture = null
+		_wipe_t = -1.0
+		return
+	# The original paints the new picture down over the one on screen (the title over the logo).
+	var under := _wipe_img
+	_wipe_img = Image.create_empty(pic.get_width(), pic.get_height(), false, pic.get_format())
+	_wipe_img.fill(Color.BLACK)
+	if under != null and under.get_size() == pic.get_size() and under.get_format() == pic.get_format():
+		_wipe_img.copy_from(under)
+	_title.texture = ImageTexture.create_from_image(_wipe_img)
+	_wipe_t = 0.0
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if _wipe_t >= 0.0:
+		_wipe_t += minf(delta, 1.0 / 30.0)   # a slow first frame doesn't skip the wipe
+		var h := _wipe_src.get_height()
+		var rows := clampi(int(h * _wipe_t / WIPE_SECS), 0, h)
+		_wipe_img.blit_rect(_wipe_src, Rect2i(0, 0, _wipe_src.get_width(), rows), Vector2i.ZERO)
+		(_title.texture as ImageTexture).update(_wipe_img)
+		if rows >= h:
+			_wipe_t = -1.0
+	elif _stage == "logo":
+		_logo_t += delta
+		if _logo_t >= LOGO_SECS:
+			_start_title()
+	else:
+		set_process(false)
 
 
 func _show_menu() -> void:
@@ -107,7 +172,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+	if _stage == "logo":
+		_start_title()
+		return
 	if _stage == "title":
+		_wipe_t = -1.0
 		_show_menu()
 		return
 	var letter := OS.get_keycode_string(key).to_upper() if key != KEY_NONE else ""
