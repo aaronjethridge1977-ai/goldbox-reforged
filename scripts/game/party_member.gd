@@ -771,8 +771,8 @@ func recalculate(types: ItemTypes) -> void:
 ## Coins on hand, in copper.
 func wealth_copper() -> int:
 	var total := 0
-	for i in 7:
-		total += money[i]     # gems and jewelry weigh 1 each too (lab chat 11: save I) * COIN_VALUE[i]
+	for i in 5:
+		total += money[i] * COIN_VALUE[i]     # coins only: gems and jewellery are not money
 	return total
 
 
