@@ -1,11 +1,14 @@
 class_name StartMenu
 extends Control
-## The way into the game: the SSI / AD&D logo (first launch only), the title picture, then a menu
-## in the original's font and frame. Each picture draws in from the top as the original's does.
+## The way into the game. On first launch, as the original: the SSI / AD&D logo, the title
+## picture (each drawn in from the top), the game's own credits; then a menu in the original's
+## font and frame. A key moves on at once.
 ##   CONTINUE        the quick save (F2), when there is one
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
+##   SETTINGS        the additions that can be turned off (the automap)
+##   CREDITS         Gold Box Reforged's credits and the Godot license
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
 
@@ -24,6 +27,16 @@ var _saves: Array[String] = []
 # same way. A key cuts the logo's wait short.
 const WIPE_SECS := 0.4
 const LOGO_SECS := 7.0
+# The original then shows the title about 5 s and its credits (GAME.OVR) about 10 s before the
+# code wheel; the credits screen is drawn in over about 0.4 s.
+const TITLE_SECS := 5.0
+const CREDITS_SECS := 10.0
+var _intro := false        # first launch: the screens move on by themselves, as the original's
+var _hold_t := 0.0
+var _credits_layout := {}
+var _draw_t := -1.0
+var _pages: Array = []
+var _page := 0
 static var _intro_done := false
 var _logo_pic: Image
 var _title_pic: Image
@@ -65,9 +78,11 @@ func open(path: String, quick: bool) -> void:
 		_intro_done = true
 		_stage = "logo"
 		_logo_t = 0.0
+		_intro = true
 		_wipe_in(_logo_pic)
 	else:
 		_intro_done = true
+		_intro = false
 		_start_title()
 
 
@@ -80,7 +95,29 @@ func _title_block(dax: DaxFile, id: int) -> Image:
 
 func _start_title() -> void:
 	_stage = "title"
+	_hold_t = 0.0
 	_wipe_in(_title_pic)
+
+
+## The original's credits screen, read from the player's GAME.OVR; straight to the menu without it.
+func _start_original_credits() -> void:
+	_wipe_t = -1.0
+	_credits_layout = Credits.original_layout(game_path)
+	if _credits_layout.is_empty():
+		_intro = false
+		_show_menu()
+		return
+	_stage = "orig_credits"
+	_title.visible = false
+	_screen.visible = true
+	_hold_t = 0.0
+	_draw_t = 0.0
+	Credits.draw_original(_screen, _credits_layout, 0)
+	set_process(true)
+
+
+func _show_credits_page() -> void:
+	Credits.draw_page(_screen, _pages[_page], _page == _pages.size() - 1)
 
 
 ## Show a picture drawing in from the top, as the original draws its title screens.
@@ -114,6 +151,23 @@ func _process(delta: float) -> void:
 		_logo_t += delta
 		if _logo_t >= LOGO_SECS:
 			_start_title()
+	elif _stage == "title" and _intro:
+		_hold_t += delta
+		if _hold_t >= TITLE_SECS:
+			_start_original_credits()
+	elif _stage == "orig_credits":
+		var steps: int = _credits_layout.texts.size()
+		if _draw_t >= 0.0:
+			_draw_t += minf(delta, 1.0 / 30.0)
+			var n := clampi(int(steps * _draw_t / WIPE_SECS), 0, steps)
+			Credits.draw_original(_screen, _credits_layout, n)
+			if n >= steps:
+				_draw_t = -1.0
+		else:
+			_hold_t += delta
+			if _hold_t >= CREDITS_SECS:
+				_intro = false
+				_show_menu()
 	else:
 		set_process(false)
 
@@ -130,6 +184,7 @@ func _show_menu() -> void:
 	_items.append("NEW GAME")
 	_items.append("PARTY CREATION")
 	_items.append("SETTINGS")
+	_items.append("CREDITS")
 	_items.append("EXIT")
 	_sel = clampi(_sel, 0, _items.size() - 1)
 	_draw()
@@ -177,7 +232,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _stage == "title":
 		_wipe_t = -1.0
+		if _intro:
+			_start_original_credits()
+		else:
+			_show_menu()
+		return
+	if _stage == "orig_credits":
+		_intro = false
 		_show_menu()
+		return
+	if _stage == "credits":
+		var last := _page >= _pages.size() - 1
+		if key == KEY_E or key == KEY_ESCAPE or (last and (key == KEY_ENTER or key == KEY_SPACE)):
+			_show_menu()
+		elif not last:
+			_page += 1
+			_show_credits_page()
 		return
 	var letter := OS.get_keycode_string(key).to_upper() if key != KEY_NONE else ""
 	if _stage == "settings":
@@ -226,5 +296,10 @@ func _pick(item: String) -> void:
 		"SETTINGS":
 			_stage = "settings"
 			_draw()
+		"CREDITS":
+			_stage = "credits"
+			_pages = Credits.pages()
+			_page = 0
+			_show_credits_page()
 		"EXIT":
 			get_tree().quit()
