@@ -275,8 +275,14 @@ func _do(line: String) -> void:
 			if _want == "inn":
 				_issue("the inn didn't take us (%s); memorizing in camp here" % main._message.text.strip_edges())
 				_want = ""
+				# Not the inn again from inside this (chat 13: arriving by boat at night, no
+				# route to the inn; healing in camp sent the party back to the inn, and so on
+				# for ten thousand lines): camp here as if at the inn.
+				var was_at_inn := _at_inn
+				_at_inn = true
 				await _memorize()
 				await _heal()
+				_at_inn = was_at_inn
 		"trainat":
 			_want = "train"
 			var a := w[1].split(",")
