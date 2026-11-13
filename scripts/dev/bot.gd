@@ -374,7 +374,7 @@ func _do(line: String) -> void:
 			var spec := " ".join(w.slice(2)).split("|")
 			if not _answer_rules.has(w[1]):
 				_answer_rules[w[1]] = []
-			_answer_rules[w[1]].append([spec[0].strip_edges(), spec[1].strip_edges().to_upper()])
+			_answer_rules[w[1]].append([spec[0].strip_edges(), spec[1].strip_edges().to_upper(), 0])
 		"parley":
 			# parley <set:block> <words of the encounter's text>: PARLAY there, not COMBAT.
 			if not _parley_cues.has(w[1]):
@@ -464,10 +464,16 @@ func _hook() -> bool:
 	if main._vm.state == EclVM.State.MENU and main._vm._menu_kind == "encounter" and not main._combat.visible:
 		var k := _encounter_choice()
 		# Encounters the Clue Book says to talk to (Ferran Martinez...): PARLAY.
+		var offered: Array = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper())
 		for cue in _parley_cues.get(_here(), []):
-			if said.contains(cue) and "PARLAY" in Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper()):
-				k = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper()).find("PARLAY") + 1
+			if said.contains(cue) and "PARLAY" in offered:
+				k = offered.find("PARLAY") + 1
 				_judged = "the plan parleys here (%s)" % cue
+			elif said.contains(cue) and "ADVANCE" in offered:
+				# Not close enough to talk yet (the pyramid's pumping room: the slaves stand
+				# three squares off): ADVANCE until PARLAY is offered.
+				k = offered.find("ADVANCE") + 1
+				_judged = "closing in to parley (%s)" % cue
 		if k == 3:
 			_count("avoided")
 		print("   >> %d (encounter: %s)" % [k, _judged])
@@ -616,15 +622,32 @@ func _hook() -> bool:
 			await main._press(str(k))
 			return true
 		# A gate travel is going through (gate lines): its choice.
-		if _gate_answer != "" and _gate_answer in items:
-			print("   >> %d (%s: the way to go)" % [items.find(_gate_answer) + 1, _gate_answer])
-			await main._press(str(items.find(_gate_answer) + 1))
+		# (Several choices, comma-separated, for a way through more than one menu: the
+		# rowboat's YES, then the pyramid door's ENTER.)
+		for g in _gate_answer.split(",", false):
+			if g.strip_edges() in items:
+				print("   >> %d (%s: the way to go)" % [items.find(g.strip_edges()) + 1, g.strip_edges()])
+				await main._press(str(items.find(g.strip_edges()) + 1))
+				return true
+		# A wilderness site passed on the way elsewhere ("YOU HAVE FOUND SOME RUINED HUTS.
+		# WILL YOU INVESTIGATE?" INVESTIGATE / LEAVE): leave it (chat 12: travel went into the
+		# huts' sub-map of 7:26 and lost its way); explore still goes in.
+		if _travelling and items.size() == 2 and items[1] == "LEAVE" and said.contains("WILL YOU"):
+			print("   >> 2 (LEAVE: only passing)")
+			await main._press("2")
 			return true
-		# The plan's answers to particular questions (answer <area> <text>|<choice>).
+		# The plan's answers to particular questions (answer <area> <text>|<choice>[,<choice>...]):
+		# several choices are taken in turn, one each time the question comes (the pyramid's
+		# rocks room: THROW A ROCK, then MOVE ON).
 		for rule in _answer_rules.get(_here(), []):
-			if said.contains(rule[0]) and rule[1] in items:
-				print("   >> %d (%s: the plan's answer)" % [items.find(rule[1]) + 1, rule[1]])
-				await main._press(str(items.find(rule[1]) + 1))
+			if not said.contains(rule[0]):
+				continue
+			var picks: PackedStringArray = String(rule[1]).split(",")
+			var pick: String = picks[int(rule[2]) % picks.size()].strip_edges()
+			if pick in items:
+				rule[2] = int(rule[2]) + 1
+				print("   >> %d (%s: the plan's answer)" % [items.find(pick) + 1, pick])
+				await main._press(str(items.find(pick) + 1))
 				return true
 		# PARLAY's manner (HAUGHTY SLY NICE MEEK ABUSIVE): NICE, as the Clue Book advises with
 		# anyone not plainly hostile (Ohlo fights the HAUGHTY and the ABUSIVE and offers his
@@ -1364,6 +1387,9 @@ func _here() -> String:
 
 ## Walks from area to area (shortest number of areas) to `goal` ("set:block").
 func _travel(goal: String) -> void:
+	# A trip can start another (a fight on the way, then the inn): the outer trip is still
+	# travelling when the inner one ends (chat 12: it went on as if exploring, into the huts).
+	var was_travelling := _travelling
 	_travelling = true
 	# Chat 11: what failed on an earlier trip is tried again. Run A kept every failed way
 	# out for good, and once the caves' "DO YOU WANT TO LEAVE?" had been answered NO while
@@ -1372,7 +1398,7 @@ func _travel(goal: String) -> void:
 	_bad_exits.clear()
 	main._menu_seen.clear()
 	await _travel_hops(goal)
-	_travelling = false
+	_travelling = was_travelling
 	# M6: stuck short of the goal (no way found or every way failed): the smallest shortcut
 	# is a teleport there, entering the area as its init places the party. Logged.
 	if _here() != goal and not _wiped() and goal.contains(":"):
@@ -1537,6 +1563,16 @@ func _travel_hops(goal: String) -> void:
 ## Explores the area in passes: the events it can't win yet wait until the party has
 ## trained (New Phlan and back), up to four passes; what still waits is logged.
 func _explore(later: Array) -> void:
+	# Events the plan leaves out are walked round, not through (a teleporter on the way).
+	main.avoid_events = {}
+	for e in later:
+		if str(e).is_valid_int():
+			main.avoid_events[int(e)] = true
+	await _explore_areas(later)
+	main.avoid_events = {}
+
+
+func _explore_areas(later: Array) -> void:
 	var area := _here()
 	var start_map: int = main._map_index
 	_visited = {}
@@ -1555,7 +1591,7 @@ func _explore(later: Array) -> void:
 			continue     # a ladder or stair took the party to the area's other map: explore it
 		if deferred.is_empty():
 			break
-		if not _can_train() or trips >= 3 or _hops(TOWN, area) >= 99:
+		if not _can_train() or trips >= 3 or not _round_trip(area):
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
 			break
 		trips += 1
@@ -1659,7 +1695,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			if _wiped() or _here() != area:
 				break
 		await _heal_if_low()
-		if not _wiped() and _can_train() and area != TOWN and _hops(TOWN, area) < 99:
+		if not _wiped() and _can_train() and area != TOWN and _round_trip(area):
 			# Training first: to New Phlan and back, then on with the area.
 			var back: Vector2i = main._pos
 			await _town()
@@ -1891,6 +1927,12 @@ func _hops(a: String, b: String) -> int:
 				dist[e.to] = dist[x] + 1
 				queue.append(e.to)
 	return 99
+
+
+## Whether travel can go from `area` to New Phlan and back (chat 12: the pyramid has no way
+## out but the priest's hole, so a training trip from it ended in a teleport).
+func _round_trip(area: String) -> bool:
+	return _hops(TOWN, area) < 99 and _hops(area, TOWN) < 99
 
 
 ## Whether anyone has the experience for a new level.
@@ -2803,7 +2845,7 @@ func _keep_level() -> void:
 		return out
 	if behind.call().is_empty():
 		return
-	if _can_train():
+	if _can_train() and _round_trip(_here()):
 		var area := _here()
 		await _town()
 		await _travel(area)

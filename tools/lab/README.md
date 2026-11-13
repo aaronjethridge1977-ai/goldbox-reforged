@@ -181,3 +181,17 @@ others from J:
   14,1 W, Up twice meets the orcs). `combatseed=<n>` fixes our fight's dice: seed 2 lets Thrender
   act first, as in the capture. Combat captures: the menu, MOVE, VIEW and its ITEMS, AIM (self,
   NEXT, MANUAL), USE, DONE, GUARDING, a cleric's menu and CAST page, DONE with BANDAGE.
+
+### Chat 12 additions
+
+- The bands' site tables (row y values, counts, x values, site types) sit two bytes past the
+  addresses the listing shows: 7:26's rows are at 0xB04C, not 0xB04A. 7:26's rowboat to the
+  pyramid is at 6,14 (site type 5); the pyramid's door, 6,16, is on the island.
+- Plan additions: `answer <area> <text>|<a>,<b>,...` takes the choices in turn, one each time the
+  question comes; `gate ... <a>,<b>` gives a way through more than one menu (the rowboat's YES,
+  then the door's ENTER); a `parley` cue whose menu offers ADVANCE instead of PARLAY advances
+  until it can talk; `explore <events>` also walks round the skipped events' squares.
+- Secret doors (Yarash's pyramid): the step script refuses a move until a roll on arrival finds
+  the door (0x4A4F); the tour now searches, steps off and back on, up to six tries per door.
+- `data/exits.txt`: the sweep's picks for 7:22 14,7 (the rocks room) were recorded on the first
+  visit's flash and come out as GO BACK later; the lab copy keeps that exit without picks.

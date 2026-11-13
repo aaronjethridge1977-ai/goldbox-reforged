@@ -33,6 +33,9 @@ expect_level 3:14 5
 expect_level 7:17 5
 expect_level 8:27 5
 expect_level 4:10 6
+expect_level 7:22 6
+expect_level 7:23 6
+expect_level 8:16 6
 expect_level 2:9 7
 expect_level 5:3 7
 expect_level 5:4 7
@@ -92,7 +95,39 @@ answer 6:25 DISAPPEARS INTO A CAVE|IGNORE CAVE
 # left out of the graph, chat 11, or travel tries it as a way across the band.)
 gate 6:25 12,31 6:1 ENTER
 gate 6:25 3,32 6:28 YES
-gate 7:26 6,16 7:22 ENTER
+# Sorcerer's Island (chat 12): the rowboat in the reeds at 7:26 6,14 (the band's site tables sit
+# two bytes past the listing's addresses: rows 10 11 12 26 27 28 14 16 29) takes the party to
+# the pyramid's door at 6,16 (YES), whose menu enters 7:22 (ENTER). 6,16 is on the island:
+# travel can't walk there, and chat 11 teleported in.
+gate 7:26 6,14 7:22 YES,ENTER
+# Otherwise the door is left: once Yarash is beaten, the band's search script shows the land
+# recovering and stands the party at the door (7:26 0xAE8F).
+answer 7:26 MAGNIFICENT PYRAMID|GO BACK
+answer 7:26 TAKE IT TO THE PYRAMID|NO
+# Inside the pyramid (7:23): the lizard men who hiss "are wary, but not hostile" (PARLAY: the enemy
+# of my enemy), and the shackled slaves in the pumping room, who when freed (PARLAY, NICE) give
+# the friend word for their tribe in the swamp (journal entry 35; the Clue Book's way into the
+# lizard men's keep).
+parley 7:23 THEY ARE WARY, BUT NOT HOSTILE
+parley 7:23 THEY RECOIL IN FEAR
+# The rocks room (7:22 14,7, event 14): the first visit flashes the party into 7:23; after that
+# it asks GO BACK / MOVE ON / THROW A ROCK. MOVE ON goes to 7:23 unless a thrown rock has turned
+# the teleporter (0x4A4D bit 0), and then MOVE ON again does. (The sweep recorded this exit on
+# the first visit, so the lab's exits.txt keeps no picks for it.)
+answer 7:22 THROW A ROCK|MOVE ON
+# 7:23's rocks room: 7:22's sends the party in with 0x4A4D bit 0 set, and MOVE ON with it set
+# goes back to 7:22 (a loop). THROW A ROCK flips it; then MOVE ON goes to 11,3, the way to
+# the dial, the mage and the desk.
+answer 7:23 THROW A ROCK|THROW A ROCK,MOVE ON
+# The dial (5,0) sets where the teleporters at 6,0 and 3,13 go (0x4A50: BLUE 7:22, COPPER 4,9,
+# SILVER 7,0, GOLD 14,13); left as it is. The shackled lizard men in the pumping room (5,4) are
+# the ones to free: 0x4A52 bit 0 brings the old lizard man out in the keep (8:16).
+answer 7:23 DO YOU WISH TO CHANGE THE SETTING|NO
+# The lizard men's keep (8:16): the old lizard man (in any of three buildings, once the pyramid's
+# slaves are freed: 0x4A52 bit 0) wants the friend word, SAVIOR; then champion him against
+# Drythh (a duel: 0x4AB5 = 254 when won). Killing him (COMBAT) ends the story.
+parley 8:16 HE LOOKS AT YOU PATIENTLY
+answer 8:16 WILL YOU CHAMPION ME|YES
 gate 8:27 11,8 8:16 ENTER
 gate 8:27 6,15 8:13 LARGE
 # The western band joins the middle one at its edges as the middle joins the eastern.
@@ -272,15 +307,27 @@ checkpoint band1
 town
 
 log 12. Sorcerer's Island: Yarash's pyramid (7:22)
+# Chat 12: the pollution commission ends in 7:23 (event 15's mage and his mutated guards,
+# "SUBDUE THEM!": 0x4AB3 = 254), Yarash's desk beside it. No town trip in between: the
+# pyramid's only way out is a priest's hole in 7:22 (the priest asks only on a lucky roll).
 travel 7:22
 explore
 checkpoint pyramid1
-town
 
 log 12b. Yarash's pyramid, inside (7:23)
 travel 7:23
 explore
 checkpoint pyramid2
+# The way into the corner with the mage, the dial and the desk is the rocks room at 7:23 15,12
+# (THROW A ROCK, MOVE ON: see the answers above). This pass keeps off the teleporter beside the
+# dial (code 16 at 6,0: on BLUE it goes back to 7:22 with the rocks' bit set, and 7:22's MOVE ON
+# then stays inside 7:22), so it reaches the desk and the pumping room too.
+travel 7:23
+explore 16
+checkpoint pyramid2b
+travel 7:22
+explore
+checkpoint pyramid3
 town
 
 log 13. The ruined castle (8:16, from 8:27 11,8)

@@ -542,6 +542,15 @@ func _tour(goal: Vector2i) -> void:
 			await get_tree().process_frame
 		if _pos == before and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
 				and not _combat.visible and _message.text.strip_edges() == "":
+			# A step the area's script refuses without a word may be a secret door not found
+			# yet (Yarash's pyramid: the step script rolls for each member on arrival, better
+			# when SEARCHing; 0x4A4F holds the doors found). Search, step off and back on, and
+			# try again, a few times.
+			var key := "%d:%d,%d,%d" % [_map_index, before.x, before.y, d]
+			var tries := int(_secret_tries.get(key, 0))
+			if tries < 6 and await _search_again(before, d):
+				_secret_tries[key] = tries + 1
+				continue
 			print("   blocked at %s" % _pos)
 			return
 		while await _auto_handle():
@@ -558,7 +567,48 @@ func _tour(goal: Vector2i) -> void:
 				return
 
 
+## Lab: steps off `at` (not towards `blocked`) and back on with SEARCH on, so the square's
+## script looks for a secret door again; SEARCH goes back as it was. False if it can't.
+func _search_again(at: Vector2i, blocked: int) -> bool:
+	var was := _searching
+	_searching = true
+	_vm.write_byte(SEARCH_FLAG, 1)
+	var ok := false
+	for k in 4:
+		if k == blocked:
+			continue
+		var next: Vector2i = at + DungeonView.DELTA[k]
+		var path := _find_path(at, next)
+		if path.size() != 2:
+			continue
+		while int(_facing) != k:
+			await _press("right" if (k - int(_facing) + 4) % 4 != 3 else "left")
+		await _press("up")
+		for i in 60:
+			await get_tree().process_frame
+		while await _auto_handle():
+			await get_tree().process_frame
+		if _pos != next:
+			continue
+		var back := (k + 2) % 4
+		while int(_facing) != back:
+			await _press("right" if (back - int(_facing) + 4) % 4 != 3 else "left")
+		await _press("up")
+		for i in 60:
+			await get_tree().process_frame
+		while await _auto_handle():
+			await get_tree().process_frame
+		ok = _pos == at
+		break
+	_searching = was
+	_vm.write_byte(SEARCH_FLAG, 1 if was else 0)
+	if ok:
+		print("   searching for a secret door at %s" % at)
+	return ok
+
+
 var _said := ""
+var _secret_tries := {}     # the tour's tries at each refused step ("map:x,y,dir")
 var _refused := {}     # the tour's steps the game turned back ("map:x,y,dir")
 var _auto_gave_up := false
 ## Lab (PlayBot): set to end the current tour at the next quiet moment (a hurt party stops
@@ -1610,6 +1660,11 @@ func _adopt_position_from_vm() -> void:
 
 
 ## Shortest walk between two squares (walls stop you unless they carry a door).
+## Lab (PlayBot): event codes whose squares walks keep off unless they are the goal (explore's
+## skipped events: Yarash's pyramid's teleporter beside the dial, chat 12).
+var avoid_events := {}
+
+
 func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	var map: GeoMap = _maps[_map_index].map
 	var came := {from: from}
@@ -1625,6 +1680,8 @@ func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 				continue
 			var nxt: Vector2i = cur + DungeonView.DELTA[d]
 			if nxt.x < 0 or nxt.y < 0 or nxt.x >= GeoMap.SIZE or nxt.y >= GeoMap.SIZE or came.has(nxt):
+				continue
+			if nxt != to and not avoid_events.is_empty() and avoid_events.has(map.flag(nxt.x, nxt.y) & 127):
 				continue
 			came[nxt] = cur
 			queue.append(nxt)

@@ -780,6 +780,14 @@ func _exec(ins: Dictionary) -> void:
 					# (ours looped there; the original doesn't).
 					if square_info.is_valid():
 						write_byte(SQUARE_INFO, int(square_info.call(read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15)))
+				0x2C4E, 0x2C51:
+					# Bracket the bands' loops that rewrite wilderness tiles (WRITE_MEM_BASE_OFF
+					# into 0x6300 and 0xD000): the river cleaned once Yarash is beaten (7:26
+					# 0xAD66..0xAE29), 8:27's at 0xAB25..0xAB99. Taken to be the original's
+					# hold-the-screen / redraw pair (chat 12: an assumption, not yet checked in
+					# the lab); our wilderness view draws those squares from 0x4AB3 itself
+					# (OverlandMap.tile), so nothing is needed here.
+					pass
 				0xBA03:
 					pass    # plays sound effect [0x03DE] (8 the Rolf tour's, 10 thunder); silent here
 				_:
