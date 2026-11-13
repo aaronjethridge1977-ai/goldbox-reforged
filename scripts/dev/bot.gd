@@ -3743,6 +3743,7 @@ func _cover_map(deadline: int) -> Array:
 		if int(k.get_slice(":", 0)) == mi:
 			done[int(k.get_slice(":", 1))] = true
 	var arrival: Dictionary = main.dev_snapshot()
+	var regions_found := {_region_id(main._pos): true}
 	while Time.get_ticks_msec() < deadline:
 		if _cover_fresh:
 			main.dev_restore(arrival)
@@ -3814,6 +3815,7 @@ func _cover_map(deadline: int) -> Array:
 			continue
 		if main._pos != best_sq:
 			print("   (didn't reach %s: at %s)" % [best_sq, main._pos])
+			_cover_new_part(regions_found, found, "walking to event %d" % best)
 			continue
 		done[best] = true
 		_cover_done["%d:%d" % [mi, best]] = true
@@ -3831,6 +3833,8 @@ func _cover_map(deadline: int) -> Array:
 			_cover_log.tries += 1
 			if await _cover_recover(here, "stepping %s from event %d" % ["NESW"[d], best]):
 				continue
+			if _here() == _cover_area and main._map_index == mi:
+				_cover_new_part(regions_found, found, "stepping %s from event %d" % ["NESW"[d], best])
 			if _here() == _cover_area and main._map_index != mi and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 				found.append(main.dev_snapshot())
 		# And once more onto the square, now that its event has run (the "already done" side).
@@ -3994,6 +3998,19 @@ func _band_path(ov, bx: int, at: Vector2i, todo: Dictionary, seen: Dictionary, b
 		p = came[p]
 	path.push_front(at)
 	return path
+
+
+## Chat 15: a step that puts the party in another part of the same map (2:9's tower stairs
+## move it within map 9) is a new arrival, walked later like any other.
+func _cover_new_part(regions: Dictionary, found: Array, how: String) -> void:
+	if main._vm.state not in [EclVM.State.IDLE, EclVM.State.DONE] or _wiped():
+		return
+	var r := _region_id(main._pos)
+	if regions.has(r):
+		return
+	regions[r] = true
+	print("   (%s put the party in another part of the map, at %s)" % [how, main._pos])
+	found.append(main.dev_snapshot())
 
 
 ## Walks toward `goal` through walls where the game allows it: the cheapest way counting each

@@ -282,3 +282,13 @@ others from J:
 - `shortcut flag <hex addr> set|or|and <value> <why>`: a story flag as a player can have it, for
   variant runs (`cover_5-4-disguised.plan`: 5:6's disguise worn into 5:4). Logged.
 - `missctx.sh 5-4`: each missed branch with the two instructions before it, for writing reasons.
+- `cover <area> <minutes> all fresh`: "fresh" walks to each event from the part's arrival, not from
+  where the last event left the party (an alarm one fight raises hid 5:4's fighter). `-fresh` plans.
+- A step that puts the party in another part of the same map (2:9's tower stairs move it within
+  map 9) is a new arrival, walked later.
+- The tour's repeated-question rule cycles through the choices once its "way out" has been taken
+  five times (7:23's "DO YOU REALLY MEAN NOKNOK?": NO only asked for the word again).
+- Report: the encounter dead-outcome rule looks past instructions (and subroutines that leave the
+  menu's variable alone) between the menu and its ON_GOTO.
+- The runs are frame-bound (about 10% CPU each): `NOWAIT=1 P=3 cover_q.sh ...` runs three at once
+  beside another queue.
