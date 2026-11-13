@@ -424,11 +424,39 @@ answer 2:9 LETS HAVE THE 15 GOLD|YES
 answer 2:9 THROW DOWN YOUR WEAPONS|ATTACK
 answer 2:9 CAN'T YOU UNDERSTAND COMMON|TAKE THE PUNCH
 travel 2:9
-explore
+# Morning, so the trader comes; meet him (4,14), then the toll at the gate (one step north from 7,12, by 7,13: no other event on the way; the toll walks the party
+# through to 8,5, and a tour to 6,11 would walk it straight back out past the bugbears). The walls'
+# squares (event 3) bring the bugbears' warnings and, the second time, their attack: kept off
+# until the gate is taken.
+restuntil 8
+tour 4,14
+tour 7,13
+tour 7,12
+face N
+step
+# Inside first: the towers' garrisons (4,5 and 11,5, and the mages above them), keeping off
+# the gate passage (7,6-7,10) and the outside, where the bugbears still wait; then the rest.
+explore 3 4 5 6 7 8 9 12 13
+explore 3
 checkpoint stojanow
 town
 
 log 18. Valjevo Castle (5:3)
+# Chat 13, from ECL5 blocks 3-7. The patrols ask for the day's password (HARASH) or whose
+# authority (TYRANTHRAXUS); the gate to the inner castle wants RHODIA, which Cadorna gives
+# from his cell once released (5:3; the Clue Book's way: free him for the password). The
+# giants asleep: SNEAK OUT QUIETLY. The giants' frogs-and-toads quarrel: LEAVE. The mage who
+# begs for his life (5:5): LET HIM GO. The scribe (5:4): tie him up; the overseer's slaves:
+# free them. The priests of Bane (5:6): LEAVE. Tyranthraxus (5:7): every member votes ATTACK.
+answer 5:3 IN THE NAME OF CHANTUA|RELEASE HIM
+answer 5:3 SNEAK OUT QUIETLY|SNEAK OUT QUIETLY
+answer 5:4 WHAT DO YOU DO|KILL THE OVERSEER AND FREE THE SLAVES
+answer 5:4 SCRIBE COMING TOWARD THE BUILDING|AMBUSH AND TIE HIM UP
+answer 5:5 FROGS AND TOADS|LEAVE
+answer 5:5 SPARE ME AND I WILL LEAVE|LET HIM GO
+answer 5:5 I'LL GIVE YOU ALL MY NOTES|LET HIM GO
+answer 5:6 ACCEPT THE BLESSING OF LORD BANE|LEAVE
+answer 5:7 HOW DO YOU VOTE|ATTACK
 travel 5:3
 explore
 checkpoint valjevo3

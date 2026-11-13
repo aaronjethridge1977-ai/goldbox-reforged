@@ -71,7 +71,14 @@ func run(plan_path: String) -> void:
 	var watch := Timer.new()
 	watch.wait_time = 120.0
 	watch.ignore_time_scale = true
-	watch.timeout.connect(func() -> void: print("   [watch] ", main._state_line()))
+	watch.timeout.connect(func() -> void:
+		print("   [watch] ", main._state_line())
+		# Coverage on disk every two minutes too (chat 13: a run stopped by its time limit
+		# never reached _exit_tree, which is where it was saved).
+		if main._vm != null and main._vm.coverage != null:
+			main._vm.coverage.save()
+		if main._shadow != null:
+			main._shadow.coverage.save())
 	add_child(watch)
 	watch.start()
 	# --resume=<quick save file>:<checkpoint name>: start from another run's checkpoint,
@@ -352,6 +359,24 @@ func _do(line: String) -> void:
 				await main._tour(best)
 				await _settle()
 				await _heal_if_low()
+		"restuntil":
+			# restuntil <hour>: camp here and rest until that hour of the day (Stojanow Gate's
+			# trader drives up only before 14:00); interruptions are fought out.
+			var want := int(w[1])
+			var hrs := (want - GameClock.hour(main._vm) + 24) % 24
+			if hrs > 0 and not _wiped() and await _open_camp():
+				var camp: CampScreen = main._camp
+				camp._rest_menu()
+				camp._to_rest += hrs * 12
+				_start_rest(camp)
+				while camp.visible and camp._resting:
+					await get_tree().process_frame
+				if camp.visible:
+					await main._press("esc")
+					if camp.visible:
+						await main._press("e")
+				await _settle()
+			print("   rested until %s" % GameClock.text(main._vm))
 		"campday":
 			# campday <n>: camp here n days whatever comes (a script that moves on when the
 			# party rests: the nomads' kobold attack), fighting each interruption.
@@ -433,6 +458,10 @@ func _hook() -> bool:
 	# Names and passwords the game tells the party ("SPEAK MY NAME, OHLO."), for when a
 	# script asks for a word.
 	var said: String = main._message.text
+	# An encounter menu with no text of its own (Stojanow Gate's trader: "A MAN DRIVING A
+	# WAGON..." comes first, then a bare COMBAT WAIT FLEE PARLAY) is read with what came before.
+	if said.strip_edges() != "" and not said.contains("COMBAT    2) WAIT"):
+		_said_before = said
 	if not _first_day.has(_here()) and main._vm_file > 0:
 		_first_day[_here()] = _day()
 		print("   (first time in %s: day %d)" % [_here(), _day()])
@@ -474,11 +503,14 @@ func _hook() -> bool:
 		var k := _encounter_choice()
 		# Encounters the Clue Book says to talk to (Ferran Martinez...): PARLAY.
 		var offered: Array = Array(main._vm.menu).map(func(x): return String(x).strip_edges().to_upper())
+		var heard := said
+		if said.split("\n")[0].strip_edges() == "" or said.strip_edges().begins_with("1) COMBAT"):
+			heard = _said_before
 		for cue in _parley_cues.get(_here(), []):
-			if said.contains(cue) and "PARLAY" in offered:
+			if heard.contains(cue) and "PARLAY" in offered:
 				k = offered.find("PARLAY") + 1
 				_judged = "the plan parleys here (%s)" % cue
-			elif said.contains(cue) and "ADVANCE" in offered:
+			elif heard.contains(cue) and "ADVANCE" in offered:
 				# Not close enough to talk yet (the pyramid's pumping room: the slaves stand
 				# three squares off): ADVANCE until PARLAY is offered.
 				k = offered.find("ADVANCE") + 1
@@ -2430,6 +2462,7 @@ var _gate_square := Vector2i(-1, -1)   # the exit square those choices belong to
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
+var _said_before := ""        # the last text shown before the current menu
 var _hire_wanted := 0         # hired NPCs the plan wants (hire <n>)
 var _inn_till_day := false
 var _resting_now := false
