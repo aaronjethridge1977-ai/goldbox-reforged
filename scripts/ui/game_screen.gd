@@ -187,7 +187,8 @@ func frame_main(view_frame: bool = true, overland: bool = false) -> void:
 ## wilderness screen; `wild`: its map view, 120x120 from (8, 8) with no frame of its own
 ## (an event picture there sits in the usual framed view).
 func draw_walk(view: Image, party: Array, selected: int, place: String, lines: PackedStringArray,
-		menu: Array, wild: bool = false, overland: bool = false, menu_selected: int = 0) -> void:
+		menu: Array, wild: bool = false, overland: bool = false, menu_selected: int = 0,
+		white_line: int = -1) -> void:
 	clear()
 	frame_main(not wild, overland or wild)
 	if wild and view != null:
@@ -202,8 +203,9 @@ func draw_walk(view: Image, party: Array, selected: int, place: String, lines: P
 		img.blit_rect(v, Rect2i(0, 0, 88, 88), Vector2i(24, 24))
 	party_list(party, selected)
 	text(17, 15, place, GREEN)
-	text_box(lines)
-	menu_line(24, menu, 0, menu_selected)
+	text_box(lines, GREEN, white_line)
+	if not menu.is_empty():
+		menu_line(24, menu, 0, menu_selected)
 	update()
 
 
@@ -224,10 +226,11 @@ func party_list(party: Array, selected: int) -> void:
 		text(39 - hp.length(), 4 + i, hp, GREEN if m.hp >= m.hp_max else YELLOW)
 
 
-func text_box(lines: PackedStringArray, color: int = GREEN) -> void:
+## The text area (rows 17-22). white_line: one line drawn white (a vertical menu's choice).
+func text_box(lines: PackedStringArray, color: int = GREEN, white_line: int = -1) -> void:
 	var start := maxi(lines.size() - 6, 0)
 	for i in range(start, lines.size()):
-		text(1, 17 + i - start, lines[i], color)
+		text(1, 17 + i - start, lines[i], WHITE if i == white_line else color)
 
 
 func update() -> void:

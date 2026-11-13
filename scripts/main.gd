@@ -779,6 +779,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			var choice := -1
 			if key >= KEY_1 and key <= KEY_9:
 				choice = key - KEY_1
+			elif _vm.menu_vertical:
+				# A vertical menu (lab, chat 13): Home and End move the highlight up and down,
+				# wrapping round; Enter takes it. Letters and the left/right arrows do nothing.
+				if key == KEY_HOME or key == KEY_END:
+					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key == KEY_END else -1), _vm.menu.size())
+				elif event.is_action("ui_accept"):
+					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			elif key >= KEY_A and key <= KEY_Z:
 				var letter := OS.get_keycode_string(key).to_upper()
 				var hits := []
@@ -1765,6 +1772,13 @@ func _after_vm() -> void:
 				_timer.start(DELAY_SECONDS * CampScreen.delay_scale())
 			return
 		EclVM.State.MENU:
+			if _vm.menu_vertical:
+				# The original clears the text area for a vertical menu and shows its question.
+				_menu_sel = 0
+				if _held_message != "":
+					_held_message = _vm.menu_question
+				else:
+					_message.text = _vm.menu_question
 			var lines := PackedStringArray()
 			for i in _vm.menu.size():
 				lines.append(("%d) %s" % [i + 1, _vm.menu[i]]) if _vm.menu.size() > 1 else "Enter) %s" % _vm.menu[i])
@@ -2181,6 +2195,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
 	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
 	var carry := _pending_move if arrive and _vm.stepped_through else -1
+	var from_step := arrive and _pending_move >= 0
 	_vm.stepped_through = false
 	if arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
@@ -2231,6 +2246,21 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		# As in the original, the square arrived on runs its event (New Phlan's gateway
 		# text when coming in from the Slums).
 		_sync_position_to_vm(_facing)
+		if from_step:
+			# The step goes on in the new area, starting again with its on-move script (lab,
+			# chat 13: a step that enters Podol Plaza shows its "HOW WILL YOU PROCEDE?" menu
+			# at once, before the square's own event). What it shows ends the step there;
+			# a stop it sets keeps the party on the arrival square.
+			var before := _vm.text
+			_vm.start(0)
+			if _vm.read_byte(EclVM.MOVEMENT_BLOCK) != 0:
+				carry = -1
+			var shown := _vm.text.strip_edges() != "" and _vm.text != before
+			if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
+				_after_vm()
+				return
+			_vm.text = before
+			_sync_position_to_vm(_facing)
 		var keep := _vm.text
 		_vm.start(1)
 		if _vm.text == "" and not _vm.text_changed:
@@ -2510,6 +2540,7 @@ func _draw_screen() -> void:
 	var body := _message.text
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
 	var selected := 0
+	var vertical: Array = []
 	if _door_options != "":
 		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
 		menu = []
@@ -2523,6 +2554,9 @@ func _draw_screen() -> void:
 			body = body.substr(0, cut)
 		menu = _vm.menu.duplicate()
 		selected = clampi(_menu_sel, 0, menu.size() - 1)
+		if _vm.menu_vertical:
+			vertical = menu
+			menu = []
 	elif _vm.state == EclVM.State.INPUT:
 		menu = []
 	elif _busy:
@@ -2537,11 +2571,16 @@ func _draw_screen() -> void:
 	if _searching:
 		place += " SEARCHING"
 	var lines := GameScreen.wrap(body.strip_edges(), 38)
+	var white := -1
+	if not vertical.is_empty():
+		white = lines.size() + selected
+		for it in vertical:
+			lines.append(String(it))
 	OverlayLook.last_view = view
 	OverlayLook.last_wild = wild
 	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
-	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1)
+	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
 
 
 ## AREA: the overhead map of the block in the view window, walls as lines, the party as an

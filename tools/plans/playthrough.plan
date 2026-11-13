@@ -384,7 +384,7 @@ answer 6:28 HOW STRONG ARE THEY|DON'T TALK
 answer 6:28 NEXT TOPIC OF DISSCUSION|MAGIC,POLITICS
 answer 6:28 UNIQUE MAGICAL ITEMS OR PLACES|MENTION POOL OF RADIANCE
 answer 6:28 ULRICH EBERHARD|DON'T KNOW
-answer 6:28 IT IS NIGHT AND YOU ARE IN YOUR QUARTERS|SLEEP WITH A WATCH
+answer 6:28 HOW DO YOU SPEND THE NIGHT|SLEEP WITH A WATCH
 answer 6:28 RETURN TO THEM NOW|RETURN
 answer 6:28 THE WALL IS CLIMBABLE|CLIMB OVER WALL
 answer 6:28 SURRENDER OR DIE|ATTACK
@@ -410,6 +410,19 @@ checkpoint graveyard
 town
 
 log 17. Stojanow Gate (2:9)
+# Chat 13, from ECL2 block 9 (events are the square's info AND 31). The Clue Book's disguise:
+# the trader's wagon (event 9, 4,14 or 11,14, before 14:00, once a visit: talk, buy it, YES),
+# then the bugbears' toll at the gate (event 5: pay the 15 gold) takes the party through to
+# 8,5 (0x4A77 bit 64 = the wagon). Never SURRENDER to the bugbears (they strip the party);
+# TAKE THE PUNCH when they warn the party off the wall. The towers' garrisons (the mages
+# overheard at 4,7 and 11,7, the guard rooms 4,5 and 11,5) are the gate's fights: "YOU HAVE
+# TAKEN THE GATE!" sets 0x4AB9 = 254.
+parley 2:9 A MAN DRIVING A WAGON
+answer 2:9 SELL YOU MY WAGON|YES
+answer 2:9 TAKE IT OR LEAVE IT|TAKE IT
+answer 2:9 LETS HAVE THE 15 GOLD|YES
+answer 2:9 THROW DOWN YOUR WEAPONS|ATTACK
+answer 2:9 CAN'T YOU UNDERSTAND COMMON|TAKE THE PUNCH
 travel 2:9
 explore
 checkpoint stojanow

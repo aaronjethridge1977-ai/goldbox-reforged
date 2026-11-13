@@ -77,6 +77,10 @@ var encounter_advances := 0
 var sprite_picture := 255
 var sprite_head := 255
 var menu: Array = []             # menu item strings while State.MENU
+## MENU_VERTICAL: its question and its items listed in the text area, one a line (lab, chat 13:
+## Podol Plaza's "HOW WILL YOU PROCEDE?"); the walking screen's menu row stays empty.
+var menu_vertical := false
+var menu_question := ""
 ## Set by the game: the party (for PARTY_STRENGTH, PARTY_SKILL_CHECK and the encounter
 ## menu) and a Callable giving how many open squares lie ahead (0..2).
 var party: Array = []
@@ -903,6 +907,8 @@ func _exec(ins: Dictionary) -> void:
 			for i in range(3, a.size()):
 				items.append(_string(a[i]))
 			_pause_for_menu(a[0], items)
+			menu_vertical = true
+			menu_question = _string(a[1])
 		"ON_GOTO", "ON_GOSUB":
 			var index := _value(a[0])
 			var inside := index >= 0 and index < _value(a[1]) and index + 2 < a.size()
@@ -1172,6 +1178,8 @@ func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	# One item is a "press to continue" prompt; its choice is not stored.
 	_menu_dest = dest
 	_menu_kind = ""
+	menu_vertical = false
+	menu_question = ""
 	_menu_at = _at
 	menu = items
 	state = State.MENU
