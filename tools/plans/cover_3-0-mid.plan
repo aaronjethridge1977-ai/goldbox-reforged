@@ -1,0 +1,10 @@
+# Coverage run, variant (chat 15): New Phlan in mid-story (checkpoint "buccaneers", chat 12, before
+# Valjevo: the proclamations, the harbor master's boats and the council's later lines follow
+# the story counters 0x4AC1 and 0x4AC4), every other choice replayed.
+rules playthrough.plan
+start chat12a_latest/buccaneers
+travel 3:0
+expect 3:0
+cover 3:0 40 all
+status
+stop

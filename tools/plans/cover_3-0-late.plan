@@ -1,0 +1,9 @@
+# Coverage run, variant (chat 15): New Phlan late in the story (checkpoint "valjevo7", after
+# Valjevo: the proclamations, the harbor master's boats and the council's later lines follow
+# the story counters 0x4AC1 and 0x4AC4), every other choice replayed.
+rules playthrough.plan
+start chat13a_latest/valjevo7
+expect 3:0
+cover 3:0 40 all
+status
+stop

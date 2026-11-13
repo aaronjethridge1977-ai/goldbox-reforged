@@ -53,6 +53,7 @@ var dev_auto_win := false
 ## (the bot's stalemate rule: nobody has been hurt for many rounds).
 var dev_round_check: Callable
 var _dev_win_now := false
+var dev_flee := false               # dev (chat 15): the next scripted fight is fled at once
 var dev_win_if: Callable          # (rows) -> bool, asked as each scripted fight opens   # each loaded creature's 0x6C0C (0x80: fights for the party)
 var _encounters: Array = []      # [{monsters: [[id, count, picture]], text}]
 var _enc_index := 0
@@ -135,6 +136,16 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_start_fight(dev_seed, false)
 	if dev_win_if.is_valid() and dev_win_if.call(rows):
 		dev_auto_win = true
+	if dev_flee and DevShortcuts.allowed():
+		# Dev shortcut (M6 coverage runs, chat 15): the whole party gets away at once, so the
+		# script's "fled" side (0x6DC7 = 129) plays.
+		dev_auto_win = false
+		for c in _combat.combatants:
+			if c.team == 0:
+				c.down = true
+				c.fled = true
+				(c.who as PartyMember).status = PartyMember.STATUS_RUNNING
+	dev_flee = false
 	if dev_auto_win and DevShortcuts.allowed():
 		# Dev shortcut (M6): the enemies fall at once; experience and treasure as for a win.
 		for c in _combat.combatants:

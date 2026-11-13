@@ -1,0 +1,13 @@
+# Coverage run, variant (chat 15): 5:4 wearing the disguise 5:6's woman offers (0x4A65 bit 0,
+# set by 5:6 at 0x99BC when the party says YES) and with the shrines untouched (0x4A6A & 3 = 0:
+# 5:4 clears the disguise on every step otherwise). The patrols then ask "WHAT ARE YOU DOING
+# HERE?" and the password (HARASH) and authority (TYRANTHRAXUS) questions come up. The flag is
+# set by shortcut (logged) on the main line's checkpoint before 5:4, "valjevo3".
+rules playthrough.plan
+start chat13a_latest/valjevo3
+shortcut flag 4A65 or 1 the disguise from 5:6's woman, as a player who says YES wears it
+travel 5:4
+expect 5:4
+cover 5:4 40 all
+status
+stop

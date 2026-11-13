@@ -2951,6 +2951,20 @@ func _shortcut_command(w: PackedStringArray) -> void:
 			main._vm.party = main._party
 			main._show()
 			_shortcut("keep", "%d members (left out %s)" % [n, ", ".join(gone)], "the plan")
+		"flag":
+			# Chat 15: `shortcut flag 4A65 or 1 <why...>`: a story flag as a player can have it
+			# (a coverage variant: 5:6's disguise worn into 5:4). Logged.
+			var addr := w[2].hex_to_int()
+			var v := int(w[4])
+			var old: int = main._vm.read_byte(addr)
+			var now := v
+			match w[3]:
+				"or":
+					now = old | v
+				"and":
+					now = old & v
+			main._vm.write_byte(addr, now)
+			_shortcut("flag", "%04X %d -> %d" % [addr, old, now], " ".join(w.slice(5)) if w.size() > 5 else "the plan")
 		"teleport":
 			var a := w[2].split(":")
 			var xy := w[3].split(",")
@@ -3122,6 +3136,7 @@ func _arrival_part(from: String, e: Dictionary) -> int:
 
 var _cover_area := ""
 var _cover_snap := {}          # the game as the current step began (in the area only)
+var _cover_flee_next := false  # chat 15: the next set fight is fled (a flee job)
 var _cover_target := Vector2i(-1, -1)   # chat 15: the square the walk is going to
 var _cover_resting := false    # chat 15: the menus now come from a rest, not a step
 const QUEST_LO := 0x4A00       # the area markers and quest flags
@@ -3332,6 +3347,22 @@ func _cover_hook() -> bool:
 
 
 func _cover_fight(rows: Array) -> bool:
+	var vm: EclVM = main._vm
+	if _cover_flee_next:
+		# A flee job (chat 15): this fight is fled by shortcut, so the script's other side
+		# (0x6DC7 = 129, "THE PARTY HAS FLED") runs.
+		_cover_flee_next = false
+		main._combat.dev_flee = true
+		_shortcut("flee", "%s at %04X" % [vm.block_key, vm._at + EclScript.BASE], "coverage run: the fled side of a set fight")
+		return false
+	# Each set fight of the area also queues a job that flees it (once a run).
+	if not _cover_snap.is_empty() and vm.block_key == _cover_area and _cover_forced.is_empty():
+		var key := "%s|flee@%d" % [vm.block_key, vm._at]
+		if not _cover_queued.has(key):
+			_cover_queued[key] = true
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": _cover_path.duplicate(true),
+				"key": key, "rest": _cover_resting, "flee": true,
+				"what": "%04X COMBAT fled" % [vm._at + EclScript.BASE]})
 	var names: PackedStringArray = []
 	for r in rows:
 		names.append("%d x%d" % [int(r[0]), int(r[1])])
@@ -3385,12 +3416,14 @@ func _cover_job(job: Dictionary) -> void:
 	main.dev_restore(job.snap)
 	_cover_forced = job.path.duplicate(true)
 	_cover_snap = {}
+	_cover_flee_next = job.get("flee", false)
 	if job.get("rest", false):
 		# A menu a rest brought: rest again until it comes (an interruption is a roll).
 		for n in 8:
 			if n > 0:
 				main.dev_restore(job.snap)
 				_cover_forced = job.path.duplicate(true)
+				_cover_flee_next = job.get("flee", false)
 			await _settle()
 			if await _open_camp():
 				await _rest_in_camp(1)
@@ -3404,6 +3437,7 @@ func _cover_job(job: Dictionary) -> void:
 		_cover_log.diverged += 1
 		print("   (coverage job: %d answers not used; the menu never came)" % _cover_forced.size())
 		_cover_forced = []
+	_cover_flee_next = false
 	var wiped: bool = await _cover_recover(job.snap, "job " + String(job.key))
 	print("   job ends: ", main._state_line())
 	# Chat 15: a job that leaves the party in the area with its quest flags changed (the
@@ -3520,7 +3554,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 			seen[bregion] = true
 			_cover_log.maps += 1
 			print("== COVER %s part %s from %s" % [_here(), bregion, _overland_at()])
-			await _cover_band(deadline)
+			arrivals.append_array(await _cover_band(deadline))
 			continue
 		var mi: int = main._map_index
 		var region := "%d:%d" % [mi, _region_id(main._pos)]
@@ -3790,9 +3824,16 @@ func _cover_map(deadline: int) -> Array:
 			if _here() == _cover_area and main._map_index != mi and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 				found.append(main.dev_snapshot())
 		# And once more onto the square, now that its event has run (the "already done" side).
-		if Time.get_ticks_msec() < deadline:
+		# Chat 15: three times, the script's dice rerolled each time (a restore brings the same
+		# dice back, so a RANDOM in the event would always come out the same: New Phlan's
+		# pickpocket, the gambling wheel).
+		for k in 3:
+			if Time.get_ticks_msec() >= deadline:
+				break
 			main.dev_restore(here)
 			await _settle()
+			if k > 0:
+				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
 			await _step_off()
 			_cover_target = best_sq
 			await main._tour(best_sq)
@@ -3825,7 +3866,8 @@ func _cover_map(deadline: int) -> Array:
 ## square isn't walked through again; one the game refuses (a menu answered no) is left too.
 ## Each square is left in all four directions once (a site's "already here" side, and the steps
 ## off it).
-func _cover_band(deadline: int) -> void:
+func _cover_band(deadline: int) -> Array:
+	var found: Array = []
 	var area := _here()
 	var ov = main._vm.overland
 	var bx: int = ov.band_x(main._vm.overland_band)
@@ -3858,6 +3900,16 @@ func _cover_band(deadline: int) -> void:
 			seen[to] = true
 			blocked[to] = true
 			continue
+		if _here() == area and not main._vm.on_overland and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+			# A map the band's own script loads (7:26's lizard men's village): walked later
+			# like any map of the area.
+			print("   (band: the step onto %s opens map %d of %s at %s)" % [to, main._maps[main._map_index].id, area, main._pos])
+			found.append(main.dev_snapshot())
+			seen[to] = true
+			blocked[to] = true
+			main.dev_restore(pre)
+			await _settle()
+			continue
 		if _here() != area or not main._vm.on_overland:
 			print("   (band: the step onto %s led to %s; back, and not that way again)" % [to, _here()])
 			seen[to] = true
@@ -3888,7 +3940,8 @@ func _cover_band(deadline: int) -> void:
 		_cover_resting = false
 	_cover_log.squares += seen.size()
 	_cover_log.tries += steps
-	print("   band walk: %d of %d squares, %d steps, %d ways out" % [seen.size(), todo.size(), steps, left])
+	print("   band walk: %d of %d squares, %d steps, %d ways out, %d maps found" % [seen.size(), todo.size(), steps, left, found.size()])
+	return found
 
 
 ## The shortest way over the band from `at` to the nearest square of `todo` not in `seen`,

@@ -274,3 +274,11 @@ others from J:
   `cov_<set>-<block>[-variant].json`.
 - Report: a test of flag bits that no script of any data set ever sets (OR, WRITE_MEM, AND
   from elsewhere, any other write to the byte) is dead (5:5's 0x9C93: 0x4A67 bit 7).
+- Flee jobs: each set fight a run meets queues one replay in which the party flees at once
+  (`SHORTCUT flee`, `combat_screen.dev_flee`), so the scripts' "fled" side (0x6DC7 = 129) runs.
+- Coming back onto an event square happens three times, the script's dice rerolled for the 2nd
+  and 3rd (a restore brings the same dice back: a RANDOM in an event always came out the same).
+- A map a band's own script loads (7:26's lizard men's village) is walked like any map of the area.
+- `shortcut flag <hex addr> set|or|and <value> <why>`: a story flag as a player can have it, for
+  variant runs (`cover_5-4-disguised.plan`: 5:6's disguise worn into 5:4). Logged.
+- `missctx.sh 5-4`: each missed branch with the two instructions before it, for writing reasons.
