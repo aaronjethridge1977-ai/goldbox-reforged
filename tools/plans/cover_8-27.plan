@@ -1,3 +1,5 @@
+# Chat 16: with "all" (every other choice replayed): the plan's IGNORE CAVE had kept the caves the band's script
+# loads (6:25's boars, anhkheg and thri-kreen) from ever being walked, ENTER CAVE having been taken once before.
 # Coverage run (chat 15): the wilderness band 8:27, with the band walker (every square of each
 # part arrived in, a step at a time; ways out undone). From the main line's checkpoint "zhentil"
 # (6:28, the party at the level of the later wilderness), travelling in as a player does.
@@ -5,6 +7,6 @@ rules playthrough.plan
 start chat13a_latest/zhentil
 travel 8:27
 expect 8:27
-cover 8:27 60
+cover 8:27 60 all
 status
 stop

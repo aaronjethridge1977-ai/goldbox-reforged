@@ -1,0 +1,9 @@
+# Chat 16: City Hall later in the story (chat13a_latest/valjevo7): the clerk's rewards and commissions follow the quests done
+# (0x4AB8, 0x4AC8, 0x4AE6/7, 0x4A98, 0x4A9A, 0x4ABE, the proclamations' counter 0x4AC1).
+rules playthrough.plan
+start chat13a_latest/valjevo7
+travel 3:8
+expect 3:8
+cover 3:8 40 all
+status
+stop

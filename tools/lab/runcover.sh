@@ -5,4 +5,4 @@
 L=/home/claude/lab; a=$1; cd $L
 [ -f data/cov_$a.json ] || cp data/coverage.json data/cov_$a.json
 [ -f data/br_$a.json ] || cp data/branches.json data/br_$a.json
-BOT_ID=$a BOT_TIMEOUT=${BOT_TIMEOUT:-6000} BOT_COVERAGE=$L/data/cov_$a.json BOT_BRANCHES=$L/data/br_$a.json ./bot.sh ${PLAN:-cover_$a.plan} > data/cover_$a$2.log 2>&1
+BOT_ID=$a$2 BOT_TIMEOUT=${BOT_TIMEOUT:-6000} BOT_COVERAGE=$L/data/cov_$a.json BOT_BRANCHES=$L/data/br_$a.json ./bot.sh ${PLAN:-cover_$a.plan} > data/cover_$a$2.log 2>&1

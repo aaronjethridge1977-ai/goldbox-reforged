@@ -495,16 +495,24 @@ func _do(line: String) -> void:
 
 
 ## Waits until nothing is open or running, playing it out with the tour's policy.
+## The quiet window _settle waits for before it trusts that nothing more is coming (ms, and
+## at least 10 frames). 70 matched the old 10 frames at 145 a second; 15 is enough (chat 16:
+## 4:21 and 6:28 the same at both), and a coverage run calls _settle thousands of times.
+const QUIET_MS := 15
+
+
 func _settle() -> void:
 	# Chat 16: the limits are real time, not frames. Headless runs used to sleep 6.9 ms a frame
 	# (145 frames a second); with --fast that sleep is gone, and 20000 frames ran out in 3 s,
-	# in the middle of 6:28's guided tour. 140 s and 70 ms are what the frame counts were.
+	# in the middle of 6:28's guided tour. 140 s is what 20000 frames were.
 	var deadline := Time.get_ticks_msec() + 140000
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 		if not await main._auto_handle():
-			var quiet := Time.get_ticks_msec() + 70
-			while Time.get_ticks_msec() < quiet:
+			var quiet := Time.get_ticks_msec() + QUIET_MS
+			var frames := 0
+			while Time.get_ticks_msec() < quiet or frames < 10:
+				frames += 1
 				await get_tree().process_frame
 			if not await main._auto_handle():
 				return
@@ -3152,6 +3160,7 @@ var _cover_area := ""
 var _cover_snap := {}          # the game as the current step began (in the area only)
 var _cover_fresh := false      # chat 15: each event walked to from the part's arrival
 var _cover_flee_next := false  # chat 15: the next set fight is fled (a flee job)
+var _cover_flee_at := -1        # chat 16: ... the one at this script offset (fights before it are won)
 var _cover_target := Vector2i(-1, -1)   # chat 15: the square the walk is going to
 var _cover_resting := false    # chat 15: the menus now come from a rest, not a step
 const QUEST_LO := 0x4A00       # the area markers and quest flags
@@ -3364,7 +3373,9 @@ func _cover_hook() -> bool:
 
 func _cover_fight(rows: Array) -> bool:
 	var vm: EclVM = main._vm
-	if _cover_flee_next:
+	if _cover_flee_next and (_cover_flee_at < 0 or vm._at == _cover_flee_at):
+		# Chat 16: only the fight the job was queued for; 6:28's chained fights had fled the
+		# first fight of the chain instead (the guards before the commandant).
 		# A flee job (chat 15): this fight is fled by shortcut, so the script's other side
 		# (0x6DC7 = 129, "THE PARTY HAS FLED") runs.
 		_cover_flee_next = false
@@ -3377,7 +3388,7 @@ func _cover_fight(rows: Array) -> bool:
 		if not _cover_queued.has(key):
 			_cover_queued[key] = true
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": _cover_path.duplicate(true),
-				"key": key, "rest": _cover_resting, "flee": true, "look": _cover_looking,
+				"key": key, "rest": _cover_resting, "flee": true, "look": _cover_looking, "flee_at": vm._at,
 				"what": "%04X COMBAT fled" % [vm._at + EclScript.BASE]})
 	var names: PackedStringArray = []
 	for r in rows:
@@ -3433,6 +3444,7 @@ func _cover_job(job: Dictionary) -> void:
 	_cover_forced = job.path.duplicate(true)
 	_cover_snap = {}
 	_cover_flee_next = job.get("flee", false)
+	_cover_flee_at = int(job.get("flee_at", -1))
 	if job.get("rest", false):
 		# A menu a rest brought: rest again until it comes (an interruption is a roll).
 		for n in 8:

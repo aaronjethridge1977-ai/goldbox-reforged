@@ -359,7 +359,7 @@ func _dead_never_set(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 ## data set: 0 (a new game), each constant a WRITE_MEM puts there, each constant an indexed
 ## WRITE_MEM_BASE_OFF from a base in the range can put anywhere above it. Any other write (a
 ## sum, a counter, a copy, OR/AND, a menu's answer, any instruction not known to only read)
-## makes the byte "any" (absent from the result; COPY_MEM makes everything from there up "any").
+## makes the byte "any" (absent from the result; a string written makes everything from there up "any").
 var _values := {}
 const READ_ONLY := ["COMPARE", "COMPARE_AND", "ON_GOTO", "ON_GOSUB", "PRINT", "PRINT_CLEAR",
 	"LOAD_MON", "LOAD_CHAR", "IF_EQ", "IF_NE", "IF_LT", "IF_GT", "IF_LE", "IF_GE"]
@@ -421,10 +421,9 @@ func _values_of(ecls: Array) -> Dictionary:
 				for k in a.size():
 					var d: Dictionary = a[k]
 					if int(d.type) in [0x01, 0x03, 0x05, 0x81] and int(d.value) <= FLAGS_HI \
-							and int(d.value) + (255 if op == "COPY_MEM" else 1) >= FLAGS_LO:
-						if op == "COPY_MEM":
-							low_any = mini(low_any, maxi(int(d.value), FLAGS_LO))
-						elif (op in ["ADD", "SUBTRACT", "MULTIPLY", "DIVIDE", "AND", "OR"] and k != 2) \
+							and int(d.value) + 1 >= FLAGS_LO:
+						# COPY_MEM base, index, dest: reads base + index, writes dest only.
+						if (op in ["ADD", "SUBTRACT", "MULTIPLY", "DIVIDE", "AND", "OR", "COPY_MEM"] and k != 2) \
 								or (op in ["RANDOM", "RANDOM0"] and k != 1):
 							pass        # a source, not the destination
 						else:
