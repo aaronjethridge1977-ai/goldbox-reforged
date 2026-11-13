@@ -45,6 +45,7 @@ func _init() -> void:
 			critical = arg.trim_prefix("--critical=")
 	if game_path == "":
 		game_path = GameData.find_game_path()
+	_settable = _settable_bits(game_path)
 	var cov := ScriptCoverage.new(cov_path)
 	var totals := [0, 0, 0, 0, 0, 0, 0, 0]   # ins run/all, branches, choices, flags
 	var entered := 0
@@ -166,6 +167,7 @@ func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 func _dead(ecl: EclScript) -> Dictionary:
 	var out := {}
 	var offs: Array = ecl.offsets()
+	_dead_never_set(ecl, offs, out)
 	for i in offs.size():
 		var ins: Dictionary = ecl.instructions[offs[i]]
 		if ins.op != "ENCOUNTER_MENU" or ins.args.size() < 9:
@@ -218,6 +220,97 @@ func _dead(ecl: EclScript) -> Dictionary:
 			if not can.has(k):
 				out["%d:%d" % [offs[i + 1], k]] = true
 	return out
+
+
+## Chat 15: the bits of each flag byte (0x4A00-0x4AFF) any script of any data set can set:
+## OR with a constant sets those bits, AND with the byte itself sets none, WRITE_MEM of a
+## constant sets its bits, anything else (a copy, a sum, a value from elsewhere) any bit.
+var _settable := {}
+
+
+static func _is_mem(a: Dictionary) -> bool:
+	return int(a.type) in [0x01, 0x02, 0x03, 0x05]
+
+
+static func _is_const(a: Dictionary) -> bool:
+	return int(a.type) in [0x00, 0x04]
+
+
+func _settable_bits(game_path: String) -> Dictionary:
+	var bits := {}
+	for n in range(1, 9):
+		var dax := DaxFile.open(game_path.path_join("ECL%d.DAX" % n))
+		if dax == null:
+			continue
+		for id in dax.ids():
+			var ecl := EclScript.decode(dax.blocks[id])
+			for off in ecl.offsets():
+				var ins: Dictionary = ecl.instructions[off]
+				var op: String = ins.op
+				if not WRITES.has(op):
+					continue
+				var dests: Array = [int(WRITES[op])]
+				if op == "COPY_MEM":
+					dests = [1, 2]
+				for di in dests:
+					if di >= ins.args.size():
+						continue
+					var d: Dictionary = ins.args[di]
+					if not (int(d.type) in [0x01, 0x02, 0x03, 0x05, 0x81]):
+						continue
+					var x := int(d.value)
+					if x < FLAGS_LO or x > FLAGS_HI:
+						continue
+					var set := 0xFF
+					var a: Array = ins.args
+					if op == "WRITE_MEM" and _is_const(a[0]):
+						set = int(a[0].value) & 0xFF
+					elif op == "OR" and a.size() >= 2:
+						set = 0
+						for k in 2:
+							if _is_const(a[k]):
+								set |= int(a[k].value) & 0xFF
+							elif not (_is_mem(a[k]) and int(a[k].value) == x):
+								set = 0xFF
+					elif op == "AND" and a.size() >= 2:
+						if (_is_mem(a[0]) and int(a[0].value) == x) or (_is_mem(a[1]) and int(a[1].value) == x):
+							set = 0
+						elif _is_const(a[0]):
+							set = int(a[0].value) & 0xFF
+						elif _is_const(a[1]):
+							set = int(a[1].value) & 0xFF
+					bits[x] = int(bits.get(x, 0)) | set
+	return bits
+
+
+## Chat 15: a test of flag bits no script ever sets (5:5's 0x9C93 tests 0x4A67 bit 7, which
+## on-move clears and nothing sets): AND [x], m followed by an IF, or COMPARE [x], 0 with x
+## never set, always sees 0, so the IF's other outcome is dead.
+func _dead_never_set(ecl: EclScript, offs: Array, out: Dictionary) -> void:
+	for i in offs.size() - 1:
+		var ins: Dictionary = ecl.instructions[offs[i]]
+		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		if not String(nxt.op).begins_with("IF_") or ins.args.size() < 2:
+			continue
+		var zero := false
+		var a: Array = ins.args
+		if ins.op == "AND":
+			for k in 2:
+				var o: Dictionary = a[1 - k]
+				if _is_mem(a[k]) and _is_const(o) and int(a[k].value) >= FLAGS_LO and int(a[k].value) <= FLAGS_HI:
+					if int(_settable.get(int(a[k].value), 0)) & int(o.value) == 0:
+						zero = true
+		elif ins.op == "COMPARE":
+			for k in 2:
+				var o: Dictionary = a[1 - k]
+				if _is_mem(a[k]) and _is_const(o) and int(o.value) == 0 and int(a[k].value) >= FLAGS_LO \
+						and int(a[k].value) <= FLAGS_HI and int(_settable.get(int(a[k].value), 0)) == 0:
+					zero = true
+		if not zero:
+			continue
+		# The test always sees 0 (equal): EQ, LE and GE hold; NE, LT and GT don't.
+		var holds: bool = nxt.op in ["IF_EQ", "IF_LE", "IF_GE"]
+		out["%d:%s" % [offs[i + 1], "F" if holds else "T"]] = true
 
 
 static func _choice_name(ins: Dictionary, op: String, i: int) -> String:

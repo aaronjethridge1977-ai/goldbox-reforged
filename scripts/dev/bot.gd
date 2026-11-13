@@ -3122,6 +3122,12 @@ func _arrival_part(from: String, e: Dictionary) -> int:
 
 var _cover_area := ""
 var _cover_snap := {}          # the game as the current step began (in the area only)
+var _cover_target := Vector2i(-1, -1)   # chat 15: the square the walk is going to
+var _cover_resting := false    # chat 15: the menus now come from a rest, not a step
+const QUEST_LO := 0x4A00       # the area markers and quest flags
+const QUEST_HI := 0x4B00
+var _cover_states := {}        # chat 15: quest-flag changes a job made -> its end snapshot
+var _cover_states_walked := {}
 var _cover_dir := -1           # that step's direction
 var _cover_path: Array = []    # the answers given since: {"c": i, "at": menu offset} / {"t": text}
 var _cover_jobs: Array = []
@@ -3136,6 +3142,8 @@ func _cover(area: String, minutes: int) -> void:
 	_cover_jobs = []
 	_cover_queued = {}
 	_cover_ran = {}
+	_cover_states = {}
+	_cover_states_walked = {}
 	_cover_exits_used = {}
 	_cover_fights = []
 	_cover_log = {"jobs": 0, "diverged": 0, "wipes": 0, "squares": 0, "tries": 0, "maps": 0}
@@ -3161,6 +3169,29 @@ func _cover(area: String, minutes: int) -> void:
 			_cover_ran[job.key] = true
 			done += 1
 			await _cover_job(job)
+		# The states jobs opened, each walked like an arrival (its events again, its menus'
+		# new choices queued and played), up to six.
+		var walked := 0
+		while not _cover_states.is_empty() and walked < 6 and Time.get_ticks_msec() < deadline:
+			var sig: String = _cover_states.keys()[0]
+			var snap: Dictionary = _cover_states[sig]
+			_cover_states.erase(sig)
+			if _cover_states_walked.has(sig):
+				continue
+			_cover_states_walked[sig] = true
+			walked += 1
+			print("==== COVER %s: walking again in the state %s" % [area, sig.strip_edges()])
+			main.dev_restore(snap)
+			await _settle()
+			await _cover_walk(deadline, true)
+			while not _cover_jobs.is_empty() and Time.get_ticks_msec() < deadline:
+				var job: Dictionary = _cover_jobs.pop_front()
+				if _cover_taken(job.key) or _cover_ran.has(job.key):
+					continue
+				_cover_ran[job.key] = true
+				done += 1
+				await _cover_job(job)
+		_cover_log["states"] = walked
 		if not _cover_jobs.is_empty():
 			_issue("cover %s: out of time with %d choices still queued" % [area, _cover_jobs.size()])
 		_cover_log.jobs = done
@@ -3227,7 +3258,7 @@ func _cover_choice(choice: int) -> void:
 			_cover_queued[key] = true
 			var path := _cover_path.duplicate(true)
 			path.append({"c": j, "at": vm._menu_at})
-			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key,
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,
 				"what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
 	_cover_path.append({"c": choice, "at": vm._menu_at})
 
@@ -3281,6 +3312,12 @@ func _cover_hook() -> bool:
 		var opts: Array = Array(vm.menu).map(func(x): return String(x).strip_edges().to_upper())
 		if "YES" in opts and "NO" in opts and (said.contains("CLIMB") or said.contains("STAIRS") \
 				or said.contains("LADDER") or said.contains("GO DOWN") or said.contains("GO UP")):
+			# Chat 15: only on the square the walk is going to; stairs on the way are passed
+			# (2:9's tower stairs bounced the walk up and down a dozen times).
+			if _cover_target.x >= 0 and main._pos != _cover_target:
+				print("   >> %d (NO: stairs on the way to %s)" % [opts.find("NO") + 1, _cover_target])
+				main.dev_choose(opts.find("NO"))
+				return true
 			print("   >> %d (YES: coverage run, the other level)" % (opts.find("YES") + 1))
 			main.dev_choose(opts.find("YES"))
 			return true
@@ -3348,21 +3385,54 @@ func _cover_job(job: Dictionary) -> void:
 	main.dev_restore(job.snap)
 	_cover_forced = job.path.duplicate(true)
 	_cover_snap = {}
-	main._try_move(int(job.dir))
+	if job.get("rest", false):
+		# A menu a rest brought: rest again until it comes (an interruption is a roll).
+		for n in 8:
+			if n > 0:
+				main.dev_restore(job.snap)
+				_cover_forced = job.path.duplicate(true)
+			await _settle()
+			if await _open_camp():
+				await _rest_in_camp(1)
+			await _settle()
+			if _cover_forced.size() < job.path.size():
+				break
+	else:
+		main._try_move(int(job.dir))
 	await _settle()
 	if not _cover_forced.is_empty():
 		_cover_log.diverged += 1
 		print("   (coverage job: %d answers not used; the menu never came)" % _cover_forced.size())
 		_cover_forced = []
-	await _cover_recover(job.snap, "job " + String(job.key))
+	var wiped: bool = await _cover_recover(job.snap, "job " + String(job.key))
 	print("   job ends: ", main._state_line())
+	# Chat 15: a job that leaves the party in the area with its quest flags changed (the
+	# bugbears fought instead of warned, the watch fought, a pass shown) opens a state the walk
+	# hasn't seen: kept for a walk of its own once the jobs are done.
+	if not wiped and _here() == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+		var before: PackedByteArray = job.snap.vm.mem.slice(QUEST_LO, QUEST_HI)
+		var now: PackedByteArray = main._vm.mem.slice(QUEST_LO, QUEST_HI)
+		var sig := ""
+		for i in now.size():
+			# Flags and the area's own markers (0x4A00-0x4A1F), as they go on or off; a
+			# counter going up (a sign read again) is not a new state.
+			if (now[i] == 0) != (before[i] == 0):
+				sig += "%04X=%d " % [QUEST_LO + i, now[i]]
+			elif now[i] != before[i] and i >= 0x20:
+				var bits: int = now[i] & ~before[i]
+				if bits != 0:
+					sig += "%04X|%d " % [QUEST_LO + i, bits]
+		if sig != "":
+			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < 12:
+				_cover_states[sig] = main.dev_snapshot()
+				print("   (a new state for the walk: %s)" % sig.strip_edges())
 
 
 ## Every map the area's script runs on: its events, each square from every side, a rest, and
 ## a step off each edge. Each part of a map (squares that reach each other on foot) is walked
 ## once, from wherever the party first arrives in it: another map of the area, or another part
 ## of this one (a tower room reached from the next map), joins the queue.
-func _cover_walk(deadline: int) -> void:
+func _cover_walk(deadline: int, again := false) -> void:
 	var start: Dictionary = main.dev_snapshot()
 	# Outside the area (an area that turns a party out at once, Diogenes's cave mouth): only
 	# the ways in.
@@ -3370,7 +3440,12 @@ func _cover_walk(deadline: int) -> void:
 	var seen := {}
 	_cover_done = {}
 	_cover_probed = {}
-	var ways_in := _cover_ways_in()
+	_cover_groups_in = {}
+	if again:
+		_cover_groups_in["all"] = true
+	if _here() == _cover_area and _area_map(_cover_area) == main._maps[main._map_index].map:
+		_cover_groups_in["part %d" % _dungeon_part(_cover_area, main._pos)] = true
+	var ways_in := [] if again else _cover_ways_in()
 	while Time.get_ticks_msec() < deadline:
 		if arrivals.is_empty():
 			# Every way into the area the graph knows, once each (Valjevo's outer castle runs
@@ -3379,8 +3454,24 @@ func _cover_walk(deadline: int) -> void:
 			if ways_in.is_empty():
 				break
 			var e: Dictionary = ways_in.pop_front()
+			var group := String(e.get("group", ""))
+			if group != "" and _cover_groups_in.has(group):
+				continue        # that part has been reached already
 			main.dev_restore(start)
 			await _settle()
+			if e.get("teleport", false):
+				# Chat 15: no walking way into this part worked (the way in starts on another map
+				# of the next area, or behind a wall there): placed on the arrival square.
+				var ta := String(e.to).split(":")
+				var ok: bool = main.dev_teleport(int(ta[0]), int(ta[1]), Vector2i(int(e.ax), int(e.ay)), int(e.dir))
+				await _settle()
+				_shortcut("teleport", "%s %d,%d %s%s" % [e.to, e.ax, e.ay, "NESW"[int(e.dir)], "" if ok else " REFUSED"],
+					"coverage run: no walking way into part %s worked" % group)
+				if ok and _here() == _cover_area and not _wiped() and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+					_cover_groups_in[group] = true
+					print("   came in on map %d at %s" % [main._maps[main._map_index].id, main._pos])
+					arrivals.append(main.dev_snapshot())
+				continue
 			print("== COVER way in from %s at %d,%d %s" % [e.from, e.x, e.y, "NESW"[e.dir]])
 			_cover_going_in = true
 			await _travel(e.from)
@@ -3411,6 +3502,8 @@ func _cover_walk(deadline: int) -> void:
 			_gate_picks = []
 			if _here() == _cover_area and not _wiped() and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 				print("   came in on map %d at %s" % [main._maps[main._map_index].id, main._pos])
+				if group != "":
+					_cover_groups_in[group] = true
 				arrivals.append(main.dev_snapshot())
 			else:
 				print("   (that way in ends in %s at %s)" % [_here(), main._pos])
@@ -3418,9 +3511,21 @@ func _cover_walk(deadline: int) -> void:
 		var arrival: Dictionary = arrivals.pop_front()
 		main.dev_restore(arrival)
 		await _settle()
+		if main._vm.on_overland:
+			# A wilderness band (chat 15): every square of the part arrived in.
+			var bregion := "band:%d" % _part_of(_here(), _overland_at())
+			if seen.has(bregion):
+				print("   (part %s from %s: walked already)" % [bregion, _overland_at()])
+				continue
+			seen[bregion] = true
+			_cover_log.maps += 1
+			print("== COVER %s part %s from %s" % [_here(), bregion, _overland_at()])
+			await _cover_band(deadline)
+			continue
 		var mi: int = main._map_index
 		var region := "%d:%d" % [mi, _region_id(main._pos)]
 		if seen.has(region):
+			print("   (part %s from %s: walked already)" % [region, main._pos])
 			continue
 		seen[region] = true
 		_cover_log.maps += 1
@@ -3428,11 +3533,16 @@ func _cover_walk(deadline: int) -> void:
 		var found: Array = await _cover_map(deadline)
 		arrivals.append_array(found)
 		var base: Dictionary = main.dev_snapshot()
-		# A rest here (the area's rest entries and its patrols).
+		# A rest here (the area's rest entries and its patrols). A menu the rest brings (a
+		# patrol, the city watch) queues jobs that rest again (chat 15).
+		_cover_snap = main.dev_snapshot()
+		_cover_path = []
+		_cover_resting = true
 		if await _open_camp():
 			await _rest_in_camp(1)
 			await _settle()
 			await _cover_recover(base, "resting")
+		_cover_resting = false
 		# Each edge of the map, once from each part: the next map of the area, or the way out.
 		for side in 4:
 			if Time.get_ticks_msec() >= deadline:
@@ -3458,27 +3568,71 @@ func _cover_walk(deadline: int) -> void:
 		await _settle()
 
 
-## The graph's ways into the cover area, one per area and arrival square (up to 12).
+## The graph's ways into the cover area. A square (stairs, a door, a gate) is a way of its own;
+## a map edge leads in all along it, so edges are grouped by the part of the area's own map
+## they arrive in (chat 15: 5:4's south edge reaches four parts, and the one try a side that
+## chat 14 made landed in the one with no events). Edge arrivals whose entering side is walled
+## on the area's map are left out. Each group's ways are tried in turn until one gets in; when
+## none does, the group ends with a teleport to its first arrival square (a logged shortcut).
 func _cover_ways_in() -> Array:
 	_load_exits()
 	var out: Array = []
-	var keys := {}
+	var groups := {}
+	var amap: GeoMap = _area_map(_cover_area)
 	for from in _exits:
 		if from == _cover_area:
 			continue
 		for e in _exits[from]:
 			if e.to != _cover_area:
 				continue
-			# A map edge leads in all along it: one try a side; a square (stairs, a door, a
-			# gate) is a way of its own.
-			var k := "%s %s" % [from, "NESW"[int(e.dir)]] if e.entry == "move" else "%s %d,%d" % [from, e.x, e.y]
-			if keys.has(k):
-				continue
-			keys[k] = true
-			var w: Dictionary = e.duplicate()
-			w["from"] = from
-			out.append(w)
-	return out.slice(0, 12)
+			var k := "%s %d,%d" % [from, e.x, e.y]
+			if e.entry == "move":
+				var part := -1
+				if e.has("ax") and amap != null:
+					# The arrival square's side the party comes in by must be open.
+					var back: int = (int(e.dir) + 2) % 4
+					if amap.wall(int(e.ax), int(e.ay), back) > 0 and amap.door(int(e.ax), int(e.ay), back) == 0:
+						continue
+					part = _dungeon_part(_cover_area, Vector2i(int(e.ax), int(e.ay)))
+				k = "%s %s part %d" % [from, "NESW"[int(e.dir)], part]
+			if not groups.has(k):
+				groups[k] = []
+			if groups[k].size() < 4:
+				var w: Dictionary = e.duplicate()
+				w["from"] = from
+				w["group"] = k
+				groups[k].append(w)
+	# Parts: one group per part of the area's map is enough (the first way in that reaches it).
+	var by_part := {}
+	for k in groups:
+		var ws: Array = groups[k]
+		var pk: String = k.get_slice(" part ", 1) if k.contains(" part ") else k
+		for w in ws:
+			w["group"] = "part " + pk if k.contains(" part ") else k
+		if not by_part.has(pk):
+			by_part[pk] = []
+		by_part[pk].append_array(ws)
+	for pk in by_part:
+		var ws: Array = by_part[pk]
+		out.append_array(ws)
+		if ws[0].has("ax") and ws[0].entry == "move":
+			var t: Dictionary = ws[0].duplicate()
+			t["teleport"] = true
+			out.append(t)
+	return out.slice(0, 40)
+
+
+## The area's own map (the GEO block with the script's number, when the script loads it).
+func _area_map(area: String) -> GeoMap:
+	var a := area.split(":")
+	var ecl: EclScript = main._script(int(a[0]), int(a[1]))
+	for m in main._maps:
+		if String(m.file) == "GEO%s.DAX" % a[0] and int(m.id) == int(a[1]) and ecl != null and ecl.loads_map(int(a[1])):
+			return m.map
+	return null
+
+
+var _cover_groups_in := {}     # chat 15: way-in groups (parts) already reached in this run
 
 
 var _cover_going_in := false   # travelling round to a way in: walks outside the area go on
@@ -3593,11 +3747,13 @@ func _cover_map(deadline: int) -> Array:
 		if main._pos == best_sq:
 			await _step_off()
 			await _settle()
+		_cover_target = best_sq
 		if probe:
 			await _cover_probe(best_sq)
 		else:
 			await main._tour(best_sq)
 		await _settle()
+		_cover_target = Vector2i(-1, -1)
 		if await _cover_recover(pre, "walking to event %d" % best):
 			continue
 		if _here() != _cover_area or main._map_index != mi:
@@ -3638,7 +3794,9 @@ func _cover_map(deadline: int) -> Array:
 			main.dev_restore(here)
 			await _settle()
 			await _step_off()
+			_cover_target = best_sq
 			await main._tour(best_sq)
+			_cover_target = Vector2i(-1, -1)
 			await _settle()
 			await _cover_recover(here, "coming back to event %d" % best)
 		# And once with SEARCH on (scripts test 0x6DCA: Valjevo's loose stone, hidden treasure).
@@ -3648,7 +3806,9 @@ func _cover_map(deadline: int) -> Array:
 			main._searching = true
 			main._vm.write_byte(main.SEARCH_FLAG, 1)
 			await _step_off()
+			_cover_target = best_sq
 			await main._tour(best_sq)
+			_cover_target = Vector2i(-1, -1)
 			await _settle()
 			main._searching = false
 			main._vm.write_byte(main.SEARCH_FLAG, 0)
@@ -3656,6 +3816,113 @@ func _cover_map(deadline: int) -> Array:
 		main.dev_restore(here)
 		await _settle()
 	return found
+
+
+## Chat 15: a wilderness band's coverage walk. The band's script works by square (its sites,
+## gates and the river's edges are tables of coordinates, not event numbers), so every square of
+## the part the party is in is stepped on, the nearest not yet visited first, a step at a time.
+## A step that takes the party out of the band (a gate, a site's own area) is undone and that
+## square isn't walked through again; one the game refuses (a menu answered no) is left too.
+## Each square is left in all four directions once (a site's "already here" side, and the steps
+## off it).
+func _cover_band(deadline: int) -> void:
+	var area := _here()
+	var ov = main._vm.overland
+	var bx: int = ov.band_x(main._vm.overland_band)
+	var part := _part_of(area, _overland_at())
+	var todo := {}
+	for y in OverlandMap.HEIGHT:
+		for x in 16:
+			if _part_of(area, Vector2i(x, y)) == part:
+				todo[Vector2i(x, y)] = true
+	var seen := {}
+	var blocked := {}
+	var steps := 0
+	var left := 0
+	while Time.get_ticks_msec() < deadline and not _wiped():
+		if _here() != area or not main._vm.on_overland:
+			break
+		var at := _overland_at()
+		seen[at] = true
+		var path := _band_path(ov, bx, at, todo, seen, blocked)
+		if path.size() < 2:
+			break
+		var to: Vector2i = path[1]
+		var d := DungeonView.DELTA.find(to - at)
+		var pre: Dictionary = main.dev_snapshot()
+		var msg_before := String(main._message.text)
+		await _overland_step(d)
+		await _settle()
+		steps += 1
+		if await _cover_recover(pre, "band step onto %s" % to):
+			seen[to] = true
+			blocked[to] = true
+			continue
+		if _here() != area or not main._vm.on_overland:
+			print("   (band: the step onto %s led to %s; back, and not that way again)" % [to, _here()])
+			seen[to] = true
+			blocked[to] = true
+			left += 1
+			main.dev_restore(pre)
+			await _settle()
+			continue
+		if _overland_at() != to:
+			seen[to] = true
+			if _overland_at() == at:
+				blocked[to] = true
+			continue
+		var said := String(main._message.text)
+		if said != "" and said != msg_before:
+			print("   band %s: %s" % [to, said.left(90)])
+		_cover_heal()
+	# A rest out here (the band's rest entries and its night encounters).
+	if _here() == area and main._vm.on_overland and not _wiped():
+		var base: Dictionary = main.dev_snapshot()
+		_cover_snap = base
+		_cover_path = []
+		_cover_resting = true
+		if await _open_camp():
+			await _rest_in_camp(1)
+			await _settle()
+			await _cover_recover(base, "resting")
+		_cover_resting = false
+	_cover_log.squares += seen.size()
+	_cover_log.tries += steps
+	print("   band walk: %d of %d squares, %d steps, %d ways out" % [seen.size(), todo.size(), steps, left])
+
+
+## The shortest way over the band from `at` to the nearest square of `todo` not in `seen`,
+## through squares not `blocked` (water stops; the poisoned river until 0x4AA2).
+func _band_path(ov, bx: int, at: Vector2i, todo: Dictionary, seen: Dictionary, blocked: Dictionary) -> Array:
+	var came := {at: at}
+	var queue: Array[Vector2i] = [at]
+	var goal := Vector2i(-1, -1)
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		if cur != at and todo.has(cur) and not seen.has(cur):
+			goal = cur
+			break
+		if cur != at and blocked.has(cur):
+			continue
+		for d in 4:
+			var nxt: Vector2i = cur + DungeonView.DELTA[d]
+			if nxt.x < 0 or nxt.x > 15 or nxt.y < 0 or nxt.y >= OverlandMap.HEIGHT or came.has(nxt):
+				continue
+			if not _walkable(ov, bx, nxt):
+				continue
+			if blocked.has(nxt) and seen.has(nxt):
+				continue
+			came[nxt] = cur
+			queue.append(nxt)
+	if goal.x < 0:
+		return []
+	var path: Array = []
+	var p := goal
+	while p != at:
+		path.push_front(p)
+		p = came[p]
+	path.push_front(at)
+	return path
 
 
 ## Walks toward `goal` through walls where the game allows it: the cheapest way counting each

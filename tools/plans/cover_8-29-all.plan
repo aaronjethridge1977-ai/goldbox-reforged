@@ -1,0 +1,10 @@
+# Chat 15: the same run replaying every other choice, taken before or not (the states they open are walked).
+# Coverage run (M6, method of 2026-11-13): 8:29, from the main line's checkpoint "chat10a_latest/sokal" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat10a_latest/sokal
+travel 8:29
+expect 8:29
+cover 8:29 40 all
+status
+stop

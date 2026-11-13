@@ -1,0 +1,10 @@
+# Chat 15: the same run replaying every other choice, taken before or not (the states they open are walked).
+# Coverage run (M6, method of 2026-11-13): 5:6, from the main line's checkpoint "valjevo5" (the
+# story flags as a player has them there), travelling in as a player does.
+rules playthrough.plan
+start chat13a_latest/valjevo5
+travel 5:6
+expect 5:6
+cover 5:6 40 all
+status
+stop

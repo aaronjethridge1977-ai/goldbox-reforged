@@ -248,3 +248,29 @@ others from J:
 - Travel knows the parts of a dungeon area (squares that reach each other on foot on the area's
   own map): an exit is only used from the part it is in, and an arrival is placed in the part
   of the square the sweep arrived on (`-> <to> at x,y,dir`).
+
+### Chat 15 additions (coverage runs, per-area fixes)
+
+- Ways in are grouped by the part of the area's own map they arrive in (`_cover_ways_in`): an edge
+  way in whose arrival side is walled on the area's map is left out; each part's ways are tried in
+  turn until one gets in; if none does, the part ends with a logged teleport to its arrival square
+  (`SHORTCUT teleport ... no walking way into part`). 5:4's south edge reaches four parts of map 4.
+- A menu brought by a rest (the city watch in 3:11, a patrol) queues jobs that rest again, up to 8
+  tries, until it comes (an interruption is a roll).
+- States: a job that ends in the area with the area markers or quest flags (0x4A00-0x4AFF) switched
+  on or off (a counter going up doesn't count) keeps its end snapshot; after the jobs, up to six
+  such states are walked again like an arrival, their own menus queued and played
+  (`==== COVER ... walking again in the state 4A0E=1 ...`, `"states"` in the closing line).
+- Stairs and ladders are taken (YES) only on the square the walk is going to; on the way they are
+  passed (2:9's tower stairs bounced the walk up and down).
+- Wilderness bands (6:25, 7:26, 8:27): `cover` walks every square of each part arrived in, nearest
+  first, a step at a time (`_cover_band`); a step that leaves the band is undone and that square
+  isn't walked through again; then a rest. Plans `cover_6-25.plan` etc. start from "zhentil".
+- `cover_<area>-all.plan`: the area's plan with `all` (every other choice replayed, taken before or
+  not), 40 minutes: the variant that opens states. `cover_5-4-alarm.plan` / `cover_5-4-late.plan`:
+  5:4 from "valjevo4" (alarm on) and "valjevo6" (after 5:6).
+- `runcover.sh`: `PLAN=<plan>` runs a variant into the area's own files. `cover_q.sh
+  5-4:cover_5-4-late.plan:_late 6-25 ...` runs a queue two at a time. `covsum.sh` takes any
+  `cov_<set>-<block>[-variant].json`.
+- Report: a test of flag bits that no script of any data set ever sets (OR, WRITE_MEM, AND
+  from elsewhere, any other write to the byte) is dead (5:5's 0x9C93: 0x4A67 bit 7).

@@ -1,0 +1,8 @@
+# Coverage run, variant (chat 15): 5:4 with the alarm sounding (0x4A64 set) and the armed man and
+# the overseer dealt with, as the main line's checkpoint "valjevo4" has them; every choice replayed.
+rules playthrough.plan
+start chat13a_latest/valjevo4
+expect 5:4
+cover 5:4 40 all
+status
+stop
