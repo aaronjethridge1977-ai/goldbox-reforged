@@ -35,8 +35,9 @@ changes game behaviour adds a line to the board's "Rule changes".
 - Speed and repeatability: `bot.sh` runs Godot with `--fixed-fps 1000` (a fixed frame, no real-time sync) and
   `--fast --no-draw --time-scale=1000`, so a run walks the same on a busy machine as on an idle one; every
   generator draws from the run seed (`== run seed <hex>` in the log; `seed=<hex>` on the plan's cover line
-  replays the whole run). An `-all` run takes 1-4 minutes. In parallel: about 8 lanes while Jeremy uses the PC,
-  10-11 when it is idle (one area's variants in one lane). `dettest.sh` re-checks the repeatability.
+  replays the whole run). An `-all` run takes 1-4 minutes. In parallel (measured): 8 lanes while Jeremy uses the PC,
+  10 when it is idle (P=10: 3.9 runs a minute; P=12: 4.1 at 100% CPU; memory and swap never the limit). One
+  area's variants in one lane. `dettest.sh` re-checks the repeatability.
 - Report: `covreport.sh <abs file> --areas= --missed= --critical=`; `--dead=<block>` lists dead outcomes
   with the rule behind each; a `DEAD BUT TAKEN` line means a dead rule is wrong.
 - Finding the way to a missed branch: `CHAIN=1 ./missctx.sh <area>` (tests from the entry to each missed

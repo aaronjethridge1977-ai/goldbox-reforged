@@ -420,44 +420,11 @@ func _replay_keys(names: PackedStringArray) -> void:
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
 		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
 			_combat.quick_all()
-		elif n == "smartquick":             # smartquick (lab): SETTINGS' smarter QUICK tactics in the open fight
-			if _combat._combat != null:
-				_combat._combat.smart_quick = true
-		elif n.begins_with("order="):       # order=<member>:<0-4> (lab): B3's standing order (SmartQuick.ORDER_NAMES)
-			var a := n.trim_prefix("order=").split(":")
-			_party[int(a[0])].quick_order = int(a[1])
-			continue
-		elif n == "smartmonsters":          # smartmonsters (lab): SETTINGS' smarter monster tactics in the open fight
-			if _combat._combat != null:
-				_combat._combat.smart_monsters = true
+		elif LabHooks.handles(n):          # the side lane's lab keys (scripts/combat/lab_hooks.gd)
+			if await LabHooks.handle(self, n):
+				continue
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
 			_combat.toggle_magic()
-		elif n == "fightend":               # fightend (lab): waits until the fight is over or asks CONTINUE BATTLE
-			var waited := 0
-			var foes := []
-			while _combat.visible and not _combat._asking_continue and waited < 2400:
-				if _combat._combat != null:
-					foes = _combat._combat.combatants.filter(func(c): return c.team == 1).map(func(c): return c.who)
-				await get_tree().create_timer(0.5).timeout
-				waited += 1
-			if _combat._asking_continue:
-				print("   ASKED CONTINUE BATTLE")
-			for f in foes:
-				print("   FOE %d %d" % [f.hp, f.status])
-		elif n == "partyhp":                # partyhp (lab): each member's HP and status byte (record 0x11B, 0x10C)
-			for k in _party.size():
-				print("   PARTY %d %d %d" % [k + 1, _party[k].hp, _party[k].status])
-			continue
-		elif n.begins_with("memorize="):    # memorize=<member>:<id>;<id>... (lab): the member's memorized spells; no ids: list them
-			var a := n.trim_prefix("memorize=").split(":")
-			var who: PartyMember = _party[int(a[0])]
-			var st := SpellTable.shared(_game_path)
-			if a.size() > 1 and a[1] != "":
-				who.memorized.clear()
-				for id in a[1].split(";"):
-					who.memorized.append(int(id))
-			print("   %s: %s" % [who.name, ", ".join(who.memorized.map(func(id): return "%d %s" % [id, st.name_of(id)]))])
-			continue
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
 				print("   ", l)
