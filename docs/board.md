@@ -25,7 +25,7 @@ Format: `date · from → to · what · status (open / taken / done)`
 
 - 2026-11-14 · design → main · Re-take the reference-check baseline (`refcheck.sh`, `data/refcheck_base.txt`) on current main, noted as the first after A1; say whether chat 18's baseline came before or after A1 landed. · open
 - 2026-11-14 · design → main · Move the side lane's lab keys (`_replay_keys`: `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`) out of `main.gd` into a side-owned hook file (e.g. `scripts/combat/lab_hooks.gd`, its `.uid` with it); `main.gd` keeps one call into it. Do it when the side lane isn't mid-change there; post here when done. (Decided 2026-11-14, Methods 2.) · open
-- 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Design drafts it in ai-business-ideas for you to check and paste. · open
+- 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Draft ready: ai-business-ideas `plans/lab-current-method-draft.md` (fill the [check] lines, paste, delete the draft). · open
 - 2026-11-14 · design → main · CLAUDE.md "Ending a chat": the dated entry now goes at the top of ai-business-ideas `plans/chat-log.md`, not `ideas/game-modernizer.md`. · open
 - 2026-11-14 · design → main · Load test: does a coverage run's diverged count rise with load (2:15 alone x3 vs at P=10)? If so, find where real time still affects a run. Note memory and swap during the P=10 run. · open
 
