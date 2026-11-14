@@ -156,6 +156,20 @@ def holddump(r, base):
         to, ts = struct.unpack_from("<HH", cr, 0xA)
         print("HOLD %2d %-15s target %-2s %s | +10c %s" % (i, name, recs.get((ts, to), "-" if not ts else "?"),
               cr.hex(" "), rd(rec + 0x10C, 0x14).hex(" ")), flush=True)
+    # The combat map's ground icons (far pointer DS:0x6716, +7 + y * 50 + x; 0x1F: a fallen
+    # figure lies there) and the fallen list (DS:0x66D6, 7 bytes each, count DS:0x6715: the
+    # figure, x, y, the icon it covered), Combat Chat 1.
+    mo, ms = struct.unpack("<HH", rd(ds + 0x6716, 4))
+    for y in range(8, 18):
+        row = rd(base + ms * 16 + mo + 7 + y * 50 + 22, 14)
+        print("HOLD icon %2d %s" % (y, " ".join("%02x" % b for b in row)), flush=True)
+    nf = rd(ds + 0x6715, 1)[0]
+    for k in range(1, nf + 1):
+        e = rd(ds + 0x66D6 + 7 * k, 7)
+        fo, fs = struct.unpack_from("<HH", e, 0)
+        st = rd(base + fs * 16 + fo + 0x10C, 1)[0] if fs else -1
+        print("HOLD fallen %2d fig %-2s at %d,%d covered %02x status %d" % (k, recs.get((fs, fo), "-" if not fs else "?"),
+              e[4], e[5], e[6], st), flush=True)
 
 
 if __name__ == "__main__":

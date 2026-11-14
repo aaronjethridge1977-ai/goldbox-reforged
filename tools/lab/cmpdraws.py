@@ -74,6 +74,13 @@ if ustart:
         orig = omoves.get(k, [])
         if ustart[k] in orig:
             orig = orig[orig.index(ustart[k]):]
+        # A diagonal step can be polled half done: the original writes x before y, so the trace
+        # shows the cell (new x, old y) between the two (Combat Chat 1: the three "positions of 1
+        # figure" verdicts were all this). Such a cell is left out when ours made that diagonal step.
+        pairs = set(zip(ours, ours[1:]))
+        xy = lambda c: tuple(int(v) for v in c.split(","))
+        orig = [c for i, c in enumerate(orig) if not (0 < i < len(orig) - 1 and (orig[i - 1], orig[i + 1]) in pairs
+                and xy(c) == (xy(orig[i + 1])[0], xy(orig[i - 1])[1]))]
         it = iter(ours)
         sub = all(c in it for c in orig)
         if not orig or not sub or orig[-1] != ours[-1]:

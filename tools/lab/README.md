@@ -85,8 +85,7 @@ only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run
 - `cmpfight2.sh <save> <seed> "<keys before>" "<keys after>"` plays one fight in both and `cmpdraws.py`
   compares draws, cells, CONTINUE BATTLE and the party's HP and status, ending `VERDICT: MATCH` or the
   first difference. `cmpfight3.sh` varies a fight with a second seed.
-- `regress.sh` replays every recorded fight (19 of 22 MATCH as of side chat 5: the basilisk added; the kobold caves
-  open at draw 4107 of 8905); `regress.sh record` records
+- `regress.sh` replays every recorded fight (all 23 MATCH since Combat Chat 1, the kobold caves' 8905 and 6825 draws included; `cmpdraws.py` leaves out a diagonal step the trace caught half done); `regress.sh record` records
   them again from the original. Run it after any change in `scripts/combat/`.
 
 **Checking anything else against the original**

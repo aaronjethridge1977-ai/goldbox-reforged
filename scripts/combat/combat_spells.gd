@@ -803,10 +803,14 @@ func _enemies_within(i: int, reach: int) -> int:
 
 ## Whom the computer heals with Cure Light Wounds (GAME.OVR 0x143F3): looking at the eight
 ## cells round the caster (up first, clockwise) and then its own, the standing figure of its
-## side with the fewest hit points below its maximum (the caster too); a figure of
-## either side lying there unconscious or dying instead (the original's list of fallen
-## figures, DS:0x66D6, has no side check; lab: Bakshi healed a fallen orc), but only when
-## nobody standing has fewer than 8 hit points. -1: nobody.
+## side with the fewest hit points below its maximum (the caster too); a party member
+## lying there unconscious or dying instead, but only when nobody standing has fewer than 8
+## hit points. -1: nobody. The fallen ones are the original's list at DS:0x66D6, which has no
+## side check but takes only party members: a figure goes in as it falls only if its fight
+## record's +0x13 is 0 (GAME.OVR 0x3168C), and +0x13 is 1 for every figure past the party
+## (0xD926), monsters of either side (lab, Combat Chat 1: in the kobold net trap Brother Sean
+## healed Bakshi twice where ours healed a fallen kobold, the list empty in the original with
+## nine kobolds down; side chat 3's note "Bakshi healed a fallen orc" was wrong).
 func cure_target(i: int) -> int:
 	var me: Dictionary = c.combatants[i]
 	var best := -1
@@ -826,9 +830,13 @@ func cure_target(i: int) -> int:
 			continue
 		for d in c.combatants.size():
 			var e: Dictionary = c.combatants[d]
-			if e.down and e.cell == cell and e.who.status in [PartyMember.STATUS_UNCONSCIOUS,
-					PartyMember.STATUS_DYING]:
+			if e.down and e.cell == cell and not e.who.is_monster and e.who.status in [
+					PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
 				body = d
+	if OS.has_environment("APDBG"):       # lab: whom the computer would heal
+		print("   @%d cure_target %d best %d low %d body %d %s" % [TpDice.calls, i, best, low, body,
+				"" if body < 0 else "%s status %d hp %d surrendered %s" % [c.combatants[body].cell,
+				c.combatants[body].who.status, c.combatants[body].who.hp, c.combatants[body].get("surrendered", false)]])
 	if low < 8 or body < 0:
 		return best
 	return body

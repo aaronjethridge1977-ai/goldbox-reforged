@@ -1292,7 +1292,7 @@ func find_target(i: int) -> bool:
 	var pool := seen if not seen.is_empty() else all
 	if pool.is_empty():
 		return false
-	_by_distance(c, pool)
+	_by_distance(c, pool, seen.is_empty())
 	if OS.has_environment("APDBG"):
 		var ps := ""
 		for j in pool:
@@ -1311,16 +1311,19 @@ func find_target(i: int) -> bool:
 ## one) between the closest cells; the sort is an exchange sort (each entry against every
 ## later one) that swaps when the later one is nearer, or equally near with a lower direction
 ## (wedge_dir from the chooser) unless that one is diagonal and the other straight.
-func _by_distance(c: Dictionary, list: Array[int]) -> void:
+## What goes into the sort (lab, Combat Chat 1, fitted to all 230 target picks of the kobold
+## net trap): every standing figure in sight, both sides, and the chooser itself (distance 0,
+## direction 0, so it moves to the front and the figures it passes change places); the caller
+## then keeps the ones it wants. With no enemy in sight (`any_sight`, find_target's fallback)
+## every standing figure goes in, seen or not. Side chat 6's "enemies alone" matched more
+## picks than ours did then (it left the chooser out), 33 differing ties against 1 now.
+func _by_distance(c: Dictionary, list: Array[int], any_sight := false) -> void:
 	var me := combatants.find(c)
 	var full: Array = []          # [index, distance, direction]
 	for j in combatants.size():
-		if j == me or combatants[j].down:
+		if combatants[j].down and j != me:
 			continue
-		# Others in the sort: only the other side's figures in sight (lab, side chat 6: the
-		# original's list at DS:0x6718 holds the enemies alone; with the kobolds' own side in it
-		# the exchange sort put Phineas before Thrender at the same distance).
-		if not (j in list) and (combatants[j].team == c.team or clear_line(c, combatants[j]).y != 1):
+		if j != me and not (j in list) and not any_sight and clear_line(c, combatants[j]).y != 1:
 			continue
 		var pr := closest(c, combatants[j])
 		var d: Vector2i = (pr[1] - pr[0]).abs()
