@@ -1201,6 +1201,7 @@ func _save_path() -> String:
 func _quick_save() -> void:
 	if _busy or _vm.state == EclVM.State.MENU or _vm.ecl == null:
 		_status.text = "Can't save in the middle of an event; finish it first."
+		_note_24("CAN'T SAVE NOW.")
 		return
 	var cfg := ConfigFile.new()
 	cfg.set_value("place", "map_file", String(_maps[_map_index].file))
@@ -1231,6 +1232,23 @@ func _quick_save() -> void:
 	cfg.set_value("party", "roster", roster)
 	var err := cfg.save(_save_path())
 	_status.text = "Saved." if err == OK else "Save failed (error %d)." % err
+	_note_24("GAME SAVED." if err == OK else "THE GAME COULDN'T BE SAVED.")
+
+
+## P39 (QoL, an exception to the pause, Jeremy 2026-11-14): F2 / F3 say what happened on
+## row 24 of the walking screen, in place of its menu, for a moment.
+var _row24_note := ""
+var _row24_until := 0
+
+
+func _note_24(text: String) -> void:
+	_row24_note = text
+	_row24_until = Time.get_ticks_msec() + 1500
+	_show()
+	await get_tree().create_timer(1.6).timeout
+	if Time.get_ticks_msec() >= _row24_until and _row24_note == text:
+		_row24_note = ""
+		_show()
 
 
 ## Lab aid: the first item in the game's treasure and monster lists whose full name starts
@@ -1446,6 +1464,7 @@ func _quick_load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(_save_path()) != OK:
 		_status.text = "No quick save yet (F2 in walk mode saves)."
+		_note_24("NO QUICK SAVE YET.")
 		return
 	var map_file: String = cfg.get_value("place", "map_file", "")
 	var map_id: int = cfg.get_value("place", "map_id", -1)
@@ -1455,6 +1474,7 @@ func _quick_load() -> void:
 			index = i
 	if index < 0:
 		_status.text = "Quick save names a map that isn't here."
+		_note_24("THE QUICK SAVE DOESN'T FIT THIS GAME.")
 		return
 	# Stop anything in progress.
 	_timer.stop()
@@ -1524,6 +1544,7 @@ func _quick_load() -> void:
 		_party[i].items = _items_from(saved.get("items", []))
 		_party[i].recalculate(_types)
 	_status.text = "Loaded."
+	_note_24("GAME LOADED.")
 	_show()
 
 
@@ -2868,10 +2889,16 @@ func _draw_screen() -> void:
 	OverlayLook.last_wild = wild
 	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
+	var note24 := _row24_note != "" and Time.get_ticks_msec() < _row24_until
+	if note24:
+		menu = []
 	var lit := clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 	if who_label != "":
 		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	if note24:
+		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
+		_screen.update()
 	if who_label != "":
 		_screen.text(0, 24, who_label, 13)
 		_screen.menu_line(24, ["SELECT"], who_label.length() + 1, 0)
