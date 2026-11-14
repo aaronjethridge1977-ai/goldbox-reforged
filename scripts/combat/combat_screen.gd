@@ -818,7 +818,9 @@ func _bottom_menu() -> Array:
 	var items := ["MOVE", "VIEW", "AIM", "USE"]
 	var c: Dictionary = _combatants[_combat.active]
 	var who: PartyMember = c.who
-	if _combat.magic != null and not _combat.magic.castable(_combat.active).is_empty():
+	# CAST: not once the figure has been wounded this fight (GAME.OVR 0x9F46, record byte 1).
+	if _combat.magic != null and not c.get("no_spells", false) and \
+			not _combat.magic.castable(_combat.active).is_empty():
 		items.append("CAST")
 	if Combat.turn_level(who) > 0:
 		items.append("TURN")
