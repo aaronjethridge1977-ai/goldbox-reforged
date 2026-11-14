@@ -1109,8 +1109,8 @@ func done() -> void:
 #   attacks its target if adjacent, else a random adjacent enemy. Lists of figures go
 #   nearest first (_by_distance). With no enemy adjacent it steps towards its target: the
 #   direction to the target turned by the pattern's offsets, the first of five that is free.
-#   A step needs more movement left than it costs (the computer never spends its last
-#   half-move). Stepping straight back counts as a failure, as does finding no step; after
+#   A step needs movement left at least its cost (GAME.OVR 0xB235; side chat 2 corrected
+#   "the computer never spends its last half-move"). Stepping straight back counts as a failure, as does finding no step; after
 #   two failures it picks a new target, after three it stops. A step can draw free attacks.
 # - A combatant that cannot attack or move ends its turn guarding: the first enemy to step
 #   next to it before its next turn is attacked. An unarmoured magic-user guards rather
@@ -1405,8 +1405,11 @@ func _can_step(c: Dictionary, dir: int) -> bool:
 	var fit := fits(combatants.find(c), c.cell + DIRS[dir])
 	if not fit[0]:
 		return false
+	# GAME.OVR 0xB235 (side chat 2): the step is allowed when the movement left is at least its
+	# cost (2, or 3 diagonally); the original's computer does spend its last half-moves (lab:
+	# Phineas used all 20 of his).
 	var cost := 3 if dir % 2 == 1 else 2
-	return cost < c.moves
+	return cost <= c.moves
 
 
 ## One step towards the target. Returns "moved", "retry" or "end".

@@ -429,3 +429,8 @@ games draw the same numbers, so a fight can be compared draw by draw.
 - Setup for these: `por_slow.conf` is `por.conf` with `cpu_cycles = 1500`; `trace.py` reads
   `game/GAME.OVR` and `re/start.img` (START.EXE unpacked with `.lab/unexepack.py`), both in
   the lab folder only.
+- Seed 0badf00d also matches all draws. Open (no dice involved): at 25,13 the original's
+  Phineas, heading for the orc at 26,11 on pattern 1 with 25,12 taken, stepped west (24,13)
+  then north, where ours steps north-west (24,12); the floor there is plain (DS:0x6716's grid
+  read in the lab) and nobody stands on it. Its step check (GAME.OVR 0xB235) allows a step
+  when the movement left is at least its cost (ours now does too).
