@@ -7,6 +7,8 @@ rules playthrough.plan
 # Chat 17: in the caves, stay in (the walk of a cave part answered LEAVE CAVE on its first square
 # and walked the band again); LEAVE CAVE is queued as a job.
 answer 6:25 PASSAGE WHICH LEADS OUTSIDE|STAY IN
+# and fight the thri-kreen who block the cave's passages (LEAVE is queued as a job).
+answer 6:25 THEY BLOCK THE PASSAGE|ATTACK
 start chat13a_latest/zhentil
 travel 6:25
 expect 6:25
