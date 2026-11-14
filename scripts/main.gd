@@ -204,6 +204,12 @@ func _ready() -> void:
 			if not "--frame-sleep" in OS.get_cmdline_user_args():
 				OS.low_processor_usage_mode = false
 				OS.low_processor_usage_mode_sleep_usec = 0
+		# --time-scale=<n> (lab, after --fast): game timers run n times faster still (chat 17:
+		# the bot's quiet window is counted in game time, so 1000 makes it a few frames).
+		if arg.begins_with("--time-scale=") and OS.is_debug_build():
+			Engine.time_scale = float(arg.get_slice("=", 1))
+		if arg == "--no-draw" and OS.is_debug_build():
+			dev_no_draw = true
 		# --coverage=<file>: record which parts of the event scripts run (M6). Dev builds only.
 		if arg.begins_with("--coverage=") and OS.is_debug_build():
 			_vm.coverage = ScriptCoverage.new(arg.trim_prefix("--coverage="))
@@ -511,6 +517,17 @@ func _press(n: String) -> void:
 		await get_tree().process_frame
 
 
+## Lab: up to 60 frames for a step to play out. Chat 17: over once nothing has been busy for
+## 8 frames in a row (a fixed 60 frames were most of a coverage run's time).
+func _step_wait() -> void:
+	var quiet := 0
+	for i in 60:
+		await get_tree().process_frame
+		quiet = quiet + 1 if not _busy and _timer.is_stopped() else 0
+		if quiet >= 8:
+			return
+
+
 ## Lab: walks to a square one step at a time and plays out whatever happens with the same
 ## policy as the lab's tour.py for the original (Enter on prompts, COMBAT on encounters, quick
 ## fights, CONTINUE BATTLE no, leave the treasure, BASH locked doors, script menus from answers= or their
@@ -556,8 +573,7 @@ func _tour(goal: Vector2i) -> void:
 			while int(_facing) != d:
 				await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
 			await _press("up")
-		for i in 60:
-			await get_tree().process_frame
+		await _step_wait()
 		if _pos == before and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
 				and not _combat.visible and _message.text.strip_edges() == "" and not _vm.on_overland:
 			# A step the area's script refuses without a word may be a secret door not found
@@ -606,8 +622,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		while int(_facing) != k:
 			await _press("right" if (k - int(_facing) + 4) % 4 != 3 else "left")
 		await _press("up")
-		for i in 60:
-			await get_tree().process_frame
+		await _step_wait()
 		while await _auto_handle():
 			await get_tree().process_frame
 		if _pos != next:
@@ -616,8 +631,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		while int(_facing) != back:
 			await _press("right" if (back - int(_facing) + 4) % 4 != 3 else "left")
 		await _press("up")
-		for i in 60:
-			await get_tree().process_frame
+		await _step_wait()
 		while await _auto_handle():
 			await get_tree().process_frame
 		ok = _pos == at
@@ -643,6 +657,7 @@ var auto_hook: Callable = Callable()
 var _shadow: ShadowExplorer = null     # dev: tries the choices not taken (--branches=)
 ## Dev (M6 coverage runs, chat 14): a harness records each step and the choices that follow it,
 ## and later puts the game back (dev_snapshot / dev_restore) to play another choice for real.
+var dev_no_draw := false      # --no-draw (lab, dev builds): _show skips the drawing (chat 17)
 var dev_step_hook: Callable = Callable()     # (direction) as a step starts in walk mode
 var dev_choice_hook: Callable = Callable()   # (choice) as a script menu takes a choice
 var dev_typed_hook: Callable = Callable()    # (text) as a script's question takes an answer
@@ -2615,6 +2630,12 @@ func _show() -> void:
 			area, e.file, e.id, _map_index + 1, _maps.size(), hint]
 		return
 	# Walk mode
+	if dev_no_draw:
+		# Chat 17: the lab's headless runs (--no-draw) skip the drawing: about 9 ms a call, a
+		# third of a coverage run's time. Only what the game needs from here is done.
+		if not _vm.on_overland:
+			_ensure_area_script()
+		return
 	if _vm.on_overland and _vm.overland != null:
 		_view_img = _event_image if _event_image != null else _overland_view()
 		_picture.texture = ImageTexture.create_from_image(_view_img)

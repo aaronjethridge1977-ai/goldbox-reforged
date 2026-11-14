@@ -329,3 +329,23 @@ others from J:
   boars, the anhkheg, the thri-kreen) from ever being walked once ENTER CAVE had been taken once.
 - `walls.gd` (copy into `proj/` as `_walls.gd`): `godot --headless --path . --script res://_walls.gd --
   <GEOn.DAX> <block> <event|-1>` lists event squares and their walls.
+
+### Chat 17 additions
+
+- **Speed, again (about 6 times):** a profile of a coverage run (each routine timed) showed two
+  costs that weren't work. Drawing the screen took about 9 ms a call (`_show`: the 3D view and
+  the adventure screen, in GDScript), a third of the time; `--no-draw` (dev builds) skips it
+  and keeps what the game needs from `_show` (the area's script for the map). Then `_settle`'s
+  quiet window of 15 ms real time was most of the rest: it is now counted in game time (the
+  same 375 ms of game time as 15 ms at `--fast`'s 25 times), and `--time-scale=1000` makes that
+  a few frames. `bot.sh` passes both. 4:21's `-all` run: 504 s → 83 s on a shared core, the
+  same jobs, squares, tries and states (64, 637, 5096, 6). `BOT_SRC=` runs another copy of
+  the source (for before/after tests).
+- The tour's fixed 60 frames after each step end once nothing has been busy for 8 frames
+  (`main._step_wait`).
+- **Resuming a run cut off by a restart:** `runcover.sh` sets `BOT_RESUME=data/resume_<area><suffix>.txt`;
+  the run writes each finished job and state walk there. Rerun (`cover_resume.sh`), it walks
+  the maps again (that queues the jobs with their snapshots) and skips what was done, except a
+  job that opened a state not yet walked. Before, an `-all` run longer than the 30 minutes
+  between restarts started over each time and never reached its later states (1:24, 2:20, 7:22
+  in chat 16).

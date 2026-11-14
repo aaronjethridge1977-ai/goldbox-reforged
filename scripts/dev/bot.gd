@@ -509,11 +509,16 @@ func _settle() -> void:
 	while Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 		if not await main._auto_handle():
+			# Chat 17: the window is game time (what the timers count): QUIET_MS of real time at
+			# --fast's 25 times. With --time-scale=1000 it passes in a few frames; the 15 ms of
+			# real time were most of a coverage run's time. Real time still bounds it.
 			var quiet := Time.get_ticks_msec() + QUIET_MS
+			var game_ms := 0.0
 			var frames := 0
-			while Time.get_ticks_msec() < quiet or frames < 10:
+			while frames < 10 or (game_ms < QUIET_MS * 25.0 and Time.get_ticks_msec() < quiet):
 				frames += 1
 				await get_tree().process_frame
+				game_ms += get_process_delta_time() * 1000.0
 			if not await main._auto_handle():
 				return
 
@@ -3214,6 +3219,7 @@ func _cover(area: String, minutes: int) -> void:
 	main.dev_choice_hook = _cover_choice
 	main.dev_typed_hook = _cover_typed
 	var deadline := Time.get_ticks_msec() + minutes * 60000
+	_cover_resume_load()
 	if false:
 		pass
 	else:
@@ -3228,8 +3234,11 @@ func _cover(area: String, minutes: int) -> void:
 			if _cover_taken(job.key) or _cover_ran.has(job.key):
 				continue
 			_cover_ran[job.key] = true
+			if _cover_resume_skip(job.key):
+				continue
 			done += 1
 			await _cover_job(job)
+			_cover_resume_note("ran", job.key)
 		# The states jobs opened, each walked like an arrival (its events again, its menus'
 		# new choices queued and played), up to six.
 		var walked := 0
@@ -3248,6 +3257,9 @@ func _cover(area: String, minutes: int) -> void:
 				continue
 			_cover_states_walked[sig] = true
 			walked += 1
+			if _cover_resumed.states.has(sig):
+				print("==== COVER %s: the state %s was walked before the restart" % [area, sig.strip_edges()])
+				continue
 			print("==== COVER %s: walking again in the state %s" % [area, sig.strip_edges()])
 			main.dev_restore(snap)
 			await _settle()
@@ -3257,8 +3269,12 @@ func _cover(area: String, minutes: int) -> void:
 				if _cover_taken(job.key) or _cover_ran.has(job.key):
 					continue
 				_cover_ran[job.key] = true
+				if _cover_resume_skip(job.key):
+					continue
 				done += 1
 				await _cover_job(job)
+				_cover_resume_note("ran", job.key)
+			_cover_resume_note("states", sig)
 		_cover_log["states"] = walked
 		if not _cover_jobs.is_empty():
 			_issue("cover %s: out of time with %d choices still queued" % [area, _cover_jobs.size()])
@@ -3274,6 +3290,58 @@ func _cover(area: String, minutes: int) -> void:
 		print("COVER FIGHT ", f)
 	_cover_area = ""
 	main._vm.coverage.save()
+
+
+## Chat 17: a run cut off by a restart of the workspace (every 30 minutes or so) starts again
+## with the same jobs; the jobs and state walks it finished are kept in BOT_RESUME's file, so
+## the rerun walks the maps again (that queues the jobs, with their snapshots) but skips them.
+var _cover_resumed := {"ran": {}, "states": {}, "opened": {}}   # from before the restart
+var _cover_resume_file := ""
+
+
+func _cover_resume_load() -> void:
+	_cover_resumed = {"ran": {}, "states": {}, "opened": {}}
+	_cover_resume_file = OS.get_environment("BOT_RESUME")
+	if _cover_resume_file == "" or not FileAccess.file_exists(_cover_resume_file):
+		return
+	var f := FileAccess.open(_cover_resume_file, FileAccess.READ)
+	for line in f.get_as_text().split("\n", false):
+		var kind := line.get_slice("\t", 0)
+		var key := line.get_slice("\t", 1)
+		if kind == "opened":
+			# A job that opened a state: run again unless that state was walked.
+			var jk := key.get_slice("|||", 0)
+			if not _cover_resumed.opened.has(jk):
+				_cover_resumed.opened[jk] = []
+			_cover_resumed.opened[jk].append(key.get_slice("|||", 1))
+		elif _cover_resumed.has(kind):
+			_cover_resumed[kind][key] = true
+	print("==== COVER %s: resuming: %d jobs and %d states done before the restart" % [_cover_area,
+		_cover_resumed.ran.size(), _cover_resumed.states.size()])
+
+
+## A job done before the restart is skipped, unless a state it opened wasn't walked then.
+func _cover_resume_skip(key: String) -> bool:
+	if not _cover_resumed.ran.has(key):
+		return false
+	for sig in _cover_resumed.opened.get(key, []):
+		if not _cover_resumed.states.has(sig):
+			return false
+	return true
+
+
+func _cover_resume_note(kind: String, key: String) -> void:
+	if _cover_resume_file == "":
+		return
+	var f: FileAccess
+	if FileAccess.file_exists(_cover_resume_file):
+		f = FileAccess.open(_cover_resume_file, FileAccess.READ_WRITE)
+	else:
+		f = FileAccess.open(_cover_resume_file, FileAccess.WRITE)
+	if f == null:
+		return
+	f.seek_end()
+	f.store_line("%s\t%s" % [kind, key])
 
 
 ## Whether a queued choice has run since it was queued (in this run or another).
@@ -3527,6 +3595,7 @@ func _cover_job(job: Dictionary) -> void:
 			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < 12:
 				_cover_states[sig] = main.dev_snapshot()
 				print("   (a new state for the walk: %s)" % sig.strip_edges())
+				_cover_resume_note("opened", "%s|||%s" % [job.key, sig])
 		# Chat 16: a job that leaves the party on a part of a map no walk has been in (6:25's
 		# caves: ENTER, then STAY IN; the walk answers LEAVE CAVE) is walked as an arrival too.
 		if not main._vm.on_overland:
@@ -3534,6 +3603,7 @@ func _cover_job(job: Dictionary) -> void:
 			if not _cover_parts_walked.has(part) and not _cover_states.has(part) and not _cover_states_walked.has(part):
 				_cover_states[part] = main.dev_snapshot()
 				print("   (a part no walk has been in: %s)" % part)
+				_cover_resume_note("opened", "%s|||%s" % [job.key, part])
 
 
 ## Every map the area's script runs on: its events, each square from every side, a rest, and
