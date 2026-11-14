@@ -281,10 +281,10 @@ the alarm off and the disguise on (0xA4AE).
   `-towers` variant flees the bugbears instead; its first runs were overridden by the bot's no-surrender rule and
   the rules file's own answer (both fixed). The payment routine (0x9956-0x9B66) needs other purses.
 - **The bands (6:25 72 / 66, 7:26 89 / 78, 8:27 84 / 72):** the caves and most sites are random rolls (about one
-  step in 20 rolls an encounter, 0xA0B3), so each run meets different ones; runs are merged. **A possible engine
-  difference:** the band caves' map (GEO6 block 25) has walls (values 1 and 2, solid in WALLDEF6 block 17) on
-  every side of the entrance squares but the way out, so in ours a party that answers STAY IN can't walk the
-  cave (the fights inside, 0xA594-0xAAB7, never come). To check in the original before changing anything.
+  step in 20 rolls an encounter, 0xA0B3), so each run meets different ones; runs are merged. The caves'
+  map (GEO6 block 25) was checked in the original: the entrance at 15,3 is a dead end facing out there too, and
+  from 0,9 the party walks north, as in ours. The walks had stopped at the entrance because the four searches
+  in a row asked the passage question four times and the repeated-question rule answered LEAVE CAVE (fixed).
 - **3:8 City Hall (81 / 82, quest flags 23/34):** the clerk's and the council's answers follow reports set in
   other areas (Podol Plaza cleared 0x4AE7 = 254, the textile house 0x4AE6 = 254, Cadorna's seal 0x4AC8 = 128, the
   Bivant rescue 0x4AA9 = 128). The `-story` variant sets them as those areas' scripts do.
