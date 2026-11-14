@@ -1186,17 +1186,41 @@ func find_target(i: int) -> bool:
 	return true
 
 
-## The original lists figures nearest first (GAME.OVR 0x3045B, seen in the lab in side chat
-## 2: Brother Sean's "first of 3" was the orc 8 half-moves away, not the first orc): the
-## distance in half-moves (2 a straight step, 3 a diagonal one) between the closest cells,
-## a tie putting the later combatant first.
+## The original lists figures nearest first (GAME.OVR 0x3045B builds the list of every
+## figure in sight in combatant order, 0x2FB80 sorts it, then the caller keeps the ones it
+## wants; read in side chat 2): the distance in half-moves (2 a straight step, 3 a diagonal
+## one) between the closest cells; the sort is an exchange sort (each entry against every
+## later one) that swaps when the later one is nearer, or equally near with a lower direction
+## (wedge_dir from the chooser) unless that one is diagonal and the other straight.
 func _by_distance(c: Dictionary, list: Array[int]) -> void:
-	var dist := {}
-	for j in list:
+	var me := combatants.find(c)
+	var full: Array = []          # [index, distance, direction]
+	for j in combatants.size():
+		if j == me or combatants[j].down:
+			continue
+		if not (j in list) and clear_line(c, combatants[j]).y != 1:
+			continue
 		var pr := closest(c, combatants[j])
 		var d: Vector2i = (pr[1] - pr[0]).abs()
-		dist[j] = 2 * (maxi(d.x, d.y) - mini(d.x, d.y)) + 3 * mini(d.x, d.y)
-	list.sort_custom(func(a, b): return dist[a] < dist[b] or (dist[a] == dist[b] and a > b))
+		full.append([j, 2 * (maxi(d.x, d.y) - mini(d.x, d.y)) + 3 * mini(d.x, d.y), wedge_dir(pr[0], pr[1])])
+	for a in range(full.size() - 1):
+		for b in range(a + 1, full.size()):
+			var x: Array = full[a]
+			var y: Array = full[b]
+			var swap: bool = y[1] < x[1]
+			if y[1] == x[1] and y[2] < x[2] and not (y[2] % 2 > x[2] % 2):
+				swap = true
+			if swap:
+				full[a] = y
+				full[b] = x
+	var keep := list.duplicate()
+	list.clear()
+	for e in full:
+		if e[0] in keep:
+			list.append(e[0])
+	for j in keep:            # (anyone the scan left out keeps its place at the end)
+		if not (j in list):
+			list.append(j)
 
 
 ## Ends combatant `i`'s turn on guard, keeping its unused attacks for a guard attack.
@@ -1460,12 +1484,6 @@ func ai_act() -> bool:
 		return false
 	if not c.get("ai", false):
 		_ai_begin(active)
-		if TpDice.on:
-			# The original's computer turn rolls d7 as it weighs a spell (GAME.OVR 0xAFA4) and
-			# d7 as it weighs an item (0xB0F4) before choosing what to do; lab dice only until
-			# those choices are traced (ours choose spells and items their own way).
-			roll(1, 7, "%s weighs a spell" % c.who.name)
-			roll(1, 7, "%s weighs an item" % c.who.name)
 		_turn_start_powers(active)
 		if c.down:
 			return false
@@ -1488,6 +1506,13 @@ func ai_act() -> bool:
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
+		if TpDice.on:
+			# The original's computer turn rolls d7 as it weighs a spell (GAME.OVR 0xAFA4) and
+			# d7 as it weighs an item (0xB0F4) before choosing what to do, after its morale
+			# check (lab: a goblin that surrendered drew neither); lab dice only until those
+			# choices are traced (ours choose spells and items their own way).
+			roll(1, 7, "%s weighs a spell" % c.who.name)
+			roll(1, 7, "%s weighs an item" % c.who.name)
 		c.fleeing = morale == "flee" or c.get("turned_undead", false)
 		if c.get("turned_undead", false):
 			pass

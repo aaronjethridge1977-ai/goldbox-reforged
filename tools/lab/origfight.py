@@ -8,7 +8,7 @@ def rs():
     mem.seek(a); return int.from_bytes(mem.read(4), "little")
 start = rs(); last_s = start; total = 0; last_txt = None; t0 = time.time(); lastq = 0
 out.write("start seed %08x\n" % start)
-keys.key("enter")
+if "noenter" not in sys.argv: keys.key("enter")
 seen_fight = False
 while time.time() - t0 < secs:
     im = lab.screen(); s = rs()

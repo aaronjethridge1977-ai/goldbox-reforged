@@ -434,3 +434,16 @@ games draw the same numbers, so a fight can be compared draw by draw.
   then north, where ours steps north-west (24,12); the floor there is plain (DS:0x6716's grid
   read in the lab) and nobody stands on it. Its step check (GAME.OVR 0xB235) allows a step
   when the movement left is at least its cost (ours now does too).
+- `cmpfight2.sh <save> <seed> "<keys before>" "<keys after>"` does the same for any fight a
+  save leads to (ours writes the saves: `load=E,at=14;8;2,e,s,f,n` made F, one step north of
+  the Slums' 14,9 S). `cmpmoves.py` lists each combatant's cells in both. `dsread.py <hex>
+  [n]` prints bytes at DS:hex in the running original.
+- Slums goblin patrol (save F, seed 10000012: "up,enter" then "up,c"): matches all draws
+  to the last goblin's surrender, after two more fixes: the target list's tie order (the
+  original's exchange sort at GAME.OVR 0x2FB80) and the morale check before the spell and
+  item d7s.
+- Found for the main chat (script, not combat): on the Slums' first step after loading F
+  (the "YOU HAVE ENTERED..." text at 14,9) the original draws no patrol RANDOM (its script
+  exits at 9B2A COMPARE 0,[6E82] / IF_NE); ours draws one. Ours never sets 0x6E82; in the
+  original it reads 0 once the step is over, and script addresses aren't DS offsets there,
+  so where it lives is still to find.
