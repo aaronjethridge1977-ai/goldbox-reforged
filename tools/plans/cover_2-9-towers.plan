@@ -1,0 +1,12 @@
+# Chat 17: 2:9 with the walk fleeing the bugbears at the gate ("THROW DOWN YOUR WEAPONS!"):
+# fighting them raises the alarm and marks both towers (0x4A77 |= 12, 0xA60E), so the walks
+# that followed found the tower rooms empty (the mage and the fighter, 0xA1D8 and 0xA2F9).
+# ATTACK is still played, as a job.
+rules playthrough.plan
+answer 2:9 THROW DOWN YOUR WEAPONS|FLEE
+start chat13a_latest/graveyard
+travel 2:9
+expect 2:9
+cover 2:9 40 all
+status
+stop

@@ -381,3 +381,7 @@ others from J:
 - An area whose script reads the hour (0x49C8/0x49C9; 20 areas do) is walked once more twelve
   hours later (`SHORTCUT clock +12 hours`, a state named "part clock +12h"): 5:6's smith works
   only until 14:00, and the runs' checkpoints came at night.
+- A fight with allies in it (0x80) queues an "ally attacked" job: won, with 0x6E33 set as after
+  a YES at ATTACK ALLY (logged `SHORTCUT ally`).
+- `cover_2-9-towers.plan`: the walk flees the gate's bugbears (fighting them marks both towers,
+  0x4A77 |= 12, so the tower rooms were always empty).

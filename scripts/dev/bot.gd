@@ -3215,6 +3215,7 @@ var _cover_area := ""
 var _cover_snap := {}          # the game as the current step began (in the area only)
 var _cover_fresh := false      # chat 15: each event walked to from the part's arrival
 var _cover_flee_next := false  # chat 15: the next set fight is fled (a flee job)
+var _cover_ally_next := false  # chat 17: the next fight (at _cover_flee_at) has an ally attacked
 var _cover_flee_at := -1        # chat 16: ... the one at this script offset (fights before it are won)
 var _cover_target := Vector2i(-1, -1)   # chat 15: the square the walk is going to
 var _cover_resting := false    # chat 15: the menus now come from a rest, not a step
@@ -3562,6 +3563,21 @@ func _cover_fight(rows: Array) -> bool:
 		main._combat.dev_flee = true
 		_shortcut("flee", "%s at %04X" % [vm.block_key, vm._at + EclScript.BASE], "coverage run: the fled side of a set fight")
 		return false
+	if _cover_ally_next and (_cover_flee_at < 0 or vm._at == _cover_flee_at):
+		# Chat 17: an "attacked an ally" job: the fight is won, with 0x6E33 set as a player who
+		# answered YES at ATTACK ALLY leaves it (7:17's nomads: "THE FILTHY TRAITORS!").
+		_cover_ally_next = false
+		vm.write_byte(EclVM.ALLY_ATTACKED, 1)
+		_shortcut("ally", "%s at %04X" % [vm.block_key, vm._at + EclScript.BASE], "coverage run: an ally attacked in the fight")
+	# Each fight with allies in it (0x80, the scripts' LOAD_CHAR past the party) also queues a
+	# job in which one of them is attacked (chat 17).
+	if not _cover_snap.is_empty() and vm.block_key == _cover_area and _cover_forced.is_empty() and 0x80 in vm.monster_teams:
+		var akey := "%s|ally@%d" % [vm.block_key, vm._at]
+		if not _cover_queued.has(akey):
+			_cover_queued[akey] = true
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": _cover_path.duplicate(true),
+				"key": akey, "rest": _cover_resting, "ally": true, "look": _cover_looking, "flee_at": vm._at,
+				"what": "%04X COMBAT, an ally attacked" % [vm._at + EclScript.BASE]})
 	# Each set fight of the area also queues a job that flees it (once a run).
 	if not _cover_snap.is_empty() and vm.block_key == _cover_area and _cover_forced.is_empty():
 		var key := "%s|flee@%d" % [vm.block_key, vm._at]
@@ -3641,6 +3657,7 @@ func _cover_job_once(job: Dictionary) -> void:
 	_cover_stairs_for = ""
 	_cover_snap = {}
 	_cover_flee_next = job.get("flee", false)
+	_cover_ally_next = job.get("ally", false)
 	_cover_flee_at = int(job.get("flee_at", -1))
 	if job.get("rest", false):
 		# A menu a rest brought: rest again until it comes (an interruption is a roll).
@@ -3674,6 +3691,7 @@ func _cover_job_once(job: Dictionary) -> void:
 		print("   (coverage job: %d answers not used; the menu never came)" % _cover_forced.size())
 		_cover_forced = []
 	_cover_flee_next = false
+	_cover_ally_next = false
 	var wiped: bool = await _cover_recover(job.snap, "job " + String(job.key))
 	print("   job ends: ", main._state_line())
 	# Chat 15: a job that leaves the party in the area with its quest flags changed (the
