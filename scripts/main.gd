@@ -304,8 +304,10 @@ func _on_start_chosen(what: String, letter: String) -> void:
 		"load":
 			load_original_save(letter)
 		"new":
+			_automap.from_save({})
 			_new_game()
 		"create":
+			_automap.from_save({})
 			# As the original starts: an empty party, the party menu's CREATE / ADD, then
 			# BEGIN ADVENTURING starts the game with whoever was added.
 			_party.clear()
@@ -416,6 +418,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 					scr = o._scr
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
+			continue
+		elif n == "automap":                # automap: the squares the automap holds, per map (lab)
+			for k in _automap.visited:
+				print("   automap %s: %d squares" % [k, (_automap.visited[k] as PackedByteArray).count(1)])
 			continue
 		elif n.begins_with("tpseed="):      # tpseed=<hex>: the original's own dice from that seed (TpDice)
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
@@ -931,7 +937,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_sheet.open(_all_monsters(), "MONSTERS")    # developer aid
 			get_viewport().set_input_as_handled()
 			return
-		elif key == KEY_M and _automap.enabled:
+		elif key == KEY_M and _automap.enabled and not (event as InputEventKey).alt_pressed:
+			# Alt+M is the original's combat MAGIC key, never the map (Methods 3). Plain M is no
+			# key on the original's adventure menu (lab, chat 22).
 			_automap.mini_open = not _automap.mini_open
 			_automap.full_open = false
 			_automap.queue_redraw()
@@ -970,9 +978,25 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_S:
 			# SEARCH: the original's search mode, which the scripts read (more random
 			# encounters, hidden things found).
+			# Lab (chat 22, save J): the place line says SEARCH at once, and loses it on the
+			# second press; the clock doesn't move.
 			_searching = not _searching
 			_vm.write_byte(SEARCH_FLAG, 1 if _searching else 0)
-			_status.text = "SEARCHING" if _searching else "Search off."
+			get_viewport().set_input_as_handled()
+			_show()
+			return
+		elif key == KEY_C:
+			# CAST: the selected member's spells in memory (camp's CAST page), or "<NAME> HAS NO
+			# SPELLS MEMORIZED" for a moment (lab, chat 22).
+			if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and not _party.is_empty():
+				for m in _party:
+					m.recalculate(_types)
+				var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
+				if _vm.on_overland:
+					menu.erase("AREA")
+				_camp.spells = SpellTable.shared(_game_path)
+				_camp.open_cast(_party, clampi(_vm.selected, 0, _party.size() - 1), menu)
+				_dev_reseed([_camp._rng2])
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_L:
@@ -1293,6 +1317,8 @@ func _save_original(letter: String) -> bool:
 		_sync_position_to_vm(_facing)
 	var ok := OriginalSave.write(_game_path, letter, _vm_file, _vm.mem, _vm.read_byte(EclVM.PARTY_X),
 		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party)
+	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save()}):
+		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
 	_party_menu.save_failed = not ok
 	print("   (saved game %s%s)" % [letter.to_upper(), "" if ok else ": FAILED"])
@@ -1336,6 +1362,10 @@ func load_original_save(letter: String) -> bool:
 		if b != 0:
 			started = true
 			break
+	# Our additions from the companion file (CompanionSave): none, or a stale one, gives an
+	# empty map.
+	var extra := CompanionSave.read(_game_path, letter)
+	_automap.from_save(extra.get("visited", {}))
 	if not started:
 		_party.assign(loaded)
 		_vm.party = _party
@@ -2750,7 +2780,7 @@ func _show() -> void:
 	var script_name := "ECL%d block %d" % [_vm_file, _vm_block] if _vm.ecl != null else "no script"
 	_status.text = "WALK  %s   %d,%d facing %s  %s   event %d   %s   %s\n↑ forward  ↓ back  ←/→ turn   E encamp  S search  L look  V view  F2 save  F3 load   N day/night  O outlines  C capture  G go to  F4 script   Tab pictures" % [
 		area, _pos.x, _pos.y, facing_name, GameClock.text(_vm), map.flag(_pos.x, _pos.y) & 127,
-		("night" if night else "day") + ("  SEARCHING" if _searching else ""), script_name]
+		("night" if night else "day") + ("  SEARCH" if _searching else ""), script_name]
 	if _screen.visible:
 		_draw_screen()
 
@@ -2789,7 +2819,7 @@ func _draw_screen() -> void:
 	if _vm.on_overland:
 		menu.erase("AREA")
 	if _searching:
-		place += " SEARCHING"
+		place += " SEARCH"
 	var lines := GameScreen.wrap(body.strip_edges(), 38)
 	var white := -1
 	if not vertical.is_empty():

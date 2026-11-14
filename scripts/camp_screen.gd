@@ -26,6 +26,16 @@ extends Control
 ##     SPELLS?" (yellow) YES NO with NO lit. A character who can't memorize or cast: nothing
 ##     happens. CAST on a member: "CAST SPELL ON WHOM" SELECT EXIT on the adventure screen,
 ##     then "<NAME>" / "IS FULLY HEALED" there, and the spell list again.
+##     CAST, more from the lab (chat 22, saves J and F at New Phlan 14,5), the same in camp and
+##     from the adventure menu: a member with nothing memorized: "<NAME>" / "HAS NO SPELLS
+##     MEMORIZED" (rows 18-19) for a moment, the menu unchanged. On the list page, with a
+##     rope at row 16 and no spell lit: a combat-only spell: "<SPELL>" / "IS A COMBAT-ONLY
+##     SPELL..." (green, rows 19-20), "LOSE IT?" (magenta) YES NO with YES lit, either answer
+##     back to the list; a spell for the caster or the party: "<NAME>" (cyan) "CASTS" /
+##     "<SPELL>" (rows 19-20), then each target's "<NAME>" / "IS SHIELDED" (rows 18-19) a
+##     moment each, then the list without it. A member spell shows no CASTS line.
+##     From the adventure menu (open_cast) the list opens at once; EXIT, or the last spell
+##     cast, goes back to the adventure menu; the clock doesn't move.
 ##     DISPLAY: "DISPLAY" (white, column 16, row 1), each member (cyan) from row 5, three rows
 ##     apart, the spell effects under them (column 2), EXIT.
 ##   ALTER: ORDER DROP SPEED ICON PICS EXIT.
@@ -126,6 +136,8 @@ var _learn_timer := {}             # member -> steps until its next spell is mem
 ## MEMORIZE's page; what's picked is memorized at once, with no rest and no time passing.
 var _start_queue: Array = []       # members still to be offered the page
 var _starting := false
+var _walk := false                 # CAST from the adventure menu (open_cast): no camp
+var _walk_menu: Array = []         # the adventure menu, shown under "HAS NO SPELLS MEMORIZED"
 
 
 ## The pause after a message, as a factor of the normal one (speed 4).
@@ -153,12 +165,43 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	if _scr == null:
 		_build()
 	_mode = "camp"
+	_walk = false
 	_plain_rope = false
 	_pick = 3                    # carried over from ENCAMP (lab: REST lit)
 	_say_lines([["", GameScreen.GREEN], ["THE PARTY MAKES CAMP...", GameScreen.GREEN]])
 	visible = true
 	_anim.start(_fire_delay(0))
 	_refresh()
+
+
+## CAST from the adventure menu: the selected member's spells in memory at once, on the
+## adventure screen (no fire, no CAMPING); `closed` when it's left.
+func open_cast(party: Array[PartyMember], sel: int, walk_menu: Array) -> void:
+	_party = party
+	if _scr == null:
+		_build()
+	_sel = clampi(sel, 0, maxi(party.size() - 1, 0))
+	_walk = true
+	_walk_menu = walk_menu
+	_starting = false
+	_plain_rope = false
+	_lines = []
+	_mode = "walk"
+	_pick = 0
+	minutes_passed = 0
+	visible = true
+	_open_list("cast")
+	if _mode == "walk" and _lines.is_empty():
+		_close_walk()          # someone who can't cast: nothing happens
+	else:
+		_refresh()
+
+
+func _close_walk() -> void:
+	_walk = false
+	_lines = []
+	visible = false
+	closed.emit()
 
 
 ## START MEMORIZED: offers MEMORIZE's page to each caster in `party` with free slots. Returns
@@ -250,7 +293,7 @@ func _next_fire() -> void:
 		return
 	_fire_frame = (_fire_frame + 1) % _fire.size()
 	_anim.start(_fire_delay(_fire_frame))
-	if _mode in ["camp", "save", "quit", "rest", "magic", "whom", "alter", "order", "drop", "speed", "pics", "ask"]:
+	if _mode in ["camp", "save", "quit", "rest", "magic", "whom", "shown", "alter", "order", "drop", "speed", "pics", "ask"]:
 		_refresh()
 
 
@@ -314,7 +357,7 @@ func _refresh() -> void:
 	if _scr == null or not visible:
 		return
 	match _mode:
-		"list", "pending", "confirm":
+		"list", "pending", "confirm", "ask", "casting":
 			_draw_list()
 		"display":
 			_draw_display()
@@ -324,16 +367,18 @@ func _refresh() -> void:
 
 
 func _draw_walk() -> void:
-	var view: Image = _fire[_fire_frame] if not _fire.is_empty() else OverlayLook.last_view
-	var who := _sel
-	if _mode == "whom":
-		who = _sel
-	_scr.draw_walk(view, _party, who, (place + " CAMPING").strip_edges(), PackedStringArray(), [])
+	if _walk:
+		_scr.draw_walk(OverlayLook.last_view, _party, _sel, OverlayLook.last_place, PackedStringArray(), [],
+			OverlayLook.last_wild, OverlayLook.last_overland)
+	else:
+		var view: Image = _fire[_fire_frame] if not _fire.is_empty() else OverlayLook.last_view
+		_scr.draw_walk(view, _party, _sel, (place + " CAMPING").strip_edges(), PackedStringArray(), [])
 	if _plain_rope:
 		_scr.tile(16, 16, 22)
-	for i in mini(_lines.size(), 6):
-		_scr.text(1, 17 + i, _lines[i][0], _lines[i][1])
+	_draw_lines()
 	match _mode:
+		"walk":
+			_scr.menu_line(24, _walk_menu, 0, 0)
 		"camp":
 			_labelled("CAMP:", CAMP_MENU, 6)
 		"save":
@@ -343,7 +388,7 @@ func _draw_walk() -> void:
 			_draw_rest()
 		"magic":
 			_scr.menu_line(24, MAGIC_MENU, 0, _pick)
-		"whom":
+		"whom", "shown":
 			_labelled("CAST SPELL ON WHOM", ["SELECT", "EXIT"], 19)
 		"alter":
 			_labelled("ALTER:", ALTER_MENU, 7)
@@ -364,9 +409,16 @@ func _draw_walk() -> void:
 		"quit":
 			_scr.text(0, 24, "QUIT TO DOS", PROMPT)
 			_scr.menu_line(24, YES_NO, 12, _pick)
-		"ask":
-			_scr.text(0, 24, "LOSE IT?", PROMPT)
-			_scr.menu_line(24, YES_NO, 9, _pick)
+
+
+
+## The text box from row 17; a line "<NAME> CASTS" has the name cyan.
+func _draw_lines() -> void:
+	for i in mini(_lines.size(), 6):
+		var t: String = _lines[i][0]
+		_scr.text(1, 17 + i, t, _lines[i][1])
+		if t.ends_with(" CASTS"):
+			_scr.text(1, 17 + i, t.trim_suffix(" CASTS"), GameScreen.CYAN)
 
 
 func _labelled(label: String, items: Array, col: int) -> void:
@@ -415,10 +467,13 @@ func _page_rows() -> int:
 func _draw_list() -> void:
 	_plain_rope = false
 	var m := _who()
-	_page_frame([0, 2, 23] if _list_kind != "memorize" or _mode != "list" else [0, 2, 16, 23])
+	var ropes := [0, 2, 23] if _list_kind != "memorize" or _mode != "list" else [0, 2, 16, 23]
+	if not _lines.is_empty():
+		ropes = [0, 2, 16, 23]
+	_page_frame(ropes)
 	var title: String = {"memorize": "SPELLS IN SPELL BOOK", "cast": "SPELLS IN MEMORY",
 		"scribe": "SPELLS ON SCROLLS"}.get(_list_kind, "SPELLS IN SPELL BOOK")
-	if _mode != "list":
+	if _mode in ["pending", "confirm"]:
 		title = "SPELLS TO BE MEMORIZED"
 	var who := "%s'S" % m.name
 	_scr.text(1, 1, who, GameScreen.CYAN)
@@ -430,8 +485,8 @@ func _draw_list() -> void:
 		if row[1] == 0:
 			_scr.text(1, r, row[0], MAGENTA)
 		else:
-			var lit := i == _cursor and _mode != "confirm"
-			_scr.text(2 if _mode != "list" else 3, r, row[0], GameScreen.WHITE if lit else GameScreen.GREEN)
+			var lit := i == _cursor and _mode in ["list", "pending"] and _lines.is_empty()
+			_scr.text(2 if _mode in ["pending", "confirm"] else 3, r, row[0], GameScreen.WHITE if lit else GameScreen.GREEN)
 	if _mode == "list" and _list_kind == "memorize":
 		_scr.text(1, 18, m.name, GameScreen.CYAN)
 		_scr.text(1, 19, "CAN MEMORIZE:", GameScreen.GREEN)
@@ -448,9 +503,13 @@ func _draw_list() -> void:
 			if any:
 				_scr.text(1, r, "%s %s" % ["    CLERIC SPELLS:" if c == 0 else "MAGIC-USER SPELLS:", "  ".join(counts).strip_edges(false, true)], GameScreen.GREEN)
 				r += 1
+	_draw_lines()
 	match _mode:
-		"list":
+		"list", "casting":
 			_labelled("CHOOSE SPELL:", _list_menu(), 14)
+		"ask":
+			_scr.text(0, 24, "LOSE IT?", MAGENTA)
+			_scr.menu_line(24, YES_NO, 9, _pick)
 		"pending":
 			_scr.menu_line(24, ["EXIT"], 1, 0)
 		"confirm":
@@ -600,6 +659,10 @@ func _interrupt() -> void:
 	await get_tree().create_timer(1.5 * delay_scale()).timeout
 	_resting = false
 	_to_rest = 0
+	# Lab (chat 22, save J resting at 14,5, twice): spells picked and not yet memorized are
+	# lost; the next camp's REST TIME is 00:00:00 and they must be picked again.
+	for m in _party:
+		m.cancel_learning()
 	visible = false
 	_anim.stop()
 	interrupted.emit()
@@ -700,6 +763,9 @@ func _open_list(kind: String) -> void:
 			if m.status != PartyMember.STATUS_OKAY:
 				return
 			ids = m.ready_spells()
+			if ids.is_empty():
+				_note_name(m.name, "HAS NO SPELLS MEMORIZED")
+				return
 		"scribe":
 			if m.status != PartyMember.STATUS_OKAY:
 				return
@@ -758,8 +824,9 @@ func _choose() -> void:
 		_caster = m
 		if not SpellCaster.castable_outside(spells, id):
 			_mode = "ask"
-			_pick = 1
-			_say_lines([["", GameScreen.GREEN], [spells.name_of(id), GameScreen.GREEN], ["CAN'T BE CAST HERE...", GameScreen.GREEN]])
+			_pick = 0                # lab: YES lit
+			_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], [spells.name_of(id), GameScreen.GREEN],
+				["IS A COMBAT-ONLY SPELL...", GameScreen.GREEN]])
 			_refresh()
 		elif SpellCaster.needs_member(spells, id):
 			_mode = "whom"
@@ -771,19 +838,43 @@ func _choose() -> void:
 
 
 func _cast(target: PartyMember) -> void:
+	var on_member := _mode == "whom"
 	var lines := SpellCaster.cast_outside(spells, _caster, _cast_id, _party, target, _rng2)
 	_sel = maxi(_party.find(_caster), 0)
-	if lines.size() > 0:
-		_say(lines[lines.size() - 1])
-	if _mode != "whom":
-		_mode = "whom"     # the result shows on the adventure screen
-	_refresh()
-	await get_tree().create_timer(1.0 * delay_scale()).timeout
-	if not visible or _mode != "whom":
-		return
+	if on_member:
+		# The result on the adventure screen, under CAST SPELL ON WHOM.
+		# Keys wait while it shows ("shown": no menu items), or a second SELECT casts again.
+		if lines.size() > 0:
+			_say(lines[lines.size() - 1])
+		_mode = "shown"
+		_refresh()
+		await get_tree().create_timer(1.0 * delay_scale()).timeout
+		if not visible or _mode != "shown":
+			return
+	else:
+		# On the list page: "<NAME> CASTS" / "<SPELL>", then each target's line in turn.
+		_mode = "casting"
+		for k in lines.size():
+			if k == 0:
+				_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], [_caster.name + " CASTS", GameScreen.GREEN],
+					[spells.name_of(_cast_id), GameScreen.GREEN]])
+			else:
+				_say(lines[k])
+			_refresh()
+			await get_tree().create_timer(1.0 * delay_scale()).timeout
+			if not visible or _mode != "casting":
+				return
+	_back_to_list()
+
+
+## After a cast or LOSE IT?: the spell list again, or out of it when nothing is left.
+func _back_to_list() -> void:
 	_lines = []
 	if _caster.ready_spells().is_empty():
-		_magic_menu()
+		if _walk:
+			_close_walk()
+		else:
+			_magic_menu()
 	else:
 		var keep := _cursor
 		_build_list(_caster.ready_spells())
@@ -795,7 +886,25 @@ func _cast(target: PartyMember) -> void:
 		_refresh()
 
 
+## "<NAME>" / message for a moment, the menu as it was (lab: HAS NO SPELLS MEMORIZED).
+func _note_name(name: String, message: String) -> void:
+	_say_name(name, message)
+	_refresh()
+	await get_tree().create_timer(1.0 * delay_scale()).timeout
+	if not visible or _lines.size() < 3 or _lines[2][0] != message:
+		return
+	_lines = []
+	_plain_rope = false
+	if _walk and _mode == "walk":
+		_close_walk()
+	else:
+		_refresh()
+
+
 func _leave_list() -> void:
+	if _walk and _list_kind == "cast":
+		_close_walk()
+		return
 	if _list_kind == "memorize" and not _who().learning_spells().is_empty():
 		_open_pending()
 		return
@@ -998,8 +1107,8 @@ func _act(choice: String) -> void:
 		"ask":
 			if choice == "YES":
 				_who().forget(_cast_id)
-			_lines = []
-			_magic_menu()
+			_caster = _who()
+			_back_to_list()
 		"alter":
 			match choice:
 				"ORDER":
