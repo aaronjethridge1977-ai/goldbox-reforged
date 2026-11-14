@@ -3468,17 +3468,23 @@ func _cover_job(job: Dictionary) -> void:
 	_cover_flee_at = int(job.get("flee_at", -1))
 	if job.get("rest", false):
 		# A menu a rest brought: rest again until it comes (an interruption is a roll).
+		# Chat 16: what the rest brings queues its own jobs (3:11's watch, fought from a rest
+		# job, never had a flee job: its fled side, 0xA094, is the halls' NEW_ECL 0 way out).
 		for n in 8:
 			if n > 0:
 				main.dev_restore(job.snap)
 				_cover_forced = job.path.duplicate(true)
 				_cover_flee_next = job.get("flee", false)
+			_cover_snap = job.snap
+			_cover_path = []
+			_cover_resting = true
 			await _settle()
 			if await _open_camp():
 				await _rest_in_camp(1)
 			await _settle()
 			if _cover_forced.size() < job.path.size():
 				break
+		_cover_resting = false
 	elif job.get("look", false):
 		await _cover_face(int(job.dir))
 		await main._press("l")
