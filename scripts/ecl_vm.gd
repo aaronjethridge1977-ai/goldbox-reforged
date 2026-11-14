@@ -24,6 +24,7 @@ const SKY_INDOORS := 0x49FE
 const MOVEMENT_BLOCK := 0x6DC9  # 255 = the move is refused
 const PICTURE_HEAD := 0x6DE1    # head portrait for the next PICTURE (255 = plain picture)
 const COMBAT_RESULT := 0x6DC7
+const DEFEATED := 0x6DC8        # monsters the last fight put down (main._on_event_fight_finished)
 const MORALE_BASE := 0x6DC6     # the encounter's morale (scripts write it before COMBAT; 99 = steady)
 const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the monsters (SURPRISE)
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
@@ -43,6 +44,7 @@ const TRAINING_MASK := 0x6DA8   # class bits the training hall's room trains (re
 const OVERLAND_X := 0x49C3
 const OVERLAND_Y := 0x49C4
 const OVERLAND_HEADING := 0x033D
+const VIEW_3D := 0x49E6         # 1 on entering an area; the bands' scripts clear it for their wilderness view
 
 enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM, INPUT }
 
@@ -269,7 +271,7 @@ func choose(index: int) -> State:
 		return state
 	if coverage != null and _menu_kind != "who" and menu.size() > 1:
 		var c := index
-		if _menu_kind == "encounter" and index == 3 and encounter_distance == 0:
+		if _menu_kind == "encounter" and index == 3 and not advance_offered():
 			c = 4      # PARLAY sits where ADVANCE would be
 		coverage.branch(block_key, _menu_at, "c%d" % c)
 	if _menu_kind == "encounter":
@@ -861,10 +863,10 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], r)
 			compare = 0 if r == 0 else 1
 		"RANDOM":
-			_write(a[1], _ri(0, maxi(0, _value(a[0]))))
+			_write(a[1], _script_roll(maxi(0, _value(a[0]))))
 		"RANDOM0":
 			var top := _value(a[1])
-			_write(a[0], _ri(0, top) if top > 0 else top)
+			_write(a[0], _script_roll(top) if top > 0 else top)
 		"WRITE_MEM":
 			if a[0].type == 0x80:
 				_write_string(a[1], a[0].value)
@@ -1099,7 +1101,7 @@ func _show_encounter_menu() -> void:
 	if line != "":
 		text = line
 		text_changed = true
-	var last := "PARLAY" if encounter_distance == 0 else "ADVANCE"
+	var last := "ADVANCE" if advance_offered() else "PARLAY"
 	_pause_for_menu({}, ["COMBAT", "WAIT", "FLEE", last])
 	_menu_kind = "encounter"
 
@@ -1124,9 +1126,16 @@ func _close_in() -> bool:
 
 
 ## Resolves a choice; returns false when the menu should be shown again.
+## ADVANCE is offered only at a distance and while 0x49E6 is set (GAME.OVR 0x2EC1-0x2EEF: the
+## wilderness bands clear it while their wilderness view is up, and their menus show PARLAY at any
+## distance; picked there, PARLAY closes in as ADVANCE would, 0x306C, until the distance is 0).
+func advance_offered() -> bool:
+	return encounter_distance > 0 and read_byte(VIEW_3D) != 0
+
+
 func _encounter_choice(choice: int) -> bool:
-	if choice == 3 and encounter_distance == 0:
-		choice = 4       # PARLAY sits where ADVANCE would be
+	if choice == 3 and not advance_offered():
+		choice = 4       # PARLAY sits where ADVANCE would be (GAME.OVR 0x2F28-0x2F46)
 	var reaction: int = _enc.reactions[choice] if choice < _enc.reactions.size() else 0
 	var moves := _party_moves()
 	var outcome := -1
@@ -1204,6 +1213,20 @@ func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	_menu_at = _at
 	menu = items
 	state = State.MENU
+
+
+## Dev (chat 18, coverage runs): called at a script's RANDOM with (instruction offset, top); a
+## value 0..top is used as the roll, -1 rolls as usual.
+var dev_dice_hook := Callable()
+
+
+## A script's RANDOM: 0..top, or what a coverage run's dice hook gives.
+func _script_roll(top: int) -> int:
+	if dev_dice_hook.is_valid():
+		var v: int = dev_dice_hook.call(_at, top)
+		if v >= 0 and v <= top:
+			return v
+	return _ri(0, top)
 
 
 ## The script's dice: Godot's generator, or the original's own in a lab comparison (TpDice).

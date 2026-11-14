@@ -2249,6 +2249,12 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
+	# ECL 0x6DC8: how many monsters the fight put down (GAME.OVR 0x672A counts the combatants it
+	# takes off the list). Lab, chat 18: 4:10's army of 105 skeletons, 63 on the field (the most a
+	# fight holds), all destroyed: after the script's SUBTRACT [6DC8], [4A01] and ADD [6DC8], [4A39]
+	# the original's save had 0x4A01 = 42 and 0x4A39 = 63. Ours had left it 0, so the graveyard's
+	# kill counters (and 2:20's, 8:16's) never grew.
+	_vm.write_byte(EclVM.DEFEATED, mini(_combat.defeated().size(), 255))
 	if result == 3 or (result == 2 and _duelist != null):
 		# The party ran (or the duelist lost): the script goes on with 0x6DC7 = 129.
 		_duelist = null
@@ -2403,6 +2409,10 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	if not loading:
 		for a in range(0x4A00, 0x4A20):
 			_vm.write_byte(a, 0)
+	# GAME.OVR 0x7792, the same routine (before the loading test): 0x49E6 = 1. The wilderness
+	# bands' scripts set it to 0 while the wilderness view is up and back to 1 at their sites; the
+	# encounter menu offers ADVANCE only while it is set (chat 18, EclVM._show_encounter_menu).
+	_vm.write_byte(EclVM.VIEW_3D, 1)
 	if arrive:
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)
@@ -2620,6 +2630,9 @@ func _script(file_no: int, id: int, ecl: DaxFile = null) -> EclScript:
 	if not _scripts.has(key):
 		if ecl == null:
 			ecl = DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
+		if ecl == null:
+			push_warning("no ECL%d.DAX for script %s" % [file_no, key])   # chat 18: was a crash
+			return null
 		_scripts[key] = EclScript.decode(ecl.blocks.get(id, PackedByteArray()))
 	return _scripts[key]
 
