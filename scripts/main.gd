@@ -409,6 +409,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
 		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
 			_combat.quick_all()
+		elif n == "smartquick":             # smartquick (lab): SETTINGS' smarter QUICK tactics in the open fight
+			if _combat._combat != null:
+				_combat._combat.smart_quick = true
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
 			_combat.toggle_magic()
 		elif n == "fightend":               # fightend (lab): waits until the fight is over or asks CONTINUE BATTLE

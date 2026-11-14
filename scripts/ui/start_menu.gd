@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages)
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, quick tactics)
 ##   ABOUT           Gold Box Reforged's credits and the Godot license
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
@@ -211,23 +211,27 @@ func _draw() -> void:
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
 		g.text(2, 21, "PLAYS HERE.", GameScreen.CYAN)
 	elif _stage == "settings":
-		g.text(2, 6, "SETTINGS (ADDITIONS TO THE ORIGINAL)", GameScreen.WHITE)
-		g.text(4, 8, "A", GameScreen.WHITE)
-		g.text(5, 8, "UTOMAP: " + ("ON" if Automap.load_enabled() else "OFF"), GameScreen.GREEN)
-		g.text(6, 9, "WALKING: M MINI-MAP, F FULL MAP", GameScreen.CYAN)
-		g.text(4, 11, "P", GameScreen.WHITE)
-		g.text(5, 11, "ORTRAITS: " + ("MATCHED" if CharacterCreator.matched_portraits() else "ORIGINAL"), GameScreen.GREEN)
-		g.text(6, 12, "MATCHED: NEW CHARACTERS START", GameScreen.CYAN)
-		g.text(6, 13, "ON A HEAD AND BODY THAT FIT", GameScreen.CYAN)
-		g.text(4, 15, "S", GameScreen.WHITE)
-		g.text(5, 15, "TART MEMORIZED: " + ("ON" if CampScreen.start_memorized_on() else "OFF"), GameScreen.GREEN)
-		g.text(6, 16, "ON: CASTERS PICK SPELLS AT", GameScreen.CYAN)
-		g.text(6, 17, "BEGIN ADVENTURING, NO REST", GameScreen.CYAN)
-		g.text(4, 19, "Q", GameScreen.WHITE)
-		g.text(5, 19, "UICK BANDAGES: " + ("ON" if Combat.quick_bandages_on() else "OFF"), GameScreen.GREEN)
-		g.text(6, 20, "ON: QUICK FIGHTERS BANDAGE", GameScreen.CYAN)
-		g.text(6, 21, "THE DYING (THE ORIGINAL'S DON'T)", GameScreen.CYAN)
-		g.text(4, 23, "A, P, S OR Q CHANGES IT, ESC: BACK", GameScreen.CYAN)
+		g.text(2, 5, "SETTINGS (ADDITIONS TO THE ORIGINAL)", GameScreen.WHITE)
+		g.text(4, 7, "A", GameScreen.WHITE)
+		g.text(5, 7, "UTOMAP: " + ("ON" if Automap.load_enabled() else "OFF"), GameScreen.GREEN)
+		g.text(6, 8, "WALKING: M MINI-MAP, F FULL MAP", GameScreen.CYAN)
+		g.text(4, 9, "P", GameScreen.WHITE)
+		g.text(5, 9, "ORTRAITS: " + ("MATCHED" if CharacterCreator.matched_portraits() else "ORIGINAL"), GameScreen.GREEN)
+		g.text(6, 10, "MATCHED: NEW CHARACTERS START", GameScreen.CYAN)
+		g.text(6, 11, "ON A HEAD AND BODY THAT FIT", GameScreen.CYAN)
+		g.text(4, 12, "S", GameScreen.WHITE)
+		g.text(5, 12, "TART MEMORIZED: " + ("ON" if CampScreen.start_memorized_on() else "OFF"), GameScreen.GREEN)
+		g.text(6, 13, "ON: CASTERS PICK SPELLS AT", GameScreen.CYAN)
+		g.text(6, 14, "BEGIN ADVENTURING, NO REST", GameScreen.CYAN)
+		g.text(4, 15, "Q", GameScreen.WHITE)
+		g.text(5, 15, "UICK BANDAGES: " + ("ON" if Combat.quick_bandages_on() else "OFF"), GameScreen.GREEN)
+		g.text(6, 16, "ON: QUICK FIGHTERS BANDAGE", GameScreen.CYAN)
+		g.text(6, 17, "THE DYING (THE ORIGINAL'S DON'T)", GameScreen.CYAN)
+		g.text(4, 18, "T", GameScreen.WHITE)
+		g.text(5, 18, "ACTICS FOR QUICK: " + ("SMARTER" if SmartQuick.on() else "ORIGINAL"), GameScreen.GREEN)
+		g.text(6, 19, "SMARTER: QUICK HEALS, AIMS AT", GameScreen.CYAN)
+		g.text(6, 20, "THE WEAKEST, SAVES ITS SPELLS", GameScreen.CYAN)
+		g.text(4, 22, "A, P, S, Q OR T CHANGES IT, ESC: BACK", GameScreen.CYAN)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -274,6 +278,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_draw()
 		elif key == KEY_Q:
 			Combat.save_quick_bandages(not Combat.quick_bandages_on())
+			_draw()
+		elif key == KEY_T:
+			SmartQuick.save(not SmartQuick.on())
 			_draw()
 		elif key == KEY_E or key == KEY_ESCAPE:
 			_show_menu()

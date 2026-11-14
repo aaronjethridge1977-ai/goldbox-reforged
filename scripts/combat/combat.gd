@@ -369,6 +369,8 @@ func first_dying(team: int) -> int:
 ## lab) and the lab dice keep it off, so they play as before.
 var quick_bandages := false
 const QUICK_BANDAGES_KEY := "quick_bandages"
+## SETTINGS: TACTICS FOR QUICK, SMARTER (B1; SmartQuick). Set like quick_bandages.
+var smart_quick := false
 
 
 static func quick_bandages_on() -> bool:
@@ -1275,7 +1277,10 @@ func find_target(i: int) -> bool:
 	if pool.is_empty():
 		return false
 	_by_distance(c, pool)
-	c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
+	if SmartQuick.applies(self, i):
+		c.target = SmartQuick.weakest(self, i, pool)
+	else:
+		c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
 	return true
 
 
@@ -1586,11 +1591,14 @@ func ai_act() -> bool:
 		# The original's QUICK never bandages (lab, side chat 2: Bakshi lay dying through the
 		# rest of the orc fight while Thrender and Brother Sean fought on). The bot still does,
 		# as a player would from the DONE menu (party_judge is its hook).
-		if c.team == 0 and (party_judge.is_valid() or quick_bandages) and bandage():
+		var smart := SmartQuick.applies(self, active)
+		if c.team == 0 and (party_judge.is_valid() or quick_bandages or smart) and bandage():
 			return false
 		choose_weapon(active)
 		var morale := _morale_check(active)
 		if c.team == 0 and party_judge.is_valid() and party_judge.call(self, active) == "flee":
+			morale = "flee"
+		elif smart and morale == "" and SmartQuick.hopeless(self):
 			morale = "flee"
 		if morale == "surrender":
 			var sm: PartyMember = c.who
@@ -1618,7 +1626,9 @@ func ai_act() -> bool:
 			pass
 		elif c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
-		elif magic and magic.ai_cast(active, spell_d7):
+		elif smart and (SmartQuick.heal(self, active) or SmartQuick.cast(self, active)):
+			return false
+		elif magic and not smart and magic.ai_cast(active, spell_d7):
 			return false
 		if not find_target(active):
 			guard(active)
@@ -1659,6 +1669,9 @@ func ai_act() -> bool:
 				if not find_target(active):
 					guard(active)
 					return false
+				if SmartQuick.applies(self, active) and not shooting and SmartQuick.hurt(self, active):
+					guard(active)          # hurt: it doesn't walk up to an enemy (SmartQuick)
+					return false
 				var r := _approach(active)
 				if r == "moved":
 					return true
@@ -1666,7 +1679,10 @@ func ai_act() -> bool:
 					return false
 				continue
 			_by_distance(c, near)
-			t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
+			if SmartQuick.applies(self, active):
+				t = SmartQuick.weakest(self, active, near)
+			else:
+				t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
 			if shooting and not m.weapon_ranged_melee and enemy_adjacent(active):
 				# Someone is next to it: it changes weapons, and that is its turn.
 				choose_weapon(active)
