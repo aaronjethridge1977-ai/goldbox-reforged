@@ -2,8 +2,8 @@ class_name LabHooks
 ## The side lane's lab keys for main.gd's `--keys` replay (moved out of main.gd, decided 2026-11-14,
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
-const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp"]
-const PREFIXES := ["order=", "memorize="]
+const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome"]
+const PREFIXES := ["order=", "memorize=", "stage=", "hp="]
 
 
 ## Whether `n` is one of these keys.
@@ -55,5 +55,38 @@ static func handle(main: Node, n: String) -> bool:
 			for id in a[1].split(";"):
 				who.memorized.append(int(id))
 		print("   %s: %s" % [who.name, ", ".join(who.memorized.map(func(id): return "%d %s" % [id, st.name_of(id)]))])
+		return true
+	elif n == "monsters":               # monsters: the test fight's MON file, id and name of each (side chat 5)
+		var cha := DaxFile.open(main._game_path.path_join("MON%dCHA.DAX" % combat._mon_file))
+		var ids: Array = cha.ids() if cha else []
+		ids.sort()
+		for id in ids:
+			var m := PartyMember.load_monster(main._game_path, combat._mon_file, id)
+			if m != null:
+				print("   MON %d %s HP %d " % [id, m.name, m.hp])
+		return true
+	elif n.begins_with("stage="):       # stage=<id>x<n>;<id>x<n>...: the open test fight (before F) against those monsters
+		var rows := []
+		for part in n.trim_prefix("stage=").split(";"):
+			var a := part.split("x")
+			rows.append([int(a[0]), int(a[1]) if a.size() > 1 else 1, int(a[0])])
+		combat._encounters = [{"monsters": rows, "text": "staged"}]
+		combat._enc_index = 0
+		combat._load_monsters()
+	elif n.begins_with("hp="):          # hp=<pct>: every party member in the open fight at that share of its full HP
+		var pct := int(n.trim_prefix("hp="))
+		if combat._combat != null:
+			for c in combat._combat.combatants:
+				if c.team == 0:
+					c.who.hp = maxi(1, c.who.hp_max * pct / 100)
+		return true
+	elif n == "outcome":                # outcome: the open fight's result (0 on, 1 won, 2 lost, 3 ran away) and each figure
+		if combat._combat != null:
+			print("   OUTCOME %d ROUND %d" % [combat._combat.outcome(), combat._combat.round_no])
+			for c in combat._combat.combatants:
+				print("   FIG %d %s HP %d/%d DOWN %s FLED %s" % [c.team, c.who.name, c.who.hp, c.who.hp_max,
+					str(c.down), str(c.get("fled", false))])
+		else:
+			print("   OUTCOME none (result %d)" % combat._result)
 		return true
 	return false
