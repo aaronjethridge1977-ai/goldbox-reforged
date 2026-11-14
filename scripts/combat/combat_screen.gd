@@ -96,6 +96,7 @@ var _muted := false
 ## and other thrown weapons as COMSPR's two-frame stone and axe.
 signal flight_done
 var _posed := -1
+var _message_count := 0   # every message so far (_messages keeps only the last six)
 var _flying := false
 var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
 var _spell_flight := {}
@@ -883,6 +884,7 @@ func _on_message(text: String) -> void:
 			and dev_round_check.call(int(text.substr(6))):
 		_dev_win_now = true
 	_messages.append(text)
+	_message_count += 1
 	if _messages.size() > 6:
 		_messages = _messages.slice(_messages.size() - 6)
 	print(text)
@@ -958,7 +960,7 @@ func _ai_step() -> void:
 	var actor: Dictionary = _combatants[_combat.active] if _combat.active >= 0 else {}
 	var before: Vector2i = actor.get("cell", Vector2i.ZERO)
 	var moves_before: int = actor.get("moves", 0)
-	var shown_before := _messages.size()
+	var shown_before := _message_count
 	var weapon_before: GameItem = (actor.who as PartyMember).weapon if not actor.is_empty() else null
 	var up_before := _standing()
 	var more := _combat.ai_act()
@@ -1222,7 +1224,7 @@ func _attack_aimed(j: int) -> void:
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
-	var shown_before := _messages.size()
+	var shown_before := _message_count
 	var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
 	var up_before := _standing()
 	if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
@@ -1261,7 +1263,10 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 		return
 	var name := (c.who as PartyMember).name.to_upper()
 	var struck := false
-	for k in range(shown_before, _messages.size()):
+	# The messages since the action began (counted, as _messages keeps only the last six:
+	# with a plain index, every pose, missile and skull stopped after the sixth message,
+	# Jeremy's P16 step 4 test).
+	for k in range(maxi(0, _messages.size() - (_message_count - shown_before)), _messages.size()):
 		var msg := String(_messages[k]).to_upper()
 		if msg.begins_with(name + " ") and (msg.ends_with(" AND MISSES") or msg.contains(" HITTING FOR ")):
 			struck = true
