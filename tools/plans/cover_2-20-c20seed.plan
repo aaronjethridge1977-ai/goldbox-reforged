@@ -1,0 +1,10 @@
+# Chat 20 (hand-play request, Methods 2): 2:20 -all with chat 20's logged seed, replayable. With the code before chat 20's
+# fix it shows the plain jobs that went another way (e.g. job 2:20|1246:c1: the die at 0x9B8A forced to 2, then 0x9CC5
+# instead of the recorded 0x9DDE): 41 plain divergences before the fix, 8 after (see docs/coverage-areas.md, 2:20).
+rules playthrough.plan
+start chat10a_latest/shopped
+travel 2:20
+expect 2:20
+cover 2:20 40 all seed=a03e02f5
+status
+stop

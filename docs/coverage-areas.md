@@ -68,7 +68,7 @@ numbers and the critical count, every remaining path listed below with its reaso
 | 5:3 Valjevo outer castle | 96 (85) | 90 (81) | 7/7 · 11/11 · 23/23 | done (chat 19) |
 | 8:16 ruined castle | 96 (96) | 88 (88) | 4/4 · 7/7 · 18/18 | done |
 | 6:1 Buccaneers' base | 95 (95) | 96 (95) | 3/3 · 15/15 · 7/7 | done (chat 19) |
-| 7:23 Yarash's pyramid, inside | 95 (90) | 93 (89) | 4/4 · 5/5 · 20/21 |  |
+| 7:23 Yarash's pyramid, inside | 95 (90) | 93 (89) | 4/4 · 5/5 · 20/20 | done |
 | 3:8 City Hall | 95 (87) | 91 (87) | 2/2 · 3/3 · 33/34 | done (chat 19) |
 | 4:2 Cadorna textile house | 95 (95) | 91 (91) | 5/5 · 12/12 · 17/17 | done |
 | 5:5 Valjevo inner castle | 95 (95) | 91 (91) | 7/7 · 7/7 · 15/15 | done |
@@ -88,13 +88,13 @@ numbers and the critical count, every remaining path listed below with its reaso
 | 5:6 Valjevo, temple side | 88 (88) | 84 (84) | 3/3 · 6/6 · 21/21 |  |
 | 8:13 kobold caves | 87 (86) | 86 (85) | 3/3 · 14/15 · 17/19 |  |
 | 2:9 Stojanow Gate | 83 (75) | 79 (75) | 4/4 · 6/7 · 22/24 |  |
-| 6:25 wilderness band, west | 81 (81) | 82 (82) | 11/11 · 8/13 · 5/5 |  |
+| 6:25 wilderness band, west | 92 (81) | 92 (82) | 11/11 · 13/13 · 5/5 | done |
 
 Overall, all runs merged: played 91% → **93%** of instructions and 87% → **89%** of branches; with the choices not
 taken tried in the shadow copy as well, 94% and 91%.
 
 **Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, 1:24, 2:15, 6:19, 7:22, 3:14, 4:2, 7:17, 1:18, and in chat 19 6:1, 3:0,
-5:7, 4:10, 5:3, 3:8, 7:26, 8:27 (23 of 29). 7:23 waits on one DOSBox answer (below).
+5:7, 4:10, 5:3, 3:8, 7:26, 8:27, and in chat 20 7:23, 6:25 (25 of 29).
 
 ## 1:24, the Temple of Bane quarter: done (chat 17)
 
@@ -522,7 +522,7 @@ Each table is mkreasons.py's first draft from `missctx.sh`, checked for the crit
 
 ### 7:23, inside Yarash's pyramid
 
-95% / 93%, critical 4/4 · 5/5 · 20/21: one DOSBox answer from done. The vats room (`cover_7-23-vats`: its way in is a secret door, event 9 at 12,11 facing east, found by the step script's search roll) and the storerooms' hidden treasure (`cover_7-23-store`: LOOK in a storeroom, reached only by the teleporters). The quest flag left, 0xA564, follows the runes door's wrong password: the monster's 200 damage (0xA559) kills the party, ours stops there; whether the original runs on to 0xA564 is on the board for the Test List.
+95% / 93%, critical 4/4 · 5/5 · 20/20 (done, chat 20). The vats room (`cover_7-23-vats`: its way in is a secret door, event 9 at 12,11 facing east, found by the step script's search roll) and the storerooms' hidden treasure (`cover_7-23-store`: LOOK in a storeroom, reached only by the teleporters). The quest flag 0xA564 is **not reachable in play** (checked in DOSBox, chat 20): it follows the runes door's wrong password (the door is event 22 at 1,1, entered facing east from 0,1), where DAMAGE 224, 1d1+200 hits every member with no save; the original then shows THE ENTIRE PARTY IS KILLED! and quits to DOS, so the write is never seen. Only a member with 202 HP or more would live through it. Left out of the critical count.
 
 | where | what it needs |
 |---|---|
@@ -535,10 +535,11 @@ Each table is mkreasons.py's first draft from `missctx.sh`, checked for the crit
 
 ## What holds the rest back (chat 19)
 
-- **6:25 west band (81 / 82, set fights 8/13):** the cave's two edge entrances (0,2) and (15,3) are walled on three
-  sides on our map and its north half (events 1-7, five set fights) has no way in at all; in the cave the on-move
-  script exits at once (0x4A9E = 255), so nothing lets a party through. Whether the original does is a DOSBox
-  question (board, "For the Test List").
+- **6:25 west band (92 / 92, set fights 13/13; done, chat 20):** the cave's two edge entrances (0,2) and (15,3) are
+  walled on three sides and open to the map's edge, and its north half (five set fights) has no other way in. Checked
+  in DOSBox: a step west from (0,2) arrives at (15,2): **the original's maps wrap** when the on-move script doesn't
+  turn an edge step into a move elsewhere (in the cave it exits at once, 0x4A9E = 255). Ours stopped at the edge;
+  fixed in main.gd (board, Rule changes). The run after the fix (`runcover.sh 6-25 _c20-wrap`) reached all 13 set fights.
 - **2:9 Stojanow Gate (83 / 79, 6/7, 22/24):** `cover_2-9-climb` reaches the tower rooms: they are closed boxes on the
   map, entered by the stairs at (4,5)/(11,5) facing south (0x9CB7, 0xA16A), and manned only until the gate's
   bugbears are beaten (0xA60E sets both tower bits), which every earlier walk did first. `cover_2-9-warned`: the
@@ -546,7 +547,12 @@ Each table is mkreasons.py's first draft from `missctx.sh`, checked for the crit
   all constants, behind the towers' state.
 - **2:20 Slums (91 / 83):** `cover_2-20-fortune50`/`-fortune100` (the fortune teller's readings by 0x4A80, the patrol
   fights won) and `cover_2-20-killed` (her killed: stronger patrols). Left: the patrols' parley sums (0xB2FE-0xB4A1)
-  and 34 plain jobs whose replay goes another way (a dice job's path, 0x9B8A forced; not explained yet).
+  and the plain jobs whose replay went another way. **Explained (chat 20):** a job's path replays a die (0x9B8A, the
+  patrol's kind) with the value the walk rolled, but the walk had drawn it from the dice generator and the replay didn't,
+  so every roll after it shifted by one: the patrol's SURPRISE came out otherwise and the job met 0x9CC5 or 0x9DDE
+  instead of its recorded menu. The replay now draws and drops one value there (bot.gd `_cover_dice`). Same seed
+  (`cover_2-20-c20seed.plan`): 41 plain divergences before, 8 after. The 8 left are dice jobs at 0xB225/0xB22B, after
+  the patrol fight: the job's fight is won by shortcut and its next answer never comes (not chased yet).
 - **5:6 temple side (88 / 84):** the disguised patrols (0xAA49-0xAB53) need the disguise (0x4A65 bit 0) still on
   when a patrol comes; any fight clears it (0xA883-0xA88F), so do the washerwomen's TIE/KILL answers (0x9EA9) and any
   move once a shrine is robbed (0x9B47). `cover_5-6-disguised` met only undisguised patrols.

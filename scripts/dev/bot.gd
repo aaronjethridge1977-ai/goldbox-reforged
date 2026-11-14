@@ -3621,6 +3621,10 @@ func _cover_dice(at: int, top: int) -> int:
 	if not _cover_forced.is_empty() and _cover_forced[0].has("r"):
 		if int(_cover_forced[0].at) == at:
 			var v := int(_cover_forced.pop_front().r)
+			# Chat 20: the walk drew this die from the generator; the replay draws (and drops) one too,
+			# or every roll after it shifts by one (2:20's patrols: the SURPRISE after 0x9B8A came out
+			# otherwise and plain jobs met 0x9CC5 or 0x9DDE instead of their recorded menu).
+			vm._ri(0, top)
 			print("   >> the die at %04X: %d (coverage job)" % [at + EclScript.BASE, v])
 			_cover_path.append({"r": v, "at": at})
 			return v

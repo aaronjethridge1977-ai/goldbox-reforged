@@ -1676,9 +1676,11 @@ func _finish_move(direction: int) -> void:
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) >= 2:
 		_locked_door(direction)
 		return
+	# A step off the edge that the area's on-move script didn't turn into a move elsewhere (0x6DD5)
+	# comes in on the other side: the original's maps wrap (lab, chat 20: 6:25's cave, west from its
+	# west entrance 0,2 the original puts the party at 15,2, in the cave's north half).
 	var next := _pos + DungeonView.DELTA[direction]
-	if next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE:
-		return
+	next = Vector2i(posmod(next.x, GeoMap.SIZE), posmod(next.y, GeoMap.SIZE))
 	_step_into(next)
 
 
@@ -1731,6 +1733,10 @@ func _overland_step(direction: int) -> void:
 		return
 	_vm.write_byte(EclVM.OVERLAND_X, x)
 	_vm.write_byte(EclVM.OVERLAND_Y, y)
+	# A band step writes the square left behind as a dungeon step does: the map square, which
+	# the band doesn't move (lab, chat 20: the original's save after a step in 6:25 held it).
+	_vm.write_byte(EclVM.PREVIOUS_X, _vm.read_byte(EclVM.PARTY_X))
+	_vm.write_byte(EclVM.PREVIOUS_Y, _vm.read_byte(EclVM.PARTY_Y))
 	_pass_time(GameClock.HOUR, 12)
 	if _vm.ecl != null:
 		_vm.clear_output()

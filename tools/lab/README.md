@@ -50,8 +50,18 @@ changes game behaviour adds a line to the board's "Rule changes".
 - Results go in `docs/coverage-areas.md` (per area, with reasons) and `docs/cover-fights.md` (fights won by
   shortcut, for the combat suite).
 - **Done** for an area: 90% of reachable instructions, 85% of reachable branches, 100% of story-critical
-  paths, every leftover listed with a reason. **Closed:** done, or two directed attempts in a row that add
-  less than 1 point, with the leftovers listed (decided 2026-11-14). M6 coverage ends when all 29 are closed.
+  paths, every leftover listed with a reason. **Stuck areas** (hand-play rule, ideas/game-modernizer.md 2026-11-14):
+  bot run, two directed attempts; if they add < 1 point, play the area by hand in the lab (~1 hour), leaving a key
+  list or plan that replays it; still unclear: a save and a Test List request; then close with reasons. DOSBox
+  questions are answered in the lab, not by Jeremy (Methods 3). M6 coverage ends when all 29 are closed.
+
+**Differential checks (main lane, from chat 20)**: `docs/diff-checks.md` (how to run one, the ignore list with
+reasons, each event's start save and result). `mksave.py ... item<n>=<DAX>:<block>:<index>` gives a member an item.
+Never save over the shipped saves (J is every `mksave.py` save's base; chat 20 restored it from the game folder):
+the checks save to F.
+
+**Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
+only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
 **Fights against the original (side lane)**
 - `trace.py` records every draw the original makes; our engine replays them with Turbo Pascal's own Random

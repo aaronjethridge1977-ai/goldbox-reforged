@@ -947,11 +947,13 @@ func _exec(ins: Dictionary) -> void:
 			# The original keeps the loaded map's id at 0x49C5 (lab, chat 10: save F in New
 			# Phlan has 0, save J from the Slums 20); scripts test it (the Wealthy Area's
 			# 31 is the Temple of Bane's map, 1:24 0x993D, 0x99C7).
-			if area_map[0] < 127:
-				write_byte(AREA_MAP_ID, area_map[0])
 			# 4,4,0 / 5,5,0 / 6,6,0: the wilderness, one of its three bands; a map of
-			# its own (mode 0 or 2) means a 3D area.
-			if area_map[0] == area_map[1] and area_map[0] >= 4 and area_map[0] <= 6 and area_map[2] == 0:
+			# its own (mode 0 or 2) means a 3D area. The wilderness leaves 0x49C5 as it was
+			# (lab, chat 20: into 6:25 from the Slums the original kept 20; ours wrote 4).
+			var band: bool = area_map[0] == area_map[1] and area_map[0] >= 4 and area_map[0] <= 6 and area_map[2] == 0
+			if area_map[0] < 127 and not band:
+				write_byte(AREA_MAP_ID, area_map[0])
+			if band:
 				overland_band = area_map[0] - 4
 				on_overland = true
 			elif area_map[0] < 127 and area_map[1] in [0, 2]:
