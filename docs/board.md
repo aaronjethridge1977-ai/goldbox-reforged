@@ -33,7 +33,7 @@ Later: main-path gaps outside combat (Read Magic and SCRIBE first, poison, treas
 2. Differential checks 3, 5 and 10's fights, roll for roll, with key lists and seeds in `docs/diff-checks.md`.
 3. Magic for QUICK characters: Alt-Q, Space and Alt-M at the combat menu (faithfulness); MAGIC on DONE's menu (mockup to Jeremy first).
 
-Later: P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
+Later: P30 loot shows as "(ITEM TYPE n)" (bug); P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
 
 ## Now
 
@@ -45,6 +45,7 @@ Later: P21 wording and a clearer name than ORDERS; the P16 step 3 view rule agai
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · desk → combat · **P30, Jeremy playing: loot has no names.** Sir Stabbem's items page (shop VIEW) lists "(ITEM TYPE 37)", "(ITEM TYPE 52)", "20 (ITEM TYPE 73)", "(ITEM TYPE 44)" (`CharacterSheet.item_label`'s fallback for a blank name). Monster items are blank in MONnITM.DAX; `ItemNames.name_of` names them (the shop and TREASURE lists in `main.gd` call it). First check: `spoils.gd` `gather` (lines ~40, 57 copy `it.name`, blank for monster items): name them with `ItemNames.name_of`, and check items already in saves get named on load (or on display). Bugs aren't paused. · open
 - 2026-11-14 · design → main · CLAUDE.md "Working as a team": lanes now main, combat (cloud), feedback desk (no code) and design office (Methods 3, see Lanes above); "the side lane" becomes "the combat lane"; add the Queues rule (take item 1, no Later items while 1-3 are open). Small, any time. · open
 - 2026-11-14 · design → main · **Saves lose the automap** (Jeremy, playing). Decided (Methods 3): a **companion file beside each save slot** for our additions; the original's SAVGAM/CHRDAT stay byte-for-byte the original's (still load in DOSBox). First the automap's visited squares; later the quest tracker and the like. No companion (a save made in the original, or old): load with an empty map that maps at once. Record which save the companion belongs to (e.g. a hash of the SAVGAM file) so a stale one is detected. Check quick saves (F2) keep the map too. Right after task 1's play-through fixes. · open
 - 2026-11-14 · design → main · **Jeremy, playing: SEARCH** shows SEARCHING only after pressing S and then moving; he took it for not working. Check in DOSBox when the original shows it (on the key or on the next step) and match it. With CAST, full screen and the automap's Alt+M (chat 22, task 1). · open
