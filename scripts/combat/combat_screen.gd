@@ -78,6 +78,17 @@ var _pending_msgs := PackedStringArray()    # paced: still to be shown
 var _row24_msg := ""
 var _draining := false
 var _muted := false
+## P16 step 3: computer turns step by step (lab: the view's corner read from the battlefield
+## record, DS:[0x6716] bytes 2-3, through a whole fight). GAME.OVR 0x30F0E keeps a cell in view:
+## if it is more than `margin` from the view's centre on an axis, the centre moves onto it on
+## that axis (centre column 3-46, row 3-21). A turn starts with the actor at margin 2, each step
+## keeps the new cell in the 7x7 view (margin 3), a hand-to-hand blow brings its target within 2. Steps come
+## about 0.15 s apart; a monster's first ~0.17 s after its turn starts, a QUICK member's after its
+## menu has shown 0.4 s. "MOVE/ATTACK, MOVE LEFT = n" is on row 24 while a computer turn walks;
+## the actor's grey box goes once it acts.
+var _box_off := false
+var _quick_menu := false
+var _move_label := ""
 var _shown_by := {}      # paced: attackers whose blows were shown in this run of messages
 signal messages_shown
 static var _paced := -1
@@ -520,6 +531,12 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, prompt, MAGENTA)
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
+	elif paced() and _combat != null and _combat.active >= 0 and _combatants[_combat.active].quick:
+		if _quick_menu:
+			var items := _bottom_menu()
+			g.menu_line(24, items, 0, _lit(items))
+		elif _move_label != "":
+			g.text(0, 24, _move_label, GameScreen.GREEN)
 	elif _combat != null and _cmode == "speed":
 		var prompt := "GAMESPEED (%d) :" % CampScreen.speed
 		g.text(0, 24, prompt, MAGENTA)
@@ -683,6 +700,23 @@ var _asking_ally := false
 var _ally_target := -1
 
 
+## The original's view rule (GAME.OVR 0x30F0E), see _box_off.
+func _ensure_view(cell: Vector2i, margin: int) -> void:
+	var cx := _view.x + 3
+	var cy := _view.y + 3
+	if cell.x < cx - margin:
+		cx = maxi(cell.x, 3)
+	elif cell.x > cx + margin:
+		cx = mini(cell.x, Battlefield.WIDTH - 4)
+	if cell.y < cy - margin:
+		cy = maxi(cell.y, 3)
+	elif cell.y > cy + margin:
+		cy = mini(cell.y, Battlefield.HEIGHT - 4)
+	if Vector2i(cx - 3, cy - 3) != _view:
+		_view = Vector2i(cx - 3, cy - 3)
+		print("   view %d,%d" % [_view.x, _view.y])     # lab: compared with viewlog.py
+
+
 ## Is the display paced like the original's (P16)? Not in the lab's runs, unless --anim.
 static func paced() -> bool:
 	if _paced < 0:
@@ -818,7 +852,13 @@ func _advance() -> void:
 	_selected = i
 	_cmode = "menu"
 	_aiming = false
-	_centre_on_selected()
+	if paced():
+		_ensure_view(_combatants[i].cell, 2)
+		_box_off = false
+		_move_label = ""
+		_quick_menu = _combatants[i].quick and _combatants[i].team == 0
+	else:
+		_centre_on_selected()
 	_refresh()
 	if not _combatants[i].quick and _combat.magic and _combat.magic.resolve_pending(i):
 		# A player's spell begun last turn goes off at this turn, which it uses up.
@@ -831,21 +871,43 @@ func _advance() -> void:
 			_advance()
 		return
 	if _combatants[i].quick:
-		_ai_timer.start(0.35)
+		if not paced():
+			_ai_timer.start(0.35)
+		elif _quick_menu:
+			# The original shows a QUICK member's menu a moment before it acts.
+			await get_tree().create_timer(0.4).timeout
+			_quick_menu = false
+			if _combat != null and _combat.active == i:
+				_refresh()
+				_ai_timer.start(0.2)
+		else:
+			_ai_timer.start(0.17)
 
 
 func _ai_step() -> void:
 	if _combat == null or not visible:
 		return
+	var actor: Dictionary = _combatants[_combat.active] if _combat.active >= 0 else {}
+	var before: Vector2i = actor.get("cell", Vector2i.ZERO)
+	var moves_before: int = actor.get("moves", 0)
 	var more := _combat.ai_act()
-	_centre_on_selected()
+	if paced() and not actor.is_empty():
+		_box_off = true
+		if actor.cell != before:
+			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
+			_ensure_view(actor.cell, 3)
+		var t: int = actor.get("target", -1)
+		if _draining and t >= 0 and t < _combatants.size() and _combat.touching(actor, _combatants[t]):
+			_ensure_view(_combatants[t].cell, 2)   # a blow; missiles are framed as they fly (step 4)
+	else:
+		_centre_on_selected()
 	_refresh()
 	if _draining:
 		await messages_shown
 		if _combat == null or not visible:
 			return
 	if more:
-		_ai_timer.start(0.3)
+		_ai_timer.start(0.15 if paced() else 0.3)
 	else:
 		await get_tree().create_timer(0.2).timeout
 		if _combat != null:
@@ -867,6 +929,9 @@ func _after_player_action(what: String) -> void:
 	var c: Dictionary = _combatants[_selected]
 	if _combat.outcome() != 0 or (c.moves <= 0 and c.attacks <= 0) or (what == "attacked" and c.attacks <= 0):
 		_advance()
+	elif paced():
+		_ensure_view(c.cell, 3)
+		_refresh()
 	else:
 		_centre_on_selected()
 		_refresh()
@@ -1252,7 +1317,7 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected and _cmode != "manual":
+		if i == _selected and _cmode != "manual" and not (_box_off and e.quick):
 			_bevel(img, at)
 		if icon:
 			var src := icon

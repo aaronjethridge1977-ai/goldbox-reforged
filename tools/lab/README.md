@@ -576,3 +576,13 @@ games draw the same numbers, so a fight can be compared draw by draw.
 - Seen, not P16: the original's level-1 Magic Missile shows only "CASTS A SPELL", then the target,
   where ours adds "SPELL: MAGIC MISSILE" and "ORC IS UNAFFECTED"; Darkstar starts with 8 darts in
   the original's save H and 11 in ours.
+- Step 3 (the view and the steps): `viewlog.py <secs>` logs the original's view while a fight runs:
+  its top-left cell (bytes 2 and 3 of the battlefield record at DS:[0x6716]) and each figure's
+  cell (DS:0x5F2B, 4 bytes: x, y, number, flag). GAME.OVR 0x30F0E keeps a cell in view: more
+  than `margin` from the centre on an axis, the centre moves onto it on that axis (centre column
+  3-46, row 3-21); 0x310D0 (far 03E0:0052) wraps it with a direction. DS:0x604B / 0x6093 are each
+  figure's column and row against the view (0x307A2 fills them). Seen: the fight opens centred on
+  the party's first member; a turn starts with the actor at margin 2; each step keeps the new
+  cell in view (margin 3); a hand-to-hand blow brings its target within 2. A dart throw reframed
+  the view between thrower and target (step 4, missiles). Ours under `--anim` prints `view x,y`
+  on each change, for comparing with viewlog.py.
