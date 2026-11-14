@@ -332,11 +332,19 @@ func close_shop() -> State:
 	return run()
 
 
+## Every COMBAT ends by zeroing the script's fight modifiers 0x6E70-0x6E72 (to-hit and
+## movement, used by the combat screen; GAME.OVR 0x6BAF, side lane 2026-11-14).
+func _clear_fight_mods() -> void:
+	for a in [0x6E70, 0x6E71, 0x6E72]:
+		write_byte(a, 0)
+
+
 ## Continues after a fight. `result`: 0 = the party won (the script reads it).
 func end_combat(result: int) -> State:
 	if state != State.COMBAT:
 		return state
 	write_byte(COMBAT_RESULT, result)
+	_clear_fight_mods()
 	monsters = []
 	monster_teams = []
 	treasure = []
@@ -1003,6 +1011,7 @@ func _exec(ins: Dictionary) -> void:
 			else:
 				_note("combat")
 				write_byte(COMBAT_RESULT, 0)
+				_clear_fight_mods()
 		"ENCOUNTER_MENU":
 			_enc = {"dest": a[3], "reactions": [], "texts": [],
 				"flee_need": _value(a[12]), "mon_speed": _value(a[13])}

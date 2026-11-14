@@ -43,6 +43,9 @@ var _spell_picks: Array[int] = []
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
 var _morale_base := 99      # the encounter's morale (from the script)
+## Set by the caller just before a scripted fight: ECL 0x6E70, 0x6E71, 0x6E72 (bytes, signed)
+## (monsters' to-hit, the party's to-hit, the party's movement); see Combat.
+var area_mods: Array[int] = [0, 0, 0]
 var _surprise := 0          # the script's ambush flag
 var _px := 0
 var _py := 0
@@ -703,6 +706,11 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 		_combat.magic.spell_cast.connect(_on_spell_cast)
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
+	# The script's modifiers for this fight (ECL 0x6E70-0x6E72), used once.
+	_combat.monster_hit_mod = (area_mods[0] & 0xFF ^ 0x80) - 0x80
+	_combat.party_hit_mod = (area_mods[1] & 0xFF ^ 0x80) - 0x80
+	_combat.party_move_mod = (area_mods[2] & 0xFF ^ 0x80) - 0x80
+	area_mods = [0, 0, 0]
 	_combat.surprise_flags = _surprise
 	_combat.message.connect(_on_combat_message)
 	_messages.clear()

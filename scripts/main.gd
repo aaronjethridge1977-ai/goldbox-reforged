@@ -2207,6 +2207,8 @@ func _start_event_fight() -> void:
 	_vm.duel = 0
 	if dev_rng != null:
 		CombatScreen.dev_seed = dev_rng.randi() | 1
+	# The script's fight modifiers (ECL 0x6E70-0x6E72: the kobold caves' nets; side lane).
+	_combat.area_mods = [_vm.read_byte(0x6E70), _vm.read_byte(0x6E71), _vm.read_byte(0x6E72)]
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams)

@@ -17,8 +17,9 @@ could pair one draw's size with another's seed.
 trace.py install           patch (once per DOSBox run)
 trace.py run <secs> [keys] poll the ring and print every call: count, CS:IP, n, result
 """
-import sys, struct, time, seed as sd, tp
+import os, sys, struct, time, seed as sd, tp
 
+NPOS = 32         # figures whose cells are logged (DS:0x5F2B, 4 bytes each)
 STUB_OFF = 0x5C
 FLAG = 0xB8       # 1 while a reader runs: the stub waits for it
 COUNTER = 0xBA
@@ -101,12 +102,13 @@ class Reader:
         except OSError:
             pass
 
-    def new(self):
+    def new(self, limit=None):
         """New calls since the last look: [(count, ip, cs, n, seed_hi)]; None for a lost one
-        (only possible with the flag off, or if the seed check fails)."""
+        (only possible with the flag off, or if the seed check fails). With `limit`, takes
+        none past that count (the game then stops 7 draws later: HOLD below)."""
         c, ring = self._raw()
         out = []
-        while self.count != c:
+        while self.count != c and (limit is None or self.count < limit):
             self.count = (self.count + 1) & 0xFFFF
             if (c - self.count) & 0xFFFF >= 7:
                 out.append(None)          # overwritten before we saw it (no reader flag)
@@ -122,6 +124,38 @@ class Reader:
             out.append((self.count, ip, cs, n, hi))
         self.m.seek(self.psp + ACK); self.m.write(struct.pack("<H", self.count))
         return out
+
+
+def holddump(r, base):
+    """The original's fight state while held (HOLD): the turn's fail count and last direction
+    (DS:0x443C/0x443D), and each figure's fight record (DS:0x65B9, far pointers; its +0x108
+    record: +3 attacks left, +6 movement left (half-moves), +0xA target, +0x14 fleeing,
+    +0x15 pattern)."""
+    ds = r.psp + 0x100 + 0xC7C * 16
+    rd = lambda a, n: (r.m.seek(a), r.m.read(n))[1]
+    g = rd(ds + 0x443C, 3)
+    print("HOLD at draw %d: last dir %d fails %d 443e %d" % (r.count + 8, g[0], g[1], g[2]), flush=True)
+    # The occupancy grid (DS:0x60DB + y * 50 + x: the figure standing there, 1-based) near
+    # the party: rows 8-17, columns 22-35.
+    for y in range(8, 18):
+        row = rd(ds + 0x60DB + y * 0x32 + 22, 14)
+        print("HOLD grid %2d %s" % (y, " ".join("%2d" % b if b else " ." for b in row)), flush=True)
+    recs = {}
+    for i in range(1, NPOS):
+        off, seg = struct.unpack("<HH", rd(ds + 0x65B9 + 4 * i, 4))
+        if seg:
+            recs[(seg, off)] = i
+    for i in range(1, NPOS):
+        off, seg = struct.unpack("<HH", rd(ds + 0x65B9 + 4 * i, 4))
+        if not seg:
+            continue
+        rec = base + seg * 16 + off
+        name = rd(rec + 1, rd(rec, 1)[0]).decode("latin1")
+        o2, s2 = struct.unpack("<HH", rd(rec + 0x108, 4))
+        cr = rd(base + s2 * 16 + o2, 0x18)
+        to, ts = struct.unpack_from("<HH", cr, 0xA)
+        print("HOLD %2d %-15s target %-2s %s | +10c %s" % (i, name, recs.get((ts, to), "-" if not ts else "?"),
+              cr.hex(" "), rd(rec + 0x10C, 0x14).hex(" ")), flush=True)
 
 
 if __name__ == "__main__":
@@ -165,9 +199,23 @@ if __name__ == "__main__":
             keys.key(k)
         pos_addr = r.psp + 0x100 + (0xC7C) * 16 + 0x5F2B     # DS:5F2B, 4 bytes a combatant: x, y
         last_pos = None
+        # HOLD=<n>: stop the original just before it writes draw n (the reader takes no more
+        # than n - 8, so the stub waits there), print the fight state (holddump), then go on.
+        # Several: HOLD=4818,4819.
+        holds = sorted(int(h) for h in os.environ.get("HOLD", "").split(",") if h)
+        held_pb, held_t = None, 0
         while time.time() - t0 < secs:
-            r.m.seek(pos_addr); pb = r.m.read(4 * 16)
-            for e in r.new():
+            r.m.seek(pos_addr); pb = r.m.read(4 * NPOS)
+            hold = holds[0] if holds else 0
+            if hold and r.count >= hold - 8 and r._raw()[0] == hold - 1:
+                # The game has written draw hold - 1; it waits in the stub once it asks for draw
+                # `hold`. Dump when nothing has moved for 3 s (it is still walking before that).
+                if pb != held_pb:
+                    held_pb, held_t = pb, time.time()
+                elif time.time() - held_t > 3:
+                    holddump(r, base); holds.pop(0); held_pb = None
+                    hold = holds[0] if holds else 0
+            for e in r.new(hold - 8 if hold else None):
                 if e is None:
                     print("LOST"); continue
                 c, ip, cs, n, hi = e
@@ -178,7 +226,7 @@ if __name__ == "__main__":
                     r.m.seek(r.psp + 0x100 + 0xC7C * 16 + 0x6718); near = r.m.read(3 * 12)
                     extra = "  list=%s near=%s" % (list(lst), [tuple(near[3 * i:3 * i + 3]) for i in range(1, near[2] + 1)] if near[2] < 12 else "?")
                 print("%5d %04x:%04x %-11s n=%-4d -> %d%s" % (c, cs, ip, where, n, (hi % n) if n else 0, extra), flush=True)
-            cells = [(pb[4 * k], pb[4 * k + 1]) for k in range(16)]
+            cells = [(pb[4 * k], pb[4 * k + 1]) for k in range(NPOS)]
             if cells != last_pos:
                 if last_pos is not None:
                     moved = ["%d:%d,%d" % (k, x, y) for k, (x, y) in enumerate(cells) if last_pos[k] != (x, y)]

@@ -33,4 +33,4 @@ for s in 11111111 22222222 33333333 55555555 deadbeef 0badf00d; do   # QUICK Bak
 done
 # Past the early game (side chat 5): monster powers and casters, one fight each.
 run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $WHAT
-run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # open: differs at draw 4107 of 8905 (Thrender's fail count)
+run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # open: differs at draw 8079 of 8905 (a kobold off by one square; side chat 6)

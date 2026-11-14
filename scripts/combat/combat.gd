@@ -61,6 +61,14 @@ var active := -1
 var surprised_team := -1
 var surprise_flags := 0      # the script's ambush flag: bit 1 the party, bit 2 the monsters
 var morale_base := 99        # the encounter's morale (0x6DC6)
+# A script's modifiers for the next fight (ECL 0x6E70 monsters' to-hit, 0x6E71 the party's
+# to-hit, 0x6E72 the party's movement; signed bytes, zeroed after every COMBAT). The kobold
+# caves' traps write +2 / -2 / -4 (8:13: "A NET ENTANGLES YOU"), the lizard men's swamp -4.
+# GAME.OVR: the to-hit roll 0x2BBF2 (d20 + 0x6E71 for a party figure, 0x6E70 for a monster,
+# a natural 20 always hits), each round's movement 0x1291E.
+var monster_hit_mod := 0
+var party_hit_mod := 0
+var party_move_mod := 0
 var flee_dir := 0            # where the monsters run: the party's facing on the grid
 var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
@@ -167,7 +175,7 @@ func start_round() -> void:
 		if c.down:
 			continue
 		var m: PartyMember = c.who
-		c.moves = maxi(m.movement, 1) * 2
+		c.moves = _round_movement(m) * 2
 		c.attacks = attacks_for(m)
 		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
 		c.attacks += c.second
@@ -555,6 +563,7 @@ func shoot(i: int, j: int) -> void:
 			continue
 		var need: int = am.thac0 - ac - bonus
 		need -= SpecialAffects.hit_bonus(am, tm)
+		need -= script_hit_mod(am)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
 		if not hit:
@@ -1004,7 +1013,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			a.second -= 1
 		if magic and magic.image_takes_it(tm):
 			continue
-		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm)
+		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
 		if not hit:
@@ -1060,7 +1069,7 @@ func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> void:
 	for k in n:
 		if t.down:
 			return
-		var need: int = am.thac0 - tm.ac
+		var need: int = am.thac0 - tm.ac - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s (needs %d)" % [am.name, tm.name, need])
 		if d20 == 1 or (d20 != 20 and d20 < need):
 			message.emit("%s ATTACKS %s AND MISSES" % [am.name, tm.name])
@@ -1284,6 +1293,11 @@ func find_target(i: int) -> bool:
 	if pool.is_empty():
 		return false
 	_by_distance(c, pool)
+	if OS.has_environment("APDBG"):
+		var ps := ""
+		for j in pool:
+			ps += " %d@%s" % [j, combatants[j].cell]
+		print("   @%d find_target %d at %s seen %d pool%s" % [TpDice.calls, i, c.cell, seen.size(), ps])
 	if SmartQuick.smart(self, i):
 		c.target = SmartQuick.weakest(self, i, pool)
 	else:
@@ -1303,7 +1317,10 @@ func _by_distance(c: Dictionary, list: Array[int]) -> void:
 	for j in combatants.size():
 		if j == me or combatants[j].down:
 			continue
-		if not (j in list) and clear_line(c, combatants[j]).y != 1:
+		# Others in the sort: only the other side's figures in sight (lab, side chat 6: the
+		# original's list at DS:0x6718 holds the enemies alone; with the kobolds' own side in it
+		# the exchange sort put Phineas before Thrender at the same distance).
+		if not (j in list) and (combatants[j].team == c.team or clear_line(c, combatants[j]).y != 1):
 			continue
 		var pr := closest(c, combatants[j])
 		var d: Vector2i = (pr[1] - pr[0]).abs()
@@ -1326,6 +1343,20 @@ func _by_distance(c: Dictionary, list: Array[int]) -> void:
 	for j in keep:            # (anyone the scan left out keeps its place at the end)
 		if not (j in list):
 			list.append(j)
+
+
+## A figure's movement for the round (GAME.OVR 0x1291E): a party figure's gets the script's
+## modifier (0x6E72), added as a byte; anything outside 1-96 becomes 1.
+func _round_movement(m: PartyMember) -> int:
+	var mv := m.movement
+	if not m.is_monster:
+		mv = (mv + party_move_mod) & 0xFF
+	return mv if mv >= 1 and mv <= 0x60 else 1
+
+
+## The script's to-hit modifier for an attacker (GAME.OVR 0x2BBF2).
+func script_hit_mod(m: PartyMember) -> int:
+	return monster_hit_mod if m.is_monster else party_hit_mod
 
 
 ## Ends combatant `i`'s turn on guard, keeping its unused attacks for a guard attack.
@@ -1557,6 +1588,14 @@ func _approach(i: int) -> String:
 	while k < 5 and not _can_step(c, (base + int(turns[k])) % 8):
 		k += 1
 	var dir := (base + int(turns[k])) % 8
+	if OS.has_environment("APDBG"):       # lab: APDBG=1 prints each computer step's choice
+		var tried := ""
+		for kk in k:
+			var dd := (base + int(turns[kk])) % 8
+			var f := fits(i, c.cell + DIRS[dd])
+			tried += " d%d:%s/%d" % [dd, f[0], f[1]]
+		print(tried)
+		print("   @%d approach %d at %s target %d at %s base %d pattern %d k %d dir %d last %d fails %d moves %d" % [TpDice.calls, i, c.cell, c.target, combatants[c.target].cell, base, c.pattern, k, dir, c.last_step, c.fails, c.moves])
 	if k == 5 or (dir + 4) % 8 == c.last_step:
 		c.fails += 1
 		c.pattern = c.pattern % 6 + 1
