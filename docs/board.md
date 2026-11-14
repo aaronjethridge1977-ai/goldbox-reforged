@@ -39,6 +39,7 @@ Format: `date · lane (chat) · change · may affect`
 
 ## Findings for everyone
 
+- 2026-11-14 · design · Decided (Methods 2): a QoL feature may change a screen, in the original's own style (font, colours, frame, menu wording and keys; new items after the original ones), with a mockup for Jeremy first; with the feature off in SETTINGS the screen is exactly the original's. Replaces the 2026-11-12 "every screen matches" rule.
 - 2026-11-14 · design · ai-business-ideas reorganized: chat logs now in `plans/chat-log.md` (newest first; add your end-of-chat entry at the top); `ideas/game-modernizer.md` keeps decisions and a short Next step. New team rules (Methods 2, dated entry): side-lane hook file, the Rule changes section above, and when an area and M6 coverage close.
 - 2026-11-14 · side (chat 3) · Shared core touched today, all small: main.gd's `_replay_keys` lab keys `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`, and `Spoils.gather`'s new 4th argument in `_after_fight` (ECL 0x6DE3). No ecl_vm.gd changes.
 - 2026-11-14 · side (chat 3) · A1 (decided): every fight now uses the original's turn order and spell choice, so the bot's real fights can play out differently. A fight with every enemy down but not dead now plays out the round and asks CONTINUE BATTLE (the bot answers N); shortcut wins set `Combat.decided`. Worthless monster items reach the pile only on a d10 of 1-3.
