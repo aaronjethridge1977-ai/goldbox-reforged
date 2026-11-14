@@ -364,3 +364,11 @@ others from J:
   and 3rd (the reaction is a roll); a rest job's later tries reroll too (a restore brings the
   same dice back, so its 8 tries were one). ADVANCE from distance 2 has its own job key, so a
   job's ADVANCE leads to another and PARLAY at distance 0 (2:15's kobolds).
+- A menu choice is queued again when the area's flags (0x4A00-0x4AFF) differ from when it was
+  queued (up to three ways a run meets it; repeats are `key#n`): 7:22's second THROW A ROCK.
+- `shortcut item <type> <name>`: the first member carries an item of that type (a bare record),
+  logged, for variants (`cover_6-19-bottle.plan`: pledged to Diogenes, carrying the silver bottle).
+- Report: a COMPARE of what an AND with a constant mask just wrote, against a constant with bits
+  outside the mask, is never equal (6:19's 0x9927).
+- `cover_6-25.plan` answers STAY IN at the caves' passage (the walk of a cave part had answered
+  LEAVE CAVE on its first square).

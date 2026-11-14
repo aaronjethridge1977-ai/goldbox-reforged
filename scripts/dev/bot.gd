@@ -3013,6 +3013,21 @@ func _shortcut_command(w: PackedStringArray) -> void:
 					now = old & v
 			main._vm.write_byte(addr, now)
 			_shortcut("flag", "%04X %d -> %d" % [addr, old, now], " ".join(w.slice(5)) if w.size() > 5 else "the plan")
+		"item":
+			# Chat 17: `shortcut item <type> <name...>`: the first member carries an item of that
+			# type, as a player who found it does (6:19: Diogenes asks for the kobolds' silver
+			# bottle, type 82, FIND_ITEM). A bare record: the name and the type. Logged.
+			var rec := PackedByteArray()
+			rec.resize(GameItem.SIZE)
+			var nm := " ".join(w.slice(3)).to_upper()
+			rec[0] = mini(nm.length(), 41)
+			for i in rec[0]:
+				rec[1 + i] = nm.unicode_at(i)
+			rec[46] = int(w[2])
+			rec[57] = 1
+			var it := GameItem.from_record(rec)
+			main._party[0].items.append(it)
+			_shortcut("item", "%s carries %s (type %d)" % [main._party[0].name, nm, it.type], "the plan")
 		"teleport":
 			var a := w[2].split(":")
 			var xy := w[3].split(",")
@@ -3396,9 +3411,19 @@ func _cover_choice(choice: int) -> void:
 			# own job (run once a run; coverage can't tell callers apart).
 			if not vm.stack.is_empty():
 				key += "@%d" % vm.stack.back()
-			if _cover_queued.has(key) or _cover_taken(key):
+			if _cover_taken(key):
 				continue
-			_cover_queued[key] = true
+			# Chat 17: the same choice again when the area's flags differ (up to three ways a
+			# choice is met): 7:22's THROW A ROCK toggles a flag, and the second throw is another
+			# path (0xA139). A repeat's key gets "#n".
+			var flags := vm.mem.slice(QUEST_LO, QUEST_HI).hex_encode()
+			var met: Dictionary = _cover_queued.get(key, {})
+			if met.has(flags) or met.size() >= 3:
+				continue
+			if not met.is_empty():
+				key += "#%d" % met.size()
+			met[flags] = true
+			_cover_queued[key.get_slice("#", 0)] = met
 			var path := _cover_path.duplicate(true)
 			path.append({"c": j, "at": vm._menu_at})
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,

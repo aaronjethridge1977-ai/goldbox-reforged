@@ -494,6 +494,20 @@ func _dead_values(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 		if ins.op != "COMPARE" or not String(nxt.op).begins_with("IF_") or ins.args.size() < 2:
 			continue
 		var a: Array = ins.args
+		# Chat 17: COMPARE of what an AND with a constant mask just wrote, with a constant that
+		# has bits outside the mask: never equal (6:19's "AND [4A87], 128 ... COMPARE it, 1").
+		if i > 0 and String(nxt.op) in ["IF_EQ", "IF_NE"]:
+			var prev: Dictionary = ecl.instructions[offs[i - 1]]
+			if prev.op == "AND" and prev.args.size() >= 3:
+				var mask := -1
+				for k in 2:
+					if _is_value(prev.args[k]):
+						mask = int(prev.args[k].value)
+				var dest := int(prev.args[2].value)
+				for m in 2:
+					if mask >= 0 and _is_byte_mem(a[m]) and int(a[m].value) == dest and _is_value(a[1 - m]) \
+							and (int(a[1 - m].value) & ~mask) != 0:
+						out["%d:%s" % [offs[i + 1], "T" if nxt.op == "IF_EQ" else "F"]] = true
 		var mem := -1
 		if _is_byte_mem(a[0]) and _is_value(a[1]) and (_in_flags(a[0]) or ENGINE_VALUES.has(int(a[0].value))):
 			mem = 0

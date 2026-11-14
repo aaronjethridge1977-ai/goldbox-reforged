@@ -1,0 +1,15 @@
+# Chat 17: 6:19 with the party pledged to Diogenes (0x4A87 bit 0, set by shortcut as a player who
+# chose PLEDGE PARTY TO DRAGON'S SERVICE has it) and carrying the kobolds' silver bottle (item
+# type 82, by shortcut, as a player who took it from 8:13 has it): his thanks (0xA3C7), the flag
+# 0x4A87 bit 1 (0xA558) and, after it, the empty cave and the way out (0x996E).
+rules playthrough.plan
+expect_level 6:19 7
+start chat13a_latest/buccaneers
+shortcut flag 4A87 or 1 pledged to Diogenes (a player who chose PLEDGE has it)
+shortcut item 82 SILVER BOTTLE
+gate 6:25 10,9 6:19 ENTER CAVE
+travel 6:25
+expect 6:25
+cover 6:19 40 all
+status
+stop
