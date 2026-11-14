@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 19 starting on the local lab (lab18). First: setup check, then 4:10 -all, 6:1's last flag, 3:8's commissions.
-- Side: side chat 3. Done today: fight comparison method (no lost draws, full fights, cells/HP; 18 of 20 recorded fights match to the treasure), A1, B1-B3 (P19). Next: P16 combat animations (display only, off in headless/--play/--keys), waiting on Jeremy for a fresh chat.
+- Side: side chat 3 ended 2026-11-14 (P17 method, A1, B1-B3 done; summary in ideas/game-modernizer.md). Open for the next side chat: P16 combat animations. Lab archive: PC `.lab/side3_lab.tgz`.
 
 ## Requests to another lane
 
