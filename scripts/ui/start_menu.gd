@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned off (automap, portraits, start memorized)
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages)
 ##   ABOUT           Gold Box Reforged's credits and the Godot license
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
@@ -223,7 +223,11 @@ func _draw() -> void:
 		g.text(5, 15, "TART MEMORIZED: " + ("ON" if CampScreen.start_memorized_on() else "OFF"), GameScreen.GREEN)
 		g.text(6, 16, "ON: CASTERS PICK SPELLS AT", GameScreen.CYAN)
 		g.text(6, 17, "BEGIN ADVENTURING, NO REST", GameScreen.CYAN)
-		g.text(4, 20, "A, P OR S CHANGES IT, ESC: BACK", GameScreen.CYAN)
+		g.text(4, 19, "Q", GameScreen.WHITE)
+		g.text(5, 19, "UICK BANDAGES: " + ("ON" if Combat.quick_bandages_on() else "OFF"), GameScreen.GREEN)
+		g.text(6, 20, "ON: QUICK FIGHTERS BANDAGE", GameScreen.CYAN)
+		g.text(6, 21, "THE DYING (THE ORIGINAL'S DON'T)", GameScreen.CYAN)
+		g.text(4, 23, "A, P, S OR Q CHANGES IT, ESC: BACK", GameScreen.CYAN)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -267,6 +271,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_draw()
 		elif key == KEY_S:
 			CampScreen.save_start_memorized(not CampScreen.start_memorized_on())
+			_draw()
+		elif key == KEY_Q:
+			Combat.save_quick_bandages(not Combat.quick_bandages_on())
 			_draw()
 		elif key == KEY_E or key == KEY_ESCAPE:
 			_show_menu()
