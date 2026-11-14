@@ -2,8 +2,8 @@ class_name LabHooks
 ## The side lane's lab keys for main.gd's `--keys` replay (moved out of main.gd, decided 2026-11-14,
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
-const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome"]
-const PREFIXES := ["order=", "memorize=", "stage=", "hp="]
+const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who"]
+const PREFIXES := ["order=", "memorize=", "stage=", "hp=", "foehp="]
 
 
 ## Whether `n` is one of these keys.
@@ -73,6 +73,16 @@ static func handle(main: Node, n: String) -> bool:
 		combat._encounters = [{"monsters": rows, "text": "staged"}]
 		combat._enc_index = 0
 		combat._load_monsters()
+	elif n == "who":                    # who: whose turn it is in the open fight, and where everyone stands
+		var act: int = combat._combat.active
+		print("   ACTIVE %s" % (combat._combatants[act].who.name if act >= 0 else "-"))
+		for c in combat._combatants:
+			if not c.down:
+				print("   %s %s %d,%d" % ["P" if c.team == 0 else "M", c.who.name, c.cell.x, c.cell.y])
+	elif n.begins_with("foehp="):       # foehp=<n>: every monster in the open fight at n HP (a blow that lands kills; side chat 6)
+		for c in combat._combatants:
+			if c.team != 0:
+				c.who.hp = mini(c.who.hp, int(n.trim_prefix("foehp=")))
 	elif n.begins_with("hp="):          # hp=<pct>: every party member in the open fight at that share of its full HP
 		var pct := int(n.trim_prefix("hp="))
 		if combat._combat != null:

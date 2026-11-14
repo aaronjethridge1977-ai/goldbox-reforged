@@ -1726,7 +1726,16 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			_centre_on_selected()
 			_refresh()
 		elif _STEP_KEYS.has(key):
+			# A step into an enemy is a blow: like AIM's, its target stays up through the message,
+			# then the skull (Jeremy's P16 step 5 test: manual melee showed no skull, manual darts did).
+			var me: int = _combat.active
+			var shown_before := _message_count
+			var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
+			var up_before := _standing()
 			var what := _combat.step(_STEP_KEYS[key])
+			_note_falls(up_before)
+			if paced() and what != "moved":
+				_after_blow(me, shown_before, weapon_before)
 			_after_player_action(what)
 			if _cmode == "move" and _combat.active == _selected and _combatants[_selected].moves <= 0:
 				_cmode = "menu"
