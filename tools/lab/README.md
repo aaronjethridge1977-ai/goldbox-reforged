@@ -436,7 +436,9 @@ games draw the same numbers, so a fight can be compared draw by draw.
   when the movement left is at least its cost (ours now does too).
 - `cmpfight2.sh <save> <seed> "<keys before>" "<keys after>"` does the same for any fight a
   save leads to (ours writes the saves: `load=E,at=14;8;2,e,s,f,n` made F, one step north of
-  the Slums' 14,9 S). `cmpmoves.py` lists each combatant's cells in both. `dsread.py <hex>
+  the Slums' 14,9 S; the goblin patrol there: `cmpfight2.sh F 10000012 "" "up,c"`).
+  `MAGIC=1` presses Alt-M after the first QUICK (ours: `--keys ...,magic`), so QUICK
+  members cast. `cmpmoves.py` lists each combatant's cells in both. `dsread.py <hex>
   [n]` prints bytes at DS:hex in the running original.
 - Slums goblin patrol (save F, seed 10000012: "up,enter" then "up,c"): matches all draws
   to the last goblin's surrender, after two more fixes: the target list's tie order (the

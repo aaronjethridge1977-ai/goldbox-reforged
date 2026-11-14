@@ -24,7 +24,7 @@ X.XFlush(d)
 
 NAMES = {"enter": "Return", "esc": "Escape", "up": "Up", "down": "Down", "left": "Left",
          "right": "Right", " ": "space", "space": "space", "shift": "Shift_L",
-         "ctrl": "Control_L", "f5": "F5", "backspace": "BackSpace", "home": "Home", "end": "End",
+         "ctrl": "Control_L", "alt": "Alt_L", "f5": "F5", "backspace": "BackSpace", "home": "Home", "end": "End",
          "pgup": "Prior", "pgdn": "Next", "f11": "F11", "f12": "F12",
          "kp7": "KP_Home", "kp9": "KP_Prior", "kp1": "KP_End", "kp3": "KP_Next", "kp8": "KP_Up", "kp2": "KP_Down", "kp4": "KP_Left", "kp6": "KP_Right"}   # Home / End pick the previous / next character
 

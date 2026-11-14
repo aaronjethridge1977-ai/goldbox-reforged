@@ -1,7 +1,8 @@
 #!/bin/bash
 # cmpfight2.sh <save letter> <seed hex> "<keys before the seed>" "<keys after>" [orig|ours|both]
 # The original: load the save, press the keys before, set the seed, press the keys after,
-# then everyone on QUICK. Ours: the same keys in --keys. Then cmpdraws.py.
+# then everyone on QUICK (MAGIC=1: Alt-M too, so QUICK members cast). Ours: the same keys in
+# --keys. Then cmpdraws.py.
 cd "$(dirname "$0")"
 L=$1; SEED=$2; PRE=$3; POST=$4; WHAT=${5:-both}
 if [ $WHAT != ours ]; then
@@ -11,11 +12,11 @@ if [ $WHAT != ours ]; then
   (DISPLAY=:98 timeout 500 python3 trace.py run 430 > /tmp/cmp_orig.txt &)
   sleep 1
   for k in $(echo $POST | tr ',' ' '); do ./orig.sh $k wait=4 >/dev/null; done
-  DISPLAY=:98 timeout 450 python3 presser.py 420 noenter
+  DISPLAY=:98 timeout 450 python3 presser.py 420 noenter ${MAGIC:+magic}
   sleep 2; pkill -f "trace.py run"
 fi
 if [ $WHAT != orig ]; then
-  Q="quickall,$(printf 'wait,%.0s' $(seq 100))"
+  Q="quickall,${MAGIC:+magic,}$(printf 'wait,%.0s' $(seq 100))"
   K="load=$L"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
   GTIME=300 ./ours.sh --save=$PWD/qs.cfg "--keys=$K,${Q}tplog" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell " > /tmp/cmp_ours.txt
 fi

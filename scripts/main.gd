@@ -409,6 +409,8 @@ func _replay_keys(names: PackedStringArray) -> void:
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
 		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
 			_combat.quick_all()
+		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
+			_combat.toggle_magic()
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
 				print("   ", l)

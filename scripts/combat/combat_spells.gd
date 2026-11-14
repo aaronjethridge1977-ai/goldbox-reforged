@@ -373,6 +373,18 @@ func _people_in(cells: Array[Vector2i]) -> Array[int]:
 func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = null) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
+	var d := 0 if item != null else table.field(id, 12) / 3
+	if d > 0 and not me.get("resolving", false):
+		# Casting time (GAME.OVR 0x14C0F): "BEGINS CASTING", the turn ends, and the spell goes
+		# off at the caster's next turn (resolve_pending) unless a wound spoils it first.
+		# (Spells from items: assumed instant; not yet checked.)
+		var keep: Array[int] = picked.duplicate()
+		me.pending = {"id": id, "cell": cell, "picked": keep}
+		me.moves = 0
+		me.attacks = 0
+		c.message.emit("%s BEGINS CASTING" % m.name)
+		c.delay_cast(i, d)
+		return
 	if item != null:
 		CharacterSheet.spend_use(m, item, id)
 	else:
@@ -426,6 +438,12 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				var amount := c.roll(1, 8, "cure")
 				if not SpecialAffects.diseased(t):
 					t.hp = mini(t.hp + amount, t.hp_max)
+					if c.combatants[j].down and t.hp > 0 and t.status in [PartyMember.STATUS_UNCONSCIOUS,
+							PartyMember.STATUS_DYING]:
+						# Healed back above 0, a fallen figure is back in the fight.
+						t.status = PartyMember.STATUS_OKAY
+						c.combatants[j].down = false
+						c.combatants[j].bleeding = 0
 				c.message.emit("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 		4, 20:      # Cause Light Wounds, Shocking Grasp: touch attacks
 			for j in targets:
@@ -545,6 +563,12 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				var amount := c.roll(2, 4, "healing") + 2
 				if not SpecialAffects.diseased(t):
 					t.hp = mini(t.hp + amount, t.hp_max)
+					if c.combatants[j].down and t.hp > 0 and t.status in [PartyMember.STATUS_UNCONSCIOUS,
+							PartyMember.STATUS_DYING]:
+						# Healed back above 0, a fallen figure is back in the fight.
+						t.status = PartyMember.STATUS_OKAY
+						c.combatants[j].down = false
+						c.combatants[j].bleeding = 0
 					c.message.emit("%s IS HEALED" % t.name)
 		48, 55:     # Haste, Slow: up to the caster's level of figures, the other cancelled first
 			var other := EFFECT_SLOW if id == 48 else EFFECT_HASTE
@@ -674,12 +698,43 @@ func _sleep_cost(t: PartyMember) -> int:
 # --- The computer's spells ------------------------------------------------------------------
 
 ## Tries to cast a spell for computer-run combatant i. Returns true if it did.
-func ai_cast(i: int) -> bool:
+## The spell combatant i began casting goes off (its turn then ends). The computer aims it
+## now (the original's 0x96:0x39 at that turn, GAME.OVR 0xACEE); a player's keeps the aim
+## chosen when it was begun (assumed: not yet checked in the lab). False if none.
+func resolve_pending(i: int) -> bool:
+	var me: Dictionary = c.combatants[i]
+	var p: Dictionary = me.get("pending", {})
+	if p.is_empty():
+		return false
+	me.pending = {}
+	var id: int = p.id
+	var cell: Vector2i = p.cell
+	var picked: Array[int] = p.picked
+	if me.get("quick", false) or me.team == 1:
+		var plan := _ai_plan(i, id, true)
+		if plan.is_empty():
+			# Nothing to aim it at any more: the spell is spent (assumed: no message).
+			(me.who as PartyMember).forget(id)
+			return true
+		cell = plan.cell
+		picked = plan.picked
+	me.resolving = true
+	cast(i, id, cell, picked)
+	me.resolving = false
+	return true
+
+
+## `tries` is the d7 already drawn in TP mode (-1: draw it here).
+func ai_cast(i: int, tries: int = -1) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	if me.team == 0 and not party_casts:
+	if me.team == 0 and not (party_casts or c.magic_on):
 		return false
-	var list := castable(i)
+	# TP mode: the original lists every memorized spell, camp spells too, and leaves them to
+	# the priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them.
+	var list: Array[int] = m.ready_spells() if TpDice.on else castable(i)
+	if me.get("no_spells", false):
+		list.clear()
 	if list.is_empty() or c.standing(1 - me.team) == 0:
 		return false
 	if me.team == 0 and party_planner.is_valid():
@@ -689,7 +744,8 @@ func ai_cast(i: int) -> bool:
 				return false
 			cast(i, p.id, p.cell, p.picked)
 			return true
-	var tries := c.roll(1, 7, "%s thinks of spells" % m.name)
+	if tries < 0:
+		tries = c.roll(1, 7, "%s thinks of spells" % m.name)
 	var priority := 7
 	for k in tries:
 		for n in 3:
@@ -705,19 +761,65 @@ func ai_cast(i: int) -> bool:
 	return false
 
 
+## How many standing enemies of i are within `reach` squares (GAME.OVR 0xBA:0x2433, with
+## the spell's range from 0x27741: range + per level x level, at least 1 for a touch).
+func _enemies_within(i: int, reach: int) -> int:
+	var me: Dictionary = c.combatants[i]
+	var n := 0
+	for e in c.combatants:
+		if not e.down and e.team != me.team and c.range_of(me, e) <= reach:
+			n += 1
+	return n
+
+
+## Whom the computer heals with Cure Light Wounds (GAME.OVR 0x143F3): looking at the eight
+## cells round the caster (up first, clockwise) and then its own, the standing figure of its
+## side with the fewest hit points below its maximum (itself only below half); a figure
+## lying there unconscious or dying (of either side) instead, but only when nobody standing
+## has fewer than 8 hit points. -1: nobody.
+func cure_target(i: int) -> int:
+	var me: Dictionary = c.combatants[i]
+	var best := -1
+	var low := 0xFF
+	var body := -1
+	for k in 9:
+		var cell: Vector2i = me.cell + (Combat.DIRS[k] if k < 8 else Vector2i.ZERO)
+		var j := c.occupant(cell, -1)
+		if j >= 0 and not c.combatants[j].down:
+			var e: Dictionary = c.combatants[j]
+			var w: PartyMember = e.who
+			if e.team == me.team and w.hp < w.hp_max and w.hp < low and (j != i or w.hp < w.hp_max / 2):
+				best = j
+				low = w.hp
+			continue
+		for d in c.combatants.size():
+			var e: Dictionary = c.combatants[d]
+			if e.down and e.cell == cell and e.who.status in [PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+				body = d
+	if low < 8 or body < 0:
+		return best
+	return body
+
+
 ## Where the computer would aim `id`: {cell, picked}, or {} if there is no use for it.
-func _ai_plan(i: int, id: int) -> Dictionary:
+## `aiming`: the spell is going off now (not just being weighed).
+func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 	var me: Dictionary = c.combatants[i]
 	var offensive := table.field(id, 14) != 0
 	if not offensive:
 		if id == 3:
-			for j in c.combatants.size():
-				var e: Dictionary = c.combatants[j]
-				if not e.down and e.team == me.team and e.who.hp < e.who.hp_max and \
-						why_not(i, id, e.cell) == "":
-					var one: Array[int] = [j]
-					return {"cell": e.cell, "picked": one}
-			return {}
+			var j := cure_target(i)
+			if j < 0:
+				# Nobody to heal: the original's check (GAME.OVR 0xAEEA) then falls through to
+				# the general one, an enemy within the spell's reach, and takes the spell
+				# (lab: Brother Sean began a Cure Light Wounds with no one wounded by him).
+				# Going off with nobody to heal, it is spent for nothing (lab: no healing
+				# roll in the original).
+				if aiming or _enemies_within(i, spell_range(i, id)) == 0:
+					return {}
+				j = i
+			var one: Array[int] = [j]
+			return {"cell": c.combatants[j].cell, "picked": one}
 		var mine: Array[int] = [i]
 		return {"cell": me.cell, "picked": mine}
 	var near: Array[int] = []

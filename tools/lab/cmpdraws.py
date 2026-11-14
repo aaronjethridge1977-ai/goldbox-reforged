@@ -16,6 +16,13 @@ for l in open(sys.argv[2]):
 print("original: %d draws (%d lost), ours: %d" % (len(o), sum(1 for x in o if x[1] == "LOST"), len(u)))
 for i in range(max(len(o), len(u))):
     a = o[i] if i < len(o) else None; b = u[i] if i < len(u) else None
+    # A draw right next to a lost stretch can carry the wrong size (the trace ring's race);
+    # its size can't be trusted, so it isn't counted as a difference.
+    edge = a is not None and b is not None and a[1] != "LOST" and a[2] != b[2] and (
+        (i + 1 < len(o) and o[i + 1][1] == "LOST") or (i > 0 and o[i - 1][1] == "LOST"))
+    if edge:
+        print("  (draw %d next to lost ones: orig d%d=%d, ours %s d%d=%d; not counted)" % (i + 1, a[2], a[3], b[1], b[2], b[3]))
+        continue
     if a is None or b is None or (a[1] != "LOST" and (a[2] != b[2] or a[3] != b[3])):
         print("first difference at draw %d:" % (i + 1))
         for j in range(max(0, i - 40), min(i + 8, max(len(o), len(u)))):

@@ -674,6 +674,14 @@ func _advance() -> void:
 	_aiming = false
 	_centre_on_selected()
 	_refresh()
+	if not _combatants[i].quick and _combat.magic and _combat.magic.resolve_pending(i):
+		# A player's spell begun last turn goes off at this turn, which it uses up.
+		_refresh()
+		await get_tree().create_timer(0.5 * CampScreen.delay_scale()).timeout
+		if _combat != null and _combat.active == i:
+			_combat.done()
+			_advance()
+		return
 	if _combatants[i].quick:
 		_ai_timer.start(0.35)
 
@@ -1186,6 +1194,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			_advance()
 		get_viewport().set_input_as_handled()
 		return
+	if _combat != null and _result == 0 and _combat.active >= 0 and _combatants[_combat.active].quick:
+		# The original reads keys while the computer runs a turn (GAME.OVR 0xBB80; lab):
+		# Alt-M switches magic on or off for the party's QUICK members, Space hands every
+		# QUICK party member back to the player (not the NPCs, who always fight on their own).
+		if key == KEY_M and (event as InputEventKey).alt_pressed:
+			get_viewport().set_input_as_handled()
+			toggle_magic()
+			return
+		if key == KEY_SPACE:
+			get_viewport().set_input_as_handled()
+			for c in _combatants:
+				var w: PartyMember = c.who
+				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80):
+					c.quick = false
+			return
 	if _event_fight and _result == 0 and _combat != null:
 		_fight_input(event, key)
 		return
@@ -1335,3 +1358,13 @@ func quick_all() -> void:
 			c.quick = true
 	if _combat.active >= 0 and _ai_timer.is_stopped():
 		_ai_timer.start(0.2)
+
+
+## Alt-M in a computer turn (and --keys magic in the lab): the party's QUICK members cast
+## spells or not ("MAGIC ON" / "MAGIC OFF" on the bottom line; off at the start of each fight,
+## GAME.OVR 0xE457).
+func toggle_magic() -> void:
+	if _combat == null:
+		return
+	_combat.magic_on = not _combat.magic_on
+	_say("MAGIC ON" if _combat.magic_on else "MAGIC OFF")

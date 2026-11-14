@@ -65,6 +65,7 @@ var flee_dir := 0            # where the monsters run: the party's facing on the
 var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
 var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
+var magic_on := false                # Alt-M: the party's QUICK members cast (the original's DS:0x6E30)
 var magic: CombatSpells = null      # spells and their effects (when the spell table is loaded)
 
 
@@ -236,8 +237,29 @@ func _pick_next() -> int:
 			chosen = i
 	if best_init == 0:
 		return -1
+	combatants[chosen]["init_was"] = best_init
 	combatants[chosen]["init"] = 0
 	return chosen
+
+
+## A spell with a casting time (GAME.OVR 0x14C0F: the table's delay / 3, here `d`) goes off
+## on the caster's next turn: its initiative drops by d (to 1 if that is all it has), so it
+## acts again later this round.
+func delay_cast(i: int, d: int) -> void:
+	var c: Dictionary = combatants[i]
+	var was: int = c.get("init_was", c.init) if TpDice.on else int(c.init)
+	var now := was - d if was > d else 1
+	c.init = now
+	if TpDice.on:
+		if order.is_empty():
+			order.append(i)      # someone is left to act this round
+		return
+	var at := order.size()
+	for k in order.size():
+		if int(combatants[order[k]].init) < now:
+			at = k
+			break
+	order.insert(at, i)
 
 
 ## DELAY (the original's DONE menu): the active combatant acts again after everyone else
@@ -456,9 +478,9 @@ func shoot(i: int, j: int) -> void:
 		attack(i, j)
 		return
 	_note_attack(a, t)
-	var behind: bool = t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4
-	if t.received < 2:
+	if t.received < 3:
 		t.dir = dir_between(t, a)
+	var behind: bool = t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4
 	a.dir = dir_between(a, t)
 	a.moves = 0
 	var reach: int = range_of(a, t)
@@ -612,6 +634,15 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 	t.last_kind = kind
 	if dmg > 0 and tm.has_affect(0x65) and not tm.has_affect(0x62) and int(t.regen_in) == 0:
 		t.regen_in = 3      # a troll's wounds start closing three rounds later (0x65, 0x3B)
+	if dmg > 0:
+		# A wound spoils a spell being cast ("LOST A SPELL", forgotten) and keeps the figure
+		# from starting another for the rest of the fight (GAME.OVR 0x12CDA: record bytes 0
+		# and 1, the latter set only as the fight begins).
+		t.no_spells = true
+		if not t.get("pending", {}).is_empty():
+			tm.forget(int(t.pending.id))
+			t.pending = {}
+			message.emit("%s LOST A SPELL" % tm.name)
 	if tm.hp >= dmg:
 		tm.hp -= dmg
 		if tm.hp > 0:
@@ -728,9 +759,11 @@ func touching(a: Dictionary, b: Dictionary, a_at = null) -> bool:
 
 
 ## Direction from a to b, from their closest cells.
+## The direction from a to b for facing and attacks from behind: the original's wedges
+## (GAME.OVR 0x14E38, which every facing and behind test calls), from their closest cells.
 func dir_between(a: Dictionary, b: Dictionary) -> int:
 	var pr := closest(a, b)
-	return dir_to(pr[0], pr[1])
+	return wedge_dir(pr[0], pr[1])
 
 
 ## Range from a to b in squares, from their closest cells.
@@ -749,8 +782,7 @@ func adjacent(a: Vector2i, b: Vector2i) -> bool:
 ## opening out from n (north: n.y - to.y >= |to.x - n.x|), the diagonals the quarter beyond n
 ## (north-east: to.x >= n.x and to.y <= n.y). `to` on `from` or on n counts. The computer's
 ## approach steps from it (lab: Rhiannon at 29,14 went west for an orc at 25,12, which these
-## wedges call west and dir_to north-west). The original's attacks use it for facing too;
-## dir_to is kept there until that is compared.
+## wedges call west and dir_to north-west), and so do facing and attacks from behind.
 static func wedge_dir(from: Vector2i, to: Vector2i) -> int:
 	for d in 8:
 		var n: Vector2i = from + DIRS[d]
@@ -891,11 +923,15 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var tm: PartyMember = t.who
 	var behind := free
 	if not free:
-		_note_attack(a, t)
+		# The original (GAME.OVR 0x12EDB: 0x13FF1 then 0x1407F) counts the attack, turns
+		# the target to face the attacker on its first two attacks of the round, and only
+		# then asks whether the attacker stands behind it (0x13DCF), so a second attacker
+		# never strikes from behind (lab, side chat 2: a goblin's d20 of 16 at Rhiannon's
+		# back missed against her front AC 0).
+		if t.received < 3:
+			t.dir = dir_between(t, a)
 		if t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4:
 			behind = true
-		if t.received < 2:
-			t.dir = dir_between(t, a)
 	a.dir = dir_between(a, t)
 	a.moves = 0
 	var stab := not free and _can_backstab(a, t)
@@ -1506,22 +1542,27 @@ func ai_act() -> bool:
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
+		# TP mode: after its morale check (a goblin that surrendered drew nothing more) the
+		# original's computer turn weighs its items with d7 tries (GAME.OVR 0xAFA4), then
+		# turning undead (0xADC3), then its spells with d7 tries (0xB105; the d7 is drawn
+		# even with nothing memorized). Ours don't use items yet, so that d7 is drawn only.
+		var spell_d7 := -1
 		if TpDice.on:
-			# The original's computer turn rolls d7 as it weighs a spell (GAME.OVR 0xAFA4) and
-			# d7 as it weighs an item (0xB0F4) before choosing what to do, after its morale
-			# check (lab: a goblin that surrendered drew neither); lab dice only until those
-			# choices are traced (ours choose spells and items their own way).
-			roll(1, 7, "%s weighs a spell" % c.who.name)
 			roll(1, 7, "%s weighs an item" % c.who.name)
+		# A spell begun last turn goes off now (GAME.OVR 0xACEE, after the item weighing).
+		if magic and magic.resolve_pending(active):
+			return false
 		c.fleeing = morale == "flee" or c.get("turned_undead", false)
-		if c.get("turned_undead", false):
-			pass
-		elif c.team == 0 and can_turn(active):
+		if c.team == 0 and not c.get("turned_undead", false) and can_turn(active):
 			turn_undead(active)
 			return false
+		if TpDice.on:
+			spell_d7 = roll(1, 7, "%s weighs a spell" % c.who.name)
+		if c.get("turned_undead", false):
+			pass
 		elif c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
-		elif magic and magic.ai_cast(active):
+		elif magic and magic.ai_cast(active, spell_d7):
 			return false
 		if not find_target(active):
 			guard(active)
