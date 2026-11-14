@@ -397,6 +397,30 @@ others from J:
 - A part's arrival square, when it has an event, is LOOKed at facing each way before the walk
   (7:23's storeroom: arriving by teleport, any step off flashes the party away again).
 
+### Chat 18 additions
+
+- **States, in order and more of them:** chat 17 walked six states, in the order they were opened, and nearly every
+  run opened 12-18; the first six were mostly the area's own per-visit markers (0x4A00-0x4A1F), and states with
+  quest flags were dropped (4:2's sealed chest, 0x4AC8 = 1; 2:9's states past the gate after paying). Now parts
+  no walk has been in come first, then states inside the area that change a quest flag (0x4A20 up) or bring a
+  quest item, fewest changes first, then the rest (`_cover_state_rank`); up to 16 are walked (`cover <area>
+  <minutes> all states=<n>`), 48 kept waiting. A state walk takes about 20 s, so an `-all` run takes 5-6 minutes.
+- The log's `==== COVER` lines carry the seconds since the run began (`[123s]`), with a "first jobs done" line:
+  in 4:2, the first walk 16 s, its 69 jobs 5 s, each state walk 16-20 s. Walking is where the time goes.
+- **Quest items open states:** a job or a walk's event that leaves the party with more of an item type some
+  FIND_ITEM looks for (74, 75, 82, 91) names the state `item<type>+` (6:1's captain's pass).
+- **WHO jobs:** the member picked at a WHO prompt is read next (4:2's thieves' well: RANDOM 99 against the
+  climber's climb-walls skill, 0x6BAB), and the bot always picked the first member, so Restal never appeared. Each
+  other member gets a job once a run (`<area>|<menu>:who<n>`). 4:2's last fight and flag came from it.
+- **Encounter and PARLAY rerolls until dry:** a reroll job tries up to eight times (was three), stopping after
+  two tries in a row that add nothing to the area's coverage.
+- Report: ON_GOTO / ON_GOSUB on a byte the game itself sets leaves the entries no value picks out (dead). 0x033D,
+  the wilderness heading, is read as the heading doubled (0, 2, 4, 6: GAME.OVR's ECL memory) and no script writes
+  it, so the bands' 8-way ON_GOTOs never take 1, 3, 5, 7 (6:25 71 -> 76% of branches, 8:27 73 -> 80, 7:26 78 -> 84).
+- `mkreasons.py < missctx.sh output`: a first draft of an area's reasons table, missed branches grouped by
+  misswhy's guess, for docs/coverage-areas.md (check each row against the listing).
+- `cover_7-17-war.plan`: the kobold war at its third stage (0x4A7E = 3, 0x4A7C = 1, 0x4A7D = 3).
+
 ### Side chat 2 additions (fights roll for roll against the original)
 
 The original draws every random number from Turbo Pascal's generator (START.EXE 0AF8:118F):

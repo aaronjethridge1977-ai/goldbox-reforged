@@ -1,0 +1,16 @@
+# Chat 18: 7:17 with the kobold war at its third stage. Each attack the nomads' camp beats off adds one to
+# 0x4A7E (0xAFBA); the attacks come with a rest interrupted or a search at the camp's squares (0x9EA3, zone
+# 2: 0xAE4D), and the one with 0x4A7E = 3 brings the headman's DESTROY THE KOBOLDS / FLEE (0xB121). Set by
+# shortcut as a player who beat off three attacks has it (the script writes 1 and adds one per fight), with
+# 0x4A7C = 1 (joined the feast, 0xA52A; bits 2 and 4, traitor and nomads fought, clear: with bit 4 the
+# attacks take the other side, 0xAE9E) and 0x4A7D = 3 (STAY AND FIGHT, 0xAB1B).
+rules playthrough.plan
+start chat10a_latest/textile
+shortcut flag 4A7E set 3 three kobold attacks beaten off (7:17 0xAED0, 0xAFBA)
+shortcut flag 4A7C set 1 joined the nomads' feast (7:17 0xA52A)
+shortcut flag 4A7D set 3 stayed to fight the kobolds (7:17 0xAB1B)
+travel 7:17
+expect 7:17
+cover 7:17 40 all
+status
+stop

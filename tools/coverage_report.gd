@@ -455,7 +455,11 @@ static func _in_flags(a: Dictionary) -> bool:
 ## 0x80 (0x6B3B) and 0x81, fled (0x5C2F), and nothing else (the ECL window 0x6B00-0x6EFF is
 ## the word array at [0x49D6] + (address - 0x6B00) * 2, so 0x6DC7 is +0x58E; those are its only
 ## writes); scripts write 129. "6DC7 = 1" (1:24, 2:20, 3:0, 8:29) can't hold.
-const ENGINE_VALUES := {0x6DC7: [0, 128, 129]}
+## Chat 18: 0x033D, the wilderness heading: GAME.OVR's ECL memory reads it as the party's heading
+## doubled (0, 2, 4, 6; research/pool-of-radiance-formats.md), ours writes direction * 2, and no
+## script of any data set writes it. The bands' and Kuto's ON_GOTO [033D], 8 ... never take the
+## odd entries.
+const ENGINE_VALUES := {0x6DC7: [0, 128, 129], 0x033D: [0, 2, 4, 6]}
 
 
 ## The values byte x can hold at a COMPARE: the flag table's, the engine's, or {} (anything).
@@ -481,6 +485,13 @@ func _dead_values(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 	for i in offs.size() - 1:
 		var ins: Dictionary = ecl.instructions[offs[i]]
 		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		# Chat 18: ON_GOTO / ON_GOSUB on a byte the game itself sets: entries no value picks.
+		if String(ins.op) in ["ON_GOTO", "ON_GOSUB"] and not ins.args.is_empty() and _is_byte_mem(ins.args[0]) \
+				and ENGINE_VALUES.has(int(ins.args[0].value)):
+			var vals: Array = ENGINE_VALUES[int(ins.args[0].value)]
+			for k in ins.args.size() - 2:
+				if not vals.has(k):
+					out["%d:%d" % [offs[i], k]] = true
 		if ins.op == "COMPARE_AND" and ins.args.size() >= 4 and String(nxt.op) in ["IF_EQ", "IF_NE"]:
 			# Chat 17: both pairs must be equal; a pair that never is makes IF_EQ never hold.
 			for k in [0, 2]:

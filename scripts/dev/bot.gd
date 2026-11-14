@@ -469,8 +469,13 @@ func _do(line: String) -> void:
 			# "fresh" (chat 15): each event is walked to from the part's arrival, not from where
 			# the last one left the party (an alarm raised by one fight changes every event
 			# after it: 5:4's fighter only comes out while the alarm is off).
+			# "states=<n>" (chat 18): how many flag states to walk again (default 16).
 			_cover_all = "all" in w.slice(3)
 			_cover_fresh = "fresh" in w.slice(3)
+			_cover_max_states = 16
+			for o: String in w.slice(3):
+				if o.begins_with("states="):
+					_cover_max_states = int(o.get_slice("=", 1))
 			await _cover(w[1], int(w[2]) if w.size() > 2 else 60)
 			_cover_all = false
 			_cover_fresh = false
@@ -3256,15 +3261,16 @@ func _cover(area: String, minutes: int) -> void:
 	main.dev_choice_hook = _cover_choice
 	main.dev_typed_hook = _cover_typed
 	var deadline := Time.get_ticks_msec() + minutes * 60000
+	_cover_t0 = Time.get_ticks_msec()
 	_cover_resume_load()
 	if false:
 		pass
 	else:
 		_cover_level()
-		print("==== COVER %s: walking every map" % area)
+		print("==== COVER %s: walking every map %s" % [area, _cover_t()])
 		var start: Dictionary = main.dev_snapshot()
 		await _cover_walk(deadline)
-		print("==== COVER %s: %d menu choices queued" % [area, _cover_jobs.size()])
+		print("==== COVER %s: %d menu choices queued %s" % [area, _cover_jobs.size(), _cover_t()])
 		var done := 0
 		while not _cover_jobs.is_empty() and Time.get_ticks_msec() < deadline:
 			var job: Dictionary = _cover_jobs.pop_front()
@@ -3279,6 +3285,7 @@ func _cover(area: String, minutes: int) -> void:
 		# Chat 17: an area whose script reads the hour (0x49C8/0x49C9: the smith works by day in
 		# 5:6, the scribes close at 17:00 in 5:4) is walked again twelve hours later, the clock
 		# moved on by shortcut (logged; as a player who rested that long has it).
+		print("==== COVER %s: first jobs done %s" % [area, _cover_t()])
 		if _cover_reads_clock(area):
 			main.dev_restore(start)
 			await _settle()
@@ -3292,14 +3299,9 @@ func _cover(area: String, minutes: int) -> void:
 			# Parts no walk has been in first, all of them; then up to six flag states.
 			var sig: String = _cover_states.keys()[0]
 			for k: String in _cover_states:
-				if not k.begins_with("outside "):
-					sig = k     # chat 17: states inside the area before those outside it
-					break
-			for k: String in _cover_states:
-				if k.begins_with("part "):
+				if _cover_state_rank(k) < _cover_state_rank(sig):
 					sig = k
-					break
-			if walked >= 6 and not sig.begins_with("part "):
+			if walked >= _cover_max_states and not sig.begins_with("part "):
 				break
 			var snap: Dictionary = _cover_states[sig]
 			_cover_states.erase(sig)
@@ -3310,7 +3312,7 @@ func _cover(area: String, minutes: int) -> void:
 			if _cover_resumed.states.has(sig):
 				print("==== COVER %s: the state %s was walked before the restart" % [area, sig.strip_edges()])
 				continue
-			print("==== COVER %s: walking again in the state %s" % [area, sig.strip_edges()])
+			print("==== COVER %s: walking again in the state %s %s" % [area, sig.strip_edges(), _cover_t()])
 			main.dev_restore(snap)
 			await _settle()
 			await _cover_walk(deadline, true)
@@ -3335,7 +3337,7 @@ func _cover(area: String, minutes: int) -> void:
 	main.dev_choice_hook = Callable()
 	main.dev_typed_hook = Callable()
 	main._combat.dev_win_if = win_if
-	print("==== COVER %s done: %s" % [area, str(_cover_log)])
+	print("==== COVER %s done: %s %s" % [area, str(_cover_log), _cover_t()])
 	for f in _cover_fights:
 		print("COVER FIGHT ", f)
 	_cover_area = ""
@@ -3410,6 +3412,37 @@ func _cover_reads_clock(area: String) -> bool:
 
 ## Whether a queued choice has run since it was queued (in this run or another).
 var _cover_all := false
+var _cover_max_states := 16     # chat 18: flag states walked again (was 6, in the order opened)
+const COVER_STATES_KEPT := 48   # chat 18: states kept waiting (was 12)
+var _cover_t0 := 0
+
+
+## Chat 18: elapsed seconds since the coverage run began, for the log's landmarks.
+func _cover_t() -> String:
+	return "[%ds]" % ((Time.get_ticks_msec() - _cover_t0) / 1000)
+
+
+## Chat 18: which state to walk next. Chat 17 walked six, in the order they were opened, and
+## nearly every run opened 12-18: the first six were mostly the area's own per-visit markers
+## (0x4A00-0x4A1F), and states with quest flags (4:2's sealed chest, 4AC8=1) were never walked.
+## Now: parts no walk has been in, then states inside the area before those outside it, then
+## those that change a quest flag (0x4A20 up), fewer changes first (the simplest new state);
+## then the rest.
+func _cover_state_rank(sig: String) -> int:
+	if sig.begins_with("part "):
+		return 0
+	var r := 100
+	if sig.begins_with("outside "):
+		r += 1000
+	var quest := false
+	var n := 0
+	for t: String in sig.strip_edges().split(" ", false):
+		n += 1
+		if t.begins_with("item") or (t.length() >= 4 and t.substr(0, 4).hex_to_int() >= 0x4A20):
+			quest = true
+	if not quest:
+		r += 500
+	return r + n
 var _cover_ran := {}
 var _cover_parts_walked := {}  # chat 16: "part map:region" walked in this run
 var _cover_looking := false    # LOOK is running (its menus' jobs look again rather than step)
@@ -3442,6 +3475,19 @@ func _cover_step(direction: int) -> void:
 
 func _cover_choice(choice: int) -> void:
 	var vm: EclVM = main._vm
+	# Chat 18: WHO picks a member, and the script reads that member next (4:2's thieves' well:
+	# RANDOM 99 against the climber's climb-walls skill, 0x6BAB; the bot always picked the first
+	# member, never the thief, so Restal was never met). One job per other member, once a run.
+	if not _cover_snap.is_empty() and vm.block_key == _cover_area and vm._menu_kind == "who" and vm.menu.size() > 1:
+		for j in vm.menu.size():
+			var key := "%s|%d:who%d" % [vm.block_key, vm._menu_at, j]
+			if j == choice or _cover_queued.has(key):
+				continue
+			_cover_queued[key] = {}
+			var path := _cover_path.duplicate(true)
+			path.append({"c": j, "at": vm._menu_at})
+			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,
+				"look": _cover_looking, "what": "%04X WHO: %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
 	if not _cover_snap.is_empty() and vm.block_key == _cover_area and vm._menu_kind != "who" and vm.menu.size() > 1:
 		for j in vm.menu.size():
 			if j == choice:
@@ -3647,11 +3693,26 @@ func _cover_recover(back: Dictionary, what: String) -> bool:
 func _cover_job(job: Dictionary) -> void:
 	await _cover_job_once(job)
 	if job.get("reroll", false):
-		for k in 2:
+		# Chat 18: up to eight tries (was three), until two in a row add nothing: the reaction
+		# to an encounter or PARLAY choice is a roll, and many outcomes after those menus (2:20's
+		# patrols, the bands) were still missing after three.
+		var dry := 0
+		for k in 7:
+			var before := _cover_size()
 			var again: Dictionary = job.duplicate()
 			again["reroll"] = false
 			again["reseed"] = true
 			await _cover_job_once(again)
+			dry = dry + 1 if _cover_size() == before else 0
+			if dry >= 2 and k >= 1:
+				break
+
+
+## Chat 18: how much of the area's script has run (instructions and branch outcomes): a try that
+## leaves it unchanged added nothing.
+func _cover_size() -> int:
+	var b: Dictionary = main._vm.coverage.blocks.get(_cover_area, {})
+	return b.get("ins", {}).size() + b.get("br", {}).size()
 
 
 func _cover_job_once(job: Dictionary) -> void:
@@ -3718,22 +3779,12 @@ func _cover_job_once(job: Dictionary) -> void:
 	# story flags (0x4A20 up) changed opens a state too; its walk comes in again by the ways in.
 	var inside := _here() == _cover_area
 	if not wiped and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and (inside or _here() != "0:0"):
-		var before: PackedByteArray = job.snap.vm.mem.slice(QUEST_LO, QUEST_HI)
-		var now: PackedByteArray = main._vm.mem.slice(QUEST_LO, QUEST_HI)
-		var sig := "" if inside else "outside "
-		for i in now.size():
-			if not inside and i < 0x20:
-				continue
-			# Flags and the area's own markers (0x4A00-0x4A1F), as they go on or off; a
-			# counter going up (a sign read again) is not a new state.
-			if (now[i] == 0) != (before[i] == 0):
-				sig += "%04X=%d " % [QUEST_LO + i, now[i]]
-			elif now[i] != before[i] and i >= 0x20:
-				var bits: int = now[i] & ~before[i]
-				if bits != 0:
-					sig += "%04X|%d " % [QUEST_LO + i, bits]
+		# Flags and the area's own markers (0x4A00-0x4A1F), as they go on or off; a counter
+		# going up (a sign read again) is not a new state. Chat 18: a quest item gained too.
+		var sig := ("" if inside else "outside ") + _cover_state_sig(job.snap.vm.mem, main._vm.mem, inside) \
+			+ _cover_item_sig(job.snap.party, main._party)
 		if sig != "" and sig != "outside ":
-			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < 12:
+			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < COVER_STATES_KEPT:
 				_cover_states[sig] = main.dev_snapshot()
 				print("   (a new state for the walk: %s)" % sig.strip_edges())
 				_cover_resume_note("opened", "%s|||%s" % [job.key, sig])
@@ -3763,6 +3814,26 @@ func _cover_state_sig(before_mem: PackedByteArray, now_mem: PackedByteArray, ins
 			var bits: int = now[i] & ~before[i]
 			if bits != 0:
 				sig += "%04X|%d " % [QUEST_LO + i, bits]
+	return sig
+
+
+## Chat 18: quest items (the types some FIND_ITEM looks for) the party carries now and didn't
+## before, as part of a state's name ("item91+ "): 6:1's captain's pass, bought from the seedy man,
+## and the kobolds' silver bottle change what later events do, as a flag would.
+func _cover_item_sig(before_party: Array, now_party: Array) -> String:
+	var count := func(party: Array) -> Dictionary:
+		var c := {}
+		for m: PartyMember in party:
+			for it: GameItem in m.items:
+				if it.type in QUEST_ITEM_TYPES:
+					c[it.type] = int(c.get(it.type, 0)) + 1
+		return c
+	var b: Dictionary = count.call(before_party)
+	var n: Dictionary = count.call(now_party)
+	var sig := ""
+	for t: int in QUEST_ITEM_TYPES:
+		if int(n.get(t, 0)) > int(b.get(t, 0)):
+			sig += "item%d+ " % t
 	return sig
 
 
@@ -4162,8 +4233,8 @@ func _cover_map(deadline: int) -> Array:
 		# Chat 17: an event the walk itself changed the story flags at (7:17's kobold attack:
 		# each won fight moves 0x4A7E on, and the next stage comes on the next arrival) opens a
 		# state, as a job's does.
-		var wsig := _cover_state_sig(pre.vm.mem, main._vm.mem, true)
-		if wsig != "" and not _cover_states.has(wsig) and not _cover_states_walked.has(wsig) and _cover_states.size() < 12:
+		var wsig := _cover_state_sig(pre.vm.mem, main._vm.mem, true) + _cover_item_sig(pre.party, main._party)
+		if wsig != "" and not _cover_states.has(wsig) and not _cover_states_walked.has(wsig) and _cover_states.size() < COVER_STATES_KEPT:
 			_cover_states[wsig] = here
 			print("   (a new state for the walk: %s, from the walk)" % wsig.strip_edges())
 		for d in 4:
