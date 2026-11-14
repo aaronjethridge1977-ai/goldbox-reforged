@@ -438,11 +438,11 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				var amount := c.roll(1, 8, "cure")
 				if not SpecialAffects.diseased(t):
 					t.hp = mini(t.hp + amount, t.hp_max)
-					if c.combatants[j].down and t.hp > 0 and t.status in [PartyMember.STATUS_UNCONSCIOUS,
-							PartyMember.STATUS_DYING]:
-						# Healed back above 0, a fallen figure is back in the fight.
-						t.status = PartyMember.STATUS_OKAY
-						c.combatants[j].down = false
+					if c.combatants[j].down and t.status == PartyMember.STATUS_DYING:
+						# A fallen figure stops dying but stays down this fight (lab: the orc
+						# Bakshi healed rolled no initiative the next round; assumed: whether
+						# the original shows it unconscious is not yet checked).
+						t.status = PartyMember.STATUS_UNCONSCIOUS
 						c.combatants[j].bleeding = 0
 				c.message.emit("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 		4, 20:      # Cause Light Wounds, Shocking Grasp: touch attacks
@@ -563,11 +563,11 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				var amount := c.roll(2, 4, "healing") + 2
 				if not SpecialAffects.diseased(t):
 					t.hp = mini(t.hp + amount, t.hp_max)
-					if c.combatants[j].down and t.hp > 0 and t.status in [PartyMember.STATUS_UNCONSCIOUS,
-							PartyMember.STATUS_DYING]:
-						# Healed back above 0, a fallen figure is back in the fight.
-						t.status = PartyMember.STATUS_OKAY
-						c.combatants[j].down = false
+					if c.combatants[j].down and t.status == PartyMember.STATUS_DYING:
+						# A fallen figure stops dying but stays down this fight (lab: the orc
+						# Bakshi healed rolled no initiative the next round; assumed: whether
+						# the original shows it unconscious is not yet checked).
+						t.status = PartyMember.STATUS_UNCONSCIOUS
 						c.combatants[j].bleeding = 0
 					c.message.emit("%s IS HEALED" % t.name)
 		48, 55:     # Haste, Slow: up to the caster's level of figures, the other cancelled first
@@ -731,8 +731,11 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 	if me.team == 0 and not (party_casts or c.magic_on):
 		return false
 	# TP mode: the original lists every memorized spell, camp spells too, and leaves them to
-	# the priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them.
+	# the priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them; it reads
+	# the record's slots from 0x17 up, the reverse of ours's `memorized`.
 	var list: Array[int] = m.ready_spells() if TpDice.on else castable(i)
+	if TpDice.on:
+		list.reverse()
 	if me.get("no_spells", false):
 		list.clear()
 	if list.is_empty() or c.standing(1 - me.team) == 0:
@@ -755,6 +758,12 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 			var plan := _ai_plan(i, id)
 			if plan.is_empty():
 				continue
+			if plan.get("weighed", false) and table.field(id, 12) / 3 == 0:
+				# An instant attack spell is aimed now.
+				plan = _ai_plan(i, id, true)
+				if plan.is_empty():
+					m.forget(id)
+					return true
 			cast(i, id, plan.cell, plan.picked)
 			return true
 		priority -= 1
@@ -774,9 +783,10 @@ func _enemies_within(i: int, reach: int) -> int:
 
 ## Whom the computer heals with Cure Light Wounds (GAME.OVR 0x143F3): looking at the eight
 ## cells round the caster (up first, clockwise) and then its own, the standing figure of its
-## side with the fewest hit points below its maximum (itself only below half); a figure
-## lying there unconscious or dying (of either side) instead, but only when nobody standing
-## has fewer than 8 hit points. -1: nobody.
+## side with the fewest hit points below its maximum (itself only below half); a figure of
+## either side lying there unconscious or dying instead (the original's list of fallen
+## figures, DS:0x66D6, has no side check; lab: Bakshi healed a fallen orc), but only when
+## nobody standing has fewer than 8 hit points. -1: nobody.
 func cure_target(i: int) -> int:
 	var me: Dictionary = c.combatants[i]
 	var best := -1
@@ -794,7 +804,8 @@ func cure_target(i: int) -> int:
 			continue
 		for d in c.combatants.size():
 			var e: Dictionary = c.combatants[d]
-			if e.down and e.cell == cell and e.who.status in [PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+			if e.down and e.cell == cell and e.who.status in [PartyMember.STATUS_UNCONSCIOUS,
+					PartyMember.STATUS_DYING]:
 				body = d
 	if low < 8 or body < 0:
 		return best
@@ -822,6 +833,29 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			return {"cell": c.combatants[j].cell, "picked": one}
 		var mine: Array[int] = [i]
 		return {"cell": me.cell, "picked": mine}
+	if not aiming:
+		# Weighing an attack spell (GAME.OVR 0xAF05): some enemy within the spell's range,
+		# and for an area spell (table byte 15 = its reach) none of those enemies so placed
+		# that the area round it would catch a figure of the caster's side, the caster
+		# included (0xAE15). No dice (lab: Bakshi passed over Sleep with Thrender next to
+		# the orcs).
+		var reach := spell_range(i, id)
+		var kind := table.field(id, 15)
+		var any := false
+		for t in c.combatants:
+			if t.down or t.team == me.team or c.range_of(me, t) > reach:
+				continue
+			any = true
+			if kind > 0:
+				for e in c.combatants:
+					if not e.down and e.team == me.team and c.range_of(e, t) <= kind:
+						return {}
+		if not any:
+			return {}
+		var none: Array[int] = []
+		return {"cell": me.cell, "picked": none, "weighed": true}
+	# Aiming it as it goes off: a random enemy in range with a clear shot (assumed: the
+	# original's aim, GAME.OVR 0x96:0x39, is not yet traced).
 	var near: Array[int] = []
 	for j in c.combatants.size():
 		var e: Dictionary = c.combatants[j]
@@ -835,18 +869,6 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			if not held(c.combatants[j].who):
 				t = j
 				break
-	# An area spell isn't cast where it would catch the caster's own side (each of them
-	# within the table's area kind of the target rolls a save: -2 for the party, +8 for
-	# monsters; one failure is enough to hold back).
-	var kind := table.field(id, 15)
-	if kind > 0 and table.field(id, 8) != 1:
-		for j in c.combatants.size():
-			var e: Dictionary = c.combatants[j]
-			if e.down or e.team != me.team:
-				continue
-			if c.range_of(e, c.combatants[t]) <= kind and not save(e.who, table.field(id, 9),
-					-2 if me.team == 0 else 8, null):
-				return {}
 	var picked: Array[int] = [t]
 	if aim_kind(id) == "pick":
 		for j in near:
