@@ -26,7 +26,7 @@ Each building lane takes item 1 first and doesn't start Later items while 1-3 ar
 2. The fresh full run's bot causes (BRAM dead with platinum, travel from lower maps, the thief at locks, the 7:26 -> 3:14 teleport), with a new full run in the background.
 3. Differential checks 6-9 (approved); then 3, 5 and 10 when Combat posts their fights.
 
-Later: P39 quick save/load feedback (QoL: waits for playable unless Jeremy says); P38 monster figure left in the view after THE MONSTERS FLEE; P31 no monster picture when monsters approach (faithfulness); main-path gaps outside combat (Read Magic and SCRIBE first, poison, treasure limits, Raise Dead's CON, Detect Magic); number-prompt jobs (3:0), 6:1's state walk.
+Later: P41 WHO WILL PAY? menu runs off the screen; P39 quick save/load feedback (QoL: waits for playable unless Jeremy says); P38 monster figure left in the view after THE MONSTERS FLEE; P31 no monster picture when monsters approach (faithfulness); main-path gaps outside combat (Read Magic and SCRIBE first, poison, treasure limits, Raise Dead's CON, Detect Magic); number-prompt jobs (3:0), 6:1's state walk.
 
 **Combat**
 1. ✓ (Combat Chat 1) The kobold net-trap fight to the end (draw 8079 of 8905; kobold 23 one square off): matches all 8905 draws, and a second seed (6825).
@@ -47,6 +47,7 @@ Later: P40 downed party members vanish from the field; P36 MOVE leaves at 0 move
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · desk → main · **P41, Jeremy playing: the inn's "WHO WILL PAY?" (2,14 W, 17:02)** puts the party's names on the bottom menu row, which runs off the screen (SIR STABBEM AXEY MCCHOP SIR HACKENBOOM S...), and doesn't work right. First check: the script command behind it (a menu of member names) and, in DOSBox, how the original asks it (pick on the party list, then a menu?); match. Bug, not paused. · open
 - 2026-11-14 · desk → combat · **P40, Jeremy playing: a party member who goes down vanishes from the battlefield**; he expects the original's lying-down figure. No downed picture found in `combat_screen.gd`. First check: in DOSBox, how the original shows a downed member (dying, unconscious, dead) and a downed monster after the skull (P16 step 5), from COMSPR or the icon, and match. Faithfulness, not paused. · open
 - 2026-11-14 · desk → main · **P39, Jeremy playing: quick save (F2) and quick load (F3) give no feedback.** `_quick_save` / `_quick_load` write only to `_status` (dev line) on errors, nothing on success. Suggest a short row-24 line in the original's style (GAME SAVED, as SAVE says; GAME LOADED; the refusals in the same place). Our own QoL feature, so the pause applies unless Jeremy makes it an exception (asked). · open
 - 2026-11-14 · desk → main · **P38, Jeremy playing: after "THE MONSTERS FLEE." the monster's figure stays in the 3D view** facing S, W and N (14,1, 15:05, screenshots with Jeremy). Like P10 (the City Hall guard): the encounter's walking figure isn't cleared on this path. First check: where P10's fix clears the figure (script redraw CALL 0x2C90, each step) and why turning in place and the monsters-flee ending miss it; check WAIT, FLEE and parley endings too. Bug, not paused. · open
