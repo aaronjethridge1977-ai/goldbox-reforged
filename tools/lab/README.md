@@ -425,7 +425,7 @@ games draw the same numbers, so a fight can be compared draw by draw.
 - Found and fixed this way (side chat 2, 2026-11-13): battlefield clutter, monster icon
   colours, who acts next, the movement patterns (d8 rule and row), the range penalty's
   sign, hand-to-hand targets, the approach direction. The draw log matched to draw 861 of
-  the orc fight; next: whom a figure that walked up strikes (the original's target list).
+  the orc fight, then (target lists nearest first; QUICK never bandages) all 965 draws.
 - Setup for these: `por_slow.conf` is `por.conf` with `cpu_cycles = 1500`; `trace.py` reads
   `game/GAME.OVR` and `re/start.img` (START.EXE unpacked with `.lab/unexepack.py`), both in
   the lab folder only.

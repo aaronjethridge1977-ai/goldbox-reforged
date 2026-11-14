@@ -35,7 +35,7 @@ extends RefCounted
 ##   "YOUR TEAMMATE IS DYING". (The lab saw all four messages in the original.)
 ## - Bandage: a party member can spend its turn bandaging the first dying party member
 ##   (anywhere on the field), who becomes UNCONSCIOUS and stops bleeding ("IS BANDAGED").
-##   Party members on Quick bandage before anything else. The original offers it under
+##   (The original's QUICK doesn't bandage; the lab bot does, as a player.) The original offers it under
 ##   DONE: GUARD DELAY QUIT BANDAGE SPEED EXIT (GUARD only with a melee weapon).
 ## - The fight ends when one side has nobody standing. (QoL: when the last enemy falls the
 ##   battle ends at once; the original asks "Continue Battle?".)
@@ -1104,9 +1104,10 @@ func done() -> void:
 # - Target: it keeps its target while that one is standing; otherwise it picks one at
 #   random among the enemies it has a line of sight to (walls block; figures don't), or
 #   among all enemies if it sees none. No target: it guards.
-# - Each action: hand to hand, it attacks a random adjacent enemy (its own target is ignored
-#   once adjacent), monsters and party members alike (GAME.OVR 0xB951: d count, even for
-#   one; side chat 2 corrected "a party member attacks its target if adjacent"). With no enemy adjacent it steps towards its target: the
+# - Each action: a monster attacks a random adjacent enemy (its own target is ignored once
+#   adjacent, as in the original: d count, even for one, GAME.OVR 0xB951); a party member
+#   attacks its target if adjacent, else a random adjacent enemy. Lists of figures go
+#   nearest first (_by_distance). With no enemy adjacent it steps towards its target: the
 #   direction to the target turned by the pattern's offsets, the first of five that is free.
 #   A step needs more movement left than it costs (the computer never spends its last
 #   half-move). Stepping straight back counts as a failure, as does finding no step; after
@@ -1180,8 +1181,22 @@ func find_target(i: int) -> bool:
 	var pool := seen if not seen.is_empty() else all
 	if pool.is_empty():
 		return false
+	_by_distance(c, pool)
 	c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
 	return true
+
+
+## The original lists figures nearest first (GAME.OVR 0x3045B, seen in the lab in side chat
+## 2: Brother Sean's "first of 3" was the orc 8 half-moves away, not the first orc): the
+## distance in half-moves (2 a straight step, 3 a diagonal one) between the closest cells,
+## a tie putting the later combatant first.
+func _by_distance(c: Dictionary, list: Array[int]) -> void:
+	var dist := {}
+	for j in list:
+		var pr := closest(c, combatants[j])
+		var d: Vector2i = (pr[1] - pr[0]).abs()
+		dist[j] = 2 * (maxi(d.x, d.y) - mini(d.x, d.y)) + 3 * mini(d.x, d.y)
+	list.sort_custom(func(a, b): return dist[a] < dist[b] or (dist[a] == dist[b] and a > b))
 
 
 ## Ends combatant `i`'s turn on guard, keeping its unused attacks for a guard attack.
@@ -1201,7 +1216,6 @@ func guard(i: int, computer: bool = true) -> void:
 func _ai_begin(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	c.ai = true
-	c["stepped"] = false
 	c.tries = 0
 	c.fails = 0
 	c.last_step = 8
@@ -1455,7 +1469,10 @@ func ai_act() -> bool:
 		if c.get("drank", false):
 			c.drank = false
 			return false
-		if c.team == 0 and bandage():
+		# The original's QUICK never bandages (lab, side chat 2: Bakshi lay dying through the
+		# rest of the orc fight while Thrender and Brother Sean fought on). The bot still does,
+		# as a player would from the DONE menu (party_judge is its hook).
+		if c.team == 0 and party_judge.is_valid() and bandage():
 			return false
 		choose_weapon(active)
 		var morale := _morale_check(active)
@@ -1499,13 +1516,10 @@ func ai_act() -> bool:
 		var shooting: bool = m.weapon_ranged and m.missile_ready
 		var reach: int = m.missile_range if shooting else 1
 		var t: int = c.get("target", -1)
-		# Hand to hand the original always strikes a random enemy within reach (d count, even
-		# for one), party members on QUICK too (GAME.OVR 0xB951, side chat 2); only a shooter
-		# keeps its target.
-		# (A figure that walked up this turn strikes the target it walked to: Brother Sean's
-		# approach in the lab drew no pick.)
-		var walked: bool = c.get("stepped", false) and not shooting and _enemy_of(c, t) and _within(active, t, reach)
-		if not walked and (not shooting or not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach)):
+		# A monster strikes a random enemy within reach (d count, even for one; GAME.OVR
+		# 0xB951); a party member its own target if in reach, else a random one. (Checked roll
+		# for roll in side chat 2, with the target lists nearest first.)
+		if not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach):
 			t = -1
 		if t < 0:
 			var near: Array[int] = []
@@ -1518,11 +1532,11 @@ func ai_act() -> bool:
 					return false
 				var r := _approach(active)
 				if r == "moved":
-					c["stepped"] = true
 					return true
 				if r == "end":
 					return false
 				continue
+			_by_distance(c, near)
 			t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
 			if shooting and not m.weapon_ranged_melee and enemy_adjacent(active):
 				# Someone is next to it: it changes weapons, and that is its turn.

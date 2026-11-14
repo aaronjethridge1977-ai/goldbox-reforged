@@ -138,7 +138,13 @@ if __name__ == "__main__":
                 if e is None:
                     print("LOST"); continue
                 c, ip, cs, n, hi = e
-                print("%5d %04x:%04x %-11s n=%-4d -> %d" % (c, cs, ip, locate(cs, ip), n, (hi % n) if n else 0), flush=True)
+                where = locate(cs, ip)
+                extra = ""
+                if where.startswith("OVR:160db") or where.startswith("OVR:0b95d"):
+                    r.m.seek(r.psp + 0x100 + 0xC7C * 16 + 0x6DE4); lst = r.m.read(12)
+                    r.m.seek(r.psp + 0x100 + 0xC7C * 16 + 0x6718); near = r.m.read(3 * 12)
+                    extra = "  list=%s near=%s" % (list(lst), [tuple(near[3 * i:3 * i + 3]) for i in range(1, near[2] + 1)] if near[2] < 12 else "?")
+                print("%5d %04x:%04x %-11s n=%-4d -> %d%s" % (c, cs, ip, where, n, (hi % n) if n else 0, extra), flush=True)
             cells = [(pb[4 * k], pb[4 * k + 1]) for k in range(16)]
             if cells != last_pos:
                 if last_pos is not None:
