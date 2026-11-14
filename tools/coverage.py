@@ -42,7 +42,7 @@ SPELLS = {
     12: ("built", "STR 18/00..18/100 by caster level (0x282BD), back when it ends"),
     13: ("missing", "effect added, nothing happens"),
     14: ("missing", "effect added; CHA not raised"),
-    15: ("built", "(level+1)/2 missiles of 1d4+1, Shield stops it"),
+    15: ("checked", "(level / 2)d4 + level / 2, nothing at level 1 (GAME.OVR 0x28451); Shield stops it; roll for roll in regress.sh's six H fights"),
     16: ("built", ""),
     17: ("built", ""),
     18: ("missing", "effect added; nothing reads it"),
@@ -148,6 +148,86 @@ ITEM_POWERS = {
     0x00: ("built", "giants throw it; 0x78 avoids it"),
 }
 
+# --- Engine features a player meets (side lane, from 2026-11-14) ---------------------------
+# Hand-kept, like the tables above: (feature, status, on the main path, note). The main-path
+# flag marks what every player meets on the way to the end; a main-path entry that is
+# partial or missing goes in the gap list at the top of docs/coverage.md. Evidence: the lab
+# checks named in each script's header and in ai-business-ideas plans/chat-log.md.
+FEATURES = [
+    ("Shops", "New Phlan's shops (opened by the area scripts with their own stock).", [
+        ("BUY: pages, prices, the buyer's coins and change", "checked", True,
+         "screens pixel for pixel (chat 11); 140 gold - 80 = 12 platinum and two more cases (chat 10)"),
+        ("POOL (the party's coins to the buyer)", "built", True, "Jeremy hand-tested 2026-11-10; not compared"),
+        ("VIEW -> SELL (half the price)", "checked", True, "the shop's VIEW and SELL prompts matched (chat 11)"),
+        ("VIEW -> ID (200 gp)", "checked", False, "screens matched (chat 11); what ID reveals not compared"),
+        ("APPRAISE gems and jewelry, SELL or KEEP", "checked", False, "values by d100 from GAME.OVR 0x26680, lab chat 8"),
+        ("NOT ENOUGH MONEY.", "partial", False, "the original's words when money is short not checked"),
+        ("BOUGHT (the item) on row 24", "built", False, "QoL addition (the original says nothing)"),
+    ]),
+    ("Temples", "New Phlan's temples of Tyr, Sune and Tempus (TEMPLE_FLAG + COMBAT).", [
+        ("HEAL: the cure list and prices", "checked", True, "screens and keys (chat 10); list and prices from GAME.OVR"),
+        ("Cure Light / Serious / Critical Wounds, waking the unconscious", "built", True, "1d8, 2d8+1, 3d8+3 to full HP; not on the diseased"),
+        ("Raise Dead", "partial", True, "back at 1 HP; the constitution loss is missing"),
+        ("Cure Disease (mummy rot)", "checked", False, "temples and the spell"),
+        ("Stone to Flesh", "built", False, "back at 1 HP (GAME.OVR 0x4EB4)"),
+        ("Cure Blindness, Neutralize Poison, Remove Curse", "partial", False,
+         "listed and paid for, but the temple doesn't see these conditions on a character, so it always asks CAST CURE ANYWAY"),
+        ("APPRAISE", "missing", False, "on the menu, does nothing"),
+        ("The look after paying", "partial", False, "(NAME) IS CURED. shown; the screen after it not compared"),
+    ]),
+    ("Training halls and the party menu", "PROGRAM 0: the halls in New Phlan and the start of the game.", [
+        ("TRAIN: level, hit points, THAC0, cost", "checked", True, "screens, level and THAC0 matched (chat 10); 1000 gold a level"),
+        ("A magic-user's new spell after training", "partial", True, "built; the original's spell-learning page never seen"),
+        ("Racial level limits", "partial", False, "open since chat 13: not checked against the original"),
+        ("CREATE, MODIFY, DROP, ADD, REMOVE, VIEW, SAVE, BEGIN, EXIT", "checked", True,
+         "screens matched (chat 10-11); creation from START.EXE / GAME.OVR's rules (chat 4)"),
+        ("ALTER ICON and PICS (icon editor, portraits)", "checked", False, "chat 4-5"),
+    ]),
+    ("Inns, the arena, City Hall", "Script programs and calls around New Phlan.", [
+        ("Inn: WHO WILL PAY?, one platinum, a safe rest", "built", True, "PROGRAM 9"),
+        ("City Hall commissions and the clerk's rewards", "checked", True, "from the scripts; the Zhentil state comparison (chat 13)"),
+        ("Arena duel (CALL 0x8000 / 0x8001), WHO", "built", False, "100 experience a level for the duelist; the duel's opponent as GAME.OVR loads it"),
+        ("Hirelings and their treasure shares", "built", False, "chat 4"),
+    ]),
+    ("Camp", "Encamp (E): SAVE VIEW MAGIC REST ALTER EXIT.", [
+        ("SAVE (the original's own format, slots A-J) and LOAD SAVED GAME", "checked", True, "our saves load in the original and back (lab saves E-I)"),
+        ("REST: the timer, 1 HP a day, interruptions", "checked", True, "save J, 4 -> 5 HP after 24 hours; interruptions from the area scripts"),
+        ("MEMORIZE and resting to memorize", "checked", True, "4 h 15 min for one 1st-level spell, as the lab showed"),
+        ("CAST in camp (cures on a member)", "built", True, "screens drawn as the original's; CAN'T BE CAST HERE not seen"),
+        ("SCRIBE (scrolls into the spell book, 15 minutes a level)", "partial", True, "built; the original's SCRIBE list never seen; whether the original needs Read Magic first not checked (spell 18 does nothing)"),
+        ("DISPLAY (spell effects on each member)", "built", False, ""),
+        ("Heal and memorized messages while resting", "partial", True, "drawn as the rest; not seen in the original"),
+        ("ALTER: ORDER, DROP, SPEED, ICON, PICS", "checked", False, "screens matched (chat 10-11); SPEED paces fights (P16)"),
+    ]),
+    ("Items", "VIEW -> ITEMS and the treasure screen.", [
+        ("READY, USE, TRADE, DROP, HALVE, JOIN, money TRADE / DROP", "checked", True, "30 lab captures pixel for pixel, messages included (chat 11)"),
+        ("Encumbrance and movement from weight", "checked", True, "matches the cached weight in all six shipped characters"),
+        ("Using items in a fight (wands, potions, scrolls)", "built", True, "items' spells as the table above; spells from items assumed instant"),
+        ("Cursed items", "partial", False, "IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing)"),
+        ("Treasure: results, experience, TAKE, POOL, SHARE", "checked", True, "464 XP for the Slums orcs; screens matched (chat 10)"),
+        ("Treasure: load and item-count limits when taking", "missing", True, "a character can take more than the original allows"),
+        ("Monsters' worthless items on a d10 of 1-3", "checked", False, "roll for roll (side chat 3)"),
+        ("The original's item names", "checked", True, "treasure and VIEW"),
+    ]),
+    ("Conditions and effects", "What can happen to a character (status byte 0x10C and the effect list).", [
+        ("Dying, bandaging, unconscious, dead", "checked", True, "bleeding a point a round, CONTINUE BATTLE; roll for roll"),
+        ("Fled (RUNNING) and left behind", "partial", True,
+         "the party keeps members left down after a flee; what the original does with them not checked"),
+        ("Poison", "partial", True, "kills at once; Slow Poison (spell 26) and the poisoned state missing"),
+        ("Disease (mummy rot)", "built", False, "0x57; cured at temples"),
+        ("Level drain", "checked", False, "wights, wraiths (one), spectres, vampires (two)"),
+        ("Paralysis (ghouls, thri-kreen)", "checked", True, ""),
+        ("Stoning (basilisk, medusa)", "built", False, "a readied mirror reflects the gaze"),
+        ("Charm", "partial", False, "lasts the fight, not after it"),
+        ("Blindness", "built", False, "Cause Blindness; temples can't see it (above)"),
+        ("Aging (Haste)", "built", False, "a year once per Haste"),
+        ("Magic resistance (Tyranthraxus 15%)", "missing", True, "the final fight; see monster power 0x6a"),
+    ]),
+]
+
+# Spells the party learns early or the monsters cast often: their gaps count as main-path gaps.
+MAIN_SPELLS = [5, 11, 13, 18, 26, 28, 34, 43, 51]
+
 OPCODES_NOTE = {
     "CALL": ("partial", "0x2C4E, 0x2C51, 0xC003, 0xC009 (wilderness, after the pyramid) not traced"),
     "SURPRISE": ("built", ""), "PARLAY": ("built", "the script's own replies"),
@@ -181,11 +261,25 @@ def main(game):
     words = item_words(img)
     out = []
     w = out.append
-    w("# Coverage: spells, items, script opcodes, monster powers\n")
+    w("# Coverage: spells, items, script opcodes, monster powers, engine features\n")
     w("Generated by `tools/coverage.py` from the game files; statuses are kept by hand in that script.")
     w("**checked**: built and compared with the original in the lab. **built**: from the original's code"
       " or tables, not yet compared. **partial**: works in part (the note says what is missing)."
       " **missing**: not built.\n")
+    w("Owner: the side lane (from 2026-11-14, Methods 3). Refresh it after a feature lands or a lab check.\n")
+    w("## Gaps a player meets on the main path\n")
+    w("Main-path entries below that are partial or missing (the engine-feature sections, then the spells and"
+      " items the party or the monsters use most).\n")
+    for sec, _, rows in FEATURES:
+        for name, st, main_path, note in rows:
+            if main_path and st in ("partial", "missing"):
+                w(f"- **{sec}: {name}** ({st}){': ' + note if note else ''}")
+    for i in MAIN_SPELLS:
+        st, note = SPELLS.get(i, ("missing", ""))
+        if st in ("partial", "missing"):
+            w(f"- **Spell {i}, {names[i - 1]}** ({st}): {note}")
+    w("- **Script CALLs** (partial): " + OPCODES_NOTE["CALL"][1])
+    w("")
 
     # Monster spell use (monsters' memorized spells: CHA record bytes 0x21..)
     mon_spells = Counter()
@@ -281,6 +375,18 @@ def main(game):
     for t in sorted(powers):
         st, note = POWERS.get(t, ("missing", ""))
         w(f"| {t:#04x} | {', '.join(sorted(powers[t]))} | {st} | {note} |")
+    w("\n## Engine features\n")
+    w("What the engine runs itself, outside the scripts: places, camp, items, conditions. Main path: met by every"
+      " player on the way to the end.\n")
+    for sec, intro, rows in FEATURES:
+        t = Counter(st for _, st, _, _ in rows)
+        w(f"### {sec} ({', '.join(f'{t[k]} {k}' for k in ('checked', 'built', 'partial', 'missing') if t[k])})\n")
+        w(intro + "\n")
+        w("| feature | status | main path | notes |")
+        w("|---|---|---|---|")
+        for name, st, main_path, note in rows:
+            w(f"| {name} | {st} | {'yes' if main_path else ''} | {note} |")
+        w("")
     for label, table in (("spells", SPELLS), ("monster powers", POWERS), ("item powers", ITEM_POWERS)):
         c = Counter(s for s, _ in table.values())
         print(f"{label}: {dict(c)}", file=sys.stderr)
