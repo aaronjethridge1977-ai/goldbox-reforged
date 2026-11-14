@@ -33,8 +33,8 @@ static func random(n: int, why: String = "") -> int:
 	calls += 1
 	var r := (seed >> 16) % n if n > 0 else 0
 	log.append("#%d %s Random(%d) = %d" % [calls, why, n, r])
-	if log.size() > 4000:
-		log = log.slice(2000)
+	if log.size() > 200000:      # a long fight (the kobold caves: ~9000 draws) is kept whole
+		log = log.slice(100000)
 	return r
 
 

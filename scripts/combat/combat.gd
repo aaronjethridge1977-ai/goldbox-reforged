@@ -1657,6 +1657,13 @@ func ai_act() -> bool:
 		if c.tries > 20 or c.down:
 			guard(active)
 			return false
+		# The original's turn loop (GAME.OVR 0xAD72) finds a target first each time round
+		# (0x15FDF: kept if it still stands, else a new pick); ours did only when nothing was in
+		# reach (lab, side chat 5: Darkstar's dart killed its kobold mid-volley, and the next
+		# dart's d17 target pick was missing).
+		if not _enemy_of(c, c.get("target", -1)) and not find_target(active):
+			guard(active)
+			return false
 		if c.moves > 0 and _enemy_of(c, c.get("target", -1)):
 			_act_powers(active)
 			if c.down:
@@ -1676,10 +1683,13 @@ func ai_act() -> bool:
 			# The ones to pick from: every enemy within reach, clear shot or not (GAME.OVR
 			# 0xB90F, the same count as for spells; lab: Phineas's darts had four to pick
 			# from where ours saw three). The target kept above needs a clear shot (0xB8DF).
+			# A missile's list holds only figures in sight (lab, side chat 5: in the kobold caves
+			# the original's count left out the one kobold in range behind a wall; START.EXE
+			# 0x2433 counts the in-sight list 0x3DB:0x3E builds).
 			var near: Array[int] = []
 			for j in combatants.size():
 				if _enemy_of(c, j) and (touching(c, combatants[j]) if reach <= 1 else
-						range_of(c, combatants[j]) <= reach):
+						range_of(c, combatants[j]) <= reach and clear_line(c, combatants[j]).y == 1):
 					near.append(j)
 			if near.is_empty():
 				if not find_target(active):

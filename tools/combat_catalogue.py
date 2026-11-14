@@ -30,6 +30,7 @@ from coverage import POWERS, spell_table  # noqa: E402
 # differs (a scenario found a difference: the note says which, and the bug), partial.
 COMPARED = {
     "2:4": ("compared", "the Slums orc fights (lab saves E and H): roll for roll in regress.sh, QUICK with and without magic: 10 of 12 to the treasure (the other 2: Phineas's first step from 31,14)"),
+    "8:0": ("partial", "the kobold caves' net trap (8:13 10,9; lab save C, regress.sh orig_C_kobolds), 20 kobolds against the starting party at 40 HP: roll for roll to draw 4106 of 8905 after three fixes (a new target each time round the turn loop, 0x15FDF; a missile's list only figures in sight, START.EXE 0x2433; TpDice's log kept whole); differs at 4107: Thrender Grone, stepping back and forth, picks a new target in ours where the original's turn just ends (its fail count and last direction, GAME.OVR 0xB5CA-0xB61D, to read). A1's turn order matched throughout"),
     "2:26": ("compared", "Mendor's library 5,4 (lab save I, regress.sh orig_I_basilisk): roll for roll to the end, Brother Sean stoned; fixed on the way: the gaze before each step or blow (0xB6FC), a kept target in reach from the figures' own squares (0xB88C)"),
     "7:41": ("partial", "as allies in the last camp battle (lab save D, 2026-11-12): side and starting place beside the party match the original"),
     "7:42": ("partial", "as 7:41"),

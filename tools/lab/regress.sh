@@ -3,7 +3,9 @@
 # BATTLE and the party's HP at the end; no game data) in ours and prints each fight's verdict.
 # regress.sh record: plays each fight in the original again first and saves its new trace
 # (about a minute a fight). Needs the lab saves E and F (README, side chat 2) and H (side chat 3).
-# Past the early game (side chat 5): save I = `python3 mksave.py E I 2 15 5 5 N` (Mendor's library).
+# Past the early game (side chat 5): save I = `python3 mksave.py E I 2 15 5 5 N` (Mendor's library); save C =
+# `python3 mksave.py E C 8 13 9 9 E`, then every CHRDATC?.SAV's bytes 0x32 and 0x11B set to 40 (the kobold caves'
+# net trap at 10,9 with 20 kobolds; the party at 40 HP so the fight runs long).
 cd "$(dirname "$0")"
 WHAT=ours; [ "$1" = record ] && WHAT=both
 run() { # name magic script args...
@@ -31,3 +33,4 @@ for s in 11111111 22222222 33333333 55555555 deadbeef 0badf00d; do   # QUICK Bak
 done
 # Past the early game (side chat 5): monster powers and casters, one fight each.
 run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $WHAT
+run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # open: differs at draw 4107 of 8905 (Thrender's fail count)
