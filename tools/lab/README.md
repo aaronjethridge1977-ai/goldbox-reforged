@@ -707,3 +707,10 @@ games draw the same numbers, so a fight can be compared draw by draw.
   filmed yet. Steps (GAME.OVR 0x12F0D): a computer-run figure margin 3 (its own square within 2
   first if the new one is off the view), a figure the player moves margin 1; delays there are
   `08AE:00DC` with a count from DS:0x2614+2n (= n): a step waits 10.
+- Step 5 (falls and spells): a figure struck down stays standing through the blow's message, then
+  COMSPR 11 (the skull on red) covers its square while "GOES DOWN ..." is up (0.8 s at speed 4),
+  then the square is empty. Sleep cast by hand (save G, Bakshi; aim NEXT, TARGET): the spark
+  (5 / 133) flies from the caster to the aim, then each figure caught shows "... FALLS ASLEEP"
+  with sparkles (9 / 137, ~0.13 s each) on its square, ~1.27 s a figure (speed 4); Bakshi's
+  Sleep took Bakshi, Threnders and Brother Sean with two orcs. A spell cast by hand shows no
+  "CASTS A SPELL" (ours does). Fireball's and Lightning's pictures not filmed yet.

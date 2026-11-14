@@ -9,7 +9,7 @@ lane's own docs. Decisions are not made here: they live in ai-business-ideas `id
 | Lane | Chat | Runs where | Owns |
 |---|---|---|---|
 | Main (M6 coverage, later differential checks) | chat 19 | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/dev/`, `tools/` coverage and report scripts, `tools/plans/`, `docs/coverage*.md`, `docs/cover-fights.md`; also `scripts/main.gd` and `scripts/ecl_vm.gd` (shared core: see CLAUDE.md) |
-| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 4 | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
+| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 5 (next) | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
 | Design office | discussion chats | claude.ai | no code; proposals and Jeremy's decisions |
 
 Files not listed: whoever needs them asks here first.
@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 19 ended 2026-11-14: 23 of 29 areas done (new: 6:1, 3:0, 5:7, 4:10, 5:3, 3:8, 7:26, 8:27); overall 93% / 89% played. Runs are load-independent and replayable. Lab archive: PC `.lab/lab19.tar.gz`. Next: chat 20 (the hook-file request, small bot fixes, then 6:25, 7:23, 2:9, 2:20, 5:6, 8:13).
-- Side: side chat 4 on P16 combat animations (display only, off in headless/--play/--keys/--fast; lab key `--anim`). Steps 2-4 done: paced messages, DONE -> SPEED, step-by-step turns with the original's view rule, missiles (COMSPR) and attack poses. Next: Jeremy's call on what's left (other spells' pictures, cursor details).
+- Side: side chat 4 ended 2026-11-14: P16 combat animations built (steps 2-5: paced messages and DONE -> SPEED, step-by-step turns with the original's view rule, missiles and attack poses, the skull and spell sparkles; display only, `--anim` in the lab), to test (Test List). Next side chat: P21 mockup and the combat AI follow-up (requests below). Lab archive: PC `.lab/side4_lab.tgz`.
 
 ## Requests to another lane
 
@@ -41,6 +41,8 @@ Format: `date · lane (chat) · change · may affect`
 - 2026-11-14 · side (chat 3) · A1: the original's turn order and spell choice in all fights; CONTINUE BATTLE when every enemy is down but not dead; worthless monster items on a d10 of 1-3 · the bot's real fights, flee jobs, story run, refcheck baseline
 
 ## Findings for everyone
+
+- 2026-11-14 · side (chat 4) · P16 is display only: no rule changes, and `main.gd` / `ecl_vm.gd` were not touched this chat, so the lab-key move into a side hook file can go ahead any time. Combat display pacing is off in headless, --play, --keys and --fast runs (`--anim` turns it on).
 
 - 2026-11-14 · main (chat 19) · Shared core touched (small): main.gd has `dev_rng` and `_dev_reseed` (lab only: when a coverage run sets it, the screens' generators are reseeded from it as they open: fight via `CombatScreen.dev_seed`, camp, shop, temple, party menu). No change to play outside the lab. Side lane: a screen that adds a new generator with `randomize()` should get a `_dev_reseed` line after its `open` in main.gd (or tell main), or seed= stops replaying runs that use it.
 - 2026-11-14 · main (chat 19) · Lab runs are now about 4x faster (`--fixed-fps`): a coverage `-all` takes 1-4 minutes.

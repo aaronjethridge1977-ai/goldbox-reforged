@@ -98,7 +98,14 @@ signal flight_done
 var _posed := -1
 var _flying := false
 var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
-var _spell_flight := {}    # a spell's missile, flown after its "CASTS A SPELL" (P16)
+var _spell_flight := {}
+var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
+var _sparkle := -1                 # the figure showing a spell's sparkles
+## A figure struck down stays standing through the blow's message; its fall shows COMSPR's
+## skull (block 11) on its square while "GOES DOWN ..." is up, then the square is empty (lab:
+## Bakshi and the orcs at speed 4, 0.8 s).
+var _lingering: Array[int] = []
+var _skulls: Array[int] = []    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
 var _quick_menu := false
 var _move_label := ""
@@ -825,8 +832,26 @@ func _show_messages() -> void:
 			_row24_msg = msg
 		else:
 			_panel_msgs.append(msg)
+			for k in _spell_hits:
+				if (_combatants[k].who as PartyMember).name.to_upper() == who and not msg.contains(" ATTACKS "):
+					_spell_hits.erase(k)
+					_sparkle = k
+					break
+			if msg.contains("GOES DOWN") or msg.contains("IS KILLED") or msg.contains("FALLS DEAD"):
+				for k in _lingering:
+					if (_combatants[k].who as PartyMember).name.to_upper() == who:
+						_lingering.erase(k)
+						_skulls.append(k)
+						break
 		_refresh()
-		await get_tree().create_timer(message_hold()).timeout
+		if _sparkle >= 0:
+			var until := Time.get_ticks_msec() + int(maxf(message_hold(), 1.2) * 1000.0)
+			while Time.get_ticks_msec() < until and is_inside_tree():
+				await get_tree().create_timer(0.066).timeout
+				_refresh()
+			_sparkle = -1
+		else:
+			await get_tree().create_timer(message_hold()).timeout
 		if not _spell_flight.is_empty() and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
 			var sf := _spell_flight
 			_spell_flight = {}
@@ -837,8 +862,12 @@ func _show_messages() -> void:
 		_row24_msg = ""
 		if _pending_msgs.is_empty() or not _continues(_pending_msgs[0]):
 			_panel_msgs.clear()
+			_skulls.clear()
 		_refresh()
 	_draining = false
+	_spell_hits.clear()
+	_skulls.clear()
+	_lingering.clear()
 	if _posed >= 0:
 		_posed = -1
 		_refresh()
@@ -927,7 +956,9 @@ func _ai_step() -> void:
 	var moves_before: int = actor.get("moves", 0)
 	var shown_before := _messages.size()
 	var weapon_before: GameItem = (actor.who as PartyMember).weapon if not actor.is_empty() else null
+	var up_before := _standing()
 	var more := _combat.ai_act()
+	_note_falls(up_before)
 	if paced() and not actor.is_empty():
 		_after_blow(_combat.active, shown_before, weapon_before)
 	if paced() and not actor.is_empty():
@@ -1189,13 +1220,32 @@ func _attack_aimed(j: int) -> void:
 	_selected = me
 	var shown_before := _messages.size()
 	var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
+	var up_before := _standing()
 	if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
 		_combat.shoot(me, j)
 	else:
 		_combat.attack(me, j)
+	_note_falls(up_before)
 	if paced():
 		_after_blow(me, shown_before, weapon_before)
 	_after_player_action("attacked")
+
+
+func _standing() -> Array[int]:
+	var out: Array[int] = []
+	for i in _combatants.size():
+		if not _combatants[i].get("down", false):
+			out.append(i)
+	return out
+
+
+## Figures that were standing before and are down now linger until their fall is shown.
+func _note_falls(up_before: Array[int]) -> void:
+	if not paced():
+		return
+	for i in up_before:
+		if _combatants[i].get("down", false) and not _lingering.has(i):
+			_lingering.append(i)
 
 
 ## After figure i acted (P16, paced): if it struck at its target, its attack pose, and for a
@@ -1233,15 +1283,23 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 		_fly(c.cell, _combatants[t].cell, frames, 720.0)
 
 
-## A spell went off (paced): the caster's pose, and Magic Missile's spark flown to its first
-## target after "CASTS A SPELL" (lab: Bakshi's, sprites 5 / 133 by turns, ~240 px/s). Other
-## spells' pictures are not filmed yet.
-func _on_spell_cast(i: int, id: int, targets: Array) -> void:
+## A spell went off (paced): the caster's pose; for a spell aimed away from the caster, COMSPR's
+## spark (5 / 133 by turns, ~240 px/s) flown to the aim after "CASTS A SPELL" (lab: Bakshi's
+## Magic Missile and Sleep); each figure the spell reaches shows sparkles (9 / 137 by turns)
+## while its message is up, at least 1.2 s (lab: Sleep, "FALLS ASLEEP"). Fireball's and
+## Lightning's own pictures are not filmed yet.
+func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():
 		return
 	_posed = i
-	if _combat.magic.table.name_of(id).to_upper() == "MAGIC MISSILE" and not targets.is_empty() and targets[0] != i:
-		_spell_flight = {"from": _combatants[i].cell, "to": _combatants[targets[0]].cell}
+	var to := cell
+	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
+		to = _combatants[targets[0]].cell
+	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell:
+		_spell_flight = {"from": _combatants[i].cell, "to": to}
+	_spell_hits = []
+	for t in targets:
+		_spell_hits.append(int(t))
 
 
 ## The arrow sprite for a flight from a to b, mirrored for the left diagonals (lab: Darkstar's
@@ -1447,7 +1505,12 @@ func _refresh() -> void:
 	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
-		if e.get("down", false):
+		if _skulls.has(i):
+			var sk := _art.sprite(11)
+			if sk != null:
+				img.blend_rect(sk, Rect2i(Vector2i.ZERO, sk.get_size()), (e.cell - _view) * CELL)
+			continue
+		if e.get("down", false) and not _lingering.has(i):
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
@@ -1461,6 +1524,10 @@ func _refresh() -> void:
 				src = icon.duplicate() as Image
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
+	if _sparkle >= 0 and _sparkle < _combatants.size():
+		var sp := _art.sprite(9 if (Time.get_ticks_msec() / 133) % 2 == 0 else 137)
+		if sp != null:
+			img.blend_rect(sp, Rect2i(Vector2i.ZERO, sp.get_size()), (_combatants[_sparkle].cell - _view) * CELL)
 	if not _flight.is_empty() and _flight.img != null:
 		var fi: Image = _flight.img
 		img.blend_rect(fi, Rect2i(Vector2i.ZERO, fi.get_size()), _flight.at)
