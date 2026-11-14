@@ -551,7 +551,7 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, prompt, MAGENTA)
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
-	elif paced() and _combat != null and _combat.active >= 0 and _combatants[_combat.active].quick:
+	elif paced() and _combat != null and _combat.active >= 0 and _combatants[_combat.active].get("quick", false):
 		if _quick_menu:
 			var items := _bottom_menu()
 			g.menu_line(24, items, 0, _lit(items))
@@ -562,7 +562,7 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, prompt, MAGENTA)
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + 1, _lit(items))
-	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].quick:
+	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].get("quick", false):
 		if _cmode == "move":
 			g.text(0, 24, "MOVE/ATTACK, MOVE LEFT = %d" % (_combatants[_combat.active].moves / 2), GameScreen.GREEN)
 		else:
@@ -771,7 +771,11 @@ func _on_combat_message(text: String) -> void:
 	if paced() and not _muted and not text.begins_with("ROUND "):
 		_pending_msgs.append(text)
 		if not _draining:
-			_show_messages()
+			# Start once the action has queued all its messages (a volley's later darts, the
+			# missile's flight): shown at once, a dart's miss went up before its volley's hits
+			# were known (Jeremy's P16 test, 2026-11-14).
+			_draining = true
+			_show_messages.call_deferred()
 
 
 ## A message that goes under the last one instead of replacing it.
@@ -920,11 +924,11 @@ func _advance() -> void:
 		_ensure_view(_combatants[i].cell, 2)
 		_box_off = false
 		_move_label = ""
-		_quick_menu = _combatants[i].quick and _combatants[i].team == 0
+		_quick_menu = _combatants[i].get("quick", false) and _combatants[i].team == 0
 	else:
 		_centre_on_selected()
 	_refresh()
-	if not _combatants[i].quick and _combat.magic and _combat.magic.resolve_pending(i):
+	if not _combatants[i].get("quick", false) and _combat.magic and _combat.magic.resolve_pending(i):
 		# A player's spell begun last turn goes off at this turn, which it uses up.
 		_refresh()
 		await get_tree().create_timer(0.5 * CampScreen.delay_scale()).timeout
@@ -934,7 +938,7 @@ func _advance() -> void:
 			_combat.done()
 			_advance()
 		return
-	if _combatants[i].quick:
+	if _combatants[i].get("quick", false):
 		if not paced():
 			_ai_timer.start(0.35)
 		elif _quick_menu:
@@ -1514,7 +1518,7 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected and _cmode != "manual" and not (_box_off and e.quick):
+		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)):
 			_bevel(img, at)
 		if i == _posed:
 			icon = _attack_icon(e)
@@ -1625,7 +1629,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_advance()
 		get_viewport().set_input_as_handled()
 		return
-	if _combat != null and _result == 0 and _combat.active >= 0 and _combatants[_combat.active].quick:
+	if _combat != null and _result == 0 and _combat.active >= 0 and _combatants[_combat.active].get("quick", false):
 		# The original reads keys while the computer runs a turn (GAME.OVR 0xBB80; lab):
 		# Alt-M switches magic on or off for the party's QUICK members, Space hands every
 		# QUICK party member back to the player (not the NPCs, who always fight on their own).
@@ -1701,7 +1705,7 @@ const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIG
 
 func _fight_input(event: InputEvent, key: Key) -> void:
 	get_viewport().set_input_as_handled()
-	if _draining or _result != 0 or _combat.active < 0 or _combatants[_combat.active].quick:
+	if _draining or _result != 0 or _combat.active < 0 or _combatants[_combat.active].get("quick", false):
 		return
 	if _cmode == "move":
 		if event.is_action("ui_cancel"):
