@@ -3257,6 +3257,15 @@ func _cover(area: String, minutes: int) -> void:
 			done += 1
 			await _cover_job(job)
 			_cover_resume_note("ran", job.key)
+		# Chat 17: an area whose script reads the hour (0x49C8/0x49C9: the smith works by day in
+		# 5:6, the scribes close at 17:00 in 5:4) is walked again twelve hours later, the clock
+		# moved on by shortcut (logged; as a player who rested that long has it).
+		if _cover_reads_clock(area):
+			main.dev_restore(start)
+			await _settle()
+			GameClock.add_minutes(main._vm, 12 * 60)
+			_shortcut("clock", "+12 hours, now %s" % GameClock.text(main._vm), "coverage run: %s's script reads the hour" % area)
+			_cover_states["part clock +12h"] = main.dev_snapshot()
 		# The states jobs opened, each walked like an arrival (its events again, its menus'
 		# new choices queued and played), up to six.
 		var walked := 0
@@ -3364,6 +3373,20 @@ func _cover_resume_note(kind: String, key: String) -> void:
 		return
 	f.seek_end()
 	f.store_line("%s\t%s" % [kind, key])
+
+
+## Chat 17: whether the area's script reads the clock's hour (0x49C8, 0x49C9).
+func _cover_reads_clock(area: String) -> bool:
+	var a := area.split(":")
+	var ecl: EclScript = main._script(int(a[0]), int(a[1]))
+	if ecl == null:
+		return false
+	for off in ecl.offsets():
+		for arg in ecl.instructions[off].args:
+			if typeof(arg.value) == TYPE_INT and int(arg.type) in [0x01, 0x03, 0x05, 0x81] \
+					and int(arg.value) in [0x49C8, 0x49C9]:
+				return true
+	return false
 
 
 ## Whether a queued choice has run since it was queued (in this run or another).

@@ -378,3 +378,6 @@ others from J:
   into again by the same way, from there.
 - The tour's repeated-question rule counts since the last `dev_restore` (`main.dev_restores`):
   a coverage walk comes back to a square from a snapshot on purpose (6:25's cave passage).
+- An area whose script reads the hour (0x49C8/0x49C9; 20 areas do) is walked once more twelve
+  hours later (`SHORTCUT clock +12 hours`, a state named "part clock +12h"): 5:6's smith works
+  only until 14:00, and the runs' checkpoints came at night.
