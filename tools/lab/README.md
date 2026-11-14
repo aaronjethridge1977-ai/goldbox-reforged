@@ -69,7 +69,8 @@ only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run
 - `cmpfight2.sh <save> <seed> "<keys before>" "<keys after>"` plays one fight in both and `cmpdraws.py`
   compares draws, cells, CONTINUE BATTLE and the party's HP and status, ending `VERDICT: MATCH` or the
   first difference. `cmpfight3.sh` varies a fight with a second seed.
-- `regress.sh` replays every recorded fight (18 of 20 MATCH as of 2026-11-14); `regress.sh record` records
+- `regress.sh` replays every recorded fight (19 of 22 MATCH as of side chat 5: the basilisk added; the kobold caves
+  open at draw 4107 of 8905); `regress.sh record` records
   them again from the original. Run it after any change in `scripts/combat/`.
 
 **Checking anything else against the original**
@@ -725,3 +726,30 @@ games draw the same numbers, so a fight can be compared draw by draw.
   with sparkles (9 / 137, ~0.13 s each) on its square, ~1.27 s a figure (speed 4); Bakshi's
   Sleep took Bakshi, Threnders and Brother Sean with two orcs. A spell cast by hand shows no
   "CASTS A SPELL" (ours does). Fireball's and Lightning's pictures not filmed yet.
+
+### Side chat 5 (2026-11-14): late-game fights against the original, staged fights
+
+- **Fights past the early game.** `mksave.py` puts the starting party (save E) beside a late fight; `cmpfight2.sh`
+  then plays it in both. Save I: `mksave.py E I 2 15 5 5 N` (Mendor's library, the basilisk at 5,4: keys "up,up",
+  seed, "enter,wait=8,c"). Save C: `mksave.py E C 8 13 9 9 E` with every CHRDATC?.SAV's bytes 0x32 and 0x11B set
+  to 40 (the kobold caves' net trap at 10,9, 20 kobolds: "up", seed, "up"). Both in `regress.sh`.
+- `cmpfight3.sh`: `KW=<s>` waits that long after each key before the seed (texts print slowly in the original;
+  a key pressed while a text prints is lost), and a `wait=<s>` token in the keys waits in the original only.
+  Set the seed before the script's own dice: the basilisk's encounter text ("DOESN'T SEEM AWARE" or "HISSES") is
+  rolled on the Enter after the library text.
+- The original won't load a save whose characters carry more than 16 items (ours allowed 27; scoreboard gap): an old
+  bot party written by ours from a quick save failed to load; mksave from save E instead.
+- TpDice's log now keeps a whole long fight (it kept the last 2000-4000 draws, so cmpdraws started mid-fight).
+- Found and fixed with them (Rule changes on the board): gazes before each step or blow (GAME.OVR 0xB6FC calls
+  category 14 first); a kept target in reach from the figures' own squares (0xB88C); a new target pick each time
+  round the turn loop when the target is gone (0xAD72 / 0x15FDF); a missile's list only figures in sight (START.EXE
+  0x2433 counts 0x3DB:0x3E's in-sight list). Open: the kobold fight at 4107 (Thrender stepping back and forth:
+  ours picks a new target where the original's turn ends; its fail count and last direction are globals
+  0x443D / 0x443C reset at 0xB702, the start of each act call; resetting ours per step broke draw 834).
+- **Staged fights in ours** (`stagefight.sh <save> <stage> <seed> "<keys>"`): the area's test fight (B) against
+  any monsters (`stage=<id>x<n>;...`, ids from the lab key `monsters`), party HP by `hp=<pct>`, the result by
+  `outcome`. Used for B1's flee rule (paused, Methods 3; results on the board).
+- `menu_run.sh <keys.py steps>`: our start menu on a virtual display (P21 screenshots).
+- P16 on film: `oursvid.sh` needs `fightend` at the end of its keys, or the replay ends and the window closes.
+  `missiles.py` misses the skull (blended); grab a frame instead.
+
