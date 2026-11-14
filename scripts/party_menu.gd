@@ -26,6 +26,8 @@ extends Control
 
 signal closed
 signal save_requested(letter: String)
+## Set by the game while handling save_requested when the save couldn't be written.
+var save_failed := false
 
 const MAGENTA := 13
 const PROMPT := 14
@@ -303,8 +305,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 			for l in LETTERS:
 				if String(l).unicode_at(0) == key:
+					save_failed = false
 					save_requested.emit(l)
-					_note.text = "GAME SAVED."
+					_note.text = "COULDN'T SAVE THE GAME." if save_failed else "GAME SAVED."
 					_show_menu()
 		"learn":
 			if up or down:

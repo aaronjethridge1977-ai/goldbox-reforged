@@ -11,7 +11,9 @@ extends RefCounted
 ##              party's size
 ##   0x1401..   the current block's script as it stands in memory, from 0x9900, 0x1E00 bytes
 ##   0x3201     x, y, facing x 2
-##   0x3204     0, 0, 1, 2 (the same in every save seen so far), then the party's size
+##   0x3204     0, 0, 1, 2 (the same in every save seen so far), then the party's size;
+##              0, 0, 1, 0 in a game saved before the adventure starts (from the party menu
+##              after PARTY CREATION): with 2 there the original goes straight to walking
 ##   0x3209     eight character file names, a length byte and 40 bytes each
 ## CHRDAT<letter><n>.SAV: the 285-byte character record (PartyMember.to_record) with its far
 ## pointers zeroed: the original rebuilds them from the files (lab: a save with every pointer
@@ -30,7 +32,7 @@ const NAMES_AT := 0x3209
 
 
 static func write(game_path: String, letter: String, set_no: int, mem: PackedByteArray,
-		x: int, y: int, facing: int, party: Array[PartyMember]) -> bool:
+		x: int, y: int, facing: int, party: Array[PartyMember], started: bool = true) -> bool:
 	letter = letter.to_upper()
 	var s := PackedByteArray()
 	s.resize(SIZE)
@@ -49,7 +51,7 @@ static func write(game_path: String, letter: String, set_no: int, mem: PackedByt
 	s[POS_AT + 3] = 0
 	s[POS_AT + 4] = 0
 	s[POS_AT + 5] = 1
-	s[POS_AT + 6] = 2
+	s[POS_AT + 6] = 2 if started else 0
 	s[POS_AT + 7] = party.size()
 	for k in mini(party.size(), 8):
 		var stem := "CHRDAT%s%d" % [letter, k + 1]

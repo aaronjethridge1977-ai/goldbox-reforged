@@ -287,15 +287,22 @@ func _on_start_chosen(what: String, letter: String) -> void:
 			# As the original starts: an empty party, the party menu's CREATE / ADD, then
 			# BEGIN ADVENTURING starts the game with whoever was added.
 			_party.clear()
-			_starting_party = true
-			_vm.write_byte(EclVM.TRAINING_MASK, 0)
-			_party_menu.tables = ClassTables.shared(_game_path)
-			_party_menu.spells = SpellTable.shared(_game_path)
-			_party_menu.types = _types
-			_party_menu.game_path = _game_path
-			_party_menu.open(_party, 0)
+			_open_starting_party_menu()
 			return
 	_show()
+
+
+## The party menu before the adventure starts (PARTY CREATION, or a game saved there):
+## BEGIN ADVENTURING starts a new game with the party in it.
+func _open_starting_party_menu() -> void:
+	_starting_party = true
+	_vm.ecl = null
+	_vm.write_byte(EclVM.TRAINING_MASK, 0)
+	_party_menu.tables = ClassTables.shared(_game_path)
+	_party_menu.spells = SpellTable.shared(_game_path)
+	_party_menu.types = _types
+	_party_menu.game_path = _game_path
+	_party_menu.open(_party, 0)
 
 
 var _starting_party := false
@@ -1212,14 +1219,31 @@ func _battle_check(spec: String) -> void:
 ## Saves the game in the original's own format as SAVGAM<letter>.DAT with its CHRDAT files in
 ## the game folder (OriginalSave), as the original's SAVE does: it loads in the original too.
 func _save_original(letter: String) -> bool:
+	if _vm.ecl == null and _starting_party:
+		# Before the adventure starts (lab, 2026-11-13): the original saves data set 3, an
+		# empty script image and the party (its square bytes 15, 1, facing 6); loading that
+		# save goes back to this party menu.
+		var blank := PackedByteArray()
+		blank.resize(_vm.mem.size())
+		# The engine bytes the original has set at that point; without them it won't load
+		# the save (lab: these three and the 0 at 0x3207 are enough).
+		blank[0x49FC] = 1
+		blank[0x49FF] = 3
+		blank[0x5012] = 3
+		var ok0 := OriginalSave.write(_game_path, letter, 3, blank, 15, 1, 3, _party, false)
+		_party_menu.save_failed = not ok0
+		print("   (saved game %s before the adventure%s)" % [letter.to_upper(), "" if ok0 else ": FAILED"])
+		return ok0
 	if _vm.ecl == null:
 		_status.text = "Can't save here."
+		_party_menu.save_failed = true
 		return false
 	if not _vm.on_overland:
 		_sync_position_to_vm(_facing)
 	var ok := OriginalSave.write(_game_path, letter, _vm_file, _vm.mem, _vm.read_byte(EclVM.PARTY_X),
 		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party)
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
+	_party_menu.save_failed = not ok
 	print("   (saved game %s%s)" % [letter.to_upper(), "" if ok else ": FAILED"])
 	return ok
 
@@ -1240,6 +1264,33 @@ func load_original_save(letter: String) -> bool:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % set_no))
 	if ecl == null:
 		return false
+	# The party.
+	var loaded: Array[PartyMember] = []
+	for k in 8:
+		var o := 0x3209 + k * 41
+		var n := s[o]
+		if n <= 0 or n > 12:
+			continue
+		var stem := s.slice(o + 1, o + 1 + n).get_string_from_ascii()
+		var m := PartyMember.load_files(_game_path.path_join(stem + ".SAV"), _game_path.path_join(stem + ".ITM"))
+		if m != null:
+			m.recalculate(_types)
+			loaded.append(m)
+	if loaded.is_empty():
+		return false
+	# A game saved before the adventure started (an empty script image, as the original writes
+	# it from the starting party menu) goes back to that menu with its party.
+	var started := false
+	for b in s.slice(0x1401, 0x1401 + 0x1E00):
+		if b != 0:
+			started = true
+			break
+	if not started:
+		_party.assign(loaded)
+		_vm.party = _party
+		_open_starting_party_menu()
+		_status.text = "Loaded saved game %s." % letter.to_upper()
+		return true
 	# The area is the block whose script the saved image matches best (the image holds the
 	# script's tables as they stood, so a few bytes differ).
 	var block_id := -1
@@ -1255,20 +1306,6 @@ func load_original_save(letter: String) -> bool:
 			block_id = id
 	if block_id < 0:
 		_status.text = "Saved game %s: its area wasn't found." % letter.to_upper()
-		return false
-	# The party.
-	var loaded: Array[PartyMember] = []
-	for k in 8:
-		var o := 0x3209 + k * 41
-		var n := s[o]
-		if n <= 0 or n > 12:
-			continue
-		var stem := s.slice(o + 1, o + 1 + n).get_string_from_ascii()
-		var m := PartyMember.load_files(_game_path.path_join(stem + ".SAV"), _game_path.path_join(stem + ".ITM"))
-		if m != null:
-			m.recalculate(_types)
-			loaded.append(m)
-	if loaded.is_empty():
 		return false
 	_party.assign(loaded)
 	_vm.party = _party
