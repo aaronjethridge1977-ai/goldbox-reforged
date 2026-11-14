@@ -90,6 +90,11 @@ func _draw() -> void:
 	match _stage:
 		"main":
 			g.menu_line(24, ["PARTS", "COLOR-1", "COLOR-2", "SIZE", "EXIT"])
+			# The keys for the colours are 1 and 2, and the original lights those (lab, 2026-11-13):
+			# "COLOR-1" all green but its "1" white.
+			for col in [6, 14]:
+				g.text(col, 24, "C", GameScreen.GREEN)
+				g.text(col + 6, 24, "12"[(col - 6) / 8], GameScreen.WHITE)
 		"parts":
 			g.menu_line(24, ["HEAD", "WEAPON", "EXIT"])
 		"colour":
