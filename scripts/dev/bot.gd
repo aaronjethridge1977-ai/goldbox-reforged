@@ -3203,6 +3203,7 @@ func _cover(area: String, minutes: int) -> void:
 	_cover_queued = {}
 	_cover_ran = {}
 	_cover_states = {}
+	_cover_parts_walked = {}
 	_cover_states_walked = {}
 	_cover_exits_used = {}
 	_cover_fights = []
@@ -3232,8 +3233,15 @@ func _cover(area: String, minutes: int) -> void:
 		# The states jobs opened, each walked like an arrival (its events again, its menus'
 		# new choices queued and played), up to six.
 		var walked := 0
-		while not _cover_states.is_empty() and walked < 6 and Time.get_ticks_msec() < deadline:
+		while not _cover_states.is_empty() and Time.get_ticks_msec() < deadline:
+			# Parts no walk has been in first, all of them; then up to six flag states.
 			var sig: String = _cover_states.keys()[0]
+			for k: String in _cover_states:
+				if k.begins_with("part "):
+					sig = k
+					break
+			if walked >= 6 and not sig.begins_with("part "):
+				break
 			var snap: Dictionary = _cover_states[sig]
 			_cover_states.erase(sig)
 			if _cover_states_walked.has(sig):
@@ -3271,6 +3279,7 @@ func _cover(area: String, minutes: int) -> void:
 ## Whether a queued choice has run since it was queued (in this run or another).
 var _cover_all := false
 var _cover_ran := {}
+var _cover_parts_walked := {}  # chat 16: "part map:region" walked in this run
 var _cover_looking := false    # LOOK is running (its menus' jobs look again rather than step)
 
 
@@ -3518,6 +3527,13 @@ func _cover_job(job: Dictionary) -> void:
 			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < 12:
 				_cover_states[sig] = main.dev_snapshot()
 				print("   (a new state for the walk: %s)" % sig.strip_edges())
+		# Chat 16: a job that leaves the party on a part of a map no walk has been in (6:25's
+		# caves: ENTER, then STAY IN; the walk answers LEAVE CAVE) is walked as an arrival too.
+		if not main._vm.on_overland:
+			var part := "part %d:%d" % [main._map_index, _region_id(main._pos)]
+			if not _cover_parts_walked.has(part) and not _cover_states.has(part) and not _cover_states_walked.has(part):
+				_cover_states[part] = main.dev_snapshot()
+				print("   (a part no walk has been in: %s)" % part)
 
 
 ## Every map the area's script runs on: its events, each square from every side, a rest, and
@@ -3620,6 +3636,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 			print("   (part %s from %s: walked already)" % [region, main._pos])
 			continue
 		seen[region] = true
+		_cover_parts_walked["part " + region] = true
 		_cover_log.maps += 1
 		print("== COVER map %d part %s (%s) from %s" % [main._maps[mi].id, region, _here(), main._pos])
 		var found: Array = await _cover_map(deadline)
