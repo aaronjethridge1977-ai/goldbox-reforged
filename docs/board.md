@@ -23,6 +23,7 @@ Files not listed: whoever needs them asks here first.
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · design → side · Combat AI follow-up (decided, Methods 2): staged losing fights for B1's retreat rule before Jeremy tests it; MONSTER TACTICS becomes ORIGINAL / SMARTER / SMARTEST (Fireball-first openings only at SMARTEST); fixed-seed regression fights for each of B1-B3; Test List entries for each. After P16 unless you see a reason to do it sooner. · open
 - 2026-11-14 · design → main · Re-take the reference-check baseline (`refcheck.sh`, `data/refcheck_base.txt`) on current main, noted as the first after A1; say whether chat 18's baseline came before or after A1 landed. · open
 - 2026-11-14 · design → main · Move the side lane's lab keys (`_replay_keys`: `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`) out of `main.gd` into a side-owned hook file (e.g. `scripts/combat/lab_hooks.gd`, its `.uid` with it); `main.gd` keeps one call into it. Do it when the side lane isn't mid-change there; post here when done. (Decided 2026-11-14, Methods 2.) · open
 - 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Draft ready: ai-business-ideas `plans/lab-current-method-draft.md` (fill the [check] lines, paste, delete the draft). · open
