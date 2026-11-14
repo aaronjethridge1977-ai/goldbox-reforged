@@ -720,7 +720,9 @@ func _hook() -> bool:
 			print("   >> %d (%s: %d events left on this map)" % [k + 1, items[k], left])
 			await main._press(str(k + 1))
 			return true
-		if "SURRENDER" in items and ("FIGHT" in items or "ATTACK" in items):
+		if "SURRENDER" in items and ("FIGHT" in items or "ATTACK" in items) \
+				and not _answer_rules.get(_here(), []).any(func(r): return said.contains(r[0])):
+			# (Chat 17: a plan's answer for the question comes first: 2:9's towers variant flees.)
 			# Norris the Gray's 'SURRENDER OR DIE!': surrendering loses every valuable.
 			var fight: int = items.find("FIGHT") if "FIGHT" in items else items.find("ATTACK")
 			print("   >> %d (no surrender)" % (fight + 1))
