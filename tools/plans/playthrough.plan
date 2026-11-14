@@ -45,6 +45,10 @@ expect_level 5:7 7
 # Encounters the Clue Book settles by talking: Ferran Martinez in Sokal Keep (a spectre that
 # drains two levels a hit) gives his story and the word for the library.
 parley 4:21 A PALE FORM RISES
+# Chat 21: the city watch rousting a party camped in New Phlan (3:0 0x9A9D): GO. STAY is a fight with 38 of the
+# watch (0xADE2) and the city's services refused after it (0x4AC0); main's rule for a question asked again had
+# answered STAY the third time (chat 21's full run: a level-1 party wiped there twice, after the inn found no platinum).
+answer 3:0 ROUSTED BY THE CITY WATCH|GO
 # People the Clue Book says not to take along: the library's madman (trouble in town).
 answer 2:15 QUITE MAD|NO
 answer 2:15 DO YOU INSIST HE COME|NO

@@ -121,7 +121,7 @@ var program := -1
 ##   0x7E78: CHA 3 0, 4 5, 5 10, 6 15, 7 20, 8-12 25, 13 30, 14 35, 15 40, 16 50, 17 55, 18+ 60).
 ## Anything else in that range is plain memory (0x6DA8, 0x6DC6, 0x6DE1... are game state).
 const CHAR_WINDOW := 0x6B00
-var selected := 0                # party index the window shows (-1: LOAD_CHAR found no one)
+var selected := 0                # party index the window shows (-1: a figure past the party, selected_creature)
 var tables: ClassTables          # set by the game (thief skills)
 var party_changed := false       # an NPC joined or left: the game redraws the party
 var duel := 0                    # CALL 0x8000 (1, the arena) / 0x8001 (2): the next COMBAT is a duel
@@ -504,9 +504,17 @@ func _load_char(v: int) -> void:
 		party_changed = true
 	_dismiss = false
 	var i := v & 0x7F
-	selected = i if i < party.size() else -1
 	var k := i - party.size()
-	selected_creature = k if k >= 0 and k < monster_teams.size() else -1
+	# Chat 21, from GAME.OVR 0x1026: LOAD_CHAR walks n figures down the list from its head and points the
+	# window at the one it reaches; past the end of the list it leaves the window where it was (the member
+	# selected before stays). Ours had "no one" (-1), so the parley bonus (0x6DCF) read 0 ever after:
+	# 2:20's patrols were angered at every parley.
+	if i < party.size():
+		selected = i
+		selected_creature = -1
+	elif k < monster_teams.size():
+		selected = -1
+		selected_creature = k
 
 
 ## Damage from a script (traps, green slime, falling...), as the original applies it:

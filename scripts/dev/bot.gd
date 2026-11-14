@@ -3887,6 +3887,7 @@ func _cover_job_once(job: Dictionary) -> void:
 	main.dev_restore(job.snap)
 	if job.get("reseed", false):
 		_cover_reseed()
+	var queued_before := _cover_jobs.size()
 	_cover_forced = job.path.duplicate(true)
 	_cover_stairs_for = ""
 	_cover_snap = {}
@@ -3926,6 +3927,15 @@ func _cover_job_once(job: Dictionary) -> void:
 		_cover_forced = []
 	_cover_flee_next = false
 	_cover_ally_next = false
+	# Chat 21: the jobs this job queued (a menu after its fled fight: 8:13's SURRENDER OR DIE, 0xA342) replay
+	# from the same step, so they flee (or attack the ally in) the same fight, or the menu never comes.
+	if job.get("flee", false) or job.get("ally", false):
+		for k in range(queued_before, _cover_jobs.size()):
+			var q: Dictionary = _cover_jobs[k]
+			if not q.get("flee", false) and not q.get("ally", false):
+				q["flee"] = job.get("flee", false)
+				q["ally"] = job.get("ally", false)
+				q["flee_at"] = int(job.get("flee_at", -1))
 	# Chat 17: a job whose answer lets the party by (6:1's guards: SHOW PASS) takes one more
 	# step the same way, through the door it opened (the captain's room was never reached).
 	if not _wiped() and _here() == _cover_area and not job.get("rest", false) and not job.get("look", false) \
