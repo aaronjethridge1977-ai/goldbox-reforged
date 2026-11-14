@@ -27,6 +27,7 @@ const COMBAT_RESULT := 0x6DC7
 const MORALE_BASE := 0x6DC6     # the encounter's morale (scripts write it before COMBAT; 99 = steady)
 const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the monsters (SURPRISE)
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
+const ALLY_ATTACKED := 0x6E33   # 1 = a player answered YES at ATTACK ALLY in this fight (chat 17)
 const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
 
 const LEAVING_MAP := 0x6DD5    # 1 while a step would leave the map (on-move moves to the next area)
@@ -985,6 +986,8 @@ func _exec(ins: Dictionary) -> void:
 				# A fight (the arena's needs no monsters: CALL 0x8000 makes the opponent), or with treasure only a treasure find: pause while the caller
 				# runs it (experience and treasure screens), then end_combat().
 				state = State.COMBAT
+				# Chat 17: a fight starts with 0x6E33 ("an ally was attacked") clear (GAME.OVR 0xE492).
+				write_byte(ALLY_ATTACKED, 0)
 			else:
 				_note("combat")
 				write_byte(COMBAT_RESULT, 0)

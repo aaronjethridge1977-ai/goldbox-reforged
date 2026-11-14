@@ -16,6 +16,8 @@ extends Control
 signal closed
 ## After a real (event) fight: 1 = the party won, 2 = the party fell.
 signal finished(result: int)
+## A player answered YES at "ATTACK ALLY:" (the game sets 0x6E33 = 1; chat 17).
+signal ally_attacked
 
 const VIEW_CELLS := 7
 const CELL := 24
@@ -468,6 +470,10 @@ func _draw_original(field: Image) -> void:
 	# Bottom lines.
 	if _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
+	elif _asking_ally:
+		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
+		g.text(0, 24, "ATTACK ALLY:", GameScreen.WHITE)
+		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_continue:
 		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 17)
@@ -602,6 +608,13 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 
 
 var _asking_continue := false
+## Chat 17: "ATTACK ALLY: YES NO" (GAME.OVR 0x15193, checked in the original): TARGET on a figure
+## of the attacker's own side asks first; NO goes back to the aim. YES sets 0x6E33 (and 0x6DE2,
+## not done here: ours reads 0x6DE2 as the temple flag) and turns every computer-run ally with
+## morale over 127 against the party (record +0x10C = 0, +0x84 > 0x7F; +0x10E = 1). The lab:
+## the player characters stay the player's.
+var _asking_ally := false
+var _ally_target := -1
 
 
 func _on_message(text: String) -> void:
@@ -866,14 +879,25 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 				_spell_target()
 				return
 			var j := _combat.occupant(_aim_cell)
-			_aiming = false
-			_cmode = "menu"
-			_selected = me
-			if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
-				_combat.shoot(me, j)
-			else:
-				_combat.attack(me, j)
-			_after_player_action("attacked")
+			if j >= 0 and _combatants[j].team == _combatants[me].team and not _asking_ally:
+				_asking_ally = true
+				_ally_target = j
+				_refresh()
+				return
+			_attack_aimed(j)
+
+
+## The active figure attacks figure j (TARGET in AIM, or YES at "ATTACK ALLY:").
+func _attack_aimed(j: int) -> void:
+	var me: int = _combat.active
+	_aiming = false
+	_cmode = "menu"
+	_selected = me
+	if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
+		_combat.shoot(me, j)
+	else:
+		_combat.attack(me, j)
+	_after_player_action("attacked")
 
 
 ## The hot letter or Enter on the lit item ("" for neither).
@@ -1115,6 +1139,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		_flash_timer.stop()
 		_flash_timer.timeout.emit()
 		get_viewport().set_input_as_handled()
+		return
+	if _asking_ally:
+		if key == KEY_Y or key == KEY_N:
+			get_viewport().set_input_as_handled()
+			if key == KEY_N:
+				_asking_ally = false
+				_refresh()
+				return
+			var me: int = _combat.active
+			for c in _combatants:
+				var w: PartyMember = c.who
+				if c.team == _combatants[me].team and c.get("quick", false) and (w.npc >= 128 or w.script_team == 0x80) \
+						and w.morale > 0x7F:
+					c.team = 1 - int(c.team)
+			ally_attacked.emit()
+			_asking_ally = false
+			_attack_aimed(_ally_target)
 		return
 	if _aiming:
 		_aim_input(event, key)

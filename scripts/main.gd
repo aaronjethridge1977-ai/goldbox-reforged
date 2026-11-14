@@ -155,6 +155,9 @@ func _ready() -> void:
 	_combat = CombatScreen.new()
 	_combat.visible = false
 	_combat.finished.connect(_on_event_fight_finished)
+	# Chat 17: "ATTACK ALLY" answered YES: 0x6E33 = 1, which 7:17's nomads read after the fight
+	# ("THE FILTHY TRAITORS!"). GAME.OVR 0x151F4.
+	_combat.ally_attacked.connect(func(): _vm.write_byte(EclVM.ALLY_ATTACKED, 1))
 	add_child(_combat)
 	_timer = Timer.new()
 	_timer.one_shot = true
