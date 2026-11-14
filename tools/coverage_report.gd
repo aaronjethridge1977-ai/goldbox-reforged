@@ -43,6 +43,8 @@ func _init() -> void:
 			missed = arg.trim_prefix("--missed=")
 		elif arg.begins_with("--critical="):
 			critical = arg.trim_prefix("--critical=")
+		elif arg.begins_with("--dead="):
+			_dead_list = arg.trim_prefix("--dead=")
 	if game_path == "":
 		game_path = GameData.find_game_path()
 	_settable = _settable_bits(game_path)
@@ -172,11 +174,34 @@ func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 ## or WAIT/ADVANCE where the reaction is 4); an ON_GOTO/ON_GOSUB right after it on the same
 ## variable can't take an outcome no choice gives. And where the menu's distance is 0, ADVANCE
 ## (choice 3) is never offered (PARLAY stands in its place).
+var _dead_list := ""   # chat 18: --dead=<block> lists each dead outcome with the rule that made it
+var _dead_why := {}
+
+
 func _dead(ecl: EclScript) -> Dictionary:
 	var out := {}
 	var offs: Array = ecl.offsets()
 	_dead_never_set(ecl, offs, out)
+	for k in out:
+		_dead_why[k] = "never-set bits"
 	_dead_values(ecl, offs, out)
+	for k in out:
+		if not _dead_why.has(k):
+			_dead_why[k] = "values (flag values, engine values, AND mask, COMPARE_AND)"
+	_dead_encounters(ecl, offs, out)
+	for k in out:
+		if not _dead_why.has(k):
+			_dead_why[k] = "encounter reactions / distance 0"
+	if _dead_list != "" and _key == _dead_list:
+		var keys := out.keys()
+		keys.sort_custom(func(a, b): return int(String(a).get_slice(":", 0)) < int(String(b).get_slice(":", 0)))
+		for k: String in keys:
+			print("   dead: %04X -> %s   (%s)" % [int(k.get_slice(":", 0)) + EclScript.BASE, k.get_slice(":", 1), _dead_why[k]])
+	_dead_why = {}
+	return out
+
+
+func _dead_encounters(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 	for i in offs.size():
 		var ins: Dictionary = ecl.instructions[offs[i]]
 		# Chat 18: a GOSUB to a shared routine that is only the menu (7:17's 0x9914, 0x9934:
@@ -254,7 +279,6 @@ func _dead(ecl: EclScript) -> Dictionary:
 		for k in nxt.args.size() - 2:
 			if not can.has(k):
 				out["%d:%d" % [offs[j], k]] = true
-	return out
 
 
 ## Chat 18: the ENCOUNTER_MENU a subroutine at `at` is made of ({} if it is anything else): WRITE_MEMs

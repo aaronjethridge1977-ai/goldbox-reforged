@@ -1,0 +1,42 @@
+# Chat 18: 3:8 (City Hall) with every report the clerk reads waiting: 0x4AA6-0x4ABF at 254 (the clerk's loop at
+# 0x9D20 looks for 254 there, reports it and moves on). Each byte is 254 as the area that finishes its quest
+# writes it: 8:29 0x4AA6, 4:21 0x4AA7, 1:24 0x4AA8, 6:1 0x4AA9, 2:15 0x4AAA-0x4AAF (the books), 1:18 0x4AB0,
+# 4:10 0x4AB1, 3:14 0x4AB2, 7:23 0x4AB3, 6:25 0x4AB4, 8:16 0x4AB5, 8:13 0x4AB6, 7:17 0x4AB7, 3:0 0x4AB8,
+# 2:9 0x4AB9, 5:7 0x4ABA, 2:20 0x4ABB, 1:24 0x4ABD, 3:8 and 5:4 0x4ABE (Cadorna unmasked), 5:3 0x4ABF.
+# No script writes 0x4ABC. Set by shortcut as a player who did all of those has them; the council's
+# commissions that follow (the Zhentil message, Urslingen, the gate attack) open states for the walk.
+rules playthrough.plan
+start chat12a_latest/buccaneers
+shortcut flag 4AA6 set 254 8:29's report
+shortcut flag 4AA7 set 254 4:21's report
+shortcut flag 4AA8 set 254 1:24's report
+shortcut flag 4AA9 set 254 6:1's report
+shortcut flag 4AAA set 254 2:15's book
+shortcut flag 4AAB set 254 2:15's book
+shortcut flag 4AAC set 254 2:15's book
+shortcut flag 4AAD set 254 2:15's book
+shortcut flag 4AAE set 254 2:15's book
+shortcut flag 4AAF set 254 2:15's book
+shortcut flag 4AB0 set 254 1:18's report (Podol Plaza)
+shortcut flag 4AB1 set 254 4:10's report (the graveyard)
+shortcut flag 4AB2 set 254 3:14's report (Kovel Mansion)
+shortcut flag 4AB3 set 254 7:23's report
+shortcut flag 4AB4 set 254 6:25's report
+shortcut flag 4AB5 set 254 8:16's report (the lizard men)
+shortcut flag 4AB6 set 254 8:13's report (the kobolds)
+shortcut flag 4AB7 set 254 7:17's report (the nomads)
+shortcut flag 4AB8 set 254 3:0's report
+shortcut flag 4AB9 set 254 2:9's report (Stojanow Gate taken)
+shortcut flag 4ABA set 254 5:7's report
+shortcut flag 4ABB set 254 2:20's report
+shortcut flag 4ABD set 254 1:24's report
+shortcut flag 4ABE set 254 Cadorna unmasked (3:8, 5:4)
+shortcut flag 4ABF set 254 5:3's report
+# City Hall's door is locked from 14:00 (3:0's 0x9920): the party rests in New Phlan until morning.
+travel 3:0
+restuntil 7
+travel 3:8
+expect 3:8
+cover 3:8 40 all
+status
+stop

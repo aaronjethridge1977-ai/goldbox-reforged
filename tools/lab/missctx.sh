@@ -13,4 +13,14 @@ for m in sys.stdin:
     i=idx.get(off)
     ctx=' | '.join(re.sub(r'\s+',' ',lines[j][6:])[:70] for j in range(max(0,i-2),i) if not lines[j].startswith(';')) if i is not None else ''
     print('%-46s  %s' % (m.replace('missed ',''), ctx))
-" | python3 $L/misswhy.py /tmp/dis_$a.txt
+" | python3 $L/misswhy.py /tmp/dis_$a.txt | if [ -n "$CHAIN" ]; then
+	# Chat 18 (decided 2026-11-14): CHAIN=1 adds, under each missed branch, the chain of tests from an entry
+	# point to it, with the writers of each byte (data/writers.json, made by writers.py).
+	[ -f $L/data/writers.json ] || python3 $L/writers.py $L/game $L/data/writers.json > /dev/null
+	while IFS= read -r line; do
+		echo "$line"
+		off=$(echo "$line" | grep -o -E '(^| )[0-9A-F]{4} (IF_|ON_|MENU|ENCOUNTER|PARLAY)' | head -1 | awk '{print $1}')
+		out=$(echo "$line" | grep -o -E -- '-> [0-9TF]+' | head -1 | awk '{print $2}')
+		[ -n "$off" ] && python3 $L/chaintests.py /tmp/dis_$a.txt $off ${out:--} $L/data/writers.json ${a/-/:} | sed 's/^/      /'
+	done
+else cat; fi
