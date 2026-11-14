@@ -9,6 +9,9 @@ shortcut flag 4AE7 set 254 Podol Plaza cleared (1:18 writes 254)
 shortcut flag 4AE6 set 254 the textile house cleared (4:2 writes 254)
 shortcut flag 4AC8 set 128 Cadorna's seal (4:2 writes 128)
 shortcut flag 4AA9 set 128 the Bivant rescue bungled (6:1 writes 128)
+# City Hall's door is locked from 14:00 (3:0's 0x9920): the party rests in New Phlan until morning.
+travel 3:0
+restuntil 7
 travel 3:8
 expect 3:8
 cover 3:8 40 all
