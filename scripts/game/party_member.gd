@@ -136,6 +136,21 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 		if itm and itm.blocks.has(id):
 			item_data = itm.blocks[id]
 	var m := from_bytes(cha.blocks[id], item_data)
+	if m and TpDice.on:
+		# As GAME.OVR loads a monster record (0x1EF8B, side chat 2): 0xC0 from the race (1,
+		# 3, 5: 1; 2, 4, 6, 7: 2), then five icon colours, each (d6 + 8) * 16 + the same d6,
+		# in 0xC1-0xC3 and 0xC5-0xC6, 0xC4 = 0xC4. Lab dice only for now: whether 0xC0 changes
+		# which icon some monsters show is not yet checked.
+		var race: int = m.raw[0x2E]
+		if race in [1, 3, 5]:
+			m.raw[0xC0] = 1
+		elif race in [2, 4, 6, 7]:
+			m.raw[0xC0] = 2
+		for k in [0xC1, 0xC2, 0xC3, 0xC5, 0xC6]:
+			var r := TpDice.random(6, "monster colour") + 1
+			m.raw[k] = ((r + 8) * 16 + r) & 0xFF
+			if k == 0xC3:
+				m.raw[0xC4] = 0xC4
 	if m:
 		m.is_monster = true
 		m.affects.clear()

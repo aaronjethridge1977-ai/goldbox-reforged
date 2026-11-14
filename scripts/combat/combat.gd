@@ -140,6 +140,8 @@ func start_round() -> void:
 	_round_start_powers()
 	_count_enemy_health()
 	var delays := {}
+	for c in combatants:
+		c["init"] = 0
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
 		if c.down:
@@ -160,11 +162,14 @@ func start_round() -> void:
 			d -= 6
 		if d <= 0 or d > 20:
 			continue
+		c["init"] = d
 		delays[i] = d * 1000 + (0 if TpDice.on else rng.randi_range(0, 999))   # ties at random (lab dice: none, to trace)
 	order.clear()
 	for i in delays.keys():
 		order.append(i)
 	order.sort_custom(func(a, b): return delays[a] > delays[b])
+	# (With the lab dice, next_turn picks from "init" itself; order only says the round
+	# has someone left to act.)
 	message.emit("ROUND %d" % round_no)
 
 
@@ -188,7 +193,10 @@ func next_turn() -> int:
 				start_round()
 			if order.is_empty():
 				return -1
-		active = order.pop_front()
+		active = order.pop_front() if not TpDice.on else _pick_next()
+		if active < 0:
+			order.clear()          # (lab dice) nobody has initiative left: the round is over
+			continue
 		var c: Dictionary = combatants[active]
 		if c.down or (magic and CombatSpells.held(c.who)):
 			continue
@@ -203,6 +211,33 @@ func next_turn() -> int:
 
 
 const ASK_CONTINUE := -2
+
+
+## The original's choice of who acts next (GAME.OVR 0x9938, read in side chat 2), used with the
+## lab dice (TpDice) so a fight replays roll for roll: every combatant in the fight, standing
+## or not, rolls d100; the highest initiative left acts, a tie going to the higher roll and an
+## equal roll to the later one. Nobody with initiative left: -1 (the round is over). The
+## one chosen has none left after its turn.
+## TODO (when it is checked against the original for the bot's fights too): the same rule
+## for normal play, in place of the sort in start_round.
+func _pick_next() -> int:
+	var best_init := 0
+	var best_roll := 0
+	var chosen := -1
+	for i in combatants.size():
+		var c: Dictionary = combatants[i]
+		var r := roll(1, 100, "who acts next: %s" % c.who.name)
+		var init: int = c.get("init", 0) if not c.down else 0
+		if init > best_init:
+			best_roll = r
+		if init >= best_init and r >= best_roll:
+			best_roll = r
+			best_init = init
+			chosen = i
+	if best_init == 0:
+		return -1
+	combatants[chosen]["init"] = 0
+	return chosen
 
 
 ## DELAY (the original's DONE menu): the active combatant acts again after everyone else
@@ -434,11 +469,14 @@ func shoot(i: int, j: int) -> void:
 		penalty += 2
 	if reach > third:
 		penalty += 3
-	var ac: int = (tm.rear_ac if behind else tm.ac) + penalty
+	# Range makes the shot harder (lab, side chat 2: the original's to-hit threshold for
+	# Phineas's darts at an orc was 59, its melee one 54 = 60 - AC; ours had the penalty
+	# the other way, making long shots easier).
+	var ac: int = (tm.rear_ac if behind else tm.ac) - penalty
 	var bonus := 0
 	if magic:
 		magic.reveal(am)
-		ac = magic.armour(tm, (tm.rear_ac if behind else tm.ac)) + penalty
+		ac = magic.armour(tm, (tm.rear_ac if behind else tm.ac)) - penalty
 		bonus = magic.hit_bonus(am, tm)
 	var how := " (FROM BEHIND)" if behind else ""
 	while a.attacks > 0 and not t.down and am.shots_left() > 0:
@@ -705,6 +743,34 @@ func adjacent(a: Vector2i, b: Vector2i) -> bool:
 	return a != b and absi(a.x - b.x) <= 1 and absi(a.y - b.y) <= 1
 
 
+## Pool of Radiance's own direction from `from` to `to` (GAME.OVR 0x14E38 with its test at
+## 0x300CD, read in side chat 2): the first d (0 up, clockwise) for which `to` lies in d's
+## region seen from the cell one step that way (n): up/right/down/left are 90-degree wedges
+## opening out from n (north: n.y - to.y >= |to.x - n.x|), the diagonals the quarter beyond n
+## (north-east: to.x >= n.x and to.y <= n.y). `to` on `from` or on n counts. The computer's
+## approach steps from it (lab: Rhiannon at 29,14 went west for an orc at 25,12, which these
+## wedges call west and dir_to north-west). The original's attacks use it for facing too;
+## dir_to is kept there until that is compared.
+static func wedge_dir(from: Vector2i, to: Vector2i) -> int:
+	for d in 8:
+		var n: Vector2i = from + DIRS[d]
+		if to == from or to == n:
+			return d
+		var ok := false
+		match d:
+			0: ok = n.y - to.y >= absi(to.x - n.x)
+			1: ok = to.x >= n.x and to.y <= n.y
+			2: ok = to.x - n.x >= absi(to.y - n.y)
+			3: ok = to.x >= n.x and to.y >= n.y
+			4: ok = to.y - n.y >= absi(to.x - n.x)
+			5: ok = to.x <= n.x and to.y >= n.y
+			6: ok = n.x - to.x >= absi(to.y - n.y)
+			7: ok = to.x <= n.x and to.y <= n.y
+		if ok:
+			return d
+	return 0
+
+
 ## The direction (0..7) in which `to` lies from `from`, as the original works it out:
 ## eight sectors split at about 22.5 and 67.5 degrees.
 static func dir_to(from: Vector2i, to: Vector2i) -> int:
@@ -755,6 +821,8 @@ func step(dir: int) -> String:
 		return "fell"
 	c.moves -= cost
 	c.cell = to
+	if TpDice.on:
+		TpDice.log.append("pos %d:%d,%d" % [active, to.x, to.y])
 	c.dir = dir
 	c.received = 0
 	c.turned = 0
@@ -1031,13 +1099,14 @@ func done() -> void:
 # The original's computer-controlled turn (monsters, and party members on Quick), melee
 # only, as documented by Pilgrim's reconstruction of the engine:
 # - Each combatant keeps a movement pattern (1..6), rerolled at the start of its turn when it
-#   is 0 or 4, or on a 1 in 4: d8, then d2 + 4 (on 1-7) or d4 (on 8).
+#   is 0, 5 or 6, or (1-4) on a 1 in 4: d8, then d4 (on 1-7) or d2 + 4 (on 8). (Read from
+#   GAME.OVR in side chat 2, 2026-11-13; this note had it the other way round.)
 # - Target: it keeps its target while that one is standing; otherwise it picks one at
 #   random among the enemies it has a line of sight to (walls block; figures don't), or
 #   among all enemies if it sees none. No target: it guards.
-# - Each action: a monster attacks a random adjacent enemy (its own target is ignored once
-#   adjacent, as in the original); a party member attacks its target if adjacent, else a
-#   random adjacent enemy. With no enemy adjacent it steps towards its target: the
+# - Each action: hand to hand, it attacks a random adjacent enemy (its own target is ignored
+#   once adjacent), monsters and party members alike (GAME.OVR 0xB951: d count, even for
+#   one; side chat 2 corrected "a party member attacks its target if adjacent"). With no enemy adjacent it steps towards its target: the
 #   direction to the target turned by the pattern's offsets, the first of five that is free.
 #   A step needs more movement left than it costs (the computer never spends its last
 #   half-move). Stepping straight back counts as a failure, as does finding no step; after
@@ -1132,13 +1201,16 @@ func guard(i: int, computer: bool = true) -> void:
 func _ai_begin(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	c.ai = true
+	c["stepped"] = false
 	c.tries = 0
 	c.fails = 0
 	c.last_step = 8
 	var p: int = c.get("pattern", 0)
-	if p == 0 or p == 4 or roll(1, 4, "%s keeps its pattern?" % c.who.name) == 1:
+	# GAME.OVR 0xABF0 (read in side chat 2; ours had the d8 and the keep rule the other way
+	# round): 0, 5 or 6 is always rerolled, 1-4 on a d4 of 1; d8, then 8: d2 + 4, else d4.
+	if p == 0 or p > 4 or roll(1, 4, "%s keeps its pattern?" % c.who.name) == 1:
 		var r := roll(1, 8, "%s pattern" % c.who.name)
-		p = roll(1, 2, "%s pattern" % c.who.name) + 4 if r != 8 else roll(1, 4, "%s pattern" % c.who.name)
+		p = roll(1, 2, "%s pattern" % c.who.name) + 4 if r == 8 else roll(1, 4, "%s pattern" % c.who.name)
 	c.pattern = p
 
 
@@ -1278,7 +1350,7 @@ func _flee_step(i: int) -> String:
 	if c.moves / 2 <= 0:
 		return "stop"
 	var base := flee_dir if c.team == 1 else (flee_dir + 4) % 8
-	var turns: Array = PATTERN_TURNS[roll(1, 2, "%s runs" % m.name)]
+	var turns: Array = PATTERN_TURNS[roll(1, 2, "%s runs" % m.name) - 1]   # patterns 1-2 (rows 0-1)
 	for k in 5:
 		var dir := (base + int(turns[k])) % 8
 		var off_field := false
@@ -1330,8 +1402,11 @@ func _approach(i: int) -> String:
 	if c.moves / 2 <= 0 or (m.class_id == CLASS_MAGE and m.armor == null):
 		guard(i)
 		return "end"
-	var base := dir_between(c, combatants[c.target])
-	var turns: Array = PATTERN_TURNS[c.pattern]
+	var pair := closest(c, combatants[c.target])
+	var base := wedge_dir(pair[0], pair[1])
+	# Pattern p is row p - 1 (the original's table at DS:0x02AE, read in side chat 2: pattern p
+	# takes bytes p * 5 + 1 .. p * 5 + 5; ours read the row of p + 1).
+	var turns: Array = PATTERN_TURNS[c.pattern - 1]
 	var k := 0
 	while k < 5 and not _can_step(c, (base + int(turns[k])) % 8):
 		k += 1
@@ -1368,6 +1443,12 @@ func ai_act() -> bool:
 		return false
 	if not c.get("ai", false):
 		_ai_begin(active)
+		if TpDice.on:
+			# The original's computer turn rolls d7 as it weighs a spell (GAME.OVR 0xAFA4) and
+			# d7 as it weighs an item (0xB0F4) before choosing what to do; lab dice only until
+			# those choices are traced (ours choose spells and items their own way).
+			roll(1, 7, "%s weighs a spell" % c.who.name)
+			roll(1, 7, "%s weighs an item" % c.who.name)
 		_turn_start_powers(active)
 		if c.down:
 			return false
@@ -1418,7 +1499,13 @@ func ai_act() -> bool:
 		var shooting: bool = m.weapon_ranged and m.missile_ready
 		var reach: int = m.missile_range if shooting else 1
 		var t: int = c.get("target", -1)
-		if not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach):
+		# Hand to hand the original always strikes a random enemy within reach (d count, even
+		# for one), party members on QUICK too (GAME.OVR 0xB951, side chat 2); only a shooter
+		# keeps its target.
+		# (A figure that walked up this turn strikes the target it walked to: Brother Sean's
+		# approach in the lab drew no pick.)
+		var walked: bool = c.get("stepped", false) and not shooting and _enemy_of(c, t) and _within(active, t, reach)
+		if not walked and (not shooting or not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach)):
 			t = -1
 		if t < 0:
 			var near: Array[int] = []
@@ -1431,6 +1518,7 @@ func ai_act() -> bool:
 					return false
 				var r := _approach(active)
 				if r == "moved":
+					c["stepped"] = true
 					return true
 				if r == "end":
 					return false

@@ -28,6 +28,12 @@ static func load_set(game_path: String, outdoors: bool = false) -> CombatArt:
 	if dax and dax.blocks.has(1):
 		for px in _frames(dax.blocks[1]):
 			art.tiles.append(_to_image(px, 24, 24, false))
+	# RANDCOM.DAX's six pictures (clutter, see Battlefield.CLUTTER) follow at 34.
+	art.tiles.resize(maxi(art.tiles.size(), 34))
+	var rnd := DaxFile.open(game_path.path_join("RANDCOM.DAX"))
+	if rnd and rnd.blocks.has(1):
+		for px in _frames(rnd.blocks[1]):
+			art.tiles.append(_to_image(px, 24, 24, false))
 	return art
 
 

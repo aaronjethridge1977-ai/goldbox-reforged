@@ -77,7 +77,7 @@ var _prompt: Label
 ## Starts a test battle at map square (px, py) facing `facing` (0..3 = N E S W) against
 ## the set battles in `script` (monsters from MON<mon_file>CHA).
 func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
-		party: Array[PartyMember], mon_file: int, script: EclScript) -> void:
+		party: Array[PartyMember], mon_file: int, script: EclScript, load_now: bool = true) -> void:
 	_game_path = game_path
 	_field = Battlefield.build(map, px, py)
 	_px = px
@@ -113,7 +113,8 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_messages.clear()
 	if _picture == null:
 		_build()
-	_load_monsters()
+	if load_now:    # (an event fight loads its own monsters next: a record loaded here
+		_load_monsters()   # would roll its colours a second time, see load_monster)
 	visible = true
 
 
@@ -124,7 +125,7 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int,
 		morale_base: int = 99, surprise: int = 0, extra: Array[PartyMember] = [],
 		teams: Array[int] = []) -> void:
-	open_test(game_path, map, px, py, facing, party, mon_file, null)
+	open_test(game_path, map, px, py, facing, party, mon_file, null, false)
 	_extra_monsters = extra
 	_monster_teams = teams
 	_event_fight = true
@@ -593,7 +594,24 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 		if m.can_fight():
 			standing.append(m)
 	_party = standing
+	# Clutter on the floor (Battlefield.scatter), rolled as the original does: after the
+	# monsters are loaded, before placement and initiative.
+	var clutter_rng := RandomNumberGenerator.new()
+	if seed_value != 0:
+		clutter_rng.seed = seed_value
+	else:
+		clutter_rng.randomize()
+	_field.scatter(func(n: int) -> int:
+		return TpDice.random(n, "clutter") + 1 if TpDice.on else clutter_rng.randi_range(1, n))
 	_place()
+	if TpDice.on:
+		for c in _combatants:
+			TpDice.log.append("cell %s %d,%d" % [c.who.name, c.cell.x, c.cell.y])
+		for y in Battlefield.HEIGHT:
+			var row := PackedStringArray()
+			for x in Battlefield.WIDTH:
+				row.append("%02d" % _field.tile(x, y))
+			TpDice.log.append("field %02d %s" % [y, " ".join(row)])
 	_combat = Combat.new(_field, _combatants, seed_value)
 	_combat.types = _types
 	var table := SpellTable.shared(_game_path)
@@ -1306,3 +1324,14 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		"DONE":
 			_cmode = "done"
 			_refresh()
+
+
+## Lab (--keys quickall): the whole party on QUICK, as pressing Q at each member's turn.
+func quick_all() -> void:
+	if _combat == null:
+		return
+	for c in _combatants:
+		if c.team == 0:
+			c.quick = true
+	if _combat.active >= 0 and _ai_timer.is_stopped():
+		_ai_timer.start(0.2)

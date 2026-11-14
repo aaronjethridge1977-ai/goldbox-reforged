@@ -394,3 +394,36 @@ others from J:
   original too (a dead end facing out); from 0,9 north is open and the party walks 0,8 and 0,7, as in ours.
   The walks had stopped at the entrance: the four searches in a row asked the passage question four times, and
   the repeated-question rule answered LEAVE CAVE. In coverage runs the rule now waits for a seventh time.
+
+### Side chat 2 additions (fights roll for roll against the original)
+
+The original draws every random number from Turbo Pascal's generator (START.EXE 0AF8:118F):
+seed = seed * 134775813 + 1 (a dword at DS:0x4428, DS = program segment + 0x0C7C), Random(n)
+= (seed >> 16) mod n, a die Random(size) + 1 (GAME.OVR 0x2BCCD). With the same seed both
+games draw the same numbers, so a fight can be compared draw by draw.
+
+- `seed.py` reads or sets the seed in the running DOSBox (found through /proc/<pid>/mem by
+  START.EXE's NextRand code; nothing on disk changes). The seed doesn't move while the game
+  is idle, so timing doesn't matter.
+- `trace.py install` patches the original's Random in memory (a stub in the PSP's unused
+  FCB area); `trace.py run <secs>` prints every draw: count, roll_dice's caller (located in
+  GAME.OVR or START.EXE by its code bytes), n and the result, and `POS` lines when a
+  combatant's cell changes (DS:0x5F2B, 4 bytes each: x, y). Each entry is checked against
+  the seed sequence; `LOST` marks draws the poller missed (use `CONF=por_slow.conf`, 1500
+  cycles, for traces).
+- `tp.py`: the generator in Python (`tp.steps(a, b)` counts the draws between two seeds).
+- Ours: `tpseed=<hex>` in `--keys` turns on TpDice (the original's dice, lab only) from that
+  seed; `tplog` prints every draw with what it was for; `quickall` puts the whole party on
+  QUICK. With the dice on, the fight also logs `cell`, `field` and `pos` lines.
+- `cmpfight.sh [seed] [orig|ours|both]` runs the Slums orc fight (save E, made by ours at
+  2:20 14,1 W) in both from the same seed, everyone on QUICK, and `cmpdraws.py` prints the
+  first draw where they differ, with the moves before it.
+- `origfight.py` / `presser.py`: the original's fight on QUICK (with or without a log of
+  the screen and the draws between lines).
+- Found and fixed this way (side chat 2, 2026-11-13): battlefield clutter, monster icon
+  colours, who acts next, the movement patterns (d8 rule and row), the range penalty's
+  sign, hand-to-hand targets, the approach direction. The draw log matched to draw 861 of
+  the orc fight; next: whom a figure that walked up strikes (the original's target list).
+- Setup for these: `por_slow.conf` is `por.conf` with `cpu_cycles = 1500`; `trace.py` reads
+  `game/GAME.OVR` and `re/start.img` (START.EXE unpacked with `.lab/unexepack.py`), both in
+  the lab folder only.

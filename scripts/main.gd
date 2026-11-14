@@ -407,6 +407,8 @@ func _replay_keys(names: PackedStringArray) -> void:
 			continue
 		elif n.begins_with("tpseed="):      # tpseed=<hex>: the original's own dice from that seed (TpDice)
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
+		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
+			_combat.quick_all()
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
 				print("   ", l)
