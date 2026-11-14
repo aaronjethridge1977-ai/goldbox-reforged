@@ -141,6 +141,7 @@ func _ready() -> void:
 	_camp.save_requested.connect(_save_original)
 	_camp.time_passed.connect(_on_camp_rested)
 	_camp.interrupted.connect(_on_rest_interrupted)
+	_camp.start_memorized.connect(_begin_adventure)
 	add_child(_camp)
 	_party_menu = PartyMenu.new()
 	_party_menu.visible = false
@@ -1992,13 +1993,23 @@ func _on_party_menu_closed() -> void:
 		m.recalculate(_types)
 	if _starting_party:
 		_starting_party = false
-		_new_game()
-		_show()
+		# START MEMORIZED (QoL, SETTINGS): casters pick their spells first, memorized at once.
+		# Not in the lab's bot or key-replay runs.
+		var lab := Array(OS.get_cmdline_user_args()).any(func(a): return a.begins_with("--play=") or a.begins_with("--keys="))
+		if CampScreen.start_memorized_on() and not lab \
+				and _camp.open_start_memorize(_party, SpellTable.shared(_game_path)):
+			return
+		_begin_adventure()
 		return
 	_vm.write_byte(EclVM.TRAINING_MASK, 0)
 	_message.text = ""
 	_vm.close_program()
 	_after_vm()
+	_show()
+
+
+func _begin_adventure() -> void:
+	_new_game()
 	_show()
 
 

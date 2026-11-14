@@ -55,6 +55,7 @@ signal closed
 signal save_requested(letter: String)
 signal interrupted          # the area's "rest interrupted" script should run now
 signal time_passed(minutes: int)   # a rest is done: the caller moves the clock on
+signal start_memorized             # START MEMORIZED: every caster has had the MEMORIZE page
 
 const STEPS_PER_HEAL := 288
 const STEPS_PER_TICK := 12  # steps shown per timer tick (a day takes about 1.2 s)
@@ -121,6 +122,10 @@ static var show_portraits := true
 var _icon_editor: IconEditor
 var _scrolls: Array = []          # SCRIBE list: [item, record byte, spell id]
 var _learn_timer := {}             # member -> steps until its next spell is memorized
+## START MEMORIZED (QoL, Jeremy's P12): at BEGIN ADVENTURING each caster with free slots gets
+## MEMORIZE's page; what's picked is memorized at once, with no rest and no time passing.
+var _start_queue: Array = []       # members still to be offered the page
+var _starting := false
 
 
 ## The pause after a message, as a factor of the normal one (speed 4).
@@ -154,6 +159,55 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	visible = true
 	_anim.start(_fire_delay(0))
 	_refresh()
+
+
+## START MEMORIZED: offers MEMORIZE's page to each caster in `party` with free slots. Returns
+## false (and shows nothing) when nobody can memorize; otherwise `start_memorized` follows.
+func open_start_memorize(party: Array[PartyMember], table: SpellTable) -> bool:
+	_party = party
+	spells = table
+	_start_queue = []
+	for m in party:
+		if m.status == PartyMember.STATUS_OKAY and _can_learn(m):
+			_start_queue.append(m)
+	if _start_queue.is_empty():
+		return false
+	if _scr == null:
+		_build()
+	_starting = true
+	_plain_rope = false
+	visible = true
+	_next_starter()
+	return true
+
+
+## Whether `m` has a free slot for a spell in its book (cleric and magic-user, levels 1-3).
+func _can_learn(m: PartyMember) -> bool:
+	for id in range(1, SpellTable.NAMED + 1):
+		if m.knows(id) and spells.spell_class(id) <= 1 and spells.level(id) <= 3 \
+				and m.slots_left(spells, spells.spell_class(id), spells.level(id)) > 0:
+			return true
+	return false
+
+
+func _next_starter() -> void:
+	while not _start_queue.is_empty():
+		var m: PartyMember = _start_queue.pop_front()
+		_sel = _party.find(m)
+		_mode = ""
+		_open_list("memorize")
+		if _mode == "list":
+			return
+	_starting = false
+	visible = false
+	start_memorized.emit()
+
+
+## The spells being memorized are memorized now (START MEMORIZED).
+static func learn_at_once(m: PartyMember) -> void:
+	for i in m.memorized.size():
+		m.memorized[i] = m.memorized[i] % PartyMember.LEARNING
+	m.learn_hours = 0
 
 
 func _build() -> void:
@@ -203,6 +257,27 @@ func _next_fire() -> void:
 ## For the bot's log: what the camp shows.
 func state_text() -> String:
 	return "CAMP %s | %s | %s" % [_mode, " / ".join(_party.map(func(m): return "%s %d" % [m.name, m.hp])), _note.text]
+
+
+# --- START MEMORIZED setting (QoL) --------------------------------------------------------------
+
+const START_MEMORIZED_KEY := "start_memorized"
+
+
+## SETTINGS: START MEMORIZED ON (an addition, on unless turned off) or OFF (as the original:
+## nothing memorized at the start; rest in camp to memorize).
+static func start_memorized_on() -> bool:
+	var c := ConfigFile.new()
+	if c.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(c.get_value("qol", START_MEMORIZED_KEY, true))
+
+
+static func save_start_memorized(on: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", START_MEMORIZED_KEY, on)
+	c.save(GameData.SETTINGS_PATH)
 
 
 # --- Drawing ------------------------------------------------------------------------------
@@ -724,6 +799,9 @@ func _leave_list() -> void:
 	if _list_kind == "memorize" and not _who().learning_spells().is_empty():
 		_open_pending()
 		return
+	if _starting:
+		_next_starter()
+		return
 	_pick = MAGIC_MENU.size() - 1
 	_magic_menu()
 
@@ -894,6 +972,15 @@ func _act(choice: String) -> void:
 			_pick = 1                # NO lit (lab)
 			_refresh()
 		"confirm":
+			if _starting:
+				# YES: memorized at once; NO: the same character's page again, nothing picked.
+				if choice == "YES":
+					learn_at_once(_who())
+					_next_starter()
+				else:
+					_who().cancel_learning()
+					_open_list("memorize")
+				return
 			if choice == "NO":
 				_who().cancel_learning()
 			_magic_menu()
