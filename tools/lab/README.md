@@ -385,3 +385,5 @@ others from J:
   a YES at ATTACK ALLY (logged `SHORTCUT ally`).
 - `cover_2-9-towers.plan`: the walk flees the gate's bugbears (fighting them marks both towers,
   0x4A77 |= 12, so the tower rooms were always empty).
+- A job that ends in the area takes one more step its way (6:1: SHOW PASS lets the party by,
+  and the captain's room is through the door).

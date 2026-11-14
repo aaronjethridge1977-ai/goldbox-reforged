@@ -3694,6 +3694,16 @@ func _cover_job_once(job: Dictionary) -> void:
 		_cover_forced = []
 	_cover_flee_next = false
 	_cover_ally_next = false
+	# Chat 17: a job whose answer lets the party by (6:1's guards: SHOW PASS) takes one more
+	# step the same way, through the door it opened (the captain's room was never reached).
+	if not _wiped() and _here() == _cover_area and not job.get("rest", false) and not job.get("look", false) \
+			and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and not main._vm.on_overland:
+		var at: Vector2i = main._pos
+		await _cover_face(int(job.dir))
+		main._try_move(int(job.dir))
+		await _settle()
+		if main._pos != at:
+			print("   (one step on: %s)" % main._state_line())
 	var wiped: bool = await _cover_recover(job.snap, "job " + String(job.key))
 	print("   job ends: ", main._state_line())
 	# Chat 15: a job that leaves the party in the area with its quest flags changed (the
