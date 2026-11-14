@@ -349,3 +349,18 @@ others from J:
   job that opened a state not yet walked. Before, an `-all` run longer than the 30 minutes
   between restarts started over each time and never reached its later states (1:24, 2:20, 7:22
   in chat 16).
+- **The fight's result (0x6DC7) in the original:** the ECL window 0x6B00-0x6EFF is a word
+  array at the far pointer DS:0x49D6, address - 0x6B00 times two (GAME.OVR 0x8314; 0x4900-0x4CFF
+  are at DS:0x49D2, 0x9700-0x98FF at 0x49DA, 0x9900-0xB6FF bytes at 0x49DE). 0x6DC7 is +0x58E:
+  GAME.OVR writes it only as 0 (a fight starts, 0x6AB1), 0x80 (0x6B3B) and 0x81 (fled, 0x5C2F).
+  So "0x6DC7 = 1" (1:24, 2:20, 3:0, 8:29) never holds; the report knows (`ENGINE_VALUES`) and
+  also works out COMPARE_AND pairs that never match, and leaves an instruction only a dead IF
+  leads to out of the critical counts. 0x6DC8 (+0x590) is counted by 0x672A (called at 0x6AC5):
+  combatants by +0x108→0x13, +0x10E and +0x10D; not worked out yet, our engine leaves it 0.
+- Every event square is also come onto the first time with SEARCH on (`_cover_first_search`):
+  7:22's rocks room flashes a party away unless it searches the first time (then "A STRANGE
+  TINGLE" and THROW A ROCK).
+- A choice at an encounter or PARLAY menu is played three times, the dice rerolled for the 2nd
+  and 3rd (the reaction is a roll); a rest job's later tries reroll too (a restore brings the
+  same dice back, so its 8 tries were one). ADVANCE from distance 2 has its own job key, so a
+  job's ADVANCE leads to another and PARLAY at distance 0 (2:15's kobolds).

@@ -3386,6 +3386,11 @@ func _cover_choice(choice: int) -> void:
 			if vm._menu_kind == "encounter" and j == 3 and vm.encounter_distance == 0:
 				c = 4
 			var key := "%s|%d:c%d" % [vm.block_key, vm._menu_at, c]
+			if vm._menu_kind == "encounter" and c == 3 and vm.encounter_distance > 1:
+				# Chat 17: ADVANCE from each distance is a job of its own, so a job's ADVANCE can
+				# be followed by another until the monsters stand at 0 and PARLAY is offered
+				# (2:15's kobolds plead for mercy at distance 2; their PARLAY was never seen).
+				key += "d%d" % vm.encounter_distance
 			# A menu in a subroutine (5:5's YES/NO at 0x9A1D, called by several events): its
 			# choice taken from one caller says nothing of another's, so each caller gets its
 			# own job (run once a run; coverage can't tell callers apart).
@@ -3397,7 +3402,8 @@ func _cover_choice(choice: int) -> void:
 			var path := _cover_path.duplicate(true)
 			path.append({"c": j, "at": vm._menu_at})
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,
-				"look": _cover_looking, "what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()]})
+				"look": _cover_looking, "what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()],
+				"reroll": vm._menu_kind in ["encounter", "parlay"]})
 	_cover_path.append({"c": choice, "at": vm._menu_at})
 
 
@@ -3536,9 +3542,25 @@ func _cover_recover(back: Dictionary, what: String) -> bool:
 	return true
 
 
+## Chat 17: a choice at an encounter or PARLAY menu is played three times, the dice rerolled for
+## the 2nd and 3rd: what it brings is a roll (the monsters' reaction; 2:20's patrols answer a
+## PARLAY with a fight, a toll or "DA BOSS DON'T LIKE YOUSE GUYS").
 func _cover_job(job: Dictionary) -> void:
-	print("\n== COVER JOB %s: %s (%d answers, then this)" % [job.key, job.what, job.path.size() - 1])
+	await _cover_job_once(job)
+	if job.get("reroll", false):
+		for k in 2:
+			var again: Dictionary = job.duplicate()
+			again["reroll"] = false
+			again["reseed"] = true
+			await _cover_job_once(again)
+
+
+func _cover_job_once(job: Dictionary) -> void:
+	print("\n== COVER JOB %s: %s (%d answers, then this)%s" % [job.key, job.what, job.path.size() - 1,
+		" (again, the dice rerolled)" if job.get("reseed", false) else ""])
 	main.dev_restore(job.snap)
+	if job.get("reseed", false):
+		main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
 	_cover_forced = job.path.duplicate(true)
 	_cover_snap = {}
 	_cover_flee_next = job.get("flee", false)
@@ -3550,6 +3572,8 @@ func _cover_job(job: Dictionary) -> void:
 		for n in 8:
 			if n > 0:
 				main.dev_restore(job.snap)
+				# Chat 17: the restore brings the same dice back; the next try needs others.
+				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
 				_cover_forced = job.path.duplicate(true)
 				_cover_flee_next = job.get("flee", false)
 			_cover_snap = job.snap
@@ -3955,6 +3979,7 @@ func _cover_map(deadline: int) -> Array:
 			# taken once, and the four steps from its own square try it again on purpose.
 			if _cover_last_step != "":
 				_cover_exits_used[_cover_last_step] = true
+			await _cover_first_search(pre, best_sq, best)
 			main.dev_restore(pre)
 			await _settle()
 			continue
@@ -4053,9 +4078,32 @@ func _cover_map(deadline: int) -> Array:
 				main._vm.write_byte(main.SEARCH_FLAG, 0)
 				if await _cover_recover(here, "searching at event %d" % best):
 					break
+		await _cover_first_search(pre, best_sq, best)
 		main.dev_restore(here)
 		await _settle()
 	return found
+
+
+## Chat 17: the first arrival on an event square, again with SEARCH on. Scripts take another way
+## when the party searches the first time it comes (7:22's rocks room: searching, "A STRANGE
+## TINGLE" and THROW A ROCK; not searching, a flash takes the party to 7:23, and the square is
+## done after that, so the walk's later searches never saw the other side).
+func _cover_first_search(pre: Dictionary, sq: Vector2i, ev: int) -> void:
+	main.dev_restore(pre)
+	await _settle()
+	main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+	main._searching = true
+	main._vm.write_byte(main.SEARCH_FLAG, 1)
+	if main._pos == sq:
+		await _step_off()
+	_cover_target = sq
+	await main._tour(sq)
+	_cover_target = Vector2i(-1, -1)
+	await _settle()
+	main._searching = false
+	main._vm.write_byte(main.SEARCH_FLAG, 0)
+	_cover_log.tries += 1
+	await _cover_recover(pre, "searching on the first arrival at event %d" % ev)
 
 
 ## Chat 15: a wilderness band's coverage walk. The band's script works by square (its sites,

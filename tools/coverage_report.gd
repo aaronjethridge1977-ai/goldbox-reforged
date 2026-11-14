@@ -450,32 +450,64 @@ static func _in_flags(a: Dictionary) -> bool:
 ## Chat 16: COMPARE of a flag byte with a constant, then an IF: where every value the byte can
 ## hold (_flag_values) gives the same answer, the other outcome is dead. 4:21's stable and shops
 ## clamp their visit flags ("IF [4A0D] > 1, set it to 0"), and nothing ever writes more than 1.
+## Chat 17: bytes the game itself writes, with every value it writes (and the scripts' own
+## writes of them). 0x6DC7, the fight's result: GAME.OVR writes 0 as a fight starts (0x6AB1),
+## 0x80 (0x6B3B) and 0x81, fled (0x5C2F), and nothing else (the ECL window 0x6B00-0x6EFF is
+## the word array at [0x49D6] + (address - 0x6B00) * 2, so 0x6DC7 is +0x58E; those are its only
+## writes); scripts write 129. "6DC7 = 1" (1:24, 2:20, 3:0, 8:29) can't hold.
+const ENGINE_VALUES := {0x6DC7: [0, 128, 129]}
+
+
+## The values byte x can hold at a COMPARE: the flag table's, the engine's, or {} (anything).
+func _known_values(ecl: EclScript, x: int, local: Dictionary) -> Dictionary:
+	if ENGINE_VALUES.has(x):
+		var d := {}
+		for v in ENGINE_VALUES[x]:
+			d[v] = true
+		return d
+	if x < FLAGS_LO or x > FLAGS_HI:
+		return {}
+	# 0x4A00-0x4A1F are zeroed on entering an area (research/pool-of-radiance-formats.md,
+	# "Area memory, corrected again"): only this area's own scripts write them in a visit.
+	if x < 0x4A20:
+		if local.is_empty():
+			local.merge(_values_of([ecl]))
+		return local.get(x, {})
+	return _values.get(x, {})
+
+
 func _dead_values(ecl: EclScript, offs: Array, out: Dictionary) -> void:
 	var local := {}
 	for i in offs.size() - 1:
 		var ins: Dictionary = ecl.instructions[offs[i]]
 		var nxt: Dictionary = ecl.instructions[offs[i + 1]]
+		if ins.op == "COMPARE_AND" and ins.args.size() >= 4 and String(nxt.op) in ["IF_EQ", "IF_NE"]:
+			# Chat 17: both pairs must be equal; a pair that never is makes IF_EQ never hold.
+			for k in [0, 2]:
+				var p: Array = [ins.args[k], ins.args[k + 1]]
+				for m in 2:
+					if _is_byte_mem(p[m]) and _is_value(p[1 - m]):
+						var vs := _known_values(ecl, int(p[m].value), local)
+						if not vs.is_empty() and not vs.has(int(p[1 - m].value)):
+							out["%d:%s" % [offs[i + 1], "T" if nxt.op == "IF_EQ" else "F"]] = true
+			continue
 		if ins.op != "COMPARE" or not String(nxt.op).begins_with("IF_") or ins.args.size() < 2:
 			continue
 		var a: Array = ins.args
 		var mem := -1
-		if _is_byte_mem(a[0]) and _is_value(a[1]) and _in_flags(a[0]):
+		if _is_byte_mem(a[0]) and _is_value(a[1]) and (_in_flags(a[0]) or ENGINE_VALUES.has(int(a[0].value))):
 			mem = 0
-		elif _is_byte_mem(a[1]) and _is_value(a[0]) and _in_flags(a[1]):
+		elif _is_byte_mem(a[1]) and _is_value(a[0]) and (_in_flags(a[1]) or ENGINE_VALUES.has(int(a[1].value))):
 			mem = 1
+		if mem < 0:
+			continue
 		var x := int(a[mem].value)
-		# 0x4A00-0x4A1F are zeroed on entering an area (research/pool-of-radiance-formats.md,
-		# "Area memory, corrected again"): only this area's own scripts write them in a visit.
-		var vals: Dictionary = _values
-		if x < 0x4A20:
-			if local.is_empty():
-				local = _values_of([ecl])
-			vals = local
-		if not vals.has(x):
+		var vs := _known_values(ecl, x, local)
+		if vs.is_empty():
 			continue
 		var c := int(a[1 - mem].value)
 		var seen := {}
-		for v in vals[x]:
+		for v in vs:
 			var cmp: int = (int(v) - c) if mem == 0 else (c - int(v))
 			var holds := false
 			match String(nxt.op):
@@ -507,10 +539,28 @@ static func _choice_name(ins: Dictionary, op: String, i: int) -> String:
 func _critical(ecl: EclScript, c: Dictionary) -> void:
 	var kinds := {"way in/out": [0, 0], "set fight": [0, 0], "quest flag": [0, 0]}
 	var left: PackedStringArray = []
+	# Chat 17: an instruction reached only by an IF's dead "true" side (the IF skips it when the
+	# test fails) is out of the counts, unless something jumps to it (1:24's 0xB092: "6DC7 = 1").
+	var dead := _dead(ecl)
+	var targets := {}
+	for off in ecl.offsets():
+		var ins: Dictionary = ecl.instructions[off]
+		if String(ins.op) in ["GOTO", "GOSUB", "ON_GOTO", "ON_GOSUB"]:
+			for a in ins.args:
+				if typeof(a.value) == TYPE_INT:
+					targets[int(a.value) - EclScript.BASE] = true
+	var unreachable := {}
+	var offs: Array = ecl.offsets()
+	for i in offs.size() - 1:
+		if String(ecl.instructions[offs[i]].op).begins_with("IF_") and dead.has("%d:T" % offs[i]) \
+				and not targets.has(offs[i + 1]):
+			unreachable[offs[i + 1]] = true
 	for off in ecl.offsets():
 		var ins: Dictionary = ecl.instructions[off]
 		var op: String = ins.op
 		var kind := ""
+		if unreachable.has(off):
+			continue
 		if op in ["NEW_ECL", "LOAD_AREA_MAP"] or (op == "CALL" and ins.args.size() > 0 and int(ins.args[0].value) == 0xC01E):
 			kind = "way in/out"
 		elif op == "COMBAT":
