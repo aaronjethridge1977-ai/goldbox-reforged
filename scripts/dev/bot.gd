@@ -689,9 +689,11 @@ func _hook() -> bool:
 		# EXAMINE / LEAVE over and over set the gas trap off until the party died.)
 		if "ATTACK" in items or "TALK" in items or items.any(func(x): return String(x).begins_with("LEAVE")):
 			_asked[ask] = int(_asked.get(ask, 0)) + 1
-		if int(_asked.get(ask, 0)) > 3:
+		# (Chat 17: in a coverage run, 6: its search loop comes onto a square four times on purpose.)
+		var too_often := 6 if _cover_area != "" else 3
+		if int(_asked.get(ask, 0)) > too_often:
 			main.tour_stop = true
-			if int(_asked[ask]) == 4:
+			if int(_asked[ask]) == too_often + 1:
 				_issue("the same question keeps coming at %s %s: %s" % [_here(), str(main._pos), ask.left(120)])
 			# A script asking over and over without the party moving (Kovel Mansion's
 			# trapped cabinet loops on its own): take the way out it offers.

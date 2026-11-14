@@ -389,3 +389,8 @@ others from J:
   and the captain's room is through the door).
 - An event at which the walk itself changes the story flags opens a state too (7:17's kobold
   attack moves 0x4A7E on with each fight won; its later stages come on later arrivals).
+- The band caves checked in the original (chat 17, save H from `mksave.py J H 6 25 <x> <y> <dir> 4A9E=255`, which
+  puts the party in the cave map, GEO6 block 25): the entrance at 15,3 is walled north, south and west in the
+  original too (a dead end facing out); from 0,9 north is open and the party walks 0,8 and 0,7, as in ours.
+  The walks had stopped at the entrance: the four searches in a row asked the passage question four times, and
+  the repeated-question rule answered LEAVE CAVE. In coverage runs the rule now waits for a seventh time.
