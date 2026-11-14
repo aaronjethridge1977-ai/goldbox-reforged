@@ -9,7 +9,7 @@ lane's own docs. Decisions are not made here: they live in ai-business-ideas `id
 | Lane | Chat | Runs where | Owns |
 |---|---|---|---|
 | Main (M6 coverage and differential checks) | chat 20 | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/dev/`, `tools/` coverage and report scripts, `tools/plans/`, `docs/coverage*.md`, `docs/cover-fights.md`; also `scripts/main.gd` and `scripts/ecl_vm.gd` (shared core: see CLAUDE.md) |
-| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 5 | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
+| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 6 (next) | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
 | Design office | discussion chats | claude.ai | no code; proposals and Jeremy's decisions |
 
 Files not listed: whoever needs them asks here first.
@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 20 ended 2026-11-14: differential checks started, 3 of the first 5 MATCH (1 3:8, 2 6:19 after two engine fixes, 4 2:9; `docs/diff-checks.md`); 3 (4:2) and 5 (5:7) wait on the side lane's fights (request below). 25 of 29 areas done (new: 7:23, 6:25 after the map-wrap fix); overall 94% / 90% played. Fresh full run from creation stopped in the kobold caves (causes below, first pass). Lab archive: PC `.lab/lab20.tar.gz`. Next: chat 21 (2:9, 2:20, 5:6, 8:13, the full run's causes; checks 3 and 5 when the fights are played).
-- Side: side chat 5 (2026-11-14): P21 built (to test). QoL paused (Methods 3). Scoreboard done (`docs/coverage.md`). Now: the combat suite past the early game, roll for roll against the original; first: the basilisk (Mendor's library, lab save I) matches after two fixes (Rule changes); regress.sh 19 MATCH + 2. Next: spectre, troll, LEVEL 6 MU's Fireball, Tyranthraxus.
+- Side: side chat 5 ended 2026-11-14: P21 built (to test); QoL paused (Methods 3); engine-feature scoreboard done (`docs/coverage.md`, side-owned); P16 fixes from Jeremy's tests (crash, darts, poses/missiles after the sixth message); combat suite: the basilisk MATCHES, the kobold caves match to draw 4106 of 8905 (5 rule fixes, Rule changes). regress.sh 19 MATCH + 2 + the kobold fight (open). Lab archive: PC `.lab/side5_lab.tgz`. Next side chat: the kobold fight to the end, then checks 3 and 5's fights (main lane's request), then the step 3 view rule against the original, then spectre, troll, LEVEL 6 MU, Tyranthraxus; screen reference captures after.
 
 ## Requests to another lane
 
