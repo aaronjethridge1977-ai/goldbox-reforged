@@ -23,7 +23,11 @@ extends Control
 ## Prices are in gold; the buyer pays from all their coins and the change comes back in
 ## platinum and gold, the part under a gold piece lost (PartyMember.pay_gold_in_shop;
 ## checked against the original: 140 gold - 80 = 12 platinum; lab chat 10, two more).
-## Not yet checked: the original's words after a purchase or when the money is short.
+## After a purchase the original says nothing (lab, side chat 2, 2026-11-13: BUY on the SHOP page
+## twice gave Thrender two hand axes, row 24 never changed). QoL (Jeremy: he bought two long
+## swords without noticing): row 24 shows "BOUGHT <ITEM>" for a moment, with how many the buyer
+## now carries when it's more than one, or "NOT ENOUGH MONEY." (the original's words when the
+## money is short are not yet checked).
 
 signal closed
 
@@ -45,6 +49,8 @@ var _top := 1            # the first item on the page
 var _pick := 0           # the highlighted menu item
 var _note := Label.new() # the text box's message (kept as a Label: the bot reads .text)
 var _scr: GameScreen
+var _flash := ""       # QoL: row 24's message after BUY on the SHOP page
+var _flash_id := 0
 
 
 func _init() -> void:
@@ -125,8 +131,11 @@ func _draw_list() -> void:
 		_scr.text(1, 4 + i, it.name.to_upper().left(26), color)
 		var price := str(it.price)
 		_scr.text(31 - price.length(), 4 + i, price, color)
-	_scr.text(0, 24, "ITEMS:", 13)
-	_scr.menu_line(24, LIST_MENU, 7, _pick)
+	if _flash != "":
+		_scr.text(0, 24, _flash, GameScreen.YELLOW)
+	else:
+		_scr.text(0, 24, "ITEMS:", 13)
+		_scr.menu_line(24, LIST_MENU, 7, _pick)
 	_scr.update()
 
 
@@ -142,11 +151,31 @@ func _buy() -> void:
 	var member := _party[_buyer]
 	if not member.pay_gold_in_shop(it.price):
 		_note.text = "NOT ENOUGH MONEY."
-		_refresh()
+		_show_flash("NOT ENOUGH MONEY.")
 		return
 	member.items.append(it.copy())
 	_note.text = ""
+	var has := 0
+	for own in member.items:
+		if own.name == it.name:
+			has += 1
+	var name := it.name.to_upper()
+	var tail := " (HAS %d)" % has if has > 1 else ""
+	_show_flash("BOUGHT " + name.left(39 - 7 - tail.length()) + tail)
+
+
+## Row 24 shows `text` in place of the menu for a moment (QoL; see the top).
+func _show_flash(text: String) -> void:
+	_flash = text
+	_flash_id += 1
+	var id := _flash_id
 	_refresh()
+	if not is_inside_tree():
+		return
+	await get_tree().create_timer(1.2 * CampScreen.delay_scale()).timeout
+	if id == _flash_id and _flash != "":
+		_flash = ""
+		_refresh()
 
 
 func _pool() -> void:
@@ -317,6 +346,7 @@ static func appraised_item(jewel: bool, value: int) -> GameItem:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or not event is InputEventKey:
 		return
+	_flash = ""          # a key brings the menu back at once
 	var key := (event as InputEventKey).keycode
 	var items: Array = MENU
 	match _mode:
