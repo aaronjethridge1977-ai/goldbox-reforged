@@ -69,6 +69,13 @@ reasons, each event's start save and result). `mksave.py ... item<n>=<DAX>:<bloc
 Never save over the shipped saves (J is every `mksave.py` save's base; chat 20 restored it from the game folder):
 the checks save to F.
 
+**Full screen (P25, chat 22):** a run embedded in the Godot editor's Game tab can't change its window mode, so
+Alt+Enter / F11 only flip the setting there; test full screen in a floating window ("Embed Game on Next Play" off) or an
+export.
+
+**Walking-screen checks (chat 22):** `ours.sh --save=<writable .cfg> "--keys=load=F,...,screen=<png>"` saves our
+320x200 screen; lab save F (New Phlan 14,5) has poked spells for CAST; `automap` prints the squares the automap holds.
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
