@@ -738,7 +738,10 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 		list.reverse()
 	if me.get("no_spells", false):
 		list.clear()
-	if list.is_empty() or c.standing(1 - me.team) == 0:
+	# With every enemy down the original picks no spell, but a goblin that surrendered still
+	# counts: the turns that play out the round pick spells then (lab 2026-11-14, Slums orcs
+	# and goblin patrol); only the plans find nothing to aim at.
+	if list.is_empty() or not _enemy_left(i):
 		return false
 	if me.team == 0 and party_planner.is_valid():
 		var p: Dictionary = party_planner.call(self, i)
@@ -767,6 +770,15 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 			cast(i, id, plan.cell, plan.picked)
 			return true
 		priority -= 1
+	return false
+
+
+## An enemy of i still standing, or one that surrendered.
+func _enemy_left(i: int) -> bool:
+	var me: Dictionary = c.combatants[i]
+	for e in c.combatants:
+		if e.team != me.team and (not e.down or e.get("surrendered", false)):
+			return true
 	return false
 
 

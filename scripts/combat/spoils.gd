@@ -6,7 +6,10 @@ extends RefCounted
 ## As the original does it (rules as documented by Pilgrim's reconstruction; checked in
 ## the lab on the Slums orcs, 3 orcs and their leader with 24 silver each and a +1 scroll):
 ## - The pile is the event's TREASURE (coins, gems, jewellery, an item list) plus every
-##   defeated monster's money and items (unreadied).
+##   defeated monster's money and items (unreadied). A monster's item worth nothing (price
+##   0) makes the pile only on a d10 of 1-3, and only while fewer than 8 of the monsters'
+##   items have made it; priced items always do; with ECL 0x6DE3 = 1 no monster's item does
+##   (GAME.OVR 0x5600-0x579B; found roll for roll in the lab, the Slums goblin patrol).
 ## - Experience: each defeated monster's worth (per hit point x hit points rolled + value),
 ##   plus the pile's money in gold (coins at their copper value / 200, a gem 250, a piece of
 ##   jewellery 2200), plus 400 for each plus of every magic item. The total is split evenly
@@ -27,7 +30,8 @@ var fought := false          # monsters were defeated (otherwise a treasure find
 
 
 ## `script_money`: the event's TREASURE coins (copper..platinum, gems, jewellery).
-static func gather(defeated: Array, script_money: Array, script_items: Array[GameItem]) -> Spoils:
+static func gather(defeated: Array, script_money: Array, script_items: Array[GameItem],
+		monster_items := true) -> Spoils:
 	var s := Spoils.new()
 	for i in mini(script_money.size(), 7):
 		s.money[i] += int(script_money[i])
@@ -36,13 +40,19 @@ static func gather(defeated: Array, script_money: Array, script_items: Array[Gam
 		c.name = it.name
 		s.items.append(c)
 	var worth := 0
+	var kept := 0
 	for m in defeated:
 		var pm: PartyMember = m
 		s.fought = true
 		worth += pm.experience_worth()
 		for i in 7:
 			s.money[i] += pm.money[i]
+		if not monster_items:
+			continue
 		for it in pm.items:
+			if it.price == 0 and (kept >= 8 or _d10() > 3):
+				continue
+			kept += 1
 			var c := it.copy()
 			c.name = it.name
 			s.items.append(c)
@@ -52,6 +62,10 @@ static func gather(defeated: Array, script_money: Array, script_items: Array[Gam
 			worth += it.plus * ITEM_PLUS_XP
 	s.experience = worth
 	return s
+
+
+static func _d10() -> int:
+	return TpDice.random(10, "a monster's item in the pile?") + 1 if TpDice.on else randi_range(1, 10)
 
 
 ## The pile's money in gold, as the original counts it for experience.

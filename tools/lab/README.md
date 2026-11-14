@@ -481,3 +481,29 @@ games draw the same numbers, so a fight can be compared draw by draw.
   exits at 9B2A COMPARE 0,[6E82] / IF_NE); ours draws one. Ours never sets 0x6E82; in the
   original it reads 0 once the step is over, and script addresses aren't DS offsets there,
   so where it lives is still to find.
+
+### Side chat 3 (2026-11-14): the method checked and tightened
+
+- **No lost draws.** `trace.py`'s stub now waits, while a reader runs (flag PSP:00B8), until the
+  reader has taken all but 7 entries of its ring (the reader's count, PSP:00BC), so nothing is
+  overwritten and no entry is read half-written. The old ring lost 2-13% of the draws and could
+  pair one draw's size with another's result (the "next to lost ones" rule in `cmpdraws.py` is
+  only for old traces now). With no reader the stub never waits.
+- **Full speed.** With nothing lost, `cmpfight2.sh`/`cmpfight3.sh` run the original at
+  `por.conf`'s speed (`SLOW=1`: `por_slow.conf`) and ours with `--fast` and the lab key
+  `fightend` (waits until the fight is over or asks CONTINUE BATTLE): a fight takes about a
+  minute both sides, `regress.sh` (all 14) 40 s. `regress.sh record` plays every fight in the
+  original again and saves its trace.
+- **More than dice.** CONTINUE BATTLE is answered NO in both and reported (`ASKED CONTINUE
+  BATTLE`); each side then records the party's HP and status (`partyrec.py` reads the
+  original's records by name; ours' key `partyhp`; lines `PARTY <n> <hp> <status>`).
+  `cmpdraws.py` also checks every figure's cells (the original's are polled, so they must be a
+  subsequence of ours and end on the same cell) and ends with `VERDICT: MATCH` or what differs.
+  `fightend` also prints each enemy's HP and status (`FOE`).
+- Before this, "matches to the end" meant to the end of what ours drew: ours ended every fight
+  as soon as the last enemy went down, while the original plays out the round and asks CONTINUE
+  BATTLE (fixed); the goblins' items make the pile on a d10 (fixed). Now 12 of the 14 match to
+  the treasure; in 2 orc fights Phineas's first step from 31,14 is sampled at 30,14 before 30,13
+  in the original (ours steps diagonally; no dice differ): open, as the 25,13 case above.
+- `presser.py`: `CONTINUE=y` answers YES the first time (the original then plays another
+  round with nobody to fight and asks again).

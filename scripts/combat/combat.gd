@@ -119,7 +119,10 @@ func standing(team: int) -> int:
 ## 0 = fight on, 1 = the party won, 2 = the party lost, 3 = the party ran away (no one
 ## left standing, but some got off the field).
 func outcome() -> int:
-	if standing(1) == 0:
+	# Every enemy dead or gone: the fight ends at once (QoL, decided 2026-11-10). With some
+	# only down (dying, unconscious) the original plays out the round and then asks
+	# CONTINUE BATTLE (next_turn; checked roll for roll in the lab, 2026-11-14); NO wins.
+	if standing(1) == 0 and (decided or enemies_all_gone()):
 		return 1
 	if standing(0) == 0:
 		for c in combatants:
@@ -127,6 +130,18 @@ func outcome() -> int:
 				return 3
 		return 2
 	return 0
+
+
+## The fight was ended by NO at CONTINUE BATTLE.
+var decided := false
+
+
+## No enemy left on the field alive: each is dead or got away.
+func enemies_all_gone() -> bool:
+	for c in combatants:
+		if c.team == 1 and not (c.get("fled", false) or (c.who as PartyMember).status == PartyMember.STATUS_DEAD):
+			return false
+	return true
 
 
 func start_round() -> void:
@@ -183,9 +198,10 @@ func start_round() -> void:
 func next_turn() -> int:
 	while outcome() == 0:
 		if order.is_empty():
-			# The original's end of round: with every enemy still standing on the run, it
-			# asks "CONTINUE BATTLE:" (answered by continue_battle()).
-			if round_no > 0 and asked_round != round_no and enemies_all_running():
+			# The original's end of round: with no enemy left to fight (every one still
+			# standing on the run, or all of them down), it asks "CONTINUE BATTLE:"
+			# (answered by continue_battle()). YES plays another round.
+			if round_no > 0 and asked_round != round_no and (enemies_all_running() or standing(1) == 0):
 				asked_round = round_no
 				return ASK_CONTINUE
 			start_round()
@@ -292,6 +308,7 @@ func enemies_all_running() -> bool:
 func continue_battle(yes: bool) -> void:
 	if yes:
 		return
+	decided = true
 	for c in combatants:
 		if c.team == 1 and not c.down:
 			c.down = true
@@ -350,6 +367,28 @@ func first_dying(team: int) -> int:
 		if c.team == team and (c.who as PartyMember).status == PartyMember.STATUS_DYING:
 			return i
 	return -1
+
+
+## SETTINGS: QUICK BANDAGES (QoL, Jeremy's P18). On: a QUICK party member bandages a dying
+## ally first, as a player would from the DONE menu. Off by default, as the original (its
+## QUICK never bandages). CombatScreen sets it for each fight; headless runs (the bot, the
+## lab) and the lab dice keep it off, so they play as before.
+var quick_bandages := false
+const QUICK_BANDAGES_KEY := "quick_bandages"
+
+
+static func quick_bandages_on() -> bool:
+	var cf := ConfigFile.new()
+	if cf.load(GameData.SETTINGS_PATH) != OK:
+		return false
+	return bool(cf.get_value("qol", QUICK_BANDAGES_KEY, false))
+
+
+static func save_quick_bandages(on: bool) -> void:
+	var cf := ConfigFile.new()
+	cf.load(GameData.SETTINGS_PATH)
+	cf.set_value("qol", QUICK_BANDAGES_KEY, on)
+	cf.save(GameData.SETTINGS_PATH)
 
 
 ## The active combatant bandages the first dying party member; its turn ends.
@@ -1553,7 +1592,7 @@ func ai_act() -> bool:
 		# The original's QUICK never bandages (lab, side chat 2: Bakshi lay dying through the
 		# rest of the orc fight while Thrender and Brother Sean fought on). The bot still does,
 		# as a player would from the DONE menu (party_judge is its hook).
-		if c.team == 0 and party_judge.is_valid() and bandage():
+		if c.team == 0 and (party_judge.is_valid() or quick_bandages) and bandage():
 			return false
 		choose_weapon(active)
 		var morale := _morale_check(active)
@@ -1562,6 +1601,7 @@ func ai_act() -> bool:
 		if morale == "surrender":
 			var sm: PartyMember = c.who
 			c.down = true
+			c.surrendered = true
 			sm.status = PartyMember.STATUS_UNCONSCIOUS
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)

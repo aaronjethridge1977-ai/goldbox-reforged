@@ -411,6 +411,22 @@ func _replay_keys(names: PackedStringArray) -> void:
 			_combat.quick_all()
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
 			_combat.toggle_magic()
+		elif n == "fightend":               # fightend (lab): waits until the fight is over or asks CONTINUE BATTLE
+			var waited := 0
+			var foes := []
+			while _combat.visible and not _combat._asking_continue and waited < 2400:
+				if _combat._combat != null:
+					foes = _combat._combat.combatants.filter(func(c): return c.team == 1).map(func(c): return c.who)
+				await get_tree().create_timer(0.5).timeout
+				waited += 1
+			if _combat._asking_continue:
+				print("   ASKED CONTINUE BATTLE")
+			for f in foes:
+				print("   FOE %d %d" % [f.hp, f.status])
+		elif n == "partyhp":                # partyhp (lab): each member's HP and status byte (record 0x11B, 0x10C)
+			for k in _party.size():
+				print("   PARTY %d %d %d" % [k + 1, _party[k].hp, _party[k].status])
+			continue
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
 				print("   ", l)
@@ -2255,7 +2271,7 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 		list_id = int(_fight_treasure[7])
 	var found := _item_list(list_id)
 	found.append_array(field_items)
-	var spoils := Spoils.gather(defeated, coins, found)
+	var spoils := Spoils.gather(defeated, coins, found, _vm.read_byte(0x6DE3) != 1)
 	var hidden := _hirelings_take_shares(spoils)
 	if hidden != "":
 		won_text += "\n" + hidden
