@@ -473,7 +473,19 @@ func _do(line: String) -> void:
 			_cover_all = "all" in w.slice(3)
 			_cover_fresh = "fresh" in w.slice(3)
 			_cover_max_states = 16
+			# "full" (chat 18): state walks try every square fully (the light walk is the default).
+			# "seed=<hex>": the run's dice seed (logged at the start; each reroll is drawn from it).
+			_cover_skip = not ("full" in w.slice(3) or "noskip" in w.slice(3))
+			_cover_seed = -1
+			_cover_only = {}
 			for o: String in w.slice(3):
+				# "only=4,7,12" (chat 18, directed coverage, decided 2026-11-14): walk just those
+				# event numbers (travelling in as usual; the jobs and states as usual).
+				if o.begins_with("only="):
+					for e in o.get_slice("=", 1).split(",", false):
+						_cover_only[int(e)] = true
+				if o.begins_with("seed="):
+					_cover_seed = o.get_slice("=", 1).hex_to_int()
 				if o.begins_with("states="):
 					_cover_max_states = int(o.get_slice("=", 1))
 			await _cover(w[1], int(w[2]) if w.size() > 2 else 60)
@@ -1541,6 +1553,14 @@ func _load_exits() -> void:
 		var to := w[arrow + 1]
 		if to.begins_with("0:"):
 			to = w[1].split(":")[0] + to.substr(1)     # NEW_ECL in the same data set
+		# Chat 18: only real areas (data sets 1-8, or the wilderness 0:0). The chat 12 sweep
+		# counted Kuto's Well's top-row walls (types 4 and 9) as doors and recorded the script's
+		# north entry (file 16, block 1: 0xAFC7/0xAFCA, a step no party can take) as "16:1";
+		# travel then asked for ECL16.DAX ("cannot read", then a SCRIPT ERROR) in 57 of chat 17's
+		# 120 logs.
+		var ts := int(to.get_slice(":", 0))
+		if to != "0:0" and (ts < 1 or ts > 8):
+			continue
 		var e := {"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[4]), "entry": w[5], "to": to, "picks": picks}
 		# "... -> <to> at x,y,dir": where the sweep arrived (the part of the area it lands in).
 		var at := w.find("at", arrow)
@@ -3254,14 +3274,22 @@ func _cover(area: String, minutes: int) -> void:
 	_cover_states_walked = {}
 	_cover_exits_used = {}
 	_cover_fights = []
+	_cover_in_state = false
 	_cover_log = {"jobs": 0, "diverged": 0, "wipes": 0, "squares": 0, "tries": 0, "maps": 0}
 	var win_if: Callable = main._combat.dev_win_if
 	main._combat.dev_win_if = _cover_fight
 	main.dev_step_hook = _cover_step
 	main.dev_choice_hook = _cover_choice
 	main.dev_typed_hook = _cover_typed
+	main._vm.dev_dice_hook = _cover_dice
 	var deadline := Time.get_ticks_msec() + minutes * 60000
 	_cover_t0 = Time.get_ticks_msec()
+	if _cover_seed < 0:
+		_cover_seed = randi()
+	_cover_rng.seed = _cover_seed
+	main._vm._rng.seed = _cover_rng.randi()
+	print("==== COVER %s: dice seed %08x (seed=%x replays it)%s" % [area, _cover_seed, _cover_seed,
+		"" if _cover_skip else ", full state walks"])
 	_cover_resume_load()
 	if false:
 		pass
@@ -3315,7 +3343,9 @@ func _cover(area: String, minutes: int) -> void:
 			print("==== COVER %s: walking again in the state %s %s" % [area, sig.strip_edges(), _cover_t()])
 			main.dev_restore(snap)
 			await _settle()
+			_cover_in_state = _cover_skip and not sig.begins_with("part ")
 			await _cover_walk(deadline, true)
+			_cover_in_state = false
 			while not _cover_jobs.is_empty() and Time.get_ticks_msec() < deadline:
 				var job: Dictionary = _cover_jobs.pop_front()
 				if _cover_taken(job.key) or _cover_ran.has(job.key):
@@ -3336,6 +3366,7 @@ func _cover(area: String, minutes: int) -> void:
 	main.dev_step_hook = Callable()
 	main.dev_choice_hook = Callable()
 	main.dev_typed_hook = Callable()
+	main._vm.dev_dice_hook = Callable()
 	main._combat.dev_win_if = win_if
 	print("==== COVER %s done: %s %s" % [area, str(_cover_log), _cover_t()])
 	for f in _cover_fights:
@@ -3412,6 +3443,19 @@ func _cover_reads_clock(area: String) -> bool:
 
 ## Whether a queued choice has run since it was queued (in this run or another).
 var _cover_all := false
+var _cover_in_state := false    # chat 18: walking a flag state again
+var _cover_skip := true         # chat 18: state walks go light on squares that add nothing ("full": off)
+var _cover_only := {}           # chat 18: "only=": the event numbers to walk ({} all)
+var _cover_seed := -1           # chat 18: the run's dice seed ("seed=<hex>"; -1: a new one, logged)
+var _cover_rng := RandomNumberGenerator.new()
+
+
+## Chat 18: a reroll's new dice, drawn from the run's own generator (seeded and logged at the start,
+## so a run can be replayed with seed=<hex>) and logged.
+func _cover_reseed() -> void:
+	var sd := _cover_rng.randi()
+	main._vm._rng.seed = sd
+	print("   (dice reseeded: %08x)" % sd)
 var _cover_max_states := 16     # chat 18: flag states walked again (was 6, in the order opened)
 const COVER_STATES_KEPT := 48   # chat 18: states kept waiting (was 12)
 var _cover_t0 := 0
@@ -3493,7 +3537,7 @@ func _cover_choice(choice: int) -> void:
 			if j == choice:
 				continue
 			var c := j
-			if vm._menu_kind == "encounter" and j == 3 and vm.encounter_distance == 0:
+			if vm._menu_kind == "encounter" and j == 3 and not vm.advance_offered():
 				c = 4
 			var key := "%s|%d:c%d" % [vm.block_key, vm._menu_at, c]
 			if vm._menu_kind == "encounter" and c == 3 and vm.encounter_distance > 1:
@@ -3525,6 +3569,41 @@ func _cover_choice(choice: int) -> void:
 				"look": _cover_looking, "what": "%04X %s" % [vm._menu_at + EclScript.BASE, String(vm.menu[j]).strip_edges()],
 				"reroll": vm._menu_kind in ["encounter", "parlay"]})
 	_cover_path.append({"c": choice, "at": vm._menu_at})
+
+
+## Chat 18: dice jobs. A script's RANDOM with a few outcomes (top 7 or less) picks where things go
+## (6:25's caves: ENTER lands at one of four entrances, RANDOM 3 at 0xA472, and the walks only ever
+## explored behind one of them). Each other value gets a job, as a menu's other choices do: the same
+## step, the same answers, the die forced to that value (`{"r": v, "at": offset}` in the path).
+const DICE_MAX := 7
+
+
+func _cover_dice(at: int, top: int) -> int:
+	var vm: EclVM = main._vm
+	if not _cover_forced.is_empty() and _cover_forced[0].has("r"):
+		if int(_cover_forced[0].at) == at:
+			var v := int(_cover_forced.pop_front().r)
+			print("   >> the die at %04X: %d (coverage job)" % [at + EclScript.BASE, v])
+			_cover_path.append({"r": v, "at": at})
+			return v
+	if _cover_snap.is_empty() or vm.block_key != _cover_area or top < 1 or top > DICE_MAX or not _cover_forced.is_empty():
+		return -1
+	var v := vm._ri(0, top)
+	for j in top + 1:
+		if j == v:
+			continue
+		var key := "%s|%d:r%d" % [vm.block_key, at, j]
+		if not vm.stack.is_empty():
+			key += "@%d" % vm.stack.back()
+		if _cover_queued.has(key):
+			continue
+		_cover_queued[key] = {}
+		var path := _cover_path.duplicate(true)
+		path.append({"r": j, "at": at})
+		_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key, "rest": _cover_resting,
+			"look": _cover_looking, "what": "%04X RANDOM %d -> %d" % [at + EclScript.BASE, top, j]})
+	_cover_path.append({"r": v, "at": at})
+	return v
 
 
 const WRONG_WORD := "XYZZY"
@@ -3720,7 +3799,7 @@ func _cover_job_once(job: Dictionary) -> void:
 		" (again, the dice rerolled)" if job.get("reseed", false) else ""])
 	main.dev_restore(job.snap)
 	if job.get("reseed", false):
-		main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+		_cover_reseed()
 	_cover_forced = job.path.duplicate(true)
 	_cover_stairs_for = ""
 	_cover_snap = {}
@@ -3735,7 +3814,7 @@ func _cover_job_once(job: Dictionary) -> void:
 			if n > 0:
 				main.dev_restore(job.snap)
 				# Chat 17: the restore brings the same dice back; the next try needs others.
-				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+				_cover_reseed()
 				_cover_forced = job.path.duplicate(true)
 				_cover_flee_next = job.get("flee", false)
 			_cover_snap = job.snap
@@ -4124,7 +4203,7 @@ func _cover_map(deadline: int) -> Array:
 	for y in GeoMap.SIZE:
 		for x in GeoMap.SIZE:
 			var ev := map.flag(x, y) & 127
-			if ev != 0:
+			if ev != 0 and (_cover_only.is_empty() or _cover_only.has(ev)):
 				todo[Vector2i(x, y)] = ev
 	var done := {}       # squares visited ("x,y")
 	for k in _cover_done:
@@ -4194,6 +4273,7 @@ func _cover_map(deadline: int) -> Array:
 		# again; only the steps that took the party away stay closed.
 		main._refused = _cover_exits_used.duplicate()
 		var pre: Dictionary = main.dev_snapshot()
+		var size0 := _cover_size()
 		print("   cover: event %d at %s%s" % [best, best_sq, " (no route: trying the walls)" if probe else ""])
 		_cover_stairs_for = ""
 		if main._pos == best_sq:
@@ -4237,6 +4317,16 @@ func _cover_map(deadline: int) -> Array:
 		if wsig != "" and not _cover_states.has(wsig) and not _cover_states_walked.has(wsig) and _cover_states.size() < COVER_STATES_KEPT:
 			_cover_states[wsig] = here
 			print("   (a new state for the walk: %s, from the walk)" % wsig.strip_edges())
+		# Chat 18: in a state walk, a square whose arrival and first-arrival search add nothing
+		# to the coverage gets no more tries (they ran in the first walk). State walks were most
+		# of a run's time (16 tries a square, every square, every state).
+		if _cover_in_state and _cover_size() == size0:
+			await _cover_first_search(pre, best_sq, best)
+			if _cover_size() == size0:
+				_cover_log["light"] = int(_cover_log.get("light", 0)) + 1
+				main.dev_restore(here)
+				await _settle()
+				continue
 		for d in 4:
 			if Time.get_ticks_msec() >= deadline:
 				break
@@ -4290,7 +4380,7 @@ func _cover_map(deadline: int) -> Array:
 			main.dev_restore(here)
 			await _settle()
 			if k > 0:
-				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+				_cover_reseed()
 			if sides.is_empty():
 				await _step_off()
 			else:
@@ -4311,7 +4401,7 @@ func _cover_map(deadline: int) -> Array:
 			for k in 4:
 				if Time.get_ticks_msec() >= deadline or _here() != _cover_area or main._map_index != mi:
 					break
-				main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+				_cover_reseed()
 				main._searching = true
 				main._vm.write_byte(main.SEARCH_FLAG, 1)
 				await _step_off()
@@ -4336,7 +4426,7 @@ func _cover_map(deadline: int) -> Array:
 func _cover_first_search(pre: Dictionary, sq: Vector2i, ev: int) -> void:
 	main.dev_restore(pre)
 	await _settle()
-	main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
+	_cover_reseed()
 	main._searching = true
 	main._vm.write_byte(main.SEARCH_FLAG, 1)
 	if main._pos == sq:

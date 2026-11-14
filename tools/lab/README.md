@@ -425,6 +425,37 @@ others from J:
   its base up: 3:14's lock routine writes 0x4AEA + n) or writes by other instructions; fixed, none left.
 - `mkreasons.py < missctx.sh output`: a first draft of an area's reasons table, missed branches grouped by
   misswhy's guess, for docs/coverage-areas.md (check each row against the listing).
+- **Light state walks (default, decided 2026-11-14):** in a state walk, an event square whose arrival and
+  first-arrival search add nothing to the coverage gets no more tries (`"light"` in the closing line). 4:2's
+  `-seal` run from no 4:2 coverage: 189 s and 90/86, against 656 s and 90/87 with every try (`cover ... full`).
+  An area's closing run uses `full`. (A first attempt, skipping squares whose scripts read none of the state's
+  flag bytes, skipped nothing: the step scripts read them on every step. Removed.)
+- **Dice jobs:** a script's RANDOM with up to 8 outcomes (top 7 or less), in the area during a walk step, queues
+  a job for each other value: the same step and answers, the die forced (`{"r": v, "at": offset}` in the job's
+  path, `>> the die at ...` in the log). 6:25's ENTER lands at one of four cave entrances by RANDOM 3 (0xA472),
+  and the walks had only ever explored behind one: the boars, the sow and five other set fights.
+- **Seeds:** a run's dice come from one seed, logged at the start (`dice seed ... (seed=<hex> replays it)`); each
+  reroll is drawn from it and logged (`dice reseeded`). `cover <area> <minutes> all seed=<hex>` replays the dice.
+- `refcheck.sh [source]`: the reference-area check after any bot change (decided 2026-11-14): 3:11 and 5:5 from
+  coverage without those areas; compare with `data/refcheck_base.txt` (must not drop).
+- **Directed coverage (decided 2026-11-14):** `writers.py <game> data/writers.json` indexes every instruction of
+  ECL1-8 that writes each byte (and the engine's own writes into the flag range); `chaintests.py <listing>
+  <offset> [T|F|n] data/writers.json <area>` prints the tests on a shortest way from an entry point to that
+  instruction and outcome, with each byte's writers; `CHAIN=1 ./missctx.sh <area>` does it under every missed
+  branch. Variants stay hand-built and logged. `cover ... only=4,7,12` walks just those event numbers.
+- Report `--dead=<block>`: each dead outcome with the rule that made it (`data/dead_all.txt`: 199 across the 29
+  areas, 109 from the encounter reactions, 86 from value sets, 4 never-set bits).
+- Engine: ADVANCE at an encounter menu only while ECL 0x49E6 is set (GAME.OVR 0x2EC1; set on entering an area,
+  0x7792; the wilderness bands clear it). See research/pool-of-radiance-formats.md, "The encounter menu".
+- Travel ignores exits to anything but areas 1-8 and the wilderness: the chat 12 sweep had recorded Kuto's Well's
+  walled top row as exits to "16:1" (the script's north table, 0xAFC7/0xAFCA: file 16, block 1), and travel asked for
+  ECL16.DAX ("cannot read", then a SCRIPT ERROR; in 57 of chat 17's 120 logs). The lab's `data/exits.txt` lost those
+  10 lines. `covsum.sh` prints each run log's SCRIPT ERROR count.
+- Engine: ECL 0x6DC8 is the number of monsters the fight put down (checked in the original, 4:10's skeleton army:
+  research/pool-of-radiance-formats.md); ours had left it 0, so 4:10's, 2:20's and 8:16's kill counters never grew.
+- Reference check (`refcheck.sh`, decided 2026-11-14), chat 18's walker against the code before it, from no
+  coverage of those areas: 3:11 72/64 -> 85/79, 5:5 91/87 -> 91/88 (`data/refcheck_base.txt`).
+- `cover_3-8-reports.plan`: City Hall with every report byte (0x4AA6-0x4ABF) at 254, as each area's script writes it.
 - `cover_7-17-war.plan`: the kobold war at its third stage (0x4A7E = 3, 0x4A7C = 1, 0x4A7D = 3).
 
 ### Side chat 2 additions (fights roll for roll against the original)
