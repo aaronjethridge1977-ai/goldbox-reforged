@@ -25,48 +25,123 @@ flee their own fight, and fights a rest brings get theirs. The report also works
 can hold (0x4A00-0x4A1F per visit), so tests no value can pass are dead. Two engine bugs came out of it, both
 checked against the original: the wall ahead (0xC04E) after a step, and the per-visit flags on loading a save.
 
-## Where each area stands (chat 16, all runs merged)
+Chat 17 ("Chat 17 additions" in the README) made runs about 6 times faster again (no drawing in lab runs; the
+bot's quiet window counted in game time) and resumable after the workspace's restarts, so every area could be
+rerun twice with the method below. New in the walks: each event square is also come onto the first time with
+SEARCH on; encounter and PARLAY choices are replayed with the dice rerolled; ADVANCE from each distance is a job,
+so jobs reach PARLAY; a choice is replayed when the area's flags differ; a job takes one more step its way after
+its menu; fights with allies get an "ally attacked" job; areas that read the hour are walked again 12 hours on;
+the walk's own flag changes open states; an area that sends every party out is come into again after a flag
+change. The report learned the values the game itself writes (0x6DC7, the fight's result, is only ever 0, 0x80 or
+0x81 in GAME.OVR), AND-mask tests and COMPARE_AND pairs that never match, and leaves an instruction only a dead
+IF reaches out of the critical counts. Variants (logged shortcuts, each a state a player can have): 6:19 pledged
+and carrying the silver bottle, 6:1 with the captain's pass, 4:10 with the bottle, 2:9 fleeing the gate's
+bugbears, 1:18 with the plaza's count at 9, 3:8 with the reports City Hall answers. One engine difference came
+out and was fixed after a check in the original: ATTACK ALLY: YES NO.
 
-Played percentages; chat 15's in brackets. Critical = ways in/out · set fights · quest flags. **Done** = meets the
+## Where each area stands (chat 17, all runs merged)
+
+Played percentages; chat 16's in brackets. Critical = ways in/out · set fights · quest flags. **Done** = meets the
 numbers and the critical count, every remaining path listed below with its reason.
 
 | area | instructions | branches | critical | |
 |---|---|---|---|---|
-| 6:28 Zhentil outpost | 97 (88) | 97 (87) | 5/5 · 9/9 · 5/5 | done |
+| 6:28 Zhentil outpost | 97 (97) | 97 (97) | 5/5 · 9/9 · 5/5 | done |
+| 7:22 Yarash's pyramid, outside | 96 (92) | 95 (91) | 4/4 · 1/1 · 10/10 | done |
 | 5:4 Valjevo, north side | 96 (96) | 91 (91) | 7/7 · 6/6 · 24/24 | done |
-| 8:16 ruined castle | 96 (93) | 88 (81) | 4/4 · 7/7 · 18/18 | done |
+| 2:15 Mendor's library | 96 (93) | 90 (85) | 3/3 · 7/7 · 25/25 | done |
+| 8:16 ruined castle | 96 (96) | 88 (88) | 4/4 · 7/7 · 18/18 | done |
+| 6:1 Buccaneers' base | 95 (85) | 94 (86) | 3/3 · 15/15 · 6/7 |  |
 | 5:5 Valjevo inner castle | 95 (95) | 91 (91) | 7/7 · 7/7 · 15/15 | done |
-| 8:29 Kuto's Well | 95 (89) | 86 (80) | 8/8 · 7/7 · 17/17 | done |
-| 4:21 Sokal Keep | 94 (92) | 92 (84) | 4/4 · 4/4 · 9/9 | done |
-| 1:24 Temple of Bane quarter | 94 (88) | 88 (79) | 4/5 · 11/11 · 15/16 |  |
-| 2:15 Mendor's library | 93 (86) | 85 (76) | 3/3 · 7/7 · 24/25 |  |
-| 7:22 Yarash's pyramid, outside | 92 (87) | 91 (86) | 4/4 · 1/1 · 7/10 |  |
-| 3:11 training halls, arena | 92 (85) | 88 (79) | 3/3 · 2/2 · 1/1 | done |
-| 7:17 nomads' camp | 90 (87) | 86 (79) | 3/3 · 5/6 · 16/20 |  |
-| 7:23 Yarash's pyramid, inside | 89 (88) | 86 (85) | 4/4 · 3/5 · 18/21 |  |
-| 2:20 Slums | 89 (88) | 78 (76) | 4/4 · 20/20 · 20/21 |  |
-| 7:26 wilderness band, middle | 89 (77) | 78 (66) | 18/18 · 5/7 · 6/6 |  |
-| 5:7 Valjevo tower | 88 (87) | 83 (81) | 4/4 · 5/5 · 13/15 |  |
-| 4:10 Valhingen graveyard | 88 (87) | 78 (75) | 2/2 · 16/18 · 38/48 |  |
-| 3:14 Kovel Mansion | 87 (86) | 82 (81) | 5/5 · 14/14 · 21/21 |  |
-| 1:18 Podol Plaza | 87 (85) | 81 (79) | 6/6 · 6/7 · 20/24 |  |
-| 3:0 New Phlan | 87 (85) | 79 (76) | 12/12 · 7/8 · 9/9 |  |
-| 4:2 Cadorna textile house | 86 (85) | 84 (80) | 5/5 · 11/12 · 15/17 |  |
-| 8:13 kobold caves | 86 (85) | 84 (83) | 3/3 · 14/15 · 17/19 |  |
-| 6:1 Buccaneers' base | 85 (75) | 86 (71) | 3/3 · 14/15 · 5/7 |  |
-| 5:6 Valjevo, temple side | 83 (81) | 73 (72) | 3/3 · 6/6 · 19/21 |  |
-| 3:8 City Hall | 81 (80) | 82 (79) | 2/2 · 3/3 · 23/34 |  |
-| 5:3 Valjevo outer castle | 81 (80) | 77 (74) | 7/7 · 10/11 · 21/23 |  |
-| 6:19 Diogenes's cave mouth | 80 (80) | 85 (85) | 1/2 · 0/0 · 2/3 |  |
-| 8:27 wilderness band, east | 71 (70) | 61 (61) | 10/10 · 5/12 · 6/6 |  |
-| 2:9 Stojanow Gate | 69 (67) | 70 (65) | 3/4 · 3/7 · 17/24 |  |
-| 6:25 wilderness band, west | 69 (67) | 64 (62) | 11/11 · 3/13 · 5/5 |  |
+| 1:24 Temple of Bane quarter | 95 (94) | 89 (88) | 5/5 · 11/11 · 15/15 | done |
+| 8:29 Kuto's Well | 95 (95) | 86 (86) | 8/8 · 7/7 · 17/17 | done |
+| 4:21 Sokal Keep | 94 (94) | 92 (92) | 4/4 · 4/4 · 9/9 | done |
+| 6:19 Diogenes's cave mouth | 93 (80) | 100 (85) | 2/2 · 0/0 · 3/3 | done |
+| 3:11 training halls, arena | 92 (92) | 88 (88) | 3/3 · 2/2 · 1/1 | done |
+| 4:2 Cadorna textile house | 92 (86) | 88 (84) | 5/5 · 11/12 · 16/17 |  |
+| 3:14 Kovel Mansion | 91 (87) | 86 (82) | 5/5 · 14/14 · 21/21 |  |
+| 7:17 nomads' camp | 90 (90) | 87 (86) | 3/3 · 5/6 · 18/20 |  |
+| 7:23 Yarash's pyramid, inside | 89 (89) | 87 (86) | 4/4 · 3/5 · 18/21 |  |
+| 2:20 Slums | 89 (89) | 78 (78) | 4/4 · 20/20 · 20/21 |  |
+| 7:26 wilderness band, middle | 89 (89) | 78 (78) | 18/18 · 5/7 · 6/6 |  |
+| 5:6 Valjevo, temple side | 88 (83) | 84 (73) | 3/3 · 6/6 · 21/21 |  |
+| 1:18 Podol Plaza | 88 (87) | 83 (81) | 6/6 · 6/7 · 20/24 |  |
+| 5:7 Valjevo tower | 88 (88) | 83 (83) | 4/4 · 5/5 · 13/15 |  |
+| 4:10 Valhingen graveyard | 88 (88) | 79 (78) | 2/2 · 16/18 · 39/48 |  |
+| 3:0 New Phlan | 87 (87) | 80 (79) | 12/12 · 7/8 · 9/9 |  |
+| 8:13 kobold caves | 86 (86) | 85 (84) | 3/3 · 14/15 · 17/19 |  |
+| 5:3 Valjevo outer castle | 85 (81) | 81 (77) | 7/7 · 10/11 · 23/23 |  |
+| 8:27 wilderness band, east | 84 (71) | 72 (61) | 10/10 · 8/12 · 6/6 |  |
+| 3:8 City Hall | 81 (81) | 82 (82) | 2/2 · 3/3 · 23/34 |  |
+| 6:25 wilderness band, west | 72 (69) | 66 (64) | 11/11 · 4/13 · 5/5 |  |
+| 2:9 Stojanow Gate | 69 (69) | 70 (70) | 3/4 · 3/7 · 17/24 |  |
 
-Overall, all runs merged: played 84% → **87%** of instructions and 77% → **82%** of reachable branches (choices
-82%, flag writes 88%); with the choices not taken tried in the shadow copy as well, 89% and 84%.
+Overall, all runs merged: played 87% → **89%** of instructions and 82% → **84%** of reachable branches; with the
+choices not taken tried in the shadow copy as well, 90% and 85%.
 
-**Done:** 5:4, 5:5, 6:28, 8:16, 4:21, 8:29, 3:11 (7 of 29). Close: 2:15 (one quest flag), 1:24 (a way out, a
-quest flag), 7:22 (quest flags 7/10), 7:17, 7:23.
+**Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, and in chat 17 1:24, 2:15, 6:19, 7:22 (11 of 29).
+
+## 1:24, the Temple of Bane quarter: done (chat 17)
+
+95% of instructions and 89% of reachable branch outcomes; every story-critical instruction has run (5 ways in or
+out, 11 set fights, 15 quest flags). Chat 17's `-all` run, resumed across a restart, took the last way out. The
+last quest flag, 0xB092 (0x4A2A = 1 after the encounter routine's fight), needs the fight's result 0x6DC7 to be 1,
+and the original never writes 1 there (GAME.OVR: 0, 0x80, 0x81 only), so the report now counts it as dead.
+
+| where | what it needs |
+|---|---|
+| 0x9A10 → T, 0x9A17 → F, 0x9A21 → F | the encounter routine entered with 0x4A2A already 1 and the party carrying item 74 or not: one visit's order |
+| 0x9B4D → 0, 2; 0x9B5C → 0; 0xA77B → 0, 4, 5, 6 | the table rolls that pick which group of the temple's guards comes (RANDOM, then AND): not all came up |
+| 0x9E86 → T, 0xA25D → T, 0xAC54 → F, 0xB56F → T | other rolls (a search find, the parley sum against the party's size) |
+| 0xAA5E → T | 0x4A2D with bits 1-3 set and 0x4ABD clear (0x4ABD = 254, written in another area) |
+| 0xAC63 → T | a member whose 0x6BB8 (control) is under 128 at that check: an NPC-only party |
+| 0xADAD → 3, 0xAF95 / 0xAFA7 | the surprise roll 3 (both sides surprised) and its four reactions |
+| 0xAE14 → 2, 0xAEE6 → 0, 0xB025 → 1-3, 0xAFE7 | the encounter routine's menus when both sides are surprised (0xAFE7 only then) |
+| 0xAEFE → T, 0xAF90 → T | the same routine with 0x4A0E = 1 (the alarm): reached only in fights a job met with the alarm off |
+| 0xB64C → T | 0x4AA8 below 254 at the temple's end: the run's checkpoint has it at 254 |
+
+## 2:15, Mendor's library: done (chat 17)
+
+96% of instructions and 90% of reachable branch outcomes; every story-critical instruction has run (3 ways in or
+out, 7 set fights, 25 quest flags). The last flag (0xAE6E: the kobolds who plead for mercy tell what they know)
+came from chat 17's ADVANCE chain: ADVANCE from distance 2 and 1 are jobs of their own, so a job reaches distance 0
+and PARLAY.
+
+| where | what it needs |
+|---|---|
+| 0x9AC1 → T, 0xA3E7 → 3 | the surprise rolls 2 and 3 (the party surprised; both sides) |
+| 0x9E26 → 3 | the random book table's fourth entry (a roll) |
+| 0xA003, 0xA0B4, 0xA10E, 0xA281, 0xA320, 0xA3B2 → F | the books' flags 0x4AAA-0x4AAF at 255 (the book handed in, written in New Phlan's City Hall): another moment of the story |
+| 0xA0C2 → T | the books-found counter 0x4A30 at 5 or more |
+| 0xA439 ADVANCE, 0xA469 → 0, 3 | the snake's menu: it comes at the distance in 0x6DC0 (0 here: PARLAY shown), and outcomes 0 and 3 (it leaves; PARLAY) are rolls |
+| 0xA921 → T | a party of eight |
+| 0xABA6 → F | the illuminators' carrels with their table byte clear: the step script sets it on the way in (not worked out) |
+| 0xAD7F → 0, 2 | the kobolds' menu: they leave, or FLEE succeeds (a party faster than kobolds) |
+
+## 6:19, Diogenes's cave mouth: done (chat 17)
+
+93% of instructions and every reachable branch outcome; every story-critical instruction has run (2 ways in or
+out, 3 quest flags). It took a variant (`cover_6-19-bottle.plan`): the party pledged to Diogenes (0x4A87 bit 0, by
+shortcut, as a player who chose PLEDGE has it) and carrying the kobolds' silver bottle (item 82, by the new
+`shortcut item`). His thanks set 0x4A87 bit 1 and send the party out; chat 17's rule for areas that send every
+party out comes in again by the same way, and finds the cave empty (0x996E, the second way out). The report now
+works out 0x9927 → F as dead (0x4A87 AND 128 compared with 1). The instructions not run are the dead side's.
+
+## 7:22, Yarash's pyramid, outside: done (chat 17)
+
+96% of instructions and 95% of reachable branch outcomes; every story-critical instruction has run (4 ways in or
+out, 1 set fight, 10 quest flags). The rocks room (event 14) needed two chat 17 rules: a party that doesn't search
+the first time it comes is flashed away to 7:23 and the square is done after that, so each event square is now
+also come onto the first time with SEARCH on ("A STRANGE TINGLE", then GO BACK / MOVE ON / THROW A ROCK); and a
+choice is played again when the area's flags differ, so a second THROW A ROCK toggles 0x4A4D bit 0 back (0xA139).
+
+| where | what it needs |
+|---|---|
+| 0x9CB4 → T | 0x4A4B bit 7 set (written only by another area's script) |
+| 0x9D47 → 0 | the priest's menu (distance in 0x6DC0, 1) giving outcome 0: a reaction no choice gave in the runs' rolls |
+| 0xA1F9 → 3 | both sides surprised (a SURPRISE roll of 3) |
+| 0xA342 → 0 | the flying monsters' menu with its own variable 0x6E7B as the distance: outcome 0 needs their roll to come out 0 |
+| 0xA35A → T | that encounter's ADVANCE side met on a row under 8 (the encounter comes on rows 8 and up in the runs) |
 
 ## 6:28, the Zhentil outpost: done
 
@@ -199,25 +274,29 @@ back to the gate after forcing it (0xA085), having stolen from Lord Bane (0xA093
 the alarm off and the disguise on (0xA4AE).
 
 
-## What holds the rest back
+## What holds the rest back (chat 17)
 
-- **2:9 Stojanow Gate (67 / 65):** the bugbears push the party back from the wall on every approach
-  (TAKE THE PUNCH, the plan's answer), and the tower stairs move the party within map 9, so the tower rooms were
-  never an arrival. Chat 15's last change (a step into another part of the same map is a new arrival) is in
-  the code; 2:9 needs a run with it. The payment routine at 0x9956-0x9B66 needs other purses (coin mixes) and
-  members' status.
-- **6:1 Buccaneers' base (85 / 86, was 75 / 71):** chat 16 solved both of chat 15's puzzles. The captain's pass
-  (item 91) is sold by the seedy man (BUY PASS, then a treasure screen the bot used to leave, as the pass has no
-  price); the boy and the merchant (0x9F20, 0xA225) come to a party arriving at the slave pen facing it, which
-  our engine never saw (the wall-ahead bug). Left: set fights 14/15, quest flags 5/7.
-- **The bands (6:25 69 / 64, 7:26 89 / 78, 8:27 71 / 61):** chat 16's runs replay every choice ("all"); 6:25's
-  caves are a map the band loads behind "SMALL DARK CAVE" (a random site), and entering lands next to "LEAVE
-  CAVE / STAY IN"; a job that leaves the party in a part no walk has been in is now walked (in the code, not yet
-  seen to work). Chat 15's note: every square walked, every way out 100%; set fights 3/13, 1/7, 5/12: the
-  lizard men's village and similar sites are maps the band's script loads (now walked as maps, not yet run), and
-  several sites test the day and hour.
-- **3:0 New Phlan (85 / 75):** much better with the mid- and late-story variants and rerolls; the proclamations
-  and boats follow story counters (0x4AC1, 0x4AC4), the gambling wheel and pickpocket are rolls.
+- **2:9 Stojanow Gate (69 / 70):** the walk fights the gate's bugbears early, and that fight marks both towers
+  (0x4A77 |= 12, 0xA60E), so the tower rooms (the mage, the fighter: 0xA1D8, 0xA2F9) were always empty. The
+  `-towers` variant flees the bugbears instead; its first runs were overridden by the bot's no-surrender rule and
+  the rules file's own answer (both fixed). The payment routine (0x9956-0x9B66) needs other purses.
+- **The bands (6:25 72 / 66, 7:26 89 / 78, 8:27 84 / 72):** the caves and most sites are random rolls (about one
+  step in 20 rolls an encounter, 0xA0B3), so each run meets different ones; runs are merged. **A possible engine
+  difference:** the band caves' map (GEO6 block 25) has walls (values 1 and 2, solid in WALLDEF6 block 17) on
+  every side of the entrance squares but the way out, so in ours a party that answers STAY IN can't walk the
+  cave (the fights inside, 0xA594-0xAAB7, never come). To check in the original before changing anything.
+- **3:8 City Hall (81 / 82, quest flags 23/34):** the clerk's and the council's answers follow reports set in
+  other areas (Podol Plaza cleared 0x4AE7 = 254, the textile house 0x4AE6 = 254, Cadorna's seal 0x4AC8 = 128, the
+  Bivant rescue 0x4AA9 = 128). The `-story` variant sets them as those areas' scripts do.
+- **1:18 Podol Plaza (88 / 83):** the plaza's count 0x4A34 reaches 9 only after many fights (0xB248 then tells
+  City Hall); the robed orc's meeting (0xB0BE) waits for an hour. The `-count` variant and the 12-hour walk.
+- **4:10 Valhingen graveyard (88 / 79):** the paladin's wraith (0xA28C) comes only while 0x4AF4 is 9 or less, and
+  the walk's earlier fights count it past that; the `-fresh` variant walks to each event from the arrival. The
+  "over 249, set 249" writes (0xA616, 0xA814, 0xAB31, 0xB29C, 0xB2B2, 0xB2C8) are clamps on kill counters.
+- **6:1 (95 / 94):** the last flag, 0x993D (0x4AA9 = 254), is written when the party leaves the map
+  (0x6DD5) after buying the boy (0x4AA9 = 1).
+- **7:17 (90 / 87):** the kobold war's third stage (0xB121, the headman's DESTROY THE KOBOLDS) comes after two
+  fights in a row at the same square; walk states (chat 17) should reach it.
 
 ## 5:5 in chat 14 (for the record)
 
