@@ -17,7 +17,11 @@ Plan and decisions: ai-business-ideas `ideas/game-modernizer.md` (Methods 2 and 
 
 **Ignore list**
 - 0x4AFA-0x4AFF: the original writes them at save time from engine words (GAME.OVR 0x1FE9C / 0x1FEC2,
-  research/pool-of-radiance-formats.md); no script of any data set reads or writes them.
+  research/pool-of-radiance-formats.md); no script of any data set reads or writes them. Chat 22: they are the
+  three wall-set slots (the last LOAD_AREA_DECO's ids at 0x4AFA-0x4AFC, the slot numbers 1-3 after them), and the
+  original reads them back when it loads a save; ours now writes them (and the data set at 0x5012) in its
+  original-format saves, so a check whose start save ours made compares them too (check 6: 0 differences without
+  the ignore list).
 
 ## The first five events
 
@@ -42,12 +46,38 @@ run like checks 1, 2 and 4. The fifth follows a set fight and waits on the side 
 
 | # | area | event | flag (readers) | start save | fight? |
 |---|---|---|---|---|---|
-| 6 | 4:21 Sokal Keep | Ferran Martinez freed: the password SAMOSUD (0xAD42-0xADAA) | 0x4A26 = 255, 0x4AA7 = 254 (3:0, 3:8) | at the keep's ghost, parley (as the playthrough) | no |
-| 7 | 8:16 ruined castle | the castle cleared (0x9CBD-0x9CCF) | 0x4AB5 = 254 (3:8) | 0x4A5D = 40 (its count) | no |
-| 8 | 3:14 Kovel Mansion | the thieves cleared (0xB343-0xB361) | 0x4AB2 = 254 (3:8) | 0x4A45 = 21 (its count) | no |
-| 9 | 1:18 Podol Plaza | the plaza's report (0xB241-0xB24E) | 0x4AE7 = 254, 0x4A34 = 10 (3:8: check 1's reward) | 0x4A34 = 9, a plain square searched | no |
+| 6 | 4:21 Sokal Keep | Ferran Martinez freed: the password SAMOSUD (0xAD42-0xADAA) | 0x4A26 = 255, 0x4AA7 = 254 (3:0, 3:8) | at the keep's ghost, parley (as the playthrough) | no · **MATCH** (chat 22) |
+| 7 | 8:16 ruined castle | the castle cleared (0x9CBD-0x9CCF) | 0x4AB5 = 254 (3:8) | 0x4A5D = 40 (its count) | no · **MATCH** (chat 22, after a fix) |
+| 8 | 3:14 Kovel Mansion | the thieves cleared (0xB343-0xB361) | 0x4AB2 = 254 (3:8) | 0x4A45 = 21 (its count) | no · **MATCH** (chat 22) |
+| 9 | 1:18 Podol Plaza | the plaza's report (0xB241-0xB24E) | 0x4AE7 = 254, 0x4A34 = 10 (3:8: check 1's reward) | 0x4A34 = 9, a plain square searched | no · **MATCH** (chat 22) |
 | 10 | 7:23 Yarash's pyramid | Yarash beaten (0xAC23-0xAC53) | 0x4AB3 = 254 (3:0, 3:8, 7:26, 8:27) | before Yarash's fight | yes (side lane) |
 
 **Recommendation:** run 6-9 next (no fight, about an hour together in the lab), and ask the side lane for 10's fight with
 checks 3 and 5's. The other closed areas without a check (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20...) follow in the same
 way after these.
+
+## Checks 6-9 (chat 22)
+
+**Start saves made by ours.** Where the area's own init would move a party that jumps in by `mksave.py` (Sokal Keep puts
+every first arrival on the pier) and the way to the event crosses random patrols, ours writes the start save: load the
+`mksave.py` save, `at=x;y;dir` puts the party at the square, ENCAMP, SAVE. Both games then load that same file. Ours'
+original-format saves load in DOSBox since chat 22 (before, a save made after a change of data set stopped the original
+with "Unable to load geo in Load3DMap": ours kept the old data set at 0x5012 and the old wall sets at 0x4AFA-0x4AFC).
+Typing in a text prompt: the original takes the letters, ours' `--keys` needs `say=<word>` (replayed letter keys carry
+no text).
+
+| # | start save | keys, original | keys, ours | result |
+|---|---|---|---|---|
+| 6 | `mksave.py J G 4 21 9 10 W`; ours `--keys=load=G,Up,Enter,at=8;9;2,E,S,G,N,E` (save G at 8,9 S) | Up (8,10: A PALE FORM RISES), P, N (NICE), LUX, Enter, T (TELL THE TRUTH), Enter until the walking menu; save F | `load=G,Up,P,N,say=LUX,T,Enter,Enter,Enter,F2` | **MATCH**, 0 differences (with or without the ignore list); both 0x4A26 = 255, 0x4AA7 = 254. The word that frees Ferran is LUX (any other lays him to rest: 0x4A13 = 255) |
+| 7 | `mksave.py J G 8 16 8 14 S 4A5D=40` (the castle's init puts the party at 8,14 N) | Up (YOU SENSE AN ANTI-MAGIC SHELL), Enter, Right, Right, Up (8,15), Up (out onto the band, 8:27 26,0); save F | `load=G,Up,Enter,Right,Right,Up,Up,F2` | **MATCH** after a fix: first 0x49E5 differed (original 0, ours 1). The castle's init sets it (the anti-magic shell) and the original's area entry clears it every time (GAME.OVR 0x771B, the routine at 0x7689 that also sets 0x49E6); ours kept it. Fixed in `main.gd`; then 0 differences (with the ignore list; 0x4AFA-C are save-time values ours' quick save doesn't hold). Both 0x4AB5 = 254 |
+| 8 | `mksave.py J G 3 14 8 7 S 4A45=21` | Up (in at 8,7 S), Up (walled), Left, Up (9,7: a square with no event runs 0xB343); save F | `load=G,Up,Up,Left,Up,F2` | **MATCH**, 0 differences; both 0x4AB2 = 254 |
+| 9 | `mksave.py J G 1 18 8 4 W`; ours `--keys=load=G,Up,mem=4A34:9,E,S,G,N,E` (1:18's init zeroes 0x4A34 on a fresh arrival, so the count is set inside) | Up (7,4: a plain square, d25, then 0xB241); save F | `load=G,Up,F2` | **MATCH**, 0 differences without the ignore list; both 0x4AE7 = 254, 0x4A34 = 10 |
+
+Kept in the lab: `data/diff_<area>_start/` (each start save with its CHRDAT files; copy into `game/` to replay), `data/diff_<area>_orig/`
+and `data/diff_<area>_ours.cfg`. Lab save G is the scratch slot for start saves (check 1's G: remake it with its recipe).
+
+**Found by checks 6-9, outside the events themselves:** ours' original-format saves didn't load in DOSBox after a change of data
+set (the data set at 0x5012 and the wall sets at 0x4AFA-0x4AFC, written by the original only at save time; fixed); the
+anti-magic flag 0x49E5 survived leaving the ruined castle (fixed); the anti-magic shell itself is not modelled in ours (the
+original tests 0x49E5 at 0x9F59, 0xAFF6, 0x17BB2 and 0x21FD6; not yet read: on the board as a gap).
+

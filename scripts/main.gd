@@ -1315,7 +1315,20 @@ func _save_original(letter: String) -> bool:
 		return false
 	if not _vm.on_overland:
 		_sync_position_to_vm(_facing)
-	var ok := OriginalSave.write(_game_path, letter, _vm_file, _vm.mem, _vm.read_byte(EclVM.PARTY_X),
+	# The engine values the original writes into the image only at save time (GAME.OVR
+	# 0x1FE77-0x1FEFE) and reads back on load: the data set at 0x5012 (its GEO and WALLDEF
+	# files) and the three wall-set slots at 0x4AFA-0x4AFC with their numbers 1-3 at
+	# 0x4AFD-0x4AFF. Lab (chat 22): a save ours made in Sokal Keep after the Slums kept the
+	# Slums' 2 and 2, 4, 1 there, and the original stopped with "Unable to load geo in
+	# Load3DMap" (then "...wallset in LoadWallSet"); with 4 and 1, 5, 9 it loads and plays.
+	var mem := _vm.mem.duplicate()
+	mem[0x5012] = _vm_file
+	var walls: Array = _vm.area_deco if _vm.area_deco.size() == 3 else _deco
+	if walls.size() == 3:
+		for i in 3:
+			mem[0x4AFA + i] = int(walls[i]) & 255
+			mem[0x4AFD + i] = i + 1
+	var ok := OriginalSave.write(_game_path, letter, _vm_file, mem, _vm.read_byte(EclVM.PARTY_X),
 		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party)
 	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save()}):
 		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
@@ -2450,6 +2463,11 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# bands' scripts set it to 0 while the wilderness view is up and back to 1 at their sites; the
 	# encounter menu offers ADVANCE only while it is set (chat 18, EclVM._show_encounter_menu).
 	_vm.write_byte(EclVM.VIEW_3D, 1)
+	# The same routine (GAME.OVR 0x7689, no branch before 0x771B) clears 0x49E5 on every area
+	# entry: the anti-magic flag the ruined castle's init sets ("YOU SENSE AN ANTI-MAGIC SHELL",
+	# 8:16 0x9BEE; tested at 0x9F59, 0xAFF6, 0x17BB2, 0x21FD6). Differential check 7 (chat 22):
+	# ours kept it after leaving the castle.
+	_vm.write_byte(0x49E5, 0)
 	if arrive:
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)

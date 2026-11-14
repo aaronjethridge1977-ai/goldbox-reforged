@@ -731,6 +731,33 @@ func _hook() -> bool:
 					print("   >> %d (%s: asked too often)" % [k + 1, items[k]])
 					await main._press(str(k + 1))
 					return true
+		# Chat 22: a script's lock (Kovel Mansion's cabinets and caskets, 3:14): PICK first, then
+		# BREAK, then CAST KNOCK if anyone has it memorized, within the three tries the guard
+		# above allows before LEAVE (chat 21's full run picked with a fighter and gave up).
+		if said.contains("HOW WILL YOU OPEN THE LOCK") and "PICK" in items and "BREAK" in items:
+			var tries := int(_asked.get(ask, 1))
+			var pick := "PICK"
+			if tries == 2:
+				pick = "BREAK"
+			elif tries >= 3:
+				pick = "CAST KNOCK" if "CAST KNOCK" in items and _knock_member() >= 0 else "BREAK"
+			print("   >> %d (the lock, try %d: %s)" % [items.find(pick) + 1, tries, pick])
+			await main._press(str(items.find(pick) + 1))
+			return true
+		if said.contains("WHO WILL TRY TO PICK") and items.size() == main._party.size():
+			var t := ClassTables.shared(main._game_path)
+			var best := 0
+			for i in main._party.size():
+				var m: PartyMember = main._party[i]
+				if m.status == PartyMember.STATUS_OKAY and m.thief_skill(t, 1) > main._party[best].thief_skill(t, 1):
+					best = i
+			print("   >> %d (best at locks: %s %d%%)" % [best + 1, main._party[best].name, main._party[best].thief_skill(t, 1)])
+			await main._press(str(best + 1))
+			return true
+		if said.contains("WHO WILL CAST") and items.size() == main._party.size() and _knock_member() >= 0:
+			print("   >> %d (has Knock)" % (_knock_member() + 1))
+			await main._press(str(_knock_member() + 1))
+			return true
 		# Ladders and stairs to the area's other map: not while this map still has events to
 		# see (Kuto's Well: down the rungs, then 'CLIMB UP THE RUNGS?' at the bottom).
 		var planned: bool = Array(_answer_rules.get(_here(), [])).any(func(r): return said.contains(String(r[0])))
@@ -929,7 +956,10 @@ func _hook() -> bool:
 		print("   inn: %s | %s" % [" ".join(main._party.map(func(m): return "%d/%d" % [m.hp, m.hp_max])),
 			" ".join(main._party.map(func(m): return str(m.memorized)))])
 		return true
-	if _want == "temple" and main._temple.visible:
+	if main._temple.visible and (_want == "temple" or _temple_needed()):
+		# Chat 22: also a temple met on the way (the inn trips through New Phlan pass one):
+		# chat 21's full run took BRAM back into the caves dead with 3324 platinum in the purse,
+		# because only a plan's "temple" line ever raised anyone (and the plan has none).
 		_want = ""
 		_temple_cures()
 		await main._press("esc")
@@ -1047,6 +1077,7 @@ var _looted := false
 var _asked := {}      # script questions answered, by text and choices
 var _visited := {}    # "map:event" explored in this area's explore
 var _ladders := {}    # "map:event" ladders and stairs left for last
+var _way_up := {}     # "area map" -> [the square explore came down to, the map above] (chat 22)
 var _no_route := {}   # "map:event" explore found no way to
 var _todo_now := {}   # the current explore pass's list of events still to visit
 var _ladder_ok := false   # explore is going for a ladder on purpose
@@ -1601,6 +1632,12 @@ func _travel(goal: String) -> void:
 	# caves to town took about 30 teleports.
 	_bad_exits.clear()
 	main._menu_seen.clear()
+	# Chat 22: a new trip counts repeated questions afresh. The band's edge menus are passed
+	# (LEAVE) on many trips, and the count carried over, so on the trip that wanted 7:26
+	# 13,27's NORTH into 3:14 the guard answered LEAVE first (chat 21's teleport 7:26 -> 3:14).
+	if not was_travelling:
+		_asked.clear()
+	await _climb_to_exits()
 	await _travel_hops(goal)
 	_travelling = was_travelling
 	# M6: stuck short of the goal (no way found or every way failed): the smallest shortcut
@@ -1612,6 +1649,25 @@ func _travel(goal: String) -> void:
 		await _settle()
 		_shortcut("teleport", "%s -> %s%s" % [from, goal, "" if ok and _here() == goal else " FAILED"],
 			"travel found no way")
+
+
+## Chat 22: on an area's lower map (8:29's catacombs), back up the ladder or stairs explore came
+## down by, to the map the area's ways out are on; travel knows only that map's exits (chat 21's
+## full runs teleported 8:29 -> 3:0 when explore went to town to train from the catacombs).
+func _climb_to_exits() -> void:
+	for n in 3:
+		var key := "%s %d" % [_here(), main._map_index]
+		if not _way_up.has(key) or _wiped():
+			return
+		var up: Array = _way_up[key]
+		if main._map_index == int(up[1]):
+			return
+		print("   travel: up to map %d by %s first" % [int(up[1]), up[0]])
+		_todo_now = {}
+		_ladder_ok = true
+		await main._tour(up[0])
+		await _settle()
+		_ladder_ok = false
 
 
 ## The ways out of this area the party can walk to from where it stands.
@@ -1802,6 +1858,7 @@ func _explore_areas(later: Array) -> void:
 		if main._map_index != map_before:
 			if not arrivals.has(main._map_index):
 				arrivals[main._map_index] = main._pos
+				_way_up["%s %d" % [area, main._map_index]] = [main._pos, start_map]
 			continue     # a ladder or stair took the party to the area's other map: explore it
 		if _climbed and n < 11:
 			# Stairs that stay on the same map (Valjevo's towers, chat 13): what had no route
@@ -2610,6 +2667,25 @@ func _fund(i: int) -> void:
 			while o != m and o.money[coin] > 0 and m.wealth_copper() < 1000 * 200:
 				o.money[coin] -= 1
 				m.money[coin] += 1
+
+
+## The first member able to cast Knock (memorized), or -1.
+func _knock_member() -> int:
+	for i in main._party.size():
+		var m: PartyMember = main._party[i]
+		if m.status == PartyMember.STATUS_OKAY and SpellCaster.KNOCK in m.ready_spells():
+			return i
+	return -1
+
+
+## Whether anyone needs one of the temple's cures `_temple_cures` buys.
+func _temple_needed() -> bool:
+	var t: TempleScreen = main._temple
+	for m in main._party:
+		for cure_name in ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]:
+			if t._needs(m, t.cure_index(cure_name)):
+				return true
+	return false
 
 
 ## At an open temple: Raise Dead, Stone to Flesh and Cure Disease for whoever needs them,
