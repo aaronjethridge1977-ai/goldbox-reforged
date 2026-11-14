@@ -6,13 +6,34 @@ lane's own docs. Decisions are not made here: they live in ai-business-ideas `id
 
 ## Lanes
 
+Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk and the combat lane; work moves between lanes, files don't.
+
 | Lane | Chat | Runs where | Owns |
 |---|---|---|---|
-| Main (M6 coverage and differential checks) | chat 21 | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/dev/`, `tools/` coverage and report scripts, `tools/plans/`, `docs/coverage*.md`, `docs/cover-fights.md`; also `scripts/main.gd` and `scripts/ecl_vm.gd` (shared core: see CLAUDE.md) |
-| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 6 | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
-| Design office | discussion chats | claude.ai | no code; proposals and Jeremy's decisions |
+| Main (differential checks, the full run and bot, walking screen, engine gaps outside combat, saves) | Gold Box Chat 22 | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/main.gd`, `scripts/ecl_vm.gd` (shared core: see CLAUDE.md), `scripts/game/`, `scripts/formats/`, `scripts/dev/`, `project.godot`, `tools/` coverage, report and check scripts, `tools/plans/`, `docs/coverage-areas.md`, `docs/cover-fights.md`, `docs/diff-checks.md` |
+| Combat (combat fidelity, combat display, screens and UI) | Gold Box Combat Chat 1 | Cloud, its own lab (rebuild: side chat 6's steps in `tools/lab/README.md` / the chat-log) | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`, `stagefight.sh`), `docs/coverage.md` (the engine-feature scoreboard), `docs/combat-tests.md` |
+| Feedback desk (Jeremy's play notes; builds nothing) | Gold Box Feedback Desk 1 | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
+| Design office | Gold Box Methods N | claude.ai | no code; proposals and Jeremy's decisions (`ideas/game-modernizer.md`) |
 
 Files not listed: whoever needs them asks here first.
+
+## Queues
+
+Each building lane takes item 1 first and doesn't start Later items while 1-3 are open. Only the design office and the feedback desk add items; only Jeremy reorders. A lane ticks an item here (and its request below) when it lands.
+
+**Main**
+1. Jeremy's play-through fixes: CAST on the walking menu; full screen (built by side chat 6, fractional scaling: finish and own it); the automap's M ignores Alt+M; SEARCH shown as the original shows it; then saves lose the automap (companion file, decided).
+2. The fresh full run's bot causes (BRAM dead with platinum, travel from lower maps, the thief at locks, the 7:26 -> 3:14 teleport), with a new full run in the background.
+3. Differential checks 6-9 (approved); then 3, 5 and 10 when Combat posts their fights.
+
+Later: main-path gaps outside combat (Read Magic and SCRIBE first, poison, treasure limits, Raise Dead's CON, Detect Magic); number-prompt jobs (3:0), 6:1's state walk.
+
+**Combat**
+1. The kobold net-trap fight to the end (draw 8079 of 8905; kobold 23 one square off).
+2. Differential checks 3, 5 and 10's fights, roll for roll, with key lists and seeds in `docs/diff-checks.md`.
+3. Magic for QUICK characters: Alt-Q, Space and Alt-M at the combat menu (faithfulness); MAGIC on DONE's menu (mockup to Jeremy first).
+
+Later: P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
 
 ## Now
 
@@ -24,6 +45,7 @@ Files not listed: whoever needs them asks here first.
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · design → main · CLAUDE.md "Working as a team": lanes now main, combat (cloud), feedback desk (no code) and design office (Methods 3, see Lanes above); "the side lane" becomes "the combat lane"; add the Queues rule (take item 1, no Later items while 1-3 are open). Small, any time. · open
 - 2026-11-14 · design → main · **Saves lose the automap** (Jeremy, playing). Decided (Methods 3): a **companion file beside each save slot** for our additions; the original's SAVGAM/CHRDAT stay byte-for-byte the original's (still load in DOSBox). First the automap's visited squares; later the quest tracker and the like. No companion (a save made in the original, or old): load with an empty map that maps at once. Record which save the companion belongs to (e.g. a hash of the SAVGAM file) so a stale one is detected. Check quick saves (F2) keep the map too. Right after task 1's play-through fixes. · open
 - 2026-11-14 · design → main · **Jeremy, playing: SEARCH** shows SEARCHING only after pressing S and then moving; he took it for not working. Check in DOSBox when the original shows it (on the key or on the next step) and match it. With CAST, full screen and the automap's Alt+M (chat 22, task 1). · open
 - 2026-11-14 · design → main · **Chat 22's work (decided, Methods 3 17:12; ideas/game-modernizer.md):** (1) differential checks **6-9 approved** (docs/diff-checks.md); check 10's fight goes to the side lane with 3 and 5. (2) **Moved from the side lane to you** (you own `main.gd`): full screen (the request below marked MOVED: Alt+Enter / F11, remembered, SETTINGS item and its features.json entry, crisp scaling, show Jeremy the fractional and whole-number choices), CAST on the walking menu (match the original in DOSBox), and the automap's M ignoring Alt. These come first: Jeremy is playing now. (3) **Main-path gaps outside combat** (`docs/coverage.md` "Gaps a player meets on the main path"), after the full run's bot causes: **Read Magic and SCRIBE first** (Jeremy needs scrolls), then poison and Slow Poison outside fights, treasure load and item limits, Raise Dead's constitution loss, Detect Magic; each from the original's code and checked in the lab; update the scoreboard row (tell the side lane on the board: it owns the file). · open
