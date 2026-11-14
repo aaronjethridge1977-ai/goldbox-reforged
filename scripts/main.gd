@@ -496,7 +496,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 			continue
 		else:
 			var ev := InputEventKey.new()
-			var key_name: String = {"enter": "Enter", "esc": "Escape", "home": "Home", "end": "End",
+			var key_name: String = {"enter": "Enter", "esc": "Escape", "home": "Home", "end": "End", "pgup": "PageUp", "pgdn": "PageDown",
 				"up": "Up", "down": "Down", "left": "Left", "right": "Right"}.get(n, n.to_upper())
 			ev.keycode = OS.find_keycode_from_string(key_name)
 			ev.pressed = true
