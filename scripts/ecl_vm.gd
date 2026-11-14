@@ -529,11 +529,11 @@ func _hurt(m: PartyMember, damage: int) -> void:
 
 func _save_roll(m: PartyMember, bonus: int, kind: int) -> bool:
 	var need: int = m.saves[clampi(kind, 0, 4)] if m.saves.size() == 5 else 20
-	return _rng.randi_range(1, 20) + bonus + CombatSpells.racial_save_bonus(m, clampi(kind, 0, 4)) >= need
+	return _ri(1, 20) + bonus + CombatSpells.racial_save_bonus(m, clampi(kind, 0, 4)) >= need
 
 
 func _random_member() -> PartyMember:
-	return party[_rng.randi_range(0, party.size() - 1)] if not party.is_empty() else null
+	return party[_ri(0, party.size() - 1)] if not party.is_empty() else null
 
 
 func _damage(a: Array) -> void:
@@ -545,7 +545,7 @@ func _damage(a: Array) -> void:
 	var roll := func() -> int:
 		var t := plus
 		for i in count:
-			t += _rng.randi_range(1, maxi(size, 1))
+			t += _ri(1, maxi(size, 1))
 		return t
 	var damage: int = roll.call()
 	if flags & 0x80:
@@ -568,7 +568,7 @@ func _damage(a: Array) -> void:
 			var m := _random_member()
 			if m == null:
 				break
-			var d := _rng.randi_range(1, 20)
+			var d := _ri(1, 20)
 			if d > 1 and (d == 20 or d + extra > 60 - m.ac):
 				_hurt(m, damage)
 			damage = roll.call()
@@ -600,7 +600,7 @@ func _rob(a: Array) -> void:
 				chance = chance - 90 if chance > 90 else 0
 			elif it.weight > 24:
 				chance = chance - 50 if chance > 50 else 0
-			if _rng.randi_range(1, 100) > chance:
+			if _ri(1, 100) > chance:
 				kept.append(it)
 		m.items = kept
 
@@ -860,10 +860,10 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], r)
 			compare = 0 if r == 0 else 1
 		"RANDOM":
-			_write(a[1], _rng.randi_range(0, maxi(0, _value(a[0]))))
+			_write(a[1], _ri(0, maxi(0, _value(a[0]))))
 		"RANDOM0":
 			var top := _value(a[1])
-			_write(a[0], _rng.randi_range(0, top) if top > 0 else top)
+			_write(a[0], _ri(0, top) if top > 0 else top)
 		"WRITE_MEM":
 			if a[0].type == 0x80:
 				_write_string(a[1], a[0].value)
@@ -966,8 +966,8 @@ func _exec(ins: Dictionary) -> void:
 			# As the original: a d6 for each side against (d + 2 - a) and (b + 2 - c); the
 			# monsters' surprise wins when both come up (names from ssi-engine: the result
 			# is COMBAT_IS_AMBUSH; rules as documented by Pilgrim's reconstruction).
-			var party_roll := _rng.randi_range(1, 6)
-			var mon_roll := _rng.randi_range(1, 6)
+			var party_roll := _ri(1, 6)
+			var mon_roll := _ri(1, 6)
 			var result := 0
 			if party_roll <= _value(a[3]) + 2 - _value(a[0]):
 				result = 1
@@ -1201,3 +1201,8 @@ func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	_menu_at = _at
 	menu = items
 	state = State.MENU
+
+
+## The script's dice: Godot's generator, or the original's own in a lab comparison (TpDice).
+func _ri(lo: int, hi: int) -> int:
+	return TpDice.between(lo, hi, "ecl") if TpDice.on else _rng.randi_range(lo, hi)

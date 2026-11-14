@@ -100,7 +100,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 func roll(count: int, size: int, why: String) -> int:
 	var total := 0
 	for i in count:
-		total += rng.randi_range(1, size)
+		total += (TpDice.random(size, why) + 1) if TpDice.on else rng.randi_range(1, size)
 	roll_log.append("%s: %dd%d = %d" % [why, count, size, total])
 	return total
 
@@ -160,7 +160,7 @@ func start_round() -> void:
 			d -= 6
 		if d <= 0 or d > 20:
 			continue
-		delays[i] = d * 1000 + rng.randi_range(0, 999)   # ties at random
+		delays[i] = d * 1000 + (0 if TpDice.on else rng.randi_range(0, 999))   # ties at random (lab dice: none, to trace)
 	order.clear()
 	for i in delays.keys():
 		order.append(i)

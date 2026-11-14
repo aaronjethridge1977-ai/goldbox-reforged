@@ -402,6 +402,12 @@ func _replay_keys(names: PackedStringArray) -> void:
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue
+		elif n.begins_with("tpseed="):      # tpseed=<hex>: the original's own dice from that seed (TpDice)
+			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
+		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
+			for l in TpDice.log:
+				print("   ", l)
+			TpDice.log.clear()
 		elif n.begins_with("combatseed="):  # combatseed=<n>: event fights roll from seed n (lab)
 			CombatScreen.dev_seed = int(n.trim_prefix("combatseed="))
 			continue
