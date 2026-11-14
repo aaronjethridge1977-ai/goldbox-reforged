@@ -66,7 +66,8 @@ if ustart:
             for at in sorted(src):
                 if at < first:
                     for t in src[at]:
-                        k, xy = t.split(":"); dst.setdefault(int(k), []).append(xy)
+                        k, _, xy = t.partition(":")
+                        if k.isdigit(): dst.setdefault(int(k), []).append(xy)
     bad = []
     for k in range(len(ustart)):
         ours = [ustart[k]] + umoves.get(k, [])

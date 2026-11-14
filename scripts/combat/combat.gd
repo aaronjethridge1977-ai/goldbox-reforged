@@ -1256,12 +1256,15 @@ func can_see(a: Vector2i, b: Vector2i) -> bool:
 	return false
 
 
-## Is j within `reach` squares of i with a clear line (1 = adjacent)?
+## Is j within `reach` squares of i with a clear line (1 = adjacent)? As the original checks
+## a kept target (GAME.OVR 0xB88C-0xB8F8): from the two figures' own squares (their top-left
+## cells, 0x31321 / 0x31349), not their closest cells: a clear line (0x2FF74) whose length in
+## half-moves, halved, is at most the reach. (Lab, side chat 5: Brother Sean, beside a
+## basilisk's second cell, picked again with a d1 at 0xB951.)
 func _within(i: int, j: int, reach: int) -> bool:
-	if reach <= 1:
-		return touching(combatants[i], combatants[j])
-	var line := clear_line(combatants[i], combatants[j])
-	return line.y == 1 and line.x / 2 <= reach
+	var a: Vector2i = combatants[i].cell
+	var b: Vector2i = combatants[j].cell
+	return line_steps(a, b).y == 1 and line_steps(a, b, false).x / 2 <= maxi(reach, 1)
 
 
 ## Keeps the combatant's target if it still stands, else picks a new one (see above).
@@ -1654,6 +1657,12 @@ func ai_act() -> bool:
 		if c.tries > 20 or c.down:
 			guard(active)
 			return false
+		if c.moves > 0 and _enemy_of(c, c.get("target", -1)):
+			_act_powers(active)
+			if c.down:
+				return false
+			if c.moves <= 0 and c.attacks <= 0:
+				return false
 		var m: PartyMember = c.who
 		var shooting: bool = m.weapon_ranged and m.missile_ready
 		var reach: int = m.missile_range if shooting else 1
@@ -1875,8 +1884,8 @@ func stone(j: int) -> void:
 	_went_down(j)
 
 
-## At the start of a computer-run turn (category 14): gazes and the ankheg's spit, aimed
-## at the figure it last went for.
+## At the start of a computer-run turn: a mantis's grip and a stirge's drinking (the gazes,
+## spit and breath are _act_powers, before each step or blow).
 func _turn_start_powers(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
@@ -1911,6 +1920,15 @@ func _turn_start_powers(i: int) -> void:
 			c.attacks = 0
 			c["drank"] = true
 			return
+
+
+## Category 14 (GAME.OVR 0xB6FC calls it first, each time the computer's turn loop has found
+## a target and has movement left, so before every step or blow): gazes, the ankheg's spit
+## and Tyranthraxus's breath, at the figure it goes for. (Lab, side chat 5: a basilisk's
+## first turn picked its target, then gazed; the save came before anything else.)
+func _act_powers(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	var m: PartyMember = c.who
 	var j: int = c.get("target", -1)
 	if j < 0 or j >= combatants.size() or combatants[j].down:
 		return

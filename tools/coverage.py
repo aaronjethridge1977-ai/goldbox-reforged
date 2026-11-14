@@ -113,7 +113,7 @@ POWERS = {
     0x4D: ("built", "giant mantis: 'IS HELD FAST' (STR under 19), then 3d4 each turn; the victim's own restriction (0x3A) not traced"),
     0x4F: ("built", "2d10 fire on a hit"), 0x50: ("built", "1d4 acid on a bite"),
     0x51: ("checked", "fear aura by level"), 0x52: ("built", "mummy fear"),
-    0x53: ("built", "stoning gaze"), 0x54: ("built", "charming gaze"),
+    0x53: ("checked", "stoning gaze, before each step or blow (0xB6FC); roll for roll (basilisk, regress.sh)"), 0x54: ("built", "charming gaze"),
     0x55: ("checked", "drains a level"), 0x56: ("checked", "drains two levels"),
     0x57: ("built", "mummy rot"), 0x58: ("checked", "lightning breath"),
     0x59: ("built", "the first attack against it misses (also the Cloak of Displacement's)"),

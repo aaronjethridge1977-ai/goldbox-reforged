@@ -223,7 +223,7 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | 0x50 | AHNKHEG | built | 1d4 acid on a bite |
 | 0x51 | TYRANITHRAXUS | checked | fear aura by level |
 | 0x52 | MUMMY | built | mummy fear |
-| 0x53 | BASILISK, MEDUSA | built | stoning gaze |
+| 0x53 | BASILISK, MEDUSA | checked | stoning gaze, before each step or blow (0xB6FC); roll for roll (basilisk, regress.sh) |
 | 0x54 | VAMPIRE | built | charming gaze |
 | 0x55 | WIGHT, WRAITH | checked | drains a level |
 | 0x56 | FERRAN MARTINEZ, SPECTRE, VAMPIRE | checked | drains two levels |

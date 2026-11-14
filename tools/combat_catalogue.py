@@ -29,6 +29,8 @@ from coverage import POWERS, spell_table  # noqa: E402
 # "file:id" -> (state, note). States: compared (a scenario matched the original in the lab),
 # differs (a scenario found a difference: the note says which, and the bug), partial.
 COMPARED = {
+    "2:4": ("compared", "the Slums orc fights (lab saves E and H): roll for roll in regress.sh, QUICK with and without magic: 10 of 12 to the treasure (the other 2: Phineas's first step from 31,14)"),
+    "2:26": ("compared", "Mendor's library 5,4 (lab save I, regress.sh orig_I_basilisk): roll for roll to the end, Brother Sean stoned; fixed on the way: the gaze before each step or blow (0xB6FC), a kept target in reach from the figures' own squares (0xB88C)"),
     "7:41": ("partial", "as allies in the last camp battle (lab save D, 2026-11-12): side and starting place beside the party match the original"),
     "7:42": ("partial", "as 7:41"),
     "7:123": ("differs", "last camp battle at 1,14 W, 53 kobolds (lab save D): the original starts them around the party, next to it; ours places them all 2 squares west (5-16 vs the party's 26-31). Placement of a big group near a map edge: to trace. Ours: SPRITE_START max 2, the sides west of 1,14 and 0,14 open (off-map on the party's row counts as open), so distance 2; the original's start looks like distance 0, so its rule for this fight differs (not yet found in GAME.OVR)"),

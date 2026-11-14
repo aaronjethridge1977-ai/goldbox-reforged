@@ -8,12 +8,14 @@
 # HP and status. Ours gets the same keys in --keys.
 # Since 2026-11-14 the trace loses no draws, so the original runs at full speed (SLOW=1:
 # por_slow.conf, 1500 cycles, as before) and ours with --fast: a fight takes about a minute.
+# KW=<seconds>: the wait after each key before the seed (default 3; longer where texts print first).
+# A wait=<s> token in the keys waits in the original only (ours leaves it out).
 cd "$(dirname "$0")"
 L=$1; SEED=$2; PRE=$3; POST=$4; WHAT=${5:-both}; SEED2=$6; POST2=$7
 NAMES="THRENDER GRONE,BAKSHI,RHIANNON,BROTHER SEAN,DARKSTAR,PHINEAS"
 if [ $WHAT != ours ]; then
   pkill -f presser.py; pkill -f "trace.py run"; pkill -f dosbox; sleep 1
-  CONF=$([ -n "$SLOW" ] && echo por_slow.conf || echo por.conf) ./orig.sh wait=15 enter wait=6 l wait=4 ${L,,} wait=10 $(echo $PRE | tr ',' ' ' | sed 's/\([a-z0-9]*\)/\1 wait=3/g') >/dev/null
+  CONF=$([ -n "$SLOW" ] && echo por_slow.conf || echo por.conf) ./orig.sh wait=15 enter wait=6 l wait=4 ${L,,} wait=10 $(echo $PRE | tr ',' ' ' | sed "s/\([a-z0-9]*\)/\1 wait=${KW:-3}/g") >/dev/null
   python3 trace.py install >/dev/null && python3 seed.py set $SEED >/dev/null
   if [ -n "$SEED2" ]; then
     for k in $(echo $POST | tr ',' ' '); do ./orig.sh $k wait=4 >/dev/null; done
@@ -29,6 +31,8 @@ if [ $WHAT != ours ]; then
   (IFS=,; python3 partyrec.py $NAMES) >> /tmp/cmp_orig.txt
 fi
 if [ $WHAT != orig ]; then
+  # wait=<s> tokens are for the original only (texts that print slowly there)
+  PRE=$(echo "$PRE" | sed 's/wait=[0-9.]*,\?//g; s/,$//'); POST=$(echo "$POST" | sed 's/wait=[0-9.]*,\?//g; s/,$//')
   K="load=$L"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
   [ -n "$SEED2" ] && K="$K,tpseed=$SEED2${POST2:+,$POST2}"
   GTIME=300 ./ours.sh --save=$PWD/qs.cfg --fast "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,wait,wait,wait,wait,wait,wait,tplog,partyhp" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /tmp/cmp_ours.txt
