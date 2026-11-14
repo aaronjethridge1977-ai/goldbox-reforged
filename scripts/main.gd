@@ -95,6 +95,7 @@ var _automap: Automap               # QoL: mini-map (M) and full map (F) of visi
 
 
 func _ready() -> void:
+	DisplayMode.apply(get_tree())          # full screen if chosen (side lane, scripts/ui/display_mode.gd)
 	_goto = LineEdit.new()
 	_goto.placeholder_text = "x y facing (e.g. 12 6 S), Enter to go, Esc to cancel"
 	_goto.visible = false
@@ -829,6 +830,12 @@ func _state_line() -> String:
 		place = "wild " + _overland_place()
 	return "%s %s ecl%d:%d vm=%d | %s | %s" % [place,
 		screen, _vm_file, _vm_block, _vm.state, " ".join(effects), text.replace("\n", " / ").left(160)]
+
+
+## Alt+Enter / F11 switch full screen on any screen (side lane, DisplayMode).
+func _input(event: InputEvent) -> void:
+	if DisplayMode.handle_key(get_tree(), event):
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -388,6 +388,16 @@ func _pick(item: String) -> void:
 
 # ---------------------------------------------------------------- SETTINGS and FEATURES (P21)
 
+func _enter_tree() -> void:
+	add_to_group("display_mode")
+
+
+## Alt+Enter / F11 while SETTINGS is up: show the new FULL SCREEN value.
+func display_mode_changed() -> void:
+	if visible and _stage == "settings":
+		_draw()
+
+
 ## A SETTINGS item's value as the index into its "values" in content/features.json.
 static func setting_value(id: String) -> int:
 	match id:
@@ -397,6 +407,7 @@ static func setting_value(id: String) -> int:
 		"bandages": return int(Combat.quick_bandages_on())
 		"tactics": return int(SmartQuick.on())
 		"monsters": return int(SmartQuick.monsters_on())
+		"fullscreen": return int(DisplayMode.load_on())
 	return 0
 
 
@@ -409,6 +420,7 @@ static func change_setting(id: String) -> void:
 		"bandages": Combat.save_quick_bandages(not Combat.quick_bandages_on())
 		"tactics": SmartQuick.save(not SmartQuick.on())
 		"monsters": SmartQuick.save_monsters(not SmartQuick.monsters_on())
+		"fullscreen": DisplayMode.toggle(Engine.get_main_loop() as SceneTree)
 
 
 func _about_index(item: String) -> int:
