@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+# ndisasm stand-in (lab only): "ndisasm -b16 -o <start> <file>" via objdump, ndisasm's line format.
+import subprocess, sys, re
+a = sys.argv[1:]; start = int(a[a.index("-o") + 1]); f = a[-1]
+out = subprocess.run(["objdump", "-D", "-b", "binary", "-m", "i8086", "-M", "intel",
+    "--adjust-vma=%d" % start, f], capture_output=True, text=True).stdout
+for l in out.splitlines():
+    m = re.match(r"\s*([0-9a-f]+):\t([0-9a-f ]+)\t(.*)$", l)
+    if not m: continue
+    ins = re.sub(r"\s+", " ", m.group(3)).strip()
+    ins = ins.replace("WORD PTR ", "word ").replace("BYTE PTR ", "byte ").replace("DWORD PTR ", "dword ")
+    ins = re.sub(r"^lcall ", "call ", ins); ins = re.sub(r"^(call|jmp) (0x[0-9a-f]+),(0x[0-9a-f]+)", r"\1 \2:\3", ins)
+    print("%08X  %-18s%s" % (int(m.group(1), 16), m.group(2).replace(" ", "").upper(), ins))

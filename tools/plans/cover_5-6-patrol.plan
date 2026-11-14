@@ -1,0 +1,21 @@
+# Chat 21: 5:6's patrol meeting a disguised party (0xA9B5/0xA92D -> 0xAA31: 'WHAT ARE YOU DOING HERE?', the
+# password HARASH, the authority TYRANTHRAXUS, 0xAA49-0xAB7F). Patrols come only while the alarm rings: a die on a step
+# outside the buildings (0x9B99 GOSUB 0x9A18: no patrol unless 0x4A64 >= 1; then 0x9BD7) and a rest's interruption
+# (the rest handler 0x9C1F sets the chance only with the alarm on; 0x990C -> 0xA8D1). In 5:6 itself the alarm starts
+# only after a fight (0xA88B), and the next instruction takes the disguise off (0xA88F), so a disguised patrol here
+# needs the alarm raised elsewhere: 0x4A64 is shared by 5:3-5:6, and 5:4's armed man (0x9F45) or its STAY AND FIGHT
+# (0xA123) ring it without touching the disguise. The state: disguised (as 5:6's woman leaves it, 0x99BC), the shrines
+# untouched, the alarm ringing (0x4A62 = 23, 0x4A64 = 24, 0x4A63 = 255: 0x9A18 finds it ringing at any hour). The walk
+# goes only to the washerwomen (event 1); its first open step's die job brings the patrol with the disguise on.
+rules playthrough.plan
+start chat13a_latest/valjevo5
+travel 5:6
+expect 5:6
+shortcut flag 4A6A and 252 nothing taken from 5:6's temple
+shortcut flag 4A65 or 1 the disguise from 5:6's woman, as a player who says YES wears it
+shortcut flag 4A62 set 23 the alarm's hour, as 5:4's 0x9F45 / 0xA123 ring it (0x99F6)
+shortcut flag 4A63 set 255 the alarm's day: still ringing (0x9A45)
+shortcut flag 4A64 set 24 the alarm on (0x9A04)
+cover 5:6 20 all only=1
+status
+stop

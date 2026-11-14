@@ -1,0 +1,16 @@
+# Chat 21: 8:13's prison walk after SURRENDER at the king's throne (0xB1DC-0xB278) brings Princess Fatima and her fight
+# (0xB287-0xB31E: NPC_ADD, COMBAT at 0xB2DE, the quest flag 0x4AD4 = 1 at 0xB31E) only while 0x4AD4 is still 0. Every
+# walk met her in her cell first (0xA856-0xA8DD set 0x4AD4 = 1), so their SURRENDER jobs went past her. Here the walk
+# goes only to the throne room (event 9 at 4-6,3, 0x9FFE) from the checkpoint (0x4AD4 = 0, the war not started),
+# placed at 5,4 just south of it: a first try from the arrival walked past her cell (event 14 at 1,3, a side room off
+# the passage west of the throne, which a player need not enter). The throne fights' flee jobs bring SURRENDER OR
+# DIE, and the SURRENDER jobs (fleeing the same fight, chat 21's bot) the prison walk.
+rules playthrough.plan
+expect_level 8:13 6
+start chat10a_latest/band3
+travel 8:13
+expect 8:13
+shortcut teleport 8:13 5,4 N just south of the throne room, Fatima's cell (1,3) not entered
+cover 8:13 20 all only=9
+status
+stop

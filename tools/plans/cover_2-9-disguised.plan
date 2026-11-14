@@ -1,0 +1,13 @@
+# Chat 21: 2:9 with the party in disguise (0x4A65 bit 0, set only by 5:6 0x99BC, the Valjevo temple's robes).
+# The giants' patrol (0x9DB4, a random step encounter and the rest interruption) asks a disguised party
+# "WHAT ARE YOU DOING HERE?" (0x9E73), then the password HARASH or, on an alert, the authority TYRANTHRAXUS
+# (0x9EF8-0x9FAB); any fight clears the disguise (0xA02C). A player can leave Valjevo disguised and come back to
+# the city; no walk had. Set by shortcut: 0x4A65 = 1 on the chat 13 checkpoint (the gate unfought).
+rules playthrough.plan
+start chat13a_latest/graveyard
+shortcut flag 4A65 or 1 disguised, as 5:6 0x99BC leaves the party
+travel 2:9
+expect 2:9
+cover 2:9 30 all
+status
+stop

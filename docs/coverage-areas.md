@@ -9,7 +9,7 @@ them for the combat suite), and each set fight is also replayed once with the pa
 not yet taken is played for real from a snapshot of the step that led to it, and a choice that switches the
 area's flags opens a state that is walked again. Variant runs replay every choice (`-all`), walk each event
 from the arrival (`-fresh`), start from other checkpoints or set a flag a player can have (logged shortcuts).
-See `tools/lab/README.md`, "Chat 14 additions" and "Chat 15 additions".
+See `tools/lab/HISTORY.md`, "Chat 14 additions" and "Chat 15 additions".
 
 **Done** means 90% of reachable instructions, 85% of reachable branch outcomes, 100% of the story-critical
 instructions (ways in and out, set fights, quest flags 0x4A20-0x4AFF), and every path left listed with its
@@ -18,42 +18,9 @@ encounter outcomes that no choice can give (also when other instructions or a su
 menu's variable alone sit between the menu and its ON_GOTO), ADVANCE where the monsters stand at distance 0,
 and tests of flag bits that no script ever sets.
 
-Chat 16 changed the method in four ways (`tools/lab/README.md`, "Chat 16 additions"): runs are about 30 times
-faster (headless Godot slept 6.9 ms a frame); every square of every event is visited, from every open side, and
-LOOK is used facing each way; each part is saved and loaded once (the "game loaded here" branches); flee jobs
-flee their own fight, and fights a rest brings get theirs. The report also works out the values each flag byte
-can hold (0x4A00-0x4A1F per visit), so tests no value can pass are dead. Two engine bugs came out of it, both
-checked against the original: the wall ahead (0xC04E) after a step, and the per-visit flags on loading a save.
+How the method changed chat by chat (chats 16-18): [tools/lab/HISTORY.md](../tools/lab/HISTORY.md), "Coverage method by chat".
 
-Chat 17 ("Chat 17 additions" in the README) made runs about 6 times faster again (no drawing in lab runs; the
-bot's quiet window counted in game time) and resumable after the workspace's restarts, so every area could be
-rerun twice with the method below. New in the walks: each event square is also come onto the first time with
-SEARCH on; encounter and PARLAY choices are replayed with the dice rerolled; ADVANCE from each distance is a job,
-so jobs reach PARLAY; a choice is replayed when the area's flags differ; a job takes one more step its way after
-its menu; fights with allies get an "ally attacked" job; areas that read the hour are walked again 12 hours on;
-the walk's own flag changes open states; an area that sends every party out is come into again after a flag
-change. The report learned the values the game itself writes (0x6DC7, the fight's result, is only ever 0, 0x80 or
-0x81 in GAME.OVR), AND-mask tests and COMPARE_AND pairs that never match, and leaves an instruction only a dead
-IF reaches out of the critical counts. Variants (logged shortcuts, each a state a player can have): 6:19 pledged
-and carrying the silver bottle, 6:1 with the captain's pass, 4:10 with the bottle, 2:9 fleeing the gate's
-bugbears, 1:18 with the plaza's count at 9, 3:8 with the reports City Hall answers. One engine difference came
-out and was fixed after a check in the original: ATTACK ALLY: YES NO.
-
-Chat 18 reviewed the method first (README, "Chat 18 additions"). States: chat 17 walked six, in the order they were
-opened, and nearly every run opened 12-18, so quest-flag states were dropped; now up to 16, quest flags and new parts
-first, and quest items open states too. WHO menus get a job per member (4:2's Restal needs the thief). Dice jobs
-replay a small RANDOM's other values (6:25's four cave entrances). The squares an area's own script moves the party to
-are arrivals for parts no way in reaches. State walks are light (a square that adds nothing on arrival gets no more
-tries) and every run logs its dice seed. Then the method decided on 2026-11-14 (ideas/game-modernizer.md): directed
-coverage, semi-automatic (`CHAIN=1 ./missctx.sh <area>`: the chain of tests to each missed branch with each byte's
-writers, `writers.py`), hand-built variants, a reference-area check after any bot change (3:11 and 5:5 must not drop),
-time-boxed areas. The report's dead rules were audited: GAME.OVR writes the flag bytes only at the per-visit zeroing,
-the save's 0x4AFA-0x4AFF and the code wheel's 0x4AFF; the encounter menu's handler (0x2C46) matches ours, and six
-outcomes were watched in DOSBox; a `DEAD BUT TAKEN` check caught one wrong rule (indexed writes), fixed. Engine fixes
-from the original: 0x6DC8 is the number of monsters a fight put down (4:10's kill counters had never grown), ADVANCE
-only while 0x49E6 is set. The ECL16.DAX error in the logs was the bot's travel graph, fixed.
-
-## Where each area stands (chat 19, all runs merged)
+## Where each area stands (chat 21, all runs merged)
 
 Played percentages; chat 18's in brackets. Critical = ways in/out · set fights · quest flags. **Done** = meets the
 numbers and the critical count, every remaining path listed below with its reason.
@@ -84,17 +51,18 @@ numbers and the critical count, every remaining path listed below with its reaso
 | 4:10 Valhingen graveyard | 93 (92) | 87 (84) | 2/2 · 18/18 · 48/48 | done (chat 19) |
 | 3:14 Kovel Mansion | 92 (92) | 88 (88) | 5/5 · 14/14 · 21/21 | done |
 | 3:0 New Phlan | 92 (90) | 86 (82) | 12/12 · 8/8 · 9/9 | done (chat 19) |
-| 2:20 Slums | 91 (89) | 83 (79) | 4/4 · 20/20 · 21/21 |  |
-| 5:6 Valjevo, temple side | 88 (88) | 84 (84) | 3/3 · 6/6 · 21/21 |  |
-| 8:13 kobold caves | 87 (86) | 86 (85) | 3/3 · 14/15 · 17/19 |  |
-| 2:9 Stojanow Gate | 83 (75) | 79 (75) | 4/4 · 6/7 · 22/24 |  |
+| 2:20 Slums | 95 (91) | 89 (83) | 4/4 · 20/20 · 21/21 | done (chat 21) |
+| 5:6 Valjevo, temple side | 96 (88) | 91 (84) | 3/3 · 6/6 · 21/21 | done (chat 21) |
+| 8:13 kobold caves | 97 (87) | 95 (86) | 3/3 · 15/15 · 19/19 | done (chat 21) |
+| 2:9 Stojanow Gate | 91 (83) | 87 (79) | 4/4 · 7/7 · 24/24 | done (chat 21) |
 | 6:25 wilderness band, west | 92 (81) | 92 (82) | 11/11 · 13/13 · 5/5 | done |
 
-Overall, all runs merged: played 91% → **93%** of instructions and 87% → **89%** of branches; with the choices not
-taken tried in the shadow copy as well, 94% and 91%.
+Overall, all runs merged: played 91% → 93% (chat 19) → 94% (chat 20) → **95%** (chat 21) of instructions and 87% → 89% →
+90% → **91%** of branches; with the choices not taken tried in the shadow copy as well, 95% and 92%. Chat 21's four rows
+show chat 20's figures in brackets.
 
 **Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, 1:24, 2:15, 6:19, 7:22, 3:14, 4:2, 7:17, 1:18, and in chat 19 6:1, 3:0,
-5:7, 4:10, 5:3, 3:8, 7:26, 8:27, and in chat 20 7:23, 6:25 (25 of 29).
+5:7, 4:10, 5:3, 3:8, 7:26, 8:27, and in chat 20 7:23, 6:25, and in chat 21 2:9, 2:20, 5:6, 8:13: **all 29 areas done**, M6 coverage closed.
 
 ## 1:24, the Temple of Bane quarter: done (chat 17)
 
@@ -540,24 +508,89 @@ Each table is mkreasons.py's first draft from `missctx.sh`, checked for the crit
   in DOSBox: a step west from (0,2) arrives at (15,2): **the original's maps wrap** when the on-move script doesn't
   turn an edge step into a move elsewhere (in the cave it exits at once, 0x4A9E = 255). Ours stopped at the edge;
   fixed in main.gd (board, Rule changes). The run after the fix (`runcover.sh 6-25 _c20-wrap`) reached all 13 set fights.
-- **2:9 Stojanow Gate (83 / 79, 6/7, 22/24):** `cover_2-9-climb` reaches the tower rooms: they are closed boxes on the
-  map, entered by the stairs at (4,5)/(11,5) facing south (0x9CB7, 0xA16A), and manned only until the gate's
-  bugbears are beaten (0xA60E sets both tower bits), which every earlier walk did first. `cover_2-9-warned`: the
-  third warning (0xA8A2). Left: the bugbears behind the gate (0xAD1F-0xAD9D), an encounter menu whose reactions are
-  all constants, behind the towers' state.
-- **2:20 Slums (91 / 83):** `cover_2-20-fortune50`/`-fortune100` (the fortune teller's readings by 0x4A80, the patrol
-  fights won) and `cover_2-20-killed` (her killed: stronger patrols). Left: the patrols' parley sums (0xB2FE-0xB4A1)
-  and the plain jobs whose replay went another way. **Explained (chat 20):** a job's path replays a die (0x9B8A, the
-  patrol's kind) with the value the walk rolled, but the walk had drawn it from the dice generator and the replay didn't,
-  so every roll after it shifted by one: the patrol's SURPRISE came out otherwise and the job met 0x9CC5 or 0x9DDE
-  instead of its recorded menu. The replay now draws and drops one value there (bot.gd `_cover_dice`). Same seed
-  (`cover_2-20-c20seed.plan`): 41 plain divergences before, 8 after. The 8 left are dice jobs at 0xB225/0xB22B, after
-  the patrol fight: the job's fight is won by shortcut and its next answer never comes (not chased yet).
-- **5:6 temple side (88 / 84):** the disguised patrols (0xAA49-0xAB53) need the disguise (0x4A65 bit 0) still on
-  when a patrol comes; any fight clears it (0xA883-0xA88F), so do the washerwomen's TIE/KILL answers (0x9EA9) and any
-  move once a shrine is robbed (0x9B47). `cover_5-6-disguised` met only undisguised patrols.
-- **8:13 kobold caves (87 / 86, 14/15, 17/19):** the kobold war's stage machine (0x4A8D) and a fight that ends not won
-  (0xA1E0: B2DE's fight and 0xB31E); `cover_8-13-full` changed nothing.
+- 2:9, 2:20, 5:6 and 8:13: done in chat 21, see below.
+
+## Chat 21's areas: what is left and why
+
+Chat 21 closed the last four. Two of them came down to bugs rather than the walk: **our LOAD_CHAR** (GAME.OVR 0x1026 walks
+n figures down the list and, past its end, leaves the character window where it was; ours had "no one", so the parley bonus
+0x6DCF read 0 from then on: every 2:20 parley, 259 of them, angered the patrol) and **the bot's flee jobs** (a job queued
+inside a flee job, 8:13's SURRENDER after the fled fight, replayed without the flee and never met its menu; such jobs now
+flee the same fight).
+
+### 2:9, Stojanow Gate: done (chat 21)
+
+91% / 87%, critical 4/4 · 7/7 · 24/24. Two directed variants and a keyed replay: `cover_2-9-inside` (event 8 at 7,7 / 8,7:
+the bugbears waiting inside the gate, 0xAD0E-0xADA6, need both tower bits, 0x4A77 bits 4 and 8, and bit 16 clear: a party
+that paid the toll and beat both tower rooms without fighting at the gate; set as 0x4A77 = 108), `cover_2-9-disguised` (the
+giants' patrol meeting a party in 5:6's disguise, 0x9E73-0x9FAB), and `tools/lab/hand_2-9-toll.sh` (the toll's payment
+routine 0x9956-0x9B66 with the first member penniless and with no one able to pay: the checkpoint parties are rich; lab save
+H from J, coverage merged from `data/cov_2-9_hand.json`).
+
+| where | what it needs |
+|---|---|
+| 0x9A33-0x9A9B, 0x9B2E → F | the payment routine's coin loops for other mixes of coins (copper, electrum, silver) |
+| 0x9B40 → T, 0x9B4B → T, 0x9B56 → T | 0x6C00 = 0 (never, in the original: LOAD_CHAR keeps the last member, GAME.OVR 0x7DC9 reads 1 or 0x80), a member not well, an NPC |
+| 0x9E24 ADVANCE, 0x9E73 ADVANCE, 0xA558, 0xB0CC ADVANCE | ADVANCE where the monsters stand at distance 0 or 1 in those rolls |
+| 0x9E5D → 2, 0x9EBA → 2, 0xAD64 → 2, 0xB100 → 2 | the reaction (FLEE) no choice gave in the runs' rolls |
+| 0x9EEC → 0, 1; 0x9F80 | the disguised patrol's parley answers other than MEEK, then the alert's TYRANTHRAXUS |
+| 0xA03B → T, 0xA060 → T | the disguised patrol's fight fled; facing west at that moment |
+| 0xA476 → 1, 2 | a counter at other values |
+| 0xA701 → F | 0x4AB9 already 254 (the gate taken) when it is taken again |
+| 0xABF1 → T | the warnings' roll (RANDOM 9) at or under the count |
+| 0xAD1F PARLAY | the bugbears inside the gate at distance 0 |
+
+### 2:20, the Slums: done (chat 21)
+
+95% / 89%, critical 4/4 · 20/20 · 21/21. The patrols' parley sums (0xB2DE-0xB65B: PARLAY + 1d30 + 0x6DCF against 75, 85,
+95) came out once LOAD_CHAR was fixed: 53 parleys on the same seed (`cover_2-20-c20seed.plan`), 29 "GIVE US SUMPTIN", 16 "LEAVE
+NOW", 8 angered. The 8 plain jobs chat 20 left at 0xB225/0xB22B: none diverged this run (126 reroll jobs did, by design: new
+dice).
+
+| where | what it needs |
+|---|---|
+| 0x99BA → T | 0x9800 over 20 |
+| 0x9B30 → T, 0x9C7A → T | the step's AND roll; both sides surprised (0x6DCB = 3) |
+| 0x9D1D, 0x9D46 | the "YOU BUMP INTO SOME" encounter (another patrol roll) |
+| 0xADEE → T, 0xAE2C → T, 0xAF79 → F | 0x4A0B = 255, 0x4A1D set, 0x4A81 under 255 at those checks |
+| 0xB129 → F, 0xB168 → T, 0xB29C → F | a patrol fight not won; patrol sizes under 8 at those checks |
+| 0xB4A1-0xB4B8 | RUN after "GIVE US SUMPTIN" with the party's movement against the patrol's (PARTY_CHECK) |
+| 0xB4C7 → T, 0xB5E4, 0xB5FE | a sum over 95 (PARLAY's best + a high die): "LET ME GIVE YOU A PIECE OF ADVICE", LET THEM GO / STOP THEM |
+
+### 5:6, Valjevo's temple side: done (chat 21)
+
+96% / 91%, critical 3/3 · 6/6 · 21/21. The disguised patrols: patrols come only while the alarm rings (0x9B99 → 0x9A18: no step
+patrol unless 0x4A64 ≥ 1; a rest is interrupted only then, 0x9C1F), and in 5:6 the alarm starts only after a fight (0xA88B)
+whose next instruction takes the disguise off (0xA88F); the washerwomen's LEAVE does too (0x9E99 → 0xA87D). The alarm byte is
+shared with 5:3-5:5, where 5:4's armed man (0x9F45) and STAY AND FIGHT (0xA123) ring it without touching the disguise.
+`cover_5-6-patrol` (disguised, shrines untouched, the alarm ringing: logged shortcuts) met the disguised patrol 219 times.
+
+| where | what it needs |
+|---|---|
+| 0x99FA → F | 0x4A64 = 0 at the patrol's surprise (patrols need the alarm) |
+| 0x9BF2 → 6 | event 6's squares (none on the map) |
+| 0xA54F → 0 | that table roll's 0 |
+| 0xA89E → T | a fight here fled (0x6DC7 = 129) at that check |
+| 0xAA1F → 2, 0xAA90 → 2 | the reaction (FLEE) no choice gave in the runs' rolls |
+
+### 8:13, the kobold caves: done (chat 21)
+
+97% / 95%, critical 3/3 · 15/15 · 19/19. `cover_8-13-large`: the drunken kobold (event 6, 0x9EA2) lies there only for a party
+that came in by the LARGE cave (8:27 0x9DAB sets 0x4AC7 = 255); the travel graph used SMALL. With it, 87/86 → 94/93.
+`cover_8-13-prison`: SURRENDER at the throne (0xA342, 0xA39F, after a fled fight; the bot's flee-job fix) and the prison walk
+bring Princess Fatima's fight (0xB2DE, 0xB31E) only while 0x4AD4 = 0, i.e. for a party that never entered her cell (event 14
+at 1,3, a side room off the passage west of the throne); the plan places the party south of the throne room.
+
+| where | what it needs |
+|---|---|
+| 0x9942 → T | 0x4A8D = 0 at that on-move check (the war started earlier in every walk that got there) |
+| 0x9A29 → T | a player character (0x6BB8 under 128) in the member slot that check reads (the walks had an NPC there) |
+| 0x9CDC → T | that flag at 1 |
+| 0xA874 → F, 0xB2EB → T | a party of 8 (0x6E3E) when Fatima joins |
+| 0xACF0 → T | standing on the square the party came in by |
+| 0xADCB → T, 0xAE93 → T | the trap rolls: a member with the skill; a member not well picked to disarm |
+| 0xAF17 → T, 0xAF47 → 2, 0xB159 → T | the escort walk's table rolls and facing |
+| 0xB32A → F | Fatima's fight not won (0x6DC7 ≥ 128) |
 
 ## 5:5 in chat 14 (for the record)
 

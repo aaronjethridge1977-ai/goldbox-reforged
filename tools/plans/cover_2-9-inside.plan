@@ -1,0 +1,18 @@
+# Chat 21: 2:9's bugbears waiting inside the gate (event 8 at 7,7 / 8,7, 0xAD0E-0xADA6). The event runs only while
+# both tower bits are set (0x4A77 bits 4 and 8, GOSUB 0x9920) and the gate's bugbears are not beaten (bit 16 clear).
+# A player has that state after paying the toll (cover_2-9-climb: 0x4A77 = 96, the party left at 8,5) and then
+# beating the mage's and the fighter's tower rooms (0xA2BF OR 4, 0xA3F2 OR 8), never fighting at the gate. Earlier
+# walks either fought at the gate first (0xA60E sets 4, 8 and 16 together) or never beat both towers before
+# stepping on event 8. Set by shortcut: 0x4A77 = 108 (96 | 4 | 8).
+rules playthrough.plan
+start chat13a_latest/graveyard
+shortcut flag 4A77 set 108 toll paid and both tower rooms beaten, gate never fought (2:9 0xAABB, 0xB014, 0xA2BF, 0xA3F2)
+shortcut flag 4A64 set 0 no alarm (2:9 0x9BA0)
+shortcut flag 4A78 set 0 no warnings yet (a new game)
+shortcut flag 4AB9 set 0 the gate not taken (a new game)
+travel 2:9
+expect 2:9
+shortcut teleport 2:9 8,5 N where the toll walk leaves the party (0xAC85-0xACB6)
+cover 2:9 20 all only=8,12
+status
+stop

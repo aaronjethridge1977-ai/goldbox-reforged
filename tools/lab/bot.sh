@@ -10,5 +10,7 @@ rm -rf $P && mkdir $P
 cp -r $S/project.godot $S/icon.svg $S/scenes $S/scripts $P/
 sed -i "s/^config\/name=\"\(.*\)\"/config\/name=\"\1 bot $ID\"/" $P/project.godot
 mkdir -p $P/tools/plans && cp $S/tools/*.gd $P/tools/ 2>/dev/null; cp $S/tools/plans/* $P/tools/plans/
+# Chat 21: COVER_SEED=<hex> replays a coverage run's dice (the plan's cover lines get seed=<hex>; refcheck.sh uses it).
+[ -n "$COVER_SEED" ] && sed -i "s/^cover \(.*\)$/cover \1 seed=$COVER_SEED/" $P/tools/plans/$PLAN
 cd $P && timeout 60 $L/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --import >/dev/null 2>&1
 timeout ${BOT_TIMEOUT:-7200} $L/godot/Godot_v4.7.2-stable_linux.x86_64 --headless ${BOT_FPS---fixed-fps 1000} $GODOT_ARGS --path . -- --game-path=$L/game --play=res://tools/plans/$PLAN --exits=$L/data/exits.txt --coverage=${BOT_COVERAGE:-$L/data/coverage.json} --branches=${BOT_BRANCHES:-$L/data/branches.json} --fast --time-scale=1000 --no-draw --checkpoints=${BOT_CHECKPOINTS:-$L/data/checkpoints} "$@" 2>&1 | grep --line-buffered -v "^\s*\[[0-9]\|GDScript backtrace\|   at: "

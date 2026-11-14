@@ -1,0 +1,13 @@
+# Chat 21: 8:13 entered by the LARGE cave (8:27 0x9DAB: arrival 10,15, 0x4AC7 = 255). The drunken kobold (event 6,
+# 0x9EA2) lies there only while 0x4AC7 = 255 and the war has not started (0x4A8D = 0): SLIP PAST / WAKE IT / KILL IT,
+# then the envoys' escort to the king (0x9F15-0x9FB1). The travel graph comes in by the SMALL cave (0x4AC7 = 0), so no
+# walk had met him. A player's choice at the cave mouth, answered by the plan.
+rules playthrough.plan
+expect_level 8:13 6
+answer 8:27 WHAT CAVE WILL YOU ENTER|LARGE
+start chat10a_latest/band3
+travel 8:13
+expect 8:13
+cover 8:13 20 all only=6
+status
+stop
