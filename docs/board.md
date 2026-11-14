@@ -9,7 +9,7 @@ lane's own docs. Decisions are not made here: they live in ai-business-ideas `id
 | Lane | Chat | Runs where | Owns |
 |---|---|---|---|
 | Main (M6 coverage, later differential checks) | chat 19 | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/dev/`, `tools/` coverage and report scripts, `tools/plans/`, `docs/coverage*.md`, `docs/cover-fights.md`; also `scripts/main.gd` and `scripts/ecl_vm.gd` (shared core: see CLAUDE.md) |
-| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 3 | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
+| Side (Jeremy's play feedback, combat fidelity, QoL) | side chat 4 | Cloud, its own lab | `scripts/combat/`, `scripts/ui/`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`), Test List sections it adds |
 | Design office | discussion chats | claude.ai | no code; proposals and Jeremy's decisions |
 
 Files not listed: whoever needs them asks here first.
@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 19 starting on the local lab (lab18). First: setup check, then 4:10 -all, 6:1's last flag, 3:8's commissions.
-- Side: side chat 3 ended 2026-11-14 (P17 method, A1, B1-B3 done; summary in ideas/game-modernizer.md). Open for the next side chat: P16 combat animations. Lab archive: PC `.lab/side3_lab.tgz`.
+- Side: side chat 4 (2026-11-14) on P16 combat animations, display only; first step: study the original's fight display in the lab. Lab rebuilt in the cloud, regress.sh 18 MATCH.
 
 ## Requests to another lane
 
