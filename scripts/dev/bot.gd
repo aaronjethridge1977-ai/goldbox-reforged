@@ -773,7 +773,10 @@ func _hook() -> bool:
 		# The plan's answers to particular questions (answer <area> <text>|<choice>[,<choice>...]):
 		# several choices are taken in turn, one each time the question comes (the pyramid's
 		# rocks room: THROW A ROCK, then MOVE ON).
-		for rule in _answer_rules.get(_here(), []):
+		# (Chat 17: the last rule given first: a coverage plan's answer overrides the rules file's.)
+		var rules: Array = _answer_rules.get(_here(), []).duplicate()
+		rules.reverse()
+		for rule in rules:
 			if not said.contains(rule[0]):
 				continue
 			var picks: PackedStringArray = String(rule[1]).split(",")
