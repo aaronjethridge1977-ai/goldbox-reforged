@@ -1,0 +1,17 @@
+# Chat 18 (directed coverage): Podol Plaza's report to City Hall (0xB241-0xB24E: 0x4AE7 = 254, the count to 10) runs
+# when the party searches on a square with no event while the plaza's count 0x4A34 is exactly 9 (on search,
+# 0x9AEA -> 0x9B27). The -count variant set 9 before travelling, and the walk's fights counted past it before it
+# ever searched a plain square. Here the count is set on arrival (as a player who fought that far has it,
+# 0x9E14 counts it up), SEARCH is turned on and the party steps once, then the usual walk.
+rules playthrough.plan
+start chat10a_latest/library
+travel 1:18
+expect 1:18
+shortcut flag 4A34 set 9 the plaza count as a player who fought that far has it (1:18 0x9E14)
+key s
+step
+step
+status
+cover 1:18 40 all
+status
+stop

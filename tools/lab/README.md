@@ -455,6 +455,12 @@ others from J:
   research/pool-of-radiance-formats.md); ours had left it 0, so 4:10's, 2:20's and 8:16's kill counters never grew.
 - Reference check (`refcheck.sh`, decided 2026-11-14), chat 18's walker against the code before it, from no
   coverage of those areas: 3:11 72/64 -> 85/79, 5:5 91/87 -> 91/88 (`data/refcheck_base.txt`).
+- **Script landings:** the squares an area's own script moves the party to (constant writes to 0xC04B/0xC04C in
+  either order, and table moves `COPY_MEM [table], [i], [C04B]` beside the 0xC04C one, each entry) become logged
+  teleport arrivals, one per part of the area's map no way in reaches ("a square the area's script moves the party
+  to"). 7:23: six parts placed (its vats room is still in none). Reference check: 3:11 87/83, 5:5 91/88.
+- Directed plans (chat 18): `cover_1-18-report` (the plaza count at 9, a search on a plain square), `cover_1-18-plaza`
+  (0x4A35 = 2, SNEAK), `cover_3-8-reports2`, `cover_2-9-paid` (walked fresh).
 - `cover_3-8-reports.plan`: City Hall with every report byte (0x4AA6-0x4ABF) at 254, as each area's script writes it.
 - `cover_7-17-war.plan`: the kobold war at its third stage (0x4A7E = 3, 0x4A7C = 1, 0x4A7D = 3).
 

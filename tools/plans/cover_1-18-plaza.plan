@@ -1,0 +1,13 @@
+# Chat 18 (directed coverage): Podol Plaza before its first menu was answered. 0x4A35 holds the answer to "THE
+# PLAZA AHEAD IS CROWDED WITH MONSTERS. HOW WILL YOU PROCEDE?" (0x9A36, asked while it is 0; 0x9AAC writes 255,
+# 1 or 2 from the table at 0xB255), and the auction's "the monsters shoot you angry looks" ends it at 2
+# (SNEAK, REMAINING UNSEEN, 0xA875-0xA87C). The menu comes as the party travels in, before the walk, so its
+# answer is set by shortcut: 0x4A35 = 2, as 0x9AAC writes for SNEAK, REMAINING UNSEEN.
+rules playthrough.plan
+start chat10a_latest/library
+travel 1:18
+expect 1:18
+shortcut flag 4A35 set 2 the plaza's first menu answered SNEAK, REMAINING UNSEEN (1:18 0x9AAC)
+cover 1:18 40 all
+status
+stop

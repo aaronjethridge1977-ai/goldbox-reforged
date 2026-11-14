@@ -3954,7 +3954,8 @@ func _cover_walk(deadline: int, again := false) -> void:
 				var ok: bool = main.dev_teleport(int(ta[0]), int(ta[1]), Vector2i(int(e.ax), int(e.ay)), int(e.dir))
 				await _settle()
 				_shortcut("teleport", "%s %d,%d %s%s" % [e.to, e.ax, e.ay, "NESW"[int(e.dir)], "" if ok else " REFUSED"],
-					"coverage run: no walking way into part %s worked" % group)
+					"coverage run: no walking way into part %s worked" % group if e.get("from", "") != "the script" \
+					else "coverage run: a square the area's script moves the party to (%s)" % group)
 				if ok and _here() == _cover_area and not _wiped() and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 					_cover_groups_in[group] = true
 					print("   came in on map %d at %s" % [main._maps[main._map_index].id, main._pos])
@@ -4126,7 +4127,99 @@ func _cover_ways_in() -> Array:
 			var t: Dictionary = ws[0].duplicate()
 			t["teleport"] = true
 			out.append(t)
-	return out.slice(0, 40)
+	out = out.slice(0, 40)
+	# Chat 18: the squares the area's own script moves the party to (WRITE_MEM x, [C04B] and y,
+	# [C04C] close together: 7:23's flashes, the trapdoors), one per part of the area's map that
+	# no way in reaches: a party can stand there because the script puts it there. Placed by a
+	# logged teleport, after the ways in (7:23's vats and most of its rooms were never entered).
+	if amap != null:
+		var parts_in := {}
+		for w in out:
+			parts_in[String(w.get("group", ""))] = true
+		for l in _cover_script_landings():
+			var part := _dungeon_part(_cover_area, l.at)
+			var g := "part %d" % part
+			if part < 0 or parts_in.has(g):
+				continue
+			parts_in[g] = true
+			out.append({"to": _cover_area, "from": "the script", "x": l.at.x, "y": l.at.y, "ax": l.at.x, "ay": l.at.y,
+				"dir": l.dir, "entry": "script", "teleport": true, "group": g, "picks": []})
+	return out
+
+
+## Chat 18: where the area's script itself puts the party: [{"at": Vector2i, "dir": n, "off": offset}].
+## Constant writes to 0xC04B and 0xC04C close together (either order), and table moves: COPY_MEM
+## [table], [i], [C04B] beside COPY_MEM [table2], [i], [C04C] (7:23's flashes), each entry of the two
+## tables while both are on the map.
+func _cover_script_landings() -> Array:
+	var a := _cover_area.split(":")
+	var ecl: EclScript = main._script(int(a[0]), int(a[1]))
+	var out: Array = []
+	if ecl == null:
+		return out
+	var offs: Array = ecl.offsets()
+	var seen := {}
+	var add := func(x: int, y: int, d: int, off: int) -> void:
+		if x >= 0 and x < 16 and y >= 0 and y < 16 and not seen.has(Vector2i(x, y)):
+			seen[Vector2i(x, y)] = true
+			out.append({"at": Vector2i(x, y), "dir": d & 3, "off": off})
+	for i in offs.size():
+		var ins: Dictionary = ecl.instructions[offs[i]]
+		var x := _const_write(ins, 0xC04B)
+		var y := _const_write(ins, 0xC04C)
+		var tx := _table_write(ins, 0xC04B)
+		var ty := _table_write(ins, 0xC04C)
+		if x < 0 and y < 0 and tx < 0 and ty < 0:
+			continue
+		var d := 0
+		for j in range(maxi(i - 3, 0), mini(i + 4, offs.size())):
+			if j == i:
+				continue
+			var o: Dictionary = ecl.instructions[offs[j]]
+			if x >= 0 and y < 0:
+				y = _const_write(o, 0xC04C)
+			if y >= 0 and x < 0:
+				x = _const_write(o, 0xC04B)
+			if tx >= 0 and ty < 0:
+				ty = _table_write(o, 0xC04C)
+			if ty >= 0 and tx < 0:
+				tx = _table_write(o, 0xC04B)
+			var dd := _const_write(o, 0xC04D)
+			if dd >= 0:
+				d = dd
+		if x >= 0 and y >= 0:
+			add.call(x, y, d, offs[i])
+		if tx >= 0 and ty >= 0:
+			for k in 16:
+				var px := tx - EclScript.BASE + k
+				var py := ty - EclScript.BASE + k
+				if px < 0 or py < 0 or px >= ecl.code.size() or py >= ecl.code.size():
+					break
+				if ecl.code[px] >= 16 or ecl.code[py] >= 16:
+					break
+				add.call(ecl.code[px], ecl.code[py], d, offs[i])
+	return out
+
+
+## The table a COPY_MEM [table], [index], [addr] reads for `addr` (-1 if it isn't one).
+static func _table_write(ins: Dictionary, addr: int) -> int:
+	if String(ins.op) != "COPY_MEM" or ins.args.size() < 3:
+		return -1
+	var d: Dictionary = ins.args[2]
+	if int(d.type) in [0x01, 0x05] and int(d.value) == addr and int(ins.args[0].type) in [0x01, 0x03, 0x05]:
+		return int(ins.args[0].value)
+	return -1
+
+
+## The constant an instruction writes to `addr` with WRITE_MEM (-1 if it doesn't).
+static func _const_write(ins: Dictionary, addr: int) -> int:
+	if String(ins.op) != "WRITE_MEM" or ins.args.size() < 2:
+		return -1
+	var v: Dictionary = ins.args[0]
+	var d: Dictionary = ins.args[1]
+	if int(d.type) in [0x01, 0x05] and int(d.value) == addr and int(v.type) in [0x00, 0x02, 0x04]:
+		return int(v.value)
+	return -1
 
 
 ## The area's own map (the GEO block with the script's number, when the script loads it).
