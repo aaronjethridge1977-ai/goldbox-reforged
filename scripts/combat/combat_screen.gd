@@ -818,7 +818,7 @@ func _bottom_menu() -> Array:
 	var items := ["MOVE", "VIEW", "AIM", "USE"]
 	var c: Dictionary = _combatants[_combat.active]
 	var who: PartyMember = c.who
-	# CAST: not once the figure has been wounded this fight (GAME.OVR 0x9F46, record byte 1).
+	# CAST: not once the figure has been wounded this round (GAME.OVR 0x9F46, record byte 1).
 	if _combat.magic != null and not c.get("no_spells", false) and \
 			not _combat.magic.castable(_combat.active).is_empty():
 		items.append("CAST")

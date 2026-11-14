@@ -783,7 +783,7 @@ func _enemies_within(i: int, reach: int) -> int:
 
 ## Whom the computer heals with Cure Light Wounds (GAME.OVR 0x143F3): looking at the eight
 ## cells round the caster (up first, clockwise) and then its own, the standing figure of its
-## side with the fewest hit points below its maximum (itself only below half); a figure of
+## side with the fewest hit points below its maximum (the caster too); a figure of
 ## either side lying there unconscious or dying instead (the original's list of fallen
 ## figures, DS:0x66D6, has no side check; lab: Bakshi healed a fallen orc), but only when
 ## nobody standing has fewer than 8 hit points. -1: nobody.
@@ -798,7 +798,9 @@ func cure_target(i: int) -> int:
 		if j >= 0 and not c.combatants[j].down:
 			var e: Dictionary = c.combatants[j]
 			var w: PartyMember = e.who
-			if e.team == me.team and w.hp < w.hp_max and w.hp < low and (j != i or w.hp < w.hp_max / 2):
+			# (0x144A2: the fewest hit points so far wins; the caster itself also wins a tie
+			# or worse while below half, which the original checks only then.)
+			if e.team == me.team and w.hp < w.hp_max and (w.hp < low or (j == i and w.hp < w.hp_max / 2)):
 				best = j
 				low = w.hp
 			continue

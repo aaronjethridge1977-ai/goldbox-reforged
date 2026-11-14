@@ -763,11 +763,9 @@ func recalculate(types: ItemTypes) -> void:
 
 	# Movement: heavy armour first, then the load beyond what STR allows.
 	# (Checked against the original's cached values: banded mail, 350 coins, gives 9;
-	# splint mail, 400, gives 6.) Monsters keep the movement in their record until a
-	# fight in the original shows otherwise: their items and loads aren't verified yet.
+	# splint mail, 400, gives 6.) Monsters too (lab, side chat 2: a goblin guard, 6 in its
+	# record, had 9 in the original's fight record, +0x11C, and walked 18 half-moves).
 	movement = base_movement
-	if is_monster:
-		return
 	if armor != null:
 		var w := armor.weight
 		if w > 150:

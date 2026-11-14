@@ -143,6 +143,10 @@ func start_round() -> void:
 	var delays := {}
 	for c in combatants:
 		c["init"] = 0
+		# Each round (GAME.OVR 0x127FB, for every figure): a spell still being cast is
+		# dropped (not forgotten), and a wounded figure may cast again.
+		c["pending"] = {}
+		c["no_spells"] = false
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
 		if c.down:
@@ -636,8 +640,8 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 		t.regen_in = 3      # a troll's wounds start closing three rounds later (0x65, 0x3B)
 	if dmg > 0:
 		# A wound spoils a spell being cast ("LOST A SPELL", forgotten) and keeps the figure
-		# from starting another for the rest of the fight (GAME.OVR 0x12CDA: record bytes 0
-		# and 1, the latter set only as the fight begins).
+		# from starting another for the rest of the round (GAME.OVR 0x12CDA: record bytes 0
+		# and 1, set again at each round's start, 0x127FB).
 		t.no_spells = true
 		if not t.get("pending", {}).is_empty():
 			tm.forget(int(t.pending.id))
@@ -987,6 +991,22 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
 			message.emit("%s RAKES..." % am.name)
 			_extra_attacks(i, j, 2, 2, 4)
+	if i != active and a.attacks <= 0:
+		# Out of turn (a guard's strike, a free attack) with its attacks spent: that is its
+		# turn for this round (GAME.OVR 0x142AB ends the attacker's turn, 0xBA:0x2637; lab:
+		# Thrender, on guard, struck a goblin and didn't act again that round).
+		_spend_turn(i)
+
+
+## Ends combatant i's turn out of turn: no initiative left this round, guard and any
+## spell being cast gone (the original's 0xBA:0x2637).
+func _spend_turn(i: int) -> void:
+	var c: Dictionary = combatants[i]
+	c.init = 0
+	c.guarding = false
+	c.pending = {}
+	c.moves = 0
+	order.erase(i)
 
 
 ## Attacks a power adds (a tiger's rake, a mantis's hold): `n` rolls to hit, `count`d`size` each.
@@ -1591,9 +1611,13 @@ func ai_act() -> bool:
 		if not _enemy_of(c, t) or combatants[t].team == 0 or not _within(active, t, reach):
 			t = -1
 		if t < 0:
+			# The ones to pick from: every enemy within reach, clear shot or not (GAME.OVR
+			# 0xB90F, the same count as for spells; lab: Phineas's darts had four to pick
+			# from where ours saw three). The target kept above needs a clear shot (0xB8DF).
 			var near: Array[int] = []
 			for j in combatants.size():
-				if _enemy_of(c, j) and _within(active, j, reach):
+				if _enemy_of(c, j) and (touching(c, combatants[j]) if reach <= 1 else
+						range_of(c, combatants[j]) <= reach):
 					near.append(j)
 			if near.is_empty():
 				if not find_target(active):
