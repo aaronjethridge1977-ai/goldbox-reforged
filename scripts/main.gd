@@ -412,6 +412,10 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "smartquick":             # smartquick (lab): SETTINGS' smarter QUICK tactics in the open fight
 			if _combat._combat != null:
 				_combat._combat.smart_quick = true
+		elif n.begins_with("order="):       # order=<member>:<0-4> (lab): B3's standing order (SmartQuick.ORDER_NAMES)
+			var a := n.trim_prefix("order=").split(":")
+			_party[int(a[0])].quick_order = int(a[1])
+			continue
 		elif n == "smartmonsters":          # smartmonsters (lab): SETTINGS' smarter monster tactics in the open fight
 			if _combat._combat != null:
 				_combat._combat.smart_monsters = true
@@ -1199,7 +1203,7 @@ func _quick_save() -> void:
 			items.append(it.to_record())
 		members.append({"name": m.name, "record": m.to_record(), "money": m.money, "items": items, "hp": m.hp,
 			"experience": m.experience, "status": m.status, "memorized": m.memorized,
-			"spell_book": m.spell_book, "affects": m.affects, "npc": m.npc})
+			"spell_book": m.spell_book, "affects": m.affects, "npc": m.npc, "quick_order": m.quick_order})
 	cfg.set_value("party", "members", members)
 	var roster := []
 	for m in _party_menu.roster:
@@ -1472,6 +1476,7 @@ func _quick_load() -> void:
 		_party[i].experience = saved.get("experience", _party[i].experience)
 		_party[i].status = saved.get("status", _party[i].status)
 		_party[i].npc = saved.get("npc", 0)
+		_party[i].quick_order = int(saved.get("quick_order", 0))
 		if saved.has("memorized"):
 			var mem: Array[int] = []
 			for v in saved.memorized:

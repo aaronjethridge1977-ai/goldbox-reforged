@@ -27,6 +27,19 @@ extends RefCounted
 ## (their own morale stays the original's). Ideas from later Gold Box games, whose computer
 ## places area spells so they spare its own side and goes for the weak.
 
+## B3 (decided 2026-11-14): a standing order per character, set from VIEW (ORDER) when
+## TACTICS FOR QUICK is SMARTER; it matters only on QUICK. FREE: the rules above. NOSPELL:
+## never casts. MELEE: no missiles, no spells. STAND (HOLD in the mockup; renamed so each
+## order has its own key letter): never moves (still strikes, shoots or casts from where it
+## stands). HEAL: bandages and heals first, casts no attack spell and
+## doesn't walk up to an enemy (it fights one next to it).
+const FREE := 0
+const NOSPELL := 1
+const MELEE := 2
+const HOLD := 3
+const HEAL := 4
+const ORDER_NAMES := ["FREE", "NOSPELL", "MELEE", "STAND", "HEAL"]
+
 const KEY := "smart_quick"
 const MONSTERS_KEY := "smart_monsters"
 const CURE_LIGHT_WOUNDS := 3
@@ -201,6 +214,19 @@ static func weakest(cb: Combat, i: int, pool: Array[int]) -> int:
 			list = casters
 	_weakest_first(cb, cb.combatants[i], list)
 	return list[0]
+
+
+## Combatant i's standing order, or -1 when the smarter rules don't apply to it.
+static func order(cb: Combat, i: int) -> int:
+	if not applies(cb, i):
+		return -1
+	return (cb.combatants[i].who as PartyMember).quick_order
+
+
+## The order keeps it from walking up to an enemy.
+static func stays(cb: Combat, i: int) -> bool:
+	var o := order(cb, i)
+	return o == HOLD or o == HEAL
 
 
 ## A quarter of its hit points or less.

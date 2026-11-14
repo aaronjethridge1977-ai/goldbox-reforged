@@ -324,6 +324,9 @@ func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
 		_t(8, 21, item_label(armor).to_upper(), G)
 	_t(1, 22, "STATUS", W)
 	_t(8, 22, m.status_name(), G)
+	if _orders_on(m):
+		_t(24, 22, "ORDER", W)
+		_t(30, 22, SmartQuick.ORDER_NAMES[clampi(m.quick_order, 0, 4)], G)
 
 
 func _heading(m: PartyMember, what: String) -> void:
@@ -423,8 +426,16 @@ func _view_menu() -> Array:
 		items.append("SPELLS")
 	if not in_combat:
 		items.append("TRADE")
-	items.append_array(["DROP", "EXIT"])
+	items.append("DROP")
+	if _orders_on(m):
+		items.append("ORDER")
+	items.append("EXIT")
 	return items
+
+
+## B3: ORDER on VIEW, for the party's own members, when TACTICS FOR QUICK is SMARTER.
+func _orders_on(m: PartyMember) -> bool:
+	return m != null and not m.is_monster and m.npc < 128 and SmartQuick.on()
 
 
 func _item_menu() -> Array:
@@ -447,6 +458,8 @@ func _current_menu() -> Array:
 			return ["EXIT"]
 		"cast":
 			return ["CAST", "EXIT"]
+		"order":
+			return SmartQuick.ORDER_NAMES + ["EXIT"]
 		"whom", "coin_whom":
 			return ["SELECT", "EXIT"]
 		"confirm":
@@ -488,6 +501,10 @@ func _refresh() -> void:
 			_draw_spells(m)
 			_t(0, 24, "CHOOSE SPELL:", MAGENTA)
 			_menu(["CAST", "EXIT"], 14)
+		"order":
+			_draw_page(m)
+			_t(0, 24, "ORDER:", MAGENTA)
+			_menu(_current_menu(), 6)
 		"whom":
 			_draw_whom("TRADE WITH WHOM?")
 		"coin_whom":
@@ -755,6 +772,18 @@ func _unhandled_input(event: InputEvent) -> void:
 					_pending = "coin_drop"
 					_coin_cursor = 0
 					_mode = "coin"
+				"ORDER":
+					_mode = "order"
+					_pick = clampi(m.quick_order, 0, 4)
+			_refresh()
+		"order":
+			if choice == "EXIT" or cancel:
+				_mode = "view"
+				_pick = _view_menu().find("ORDER")
+			elif choice != "":
+				m.quick_order = SmartQuick.ORDER_NAMES.find(choice)
+				_mode = "view"
+				_pick = _view_menu().find("ORDER")
 			_refresh()
 		"spells":
 			if choice == "EXIT":

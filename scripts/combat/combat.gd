@@ -643,6 +643,8 @@ func choose_weapon(i: int) -> void:
 				if it.readied and it.type == want:
 					has_ammo = true
 		var melee_too := (f & 0x14) == 0x14
+		if SmartQuick.order(self, i) == SmartQuick.MELEE:
+			has_ammo = false           # B3: MELEE keeps a hand weapon
 		if has_ammo and (melee_too or not enemy_adjacent(i)):
 			pick = best_missile
 	if pick == m.weapon:
@@ -1628,7 +1630,10 @@ func ai_act() -> bool:
 			pass
 		elif c.fleeing:
 			message.emit("%s FLEES IN PANIC" % c.who.name)
-		elif smart and (SmartQuick.heal(self, active) or SmartQuick.cast(self, active)):
+		elif smart and SmartQuick.order(self, active) in [SmartQuick.NOSPELL, SmartQuick.MELEE]:
+			pass                       # B3: this one doesn't cast
+		elif smart and (SmartQuick.heal(self, active) or
+				(SmartQuick.order(self, active) != SmartQuick.HEAL and SmartQuick.cast(self, active))):
 			return false
 		elif magic and not smart and magic.ai_cast(active, spell_d7):
 			return false
@@ -1671,8 +1676,9 @@ func ai_act() -> bool:
 				if not find_target(active):
 					guard(active)
 					return false
-				if SmartQuick.applies(self, active) and not shooting and SmartQuick.hurt(self, active):
-					guard(active)          # hurt: it doesn't walk up to an enemy (SmartQuick)
+				if SmartQuick.applies(self, active) and ((not shooting and SmartQuick.hurt(self, active))
+						or SmartQuick.stays(self, active)):
+					guard(active)          # hurt, or ordered to HOLD / HEAL: it doesn't walk up (SmartQuick)
 					return false
 				var r := _approach(active)
 				if r == "moved":

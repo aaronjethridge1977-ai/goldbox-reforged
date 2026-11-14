@@ -96,6 +96,7 @@ var memorized: Array[int] = []        # spell ids; + LEARNING while still being 
 var spell_slots := [[0, 0, 0], [0, 0, 0]]   # [cleric, magic-user][level - 1]
 var affects: Array = []               # [{effect, spell, minutes, value}]
 var learn_hours := 0                  # resting: hours still to go before memorizing starts
+var quick_order := 0                  # B3: SmartQuick.FREE/NOSPELL/MELEE/HOLD/HEAL (ours only, quick saves)
 
 # Derived by recalculate()
 var ac := 10
