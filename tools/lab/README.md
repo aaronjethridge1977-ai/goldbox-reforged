@@ -554,3 +554,25 @@ games draw the same numbers, so a fight can be compared draw by draw.
   with the running draw count (how the Magic Missile was found: "SPELL: MAGIC MISSILE", an
   aim, and no damage dice).
 
+
+### Side chat 4 (2026-11-14): P16, the original's fight display on film
+
+- `origvid.sh <save> <seed> <out.mkv> <secs> [magic]` films the original's fight from a lab save
+  (as `cmpfight2.sh` reaches it: load, "up up", the seed, Enter, everyone on QUICK) at 30 frames a
+  second, losslessly (ffv1, the 640x400 game area only; ffmpeg's x11grab on :98). `PRE="<dump.py
+  steps>"` runs steps after loading (e.g. `e a s f f f f e e e` sets game speed 0).
+- `oursvid.sh <out.mkv> <secs> "<keys>"` films ours the same way (Godot on :97, 1280x800) with
+  `--keys`; `EXTRA=--anim` turns on the original's pacing, which `--keys` runs otherwise leave off.
+- `vtl.py <video> [start] [end]` prints a timeline: each frame where the map, the right-hand panel
+  or row 24 changed, with the panel's and row 24's text and how many map pixels changed.
+- Found (orc fight H, seed 11111111, speeds 0, 4 and 9): a blow's message appears ~0.2 s after the
+  blow and stays game speed x 0.2 s (0.8 s at 4, 1.8 s at 9, a flash at 0), then the panel is
+  cleared; "GOES DOWN / AND IS DYING" is added under the blow's lines; "YOUR TEAMMATE IS DYING" is
+  on row 24 for the same time. A dart volley (three a round) shows each hit and no misses; a miss
+  only when all missed, once. A step takes ~0.15 s and the view scrolls with it; a missile is a
+  small sprite moved one position a frame (4-7 frames); the actor's grey box shows ~0.3 s at the
+  start of a computer turn. Nothing blinks while the menu, AIM or MANUAL waits. Steps and missiles
+  don't change with the speed. DONE -> SPEED: "GAMESPEED (n) : SLOWER FASTER EXIT" (magenta prompt).
+- Seen, not P16: the original's level-1 Magic Missile shows only "CASTS A SPELL", then the target,
+  where ours adds "SPELL: MAGIC MISSILE" and "ORC IS UNAFFECTED"; Darkstar starts with 8 darts in
+  the original's save H and 11 in ours.

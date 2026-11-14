@@ -65,6 +65,22 @@ var _game_path := ""
 
 var _combat: Combat = null
 var _messages := PackedStringArray()
+## P16 (side chat 4): the original's pacing of a fight's messages (lab, 2026-11-14, the Slums orcs
+## filmed at 30 frames a second at game speeds 0, 4 and 9). A blow's message appears about 0.2 s
+## after the blow, stays game speed x 0.2 s (0.8 s at 4, 1.8 s at 9, a flash at 0) and is cleared
+## before the next; "GOES DOWN ..." is added under the blow's lines, "YOUR TEAMMATE IS DYING" goes
+## on row 24. The next figure acts only once its messages are shown. Display only: off in headless,
+## --play, --keys and --fast runs (the lab's --anim turns it on there), so the bot, the coverage
+## runs and the lab's replays are unchanged.
+const MESSAGE_GAP := 0.2
+var _panel_msgs := PackedStringArray()      # paced: the messages now on the right
+var _pending_msgs := PackedStringArray()    # paced: still to be shown
+var _row24_msg := ""
+var _draining := false
+var _muted := false
+var _shown_by := {}      # paced: attackers whose blows were shown in this run of messages
+signal messages_shown
+static var _paced := -1
 var _ai_timer: Timer
 var _result := 0
 var _event_fight := false
@@ -411,6 +427,16 @@ var _sheet: CharacterSheet
 const MAGENTA := 13
 
 
+## A message in the original's pieces (lab): "HITTING FOR n" is followed by "POINT(S) OF
+## DAMAGE" on its own line, and "AND IS DYING" starts a line of its own.
+static func _message_pieces(msg: String) -> String:
+	var re := RegEx.create_from_string("HITTING FOR (\\d+)$")
+	var m := re.search(msg)
+	if m != null:
+		msg += "\n" + ("POINT OF DAMAGE" if m.get_string(1) == "1" else "POINTS OF DAMAGE")
+	return msg.replace(" AND IS DYING", "\nAND IS DYING")
+
+
 ## The original's combat screen: rope frame (rows 0 and 22, columns 0, 22 and 39), the
 ## 7x7 field at (8, 8), the figure's name (yellow), HITPOINTS, AC and weapon at column 23
 ## rows 1-7, the fight's messages below them, and the prompt or menu on row 24.
@@ -447,9 +473,13 @@ func _draw_original(field: Image) -> void:
 	for c in _combatants:
 		names[(c.who as PartyMember).name.to_upper()] = GameScreen.CYAN if c.team == 0 else GameScreen.YELLOW
 	var lines := []
-	if not _messages.is_empty() and not String(_messages[-1]).begins_with("ROUND "):
-		var msg := String(_messages[-1]).to_upper()
-		var rest := msg
+	var shown := []
+	if paced():
+		shown = Array(_panel_msgs)
+	elif not _messages.is_empty() and not String(_messages[-1]).begins_with("ROUND "):
+		shown = [_messages[-1]]
+	for m_text in shown:
+		var rest := _message_pieces(String(m_text).to_upper())
 		while rest != "":
 			var hit := ""
 			var at := rest.length()
@@ -459,9 +489,10 @@ func _draw_original(field: Image) -> void:
 					at = k
 					hit = n
 			if at > 0:
-				for w in GameScreen.wrap(rest.substr(0, at).strip_edges(), 16):
-					if w != "":
-						lines.append([w, GameScreen.GREEN])
+				for piece in rest.substr(0, at).split("\n"):
+					for w in GameScreen.wrap(piece.strip_edges(), 16):
+						if w != "":
+							lines.append([w, GameScreen.GREEN])
 			if hit == "":
 				break
 			lines.append([hit.left(16), names[hit]])
@@ -470,7 +501,9 @@ func _draw_original(field: Image) -> void:
 		for i in mini(lines.size(), 12):
 			g.text(23, 10 + i, lines[i][0], lines[i][1])
 	# Bottom lines.
-	if _flash != "":
+	if _row24_msg != "":
+		g.text(0, 24, _row24_msg, GameScreen.GREEN)
+	elif _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
 	elif _asking_ally:
 		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
@@ -487,6 +520,11 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, prompt, MAGENTA)
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
+	elif _combat != null and _cmode == "speed":
+		var prompt := "GAMESPEED (%d) :" % CampScreen.speed
+		g.text(0, 24, prompt, MAGENTA)
+		var items := _bottom_menu()
+		g.menu_line(24, items, prompt.length() + 1, _lit(items))
 	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].quick:
 		if _cmode == "move":
 			g.text(0, 24, "MOVE/ATTACK, MOVE LEFT = %d" % (_combatants[_combat.active].moves / 2), GameScreen.GREEN)
@@ -627,8 +665,11 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
 	_combat.surprise_flags = _surprise
-	_combat.message.connect(_on_message)
+	_combat.message.connect(_on_combat_message)
 	_messages.clear()
+	_panel_msgs.clear()
+	_pending_msgs.clear()
+	_row24_msg = ""
 	_result = 0
 
 
@@ -640,6 +681,99 @@ var _asking_continue := false
 ## the player characters stay the player's.
 var _asking_ally := false
 var _ally_target := -1
+
+
+## Is the display paced like the original's (P16)? Not in the lab's runs, unless --anim.
+static func paced() -> bool:
+	if _paced < 0:
+		var args := OS.get_cmdline_user_args()
+		_paced = 1
+		if DisplayServer.get_name() == "headless" or "--fast" in args:
+			_paced = 0
+		for a in args:
+			if a.begins_with("--play=") or a.begins_with("--keys="):
+				_paced = 0
+		if "--anim" in args:
+			_paced = 1
+	return _paced == 1
+
+
+## How long a combat message stays: game speed x 0.2 s, as the original.
+static func message_hold() -> float:
+	return CampScreen.speed * 0.2
+
+
+func _on_combat_message(text: String) -> void:
+	_on_message(text)
+	if paced() and not _muted and not text.begins_with("ROUND "):
+		_pending_msgs.append(text)
+		if not _draining:
+			_show_messages()
+
+
+## A message that goes under the last one instead of replacing it.
+func _continues(msg: String) -> bool:
+	if _panel_msgs.is_empty():
+		return false
+	for w in ["GOES DOWN", "IS KILLED", "IS DYING", "FALLS DEAD", "IS DEAD FOREVER"]:
+		if msg.contains(w):
+			return true
+	return false
+
+
+## The figure a blow's message starts with ("" if none).
+func _attacker(msg: String) -> String:
+	var best := ""
+	for c in _combatants:
+		var n := (c.who as PartyMember).name.to_upper()
+		if n.length() > best.length() and msg.begins_with(n + " "):
+			best = n
+	return best
+
+
+## The original shows a volley's hits one by one and none of its misses; a miss shows only when
+## the whole volley missed, once (lab: darts, three a round, at speeds 0 and 4).
+func _skip_miss(msg: String, who: String) -> bool:
+	if who == "" or not msg.ends_with(" AND MISSES"):
+		return false
+	if _shown_by.has(who):
+		return true
+	for m in _pending_msgs:
+		if m.begins_with(who + " ") and (m.ends_with(" AND MISSES") or m.contains(" HITTING FOR ")):
+			return true
+	return false
+
+
+## Shows the queued messages one at a time, the original's way (P16).
+func _show_messages() -> void:
+	_draining = true
+	_shown_by.clear()
+	while not _pending_msgs.is_empty() and is_inside_tree():
+		var msg := _pending_msgs[0]
+		_pending_msgs.remove_at(0)
+		var who := _attacker(msg)
+		if _skip_miss(msg, who):
+			continue
+		if who != "":
+			_shown_by[who] = true
+		var dying := msg == "YOUR TEAMMATE IS DYING"
+		if not _continues(msg) and not dying:
+			_panel_msgs.clear()
+			_refresh()
+			await get_tree().create_timer(MESSAGE_GAP).timeout
+		if dying:
+			_panel_msgs.clear()
+			_row24_msg = msg
+		else:
+			_panel_msgs.append(msg)
+		_refresh()
+		await get_tree().create_timer(message_hold()).timeout
+		_row24_msg = ""
+		if _pending_msgs.is_empty() or not _continues(_pending_msgs[0]):
+			_panel_msgs.clear()
+		_refresh()
+	_draining = false
+	messages_shown.emit()
 
 
 func _on_message(text: String) -> void:
@@ -661,6 +795,10 @@ func _advance() -> void:
 				c.down = true
 		_combat.decided = true
 	var i := _combat.next_turn()
+	if _draining:
+		await messages_shown
+		if _combat == null:
+			return
 	if i == Combat.ASK_CONTINUE:
 		_asking_continue = true
 		_on_message("CONTINUE BATTLE: YES NO")
@@ -686,6 +824,8 @@ func _advance() -> void:
 		# A player's spell begun last turn goes off at this turn, which it uses up.
 		_refresh()
 		await get_tree().create_timer(0.5 * CampScreen.delay_scale()).timeout
+		if _draining:
+			await messages_shown
 		if _combat != null and _combat.active == i:
 			_combat.done()
 			_advance()
@@ -700,6 +840,10 @@ func _ai_step() -> void:
 	var more := _combat.ai_act()
 	_centre_on_selected()
 	_refresh()
+	if _draining:
+		await messages_shown
+		if _combat == null or not visible:
+			return
 	if more:
 		_ai_timer.start(0.3)
 	else:
@@ -709,6 +853,10 @@ func _ai_step() -> void:
 
 
 func _after_player_action(what: String) -> void:
+	if _draining:
+		await messages_shown
+		if _combat == null:
+			return
 	if what == "blocked":
 		_on_message("CAN'T GO THERE")
 	elif what == "no moves":
@@ -814,6 +962,8 @@ func _bottom_menu() -> Array:
 			return ["NEXT", "PREV", "MANUAL"] + (["TARGET"] if _can_target() else []) + ["CENTER", "EXIT"]
 		"manual":
 			return (["TARGET"] if _can_target() else []) + ["CENTER", "EXIT"]
+		"speed":
+			return ["SLOWER", "FASTER", "EXIT"]
 		"done":
 			var items := []
 			if _combat.can_guard():
@@ -1280,7 +1430,7 @@ const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIG
 
 func _fight_input(event: InputEvent, key: Key) -> void:
 	get_viewport().set_input_as_handled()
-	if _result != 0 or _combat.active < 0 or _combatants[_combat.active].quick:
+	if _draining or _result != 0 or _combat.active < 0 or _combatants[_combat.active].quick:
 		return
 	if _cmode == "move":
 		if event.is_action("ui_cancel"):
@@ -1295,7 +1445,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		return
 	var items := _bottom_menu()
 	var choice := _menu_choice(event, key, items)
-	if choice == "" and _cmode == "done" and event.is_action("ui_cancel"):
+	if choice == "" and _cmode in ["done", "speed"] and event.is_action("ui_cancel"):
 		choice = "EXIT"
 	if choice == "":
 		# Modern extras (not in the original's menus): Space ends the turn.
@@ -1305,11 +1455,26 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			_advance()
 		return
 	_pick = items.find(choice)
+	if _cmode == "speed":
+		# The original's DONE -> SPEED (lab): "GAMESPEED (n) : SLOWER FASTER EXIT", 0 fastest
+		# to 9 slowest, the same setting as ALTER's; EXIT goes back to DONE's menu.
+		match choice:
+			"SLOWER":
+				CampScreen.speed = mini(CampScreen.speed + 1, 9)
+			"FASTER":
+				CampScreen.speed = maxi(CampScreen.speed - 1, 0)
+			"EXIT":
+				_cmode = "done"
+				_pick = maxi(_bottom_menu().find("SPEED"), 0)
+		_refresh()
+		return
 	if _cmode == "done":
 		match choice:
 			"GUARD":
 				var shown := _messages.size()
+				_muted = true
 				_combat.guard(_combat.active, false)
+				_muted = false
 				# Lab: the original says only GUARDING on the bottom line, nothing on the right.
 				_messages = _messages.slice(0, shown)
 				_cmode = "menu"
@@ -1330,7 +1495,9 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 					_refresh()
 					_advance()
 			"SPEED":
-				pass      # the game's speed setting: not built
+				_cmode = "speed"
+				_pick = 0
+				_refresh()
 			"EXIT":
 				_cmode = "menu"
 				_refresh()

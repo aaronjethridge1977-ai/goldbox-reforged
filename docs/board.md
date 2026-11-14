@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 19 starting on the local lab (lab18). First: setup check, then 4:10 -all, 6:1's last flag, 3:8's commissions.
-- Side: side chat 4 (2026-11-14) on P16 combat animations, display only; first step: study the original's fight display in the lab. Lab rebuilt in the cloud, regress.sh 18 MATCH.
+- Side: side chat 4 on P16 combat animations (display only, off in headless/--play/--keys/--fast; lab key `--anim`). Step 2 done: messages paced as the original, DONE -> SPEED built. Next: steps one at a time, then missiles.
 
 ## Requests to another lane
 
