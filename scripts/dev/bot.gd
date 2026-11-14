@@ -4061,6 +4061,26 @@ func _cover_map(deadline: int) -> Array:
 			done[k.get_slice(":", 1)] = true
 	var arrival: Dictionary = main.dev_snapshot()
 	var regions_found := {_region_id(main._pos): true}
+	# Chat 17: an arrival on an event square (a teleport into 7:23's storeroom, whose step off
+	# flashes the party away again) is LOOKed at first, facing each way: LOOK searches the
+	# square (the storeroom's hidden treasure, 0xA38F, needs SEARCH).
+	if map.flag(main._pos.x, main._pos.y) & 127 != 0:
+		for d in 4:
+			main.dev_restore(arrival)
+			await _settle()
+			await _cover_face(d)
+			_cover_snap = main.dev_snapshot()
+			_cover_path = []
+			_cover_dir = d
+			_cover_looking = true
+			await main._press("l")
+			await _settle()
+			_cover_looking = false
+			_cover_snap = {}
+			_cover_log.tries += 1
+			await _cover_recover(arrival, "looking %s on arriving" % "NESW"[d])
+		main.dev_restore(arrival)
+		await _settle()
 	while Time.get_ticks_msec() < deadline:
 		if _cover_fresh:
 			main.dev_restore(arrival)

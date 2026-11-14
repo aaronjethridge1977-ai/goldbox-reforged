@@ -394,6 +394,8 @@ others from J:
   original too (a dead end facing out); from 0,9 north is open and the party walks 0,8 and 0,7, as in ours.
   The walks had stopped at the entrance: the four searches in a row asked the passage question four times, and
   the repeated-question rule answered LEAVE CAVE. In coverage runs the rule now waits for a seventh time.
+- A part's arrival square, when it has an event, is LOOKed at facing each way before the walk
+  (7:23's storeroom: arriving by teleport, any step off flashes the party away again).
 
 ### Side chat 2 additions (fights roll for roll against the original)
 
