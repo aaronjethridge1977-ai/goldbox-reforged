@@ -352,6 +352,7 @@ func _back_to_start() -> void:
 		_start_menu.chosen.connect(_on_start_chosen)
 	_start_menu.visible = true
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
+var _who_open := false   # a WHO menu's highlight has been put on the selected member
 var _menu_sel := 0   # the event menus' highlight, kept from one menu to the next
 
 
@@ -874,6 +875,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			var choice := -1
 			if key >= KEY_1 and key <= KEY_9:
 				choice = key - KEY_1
+			elif _vm._menu_kind == "who":
+				# WHO (lab, chat 22, New Phlan's inn): "WHO WILL PAY?" SELECT on row 24; Home/End
+				# move the white member on the party list, Enter (or SELECT's S) takes them.
+				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1]:
+					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1] else -1), _vm.menu.size())
+				elif event.is_action("ui_accept") or key == KEY_S:
+					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			elif _vm.menu_vertical:
 				# A vertical menu (lab, chat 13): Home and End move the highlight up and down,
 				# wrapping round; Enter takes it. Letters and the left/right arrows do nothing.
@@ -2809,6 +2817,9 @@ func _draw_screen() -> void:
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
 	var selected := 0
 	var vertical: Array = []
+	var who_label := ""
+	if _vm._menu_kind != "who" or _vm.state != EclVM.State.MENU:
+		_who_open = false
 	if _door_options != "":
 		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
 		menu = []
@@ -2816,6 +2827,15 @@ func _draw_screen() -> void:
 			menu.append(words[c])
 		body = ""
 		menu.push_front("LOCKED.")
+	elif _vm.state == EclVM.State.MENU and not _vm.menu.is_empty() and _vm._menu_kind == "who":
+		# WHO: the question on row 24 (magenta) with SELECT, the member picked on the party
+		# list, the text box empty (lab, chat 22: the inn's WHO WILL PAY?).
+		if not _who_open:
+			_who_open = true
+			_menu_sel = clampi(_vm.selected, 0, _vm.menu.size() - 1)
+		body = ""
+		menu = []
+		who_label = _vm.text.strip_edges()
 	elif _vm.state == EclVM.State.MENU and not _vm.menu.is_empty():
 		var cut := body.rfind("\n\n")
 		if cut >= 0:
@@ -2848,7 +2868,14 @@ func _draw_screen() -> void:
 	OverlayLook.last_wild = wild
 	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
-	_screen.draw_walk(view, _party, clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	var lit := clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
+	if who_label != "":
+		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
+	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	if who_label != "":
+		_screen.text(0, 24, who_label, 13)
+		_screen.menu_line(24, ["SELECT"], who_label.length() + 1, 0)
+		_screen.update()
 
 
 ## AREA: the overhead map of the block in the view window, walls as lines, the party as an
