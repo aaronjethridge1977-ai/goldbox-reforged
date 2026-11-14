@@ -481,6 +481,7 @@ func shoot(i: int, j: int) -> void:
 	if am.weapon_ranged_melee and touching(a, t):
 		attack(i, j)
 		return
+	a.target = j
 	_note_attack(a, t)
 	if t.received < 3:
 		t.dir = dir_between(t, a)
@@ -927,6 +928,9 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var tm: PartyMember = t.who
 	var behind := free
 	if not free:
+		# Whoever it attacks becomes its target (GAME.OVR 0x14126; a free attack puts the old
+		# one back, 0x13402).
+		a.target = j
 		# The original (GAME.OVR 0x12EDB: 0x13FF1 then 0x1407F) counts the attack, turns
 		# the target to face the attacker on its first two attacks of the round, and only
 		# then asks whether the attacker stands behind it (0x13DCF), so a second attacker
