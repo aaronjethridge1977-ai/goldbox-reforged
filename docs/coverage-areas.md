@@ -46,9 +46,9 @@ numbers and the critical count, every remaining path listed below with its reaso
 
 | area | instructions | branches | critical | |
 |---|---|---|---|---|
+| 5:4 Valjevo, north side | 98 (96) | 94 (91) | 7/7 · 6/6 · 24/24 | done |
 | 6:28 Zhentil outpost | 97 (97) | 97 (97) | 5/5 · 9/9 · 5/5 | done |
 | 7:22 Yarash's pyramid, outside | 96 (92) | 95 (91) | 4/4 · 1/1 · 10/10 | done |
-| 5:4 Valjevo, north side | 96 (96) | 91 (91) | 7/7 · 6/6 · 24/24 | done |
 | 2:15 Mendor's library | 96 (93) | 90 (85) | 3/3 · 7/7 · 25/25 | done |
 | 8:16 ruined castle | 96 (96) | 88 (88) | 4/4 · 7/7 · 18/18 | done |
 | 6:1 Buccaneers' base | 95 (85) | 94 (86) | 3/3 · 15/15 · 6/7 |  |
@@ -57,29 +57,29 @@ numbers and the critical count, every remaining path listed below with its reaso
 | 8:29 Kuto's Well | 95 (95) | 86 (86) | 8/8 · 7/7 · 17/17 | done |
 | 4:21 Sokal Keep | 94 (94) | 92 (92) | 4/4 · 4/4 · 9/9 | done |
 | 6:19 Diogenes's cave mouth | 93 (80) | 100 (85) | 2/2 · 0/0 · 3/3 | done |
-| 3:11 training halls, arena | 92 (92) | 88 (88) | 3/3 · 2/2 · 1/1 | done |
-| 4:2 Cadorna textile house | 92 (86) | 88 (84) | 5/5 · 11/12 · 16/17 |  |
-| 3:14 Kovel Mansion | 91 (87) | 86 (82) | 5/5 · 14/14 · 21/21 |  |
+| 3:11 training halls, arena | 93 (92) | 89 (88) | 3/3 · 2/2 · 1/1 | done |
+| 4:2 Cadorna textile house | 93 (86) | 89 (84) | 5/5 · 11/12 · 16/17 |  |
+| 3:14 Kovel Mansion | 92 (87) | 88 (82) | 5/5 · 14/14 · 21/21 | done |
 | 7:17 nomads' camp | 90 (90) | 87 (86) | 3/3 · 5/6 · 18/20 |  |
-| 7:23 Yarash's pyramid, inside | 89 (89) | 87 (86) | 4/4 · 3/5 · 18/21 |  |
+| 3:0 New Phlan | 90 (87) | 82 (79) | 12/12 · 8/8 · 9/9 |  |
+| 7:23 Yarash's pyramid, inside | 89 (89) | 88 (86) | 4/4 · 3/5 · 18/21 |  |
+| 1:18 Podol Plaza | 89 (87) | 85 (81) | 6/6 · 6/7 · 20/24 |  |
 | 2:20 Slums | 89 (89) | 78 (78) | 4/4 · 20/20 · 20/21 |  |
 | 7:26 wilderness band, middle | 89 (89) | 78 (78) | 18/18 · 5/7 · 6/6 |  |
 | 5:6 Valjevo, temple side | 88 (83) | 84 (73) | 3/3 · 6/6 · 21/21 |  |
-| 1:18 Podol Plaza | 88 (87) | 83 (81) | 6/6 · 6/7 · 20/24 |  |
-| 5:7 Valjevo tower | 88 (88) | 83 (83) | 4/4 · 5/5 · 13/15 |  |
+| 5:7 Valjevo tower | 88 (88) | 84 (83) | 4/4 · 5/5 · 13/15 |  |
 | 4:10 Valhingen graveyard | 88 (88) | 79 (78) | 2/2 · 16/18 · 39/48 |  |
-| 3:0 New Phlan | 87 (87) | 80 (79) | 12/12 · 7/8 · 9/9 |  |
 | 8:13 kobold caves | 86 (86) | 85 (84) | 3/3 · 14/15 · 17/19 |  |
 | 5:3 Valjevo outer castle | 85 (81) | 81 (77) | 7/7 · 10/11 · 23/23 |  |
-| 8:27 wilderness band, east | 84 (71) | 72 (61) | 10/10 · 8/12 · 6/6 |  |
-| 3:8 City Hall | 81 (81) | 82 (82) | 2/2 · 3/3 · 23/34 |  |
-| 6:25 wilderness band, west | 72 (69) | 66 (64) | 11/11 · 4/13 · 5/5 |  |
+| 3:8 City Hall | 84 (81) | 84 (82) | 2/2 · 3/3 · 28/34 |  |
+| 8:27 wilderness band, east | 84 (71) | 73 (61) | 10/10 · 8/12 · 6/6 |  |
+| 6:25 wilderness band, west | 76 (69) | 71 (64) | 11/11 · 6/13 · 5/5 |  |
 | 2:9 Stojanow Gate | 69 (69) | 70 (70) | 3/4 · 3/7 · 17/24 |  |
 
-Overall, all runs merged: played 87% → **89%** of instructions and 82% → **84%** of reachable branches; with the
-choices not taken tried in the shadow copy as well, 90% and 85%.
+Overall, all runs merged: played 87% → **90%** of instructions and 82% → **85%** of reachable branches; with the
+choices not taken tried in the shadow copy as well, 91% and 86%.
 
-**Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, and in chat 17 1:24, 2:15, 6:19, 7:22 (11 of 29).
+**Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, and in chat 17 1:24, 2:15, 6:19, 7:22, 3:14 (12 of 29).
 
 ## 1:24, the Temple of Bane quarter: done (chat 17)
 
@@ -142,6 +142,25 @@ choice is played again when the area's flags differ, so a second THROW A ROCK to
 | 0xA1F9 → 3 | both sides surprised (a SURPRISE roll of 3) |
 | 0xA342 → 0 | the flying monsters' menu with its own variable 0x6E7B as the distance: outcome 0 needs their roll to come out 0 |
 | 0xA35A → T | that encounter's ADVANCE side met on a row under 8 (the encounter comes on rows 8 and up in the runs) |
+
+## 3:14, Kovel Mansion: done (chat 17)
+
+92% of instructions and 88% of reachable branch outcomes; every story-critical instruction has run (5 ways in or
+out, 14 set fights, 21 quest flags). Chat 17's two rounds of every-choice runs (rerolled encounter jobs, walk
+states, the 12-hour walk) did it. Not every one of these is worked out:
+
+| where | what it needs |
+|---|---|
+| 0x993C → 3 | the facing table's fourth case (arriving facing west on that square) |
+| 0x99FA → F, 0x9A2C → T; 0x9A05, 0x9DD3, 0x9DDE, 0x9DE9 | 0x4A06 set, and 0x4AEA-0x4AEC at 1: written only outside this area; the code behind them is unreached |
+| 0x9B53 → T, 0xAAC8 → T, 0xAAD3 → F | the mansion's alarm count 0x4A45 at 21 or more (with the roll added) |
+| 0x9CC3 → T | a room's visit byte (0x4A08 + room) at 1 when that check runs |
+| 0x9ED9 → T | a member with spell 31 (0x6E7D not 255 after the SPELL check): another party |
+| 0xA36B → T | 0x4AED = 1 (written only outside this area) |
+| 0xA534 → T, 0xA639 → T | bits 1 and 2 of 0x4A46 already set at those rooms |
+| 0xA53D, 0xA642, 0xA729 → 2; 0xA80B → 1, 2 | the visit state 0x4A13 at 1 or 2 when those rooms are entered (the order the walk took them) |
+| 0xAB49 → T, 0xAB58 → F | the treasure room's counter and roll |
+| 0xB3CB → T | a PARTY_CHECK that comes out nonzero: another party |
 
 ## 6:28, the Zhentil outpost: done
 
@@ -276,23 +295,28 @@ the alarm off and the disguise on (0xA4AE).
 
 ## What holds the rest back (chat 17)
 
-- **2:9 Stojanow Gate (69 / 70):** the walk fights the gate's bugbears early, and that fight marks both towers
-  (0x4A77 |= 12, 0xA60E), so the tower rooms (the mage, the fighter: 0xA1D8, 0xA2F9) were always empty. The
-  `-towers` variant flees the bugbears instead; its first runs were overridden by the bot's no-surrender rule and
-  the rules file's own answer (both fixed). The payment routine (0x9956-0x9B66) needs other purses.
-- **The bands (6:25 72 / 66, 7:26 89 / 78, 8:27 84 / 72):** the caves and most sites are random rolls (about one
+- **2:9 Stojanow Gate (69 / 70):** the gate's bugbears ask THROW DOWN YOUR WEAPONS until the party fights (FLEE
+  only brings the question back); the fight raises the alarm, the towers' defenders come out and are marked dealt
+  with (0x4A77 |= 12, 0xA60E), so the tower rooms (the mage, the fighter: 0xA1D8, 0xA2F9) are always empty after.
+  Finding them manned needs a party that pays its way past the gate (the payment routine 0x9956-0x9B66, other
+  purses); `cover_2-9-fresh` is still to run with chat 17's code.
+- **The bands (6:25 76 / 71, 7:26 89 / 78, 8:27 84 / 73):** the caves and most sites are random rolls (about one
   step in 20 rolls an encounter, 0xA0B3), so each run meets different ones; runs are merged. The caves'
   map (GEO6 block 25) was checked in the original: the entrance at 15,3 is a dead end facing out there too, and
   from 0,9 the party walks north, as in ours. The walks had stopped at the entrance because the four searches
   in a row asked the passage question four times and the repeated-question rule answered LEAVE CAVE (fixed).
-- **3:8 City Hall (81 / 82, quest flags 23/34):** the clerk's and the council's answers follow reports set in
+- **3:8 City Hall (84 / 84, quest flags 28/34):** the clerk's and the council's answers follow reports set in
   other areas (Podol Plaza cleared 0x4AE7 = 254, the textile house 0x4AE6 = 254, Cadorna's seal 0x4AC8 = 128, the
-  Bivant rescue 0x4AA9 = 128). The `-story` variant sets them as those areas' scripts do.
-- **1:18 Podol Plaza (88 / 83):** the plaza's count 0x4A34 reaches 9 only after many fights (0xB248 then tells
+  Bivant rescue 0x4AA9 = 128). The `-story` variant sets them as those areas' scripts do and rests until morning
+  (City Hall locks at 14:00, 3:0's 0x9920); it raised the flags from 23 to 28.
+- **1:18 Podol Plaza (89 / 85):** the plaza's count 0x4A34 reaches 9 only after many fights (0xB248 then tells
   City Hall); the robed orc's meeting (0xB0BE) waits for an hour. The `-count` variant and the 12-hour walk.
 - **4:10 Valhingen graveyard (88 / 79):** the paladin's wraith (0xA28C) comes only while 0x4AF4 is 9 or less, and
   the walk's earlier fights count it past that; the `-fresh` variant walks to each event from the arrival. The
   "over 249, set 249" writes (0xA616, 0xA814, 0xAB31, 0xB29C, 0xB2B2, 0xB2C8) are clamps on kill counters.
+- **4:2 (93 / 89):** the last fight and flag (0xAF05, 0xAF0C) are Restal's offer to duplicate the seal, which
+  needs City Hall's commission (0x4A97 = 255) and the sealed chest taken unopened (0x4AC8 = 1); the `-seal`
+  variant set both and the offer still didn't come (not worked out).
 - **6:1 (95 / 94):** the last flag, 0x993D (0x4AA9 = 254), is written when the party leaves the map
   (0x6DD5) after buying the boy (0x4AA9 = 1).
 - **7:17 (90 / 87):** the kobold war's third stage (0xB121, the headman's DESTROY THE KOBOLDS) comes after two
