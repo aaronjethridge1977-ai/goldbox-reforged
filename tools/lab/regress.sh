@@ -2,7 +2,7 @@
 # Replays every saved original trace (tools/lab/traces/: the original's dice, cells, CONTINUE
 # BATTLE and the party's HP at the end; no game data) in ours and prints each fight's verdict.
 # regress.sh record: plays each fight in the original again first and saves its new trace
-# (about a minute a fight). Needs the lab saves E and F (README, side chat 2).
+# (about a minute a fight). Needs the lab saves E and F (README, side chat 2) and H (side chat 3).
 cd "$(dirname "$0")"
 WHAT=ours; [ "$1" = record ] && WHAT=both
 run() { # name magic script args...
@@ -24,4 +24,7 @@ run orig_E_5eed5eed 1 ./cmpfight2.sh E 5eed5eed up,up enter $WHAT
 for s in 00000002 00000003 00000004 deadbeef cafef00d 12121212; do
   m=1; [ $s = 00000003 ] || [ $s = deadbeef ] && m=0
   run orig_F3_$s $m ./cmpfight3.sh F 10000012 "" up,c $WHAT $s ""
+done
+for s in 11111111 22222222 33333333 55555555 deadbeef 0badf00d; do   # QUICK Bakshi with two Magic Missiles
+  run orig_H_$s 1 ./cmpfight2.sh H $s up,up enter $WHAT
 done

@@ -475,8 +475,10 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 				else:
 					SpellCaster.add_affect(t, EFFECT_PARALYZE, id, dur, lvl)
 					c.message.emit("%s IS HELD" % t.name)
-		15:         # Magic Missile
-			var n := (lvl + 1) / 2
+		15:         # Magic Missile: the original's handler (GAME.OVR 0x28451) rolls (level / 2)d4
+			# + level / 2, not the rule book's (level + 1) / 2 missiles: at level 1 no damage
+			# and no dice (lab 2026-11-14, a QUICK Bakshi's missile drew nothing).
+			var n := lvl / 2
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				if t.has_affect(EFFECT_SHIELD):
@@ -868,8 +870,10 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			return {}
 		var none: Array[int] = []
 		return {"cell": me.cell, "picked": none, "weighed": true}
-	# Aiming it as it goes off: a random enemy in range with a clear shot (assumed: the
-	# original's aim, GAME.OVR 0x96:0x39, is not yet traced).
+	# Aiming it: a random enemy in range with a clear shot, from the list nearest first, the
+	# same pick (GAME.OVR 0x160DB) as a target for a blow, and it becomes the caster's
+	# target (lab 2026-11-14: a QUICK Bakshi's Magic Missile, then its next blow drew no
+	# new pick).
 	var near: Array[int] = []
 	for j in c.combatants.size():
 		var e: Dictionary = c.combatants[j]
@@ -877,7 +881,9 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			near.append(j)
 	if near.is_empty():
 		return {}
+	c._by_distance(me, near)
 	var t: int = near[c.roll(1, near.size(), "%s aims" % me.who.name) - 1]
+	me.target = t
 	if held(c.combatants[t].who):
 		for j in near:
 			if not held(c.combatants[j].who):

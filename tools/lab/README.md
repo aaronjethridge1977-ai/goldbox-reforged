@@ -507,3 +507,13 @@ games draw the same numbers, so a fight can be compared draw by draw.
   in the original (ours steps diagonally; no dice differ): open, as the 25,13 case above.
 - `presser.py`: `CONTINUE=y` answers YES the first time (the original then plays another
   round with nobody to fight and asks again).
+- Save H (ours writes it): `load=E,memorize=1:15;15,e,s,h,n`, Bakshi with two Magic Missiles
+  (G: `memorize=1:21;21`, two Sleeps; no QUICK caster has picked Sleep yet). The lab key
+  `memorize=<member>:<id>;<id>...` sets a member's memorized spells (no ids: lists them).
+  `regress.sh` replays six H fights too: the original's Magic Missile rolls (level / 2)d4 +
+  level / 2 (GAME.OVR 0x28451; nothing at level 1), and its aim is the blow's target pick,
+  nearest first, which becomes the caster's target.
+- `origfight.py <secs> <log> noenter magic` logs each screen change of the original's fight
+  with the running draw count (how the Magic Missile was found: "SPELL: MAGIC MISSILE", an
+  aim, and no damage dice).
+

@@ -427,6 +427,16 @@ func _replay_keys(names: PackedStringArray) -> void:
 			for k in _party.size():
 				print("   PARTY %d %d %d" % [k + 1, _party[k].hp, _party[k].status])
 			continue
+		elif n.begins_with("memorize="):    # memorize=<member>:<id>;<id>... (lab): the member's memorized spells; no ids: list them
+			var a := n.trim_prefix("memorize=").split(":")
+			var who: PartyMember = _party[int(a[0])]
+			var st := SpellTable.shared(_game_path)
+			if a.size() > 1 and a[1] != "":
+				who.memorized.clear()
+				for id in a[1].split(";"):
+					who.memorized.append(int(id))
+			print("   %s: %s" % [who.name, ", ".join(who.memorized.map(func(id): return "%d %s" % [id, st.name_of(id)]))])
+			continue
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
 				print("   ", l)

@@ -64,7 +64,7 @@ if ustart:
         omoves = {}; umoves = {}
         for src, dst in ((opos, omoves), (upos, umoves)):
             for at in sorted(src):
-                if at <= first:
+                if at < first:
                     for t in src[at]:
                         k, xy = t.split(":"); dst.setdefault(int(k), []).append(xy)
     bad = []

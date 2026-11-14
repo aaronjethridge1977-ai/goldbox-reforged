@@ -1,6 +1,7 @@
 """Plays the open fight in the original on QUICK for everyone, logging each screen change:
 the right panel's text and row 24, and how many random numbers were drawn since the last line
-(the seed's steps, tp.steps). origfight.py <seconds> [out.txt]"""
+(the seed's steps, tp.steps). origfight.py <seconds> [out.txt] [noenter] [magic]
+(magic: Alt-M right after the first Q, so QUICK members cast.)"""
 import sys, time, hashlib, lab, keys, tp, seed as sd
 secs = float(sys.argv[1]); out = open(sys.argv[2] if len(sys.argv) > 2 else "/dev/stdout", "w")
 p = sd.pid(); a = sd.addr(p); mem = open(f"/proc/{p}/mem", "rb", 0)
@@ -21,6 +22,7 @@ while time.time() - t0 < secs:
         last_txt = txt; last_s = s
     if "QUICK" in rows[24] and time.time() - lastq > 1.5:
         keys.key("q"); lastq = time.time()
+        if "magic" in sys.argv and not seen_fight: time.sleep(0.2); keys.key("alt+m")
     if "QUICK" in rows[24] or "MOVE/ATTACK" in rows[24]:
         seen_fight = True
     if seen_fight and ("PRESS <ENTER>" in rows[24] or "CONTINUE" in rows[24]):
