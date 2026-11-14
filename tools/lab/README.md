@@ -372,3 +372,9 @@ others from J:
   outside the mask, is never equal (6:19's 0x9927).
 - `cover_6-25.plan` answers STAY IN at the caves' passage (the walk of a cave part had answered
   LEAVE CAVE on its first square).
+- Stairs are taken once per square the walk goes to (2:9's tower stairs land on the other
+  stairs, which asked again: up and down until the loop rule stopped it).
+- An area that sends every party out and changes the story flags on the way in (6:19) is come
+  into again by the same way, from there.
+- The tour's repeated-question rule counts since the last `dev_restore` (`main.dev_restores`):
+  a coverage walk comes back to a square from a snapshot on purpose (6:25's cave passage).

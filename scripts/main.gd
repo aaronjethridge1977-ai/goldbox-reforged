@@ -657,6 +657,7 @@ var auto_hook: Callable = Callable()
 var _shadow: ShadowExplorer = null     # dev: tries the choices not taken (--branches=)
 ## Dev (M6 coverage runs, chat 14): a harness records each step and the choices that follow it,
 ## and later puts the game back (dev_snapshot / dev_restore) to play another choice for real.
+var dev_restores := 0       # dev_restore calls so far (the bot's repeated-question counts start again)
 var dev_no_draw := false      # --no-draw (lab, dev builds): _show skips the drawing (chat 17)
 var dev_step_hook: Callable = Callable()     # (direction) as a step starts in walk mode
 var dev_choice_hook: Callable = Callable()   # (choice) as a script menu takes a choice
@@ -2851,6 +2852,7 @@ func dev_choose(i: int) -> void:
 func dev_restore(s: Dictionary) -> bool:
 	if not DevShortcuts.allowed() or s.is_empty():
 		return false
+	dev_restores += 1
 	_timer.stop()
 	_busy = false
 	_walk_path.clear()

@@ -682,6 +682,9 @@ func _hook() -> bool:
 		# The same question again and again (a script that puts the party back outside, and the
 		# walk going straight back in): stop the walk.
 		var ask: String = "%s %s|" % [_here(), main._pos] + main._message.text.strip_edges().left(80) + "|" + " ".join(items)
+		# Chat 17: counted since the last restore (a coverage run comes back to a square from a
+		# snapshot many times on purpose; 6:25's cave passage then answered LEAVE CAVE).
+		ask = "%d|%s" % [main.dev_restores, ask]
 		# (Any way out counts: "LEAVE IT" at Kovel Mansion's trapped cabinet, chat 10, where
 		# EXAMINE / LEAVE over and over set the gas trap off until the party died.)
 		if "ATTACK" in items or "TALK" in items or items.any(func(x): return String(x).begins_with("LEAVE")):
@@ -3261,6 +3264,10 @@ func _cover(area: String, minutes: int) -> void:
 			# Parts no walk has been in first, all of them; then up to six flag states.
 			var sig: String = _cover_states.keys()[0]
 			for k: String in _cover_states:
+				if not k.begins_with("outside "):
+					sig = k     # chat 17: states inside the area before those outside it
+					break
+			for k: String in _cover_states:
 				if k.begins_with("part "):
 					sig = k
 					break
@@ -3450,6 +3457,9 @@ func _cover_typed(text: String) -> void:
 
 ## The bot's hook in a coverage run: a job's answers first; then COMBAT at encounters (the
 ## fight is won by shortcut; the other choices are queued).
+var _cover_stairs_for := ""     # chat 17: the walk's target the stairs were taken for
+
+
 func _cover_hook() -> bool:
 	var vm: EclVM = main._vm
 	if _here() == _cover_area and _cover_going_in:
@@ -3487,6 +3497,13 @@ func _cover_hook() -> bool:
 				print("   >> %d (NO: stairs on the way to %s)" % [opts.find("NO") + 1, _cover_target])
 				main.dev_choose(opts.find("NO"))
 				return true
+			# Chat 17: once per square walked to: 2:9's tower stairs land the party on the other
+			# stairs, which asked again, and the walk went up and down until the loop rule.
+			if _cover_stairs_for == "%d:%s" % [main._map_index, _cover_target]:
+				print("   >> %d (NO: the stairs were taken once already)" % (opts.find("NO") + 1))
+				main.dev_choose(opts.find("NO"))
+				return true
+			_cover_stairs_for = "%d:%s" % [main._map_index, _cover_target]
 			print("   >> %d (YES: coverage run, the other level)" % (opts.find("YES") + 1))
 			main.dev_choose(opts.find("YES"))
 			return true
@@ -3587,6 +3604,7 @@ func _cover_job_once(job: Dictionary) -> void:
 	if job.get("reseed", false):
 		main._vm._rng.seed = randi() ^ Time.get_ticks_usec()
 	_cover_forced = job.path.duplicate(true)
+	_cover_stairs_for = ""
 	_cover_snap = {}
 	_cover_flee_next = job.get("flee", false)
 	_cover_flee_at = int(job.get("flee_at", -1))
@@ -3627,11 +3645,16 @@ func _cover_job_once(job: Dictionary) -> void:
 	# Chat 15: a job that leaves the party in the area with its quest flags changed (the
 	# bugbears fought instead of warned, the watch fought, a pass shown) opens a state the walk
 	# hasn't seen: kept for a walk of its own once the jobs are done.
-	if not wiped and _here() == _cover_area and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+	# Chat 17: a job that ends outside the area (Diogenes's mouth sends every party out) with the
+	# story flags (0x4A20 up) changed opens a state too; its walk comes in again by the ways in.
+	var inside := _here() == _cover_area
+	if not wiped and main._vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and (inside or _here() != "0:0"):
 		var before: PackedByteArray = job.snap.vm.mem.slice(QUEST_LO, QUEST_HI)
 		var now: PackedByteArray = main._vm.mem.slice(QUEST_LO, QUEST_HI)
-		var sig := ""
+		var sig := "" if inside else "outside "
 		for i in now.size():
+			if not inside and i < 0x20:
+				continue
 			# Flags and the area's own markers (0x4A00-0x4A1F), as they go on or off; a
 			# counter going up (a sign read again) is not a new state.
 			if (now[i] == 0) != (before[i] == 0):
@@ -3640,14 +3663,14 @@ func _cover_job_once(job: Dictionary) -> void:
 				var bits: int = now[i] & ~before[i]
 				if bits != 0:
 					sig += "%04X|%d " % [QUEST_LO + i, bits]
-		if sig != "":
+		if sig != "" and sig != "outside ":
 			if not _cover_states.has(sig) and not _cover_states_walked.has(sig) and _cover_states.size() < 12:
 				_cover_states[sig] = main.dev_snapshot()
 				print("   (a new state for the walk: %s)" % sig.strip_edges())
 				_cover_resume_note("opened", "%s|||%s" % [job.key, sig])
 		# Chat 16: a job that leaves the party on a part of a map no walk has been in (6:25's
 		# caves: ENTER, then STAY IN; the walk answers LEAVE CAVE) is walked as an arrival too.
-		if not main._vm.on_overland:
+		if inside and not main._vm.on_overland:
 			var part := "part %d:%d" % [main._map_index, _region_id(main._pos)]
 			if not _cover_parts_walked.has(part) and not _cover_states.has(part) and not _cover_states_walked.has(part):
 				_cover_states[part] = main.dev_snapshot()
@@ -3672,7 +3695,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 		_cover_groups_in["all"] = true
 	if _here() == _cover_area and _area_map(_cover_area) == main._maps[main._map_index].map:
 		_cover_groups_in["part %d" % _dungeon_part(_cover_area, main._pos)] = true
-	var ways_in := [] if again else _cover_ways_in()
+	var ways_in := [] if again and not arrivals.is_empty() else _cover_ways_in()
 	while Time.get_ticks_msec() < deadline:
 		if arrivals.is_empty():
 			# Every way into the area the graph knows, once each (Valjevo's outer castle runs
@@ -3684,7 +3707,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 			var group := String(e.get("group", ""))
 			if group != "" and _cover_groups_in.has(group):
 				continue        # that part has been reached already
-			main.dev_restore(start)
+			main.dev_restore(e.get("from_snap", start))
 			await _settle()
 			if e.get("teleport", false):
 				# Chat 15: no walking way into this part worked (the way in starts on another map
@@ -3734,6 +3757,15 @@ func _cover_walk(deadline: int, again := false) -> void:
 				arrivals.append(main.dev_snapshot())
 			else:
 				print("   (that way in ends in %s at %s: %s, vm %d)" % [_here(), main._pos, main._state_line(), main._vm.state])
+				# Chat 17: an area that sends every party out (Diogenes's mouth) and changed the
+				# story flags on the way: the same way in once more, from here (his thanks set
+				# 0x4A87 bit 1; the next visit finds the cave empty, 0x996E).
+				var was: PackedByteArray = (e.get("from_snap", start) as Dictionary).vm.mem.slice(QUEST_LO + 0x20, QUEST_HI)
+				if not e.has("from_snap") and not _wiped() and main._vm.mem.slice(QUEST_LO + 0x20, QUEST_HI) != was:
+					var again_e: Dictionary = e.duplicate()
+					again_e["from_snap"] = main.dev_snapshot()
+					ways_in.push_front(again_e)
+					print("   (the story flags changed: that way in once more)")
 			continue
 		var arrival: Dictionary = arrivals.pop_front()
 		main.dev_restore(arrival)
@@ -3983,6 +4015,7 @@ func _cover_map(deadline: int) -> Array:
 		main._refused = _cover_exits_used.duplicate()
 		var pre: Dictionary = main.dev_snapshot()
 		print("   cover: event %d at %s%s" % [best, best_sq, " (no route: trying the walls)" if probe else ""])
+		_cover_stairs_for = ""
 		if main._pos == best_sq:
 			await _step_off()
 			await _settle()
