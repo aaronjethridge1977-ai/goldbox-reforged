@@ -1,0 +1,10 @@
+# Chat 17: 1:18 with Podol Plaza's count 0x4A34 at 9 (counted up by 0x9E14), by shortcut, as a player
+# who has fought that far has it: at 9 the plaza is cleared (0xB248: 0x4AE7 = 254 for City Hall).
+rules playthrough.plan
+start chat10a_latest/library
+shortcut flag 4A34 set 9 the plaza count as a player who fought that far has it
+travel 1:18
+expect 1:18
+cover 1:18 40 all
+status
+stop

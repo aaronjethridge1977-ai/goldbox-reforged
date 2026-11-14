@@ -1,0 +1,16 @@
+# Chat 17: 3:8 (City Hall) with the reports the clerk and the council answer, set by shortcut as a
+# player who did those things has them: Podol Plaza cleared (0x4AE7 = 254, written by 1:18),
+# the textile house cleared (0x4AE6 = 254, by 4:2), Cadorna's seal handed over (0x4AC8 = 128,
+# by 4:2), the Bivant boy's rescue bungled (0x4AA9 = 128, by 6:1). Each the value that area's
+# script writes.
+rules playthrough.plan
+start chat12a_latest/buccaneers
+shortcut flag 4AE7 set 254 Podol Plaza cleared (1:18 writes 254)
+shortcut flag 4AE6 set 254 the textile house cleared (4:2 writes 254)
+shortcut flag 4AC8 set 128 Cadorna's seal (4:2 writes 128)
+shortcut flag 4AA9 set 128 the Bivant rescue bungled (6:1 writes 128)
+travel 3:8
+expect 3:8
+cover 3:8 40 all
+status
+stop
