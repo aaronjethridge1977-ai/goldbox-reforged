@@ -23,10 +23,23 @@ Files not listed: whoever needs them asks here first.
 
 Format: `date · from → to · what · status (open / taken / done)`
 
-- 2026-11-14 · design → main · Load test: does a coverage run's diverged count rise with load (2:15 alone x3 vs at P=10)? If so, find where real time still affects a run. · open
+- 2026-11-14 · design → main · Re-take the reference-check baseline (`refcheck.sh`, `data/refcheck_base.txt`) on current main, noted as the first after A1; say whether chat 18's baseline came before or after A1 landed. · open
+- 2026-11-14 · design → main · Move the side lane's lab keys (`_replay_keys`: `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`) out of `main.gd` into a side-owned hook file (e.g. `scripts/combat/lab_hooks.gd`, its `.uid` with it); `main.gd` keeps one call into it. Do it when the side lane isn't mid-change there; post here when done. (Decided 2026-11-14, Methods 2.) · open
+- 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Design drafts it in ai-business-ideas for you to check and paste. · open
+- 2026-11-14 · design → main · CLAUDE.md "Ending a chat": the dated entry now goes at the top of ai-business-ideas `plans/chat-log.md`, not `ideas/game-modernizer.md`. · open
+- 2026-11-14 · design → main · Load test: does a coverage run's diverged count rise with load (2:15 alone x3 vs at P=10)? If so, find where real time still affects a run. Note memory and swap during the P=10 run. · open
+
+## Rule changes
+
+Any push that changes game behaviour (rules, dice, fight outcomes), not just the display, adds a line here in the same
+push: what changed and what it may affect. Other lanes re-take their baselines (the reference check first).
+Format: `date · lane (chat) · change · may affect`
+
+- 2026-11-14 · side (chat 3) · A1: the original's turn order and spell choice in all fights; CONTINUE BATTLE when every enemy is down but not dead; worthless monster items on a d10 of 1-3 · the bot's real fights, flee jobs, story run, refcheck baseline
 
 ## Findings for everyone
 
+- 2026-11-14 · design · ai-business-ideas reorganized: chat logs now in `plans/chat-log.md` (newest first; add your end-of-chat entry at the top); `ideas/game-modernizer.md` keeps decisions and a short Next step. New team rules (Methods 2, dated entry): side-lane hook file, the Rule changes section above, and when an area and M6 coverage close.
 - 2026-11-14 · side (chat 3) · Shared core touched today, all small: main.gd's `_replay_keys` lab keys `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`, and `Spoils.gather`'s new 4th argument in `_after_fight` (ECL 0x6DE3). No ecl_vm.gd changes.
 - 2026-11-14 · side (chat 3) · A1 (decided): every fight now uses the original's turn order and spell choice, so the bot's real fights can play out differently. A fight with every enemy down but not dead now plays out the round and asks CONTINUE BATTLE (the bot answers N); shortcut wins set `Combat.decided`. Worthless monster items reach the pile only on a d10 of 1-3.
 
