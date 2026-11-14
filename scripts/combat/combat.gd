@@ -371,6 +371,8 @@ var quick_bandages := false
 const QUICK_BANDAGES_KEY := "quick_bandages"
 ## SETTINGS: TACTICS FOR QUICK, SMARTER (B1; SmartQuick). Set like quick_bandages.
 var smart_quick := false
+## SETTINGS: MONSTER TACTICS, SMARTER (B2; SmartQuick). Set like quick_bandages.
+var smart_monsters := false
 
 
 static func quick_bandages_on() -> bool:
@@ -1277,7 +1279,7 @@ func find_target(i: int) -> bool:
 	if pool.is_empty():
 		return false
 	_by_distance(c, pool)
-	if SmartQuick.applies(self, i):
+	if SmartQuick.smart(self, i):
 		c.target = SmartQuick.weakest(self, i, pool)
 	else:
 		c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
@@ -1591,14 +1593,14 @@ func ai_act() -> bool:
 		# The original's QUICK never bandages (lab, side chat 2: Bakshi lay dying through the
 		# rest of the orc fight while Thrender and Brother Sean fought on). The bot still does,
 		# as a player would from the DONE menu (party_judge is its hook).
-		var smart := SmartQuick.applies(self, active)
+		var smart := SmartQuick.smart(self, active)
 		if c.team == 0 and (party_judge.is_valid() or quick_bandages or smart) and bandage():
 			return false
 		choose_weapon(active)
 		var morale := _morale_check(active)
 		if c.team == 0 and party_judge.is_valid() and party_judge.call(self, active) == "flee":
 			morale = "flee"
-		elif smart and morale == "" and SmartQuick.hopeless(self):
+		elif SmartQuick.applies(self, active) and morale == "" and SmartQuick.hopeless(self):
 			morale = "flee"
 		if morale == "surrender":
 			var sm: PartyMember = c.who
@@ -1679,7 +1681,7 @@ func ai_act() -> bool:
 					return false
 				continue
 			_by_distance(c, near)
-			if SmartQuick.applies(self, active):
+			if SmartQuick.smart(self, active):
 				t = SmartQuick.weakest(self, active, near)
 			else:
 				t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]

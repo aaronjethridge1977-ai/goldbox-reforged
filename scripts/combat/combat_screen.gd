@@ -616,6 +616,10 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_combat = Combat.new(_field, _combatants, seed_value)
 	_combat.quick_bandages = Combat.quick_bandages_on() and DisplayServer.get_name() != "headless" and not TpDice.on
 	_combat.smart_quick = SmartQuick.on() and DisplayServer.get_name() != "headless" and not TpDice.on
+	_combat.smart_monsters = SmartQuick.monsters_on() and DisplayServer.get_name() != "headless" and not TpDice.on
+	# Lab: --smart-quick / --smart-monsters turn them on in headless test fights too.
+	_combat.smart_quick = _combat.smart_quick or "--smart-quick" in OS.get_cmdline_user_args()
+	_combat.smart_monsters = _combat.smart_monsters or "--smart-monsters" in OS.get_cmdline_user_args()
 	_combat.types = _types
 	var table := SpellTable.shared(_game_path)
 	if table.is_loaded():

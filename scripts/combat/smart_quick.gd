@@ -19,8 +19,16 @@ extends RefCounted
 ##   one it fights on (stepping away would invite free attacks).
 ## - The whole party flees when the fight looks hopeless: the enemies standing have more
 ##   than four times the party's standing hit points.
+##
+## SETTINGS: MONSTER TACTICS, SMARTER (Jeremy's B2, a difficulty option; off by default).
+## Monsters use the same rules for healing (Cure Light Wounds; they don't bandage: a fallen
+## monster stays down, so it would only waste a turn), spells and targets
+## (smart()), and pick spellcasters first, then the weakest; not the hurt or the flee rules
+## (their own morale stays the original's). Ideas from later Gold Box games, whose computer
+## places area spells so they spare its own side and goes for the weak.
 
 const KEY := "smart_quick"
+const MONSTERS_KEY := "smart_monsters"
 const CURE_LIGHT_WOUNDS := 3
 const MAGIC_MISSILE := 15
 
@@ -39,6 +47,28 @@ static func save(enabled: bool) -> void:
 	cf.save(GameData.SETTINGS_PATH)
 
 
+static func monsters_on() -> bool:
+	var cf := ConfigFile.new()
+	if cf.load(GameData.SETTINGS_PATH) != OK:
+		return false
+	return bool(cf.get_value("qol", MONSTERS_KEY, false))
+
+
+static func save_monsters(enabled: bool) -> void:
+	var cf := ConfigFile.new()
+	cf.load(GameData.SETTINGS_PATH)
+	cf.set_value("qol", MONSTERS_KEY, enabled)
+	cf.save(GameData.SETTINGS_PATH)
+
+
+## The smarter healing, spell and target rules apply to combatant i: a party member under
+## TACTICS FOR QUICK, or a monster under MONSTER TACTICS.
+static func smart(cb: Combat, i: int) -> bool:
+	if i < 0:
+		return false
+	return applies(cb, i) or (cb.smart_monsters and cb.combatants[i].team == 1)
+
+
 ## Combatant i is one of the party's own members (QUICK) and the switch is on.
 static func applies(cb: Combat, i: int) -> bool:
 	if not cb.smart_quick or i < 0:
@@ -48,14 +78,17 @@ static func applies(cb: Combat, i: int) -> bool:
 	return c.team == 0 and m.npc < 128 and m.script_team != 0x80
 
 
-## Casting is allowed for QUICK members (Alt-M MAGIC ON, or the caller's party_casts).
-static func _may_cast(cb: Combat) -> bool:
-	return cb.magic != null and (CombatSpells.party_casts or cb.magic_on)
+## Casting is allowed: monsters always, QUICK members with Alt-M MAGIC ON (or the caller's
+## party_casts).
+static func _may_cast(cb: Combat, i: int) -> bool:
+	if cb.magic == null:
+		return false
+	return cb.combatants[i].team == 1 or CombatSpells.party_casts or cb.magic_on
 
 
 ## Cure Light Wounds on the most hurt ally within touch at half its hit points or less.
 static func heal(cb: Combat, i: int) -> bool:
-	if not _may_cast(cb):
+	if not _may_cast(cb, i):
 		return false
 	var me: Dictionary = cb.combatants[i]
 	var m: PartyMember = me.who
@@ -83,7 +116,7 @@ static func heal(cb: Combat, i: int) -> bool:
 
 ## An attack spell where it does the most good, or false.
 static func cast(cb: Combat, i: int) -> bool:
-	if not _may_cast(cb):
+	if not _may_cast(cb, i):
 		return false
 	var ms: CombatSpells = cb.magic
 	var me: Dictionary = cb.combatants[i]
@@ -158,9 +191,14 @@ static func _weakest_first(cb: Combat, me: Dictionary, list: Array[int]) -> void
 		return ha < hb or (ha == hb and order[a] < order[b]))
 
 
-## The weakest of `pool` (a copy of the list is sorted).
+## The weakest of `pool` (a copy of the list is sorted); a smarter monster takes a
+## spellcaster first, if any is in the pool.
 static func weakest(cb: Combat, i: int, pool: Array[int]) -> int:
 	var list: Array[int] = pool.duplicate()
+	if cb.combatants[i].team == 1:
+		var casters: Array[int] = list.filter(func(j): return not cb.combatants[j].who.ready_spells().is_empty())
+		if not casters.is_empty():
+			list = casters
 	_weakest_first(cb, cb.combatants[i], list)
 	return list[0]
 

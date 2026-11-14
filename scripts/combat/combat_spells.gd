@@ -712,7 +712,7 @@ func resolve_pending(i: int) -> bool:
 	var id: int = p.id
 	var cell: Vector2i = p.cell
 	var picked: Array[int] = p.picked
-	var smart_kept: bool = SmartQuick.applies(c, i) and (picked.is_empty() or not c.combatants[picked[0]].down)
+	var smart_kept: bool = SmartQuick.smart(c, i) and (picked.is_empty() or not c.combatants[picked[0]].down)
 	if (me.get("quick", false) or me.team == 1) and not smart_kept:
 		var plan := _ai_plan(i, id, true)
 		if plan.is_empty():

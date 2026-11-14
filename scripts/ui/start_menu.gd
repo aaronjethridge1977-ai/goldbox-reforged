@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, quick tactics)
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, quick tactics, monster tactics)
 ##   ABOUT           Gold Box Reforged's credits and the Godot license
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
@@ -231,7 +231,10 @@ func _draw() -> void:
 		g.text(5, 18, "ACTICS FOR QUICK: " + ("SMARTER" if SmartQuick.on() else "ORIGINAL"), GameScreen.GREEN)
 		g.text(6, 19, "SMARTER: QUICK HEALS, AIMS AT", GameScreen.CYAN)
 		g.text(6, 20, "THE WEAKEST, SAVES ITS SPELLS", GameScreen.CYAN)
-		g.text(4, 22, "A, P, S, Q OR T CHANGES IT, ESC: BACK", GameScreen.CYAN)
+		g.text(4, 21, "M", GameScreen.WHITE)
+		g.text(5, 21, "ONSTER TACTICS: " + ("SMARTER" if SmartQuick.monsters_on() else "ORIGINAL"), GameScreen.GREEN)
+		g.text(6, 22, "SMARTER: HARDER FIGHTS", GameScreen.CYAN)
+		g.text(2, 24, "A P S Q T OR M CHANGES IT, ESC: BACK", GameScreen.CYAN)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -281,6 +284,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_draw()
 		elif key == KEY_T:
 			SmartQuick.save(not SmartQuick.on())
+			_draw()
+		elif key == KEY_M:
+			SmartQuick.save_monsters(not SmartQuick.monsters_on())
 			_draw()
 		elif key == KEY_E or key == KEY_ESCAPE:
 			_show_menu()

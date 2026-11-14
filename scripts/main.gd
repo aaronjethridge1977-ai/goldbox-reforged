@@ -412,6 +412,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "smartquick":             # smartquick (lab): SETTINGS' smarter QUICK tactics in the open fight
 			if _combat._combat != null:
 				_combat._combat.smart_quick = true
+		elif n == "smartmonsters":          # smartmonsters (lab): SETTINGS' smarter monster tactics in the open fight
+			if _combat._combat != null:
+				_combat._combat.smart_monsters = true
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
 			_combat.toggle_magic()
 		elif n == "fightend":               # fightend (lab): waits until the fight is over or asks CONTINUE BATTLE
