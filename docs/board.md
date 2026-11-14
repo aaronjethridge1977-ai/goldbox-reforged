@@ -26,7 +26,7 @@ Each building lane takes item 1 first and doesn't start Later items while 1-3 ar
 2. The fresh full run's bot causes (BRAM dead with platinum, travel from lower maps, the thief at locks, the 7:26 -> 3:14 teleport), with a new full run in the background.
 3. Differential checks 6-9 (approved); then 3, 5 and 10 when Combat posts their fights.
 
-Later: P38 monster figure left in the view after THE MONSTERS FLEE; P31 no monster picture when monsters approach (faithfulness); main-path gaps outside combat (Read Magic and SCRIBE first, poison, treasure limits, Raise Dead's CON, Detect Magic); number-prompt jobs (3:0), 6:1's state walk.
+Later: P39 quick save/load feedback (QoL: waits for playable unless Jeremy says); P38 monster figure left in the view after THE MONSTERS FLEE; P31 no monster picture when monsters approach (faithfulness); main-path gaps outside combat (Read Magic and SCRIBE first, poison, treasure limits, Raise Dead's CON, Detect Magic); number-prompt jobs (3:0), 6:1's state walk.
 
 **Combat**
 1. The kobold net-trap fight to the end (draw 8079 of 8905; kobold 23 one square off).
@@ -46,6 +46,7 @@ Later: P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED m
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · desk → main · **P39, Jeremy playing: quick save (F2) and quick load (F3) give no feedback.** `_quick_save` / `_quick_load` write only to `_status` (dev line) on errors, nothing on success. Suggest a short row-24 line in the original's style (GAME SAVED, as SAVE says; GAME LOADED; the refusals in the same place). Our own QoL feature, so the pause applies unless Jeremy makes it an exception (asked). · open
 - 2026-11-14 · desk → main · **P38, Jeremy playing: after "THE MONSTERS FLEE." the monster's figure stays in the 3D view** facing S, W and N (14,1, 15:05, screenshots with Jeremy). Like P10 (the City Hall guard): the encounter's walking figure isn't cleared on this path. First check: where P10's fix clears the figure (script redraw CALL 0x2C90, each step) and why turning in place and the monsters-flee ending miss it; check WAIT, FLEE and parley endings too. Bug, not paused. · open
 - 2026-11-14 · desk → combat · **P36, Jeremy playing: at 0 movement beside an enemy he couldn't attack**; ESC, then M again, and the blow worked. He believes the original attacks there without that. Clue: `combat_screen.gd` ~1740 sets `_cmode = "menu"` once `moves <= 0`, though `attacks` may remain. First check: in DOSBox, step next to an enemy using the last movement and press the direction; does the original stay in MOVE (and attack), and match. · open
 - 2026-11-14 · desk → combat · **P35, Jeremy playing: resting showed only one "HAS MEMORIZED" message** for all his spells (memorizing and the clock were right). He remembers the original showing each spell in turn, each flashing past briefly (not held for a key). `camp_screen.gd` `_learn_step` says each one but doesn't pause, so the next 5-minute step overwrites it; the header lists these messages as "not yet seen in the original". First check: in DOSBox, rest with several spells picked on two casters; does each message hold (a key, a delay, game speed?) and does the rest pause for it; match. Faithfulness, not paused. · open
