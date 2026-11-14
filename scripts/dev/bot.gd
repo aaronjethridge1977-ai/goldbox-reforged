@@ -749,6 +749,15 @@ func _hook() -> bool:
 		# rowboat's YES, then the pyramid door's ENTER.)
 		for g in _gate_answer.split(",", false):
 			if g.strip_edges() in items:
+				# Chat 17: the same gate answer over and over (6:19 empty: in, out at once, the
+				# cave's menu again) ends the trip through it.
+				_gate_uses += 1
+				if _gate_uses > 6:
+					print("   (the gate's answer given 6 times: giving up on it)")
+					_gate_answer = ""
+					_gate_uses = 0
+					main.tour_stop = true
+					break
 				print("   >> %d (%s: the way to go)" % [items.find(g.strip_edges()) + 1, g.strip_edges()])
 				await main._press(str(items.find(g.strip_edges()) + 1))
 				return true
@@ -1667,6 +1676,7 @@ func _travel_hops(goal: String) -> void:
 				if goal != TOWN and not _at_inn:
 					await _heal()
 			_gate_answer = String(best.get("answer", ""))
+			_gate_uses = 0
 			_gate_picks = Array(best.get("picks", []))
 			_gate_square = Vector2i(best.x, best.y)
 			if main._vm.on_overland:
@@ -2591,6 +2601,7 @@ var _parts := {}                # band "set:block" -> {Vector2i: part id} (river
 var _gate_picks: Array = []
 var _gate_square := Vector2i(-1, -1)   # the exit square those choices belong to     # menu choices (1-based) on the way through the exit being used
 var _gate_answer := ""     # the menu choice of the gate travel is walking to
+var _gate_uses := 0        # chat 17: times _gate_answer was given since it was set
 var _answer_rules := {}      # area -> [[question text, choice]] (answer lines)
 var _parley_cues := {}       # area -> encounter texts to PARLAY at (parley lines)
 var _fight_cues := {}        # area -> encounter texts to fight at (fight lines)
@@ -3755,6 +3766,7 @@ func _cover_walk(deadline: int, again := false) -> void:
 			if not main._vm.on_overland and (e.entry == "gate" or main._pos == Vector2i(e.x, e.y)):
 				await _step_off()
 			_gate_answer = String(e.get("answer", ""))
+			_gate_uses = 0
 			_gate_picks = Array(e.get("picks", []))
 			_gate_square = Vector2i(e.x, e.y)
 			_travelling = true
