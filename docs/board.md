@@ -33,7 +33,7 @@ Later: P39 quick save/load feedback (QoL: waits for playable unless Jeremy says)
 2. Differential checks 3, 5 and 10's fights, roll for roll, with key lists and seeds in `docs/diff-checks.md`.
 3. Magic for QUICK characters: Alt-Q, Space and Alt-M at the combat menu (faithfulness); MAGIC on DONE's menu (mockup to Jeremy first).
 
-Later: P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED messages; P30 loot shows as "(ITEM TYPE n)" (bug); P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
+Later: P40 downed party members vanish from the field; P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED messages; P30 loot shows as "(ITEM TYPE n)" (bug); P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
 
 ## Now
 
@@ -47,6 +47,7 @@ Later: P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED m
 
 Format: `date · from → to · what · status (open / taken / done)`
 
+- 2026-11-14 · desk → combat · **P40, Jeremy playing: a party member who goes down vanishes from the battlefield**; he expects the original's lying-down figure. No downed picture found in `combat_screen.gd`. First check: in DOSBox, how the original shows a downed member (dying, unconscious, dead) and a downed monster after the skull (P16 step 5), from COMSPR or the icon, and match. Faithfulness, not paused. · open
 - 2026-11-14 · desk → main · **P39, Jeremy playing: quick save (F2) and quick load (F3) give no feedback.** `_quick_save` / `_quick_load` write only to `_status` (dev line) on errors, nothing on success. Suggest a short row-24 line in the original's style (GAME SAVED, as SAVE says; GAME LOADED; the refusals in the same place). Our own QoL feature, so the pause applies unless Jeremy makes it an exception (asked). · open
 - 2026-11-14 · desk → main · **P38, Jeremy playing: after "THE MONSTERS FLEE." the monster's figure stays in the 3D view** facing S, W and N (14,1, 15:05, screenshots with Jeremy). Like P10 (the City Hall guard): the encounter's walking figure isn't cleared on this path. First check: where P10's fix clears the figure (script redraw CALL 0x2C90, each step) and why turning in place and the monsters-flee ending miss it; check WAIT, FLEE and parley endings too. Bug, not paused. · open
 - 2026-11-14 · desk → combat · **P36, Jeremy playing: at 0 movement beside an enemy he couldn't attack**; ESC, then M again, and the blow worked. He believes the original attacks there without that. Clue: `combat_screen.gd` ~1740 sets `_cmode = "menu"` once `moves <= 0`, though `attacks` may remain. First check: in DOSBox, step next to an enemy using the last movement and press the direction; does the original stay in MOVE (and attack), and match. · open
