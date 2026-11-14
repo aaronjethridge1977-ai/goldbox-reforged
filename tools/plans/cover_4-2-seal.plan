@@ -1,0 +1,12 @@
+# Chat 17: 4:2 with the thieves' guild offer open: City Hall's commission given (0x4A97 = 255, written
+# by 3:8 0xB068) and the Cadornas' sealed chest taken unopened (0x4AC8 = 1, written by 4:2 0xA9A8),
+# by shortcut, as a player who did both has them: Restal offers to duplicate the seal (0xAE87).
+rules playthrough.plan
+start chat10a_latest/podol
+shortcut flag 4A97 set 255 City Hall's commission (3:8 writes 255)
+shortcut flag 4AC8 set 1 the sealed chest taken unopened (4:2 writes 1)
+travel 4:2
+expect 4:2
+cover 4:2 40 all
+status
+stop
