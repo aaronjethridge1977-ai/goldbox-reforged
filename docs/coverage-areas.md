@@ -100,6 +100,28 @@ and the original never writes 1 there (GAME.OVR: 0, 0x80, 0x81 only), so the rep
 | 0xAEFE → T, 0xAF90 → T | the same routine with 0x4A0E = 1 (the alarm): reached only in fights a job met with the alarm off |
 | 0xB64C → T | 0x4AA8 below 254 at the temple's end: the run's checkpoint has it at 254 |
 
+## 4:2, the Cadorna textile house: done (chat 18)
+
+95% of instructions and 91% of reachable branch outcomes; every story-critical instruction has run (5 ways in or
+out, 12 set fights, 17 quest flags). The last fight and flag (0xAF05, 0xAF0C: Restal's offer to duplicate the seal)
+came from chat 18's WHO jobs: Restal is met only by a member who survives the climb down the thieves' well
+(RANDOM 99 against the climber's climb-walls skill, 0x6BAB), and the bot had always sent the first member. The
+`-seal` variant (City Hall's commission 0x4A97 = 255, the sealed chest taken 0x4AC8 = 1) then gets the offer.
+
+| where | what it needs |
+|---|---|
+| 0x996D → 2 | leaving the map facing south (0x6DD5): no run left that way (not checked whether the south edge is open) |
+| 0x99B6 → 9, 10, 11 | the search table's events 9-11: no square of map 2 has them (their entries are EXIT) |
+| 0x9A63 → T | the house's counter 0x4AE4 at 9 with 0x4A75 clear when that check runs |
+| 0xA535 → F | a party of eight: no room for Skullcrusher |
+| 0xAAD7 → T, 0xAC85 → F | a member who is not well (0x6C00 not 1): Skullcrusher hurt, or an unwell climber picked |
+| 0xAD05 → T, 0xAD3C | a falling climber carrying item 27 (feather falling: "YOU FLOAT DOWN THE WELL") |
+| 0xAA17 → T | FLEE succeeding at the hobgoblins' menu (outcome 2): a party faster than they are |
+| 0xAA8F → F | the shared hobgoblin fight with a caller code (0x6E82) other than 2, 5 or 8: not worked out |
+| 0xAE61 → T | City Hall's commission not given (0x4A97, written in 3:8): the main line's checkpoint has it |
+| 0xAE77 → T | 0x4AB8 = 255, written only outside this area |
+| 0xAE82 → T | Restal's room a second time in the same visit (0x4A17, cleared on entry) |
+
 ## 2:15, Mendor's library: done (chat 17)
 
 96% of instructions and 90% of reachable branch outcomes; every story-critical instruction has run (3 ways in or
@@ -314,9 +336,6 @@ the alarm off and the disguise on (0xA4AE).
 - **4:10 Valhingen graveyard (88 / 79):** the paladin's wraith (0xA28C) comes only while 0x4AF4 is 9 or less, and
   the walk's earlier fights count it past that; the `-fresh` variant walks to each event from the arrival. The
   "over 249, set 249" writes (0xA616, 0xA814, 0xAB31, 0xB29C, 0xB2B2, 0xB2C8) are clamps on kill counters.
-- **4:2 (93 / 89):** the last fight and flag (0xAF05, 0xAF0C) are Restal's offer to duplicate the seal, which
-  needs City Hall's commission (0x4A97 = 255) and the sealed chest taken unopened (0x4AC8 = 1); the `-seal`
-  variant set both and the offer still didn't come (not worked out).
 - **6:1 (95 / 94):** the last flag, 0x993D (0x4AA9 = 254), is written when the party leaves the map
   (0x6DD5) after buying the boy (0x4AA9 = 1).
 - **7:17 (90 / 87):** the kobold war's third stage (0xB121, the headman's DESTROY THE KOBOLDS) comes after two

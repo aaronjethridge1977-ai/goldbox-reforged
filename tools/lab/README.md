@@ -417,6 +417,12 @@ others from J:
 - Report: ON_GOTO / ON_GOSUB on a byte the game itself sets leaves the entries no value picks out (dead). 0x033D,
   the wilderness heading, is read as the heading doubled (0, 2, 4, 6: GAME.OVR's ECL memory) and no script writes
   it, so the bands' 8-way ON_GOTOs never take 1, 3, 5, 7 (6:25 71 -> 76% of branches, 8:27 73 -> 80, 7:26 78 -> 84).
+- Report: an ENCOUNTER_MENU's dead outcomes are worked out when only its reactions are constants (the distance
+  may be a variable: then ADVANCE's reaction stays in), and a GOSUB to a routine that is only the menu (7:17's
+  0x9914, 0x9934) stands for the menu at its caller's ON_GOTO.
+- Report: `DEAD BUT TAKEN` lines name any outcome a rule calls dead that a run took (a wrong rule). The first two
+  rules it caught: the never-set-bits rule didn't know indexed writes (WRITE_MEM_BASE_OFF reaches any byte from
+  its base up: 3:14's lock routine writes 0x4AEA + n) or writes by other instructions; fixed, none left.
 - `mkreasons.py < missctx.sh output`: a first draft of an area's reasons table, missed branches grouped by
   misswhy's guess, for docs/coverage-areas.md (check each row against the listing).
 - `cover_7-17-war.plan`: the kobold war at its third stage (0x4A7E = 3, 0x4A7C = 1, 0x4A7D = 3).

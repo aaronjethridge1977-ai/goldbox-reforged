@@ -69,6 +69,7 @@ func _init() -> void:
 				never.append(key)
 			else:
 				entered += 1
+			_key = key
 			var r := _measure(ecl, c)
 			var extra := 0      # ran, but the decoder doesn't reach it (judged now, not when recorded)
 			for o in c.ins:
@@ -103,6 +104,9 @@ static func _pct(a: int, b: int) -> String:
 
 
 ## counts: instructions run/all, branch outcomes taken/all, choices made/all, flag writes run/all.
+var _key := ""     # the block being measured (for messages)
+
+
 func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 	var counts := [0, 0, 0, 0, 0, 0, 0, 0]
 	var missed: PackedStringArray = []
@@ -134,6 +138,9 @@ func _measure(ecl: EclScript, c: Dictionary) -> Dictionary:
 		for o in outcomes:
 			if dead.has("%d:%s" % [off, o]):
 				dead_n += 1
+				# Chat 18: a "dead" outcome a run took means a rule is wrong: say so.
+				if c.br.has("%d:%s" % [off, o]):
+					print("   DEAD BUT TAKEN: %s %04X %s -> %s" % [_key, off + EclScript.BASE, op, o])
 				continue
 			counts[3] += 1
 			if c.br.has("%d:%s" % [off, o]):
@@ -172,16 +179,24 @@ func _dead(ecl: EclScript) -> Dictionary:
 	_dead_values(ecl, offs, out)
 	for i in offs.size():
 		var ins: Dictionary = ecl.instructions[offs[i]]
+		# Chat 18: a GOSUB to a shared routine that is only the menu (7:17's 0x9914, 0x9934:
+		# WRITE_MEM, ENCOUNTER_MENU, WRITE_MEM, RETURN) stands for the menu at the caller.
+		if ins.op == "GOSUB" and not ins.args.is_empty():
+			ins = _sub_menu(ecl, int(ins.args[0].value) - EclScript.BASE)
+			if ins.is_empty():
+				continue
 		if ins.op != "ENCOUNTER_MENU" or ins.args.size() < 9:
 			continue
+		# The reactions must be constants; the distance (args[1]) may be a variable (7:17's
+		# [6DC0]): then ADVANCE may be offered, and its reaction stays among the outcomes.
 		var lit := true
-		for k in [1, 4, 5, 6, 7, 8]:
+		for k in [4, 5, 6, 7, 8]:
 			if int(ins.args[k].type) != 0:
 				lit = false
 		if not lit:
 			continue
-		var at_zero := int(ins.args[1].value) == 0
-		if at_zero:
+		var at_zero := int(ins.args[1].type) == 0 and int(ins.args[1].value) == 0
+		if at_zero and ecl.instructions[offs[i]].op == "ENCOUNTER_MENU":
 			out["%d:c3" % offs[i]] = true
 		var can := {}
 		for ch in 5:
@@ -242,6 +257,31 @@ func _dead(ecl: EclScript) -> Dictionary:
 	return out
 
 
+## Chat 18: the ENCOUNTER_MENU a subroutine at `at` is made of ({} if it is anything else): WRITE_MEMs
+## of other bytes around one ENCOUNTER_MENU, then RETURN; nothing after the menu writes its variable.
+func _sub_menu(ecl: EclScript, at: int) -> Dictionary:
+	var offs: Array = ecl.offsets()
+	var i := offs.find(at)
+	if i < 0:
+		return {}
+	var menu := {}
+	for n in 6:
+		if i + n >= offs.size():
+			return {}
+		var x: Dictionary = ecl.instructions[offs[i + n]]
+		if x.op == "RETURN":
+			return menu
+		if x.op == "ENCOUNTER_MENU" and menu.is_empty():
+			menu = x
+		elif x.op == "WRITE_MEM" and x.args.size() > 1:
+			if not menu.is_empty() and menu.args.size() > 3 and int(x.args[1].type) == int(menu.args[3].type) \
+					and int(x.args[1].value) == int(menu.args[3].value):
+				return {}
+		else:
+			return {}
+	return {}
+
+
 ## Chat 15: whether a subroutine (straight on from `at` to its RETURN; IFs only skip one
 ## instruction) leaves `dest` alone: no write to it, no call or jump on the way.
 func _sub_keeps(ecl: EclScript, at: int, dest: Dictionary) -> bool:
@@ -290,6 +330,20 @@ func _settable_bits(game_path: String) -> Dictionary:
 				var ins: Dictionary = ecl.instructions[off]
 				var op: String = ins.op
 				if not WRITES.has(op):
+					# Chat 18: an indexed write (WRITE_MEM_BASE_OFF v, [base], [index]) can reach any
+					# byte from its base up (3:14's lock routine writes 0x4AEA + n: 0x4AED was taken
+					# as never set, and five outcomes a run had taken counted dead); any other
+					# instruction that isn't known to only read may write its memory arguments.
+					if op == "WRITE_MEM_BASE_OFF" and ins.args.size() >= 2:
+						var base := int(ins.args[1].value)
+						var v := int(ins.args[0].value) & 0xFF if _is_const(ins.args[0]) else 0xFF
+						for x in range(maxi(base, FLAGS_LO), FLAGS_HI + 1):
+							if base <= FLAGS_HI:
+								bits[x] = int(bits.get(x, 0)) | v
+					elif not op in READ_ONLY:
+						for d: Dictionary in ins.args:
+							if int(d.type) in [0x01, 0x03, 0x05, 0x81] and int(d.value) >= FLAGS_LO and int(d.value) <= FLAGS_HI:
+								bits[int(d.value)] = 0xFF
 					continue
 				var dests: Array = [int(WRITES[op])]
 				if op == "COPY_MEM":
