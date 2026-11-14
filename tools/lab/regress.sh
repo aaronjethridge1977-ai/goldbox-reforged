@@ -1,10 +1,10 @@
 #!/bin/bash
-# Replays every saved original trace (traces/, git-ignored lab data: copy the original side
-# of a cmpfight run there) in ours and prints where each first differs.
+# Replays every saved original trace (tools/lab/traces/: the original's dice, no game data;
+# add the original side of new cmpfight runs there) in ours and prints where each differs.
 cd "$(dirname "$0")"
 run() { # name magic script args...
   local n=$1 m=$2; shift 2
-  cp traces/$n.txt /tmp/cmp_orig.txt
+  cp "$(dirname "$0")/traces/$n.txt" /tmp/cmp_orig.txt 2>/dev/null || cp traces/$n.txt /tmp/cmp_orig.txt
   if [ "$m" = 1 ]; then export MAGIC=1; else unset MAGIC; fi
   timeout 400 "$@" > /tmp/reg_$n.txt 2>&1
   echo "$n: $(sed -n 1,2p /tmp/reg_$n.txt | tr '\n' ' ')"
