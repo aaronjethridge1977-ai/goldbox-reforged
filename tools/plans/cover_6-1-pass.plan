@@ -1,0 +1,12 @@
+# Chat 17: 6:1 with the captain's pass (item 91) from the start, by shortcut, as a player who bought it
+# from the seedy man has it: the walk met the guards before it met him, so the captain's room
+# (ATTACK / MENTION YOUNG BOY, 0xACF7) was never reached.
+rules playthrough.plan
+expect_level 6:1 6
+start chat12a_latest/lizard
+shortcut item 91 PASS
+travel 6:1
+expect 6:1
+cover 6:1 40 all
+status
+stop

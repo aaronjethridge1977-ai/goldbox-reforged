@@ -1,0 +1,10 @@
+# Chat 17: 4:10 with the kobolds' silver bottle (item 82), by shortcut, as a player who took it from
+# 8:13 has it: the vampire's fight then brings the efreet (0xB25E FIND_ITEM 82).
+rules playthrough.plan
+start chat13a_latest/zhentil
+shortcut item 82 SILVER BOTTLE
+travel 4:10
+expect 4:10
+cover 4:10 40 all
+status
+stop
