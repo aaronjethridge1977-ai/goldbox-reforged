@@ -154,6 +154,7 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		for c in _combat.combatants:
 			if c.team == 1:
 				c.down = true
+		_combat.decided = true     # won now: no round played out, no CONTINUE BATTLE
 	dev_auto_win = false
 	_advance()
 
@@ -653,6 +654,7 @@ func _advance() -> void:
 		for c in _combat.combatants:
 			if c.team == 1:
 				c.down = true
+		_combat.decided = true
 	var i := _combat.next_turn()
 	if i == Combat.ASK_CONTINUE:
 		_asking_continue = true
