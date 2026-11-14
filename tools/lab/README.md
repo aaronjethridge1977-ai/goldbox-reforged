@@ -387,3 +387,5 @@ others from J:
   0x4A77 |= 12, so the tower rooms were always empty).
 - A job that ends in the area takes one more step its way (6:1: SHOW PASS lets the party by,
   and the captain's room is through the door).
+- An event at which the walk itself changes the story flags opens a state too (7:17's kobold
+  attack moves 0x4A7E on with each fight won; its later stages come on later arrivals).

@@ -3742,6 +3742,25 @@ func _cover_job_once(job: Dictionary) -> void:
 				_cover_resume_note("opened", "%s|||%s" % [job.key, part])
 
 
+## Chat 17: the story-flag change between two memories, as a state's name ("" for none): flags and
+## the area's own markers (0x4A00-0x4A1F, inside the area only) going on or off, new bits in the
+## flags; a counter going up is not a new state.
+func _cover_state_sig(before_mem: PackedByteArray, now_mem: PackedByteArray, inside: bool) -> String:
+	var before := before_mem.slice(QUEST_LO, QUEST_HI)
+	var now := now_mem.slice(QUEST_LO, QUEST_HI)
+	var sig := ""
+	for i in now.size():
+		if not inside and i < 0x20:
+			continue
+		if (now[i] == 0) != (before[i] == 0):
+			sig += "%04X=%d " % [QUEST_LO + i, now[i]]
+		elif now[i] != before[i] and i >= 0x20:
+			var bits: int = now[i] & ~before[i]
+			if bits != 0:
+				sig += "%04X|%d " % [QUEST_LO + i, bits]
+	return sig
+
+
 ## Every map the area's script runs on: its events, each square from every side, a rest, and
 ## a step off each edge. Each part of a map (squares that reach each other on foot) is walked
 ## once, from wherever the party first arrives in it: another map of the area, or another part
@@ -4115,6 +4134,13 @@ func _cover_map(deadline: int) -> Array:
 		_cover_log.squares += 1
 		_cover_heal()
 		var here: Dictionary = main.dev_snapshot()
+		# Chat 17: an event the walk itself changed the story flags at (7:17's kobold attack:
+		# each won fight moves 0x4A7E on, and the next stage comes on the next arrival) opens a
+		# state, as a job's does.
+		var wsig := _cover_state_sig(pre.vm.mem, main._vm.mem, true)
+		if wsig != "" and not _cover_states.has(wsig) and not _cover_states_walked.has(wsig) and _cover_states.size() < 12:
+			_cover_states[wsig] = here
+			print("   (a new state for the walk: %s, from the walk)" % wsig.strip_edges())
 		for d in 4:
 			if Time.get_ticks_msec() >= deadline:
 				break
