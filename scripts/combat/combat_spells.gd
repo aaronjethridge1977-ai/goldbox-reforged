@@ -732,12 +732,12 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 	var m: PartyMember = me.who
 	if me.team == 0 and not (party_casts or c.magic_on):
 		return false
-	# TP mode: the original lists every memorized spell, camp spells too, and leaves them to
-	# the priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them; it reads
-	# the record's slots from 0x17 up, the reverse of ours's `memorized`.
-	var list: Array[int] = m.ready_spells() if TpDice.on else castable(i)
-	if TpDice.on:
-		list.reverse()
+	# The original lists every memorized spell, camp spells too, and leaves them to the
+	# priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them; it reads the
+	# record's slots from 0x17 up, the reverse of ours's `memorized`. (All play since
+	# 2026-11-14, Jeremy's A1; before, only with the lab dice.)
+	var list: Array[int] = m.ready_spells()
+	list.reverse()
 	if me.get("no_spells", false):
 		list.clear()
 	# With every enemy down the original picks no spell, but a goblin that surrendered still

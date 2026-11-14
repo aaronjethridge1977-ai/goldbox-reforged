@@ -183,13 +183,14 @@ func start_round() -> void:
 		if d <= 0 or d > 20:
 			continue
 		c["init"] = d
-		delays[i] = d * 1000 + (0 if TpDice.on else rng.randi_range(0, 999))   # ties at random (lab dice: none, to trace)
+		delays[i] = d
 	order.clear()
 	for i in delays.keys():
 		order.append(i)
 	order.sort_custom(func(a, b): return delays[a] > delays[b])
-	# (With the lab dice, next_turn picks from "init" itself; order only says the round
-	# has someone left to act.)
+	# next_turn picks from "init" itself (_pick_next); order only says the round has
+	# someone left to act. (The original's rule in all play since 2026-11-14, Jeremy's A1;
+	# before, only with the lab dice.)
 	message.emit("ROUND %d" % round_no)
 
 
@@ -214,9 +215,9 @@ func next_turn() -> int:
 				start_round()
 			if order.is_empty():
 				return -1
-		active = order.pop_front() if not TpDice.on else _pick_next()
+		active = _pick_next()
 		if active < 0:
-			order.clear()          # (lab dice) nobody has initiative left: the round is over
+			order.clear()          # nobody has initiative left: the round is over
 			continue
 		var c: Dictionary = combatants[active]
 		if c.down or (magic and CombatSpells.held(c.who)):
@@ -234,13 +235,11 @@ func next_turn() -> int:
 const ASK_CONTINUE := -2
 
 
-## The original's choice of who acts next (GAME.OVR 0x9938, read in side chat 2), used with the
-## lab dice (TpDice) so a fight replays roll for roll: every combatant in the fight, standing
-## or not, rolls d100; the highest initiative left acts, a tie going to the higher roll and an
-## equal roll to the later one. Nobody with initiative left: -1 (the round is over). The
-## one chosen has none left after its turn.
-## TODO (when it is checked against the original for the bot's fights too): the same rule
-## for normal play, in place of the sort in start_round.
+## The original's choice of who acts next (GAME.OVR 0x9938, read in side chat 2; the rule in
+## all play since 2026-11-14, Jeremy's A1): every combatant in the fight, standing or not,
+## rolls d100; the highest initiative left acts, a tie going to the higher roll and an equal
+## roll to the later one. Nobody with initiative left: -1 (the round is over). The one chosen
+## has none left after its turn.
 func _pick_next() -> int:
 	var best_init := 0
 	var best_roll := 0
@@ -267,19 +266,11 @@ func _pick_next() -> int:
 ## acts again later this round.
 func delay_cast(i: int, d: int) -> void:
 	var c: Dictionary = combatants[i]
-	var was: int = c.get("init_was", c.init) if TpDice.on else int(c.init)
+	var was: int = c.get("init_was", c.init)
 	var now := was - d if was > d else 1
 	c.init = now
-	if TpDice.on:
-		if order.is_empty():
-			order.append(i)      # someone is left to act this round
-		return
-	var at := order.size()
-	for k in order.size():
-		if int(combatants[order[k]].init) < now:
-			at = k
-			break
-	order.insert(at, i)
+	if order.is_empty():
+		order.append(i)      # someone is left to act this round
 
 
 ## DELAY (the original's DONE menu): the active combatant acts again after everyone else
@@ -288,6 +279,9 @@ func delay() -> bool:
 	if active < 0 or combatants[active].get("delayed_round", 0) == round_no:
 		return false
 	combatants[active].delayed_round = round_no
+	# Initiative 1: after everyone with more, ties by the d100 (assumed, not yet checked in
+	# the lab; the original's DELAY is still to trace).
+	combatants[active].init = 1
 	order.append(active)
 	return true
 var asked_round := -1
@@ -1606,13 +1600,12 @@ func ai_act() -> bool:
 			sm.hp = 0
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
-		# TP mode: after its morale check (a goblin that surrendered drew nothing more) the
-		# original's computer turn weighs its items with d7 tries (GAME.OVR 0xAFA4), then
-		# turning undead (0xADC3), then its spells with d7 tries (0xB105; the d7 is drawn
-		# even with nothing memorized). Ours don't use items yet, so that d7 is drawn only.
+		# After its morale check (a goblin that surrendered drew nothing more) the original's
+		# computer turn weighs its items with d7 tries (GAME.OVR 0xAFA4), then turning undead
+		# (0xADC3), then its spells with d7 tries (0xB105; the d7 is drawn even with nothing
+		# memorized). Ours don't use items yet, so that d7 is drawn only.
 		var spell_d7 := -1
-		if TpDice.on:
-			roll(1, 7, "%s weighs an item" % c.who.name)
+		roll(1, 7, "%s weighs an item" % c.who.name)
 		# A spell begun last turn goes off now (GAME.OVR 0xACEE, after the item weighing).
 		if magic and magic.resolve_pending(active):
 			return false
@@ -1620,8 +1613,7 @@ func ai_act() -> bool:
 		if c.team == 0 and not c.get("turned_undead", false) and can_turn(active):
 			turn_undead(active)
 			return false
-		if TpDice.on:
-			spell_d7 = roll(1, 7, "%s weighs a spell" % c.who.name)
+		spell_d7 = roll(1, 7, "%s weighs a spell" % c.who.name)
 		if c.get("turned_undead", false):
 			pass
 		elif c.fleeing:
