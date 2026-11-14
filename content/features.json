@@ -1,0 +1,156 @@
+{
+	"_about": "All the text of SETTINGS' help, ABOUT -> FEATURES and ABOUT -> CREDITS (P21, 2026-11-14). Upper case and the original font's characters only; lines are wrapped by the engine. Each feature: name (as listed), setting (the SETTINGS item it belongs to, or empty when always on; then label and values, in the order the engine numbers them), help (green, SETTINGS and the FEATURES list), note (cyan, SETTINGS only: default and the original), and its FEATURES page: what, keys, default, original.",
+
+	"settings_title": "SETTINGS (ADDITIONS TO THE ORIGINAL)",
+	"about_title": "ABOUT",
+	"features_title": "FEATURES (ADDITIONS TO THE ORIGINAL)",
+	"menus": {
+		"about": ["FEATURES", "CREDITS", "EXIT"],
+		"settings": ["CHANGE", "EXIT"],
+		"features": ["VIEW", "EXIT"],
+		"page": ["NEXT", "PREV", "EXIT"],
+		"credits_more": ["NEXT", "EXIT"],
+		"credits_last": ["EXIT"]
+	},
+	"page_headings": {
+		"what": "WHAT IT DOES:",
+		"keys": "KEYS:",
+		"default": "DEFAULT:",
+		"original": "IN THE ORIGINAL:"
+	},
+
+	"features": [
+		{
+			"id": "automap",
+			"name": "AUTOMAP",
+			"setting": "automap",
+			"label": "AUTOMAP",
+			"values": ["OFF", "ON"],
+			"help": "A MAP OF EVERY SQUARE THE PARTY HAS STOOD ON. WALKING: M MINI-MAP, F FULL MAP.",
+			"note": "DEFAULT: ON. OFF: AS THE ORIGINAL, WHICH HAS ONLY ITS OWN AREA VIEW.",
+			"what": "A MAP OF EVERY SQUARE THE PARTY HAS STOOD ON, WITH ITS WALLS AND DOORS; THE PARTY IS AN ARROW. KEPT WITH THE QUICK SAVE.",
+			"keys": "WALKING: M MINI-MAP, F FULL MAP, ESC CLOSES THE FULL MAP.",
+			"default": "ON (SETTINGS: AUTOMAP).",
+			"original": "NO AUTOMAP. ITS OWN AREA VIEW IS STILL THERE, UNCHANGED."
+		},
+		{
+			"id": "quicksave",
+			"name": "QUICK SAVE",
+			"setting": "",
+			"help": "F2 SAVES THE GAME AT ONCE WHILE WALKING, F3 LOADS IT; CONTINUE ON THE START MENU TOO. ALWAYS ON.",
+			"note": "",
+			"what": "ONE SAVE YOU CAN MAKE AT ANY TIME WHILE WALKING, APART FROM THE ORIGINAL'S OWN SAVES.",
+			"keys": "WALKING: F2 SAVES, F3 LOADS. START MENU: CONTINUE LOADS IT.",
+			"default": "ALWAYS ON.",
+			"original": "SAVES ONLY FROM ENCAMP (SAVE), IN SLOTS A TO J. THOSE ARE STILL THERE, AND LOAD SAVED GAME READS THEM."
+		},
+		{
+			"id": "autoend",
+			"name": "BATTLE ENDS WHEN WON",
+			"setting": "",
+			"help": "A FIGHT ENDS THE MOMENT EVERY ENEMY IS DEAD OR GONE. ALWAYS ON.",
+			"note": "",
+			"what": "A FIGHT ENDS THE MOMENT EVERY ENEMY IS DEAD OR GONE. WITH SOME ONLY DOWN, THE ROUND PLAYS OUT AND CONTINUE BATTLE IS ASKED, AS IN THE ORIGINAL.",
+			"keys": "NONE.",
+			"default": "ALWAYS ON.",
+			"original": "PLAYS OUT THE REST OF THE ROUND FIRST."
+		},
+		{
+			"id": "portraits",
+			"name": "PORTRAITS MATCHED",
+			"setting": "portraits",
+			"label": "PORTRAITS",
+			"values": ["ORIGINAL", "MATCHED"],
+			"help": "NEW CHARACTERS START ON A HEAD AND BODY THAT FIT THEIR RACE, SEX AND CLASS.",
+			"note": "DEFAULT: MATCHED. ORIGINAL: EVERY NEW CHARACTER STARTS ON THE FIRST HEAD AND BODY.",
+			"what": "WHEN A CHARACTER IS CREATED, ITS PORTRAIT STARTS ON A HEAD AND BODY THAT FIT ITS RACE, SEX AND CLASS. YOU CAN STILL CHANGE IT.",
+			"keys": "NONE.",
+			"default": "MATCHED (SETTINGS: PORTRAITS).",
+			"original": "EVERY NEW CHARACTER STARTS ON THE FIRST HEAD AND BODY."
+		},
+		{
+			"id": "memorized",
+			"name": "START MEMORIZED",
+			"setting": "memorized",
+			"label": "START MEMORIZED",
+			"values": ["OFF", "ON"],
+			"help": "CASTERS PICK THEIR SPELLS AT BEGIN ADVENTURING, MEMORIZED AT ONCE, NO REST NEEDED.",
+			"note": "DEFAULT: ON. OFF: AS THE ORIGINAL, NOTHING MEMORIZED UNTIL A REST.",
+			"what": "WHEN A NEW PARTY BEGINS ADVENTURING, EACH CASTER PICKS ITS SPELLS AND HAS THEM MEMORIZED AT ONCE.",
+			"keys": "NONE.",
+			"default": "ON (SETTINGS: START MEMORIZED).",
+			"original": "NOTHING IS MEMORIZED AT THE START; THE PARTY RESTS IN CAMP TO MEMORIZE."
+		},
+		{
+			"id": "bandages",
+			"name": "QUICK BANDAGES",
+			"setting": "bandages",
+			"label": "QUICK BANDAGES",
+			"values": ["OFF", "ON"],
+			"help": "A QUICK FIGHTER BANDAGES A DYING ALLY FIRST, AS A PLAYER WOULD.",
+			"note": "DEFAULT: OFF, AS THE ORIGINAL: ITS QUICK NEVER BANDAGES.",
+			"what": "A PARTY MEMBER ON QUICK BANDAGES A DYING ALLY BEFORE ANYTHING ELSE, AS A PLAYER WOULD FROM THE DONE MENU.",
+			"keys": "NONE.",
+			"default": "OFF (SETTINGS: QUICK BANDAGES).",
+			"original": "QUICK NEVER BANDAGES."
+		},
+		{
+			"id": "tactics",
+			"name": "TACTICS FOR QUICK",
+			"setting": "tactics",
+			"label": "TACTICS FOR QUICK",
+			"values": ["ORIGINAL", "SMARTER"],
+			"help": "SMARTER: QUICK HEALS, AIMS AT THE WEAKEST, SAVES ITS SPELLS AND FLEES A HOPELESS FIGHT.",
+			"note": "DEFAULT: ORIGINAL, AS THE ORIGINAL'S QUICK.",
+			"what": "SMARTER: THE PARTY'S QUICK MEMBERS BANDAGE AND HEAL, WASTE NO SPELLS, GO FOR THE WEAKEST ENEMY, KEEP OUT OF REACH WHEN BADLY HURT, AND THE PARTY FLEES A HOPELESS FIGHT.",
+			"keys": "NONE.",
+			"default": "ORIGINAL (SETTINGS: TACTICS FOR QUICK).",
+			"original": "QUICK PICKS TARGETS AND SPELLS AT RANDOM AND NEVER HEALS."
+		},
+		{
+			"id": "orders",
+			"name": "ORDERS",
+			"setting": "",
+			"help": "WITH TACTICS FOR QUICK SMARTER, VIEW HAS ORDER: FREE, NO SPELLS, MELEE, STAND OR HEAL.",
+			"note": "",
+			"what": "A STANDING ORDER FOR EACH CHARACTER ON QUICK: FREE, NO SPELLS, MELEE ONLY, STAND (NEVER MOVES) OR HEAL (HEALS FIRST, NO ATTACK SPELLS).",
+			"keys": "VIEW, THEN ORDER.",
+			"default": "FREE. ONLY THERE WHEN TACTICS FOR QUICK IS SMARTER.",
+			"original": "NO ORDERS."
+		},
+		{
+			"id": "monsters",
+			"name": "MONSTER TACTICS",
+			"setting": "monsters",
+			"label": "MONSTER TACTICS",
+			"values": ["ORIGINAL", "SMARTER"],
+			"help": "HOW HARD FIGHTS ARE. SMARTER: MONSTERS HEAL, SPARE THEIR OWN SIDE, GO FOR CASTERS.",
+			"note": "DEFAULT: ORIGINAL, AS THE ORIGINAL.",
+			"what": "A DIFFICULTY OPTION. SMARTER: MONSTERS HEAL, PLACE AREA SPELLS TO SPARE THEIR OWN SIDE, AND GO FOR SPELLCASTERS, THEN THE WEAKEST.",
+			"keys": "NONE.",
+			"default": "ORIGINAL (SETTINGS: MONSTER TACTICS).",
+			"original": "MONSTERS PICK TARGETS AND SPELLS AT RANDOM."
+		}
+	],
+
+	"credits": [
+		["GOLD BOX REFORGED", "YELLOW"],
+		["", ""],
+		["BUILT BY PEOPLE USING AI,", "CYAN"],
+		["NOT BY AI USING PEOPLE.", "CYAN"],
+		["", ""],
+		["ENGINE DESIGN AND CODE:", "YELLOW"],
+		["CLAUDE (ANTHROPIC)", "CYAN"],
+		["", ""],
+		["THANKS TO THE PEOPLE AT ANTHROPIC WHO MAKE CLAUDE, AND ALL THOSE EXPLORING WHAT MANKIND AND AI CAN DO TOGETHER.", "GREEN"],
+		["", ""],
+		["FORMAT RESEARCH OWED TO:", "YELLOW"],
+		["SSI-ENGINE", "CYAN"],
+		["SIMEON PILGRIM'S CURSE OF THE AZURE BONDS RECONSTRUCTION", "CYAN"],
+		["", ""],
+		["SPECIAL THANKS TO AARON J. ETHRIDGE, WHO KEPT IT ALL POINTED IN THE RIGHT DIRECTION.", "WHITE"]
+	],
+	"disclaimer": "AN UNOFFICIAL FAN PROJECT, FREE AND NOT FOR SALE. NOT AFFILIATED WITH OR ENDORSED BY ANTHROPIC OR THE OWNERS OF THE ORIGINAL GAMES.",
+	"license_heading": ["THIS GAME USES GODOT ENGINE,", "AVAILABLE UNDER THE FOLLOWING LICENSE:"],
+	"third_party": ["THIRD-PARTY LICENSES:", "GODOTENGINE.ORG/LICENSE"]
+}

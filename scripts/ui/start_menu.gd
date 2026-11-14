@@ -7,10 +7,13 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, quick tactics, monster tactics)
-##   ABOUT           Gold Box Reforged's credits and the Godot license
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, quick tactics, monster tactics),
+##                   one line each; Up/Down highlights one and the box below explains it (P21)
+##   ABOUT           a menu (P21): FEATURES (each addition: a list, then a page each) and CREDITS
+##                   (Gold Box Reforged's credits and the Godot license)
 ##   EXIT
 ## Keys: the hot letters, Up/Down and Enter. Saved-game letters pick a save.
+## All the text of SETTINGS, FEATURES and CREDITS comes from content/features.json (FeatureText).
 
 signal chosen(what: String, letter: String)
 
@@ -37,6 +40,9 @@ var _credits_layout := {}
 var _draw_t := -1.0
 var _pages: Array = []
 var _page := 0
+var _set_sel := 0        # SETTINGS: the highlighted item
+var _about_sel := 0      # ABOUT: the highlighted item
+var _feat_sel := 0       # FEATURES: the highlighted feature (and the page shown)
 static var _intro_done := false
 var _logo_pic: Image
 var _title_pic: Image
@@ -192,6 +198,12 @@ func _show_menu() -> void:
 
 func _draw() -> void:
 	var g := _screen
+	if _stage == "features":
+		_draw_features(g)
+		return
+	if _stage == "feature":
+		_draw_feature_page(g)
+		return
 	g.clear()
 	for c in 40:
 		g.tile(c, 0, 22)
@@ -201,6 +213,8 @@ func _draw() -> void:
 		g.tile(39, r, 21)
 	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
 		g.tile(p.x, p.y, 20)
+	if _stage == "settings":
+		_divider(g)
 	g.text(10, 2, "POOL OF RADIANCE", GameScreen.YELLOW)
 	g.text(9, 3, "GOLD BOX REFORGED", GameScreen.CYAN)
 	if _stage == "menu":
@@ -211,30 +225,14 @@ func _draw() -> void:
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
 		g.text(2, 21, "PLAYS HERE.", GameScreen.CYAN)
 	elif _stage == "settings":
-		g.text(2, 5, "SETTINGS (ADDITIONS TO THE ORIGINAL)", GameScreen.WHITE)
-		g.text(4, 7, "A", GameScreen.WHITE)
-		g.text(5, 7, "UTOMAP: " + ("ON" if Automap.load_enabled() else "OFF"), GameScreen.GREEN)
-		g.text(6, 8, "WALKING: M MINI-MAP, F FULL MAP", GameScreen.CYAN)
-		g.text(4, 9, "P", GameScreen.WHITE)
-		g.text(5, 9, "ORTRAITS: " + ("MATCHED" if CharacterCreator.matched_portraits() else "ORIGINAL"), GameScreen.GREEN)
-		g.text(6, 10, "MATCHED: NEW CHARACTERS START", GameScreen.CYAN)
-		g.text(6, 11, "ON A HEAD AND BODY THAT FIT", GameScreen.CYAN)
-		g.text(4, 12, "S", GameScreen.WHITE)
-		g.text(5, 12, "TART MEMORIZED: " + ("ON" if CampScreen.start_memorized_on() else "OFF"), GameScreen.GREEN)
-		g.text(6, 13, "ON: CASTERS PICK SPELLS AT", GameScreen.CYAN)
-		g.text(6, 14, "BEGIN ADVENTURING, NO REST", GameScreen.CYAN)
-		g.text(4, 15, "Q", GameScreen.WHITE)
-		g.text(5, 15, "UICK BANDAGES: " + ("ON" if Combat.quick_bandages_on() else "OFF"), GameScreen.GREEN)
-		g.text(6, 16, "ON: QUICK FIGHTERS BANDAGE", GameScreen.CYAN)
-		g.text(6, 17, "THE DYING (THE ORIGINAL'S DON'T)", GameScreen.CYAN)
-		g.text(4, 18, "T", GameScreen.WHITE)
-		g.text(5, 18, "ACTICS FOR QUICK: " + ("SMARTER" if SmartQuick.on() else "ORIGINAL"), GameScreen.GREEN)
-		g.text(6, 19, "SMARTER: QUICK HEALS, AIMS AT", GameScreen.CYAN)
-		g.text(6, 20, "THE WEAKEST, SAVES ITS SPELLS", GameScreen.CYAN)
-		g.text(4, 21, "M", GameScreen.WHITE)
-		g.text(5, 21, "ONSTER TACTICS: " + ("SMARTER" if SmartQuick.monsters_on() else "ORIGINAL"), GameScreen.GREEN)
-		g.text(6, 22, "SMARTER: HARDER FIGHTS", GameScreen.CYAN)
-		g.text(2, 24, "A P S Q T OR M CHANGES IT, ESC: BACK", GameScreen.CYAN)
+		_draw_settings(g)
+	elif _stage == "about":
+		g.text(9, 5, FeatureText.text("about_title", "ABOUT"), GameScreen.WHITE)
+		var items := FeatureText.menu("about")
+		for i in items.size():
+			var s: String = items[i]
+			g.text(12, 7 + i * 2, s.substr(0, 1), GameScreen.WHITE)
+			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _about_sel else GameScreen.GREEN)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -263,33 +261,82 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _stage == "credits":
 		var last := _page >= _pages.size() - 1
 		if key == KEY_E or key == KEY_ESCAPE or (last and (key == KEY_ENTER or key == KEY_SPACE)):
-			_show_menu()
+			_stage = "about"
+			_draw()
 		elif not last:
 			_page += 1
 			_show_credits_page()
 		return
 	var letter := OS.get_keycode_string(key).to_upper() if key != KEY_NONE else ""
 	if _stage == "settings":
-		if key == KEY_A:
-			Automap.save_enabled(not Automap.load_enabled())
-			_draw()
-		elif key == KEY_P:
-			CharacterCreator.save_matched_portraits(not CharacterCreator.matched_portraits())
-			_draw()
-		elif key == KEY_S:
-			CampScreen.save_start_memorized(not CampScreen.start_memorized_on())
-			_draw()
-		elif key == KEY_Q:
-			Combat.save_quick_bandages(not Combat.quick_bandages_on())
-			_draw()
-		elif key == KEY_T:
-			SmartQuick.save(not SmartQuick.on())
-			_draw()
-		elif key == KEY_M:
-			SmartQuick.save_monsters(not SmartQuick.monsters_on())
-			_draw()
-		elif key == KEY_E or key == KEY_ESCAPE:
+		var sets := FeatureText.settings()
+		if key == KEY_E or key == KEY_ESCAPE:
 			_show_menu()
+			return
+		if event.is_action("ui_up"):
+			_set_sel = (_set_sel + sets.size() - 1) % sets.size()
+		elif event.is_action("ui_down"):
+			_set_sel = (_set_sel + 1) % sets.size()
+		elif event.is_action("ui_accept") or key == KEY_C or key == KEY_SPACE:
+			change_setting(String(sets[_set_sel].setting))
+		else:
+			for i in sets.size():
+				if letter != "" and String(sets[i].label).begins_with(letter):
+					_set_sel = i
+					change_setting(String(sets[i].setting))
+					break
+		_draw()
+		return
+	if _stage == "about":
+		var items := FeatureText.menu("about")
+		var pick := ""
+		if key == KEY_ESCAPE:
+			pick = "EXIT"
+		elif event.is_action("ui_up"):
+			_about_sel = (_about_sel + items.size() - 1) % items.size()
+		elif event.is_action("ui_down"):
+			_about_sel = (_about_sel + 1) % items.size()
+		elif event.is_action("ui_accept"):
+			pick = items[_about_sel]
+		else:
+			for it in items:
+				if letter != "" and String(it).begins_with(letter):
+					pick = it
+		match _about_index(pick):
+			0:
+				_stage = "features"
+			1:
+				_stage = "credits"
+				_pages = Credits.pages()
+				_page = 0
+				_show_credits_page()
+				return
+			2:
+				_show_menu()
+				return
+		_draw()
+		return
+	if _stage == "features":
+		var n := FeatureText.features().size()
+		if key == KEY_E or key == KEY_ESCAPE:
+			_stage = "about"
+		elif event.is_action("ui_up"):
+			_feat_sel = (_feat_sel + n - 1) % n
+		elif event.is_action("ui_down"):
+			_feat_sel = (_feat_sel + 1) % n
+		elif event.is_action("ui_accept") or key == KEY_V:
+			_stage = "feature"
+		_draw()
+		return
+	if _stage == "feature":
+		var n := FeatureText.features().size()
+		if key == KEY_E or key == KEY_ESCAPE:
+			_stage = "features"
+		elif key == KEY_N or event.is_action("ui_accept") or event.is_action("ui_right") or event.is_action("ui_down"):
+			_feat_sel = (_feat_sel + 1) % n
+		elif key == KEY_P or event.is_action("ui_left") or event.is_action("ui_up"):
+			_feat_sel = (_feat_sel + n - 1) % n
+		_draw()
 		return
 	if _stage == "load":
 		if _saves.has(letter):
@@ -329,11 +376,129 @@ func _pick(item: String) -> void:
 			chosen.emit("create", "")
 		"SETTINGS":
 			_stage = "settings"
+			_set_sel = 0
 			_draw()
 		"ABOUT":
-			_stage = "credits"
-			_pages = Credits.pages()
-			_page = 0
-			_show_credits_page()
+			_stage = "about"
+			_about_sel = 0
+			_draw()
 		"EXIT":
 			get_tree().quit()
+
+
+# ---------------------------------------------------------------- SETTINGS and FEATURES (P21)
+
+## A SETTINGS item's value as the index into its "values" in content/features.json.
+static func setting_value(id: String) -> int:
+	match id:
+		"automap": return int(Automap.load_enabled())
+		"portraits": return int(CharacterCreator.matched_portraits())
+		"memorized": return int(CampScreen.start_memorized_on())
+		"bandages": return int(Combat.quick_bandages_on())
+		"tactics": return int(SmartQuick.on())
+		"monsters": return int(SmartQuick.monsters_on())
+	return 0
+
+
+## Moves a SETTINGS item on to its next value.
+static func change_setting(id: String) -> void:
+	match id:
+		"automap": Automap.save_enabled(not Automap.load_enabled())
+		"portraits": CharacterCreator.save_matched_portraits(not CharacterCreator.matched_portraits())
+		"memorized": CampScreen.save_start_memorized(not CampScreen.start_memorized_on())
+		"bandages": Combat.save_quick_bandages(not Combat.quick_bandages_on())
+		"tactics": SmartQuick.save(not SmartQuick.on())
+		"monsters": SmartQuick.save_monsters(not SmartQuick.monsters_on())
+
+
+func _about_index(item: String) -> int:
+	return FeatureText.menu("about").find(item)
+
+
+## The start menu's frame (the caller has drawn it) with a rope across row 16, as the walking
+## screen's, making a text box of rows 17..22.
+func _divider(g: GameScreen) -> void:
+	for c in 40:
+		g.tile(c, 16, 22)
+	g.tile(0, 16, 20)
+	g.tile(39, 16, 20)
+
+
+func _frame(g: GameScreen) -> void:
+	g.clear()
+	for c in 40:
+		g.tile(c, 0, 22)
+		g.tile(c, 23, 22)
+	for r in range(1, 23):
+		g.tile(0, r, 21)
+		g.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		g.tile(p.x, p.y, 20)
+
+
+## SETTINGS: one line an item (hot letter white, name green, value cyan; the highlighted line
+## all white, as the original's menus), the highlighted item's help in the box, CHANGE EXIT.
+func _draw_settings(g: GameScreen) -> void:
+	g.text(2, 5, FeatureText.text("settings_title"), GameScreen.WHITE)
+	var sets := FeatureText.settings()
+	_set_sel = clampi(_set_sel, 0, maxi(sets.size() - 1, 0))
+	for i in sets.size():
+		var f: Dictionary = sets[i]
+		var label := String(f.label)
+		var vals: Array = f.get("values", [])
+		var v := setting_value(String(f.setting))
+		var on := i == _set_sel
+		g.text(4, 7 + i, label.substr(0, 1), GameScreen.WHITE)
+		g.text(5, 7 + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
+		g.text(24, 7 + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
+	if not sets.is_empty():
+		_box(g, FeatureText.box_lines(sets[_set_sel], true))
+	g.menu_line(24, FeatureText.menu("settings"))
+
+
+func _box(g: GameScreen, lines: Array) -> void:
+	for i in lines.size():
+		if String(lines[i][0]) != "":
+			g.text(1, 17 + i, lines[i][0], lines[i][1])
+
+
+## FEATURES: every addition, the highlighted one's help in the box, VIEW EXIT.
+func _draw_features(g: GameScreen) -> void:
+	_frame(g)
+	_divider(g)
+	g.text(2, 2, FeatureText.text("features_title"), GameScreen.WHITE)
+	var fs := FeatureText.features()
+	_feat_sel = clampi(_feat_sel, 0, maxi(fs.size() - 1, 0))
+	for i in fs.size():
+		g.text(4, 4 + i, String(fs[i].name), GameScreen.WHITE if i == _feat_sel else GameScreen.GREEN)
+	if not fs.is_empty():
+		_box(g, FeatureText.box_lines(fs[_feat_sel], false))
+	g.menu_line(24, FeatureText.menu("features"))
+	g.update()
+
+
+## One feature's page: its name, then WHAT IT DOES, KEYS, DEFAULT and IN THE ORIGINAL.
+func _draw_feature_page(g: GameScreen) -> void:
+	_frame(g)
+	var fs := FeatureText.features()
+	if fs.is_empty():
+		g.update()
+		return
+	var f: Dictionary = fs[_feat_sel]
+	var name := String(f.name)
+	g.text((40 - name.length()) / 2, 2, name, GameScreen.YELLOW)
+	var row := 4
+	for k in ["what", "keys", "default", "original"]:
+		var t := String(f.get(k, ""))
+		if t == "":
+			continue
+		if row > 4:
+			row += 1
+		g.text(2, row, FeatureText.heading(k), GameScreen.YELLOW)
+		row += 1
+		for l in GameScreen.wrap(t, 36):
+			if row <= 22:
+				g.text(2, row, l, GameScreen.CYAN)
+			row += 1
+	g.menu_line(24, FeatureText.menu("page"))
+	g.update()

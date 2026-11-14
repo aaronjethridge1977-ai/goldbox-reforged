@@ -102,27 +102,9 @@ static func _find(d: PackedByteArray, what: PackedByteArray, from: int) -> int:
 	return -1
 
 
-# Gold Box Reforged's credits, as [text, colour] lines; "" is a blank line. Wording settled
-# with Jeremy on 2026-11-13.
-const OURS := [
-	["GOLD BOX REFORGED", GameScreen.YELLOW],
-	["", 0],
-	["BUILT BY PEOPLE USING AI,", GameScreen.CYAN],
-	["NOT BY AI USING PEOPLE.", GameScreen.CYAN],
-	["", 0],
-	["ENGINE DESIGN AND CODE:", GameScreen.YELLOW],
-	["CLAUDE (ANTHROPIC)", GameScreen.CYAN],
-	["", 0],
-	["THANKS TO THE PEOPLE AT ANTHROPIC WHO MAKE CLAUDE, AND ALL THOSE EXPLORING WHAT MANKIND AND AI CAN DO TOGETHER.", GameScreen.GREEN],
-	["", 0],
-	["FORMAT RESEARCH OWED TO:", GameScreen.YELLOW],
-	["SSI-ENGINE", GameScreen.CYAN],
-	["SIMEON PILGRIM'S CURSE OF THE AZURE BONDS RECONSTRUCTION", GameScreen.CYAN],
-	["", 0],
-	["SPECIAL THANKS TO AARON J. ETHRIDGE, WHO KEPT IT ALL POINTED IN THE RIGHT DIRECTION.", GameScreen.WHITE],
-]
-# Heads the legal pages, before the Godot license.
-const DISCLAIMER := "AN UNOFFICIAL FAN PROJECT, FREE AND NOT FOR SALE. NOT AFFILIATED WITH OR ENDORSED BY ANTHROPIC OR THE OWNERS OF THE ORIGINAL GAMES."
+# Gold Box Reforged's credits (wording settled with Jeremy on 2026-11-13), the disclaimer that
+# heads the legal pages and the headings around the Godot license all come from
+# content/features.json (FeatureText, P21).
 
 const WIDTH := 36        # text columns inside the frame, a column of margin each side
 const PAGE_ROWS := 21    # rows 2..22
@@ -132,27 +114,29 @@ const PAGE_ROWS := 21    # rows 2..22
 ## pages of centred [text, colour] lines.
 static func pages() -> Array:
 	var lines: Array = []
-	for l in OURS:
-		if l[0] == "":
+	for l in FeatureText.data().get("credits", []):
+		if String(l[0]) == "":
 			lines.append(["", 0])
 		else:
-			for w in GameScreen.wrap(l[0], WIDTH):
-				lines.append([w, l[1]])
+			for w in GameScreen.wrap(String(l[0]), WIDTH):
+				lines.append([w, FeatureText.color(String(l[1]))])
 	var out := _paginate(lines)
 	# The Godot Engine license (the engine's own text, so it stays right when Godot is updated)
 	# and where the third-party notices are: godotengine.org/license.
 	var lic: Array = []
-	for w in GameScreen.wrap(DISCLAIMER, WIDTH):
+	for w in GameScreen.wrap(FeatureText.text("disclaimer"), WIDTH):
 		lic.append([w, GameScreen.GREEN])
 	lic.append(["", 0])
-	lic.append_array([["THIS GAME USES GODOT ENGINE,", GameScreen.YELLOW],
-		["AVAILABLE UNDER THE FOLLOWING LICENSE:", GameScreen.YELLOW], ["", 0]])
+	for h in FeatureText.data().get("license_heading", []):
+		lic.append([String(h), GameScreen.YELLOW])
+	lic.append(["", 0])
 	for para in Engine.get_license_text().strip_edges().split("\n\n"):
 		for w in GameScreen.wrap(_plain(para.replace("\n", " ")), WIDTH):
 			lic.append([w, GameScreen.CYAN])
 		lic.append(["", 0])
-	lic.append(["THIRD-PARTY LICENSES:", GameScreen.YELLOW])
-	lic.append(["GODOTENGINE.ORG/LICENSE", GameScreen.CYAN])
+	var tp: Array = FeatureText.data().get("third_party", [])
+	for i in tp.size():
+		lic.append([String(tp[i]), GameScreen.YELLOW if i == 0 else GameScreen.CYAN])
 	out.append_array(_paginate(lic))
 	return out
 
@@ -196,5 +180,5 @@ static func draw_page(g: GameScreen, page: Array, last: bool) -> void:
 	for i in page.size():
 		var s: String = page[i][0]
 		g.text((40 - s.length()) / 2, top + i, s, page[i][1])
-	g.menu_line(24, ["EXIT"] if last else ["NEXT", "EXIT"])
+	g.menu_line(24, FeatureText.menu("credits_last" if last else "credits_more"))
 	g.update()
