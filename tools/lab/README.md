@@ -692,3 +692,18 @@ games draw the same numbers, so a fight can be compared draw by draw.
   cell in view (margin 3); a hand-to-hand blow brings its target within 2. A dart throw reframed
   the view between thrower and target (step 4, missiles). Ours under `--anim` prints `view x,y`
   on each change, for comparing with viewlog.py.
+- Step 4 (missiles): `missiles.py <video> <start> <end>` finds COMSPR sprites on the view in each
+  frame of a lab video (sprite block and top-left pixel). COMSPR: 0-2 arrows up, up-right, right;
+  128-130 down, down-right, left (the left diagonals drawn mirrored); 3/131 axe, 4/132 flask, 5/133
+  Magic Missile, 6/134 lightning, 7/135 boulder, 8/136 stone, 9/137 sparkles, 10/138 explosion,
+  11/139 skull, 25/153 cursor box; loaded at fight start into picture slots n + 13 (DS:0x5E5A,
+  8 bytes a slot: block n, block n + 128; GAME.OVR 0xEAD5). Seen: a dart volley flies once (sprite
+  130 from Phineas at 120,72 to the orc at 0,48 of the view, ~720 px/s in 8-pixel steps), before
+  the first message; with the target off the view the view first centres on the midpoint, rounded
+  up. Magic Missile: "CASTS A SPELL", then sprites 5 / 133 by turns ~240 px/s, then the target.
+  The attacker shows its attack pose (icon + 128) until its messages are done. Not found yet: the
+  code that picks a weapon's sprite (ITEMS has no byte for it); ours: darts, arrows, quarrels the
+  arrow; slings the stone; other thrown weapons the axe (assumed). Other spells' pictures not
+  filmed yet. Steps (GAME.OVR 0x12F0D): a computer-run figure margin 3 (its own square within 2
+  first if the new one is off the view), a figure the player moves margin 1; delays there are
+  `08AE:00DC` with a count from DS:0x2614+2n (= n): a step waits 10.

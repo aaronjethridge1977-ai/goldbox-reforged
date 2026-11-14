@@ -81,11 +81,24 @@ var _muted := false
 ## P16 step 3: computer turns step by step (lab: the view's corner read from the battlefield
 ## record, DS:[0x6716] bytes 2-3, through a whole fight). GAME.OVR 0x30F0E keeps a cell in view:
 ## if it is more than `margin` from the view's centre on an axis, the centre moves onto it on
-## that axis (centre column 3-46, row 3-21). A turn starts with the actor at margin 2, each step
-## keeps the new cell in the 7x7 view (margin 3), a hand-to-hand blow brings its target within 2. Steps come
+## that axis (centre column 3-46, row 3-21). A turn starts with the actor at margin 2; a computer-run step
+## keeps the new cell in the 7x7 view (margin 3; GAME.OVR 0x12F0D: if it was off the view, the
+## walker's own cell comes within 2 first), a step the player makes keeps it within 1; a
+## hand-to-hand blow brings its target within 2 (0xB9F5: the cell beside the attacker toward it). Steps come
 ## about 0.15 s apart; a monster's first ~0.17 s after its turn starts, a QUICK member's after its
 ## menu has shown 0.4 s. "MOVE/ATTACK, MOVE LEFT = n" is on row 24 while a computer turn walks;
 ## the actor's grey box goes once it acts.
+## P16 step 4: blows and missiles (lab, filmed): the attacker shows its attack pose (icon block
+## + 128) from the blow until its messages are done. A missile flies from the attacker's square to
+## the target's in 8-pixel steps (a dart ~720 px/s, Magic Missile ~240), once a volley, before
+## the first message; a target off the view first brings the view's centre to the midpoint
+## (rounded up). Darts, arrows and quarrels fly as the arrow for their direction, a sling's stone
+## and other thrown weapons as COMSPR's two-frame stone and axe.
+signal flight_done
+var _posed := -1
+var _flying := false
+var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
+var _spell_flight := {}    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
 var _quick_menu := false
 var _move_label := ""
@@ -613,14 +626,14 @@ func _place() -> void:
 		# A member a script turned against the party (0x6C0C = 0x81) fights with the monsters.
 		var side := 1 if _party[i].script_team == 0x81 else 0
 		_combatants.append({"who": _party[i], "team": side, "cell": party_cells[i],
-			"icon": _art.character_icon(_party[i]), "dir": party_dir})
+			"icon": _art.character_icon(_party[i]), "dir": party_dir, "pic": -1})
 	for i in range(_party.size(), side_list.size()):
 		if party_cells[i].x < 0:
 			continue
 		var k := _monsters.find(side_list[i])
 		_combatants.append({"who": side_list[i], "team": 0, "cell": party_cells[i],
 			"icon": _art.monster_icon(_mon_file, _pictures[k]) if _pictures[k] >= 0 else _art.character_icon(side_list[i]),
-			"dir": party_dir})
+			"dir": party_dir, "pic": _pictures[k]})
 	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
 	var mon_sizes := foes.map(func(m): return Combat.foot_size(m))
 	var mon_cells := placer.place_team(foes.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
@@ -630,7 +643,7 @@ func _place() -> void:
 		var icon: Variant = _art.character_icon(foes[i]) if foe_pictures[i] < 0 \
 			else _art.monster_icon(_mon_file, foe_pictures[i])
 		_combatants.append({"who": foes[i], "team": 1, "cell": mon_cells[i],
-			"icon": icon, "dir": (party_dir + 4) % 8})
+			"icon": icon, "dir": (party_dir + 4) % 8, "pic": foe_pictures[i]})
 
 
 # --- Fighting ---------------------------------------------------------------------------
@@ -679,6 +692,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	var table := SpellTable.shared(_game_path)
 	if table.is_loaded():
 		_combat.magic = CombatSpells.new(_combat, table)
+		_combat.magic.spell_cast.connect(_on_spell_cast)
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
 	_combat.surprise_flags = _surprise
@@ -698,6 +712,14 @@ var _asking_continue := false
 ## the player characters stay the player's.
 var _asking_ally := false
 var _ally_target := -1
+
+
+## A figure's attack pose (its icon's block + 128), kept with it.
+func _attack_icon(e: Dictionary) -> Image:
+	if not e.has("icon_attack"):
+		var pic: int = e.get("pic", -1)
+		e.icon_attack = _art.monster_icon(_mon_file, pic, true) if pic >= 0 else _art.character_icon(e.who, true)
+	return e.icon_attack if e.icon_attack != null else e.icon
 
 
 ## The original's view rule (GAME.OVR 0x30F0E), see _box_off.
@@ -795,6 +817,9 @@ func _show_messages() -> void:
 			_panel_msgs.clear()
 			_refresh()
 			await get_tree().create_timer(MESSAGE_GAP).timeout
+			if _flying:
+				await flight_done
+				await get_tree().create_timer(0.13).timeout
 		if dying:
 			_panel_msgs.clear()
 			_row24_msg = msg
@@ -802,11 +827,21 @@ func _show_messages() -> void:
 			_panel_msgs.append(msg)
 		_refresh()
 		await get_tree().create_timer(message_hold()).timeout
+		if not _spell_flight.is_empty() and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
+			var sf := _spell_flight
+			_spell_flight = {}
+			_panel_msgs.clear()
+			_refresh()
+			_fly(sf.from, sf.to, [5, 133], 240.0)
+			await flight_done
 		_row24_msg = ""
 		if _pending_msgs.is_empty() or not _continues(_pending_msgs[0]):
 			_panel_msgs.clear()
 		_refresh()
 	_draining = false
+	if _posed >= 0:
+		_posed = -1
+		_refresh()
 	messages_shown.emit()
 
 
@@ -890,11 +925,19 @@ func _ai_step() -> void:
 	var actor: Dictionary = _combatants[_combat.active] if _combat.active >= 0 else {}
 	var before: Vector2i = actor.get("cell", Vector2i.ZERO)
 	var moves_before: int = actor.get("moves", 0)
+	var shown_before := _messages.size()
+	var weapon_before: GameItem = (actor.who as PartyMember).weapon if not actor.is_empty() else null
 	var more := _combat.ai_act()
+	if paced() and not actor.is_empty():
+		_after_blow(_combat.active, shown_before, weapon_before)
 	if paced() and not actor.is_empty():
 		_box_off = true
 		if actor.cell != before:
 			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
+			# GAME.OVR 0x12F0D: a computer-run step whose square is off the view first brings
+			# the walker's own square within 2, then keeps the new one in view.
+			if not _on_screen(actor.cell):
+				_ensure_view(before, 2)
 			_ensure_view(actor.cell, 3)
 		var t: int = actor.get("target", -1)
 		if _draining and t >= 0 and t < _combatants.size() and _combat.touching(actor, _combatants[t]):
@@ -930,7 +973,7 @@ func _after_player_action(what: String) -> void:
 	if _combat.outcome() != 0 or (c.moves <= 0 and c.attacks <= 0) or (what == "attacked" and c.attacks <= 0):
 		_advance()
 	elif paced():
-		_ensure_view(c.cell, 3)
+		_ensure_view(c.cell, 1)     # a step the player made: margin 1 (GAME.OVR 0x12F0D)
 		_refresh()
 	else:
 		_centre_on_selected()
@@ -1144,11 +1187,102 @@ func _attack_aimed(j: int) -> void:
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
+	var shown_before := _messages.size()
+	var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
 	if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
 		_combat.shoot(me, j)
 	else:
 		_combat.attack(me, j)
+	if paced():
+		_after_blow(me, shown_before, weapon_before)
 	_after_player_action("attacked")
+
+
+## After figure i acted (P16, paced): if it struck at its target, its attack pose, and for a
+## missile weapon the missile's flight.
+func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
+	var c: Dictionary = _combatants[i]
+	var t: int = c.get("target", -1)
+	if t < 0 or t >= _combatants.size():
+		return
+	var name := (c.who as PartyMember).name.to_upper()
+	var struck := false
+	for k in range(shown_before, _messages.size()):
+		var msg := String(_messages[k]).to_upper()
+		if msg.begins_with(name + " ") and (msg.ends_with(" AND MISSES") or msg.contains(" HITTING FOR ")):
+			struck = true
+	if not struck:
+		return
+	_posed = i
+	# QUICK may change weapons during its turn (Phineas: dagger to darts); the last dart thrown
+	# can leave none readied: then the weapon from before the turn.
+	var now: GameItem = (c.who as PartyMember).weapon
+	if now != null and (c.who as PartyMember).weapon_ranged:
+		weapon = now
+	if _combat.touching(c, _combatants[t]) or weapon == null or _types == null:
+		return
+	var f := _types.flags(weapon.type)
+	var frames: Array = []
+	if weapon.type == 9 or f & (ItemTypes.FLAG_ARROWS | ItemTypes.FLAG_QUARRELS):
+		frames = ["arrow"]
+	elif f & ItemTypes.FLAG_LAUNCHER:
+		frames = [8, 136]
+	elif f & ItemTypes.FLAG_THROWN:
+		frames = [3, 131]
+	if not frames.is_empty():
+		_fly(c.cell, _combatants[t].cell, frames, 720.0)
+
+
+## A spell went off (paced): the caster's pose, and Magic Missile's spark flown to its first
+## target after "CASTS A SPELL" (lab: Bakshi's, sprites 5 / 133 by turns, ~240 px/s). Other
+## spells' pictures are not filmed yet.
+func _on_spell_cast(i: int, id: int, targets: Array) -> void:
+	if not paced() or i < 0 or i >= _combatants.size():
+		return
+	_posed = i
+	if _combat.magic.table.name_of(id).to_upper() == "MAGIC MISSILE" and not targets.is_empty() and targets[0] != i:
+		_spell_flight = {"from": _combatants[i].cell, "to": _combatants[targets[0]].cell}
+
+
+## The arrow sprite for a flight from a to b, mirrored for the left diagonals (lab: Darkstar's
+## dart thrown down-left).
+func _arrow(a: Vector2i, b: Vector2i) -> Image:
+	var d := Vector2(b - a)
+	var sector := int(round(atan2(d.x, -d.y) / (PI / 4.0))) % 8
+	if sector < 0:
+		sector += 8
+	var block: int = [0, 1, 2, 129, 128, 129, 130, 1][sector]
+	var img := _art.sprite(block)
+	if img != null and sector in [5, 7]:
+		img = img.duplicate() as Image
+		img.flip_x()
+	return img
+
+
+## A missile's flight from cell a to cell b (P16).
+func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float) -> void:
+	_flying = true
+	if not _on_screen(b):
+		_ensure_view(Vector2i((a.x + b.x + 1) / 2, (a.y + b.y + 1) / 2), 0)
+	var p0 := Vector2((a - _view) * CELL)
+	var p1 := Vector2((b - _view) * CELL)
+	var length := maxf(absf(p1.x - p0.x), absf(p1.y - p0.y))
+	var t := 0.0
+	var started := Time.get_ticks_msec()
+	while is_inside_tree():
+		t = (Time.get_ticks_msec() - started) / 1000.0
+		var gone := minf(t * speed, length)
+		var at := p0.lerp(p1, gone / length if length > 0 else 1.0)
+		var img: Image = _arrow(a, b) if frames[0] is String else _art.sprite(frames[int(t * 15.0) % frames.size()])
+		_flight = {"img": img, "at": Vector2i(int(at.x) / 8 * 8, int(at.y) / 8 * 8)}
+		_refresh()
+		if gone >= length:
+			break
+		await get_tree().process_frame
+	_flight = {}
+	_flying = false
+	_refresh()
+	flight_done.emit()
 
 
 ## The hot letter or Enter on the lit item ("" for neither).
@@ -1319,12 +1453,17 @@ func _refresh() -> void:
 		var at: Vector2i = (e.cell - _view) * CELL
 		if i == _selected and _cmode != "manual" and not (_box_off and e.quick):
 			_bevel(img, at)
+		if i == _posed:
+			icon = _attack_icon(e)
 		if icon:
 			var src := icon
 			if Placement.DX[e.dir] < 0:
 				src = icon.duplicate() as Image
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
+	if not _flight.is_empty() and _flight.img != null:
+		var fi: Image = _flight.img
+		img.blend_rect(fi, Rect2i(Vector2i.ZERO, fi.get_size()), _flight.at)
 	_picture.texture = ImageTexture.create_from_image(img)
 	_draw_original(img)
 	if _combatants.is_empty():

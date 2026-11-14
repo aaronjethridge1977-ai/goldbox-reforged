@@ -17,7 +17,7 @@ Files not listed: whoever needs them asks here first.
 ## Now
 
 - Main: chat 19 ended 2026-11-14: 23 of 29 areas done (new: 6:1, 3:0, 5:7, 4:10, 5:3, 3:8, 7:26, 8:27); overall 93% / 89% played. Runs are load-independent and replayable. Lab archive: PC `.lab/lab19.tar.gz`. Next: chat 20 (the hook-file request, small bot fixes, then 6:25, 7:23, 2:9, 2:20, 5:6, 8:13).
-- Side: side chat 4 on P16 combat animations (display only, off in headless/--play/--keys/--fast; lab key `--anim`). Steps 2-3 done: messages paced as the original, DONE -> SPEED; computer turns step by step with the original's view rule (GAME.OVR 0x30F0E). Next: missiles.
+- Side: side chat 4 on P16 combat animations (display only, off in headless/--play/--keys/--fast; lab key `--anim`). Steps 2-4 done: paced messages, DONE -> SPEED, step-by-step turns with the original's view rule, missiles (COMSPR) and attack poses. Next: Jeremy's call on what's left (other spells' pictures, cursor details).
 
 ## Requests to another lane
 

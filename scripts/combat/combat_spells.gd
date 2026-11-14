@@ -370,6 +370,10 @@ func _people_in(cells: Array[Vector2i]) -> Array[int]:
 # --- Casting ------------------------------------------------------------------------------
 
 ## Combatant i casts `id` at `cell` (area spells) or at the figures in `picked`.
+## A spell going off (P16: the combat screen draws its missile): caster, spell id, targets.
+signal spell_cast(i: int, id: int, targets: Array)
+
+
 func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = null) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
@@ -409,6 +413,7 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 			targets = picked.duplicate()
 	if targets.size() > 0 and id != LIGHTNING:
 		me.dir = c.dir_between(me, c.combatants[targets[0]]) if targets[0] != i else me.dir
+	spell_cast.emit(i, id, targets)
 	_resolve(i, id, targets)
 
 

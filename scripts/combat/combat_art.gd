@@ -41,6 +41,26 @@ func tile(t: int) -> Image:
 	return tiles[t] if t >= 0 and t < tiles.size() else null
 
 
+## COMSPR.DAX's combat sprites (24x24, colour 0 transparent), by block (P16, lab): 0-2 arrows
+## up, up-right and right, 128-130 down, down-right and left (the original mirrors these for the
+## two left diagonals); 3/131 a thrown axe, 4/132 a flask, 5/133 Magic Missile, 6/134 lightning,
+## 7/135 a boulder, 8/136 a sling stone, 9/137 sparkles, 10/138 an explosion, 11/139 the skull,
+## 25/153 the grey cursor box. The pairs n / n + 128 are a missile's two frames.
+func sprite(block: int) -> Image:
+	var key := "s%d" % block
+	if _cache.has(key):
+		return _cache[key]
+	var img: Image = null
+	var dax := _dax("COMSPR.DAX")
+	if dax and dax.blocks.has(block):
+		var b: PackedByteArray = dax.blocks[block]
+		var frames := _frames(b)
+		if not frames.is_empty():
+			img = _to_image(frames[0], b.decode_u16(2) * 8, b.decode_u16(0), true)
+	_cache[key] = img
+	return img
+
+
 ## Icon for a monster of MON<file_no>CHA block `id`.
 func monster_icon(file_no: int, id: int, attack: bool = false) -> Image:
 	var key := "m%d:%d:%d" % [file_no, id, int(attack)]
