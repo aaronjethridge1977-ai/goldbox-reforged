@@ -7,12 +7,15 @@ extends Control
 ##   PARTS → HEAD WEAPON EXIT → NEXT PREV KEEP EXIT     (record 0xBD head, 0xBE body/weapon:
 ##                                                       the CHEAD / CBODY pictures)
 ##   COLOR-1 (key 1), COLOR-2 (key 2) → WEAPON BODY HAIR SHIELD ARM LEG EXIT
-##                                    → NEXT PREV KEEP EXIT  (record 0xC1..0xC6: COLOR-1
-##                                       steps the low nibble, COLOR-2 the high one; lab:
-##                                       NEXT goes 7, 8, 9...)
+##                                    → NEXT PREV KEEP EXIT  (COLOR-1 steps the low nibble,
+##                                       COLOR-2 the high one; lab: NEXT goes 7, 8, 9...).
+##     The parts' record bytes (lab, 2026-11-13: each part stepped a different number of
+##     times in the original, then the saved records compared): WEAPON 0xC6, BODY 0xC1,
+##     HAIR 0xC4, SHIELD 0xC5, ARM 0xC2, LEG 0xC3.
 ##   SIZE: small (record 0xC0 = 1) or normal (2)
 ##   EXIT → IS THIS ICON OK? YES NO  (No goes back to the editor)
-## KEEP keeps a change, EXIT drops it.
+## KEEP keeps a change, EXIT drops it; both go back to the list the part was picked from
+## (lab, 2026-11-13: the colour parts, or HEAD WEAPON).
 
 signal finished(changed: bool)
 
@@ -25,7 +28,9 @@ var _trial := PackedByteArray()      # the change being tried (NEXT/PREV) before
 var _stage := "main"
 var _field := 0                       # record offset being changed
 var _nibble := 0                      # 0 low (COLOR-1), 4 high (COLOR-2)
+var _back := "main"                   # the list NEXT PREV KEEP EXIT returns to
 const PARTS := ["WEAPON", "BODY", "HAIR", "SHIELD", "ARM", "LEG"]
+const PART_FIELDS := [0xC6, 0xC1, 0xC4, 0xC5, 0xC2, 0xC3]   # record byte of each part, in menu order
 
 
 func open(game_path: String, m: PartyMember) -> void:
@@ -127,14 +132,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				KEY_E, KEY_ESCAPE: _stage = "ok"
 		"parts":
 			match k:
-				KEY_H: _field = 0xBD; _stage = "step"
-				KEY_W: _field = 0xBE; _stage = "step"
+				KEY_H: _field = 0xBD; _stage = "step"; _back = "parts"
+				KEY_W: _field = 0xBE; _stage = "step"; _back = "parts"
 				KEY_E, KEY_ESCAPE: _stage = "main"
 		"colour":
 			var i := ["W", "B", "H", "S", "A", "L"].find(OS.get_keycode_string(k))
 			if i >= 0:
-				_field = 0xC1 + i
+				_field = PART_FIELDS[i]
 				_stage = "step"
+				_back = "colour"
 			elif k == KEY_E or k == KEY_ESCAPE:
 				_stage = "main"
 		"step":
@@ -145,10 +151,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					if not _trial.is_empty():
 						_new = _trial
 					_trial = PackedByteArray()
-					_stage = "main"
+					_stage = _back
 				KEY_E, KEY_ESCAPE:
 					_trial = PackedByteArray()
-					_stage = "main"
+					_stage = _back
 		"ok":
 			if k == KEY_Y:
 				var changed := _new != _old
