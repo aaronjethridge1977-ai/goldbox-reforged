@@ -1441,6 +1441,7 @@ func _try_move(direction: int) -> void:
 	if dev_step_hook.is_valid():
 		dev_step_hook.call(direction)
 	_event_image = null
+	_vm.sprite_id = -1   # a step redraws the view: a figure left standing there is gone too
 	_message.text = ""
 	if _vm.on_overland:
 		_overland_move(direction)

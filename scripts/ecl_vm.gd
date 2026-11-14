@@ -798,6 +798,10 @@ func _exec(ins: Dictionary) -> void:
 					# (ours looped there; the original doesn't).
 					if square_info.is_valid():
 						write_byte(SQUARE_INFO, int(square_info.call(read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15)))
+					# The redraw also wipes an approaching figure: City Hall's guard (3:8 0xB3D9)
+					# walks up, YES to "DO YOU LEAVE?" puts the party outside and calls this;
+					# ours kept drawing the guard over the street (Jeremy, 2026-11-13).
+					sprite_id = -1
 				0x2C4E, 0x2C51:
 					# Bracket the bands' loops that rewrite wilderness tiles (WRITE_MEM_BASE_OFF
 					# into 0x6300 and 0xD000): the river cleaned once Yarash is beaten (7:26
