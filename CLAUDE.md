@@ -22,7 +22,7 @@ Several chats work on this repo at once. Jeremy is the designer and decides; the
 - **Before every push:** `git fetch` and rebase onto origin/main; `./check_godot.sh`; after any change to
   `scripts/dev/bot.gd`, `refcheck.sh` (3:11 and 5:5 must not drop); `git status` (no game data, no saves).
 - **Godot `.uid` files:** commit a new script's or scene's `.uid` together with it.
-- **Ending a chat:** board updated, repos pushed, lab archive saved, a dated entry in `ideas/game-modernizer.md`,
+- **Ending a chat:** board updated, repos pushed, lab archive saved, a dated entry at the top of ai-business-ideas `plans/chat-log.md`,
   and the next chat's opening post. A chat that ends mid-task leaves the task on the board as open.
 - **Questions for Jeremy:** design and priority questions go to him directly; keep them few and ready to answer
   (options and a recommendation). Everything else, decide within your lane and log it.

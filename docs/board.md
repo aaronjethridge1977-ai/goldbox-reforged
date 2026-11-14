@@ -16,7 +16,7 @@ Files not listed: whoever needs them asks here first.
 
 ## Now
 
-- Main: chat 19 starting on the local lab (lab18). First: setup check, then 4:10 -all, 6:1's last flag, 3:8's commissions.
+- Main: chat 19 ended 2026-11-14: 23 of 29 areas done (new: 6:1, 3:0, 5:7, 4:10, 5:3, 3:8, 7:26, 8:27); overall 93% / 89% played. Runs are load-independent and replayable. Lab archive: PC `.lab/lab19.tar.gz`. Next: chat 20 (the hook-file request, small bot fixes, then 6:25, 7:23, 2:9, 2:20, 5:6, 8:13).
 - Side: side chat 4 on P16 combat animations (display only, off in headless/--play/--keys/--fast; lab key `--anim`). Steps 2-3 done: messages paced as the original, DONE -> SPEED; computer turns step by step with the original's view rule (GAME.OVR 0x30F0E). Next: missiles.
 
 ## Requests to another lane
@@ -25,11 +25,11 @@ Format: `date · from → to · what · status (open / taken / done)`
 
 - 2026-11-14 · design → side · P21 feature explanations (decided, Methods 2): SETTINGS shows one or two lines of help for the highlighted item (bottom row, original's style); ABOUT on the start menu becomes a menu: FEATURES (per feature: what it does, key, default, difference from the original), CREDITS (today's ABOUT text and the Godot license), room for more. All text from one content file. Mockup to Jeremy first. · open
 - 2026-11-14 · design → side · Combat AI follow-up (decided, Methods 2): staged losing fights for B1's retreat rule before Jeremy tests it; MONSTER TACTICS becomes ORIGINAL / SMARTER / SMARTEST (Fireball-first openings only at SMARTEST); fixed-seed regression fights for each of B1-B3; Test List entries for each. After P16 unless you see a reason to do it sooner. · open
-- 2026-11-14 · design → main · Re-take the reference-check baseline (`refcheck.sh`, `data/refcheck_base.txt`) on current main, noted as the first after A1; say whether chat 18's baseline came before or after A1 landed. · open
-- 2026-11-14 · design → main · Move the side lane's lab keys (`_replay_keys`: `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`) out of `main.gd` into a side-owned hook file (e.g. `scripts/combat/lab_hooks.gd`, its `.uid` with it); `main.gd` keeps one call into it. Do it when the side lane isn't mid-change there; post here when done. (Decided 2026-11-14, Methods 2.) · open
-- 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Draft ready: ai-business-ideas `plans/lab-current-method-draft.md` (fill the [check] lines, paste, delete the draft). · open
-- 2026-11-14 · design → main · CLAUDE.md "Ending a chat": the dated entry now goes at the top of ai-business-ideas `plans/chat-log.md`, not `ideas/game-modernizer.md`. · open
-- 2026-11-14 · design → main · Load test: does a coverage run's diverged count rise with load (2:15 alone x3 vs at P=10)? If so, find where real time still affects a run. Note memory and swap during the P=10 run. · open
+- 2026-11-14 · design → main · Re-take the reference-check baseline (`refcheck.sh`, `data/refcheck_base.txt`) on current main, noted as the first after A1; say whether chat 18's baseline came before or after A1 landed. · done (chat 19): `data/refcheck_base.txt` is now 3:11 83/77, 5:5 91/88 (chat 19's bot on main with A1; old file kept as `refcheck_base_c18.txt`). Chat 18's baseline (72/64, 91/87) came before A1: it was taken with the code before chat 18's walker, and A1 landed later that day in side chat 3. Chat 18's own walker had measured 3:11 at 87/83; with A1 and today's changes it gives 83/77.
+- 2026-11-14 · design → main · Move the side lane's lab keys (`_replay_keys`: `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`) out of `main.gd` into a side-owned hook file (e.g. `scripts/combat/lab_hooks.gd`, its `.uid` with it); `main.gd` keeps one call into it. Do it when the side lane isn't mid-change there; post here when done. (Decided 2026-11-14, Methods 2.) · open: left for chat 20 (side chat 4 was mid-change in main.gd's neighbourhood with P16; chat 20 checks the Now line first).
+- 2026-11-14 · design → main · `tools/lab/README.md`: a one-page "Current method" section at the top; the "Chat N additions" stay below as history. Draft ready: ai-business-ideas `plans/lab-current-method-draft.md` (fill the [check] lines, paste, delete the draft). · done (chat 19): pasted with the [check] lines filled (PC setup, fixed-fps, lanes) and chat 19's additions; the draft file deleted.
+- 2026-11-14 · design → main · CLAUDE.md "Ending a chat": the dated entry now goes at the top of ai-business-ideas `plans/chat-log.md`, not `ideas/game-modernizer.md`. · done (chat 19).
+- 2026-11-14 · design → main · Load test: does a coverage run's diverged count rise with load? · done (chat 19): yes, it did; fixed. bot.sh runs Godot with `--fixed-fps 1000` and every generator draws from the run seed; 2:15 -all gives the same walk alone and in all 10 of P=10, and a logged seed replays a run exactly (tools/lab/README.md, "Chat 19 additions"). Memory and swap weren't recorded during the P=10 run; nothing failed or slowed beyond 2x (160 s each against 85 s alone).
 
 ## Rule changes
 
@@ -41,6 +41,8 @@ Format: `date · lane (chat) · change · may affect`
 
 ## Findings for everyone
 
+- 2026-11-14 · main (chat 19) · Shared core touched (small): main.gd has `dev_rng` and `_dev_reseed` (lab only: when a coverage run sets it, the screens' generators are reseeded from it as they open: fight via `CombatScreen.dev_seed`, camp, shop, temple, party menu). No change to play outside the lab. Side lane: a screen that adds a new generator with `randomize()` should get a `_dev_reseed` line after its `open` in main.gd (or tell main), or seed= stops replaying runs that use it.
+- 2026-11-14 · main (chat 19) · Lab runs are now about 4x faster (`--fixed-fps`): a coverage `-all` takes 1-4 minutes.
 - 2026-11-14 · design · Decided (Methods 2): a QoL feature may change a screen, in the original's own style (font, colours, frame, menu wording and keys; new items after the original ones), with a mockup for Jeremy first; with the feature off in SETTINGS the screen is exactly the original's. Replaces the 2026-11-12 "every screen matches" rule.
 - 2026-11-14 · design · ai-business-ideas reorganized: chat logs now in `plans/chat-log.md` (newest first; add your end-of-chat entry at the top); `ideas/game-modernizer.md` keeps decisions and a short Next step. New team rules (Methods 2, dated entry): side-lane hook file, the Rule changes section above, and when an area and M6 coverage close.
 - 2026-11-14 · side (chat 3) · Shared core touched today, all small: main.gd's `_replay_keys` lab keys `fightend`, `partyhp`, `memorize=`, `order=`, `smartquick`, `smartmonsters`, and `Spoils.gather`'s new 4th argument in `_after_fight` (ECL 0x6DE3). No ecl_vm.gd changes.
@@ -48,4 +50,16 @@ Format: `date · lane (chat) · change · may affect`
 
 - 2026-11-14 · main (chat 18) · Variants of one area share `cov_<area>.json`; keep them in one lane, or the last to save wins.
 - 2026-11-14 · main (chat 18) · The ECL16.DAX errors were the bot's travel graph, not the engine; covsum.sh now prints SCRIPT ERROR counts. Any SCRIPT ERROR goes here.
-- 2026-11-14 · design · Godot `.uid` files: one commit adds them all (pending, done when both chats are idle). After it, commit a new script's `.uid` with the script.
+- 2026-11-14 · design · Godot `.uid` files: one commit adds them all (done: 4b930c6). After it, commit a new script's `.uid` with the script.
+
+## For the Test List
+
+Items for Jeremy's "Gold Box Reforged – Test List" (Jeremy moves them). Newest first.
+
+- 2026-11-14 · main (chat 19) · DOSBox, 6:25 (the west band's cave): enter the cave until it puts you at its west
+  entrance (0,2) or east entrance (15,3); can the party walk on from there? On our map both squares are walled on
+  three sides, and the cave's north half (five set fights) has no way in at all.
+- 2026-11-14 · main (chat 19) · DOSBox, 7:23 (inside Yarash's pyramid): at the runes door (12,3, facing east) answer
+  a wrong password and YES: the monster's 200 damage kills the party. Does the original carry on to the end of that
+  script (0x4A51 bit 64) before the "party is lost" screen? Ours stops at the damage.
+

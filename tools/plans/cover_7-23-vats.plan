@@ -1,0 +1,12 @@
+# Chat 19: 7:23's vats room (13-15, 9-11). Its way in is the secret door east of (12,11) (event 9: found by the
+# step script's search roll, 0x9A09, bit 16 of 0x4A4F; until then the on-move script blocks the step, 0x9C24).
+# Chat 18's walks never routed to (12,11); today's walk (seeded dice) does from the south-west part (4,15), and
+# this plan walks just that part's events.
+rules playthrough.plan
+start chat12a_latest/pyramid1
+travel 7:23
+expect 7:23
+shortcut teleport 7:23 4,15 N
+cover 7:23 10 only=6,7,8,9,10,17
+status
+stop

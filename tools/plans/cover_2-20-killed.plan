@@ -1,0 +1,11 @@
+# Chat 19: 2:20 after killing the fortune teller (0x4A0B = 255, 0x4A80 = 0: 0xA6E7-0xA74F, 'THE GODS HAVE NOTED
+# YOUR DEED'): the patrols come stronger (0x9A14, 0x9B56, 0x9B80, 0xADEE). Set on arrival. Otherwise as cover_2-20-all.
+rules playthrough.plan
+start chat10a_latest/shopped
+travel 2:20
+expect 2:20
+shortcut flag 4A0B set 255 the fortune teller killed
+shortcut flag 4A80 set 0 the fortune teller killed
+cover 2:20 40 all
+status
+stop

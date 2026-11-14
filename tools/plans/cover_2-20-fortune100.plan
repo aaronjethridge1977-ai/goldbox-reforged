@@ -1,0 +1,12 @@
+# Chat 19: 2:20's fortune teller (event 8, 0xA63A) for a party with 100 patrol fights behind it (0x4A80, +1 a fight,
+# 0xB12A/0xB145): her reading depends on it (0xA7FD: up to 25, up to 75, more). Set on arrival with her not yet
+# visited (0x4A0B = 0); only her event walked.
+rules playthrough.plan
+start chat10a_latest/shopped
+travel 2:20
+expect 2:20
+shortcut flag 4A80 set 100 patrol fights won
+shortcut flag 4A0B set 0 the fortune teller not yet visited
+cover 2:20 10 all only=8
+status
+stop

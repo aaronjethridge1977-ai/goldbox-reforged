@@ -1,0 +1,19 @@
+# Chat 19: 2:9's tower rooms (the mage 0xA1D8, the fighter 0xA2F9). The towers are closed on the map; their way
+# in is the stairs: on (4,5) and (11,5) a step south asks "DO YOU WANT TO GO UPSTAIRS?" (events 10 and 11, the
+# on-move table at 0x9CB7) and YES moves the party into the tower (0xA16A). The rooms are manned only while
+# 0x4A77 bits 4 and 8 are clear; winning the fight with the bugbears inside the gate sets both (0xA60E), and
+# chat 18's walks always fought there before climbing. Paying the 15 gold toll walks the party through the gate to
+# (8,5) and writes no tower bit (0xAC85-0xACB6). So: chat 18's paid state (cover_2-9-paid.plan), placed where
+# the toll walk leaves the party, walking only the stairs and the tower rooms.
+rules playthrough.plan
+start chat13a_latest/graveyard
+shortcut flag 4A77 set 96 gate seen and wagon bought, never fought (2:9 0xAABB, 0xB014)
+shortcut flag 4A64 set 0 no alarm (2:9 0x9BA0)
+shortcut flag 4A78 set 0 no warnings yet (a new game)
+shortcut flag 4AB9 set 0 the gate not taken (a new game)
+travel 2:9
+expect 2:9
+shortcut teleport 2:9 8,5 N where the toll walk leaves the party (0xAC85-0xACB6)
+cover 2:9 20 all only=1,2,10,11
+status
+stop

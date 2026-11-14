@@ -1,0 +1,12 @@
+# Chat 19: 5:6 wearing the disguise its woman offers (0x4A65 bit 0, 0x99BC) with the shrines untouched (0x4A6A & 3 = 0,
+# the offering box 0xA7B0 and the crossed swords 0xA857): the patrols' 'WHAT ARE YOU DOING HERE?' (0xAA90-0xAB53).
+# The checkpoint has the shrines robbed (0x4A6A = 51); both set on arrival, logged. Otherwise as cover_5-6-all.
+rules playthrough.plan
+start chat13a_latest/valjevo5
+travel 5:6
+expect 5:6
+shortcut flag 4A6A and 252 nothing taken from 5:6's temple
+shortcut flag 4A65 or 1 the disguise from 5:6's woman, as a player who says YES wears it
+cover 5:6 40 all
+status
+stop

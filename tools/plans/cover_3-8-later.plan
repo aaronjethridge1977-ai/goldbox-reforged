@@ -1,0 +1,42 @@
+# Chat 19: 3:8 on a later visit: every report already taken (0x4AA6-0x4ABF at 255, as the clerk's loop leaves
+# them, 0x9F5A) except 5:7's (0x4ABA) and Cadorna unmasked (0x4ABE), so 0x4AB9 = 255 and few earlier offers are
+# still open: the clerk lists at most three commissions in order (0xA845), and the special council meeting
+# (0xAEA5-0xAF2C, the last) needs 0x4A9A below 254, 0x4AB9 = 255 and 0x4ABA not 255. Then the council chamber
+# (0xB299, 0xB3C0) in the walk's state with 0x4A9A = 254. The checkpoint already had the council (0x4A9A >= 254: index 15
+# then jumps to the end, 0xAEAC), so 0x4A9A and 0x4ABA are cleared on arrival (set before the trip, its restarts undo them).
+rules playthrough.plan
+start chat12a_latest/buccaneers
+shortcut flag 4AA6 set 255 reported on an earlier visit
+shortcut flag 4AA7 set 255 reported on an earlier visit
+shortcut flag 4AA8 set 255 reported on an earlier visit
+shortcut flag 4AA9 set 255 reported on an earlier visit
+shortcut flag 4AAA set 255 reported on an earlier visit
+shortcut flag 4AAB set 255 reported on an earlier visit
+shortcut flag 4AAC set 255 reported on an earlier visit
+shortcut flag 4AAD set 255 reported on an earlier visit
+shortcut flag 4AAE set 255 reported on an earlier visit
+shortcut flag 4AAF set 255 reported on an earlier visit
+shortcut flag 4AB0 set 255 reported on an earlier visit
+shortcut flag 4AB1 set 255 reported on an earlier visit
+shortcut flag 4AB2 set 255 reported on an earlier visit
+shortcut flag 4AB3 set 255 reported on an earlier visit
+shortcut flag 4AB4 set 255 reported on an earlier visit
+shortcut flag 4AB5 set 255 reported on an earlier visit
+shortcut flag 4AB6 set 255 reported on an earlier visit
+shortcut flag 4AB7 set 255 reported on an earlier visit
+shortcut flag 4AB8 set 255 reported on an earlier visit
+shortcut flag 4AB9 set 255 reported on an earlier visit
+shortcut flag 4ABB set 255 reported on an earlier visit
+shortcut flag 4ABD set 255 reported on an earlier visit
+shortcut flag 4ABF set 255 reported on an earlier visit
+# City Hall's door is locked from 14:00 (3:0's 0x9920): the party heals and rests in New Phlan until morning.
+travel 3:0
+heal
+restuntil 7
+travel 3:8
+expect 3:8
+shortcut flag 4A9A set 0 the special council not yet called (0xAEA5)
+shortcut flag 4ABA set 0 5:7's report not taken (0xAEBB)
+cover 3:8 40 all
+status
+stop

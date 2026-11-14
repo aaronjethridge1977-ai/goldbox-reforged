@@ -1,0 +1,10 @@
+# Chat 19: 3:0's gambling tavern (event 20) with a party that has platinum: the wager (0xA564) is checked against
+# the gambler's platinum (0xA56A: 0x6BC3), and the new party of the area's own runs has none, so every bet above 0
+# was refused. The main line's late checkpoint (buccaneers) has platinum; only the tavern is walked.
+rules playthrough.plan
+start chat12a_latest/buccaneers
+travel 3:0
+expect 3:0
+cover 3:0 10 all only=20
+status
+stop

@@ -1,0 +1,27 @@
+# Chat 19: 4:10 with its three kill counters (0x4A39-0x4A3B: each fight adds the monsters it put down, 0x6DC8, and
+# 5 more after some fights) past 249, as a party that has fought long in the graveyard has them: the clamps
+# (0xA616, 0xA814, 0xAB31, 0xB29C, 0xB2B2, 0xB2C8: over 249, set 249) then run. The events holding them
+# (15, 18, 22, 28) are each run directly, the party placed on the square and LOOKing (the step script runs): a
+# byte add wraps, and on any walk there the wandering skeletons (0x9CE1 adds their kills) take the counters past
+# 255 first. Event 15's clamp (0xA616) came from a walk.
+rules playthrough.plan
+start chat13a_latest/zhentil
+travel 4:10
+expect 4:10
+shortcut flag 4A39 set 250 the kill counter after long fighting
+shortcut flag 4A3A set 250 the kill counter after long fighting
+shortcut flag 4A3B set 250 the kill counter after long fighting
+shortcut teleport 4:10 4,10 N event 18's square
+key l
+shortcut flag 4A39 set 250 the kill counter after long fighting
+shortcut flag 4A3A set 250 the kill counter after long fighting
+shortcut flag 4A3B set 250 the kill counter after long fighting
+shortcut teleport 4:10 9,7 N event 22's square
+key l
+shortcut flag 4A39 set 250 the kill counter after long fighting
+shortcut flag 4A3A set 250 the kill counter after long fighting
+shortcut flag 4A3B set 250 the kill counter after long fighting
+shortcut teleport 4:10 14,0 N event 28's square
+key l
+status
+stop

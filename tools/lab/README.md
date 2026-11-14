@@ -1,5 +1,75 @@
 # Test lab
 
+## Current method (read this first)
+
+This page is the lab as it is used now. The sections after it are the history, chat by chat, and hold
+the detail behind each command. A chat that changes the method updates this page in the same push.
+
+**Where the labs run**
+- Main lane: Claude Code in WSL Ubuntu on Jeremy's PC, lab at `/home/claude/lab`, both repos in `~/gbr`
+  (`/home/claude` links to `~/gbr`), 12 threads. Setup: `~/gbr/restore_lab.sh` restores a lab archive
+  (`labNN.tar.gz`, kept in the Windows `.lab` folder: `/mnt/d/ai_projects/goldbox-reforged/.lab`), then
+  `./check_godot.sh /home/claude/goldbox-reforged`. The lab keeps its own copy of the game files in `game/`; the
+  Windows folders are read only, except for writing the lab archive at the end of a chat.
+- Side lane: the cloud workspace, its own lab built with `rebuild.sh` (see "The whole lab inside the cloud
+  workspace").
+- The original runs in DOSBox Staging and our engine in Godot 4.7.2, both on virtual displays (Xvfb).
+  Game files, `font.json` and `wheel.json` stay in the git-ignored `.lab` folder or the lab, never in a repo.
+
+**Before every push** (CLAUDE.md): fetch and rebase; `./check_godot.sh`; `refcheck.sh` after any change to
+`scripts/dev/bot.gd` (3:11 and 5:5 must not drop below `data/refcheck_base.txt`); `git status`. A push that
+changes game behaviour adds a line to the board's "Rule changes".
+
+**Coverage (M6, main lane)**
+- One area per run: `tools/plans/cover_<set>-<block>[-variant].plan` (a checkpoint, travel, then
+  `cover <area> <minutes> [all] [full] [states=<n>] [seed=<hex>] [only=<events>]`). Runs are started with
+  `runcover.sh <area>` or `cover_all.sh <area> ...`, resumed with `cover_resume.sh`, and summed with
+  `covsum.sh` (one line per area, SCRIPT ERROR counts included); `merge_cov.py` unions results.
+- What a run does: walks every part of each map, arrives at each event square from every open side, uses
+  SEARCH and LOOK, wins every fight at once by logged shortcut (and flees each set fight once), replays
+  every untaken menu choice from a snapshot (WHO, encounter, PARLAY and dice jobs included; a die of more
+  than 8 values gets jobs for the values the script compares it with; a number prompt gets 1, 100, 1001 and
+  9999), and walks the
+  flag states the run opens, quest flags first (up to 16). State walks are light by default; an area's
+  closing run uses `full`. Every run logs its dice seed, so it can be replayed.
+- Speed and repeatability: `bot.sh` runs Godot with `--fixed-fps 1000` (a fixed frame, no real-time sync) and
+  `--fast --no-draw --time-scale=1000`, so a run walks the same on a busy machine as on an idle one; every
+  generator draws from the run seed (`== run seed <hex>` in the log; `seed=<hex>` on the plan's cover line
+  replays the whole run). An `-all` run takes 1-4 minutes. In parallel: about 8 lanes while Jeremy uses the PC,
+  10-11 when it is idle (one area's variants in one lane). `dettest.sh` re-checks the repeatability.
+- Report: `covreport.sh <abs file> --areas= --missed= --critical=`; `--dead=<block>` lists dead outcomes
+  with the rule behind each; a `DEAD BUT TAKEN` line means a dead rule is wrong.
+- Finding the way to a missed branch: `CHAIN=1 ./missctx.sh <area>` (tests from the entry to each missed
+  branch, with each byte's writers from `data/writers.json`), `misswhy.py` (a first guess at the reason),
+  `mkreasons.py` (a first draft of the area's reasons table). Variants are hand-built plans, each a state
+  some script writes, and each is logged (`shortcut flag`, `teleport`, `item`, `npc`, ...).
+- Maps: `geo.sh mapdump|mapparts|mapedge <GEO file> <block> [x,y ...]` shows a map's walls, doors and events,
+  its connected parts, and a square's four sides (a door can be on one side only).
+- Variants of one area share `data/cov_<area>.json`: keep them in one lane and don't run them at once.
+- Results go in `docs/coverage-areas.md` (per area, with reasons) and `docs/cover-fights.md` (fights won by
+  shortcut, for the combat suite).
+- **Done** for an area: 90% of reachable instructions, 85% of reachable branches, 100% of story-critical
+  paths, every leftover listed with a reason. **Closed:** done, or two directed attempts in a row that add
+  less than 1 point, with the leftovers listed (decided 2026-11-14). M6 coverage ends when all 29 are closed.
+
+**Fights against the original (side lane)**
+- `trace.py` records every draw the original makes; our engine replays them with Turbo Pascal's own Random
+  (`--keys tpseed=<hex>`).
+- `cmpfight2.sh <save> <seed> "<keys before>" "<keys after>"` plays one fight in both and `cmpdraws.py`
+  compares draws, cells, CONTINUE BATTLE and the party's HP and status, ending `VERDICT: MATCH` or the
+  first difference. `cmpfight3.sh` varies a fight with a second seed.
+- `regress.sh` replays every recorded fight (18 of 20 MATCH as of 2026-11-14); `regress.sh record` records
+  them again from the original. Run it after any change in `scripts/combat/`.
+
+**Checking anything else against the original**
+- `pl.py boot <save>` / `pl.py do <steps>`: a running session of the original (`dump` reads the screen as
+  text). `mksave.py` makes a lab save that starts in any area.
+- `ours.sh` / `t.sh --keys=...`: our engine headless with keys; `run_godot.sh` on a display for screenshots.
+- `origvid.sh`, `oursvid.sh`, `vtl.py`: film both and time what's on screen (display work).
+
+**Where findings go:** engine facts in ai-business-ideas `research/pool-of-radiance-formats.md`; anything
+another lane needs on the board; the end-of-chat entry at the top of ai-business-ideas `plans/chat-log.md`.
+
 Runs the original Pool of Radiance in DOSBox Staging on an invisible X display (Xvfb), so
 Claude can press keys and take screenshots on Jeremy's PC without taking over his screen.
 See `plans/test-lab-roadmap.md` in the ai-business-ideas repo.
@@ -396,6 +466,42 @@ others from J:
   the repeated-question rule answered LEAVE CAVE. In coverage runs the rule now waits for a seventh time.
 - A part's arrival square, when it has an event, is LOOKed at facing each way before the walk
   (7:23's storeroom: arriving by teleport, any step off flashes the party away again).
+
+### Chat 19 additions
+
+- **Runs no longer depend on machine load:** `bot.sh` runs Godot with `--fixed-fps 1000` (each frame is a fixed
+  1 ms, times `--time-scale=1000`: one game second; `BOT_FPS=` drops it). Game timers and the bot's frame-counted
+  waits now see the same time on a loaded machine as on an idle one. Every generator that rolled from the clock
+  now draws from the run seed (`_seed_all` in bot.gd: the script's dice, `main.dev_rng` for the screens' fights,
+  camp, shops, temples and party menu, the doors, the bot's own choices, Godot's global one, level grants), at the
+  start of the run (`== run seed <hex>` in the log; the plan's `cover ... seed=` if it has one) and again when a
+  coverage run begins. A coverage run without `seed=` uses the run seed, so the one logged value replays the
+  whole run, travel in included. Checked with `dettest.sh` (2:15 -all): alone and all 10 of P=10 the same walk line
+  for line; a run replayed from its logged seed the same. Side effect: 2:15 -all takes 85 s alone (was 5-6 min),
+  160 s each at P=10. All diverged jobs in those runs are reroll jobs (new dice by design). Open: 2:20 has 34
+  plain jobs whose replay goes another way (0x9D7E vs 0x9DDE); not explained yet.
+- `dettest.sh <tag> <n> [source]`: n copies of 2:15 -all (`cover_2-15-det.plan`, a fixed seed) at once from the
+  same coverage files, each walk compared with the first.
+- **Number prompts:** at an INPUT_NUMBER the bot typed its words (read as 0) every time, so 3:0's wager was never
+  placed. Each number prompt now also gets jobs typing 1, 100, 1001 and 9999.
+- **`shortcut npc <monster id> <morale> <why>`:** a monster record of the area's file joins as NPC_ADD makes it
+  (5:7's party of eight). Logged.
+- Map tools (run in `proj/` by `geo.sh <tool> <GEO file> <block> [x,y ...]`): `mapdump` (the map as text: event
+  numbers, walls with their type, D/L/W doors), `mapparts` (connected parts and their events), `mapedge` (a
+  square's walls and doors on each side). A door can be on one side only (2:9's towers: the door is on the inside,
+  the outside square is walled on all four sides; the way in is the stairs' script move).
+- Findings (scripts): 7:23's event squares 1-10 are secret doors (0x9A09: a RANDOM 5 per member against search and
+  race; 0x4A4F bits; the on-move script blocks the step until found, 0x9C24). 2:9's towers are entered by the
+  stairs on (4,5)/(11,5) facing south (0x9CB7 table, 0xA16A); the rooms are manned only until the gate's
+  bugbears are beaten (0xA60E sets both tower bits). 3:8's clerk takes reports first (each byte 255, 0x9F5A),
+  then lists at most three commissions in order (0xA845); with 5:7's report taken the report loop leaves for the
+  end game at 0x9D3E (0xB589), so the list never runs then. 4:10's kill counters only grow, and a byte add wraps:
+  past 249 they are reached by placing the party on the event square, not by walking (wandering fights wrap them).
+- Directed plans (chat 19): `cover_6-1-boyleave`, `cover_7-23-vats`, `cover_7-23-store`, `cover_3-0-procl`,
+  `cover_5-7-dagger`, `cover_5-7-eight`, `cover_4-10-counters`, `cover_3-8-later`, `cover_3-8-later2`,
+  `cover_2-9-climb`, `cover_5-3-disguised`, `cover_5-3-temple`, `cover_5-6-disguised`, `cover_2-20-fortune50`,
+  `cover_2-20-fortune100`, `cover_2-20-killed`; `cover_3-8-reports2` heals in 3:0 first (chat 18's run never reached
+  the clerk: hurt, it left for the inn and came back to a locked hall).
 
 ### Chat 18 additions
 

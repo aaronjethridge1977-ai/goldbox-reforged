@@ -1,0 +1,42 @@
+# Chat 19: 3:8 on a later visit with Cadorna exposed (0x4ABE = 255, his report taken) but the Zhentil message not
+# yet given (0x4A98 = 0): the clerk offers it with the warning about the traitor (0xAD0C-0xAE1E). (Not reachable:
+# 0xAEC1 -> T and 0xAF3A-0xAF45, the list's end with 5:7's report taken: with 0x4ABA = 255 the report loop leaves
+# for the end game at its first GOSUB 0xB589, 0x9D3E, before the list.) Otherwise as cover_3-8-later.plan.
+rules playthrough.plan
+start chat12a_latest/buccaneers
+shortcut flag 4AA6 set 255 reported on an earlier visit
+shortcut flag 4AA7 set 255 reported on an earlier visit
+shortcut flag 4AA8 set 255 reported on an earlier visit
+shortcut flag 4AA9 set 255 reported on an earlier visit
+shortcut flag 4AAA set 255 reported on an earlier visit
+shortcut flag 4AAB set 255 reported on an earlier visit
+shortcut flag 4AAC set 255 reported on an earlier visit
+shortcut flag 4AAD set 255 reported on an earlier visit
+shortcut flag 4AAE set 255 reported on an earlier visit
+shortcut flag 4AAF set 255 reported on an earlier visit
+shortcut flag 4AB0 set 255 reported on an earlier visit
+shortcut flag 4AB1 set 255 reported on an earlier visit
+shortcut flag 4AB2 set 255 reported on an earlier visit
+shortcut flag 4AB3 set 255 reported on an earlier visit
+shortcut flag 4AB4 set 255 reported on an earlier visit
+shortcut flag 4AB5 set 255 reported on an earlier visit
+shortcut flag 4AB6 set 255 reported on an earlier visit
+shortcut flag 4AB7 set 255 reported on an earlier visit
+shortcut flag 4AB8 set 255 reported on an earlier visit
+shortcut flag 4AB9 set 255 reported on an earlier visit
+shortcut flag 4ABB set 255 reported on an earlier visit
+shortcut flag 4ABD set 255 reported on an earlier visit
+shortcut flag 4ABF set 255 reported on an earlier visit
+# City Hall's door is locked from 14:00 (3:0's 0x9920): the party heals and rests in New Phlan until morning.
+travel 3:0
+heal
+restuntil 7
+travel 3:8
+expect 3:8
+shortcut flag 4A9A set 0 the special council not yet called (0xAEA5)
+shortcut flag 4ABA set 0 5:7's report not taken
+shortcut flag 4ABE set 255 Cadorna exposed and reported (0xA2BA, then 0x9F5A)
+shortcut flag 4A98 set 0 the Zhentil message not yet given
+cover 3:8 40 all
+status
+stop

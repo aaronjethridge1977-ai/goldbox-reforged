@@ -1,0 +1,21 @@
+# Chat 19: as cover_2-9-paid with the warnings one step on (0x4A78 = 1): the wall square (event 3, 0xA709) then gives
+# the third warning (0xA863-0xA8A2, 3) and the bugbears come (0xAD73-0xAD9D).
+# Chat 18 (directed coverage, decided 2026-11-14): 2:9 before the gate was ever fought, with the wagon bought, so
+# the bugbears ask the 15 gold toll (0xAB64-0xAC4B) and the towers are still manned (0xA1C3, 0xA2E4: 0x4A77 bits
+# 4 and 8 clear; the mage and the fighter, 0xA23F, 0xA372; the bugbears waiting inside the gate, 0xAD1F). The main
+# line's checkpoint has the gate unfought too (0x4A77 = 0), but no wagon. Set by shortcut as a player who hasn't fought there has them:
+# 0x4A77 = 96 (the gate seen, 0xAABB OR 32; the wagon bought, 0xB014 OR 64; nothing else), the alarm off (0x4A64
+# = 0, as 0x9BA0 writes), the warnings not yet given (0x4A78 = 0) and the gate not taken (0x4AB9 = 0, a new game).
+# Each event walked from the arrival ("fresh"): the other gate squares' warnings set 0x4A78 = 3 first otherwise,
+# and the toll square then calls the party impostors (0xAB80).
+rules playthrough.plan
+start chat13a_latest/graveyard
+shortcut flag 4A77 set 96 gate seen and wagon bought, never fought (2:9 0xAABB, 0xB014)
+shortcut flag 4A64 set 0 no alarm (2:9 0x9BA0)
+shortcut flag 4A78 set 1 warned at the wall, then at the gate (0xA85C writes 2, 0xA9C5 then 1)
+shortcut flag 4AB9 set 0 the gate not taken (a new game)
+travel 2:9
+expect 2:9
+cover 2:9 30 all
+status
+stop

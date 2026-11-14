@@ -1,0 +1,15 @@
+# Chat 19: 6:1's last flag. The bought boy (0x4A10 = 1, 0x4AA9 = 1, as BUY THE BOY at 0xAF3B leaves them),
+# then out by the north edge: the on-move script's 0x993C should see 0x4AA9 = 1 and write 254 (NEW_ECL 25).
+rules playthrough.plan
+expect_level 6:1 6
+start chat12a_latest/lizard
+travel 6:1
+expect 6:1
+shortcut flag 4A10 set 1 the boy bought (0xAF4C)
+shortcut flag 4AA9 set 1 the boy bought (0xAF3B)
+status
+tour 8,1 8,0
+face N
+step
+status
+stop

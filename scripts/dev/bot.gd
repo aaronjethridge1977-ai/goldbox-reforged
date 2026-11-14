@@ -54,10 +54,10 @@ var _skip_events := {}          # events passed by shortcut after they beat the 
 var _new_party: Array[PartyMember] = []
 var _rng := RandomNumberGenerator.new()
 var issues: PackedStringArray = []
+var run_seed := -1    # chat 19: the run's seed (logged); a coverage run without seed= uses it too
 
 
 func run(plan_path: String) -> void:
-	_rng.randomize()
 	CombatSpells.party_casts = true
 	CombatSpells.party_planner = _plan_spell
 	Combat.party_judge = _judge_fight
@@ -65,6 +65,18 @@ func run(plan_path: String) -> void:
 	main._combat.dev_round_check = _stalemate
 	var text := FileAccess.get_file_as_string(plan_path)
 	lines = text.split("\n")
+	run_seed = -1
+	for l in lines:
+		var m := RegEx.create_from_string("^cover .* seed=([0-9a-fA-F]+)").search(l.strip_edges())
+		if m != null:
+			run_seed = m.get_string(1).hex_to_int()
+	if run_seed < 0:
+		_rng.randomize()
+		run_seed = _rng.randi()
+	var start_rng := RandomNumberGenerator.new()
+	start_rng.seed = run_seed ^ 0x5eed
+	_seed_all(start_rng)
+	print("== run seed %08x (a plan's \"cover ... seed=%x\" replays it)" % [run_seed, run_seed])
 	main.auto_hook = _hook
 	main._camp.interrupted.connect(func(): _count("interrupted"))
 	# Watchdog: the game's state every 2 real minutes, so a run that goes quiet shows where.
@@ -3014,7 +3026,7 @@ func _shortcut_command(w: PackedStringArray) -> void:
 				if m.npc >= 128 or (w.size() > 2 and w[2] != "all" and m.name != w[2]):
 					continue
 				var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
-					RandomNumberGenerator.new(), _pick_spell)
+					_child_rng(), _pick_spell)
 				_shortcut("level", "%s %s" % [m.name, got if got != "" else "at the cap"], "the plan")
 		"win":
 			# shortcut win [<n> at <x>,<y> | at ev<k>]: the next fight, or the next n scripted
@@ -3074,6 +3086,12 @@ func _shortcut_command(w: PackedStringArray) -> void:
 			var it := GameItem.from_record(rec)
 			main._party[0].items.append(it)
 			_shortcut("item", "%s carries %s (type %d)" % [main._party[0].name, nm, it.type], "the plan")
+		"npc":
+			# Chat 19: `shortcut npc <monster id> <morale> <why...>`: a monster record of the area's file joins
+			# as NPC_ADD makes it (a party of 8, as 5:7's 0xA2DF asks for). Logged.
+			main._vm.npc_requests.append([int(w[2]), int(w[3])])
+			main._add_npcs()
+			_shortcut("npc", "monster %s, party of %d" % [w[2], main._party.size()], " ".join(w.slice(4)) if w.size() > 4 else "the plan")
 		"teleport":
 			var a := w[2].split(":")
 			var xy := w[3].split(",")
@@ -3115,7 +3133,7 @@ func _keep_level() -> void:
 			if _top_level(m) >= want:
 				break
 			var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
-				RandomNumberGenerator.new(), _pick_spell)
+				_child_rng(), _pick_spell)
 			if got == "":
 				break
 			_shortcut("level", "%s to %s" % [m.name, got], "%s expects level %d" % [_here(), want + 1])
@@ -3285,9 +3303,9 @@ func _cover(area: String, minutes: int) -> void:
 	var deadline := Time.get_ticks_msec() + minutes * 60000
 	_cover_t0 = Time.get_ticks_msec()
 	if _cover_seed < 0:
-		_cover_seed = randi()
+		_cover_seed = run_seed
 	_cover_rng.seed = _cover_seed
-	main._vm._rng.seed = _cover_rng.randi()
+	_seed_all(_cover_rng)
 	print("==== COVER %s: dice seed %08x (seed=%x replays it)%s" % [area, _cover_seed, _cover_seed,
 		"" if _cover_skip else ", full state walks"])
 	_cover_resume_load()
@@ -3450,6 +3468,26 @@ var _cover_seed := -1           # chat 18: the run's dice seed ("seed=<hex>"; -1
 var _cover_rng := RandomNumberGenerator.new()
 
 
+## Chat 19: every generator that rolls, from one seeded generator (they used the clock): the script's
+## dice, the screens' (main.dev_rng: fights, camp, shops, temples), the doors, the bot's own choices and
+## Godot's global one. At the start of a run (from the plan's seed=, else a new one, logged) and again
+## when a coverage run begins, so seed= replays the travel in as well as the run.
+func _seed_all(from: RandomNumberGenerator) -> void:
+	main._vm._rng.seed = from.randi()
+	main.dev_rng = RandomNumberGenerator.new()
+	main.dev_rng.seed = from.randi()
+	main._door_rng.seed = from.randi()
+	_rng.seed = from.randi()
+	seed(from.randi())
+
+
+## Chat 19: a generator seeded from the bot's own (the run seed in a coverage run), for level grants.
+func _child_rng() -> RandomNumberGenerator:
+	var r := RandomNumberGenerator.new()
+	r.seed = _rng.randi()
+	return r
+
+
 ## Chat 18: a reroll's new dice, drawn from the run's own generator (seeded and logged at the start,
 ## so a run can be replayed with seed=<hex>) and logged.
 func _cover_reseed() -> void:
@@ -3586,10 +3624,15 @@ func _cover_dice(at: int, top: int) -> int:
 			print("   >> the die at %04X: %d (coverage job)" % [at + EclScript.BASE, v])
 			_cover_path.append({"r": v, "at": at})
 			return v
-	if _cover_snap.is_empty() or vm.block_key != _cover_area or top < 1 or top > DICE_MAX or not _cover_forced.is_empty():
+	if _cover_snap.is_empty() or vm.block_key != _cover_area or top < 1 or not _cover_forced.is_empty():
+		return -1
+	# Chat 19: a bigger die gets jobs only for the values the script compares its result with just after
+	# (8:27's cave: RANDOM 20 at 0xA867, found only on a 20, 0xA86D).
+	var others: Array = range(top + 1) if top <= DICE_MAX else _cover_compared(at, top)
+	if others.is_empty():
 		return -1
 	var v := vm._ri(0, top)
-	for j in top + 1:
+	for j in others:
 		if j == v:
 			continue
 		var key := "%s|%d:r%d" % [vm.block_key, at, j]
@@ -3606,6 +3649,33 @@ func _cover_dice(at: int, top: int) -> int:
 	return v
 
 
+## Chat 19: the constants the next few instructions after the RANDOM at `at` compare its result with (COMPARE
+## and COMPARE_AND, either operand order), those within 0..top.
+func _cover_compared(at: int, top: int) -> Array:
+	var ecl: EclScript = main._vm.ecl
+	var ins: Dictionary = ecl.instructions.get(at, {})
+	if ins.is_empty() or ins.args.size() < 2:
+		return []
+	var dest: int = int(ins.args[1].value)
+	var found: Array = []
+	var p: int = at + int(ins.size)
+	for k in 4:
+		var n: Dictionary = ecl.instructions.get(p, {})
+		if n.is_empty():
+			break
+		if String(n.op) in ["COMPARE", "COMPARE_AND"]:
+			for i in range(0, n.args.size() - 1, 2):
+				var a: Dictionary = n.args[i]
+				var b: Dictionary = n.args[i + 1]
+				for pair in [[a, b], [b, a]]:
+					if int(pair[0].type) != 0 and int(pair[0].value) == dest and int(pair[1].type) == 0:
+						var c := int(pair[1].value)
+						if c >= 0 and c <= top and not c in found:
+							found.append(c)
+		p += int(n.size)
+	return found
+
+
 const WRONG_WORD := "XYZZY"
 
 
@@ -3619,6 +3689,19 @@ func _cover_typed(text: String) -> void:
 			path.append({"t": WRONG_WORD})
 			_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": path, "key": key,
 				"rest": _cover_resting, "look": _cover_looking, "what": "%04X typed %s" % [vm._at + EclScript.BASE, WRONG_WORD]})
+		# Chat 19: a number prompt (INPUT_NUMBER) got words, read as 0, every time (3:0's wager: never a
+		# bet placed). Each number prompt also gets a job for a few numbers: small, middling, past a
+		# limit of 1000 (the gambling house's) and large.
+		if vm.input_numeric:
+			for n in ["1", "100", "1001", "9999"]:
+				var nkey := "%s|%d:n%s" % [vm.block_key, vm._at, n]
+				if n == text or _cover_queued.has(nkey):
+					continue
+				_cover_queued[nkey] = true
+				var npath := _cover_path.duplicate(true)
+				npath.append({"t": n})
+				_cover_jobs.append({"snap": _cover_snap, "dir": _cover_dir, "path": npath, "key": nkey,
+					"rest": _cover_resting, "look": _cover_looking, "what": "%04X typed %s" % [vm._at + EclScript.BASE, n]})
 	_cover_path.append({"t": text})
 
 
@@ -3740,7 +3823,7 @@ func _cover_level() -> void:
 			if _top_level(m) >= want:
 				break
 			var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
-				RandomNumberGenerator.new(), _pick_spell)
+				_child_rng(), _pick_spell)
 			if got == "":
 				break
 			_shortcut("level", "%s to %s" % [m.name, got], "coverage run: %s expects level %d" % [_cover_area, want])

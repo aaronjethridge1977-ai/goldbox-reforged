@@ -69,6 +69,17 @@ var _searching := false
 var _door_options := ""            # the LOCKED. menu while it is open ("BPKE" letters offered)
 var _door_side := -1
 var _door_rng := RandomNumberGenerator.new()
+## Lab (chat 19): set by a coverage run. Every generator a screen seeds from the clock when it opens
+## (fights, camp, shops, temples, the party menu and sheet, doors) is reseeded from this one, so a
+## run's seed= replays everything, not only the script's dice.
+var dev_rng: RandomNumberGenerator = null
+
+
+func _dev_reseed(gens: Array) -> void:
+	if dev_rng == null:
+		return
+	for r in gens:
+		r.seed = dev_rng.randi()
 const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
 const REST_PERCENT := 0x6DD3      # ... and the chance (d100) that rest is interrupted
 var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
@@ -1973,6 +1984,7 @@ func _after_vm() -> void:
 			for m in _party:
 				m.recalculate(_types)
 			_temple.open(_party)
+			_dev_reseed([_temple._rng])
 			return
 		EclVM.State.COMBAT:
 			_start_event_fight()
@@ -2033,6 +2045,7 @@ func _run_program() -> void:
 			_party_menu.types = _types
 			_party_menu.game_path = _game_path
 			_party_menu.open(_party, _vm.read_byte(EclVM.TRAINING_MASK))
+			_dev_reseed([_party_menu._rng])
 		9:
 			_vm.close_program()
 			_make_camp()
@@ -2092,6 +2105,7 @@ func _open_shop() -> void:
 		if it.price == 0:
 			it.price = 1
 	_shop.open(stock, _party)
+	_dev_reseed([_shop._rng])
 
 
 ## A TREASURE item list: an ITEM<n>.DAX block (this area's file first), in reverse of
@@ -2136,6 +2150,7 @@ func _make_camp() -> void:
 	_camp.spells = SpellTable.shared(_game_path)
 	_camp.place = _place_line()
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
+	_dev_reseed([_camp._rng, _camp._rng2])
 
 
 func _on_temple_closed() -> void:
@@ -2217,6 +2232,8 @@ func _start_event_fight() -> void:
 		_duelist = _party[_vm.selected]
 		fighters = [_duelist]
 	_vm.duel = 0
+	if dev_rng != null:
+		CombatScreen.dev_seed = dev_rng.randi() | 1
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams)

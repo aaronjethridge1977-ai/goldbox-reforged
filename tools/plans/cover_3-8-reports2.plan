@@ -6,6 +6,7 @@
 # 4:10 0x4AB1, 3:14 0x4AB2, 7:23 0x4AB3, 6:25 0x4AB4, 8:16 0x4AB5, 8:13 0x4AB6, 7:17 0x4AB7, 3:0 0x4AB8,
 # No script writes 0x4ABC. Set by shortcut as a player who did all of those has them; the council's
 # commissions that follow (the Zhentil message, Urslingen, the gate attack) open states for the walk.
+# Chat 19: healed in 3:0 first (chat 18's run left City Hall for the inn, hurt, and came back to it locked).
 rules playthrough.plan
 start chat12a_latest/buccaneers
 shortcut flag 4AA6 set 254 8:29's report
@@ -33,6 +34,7 @@ shortcut flag 4ABD set 254 1:24's report
 shortcut flag 4ABF set 254 5:3's report
 # City Hall's door is locked from 14:00 (3:0's 0x9920): the party rests in New Phlan until morning.
 travel 3:0
+heal
 restuntil 7
 travel 3:8
 expect 3:8

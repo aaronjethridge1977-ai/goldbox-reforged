@@ -1,0 +1,12 @@
+# Chat 19: 5:7 with a party of eight (six and two NPCs): the man who offers to join instead asks "IS IT A
+# DEAL?" when there is no room (0xA2DF COMPARE [6E3E], 8), and YES sets 0x4A6D bit 1 (0xA350). The two NPCs
+# join by shortcut (monster 88 of ECL5, the record 5:7's own NPC_ADD uses, 0xA321): only the count matters here.
+rules playthrough.plan
+start chat13a_latest/valjevo6
+travel 5:7
+expect 5:7
+shortcut npc 88 100 a party of eight
+shortcut npc 88 100 a party of eight
+cover 5:7 40 all
+status
+stop

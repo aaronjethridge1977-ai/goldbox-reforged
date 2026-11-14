@@ -1,0 +1,38 @@
+# Chat 19: 3:0's proclamations. City Hall's wall (event 26, 3,4: 0xAC21) shows proclamation 0x4AC1 - 1 (0xAC6C,
+# nine texts); 0x4AC1 counts up with each report City Hall's clerk takes (3:8, ten writers). The runs' party
+# had reported none (0x4AC1 = 0: the four old proclamations). Here 0x4AC1 is set to each count a player passes
+# through (1 to 9) by shortcut, and the wall read again each time, facing it from (2,4) (0xAC14: event 26 and wall 11 ahead) (0x4A13, shown once a visit, cleared as a new visit does).
+rules playthrough.plan
+expect_level 3:0 1
+start chat10a_latest/start
+travel 3:0
+expect 3:0
+shortcut flag 4AC1 set 1 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 2 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 3 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 4 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 5 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 6 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 7 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 8 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+shortcut flag 4AC1 set 9 reports taken so far
+shortcut flag 4A13 set 0 a new visit (the per-visit marker the wall sets, 0xABCF)
+tour 2,4 3,4
+status
+stop

@@ -1,0 +1,13 @@
+# Chat 19: 7:23's storerooms (events 19-21, 0xA344): the hidden treasure (0xA38F-0xA3E2) needs a search
+# (0x6DCA = 1) on a storeroom square. The storerooms are closed parts reached only by the teleporters (the
+# dial's COPPER setting lands on 4,9: 0x9DEC, table 0x9DFA). Placed on one, LOOK.
+rules playthrough.plan
+start chat12a_latest/pyramid1
+travel 7:23
+expect 7:23
+shortcut teleport 7:23 5,10 N inside the storeroom the teleporter lands in (4,9)
+key l
+face E
+key l
+status
+stop

@@ -53,47 +53,48 @@ outcomes were watched in DOSBox; a `DEAD BUT TAKEN` check caught one wrong rule 
 from the original: 0x6DC8 is the number of monsters a fight put down (4:10's kill counters had never grown), ADVANCE
 only while 0x49E6 is set. The ECL16.DAX error in the logs was the bot's travel graph, fixed.
 
-## Where each area stands (chat 18, all runs merged)
+## Where each area stands (chat 19, all runs merged)
 
-Played percentages; chat 17's in brackets. Critical = ways in/out · set fights · quest flags. **Done** = meets the
+Played percentages; chat 18's in brackets. Critical = ways in/out · set fights · quest flags. **Done** = meets the
 numbers and the critical count, every remaining path listed below with its reason.
 
 | area | instructions | branches | critical | |
 |---|---|---|---|---|
-| 5:4 Valjevo, north side | 98 (98) | 94 (94) | 7/7 · 6/6 · 24/24 |  done |
-| 6:28 Zhentil outpost | 97 (97) | 97 (97) | 5/5 · 9/9 · 5/5 |  done |
-| 7:22 Yarash's pyramid, outside | 96 (96) | 96 (95) | 4/4 · 1/1 · 10/10 |  done |
-| 1:18 Podol Plaza | 96 (89) | 94 (85) | 6/6 · 7/7 · 24/24 |  done |
-| 2:15 Mendor's library | 96 (96) | 91 (90) | 3/3 · 7/7 · 25/25 |  done |
-| 8:16 ruined castle | 96 (96) | 88 (88) | 4/4 · 7/7 · 18/18 |  done |
-| 6:1 Buccaneers' base | 95 (95) | 95 (94) | 3/3 · 15/15 · 6/7 |  |
-| 4:2 Cadorna textile house | 95 (93) | 91 (89) | 5/5 · 12/12 · 17/17 |  done |
-| 5:5 Valjevo inner castle | 95 (95) | 91 (91) | 7/7 · 7/7 · 15/15 |  done |
-| 1:24 Temple of Bane quarter | 95 (95) | 89 (89) | 5/5 · 11/11 · 15/15 |  done |
-| 8:29 Kuto's Well | 95 (95) | 86 (86) | 8/8 · 7/7 · 17/17 |  done |
-| 4:21 Sokal Keep | 94 (94) | 92 (92) | 4/4 · 4/4 · 9/9 |  done |
-| 6:19 Diogenes's cave mouth | 93 (93) | 100 (100) | 2/2 · 0/0 · 3/3 |  done |
-| 7:17 nomads' camp | 93 (90) | 91 (87) | 3/3 · 6/6 · 20/20 |  done |
-| 3:11 training halls, arena | 93 (93) | 89 (89) | 3/3 · 2/2 · 1/1 |  done |
-| 3:14 Kovel Mansion | 92 (92) | 88 (88) | 5/5 · 14/14 · 21/21 |  done |
-| 4:10 Valhingen graveyard | 92 (88) | 84 (79) | 2/2 · 18/18 · 42/48 |  |
-| 7:23 Yarash's pyramid, inside | 90 (89) | 89 (88) | 4/4 · 3/5 · 18/21 |  |
-| 3:0 New Phlan | 90 (90) | 82 (82) | 12/12 · 8/8 · 9/9 |  |
-| 7:26 wilderness band, middle | 89 (89) | 86 (78) | 18/18 · 5/7 · 6/6 |  |
-| 2:20 Slums | 89 (89) | 79 (78) | 4/4 · 20/20 · 20/21 |  |
+| 5:4 Valjevo, north side | 98 (98) | 94 (94) | 7/7 · 6/6 · 24/24 | done |
+| 6:28 Zhentil outpost | 97 (97) | 97 (97) | 5/5 · 9/9 · 5/5 | done |
+| 7:22 Yarash's pyramid, outside | 96 (96) | 96 (96) | 4/4 · 1/1 · 10/10 | done |
+| 1:18 Podol Plaza | 96 (96) | 94 (94) | 6/6 · 7/7 · 24/24 | done |
+| 2:15 Mendor's library | 96 (96) | 91 (91) | 3/3 · 7/7 · 25/25 | done |
+| 5:3 Valjevo outer castle | 96 (85) | 90 (81) | 7/7 · 11/11 · 23/23 | done (chat 19) |
+| 8:16 ruined castle | 96 (96) | 88 (88) | 4/4 · 7/7 · 18/18 | done |
+| 6:1 Buccaneers' base | 95 (95) | 96 (95) | 3/3 · 15/15 · 7/7 | done (chat 19) |
+| 7:23 Yarash's pyramid, inside | 95 (90) | 93 (89) | 4/4 · 5/5 · 20/21 |  |
+| 3:8 City Hall | 95 (87) | 91 (87) | 2/2 · 3/3 · 33/34 | done (chat 19) |
+| 4:2 Cadorna textile house | 95 (95) | 91 (91) | 5/5 · 12/12 · 17/17 | done |
+| 5:5 Valjevo inner castle | 95 (95) | 91 (91) | 7/7 · 7/7 · 15/15 | done |
+| 1:24 Temple of Bane quarter | 95 (95) | 89 (89) | 5/5 · 11/11 · 15/15 | done |
+| 8:29 Kuto's Well | 95 (95) | 86 (86) | 8/8 · 7/7 · 17/17 | done |
+| 4:21 Sokal Keep | 94 (94) | 92 (92) | 4/4 · 4/4 · 9/9 | done |
+| 5:7 Valjevo tower | 94 (88) | 90 (84) | 4/4 · 5/5 · 15/15 | done (chat 19) |
+| 8:27 wilderness band, east | 94 (84) | 90 (81) | 10/10 · 12/12 · 6/6 | done (chat 19) |
+| 6:19 Diogenes's cave mouth | 93 (93) | 100 (100) | 2/2 · 0/0 · 3/3 | done |
+| 7:17 nomads' camp | 93 (93) | 91 (91) | 3/3 · 6/6 · 20/20 | done |
+| 3:11 training halls, arena | 93 (93) | 89 (89) | 3/3 · 2/2 · 1/1 | done |
+| 7:26 wilderness band, middle | 93 (89) | 89 (86) | 18/18 · 7/7 · 6/6 | done (chat 19) |
+| 4:10 Valhingen graveyard | 93 (92) | 87 (84) | 2/2 · 18/18 · 48/48 | done (chat 19) |
+| 3:14 Kovel Mansion | 92 (92) | 88 (88) | 5/5 · 14/14 · 21/21 | done |
+| 3:0 New Phlan | 92 (90) | 86 (82) | 12/12 · 8/8 · 9/9 | done (chat 19) |
+| 2:20 Slums | 91 (89) | 83 (79) | 4/4 · 20/20 · 21/21 |  |
 | 5:6 Valjevo, temple side | 88 (88) | 84 (84) | 3/3 · 6/6 · 21/21 |  |
-| 5:7 Valjevo tower | 88 (88) | 84 (84) | 4/4 · 5/5 · 13/15 |  |
-| 3:8 City Hall | 87 (84) | 87 (84) | 2/2 · 3/3 · 30/34 |  |
-| 8:13 kobold caves | 86 (86) | 85 (85) | 3/3 · 14/15 · 17/19 |  |
-| 5:3 Valjevo outer castle | 85 (85) | 81 (81) | 7/7 · 10/11 · 23/23 |  |
-| 8:27 wilderness band, east | 84 (84) | 81 (73) | 10/10 · 8/12 · 6/6 |  |
-| 6:25 wilderness band, west | 81 (76) | 82 (71) | 11/11 · 8/13 · 5/5 |  |
-| 2:9 Stojanow Gate | 75 (69) | 75 (70) | 4/4 · 4/7 · 19/24 |  |
+| 8:13 kobold caves | 87 (86) | 86 (85) | 3/3 · 14/15 · 17/19 |  |
+| 2:9 Stojanow Gate | 83 (75) | 79 (75) | 4/4 · 6/7 · 22/24 |  |
+| 6:25 wilderness band, west | 81 (81) | 82 (82) | 11/11 · 8/13 · 5/5 |  |
 
-Overall, all runs merged: played 90% → **91%** of instructions and 85% → **87%** of reachable branches; with the
-choices not taken tried in the shadow copy as well, 92% and 89%.
+Overall, all runs merged: played 91% → **93%** of instructions and 87% → **89%** of branches; with the choices not
+taken tried in the shadow copy as well, 94% and 91%.
 
-**Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, 1:24, 2:15, 6:19, 7:22, 3:14, and in chat 18 4:2, 7:17, 1:18 (15 of 29).
+**Done:** 6:28, 5:4, 8:16, 5:5, 8:29, 4:21, 3:11, 1:24, 2:15, 6:19, 7:22, 3:14, 4:2, 7:17, 1:18, and in chat 19 6:1, 3:0,
+5:7, 4:10, 5:3, 3:8, 7:26, 8:27 (23 of 29). 7:23 waits on one DOSBox answer (below).
 
 ## 1:24, the Temple of Bane quarter: done (chat 17)
 
@@ -374,24 +375,183 @@ back to the gate after forcing it (0xA085), having stolen from Lord Bane (0xA093
 the alarm off and the disguise on (0xA4AE).
 
 
-## What holds the rest back (chat 18)
+## Chat 19's areas: what is left and why
 
-- **2:9 Stojanow Gate (75 / 75):** `cover_2-9-paid` (the gate never fought, the wagon bought, the alarm off; each event
-  walked from the arrival) gets the 15 gold toll paid and the gate opened, but the tower rooms (the mage and the
-  fighter, 0xA1D8, 0xA2F9) were still never reached in that state: how the paid party gets up the tower stairs
-  without the garrison coming out is not worked out yet.
-- **The bands (6:25 81 / 82, 7:26, 8:27):** 0x033D's odd ON_GOTO entries are dead (the heading reads 0, 2, 4, 6); dice
-  jobs walk all four cave entrances. 6:25's five cave fights left stand on squares no walking route from any entrance
-  reaches (0,0, 11,0, 4,1, 15,14 ...): a secret way not found yet.
-- **3:8 City Hall (87 / 87, quest flags 30/34):** `-reports` (every report byte 0x4AA6-0x4ABF at 254, as each area
-  writes it) and `-reports2` (without 5:7's report and Cadorna unmasked: the special council meeting, 0xAF2C, needs
-  0x4ABA not reported). The council's later commissions (0xAE1E, 0xAF2C, 0xAF45, 0xB3C0) are each one story state away.
-- **4:10 Valhingen graveyard (92 / 84, 18/18 set fights, quest flags 42/48):** the six left are the kill counters'
-  clamps ("over 249, set 249"); with 0x6DC8 fixed the counters grow (one skeleton army adds up to 63).
-- **6:1 (95 / 95, 6/7):** the bought boy's state (0x4A10 = 1, 0x4AA9 = 1) was walked and left by the north edge, yet
-  0x993C → T (leaving with 0x4AA9 = 1) wasn't recorded: not worked out.
-- **7:23 (90 / 89):** the vats (events 10 and 17, 13-15,9-11) and several rooms are in parts no way in, landing
-  square or walking route reaches; how a player gets there is not worked out.
+Each table is mkreasons.py's first draft from `missctx.sh`, checked for the critical items; the directed plans are in tools/plans.
+
+### 6:1, the Buccaneers' base: done (chat 19)
+
+95% / 96%, critical 3/3 · 15/15 · 7/7. The last flag (0x993C → T: leaving north with the bought boy, 0x4AA9 = 1) came from `cover_6-1-boyleave`: the boy bought, out by the north edge. Why the state walk in that same state never recorded it is not worked out (it did step off the north edge).
+
+| where | what it needs |
+|---|---|
+| 0x9C7F → T | 0x4A04 at another value (this area writes 0/255) |
+| 0x9C95 → T | 0x4A8B at another value (this area writes 128/255) |
+| 0xA2E0 → T | 0x4A11 at another value (this area writes 1) |
+| 0xAA28 → T | 0x4A0E at another value (this area writes 1) |
+| 0xAFB3 → T; 0xB634 → T | 0x4AA9 at another value (this area writes 1/128/254) |
+
+### 3:0, New Phlan: done (chat 19)
+
+92% / 86%, critical 12/12 · 8/8 · 9/9. `cover_3-0-procl` reads City Hall's wall (event 26 at 3,4, facing east: 0xAC14) with each proclamation count 0x4AC1 = 1-9 (0xAC6C's nine texts; the area's runs only had 0). The wager's ten branches (0xA571-0xA5E7) are left: the bet is checked against the gambler's platinum, the area's own runs start from the new party with none, and in `cover_3-0-rich` (a late party with platinum) the number jobs, once per prompt, met a member with 0 first (next: one set of number jobs per member).
+
+| where | what it needs |
+|---|---|
+| 0x9999 → T | 6E82 and; [C04E] |
+| 0x9A06 → T | 0x4AC5 at another value (this area writes 1) |
+| 0x9A32 → T; 0xA0B3 → T | 0x4A05 at another value (this area writes 0/1) |
+| 0x9B1E → F | 0x6DD3 at another value (this area writes 0/101) |
+| 0x9B4C → 11, 12, 13, 16, 18 | a counter at another value (visits, tries) |
+| 0x9E20 → T; 0x9EAC → T | 0x4A9C at another value (this area writes 128/255) |
+| 0xA036 → 1 | a roll (RANDOM in this area) that didn't come out that way |
+| 0xA1C7 → F; 0xA507 → T; 0xAEB1 → F; 0xAF92 → T | another party (a member's stats, class, size or strength) |
+| 0xA57D → T | 4A0D menu; [03E8] |
+| 0xA588 → F | 4A0D menu |
+| 0xA599 → T, F; 0xA5BE → T, F; 0xA5C9 → T, F; 0xA5D4 → T, F; 0xA5E7 → T, F | neither side ran: the code above it was never reached |
+| 0xA84A → T | 0x4AC0 at another value (this area writes 1) |
+| 0xA9DC → T | 0x4A09 at another value (this area writes 1) |
+| 0xAB20 → T | 0x4AC8 at another value (this area writes 255) |
+| 0xAEA9 → F | 0x4A03 at another value (this area writes 0/1) |
+| 0xB083 → T | another hour or day |
+
+### 5:7, the Valjevo tower: done (chat 19)
+
+94% / 90%, critical 4/4 · 5/5 · 15/15. `cover_5-7-dagger` (nothing taken from 5:6's temple: the man with the dagger talks, 0x9FEF) and `cover_5-7-eight` (a party of eight, two NPCs by `shortcut npc`: 0xA2DF's "IS IT A DEAL?", 0xA350).
+
+| where | what it needs |
+|---|---|
+| 0x9A3D → T | 0x4AE0 at another value (this area writes 0/1) |
+| 0x9C3B → T; 0xA40E → T; 0xA78E → F | another party (a member's stats, class, size or strength) |
+| 0x9E1A → 2 | the reaction no choice gave in the runs' rolls |
+| 0xA184 → ADVANCE | a menu answer not given |
+| 0xA44F → F | 9800 counter; [6E3E] |
+| 0xA799 → T, F; 0xA7A6 → T, F; 0xA7B3 → T, F | neither side ran: the code above it was never reached |
+| 0xA814 → F | 0x4ABA at another value (this area writes 254) |
+
+### 4:10, Valhingen graveyard: done (chat 19)
+
+93% / 87%, critical 2/2 · 18/18 · 48/48. The six kill-counter clamps (over 249, set 249) from `cover_4-10-counters`: the counters at 250 and the party placed on events 18, 22 and 28 (event 15's came from a walk). Walking there never works: the wandering skeleton armies add their kills first (0x9CE1) and the byte wraps.
+
+| where | what it needs |
+|---|---|
+| 0x997D → T; 0xAF09 → T | 0x4A41 at another value (this area writes 250/255) |
+| 0x99D3 → T; 0x9C9F → T; 0x9D8B → T; 0x9DE2 → T; 0x9EC5 → T; 0x9F4D → T; 0x9FAF → T; 0xA0AC → T; 0xA14E → T; 0xA228 → T; 0xA27F → T; 0xA457 → T; 0xA561 → T; 0xA742 → T; 0xA8F4 → T; 0xAA82 → T; 0xAB4F → T | a counter at another value (visits, tries) |
+| 0x9B05 → T; 0x9B35 → T; 0x9B65 → T; 0xB48C → F | (no guess) |
+| 0x9B8D → T | 0x6DD3 at another value (this area writes 0/4) |
+| 0x9D1D → T; 0x9E14 → T; 0xA45F → T; 0xA569 → F | 4A05 copy of |
+| 0x9E48 → F; 0xB5A9 → T | 6E7F copy of |
+| 0xA574 → T, F; 0xA755 → T, F; 0xB137 → T, F | neither side ran: the code above it was never reached |
+| 0xA74A → F | 4A06 copy of |
+| 0xA882 → T; 0xB3CD → T | a roll (RANDOM in this area) that didn't come out that way |
+| 0xA8FF → T | 4A07 copy of |
+| 0xA9B8 → F | SEARCH on (or off) at that moment |
+| 0xAA95 → F | 0x4A0B at another value (this area writes 1) |
+| 0xAE23 → T | another party (a member's stats, class, size or strength) |
+| 0xB12C → F | 0x4A43 at another value (this area writes 251) |
+| 0xB159 → T | 0x4AD5 at another value (this area writes 255) |
+| 0xB3EA → T | C04D facing; [4A42] |
+| 0xB482 → T | a surprise roll (3: both sides surprised) |
+
+### 5:3, Valjevo's outer castle: done (chat 19)
+
+96% / 90%, critical 7/7 · 11/11 · 23/23, from `cover_5-3-disguised` (5:6's disguise worn, the shrines untouched: the guards' "WHAT ARE YOU DOING HERE?") and `cover_5-3-temple`.
+
+| where | what it needs |
+|---|---|
+| 0x9977 → T | 49C9 clock; [4A62] |
+| 0x9BE4 → T; 0x9CD3 → T; 0x9D36 → F; 0xA8CB → T; 0xABEF → T; 0xAFE9 → T | (no guess) |
+| 0x9C49 → T | a fight's result other than won (lost ends the game; fled is a flee job's) |
+| 0x9DCA → 2; 0x9E38 → 2; 0xA0D6 → 2; 0xA3D0 → 2; 0xA662 → 2; 0xA7BE → 2; 0xA815 → 2; 0xAC1E → 2; 0xB35E → 2 | the reaction no choice gave in the runs' rolls |
+| 0xA371 → ADVANCE | a menu answer not given |
+| 0xAE03 → T; 0xAE14 → T; 0xAEFF → F | another party (a member's stats, class, size or strength) |
+
+### 3:8, City Hall: done (chat 19)
+
+95% / 91%, critical 2/2 · 3/3 · 33/34. `cover_3-8-later` (a later visit, every report taken but 5:7's: the special council and its chamber, 0xAF2C, 0xB3C0) and `cover_3-8-later2` (Cadorna exposed, the Zhentil message not yet given: 0xAE1E). **Not reachable:** 0xAEC1 → T and 0xAF3A-0xAF45 (the commission list's end with 5:7's report taken, 0x4ABA = 255): with that byte at 255 the report loop leaves for the end game at its first GOSUB 0xB589 (0x9D3E), before the list. The quest flag 0xAF45 is one of these.
+
+| where | what it needs |
+|---|---|
+| 0x9A1A → T | 0x6DD3 at another value (this area writes 0/101) |
+| 0x9ACF → T; 0xAA42 → T | 0x4ABE at another value (this area writes 254) |
+| 0x9D63 → 22; 0xA5B2 → T; 0xA625 → F; 0xA767 → 1; 0xA856 → T | 6E79 menu |
+| 0xA803 → T | 0x4A06 at another value (this area writes 0/1) |
+| 0xAA4D → T | 0x4AB8 at another value (this area writes 255) |
+| 0xAAAE → T; 0xAB16 → T; 0xACA0 → T | 0x4AA7: nothing in this area writes it (another area's flag, or the engine) |
+| 0xAAC4 → T | 0x4ABD: nothing in this area writes it (another area's flag, or the engine) |
+| 0xAD1D → T | 0x4A97 at another value (this area writes 254/255) |
+| 0xAD28 → T | 0x4AB4: nothing in this area writes it (another area's flag, or the engine) |
+| 0xAEC1 → T | 0x4ABA: nothing in this area writes it (another area's flag, or the engine) |
+| 0xAF40 → T, F | neither side ran: the code above it was never reached |
+
+### 7:26, the middle wilderness band: done (chat 19)
+
+93% / 89%, critical 18/18 · 7/7 · 6/6, from today's `-all` run (the deterministic walk with the original's turn order, side chat 3's A1).
+
+| where | what it needs |
+|---|---|
+| 0x9989 → 0, 4, 6; 0x99B8 → 0, 2, 4 | 0x033D: nothing in this area writes it (another area's flag, or the engine) |
+| 0x99EC → T, F; 0x99FE → T, F; 0xA371 → T, F | neither side ran: the code above it was never reached |
+| 0x9A7E → T | 035F outside; [6E7A] |
+| 0x9A85 → T | (no guess) |
+| 0xA0E5 → T | 0x49C3 at another value (this area writes 14/3/6/7;) |
+| 0xA140 → T | 6E7D copy_mem |
+| 0xA14A → 3 | a surprise roll (3: both sides surprised) |
+| 0xA172 → ADVANCE; 0xA1C5 → ADVANCE; 0xA210 → ADVANCE; 0xA26C → COMBAT, WAIT, FLEE, ADVANCE, PARLAY | a menu answer not given |
+| 0xA194 → 2; 0xA1E5 → 2; 0xA28C → 1, 2, 3 | the reaction no choice gave in the runs' rolls |
+| 0xA321 → T; 0xAC06 → T; 0xAC20 → T | a roll (RANDOM in this area) that didn't come out that way |
+| 0xAFE7 → T | 0x4AD2: nothing in this area writes it (another area's flag, or the engine) |
+
+### 8:27, the east wilderness band: done (chat 19)
+
+94% / 90%, critical 10/10 · 12/12 · 6/6. The cave ("YOU HAVE FOUND A SMALL, DARK CAVE") is a 1-in-21 random event (0xA867: RANDOM 20, the cave only on 20); the new dice jobs for a big die's compared values force it, and its four set fights (0xA500-0xA667, part 21, entrance 6,15) followed.
+
+| where | what it needs |
+|---|---|
+| 0x99A3 → 0, 2, 4 | 0x033D: nothing in this area writes it (another area's flag, or the engine) |
+| 0x99D8 → T, F | neither side ran: the code above it was never reached |
+| 0x9A3A → T | 035F outside; [6E7A] |
+| 0x9A41 → T; 0xA418 → F; 0xA48C → T; 0xAB00 → T | (no guess) |
+| 0x9C1A → T | 0x4A11 at another value (this area writes 255) |
+| 0x9C67 → T | a fight's result other than won (lost ends the game; fled is a flee job's) |
+| 0x9F00 → T | 6E7D copy_mem |
+| 0x9F0A → 3 | a surprise roll (3: both sides surprised) |
+| 0x9F32 → ADVANCE; 0x9F85 → ADVANCE; 0x9FD0 → ADVANCE; 0xA02C → COMBAT, WAIT, FLEE, ADVANCE, PARLAY | a menu answer not given |
+| 0x9F54 → 2; 0x9FA5 → 2; 0xA04C → 1, 2, 3 | the reaction no choice gave in the runs' rolls |
+| 0xA0A4 → T | 9802 copy_mem |
+| 0xA94A → T; 0xA964 → T | a roll (RANDOM in this area) that didn't come out that way |
+
+### 7:23, inside Yarash's pyramid
+
+95% / 93%, critical 4/4 · 5/5 · 20/21: one DOSBox answer from done. The vats room (`cover_7-23-vats`: its way in is a secret door, event 9 at 12,11 facing east, found by the step script's search roll) and the storerooms' hidden treasure (`cover_7-23-store`: LOOK in a storeroom, reached only by the teleporters). The quest flag left, 0xA564, follows the runes door's wrong password: the monster's 200 damage (0xA559) kills the party, ours stops there; whether the original runs on to 0xA564 is on the board for the Test List.
+
+| where | what it needs |
+|---|---|
+| 0x9C8C → F | (no guess) |
+| 0x9C91 → 0, 1 | SEARCH on (or off) at that moment |
+| 0x9CCC → F | 6E79 menu |
+| 0x9F0D → 0; 0xABF9 → 2 | the reaction no choice gave in the runs' rolls |
+| 0xA6DE → T; 0xA7E9 → T | a counter at another value (visits, tries) |
+| 0xAC52 → F | 0x4AB3 at another value (this area writes 254) |
+
+## What holds the rest back (chat 19)
+
+- **6:25 west band (81 / 82, set fights 8/13):** the cave's two edge entrances (0,2) and (15,3) are walled on three
+  sides on our map and its north half (events 1-7, five set fights) has no way in at all; in the cave the on-move
+  script exits at once (0x4A9E = 255), so nothing lets a party through. Whether the original does is a DOSBox
+  question (board, "For the Test List").
+- **2:9 Stojanow Gate (83 / 79, 6/7, 22/24):** `cover_2-9-climb` reaches the tower rooms: they are closed boxes on the
+  map, entered by the stairs at (4,5)/(11,5) facing south (0x9CB7, 0xA16A), and manned only until the gate's
+  bugbears are beaten (0xA60E sets both tower bits), which every earlier walk did first. `cover_2-9-warned`: the
+  third warning (0xA8A2). Left: the bugbears behind the gate (0xAD1F-0xAD9D), an encounter menu whose reactions are
+  all constants, behind the towers' state.
+- **2:20 Slums (91 / 83):** `cover_2-20-fortune50`/`-fortune100` (the fortune teller's readings by 0x4A80, the patrol
+  fights won) and `cover_2-20-killed` (her killed: stronger patrols). Left: the patrols' parley sums (0xB2FE-0xB4A1)
+  and 34 plain jobs whose replay goes another way (a dice job's path, 0x9B8A forced; not explained yet).
+- **5:6 temple side (88 / 84):** the disguised patrols (0xAA49-0xAB53) need the disguise (0x4A65 bit 0) still on
+  when a patrol comes; any fight clears it (0xA883-0xA88F), so do the washerwomen's TIE/KILL answers (0x9EA9) and any
+  move once a shrine is robbed (0x9B47). `cover_5-6-disguised` met only undisguised patrols.
+- **8:13 kobold caves (87 / 86, 14/15, 17/19):** the kobold war's stage machine (0x4A8D) and a fight that ends not won
+  (0xA1E0: B2DE's fight and 0xB31E); `cover_8-13-full` changed nothing.
 
 ## 5:5 in chat 14 (for the record)
 
