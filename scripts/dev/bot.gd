@@ -20,7 +20,8 @@ extends Node
 ##   memorize              fill every caster's spell slots (first spells in the book) and rest
 ##   train                 (in a training hall's party menu) train everyone who can
 ##   buy <member> <item>   (in a shop) buy the first item whose name starts so; pool first
-##   temple                (at a temple) raise / cure / heal everyone who needs it
+##   temple x,y [raise]    (walk to a temple) cure everyone who needs it; Raise Dead only with
+##            "raise" (a test of the mechanic: a full run never depends on it, Jeremy, Methods 4)
 ##   travel <set>:<block>  walk area to area by the area graph (--exits=)
 ##   explore [events]      visit every event of this area, resting first, training on the way;
 ##            the listed events (and any whose first fight looks unwinnable) wait for training
@@ -41,6 +42,7 @@ var _pc := 0
 var _checkpoint := ""
 var _checkpoint_pc := 0
 var _retries := 0
+var _raise_ok := false     # this temple trip may raise the dead (plan "temple x,y raise")
 ## M6 shortcuts: the last scripted fight opened ({key, area, at, monsters}), the fights to win
 ## by shortcut (keys), and the log of every shortcut used and every fight it skipped.
 var _last_fight := {}
@@ -133,9 +135,15 @@ func run(plan_path: String) -> void:
 		if line == "stop":
 			break
 		await _do(line)
-		if _wiped():
-			_count("wipes")
-			_issue("party wiped at plan line %d (%s)" % [_pc, line])
+		var died := _died()
+		if _wiped() or died != "":
+			# Methods 4 (Jeremy): a playthrough never depends on resurrection; in a full run a
+			# member's death is a loss like a wipe: back to the last checkpoint.
+			_count("wipes" if died == "" else "deaths")
+			if died == "":
+				_issue("party wiped at plan line %d (%s)" % [_pc, line])
+			else:
+				_issue("%s died at plan line %d (%s): reload" % [died, _pc, line])
 			if _checkpoint == "" or _retries >= 8:
 				break
 			_retries += 1
@@ -172,6 +180,17 @@ func run(plan_path: String) -> void:
 func _issue(t: String) -> void:
 	issues.append(t)
 	print("!! ", t)
+
+
+## A full run's dead (or stoned, or gone) member, by name; "" if none, or in a coverage run (it
+## restores the party by shortcut instead).
+func _died() -> String:
+	if _cover_area != "" or main._party.is_empty():
+		return ""
+	for m in main._party:
+		if m.status >= PartyMember.STATUS_DEAD:
+			return m.name
+	return ""
 
 
 func _wiped() -> bool:
@@ -334,12 +353,14 @@ func _do(line: String) -> void:
 			_buy(int(w[1]), " ".join(w.slice(2)))
 		"temple":
 			_want = "temple"
+			_raise_ok = w.size() > 2 and w[2] == "raise"
 			var a := w[1].split(",")
 			var before := _coin()
 			await main._tour(Vector2i(int(a[0]), int(a[1])))
 			await _settle()
 			_book("temple", before)
 			_want = ""
+			_raise_ok = false
 		"clerk":
 			await _clerk()
 		"rest":
@@ -1981,7 +2002,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 	var map_now: int = main._map_index
 	_todo_now = todo
 	_ladder_ok = false
-	while not todo.is_empty() and not _wiped() and _here() == area and main._map_index == map_now:
+	while not todo.is_empty() and not _wiped() and _died() == "" and _here() == area and main._map_index == map_now:
 		var best := -1
 		var best_len := 1 << 20
 		for ev in todo:
@@ -2040,9 +2061,10 @@ func _explore_pass(skip: Array) -> Dictionary:
 				return deferred
 			await main._tour(back)
 			await _settle()
-		if not _wiped() and _here() == area:
+		if not _wiped() and _died() == "" and _here() == area:
 			# A checkpoint after each event; a wipe comes back here and explores again
-			# (events already done do nothing the second time).
+			# (events already done do nothing the second time). Never with a member dead:
+			# the main loop goes back to the last checkpoint instead (Methods 4).
 			_checkpoint = "explore"
 			_checkpoint_pc = _pc - 1
 			main._quick_save()
@@ -2758,10 +2780,17 @@ func _knock_member() -> int:
 func _temple_needed() -> bool:
 	var t: TempleScreen = main._temple
 	for m in main._party:
-		for cure_name in ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]:
+		for cure_name in _temple_list():
 			if t._needs(m, t.cure_index(cure_name)):
 				return true
 	return false
+
+
+## The cures the bot buys: Raise Dead only on a "temple ... raise" trip or in a coverage run.
+func _temple_list() -> Array:
+	if _raise_ok or _cover_area != "":
+		return ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]
+	return ["STONE TO FLESH", "CURE DISEASE"]
 
 
 ## At an open temple: Raise Dead, Stone to Flesh and Cure Disease for whoever needs them,
@@ -2769,7 +2798,7 @@ func _temple_needed() -> bool:
 func _temple_cures() -> void:
 	var t: TempleScreen = main._temple
 	for i in main._party.size():
-		for cure_name in ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]:
+		for cure_name in _temple_list():
 			var cure := t.cure_index(cure_name)
 			if t._needs(main._party[i], cure):
 				t._who = i

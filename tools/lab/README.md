@@ -130,6 +130,8 @@ difference). In the original, **lists move with Home/End**, not the arrows (the 
 book; the highlight starts on the last entry there), and keys sent before a list is drawn are lost. Resting in New Phlan
 or City Hall brings the watch or the guards: City Hall rests quietly with `4AC0=1` in the save. Checks driver:
 `data/c26/checks/run.sh <n> <area>` (keys from chat 25's logs).
+The bot's full runs reload the last checkpoint at a member's death (chat 26); full run c26a: `data/logs26/full_c26a.log.gz`.
+A Monitor or tail pipeline must flush every stage (`cut` buffers; use `awk '{print substr($0,1,200); fflush()}'`).
 
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
