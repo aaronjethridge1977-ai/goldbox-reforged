@@ -198,6 +198,16 @@ def run(plan_path, save, seed, run_id, boot=True, after=None):
     if seed is not None:
         p.g.mem.set_seed(seed)
         p.log("SEED set %08x" % seed)
+    reader = None
+    if os.environ.get("OP_TRACE"):     # every dice draw with its caller (the lab's trace.py, this lab's DOSBox)
+        import subprocess
+        env = dict(os.environ, DISPLAY=orig.DISPLAY)
+        subprocess.run([sys.executable, "trace.py", "install"], cwd=orig.LAB, env=env, check=True)
+        reader = subprocess.Popen([sys.executable, "trace.py", "run", "36000"], cwd=orig.LAB, env=env,
+                                  stdout=open(os.path.join(LOGS, "%s.trace.txt" % run_id), "w"),
+                                  stderr=subprocess.STDOUT)
+        time.sleep(1.5)
+        p.log("TRACE reader started:", os.path.join(LOGS, "%s.trace.txt" % run_id))
     result = "done"
     try:
         while p.step():
@@ -206,6 +216,15 @@ def run(plan_path, save, seed, run_id, boot=True, after=None):
         result = "stopped: %s" % e
     except G.Timeout as e:
         result = "stopped: %s" % e
+    if reader is not None:
+        reader.terminate()
+    if result != "done":
+        try:
+            shot = os.path.join(LOGS, "%s_stop.png" % run_id)
+            G._lab.screen().save(shot)
+            p.log("STOP SCREEN", shot)
+        except Exception as e:
+            p.log("no stop screen:", e)
     p.log("END", result)
     summary(p, result, plan_path, save, seed)
     return p, result

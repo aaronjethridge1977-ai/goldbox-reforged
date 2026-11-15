@@ -3,7 +3,7 @@
   cmpsaves.py <checkpoint dir A> <checkpoint dir B>
 
 Each dir holds SAVGAM<x>.DAT and its CHRDAT<x>n files (player.py checkpoints). The save's ECL memory
-(0x4900-0x52FF as words from byte 1) is reported by address; the rest by file offset; character files by name.
+(16-bit cells from byte 1: 0x4900-0x4CFF, 0x6B00-0x6EFF, 0x9700-0x98FF) is reported by address; the rest by file offset; character files by name.
 Prints IDENTICAL or one line per difference.
 """
 import os, sys
@@ -24,8 +24,10 @@ def where(name, i):
     if name == "SAVGAM":
         if i == 0:
             return "data set"
-        if 1 <= i < 0x1401:
-            return "ECL %04X%s" % (0x4900 + (i - 1) // 2, " (high byte)" if (i - 1) % 2 else "")
+        if 1 <= i < 0x1401:      # three arrays of 16-bit cells (chat 25, GAME.OVR)
+            j = (i - 1) // 2
+            base = 0x4900 + j if j < 0x400 else (0x6B00 + j - 0x400 if j < 0x800 else 0x9700 + j - 0x800)
+            return "ECL %04X%s" % (base, " (high byte)" if (i - 1) % 2 else "")
         if 0x1401 <= i < 0x3201:
             return "script image %04X" % (0x9900 + i - 0x1401)
         return "offset %04X" % i

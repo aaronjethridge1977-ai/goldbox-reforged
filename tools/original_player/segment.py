@@ -36,10 +36,11 @@ def keys_between(run, a, b, magic):
             continue
         if not on:
             continue
-        m = re.search(r"KEY #\d+ (\S+)\s+\|.*\| (default for \w+|[^|]*)$", line)
+        m = re.match(r"\s*[\d.]+ KEY #\d+ (\S+)\s+\| ", line)
         if not m:
             continue
-        k, why = m.group(1), m.group(2)
+        f = line.rstrip("\n").split(" | ", 5)    # key, area and square, seed, wait, row 24, reason
+        k, bottom, why = m.group(1), f[4].strip(), f[5]
         if "checkpoint %s: ENCAMP" % b in why:
             break
         if "ENCAMP" in why or "checkpoint" in why or "leave camp" in why or "quit to DOS" in why:
@@ -53,6 +54,8 @@ def keys_between(run, a, b, magic):
             out += ["wait", "wait", "wait"]
             fight = False
         out.append(GKEY.get(k, k))
+        if not ("ENCAMP" in bottom and bottom.endswith("LOOK")):
+            out += ["wait", "wait"]      # ours' menus and treasure take a few frames (chat 24)
     return out
 
 

@@ -34,7 +34,7 @@ def classify(st):
         out["kind"] = "wiped"
     elif b.startswith("INPUT THE CODE WORD"):
         out["kind"] = "wheel"
-    elif b.startswith("AREA") and "ENCAMP" in b:
+    elif "ENCAMP" in b and b.endswith("LOOK"):     # AREA CAST VIEW ENCAMP SEARCH LOOK; CAST ... LOOK in the wilderness
         out["kind"] = "walking"
     elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b:
         out["kind"] = "enter"
