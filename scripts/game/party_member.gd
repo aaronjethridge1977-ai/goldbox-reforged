@@ -354,6 +354,9 @@ func ready_spells() -> Array[int]:
 ## SCRIBE: magic-user spells on this member's scrolls marked for copying into the spell
 ## book (the original sets bit 7 of the scroll's spell byte, record bytes 60..62). Resting
 ## copies them after any memorizing, a spell at a time ("<NAME> HAS SCRIBED <SPELL>").
+const READ_MAGIC := 18
+
+
 func scribe_pending() -> Array[int]:
 	var out: Array[int] = []
 	for it in items:
@@ -371,6 +374,7 @@ func scribe_next() -> int:
 			if it.raw.size() > k and it.raw[k] > 0x80:
 				var id: int = it.raw[k] & 0x7F
 				it.raw[k] = 0
+				it.raw[53] = 0       # the scroll has been read (lab: "MAGIC USER SCROLL WITH 2 SPELLS" after)
 				if id <= spell_book.size():
 					spell_book[id - 1] = 1
 				if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
@@ -379,23 +383,47 @@ func scribe_next() -> int:
 	return 0
 
 
-## Scroll spells this magic-user could scribe: magic-user spells of levels they have slots
-## for, not already in the book, on scrolls whose spells are known (record byte 53 clear).
+## SCRIBE's list (lab, chat 22, save J's Darkstar with a scroll from the treasure): every
+## magic-user spell on the member's scrolls that the member can read: a scroll read before
+## (record byte 53 = 0, "... WITH n SPELLS"), or any scroll while Read Magic is on the member
+## (an unread scroll, byte 53 = 6: "HAS NO COPYABLE SCROLLS" without it). Whatever the
+## spell's level and whether it is known: choosing it says why not (CampScreen). The
+## original's checks: GAME.OVR 0x1838D (SCRIBE), 0x17B9D (the member's condition).
 func scribable(table: SpellTable) -> Array:
 	var out: Array = []     # [item, record byte, id]
 	if class_level(1) == 0:
 		return out
+	var reading := table.effect(READ_MAGIC) > 0 and has_affect(table.effect(READ_MAGIC))
 	for it in items:
-		if it.raw.size() < 63 or it.raw[53] != 0:
+		if it.raw.size() < 63 or (it.raw[53] != 0 and not reading):
 			continue
 		for k in [60, 61, 62]:
 			var id: int = it.raw[k] & 0x7F
 			if id == 0 or id > SpellTable.NAMED or table.spell_class(id) != SpellTable.MAGE:
 				continue
-			var lvl := table.level(id)
-			if lvl >= 1 and lvl <= 3 and spell_slots[1][lvl - 1] > 0 and not knows(id):
-				out.append([it, k, id])
+			out.append([it, k, id])
 	return out
+
+
+## Why SCRIBE refuses a spell on the list ("" if it can be marked): the original's messages.
+func scribe_refusal(table: SpellTable, it: GameItem, k: int) -> String:
+	var id: int = it.raw[k] & 0x7F
+	if knows(id):
+		return "YOU ALREADY KNOW THAT SPELL"
+	if it.raw[k] > 0x80:
+		return "YOU ARE ALREADY SCIBING THAT SPELL"     # sic, the original's spelling
+	var lvl := table.level(id)
+	if lvl < 1 or lvl > 3 or spell_slots[1][lvl - 1] == 0:
+		return "YOU CAN NOT SCRIBE THAT SPELL."
+	return ""
+
+
+## Unmarks every scroll spell marked for SCRIBE (NO at "SCRIBE THESE SPELLS?").
+func cancel_scribing() -> void:
+	for it in items:
+		for k in [60, 61, 62]:
+			if it.raw.size() > k and it.raw[k] > 0x80:
+				it.raw[k] &= 0x7F
 
 
 func learning_spells() -> Array[int]:

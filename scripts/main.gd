@@ -2203,6 +2203,10 @@ func _make_camp() -> void:
 		m.recalculate(_types)
 	_camp.spells = SpellTable.shared(_game_path)
 	_camp.place = _place_line()
+	# The camp opens on the member selected on the walking screen and hands its choice back
+	# (one selection in the original; lab, chat 22: End x4, ENCAMP, MAGIC, SCRIBE answered for
+	# DARKSTAR).
+	_camp._sel = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
 	_dev_reseed([_camp._rng, _camp._rng2])
 
@@ -2216,6 +2220,8 @@ func _on_temple_closed() -> void:
 
 func _on_camp_closed() -> void:
 	GameClock.add_minutes(_vm, _camp.minutes_passed)   # the camp has already run the effects
+	if not _party.is_empty():
+		_vm.selected = clampi(_camp._sel, 0, _party.size() - 1)
 	_show()
 
 

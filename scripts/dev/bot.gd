@@ -932,23 +932,31 @@ func _hook() -> bool:
 		return true
 	if _want == "inn" and main._camp.visible:
 		_want = ""
-		_pick_spells()
-		var need := 0
-		for m in main._party:
-			if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
-				need = maxi(need, m.hp_max - m.hp)
-		# Long enough to memorize and heal; on to the morning when New Phlan's doors are
-		# shut (from hour 14) and the party came to wait for them.
+		# Chat 22 (the kobold caves): as a player at an inn, rest to memorize, cure with Cure
+		# Light Wounds, memorize again, until everyone is whole; without a cleric, rest the days
+		# it takes (a day a hit point). Chat 22's run b left the inn at 14/31, 14/33, 14/34
+		# (one rest, 14 days at most, no cures) and wiped in the wilderness on the way back.
 		var camp: CampScreen = main._camp
-		camp._rest_menu()
-		camp._to_rest += mini(need, 14) * 288
-		if _inn_till_day:
-			var h := GameClock.hour(main._vm)
-			var till := ((24 - h) * 60 - GameClock.minute(main._vm) + 5) / 5
-			camp._to_rest = maxi(camp._to_rest, till)
-		_start_rest(camp)
-		while camp.visible and camp._resting:
-			await get_tree().process_frame
+		for round_no in 12:
+			_pick_spells()
+			var need := _hp_need()
+			camp._rest_menu()
+			if not _can_cure():
+				camp._to_rest += mini(need, 40) * 288
+			if _inn_till_day and round_no == 0:
+				var h := GameClock.hour(main._vm)
+				var till := ((24 - h) * 60 - GameClock.minute(main._vm) + 5) / 5
+				camp._to_rest = maxi(camp._to_rest, till)
+			if camp._to_rest <= 0:
+				break
+			_start_rest(camp)
+			while camp.visible and camp._resting:
+				await get_tree().process_frame
+			if not camp.visible:
+				break
+			_cure_in_camp()
+			if _hp_need() == 0 or not _can_cure():
+				break
 		if camp.visible:
 			await main._press("esc")
 			if camp.visible:
@@ -960,7 +968,9 @@ func _hook() -> bool:
 		# Chat 22: also a temple met on the way (the inn trips through New Phlan pass one):
 		# chat 21's full run took BRAM back into the caves dead with 3324 platinum in the purse,
 		# because only a plan's "temple" line ever raised anyone (and the plan has none).
-		_want = ""
+		# (Only a temple trip's own want ends here: an inn trip passes this temple first.)
+		if _want == "temple":
+			_want = ""
 		_temple_cures()
 		await main._press("esc")
 		return true
@@ -2667,6 +2677,23 @@ func _fund(i: int) -> void:
 			while o != m and o.money[coin] > 0 and m.wealth_copper() < 1000 * 200:
 				o.money[coin] -= 1
 				m.money[coin] += 1
+
+
+## The most hit points any living member is short of.
+func _hp_need() -> int:
+	var need := 0
+	for m in main._party:
+		if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+			need = maxi(need, m.hp_max - m.hp)
+	return need
+
+
+## Whether someone able can memorize Cure Light Wounds (a cleric who knows it).
+func _can_cure() -> bool:
+	for m in main._party:
+		if m.status == PartyMember.STATUS_OKAY and m.knows(3) and m.spell_slots[0][0] > 0:
+			return true
+	return false
 
 
 ## The first member able to cast Knock (memorized), or -1.

@@ -474,7 +474,7 @@ func _draw_list() -> void:
 	var title: String = {"memorize": "SPELLS IN SPELL BOOK", "cast": "SPELLS IN MEMORY",
 		"scribe": "SPELLS ON SCROLLS"}.get(_list_kind, "SPELLS IN SPELL BOOK")
 	if _mode in ["pending", "confirm"]:
-		title = "SPELLS TO BE MEMORIZED"
+		title = "SPELLS TO BE SCRIBED" if _list_kind == "scribe" else "SPELLS TO BE MEMORIZED"
 	var who := "%s'S" % m.name
 	_scr.text(1, 1, who, GameScreen.CYAN)
 	_scr.text(2 + who.length(), 1, title, GameScreen.GREEN)
@@ -487,6 +487,8 @@ func _draw_list() -> void:
 		else:
 			var lit := i == _cursor and _mode in ["list", "pending"] and _lines.is_empty()
 			_scr.text(2 if _mode in ["pending", "confirm"] else 3, r, row[0], GameScreen.WHITE if lit else GameScreen.GREEN)
+			if _mode == "list" and _list_kind == "scribe" and _marked(int(row[1])):
+				_scr.text(2, r, "*", GameScreen.WHITE if lit else GameScreen.GREEN)
 	if _mode == "list" and _list_kind == "memorize":
 		_scr.text(1, 18, m.name, GameScreen.CYAN)
 		_scr.text(1, 19, "CAN MEMORIZE:", GameScreen.GREEN)
@@ -506,15 +508,19 @@ func _draw_list() -> void:
 	_draw_lines()
 	match _mode:
 		"list", "casting":
-			_labelled("CHOOSE SPELL:", _list_menu(), 14)
+			if _row24 != "":
+				_scr.text(0, 24, _row24, GameScreen.WHITE)
+			else:
+				_labelled("CHOOSE SPELL:", _list_menu(), 14)
 		"ask":
 			_scr.text(0, 24, "LOSE IT?", MAGENTA)
 			_scr.menu_line(24, YES_NO, 9, _pick)
 		"pending":
 			_scr.menu_line(24, ["EXIT"], 1, 0)
 		"confirm":
-			_scr.text(0, 24, "MEMORIZE THESE SPELLS?", PROMPT)
-			_scr.menu_line(24, YES_NO, 23, _pick)
+			var ask := "SCRIBE THESE SPELLS?" if _list_kind == "scribe" else "MEMORIZE THESE SPELLS?"
+			_scr.text(0, 24, ask, PROMPT)
+			_scr.menu_line(24, YES_NO, ask.length() + 1, _pick)
 
 
 func _list_menu() -> Array:
@@ -751,6 +757,12 @@ func _build_list(ids: Array, mark: String = "") -> void:
 func _open_list(kind: String) -> void:
 	var m := _who()
 	var ids: Array = []
+	# Someone not fit to act (GAME.OVR 0x17B9D, the same check for all three): "<NAME>" / "IS IN
+	# NO CONDITION TO CAST ANY SPELLS" (MEMORIZE SPELLS, SCRIBE ANY SCROLLS).
+	if m.status != PartyMember.STATUS_OKAY:
+		_note_name(m.name, "IS IN NO CONDITION TO " + {"cast": "CAST ANY SPELLS", "memorize": "MEMORIZE SPELLS",
+			"scribe": "SCRIBE ANY SCROLLS"}.get(kind, "CAST ANY SPELLS"))
+		return
 	match kind:
 		"memorize":
 			# A character who can't memorize: nothing happens (lab: a fighter).
@@ -772,6 +784,9 @@ func _open_list(kind: String) -> void:
 			_scrolls = m.scribable(spells)
 			for row in _scrolls:
 				ids.append(row[2])
+			if ids.is_empty():
+				_note_name(m.name, "HAS NO COPYABLE SCROLLS")     # lab, chat 22 (GAME.OVR 0x18447)
+				return
 	if ids.is_empty():
 		return        # lab: SCRIBE with no scrolls, nothing happens
 	_list_kind = kind
@@ -783,7 +798,7 @@ func _open_list(kind: String) -> void:
 
 
 func _open_pending() -> void:
-	_build_list(_who().learning_spells(), "*")
+	_build_list(_who().scribe_pending() if _list_kind == "scribe" else _who().learning_spells(), "*")
 	_mode = "pending"
 	_refresh()
 
@@ -811,12 +826,18 @@ func _choose() -> void:
 			m.memorized.append(id + PartyMember.LEARNING)
 		_refresh()
 	elif _list_kind == "scribe":
-		# Marks (or unmarks) the scroll spell to be scribed while resting.
+		# Marks the scroll spell to be scribed while resting ("*"), or says why not on row 24
+		# for a moment (lab, chat 22; GAME.OVR 0x1838D): already known, already marked, or a
+		# level the magic-user can't learn yet.
 		for row in _scrolls:
 			if row[2] == id:
 				var it: GameItem = row[0]
-				it.raw[row[1]] ^= 0x80
-				_note.text = ("%s WILL BE SCRIBED" if it.raw[row[1]] > 0x80 else "%s WILL NOT BE SCRIBED") % spells.name_of(id).to_upper()
+				var why := m.scribe_refusal(spells, it, row[1])
+				if why != "":
+					_note_24(why)
+				else:
+					it.raw[row[1]] |= 0x80
+					_note.text = "%s WILL BE SCRIBED" % spells.name_of(id).to_upper()
 				break
 		_refresh()
 	elif _list_kind == "cast":
@@ -886,6 +907,26 @@ func _back_to_list() -> void:
 		_refresh()
 
 
+var _row24 := ""     # a refusal shown on row 24 for a moment, in place of the menu
+
+
+func _note_24(text: String) -> void:
+	_row24 = text
+	_refresh()
+	await get_tree().create_timer(1.0 * delay_scale()).timeout
+	if _row24 == text:
+		_row24 = ""
+		_refresh()
+
+
+## Whether a scroll spell with this id is marked for SCRIBE.
+func _marked(id: int) -> bool:
+	for row in _scrolls:
+		if row[2] == id and (row[0] as GameItem).raw[row[1]] > 0x80:
+			return true
+	return false
+
+
 ## "<NAME>" / message for a moment, the menu as it was (lab: HAS NO SPELLS MEMORIZED).
 func _note_name(name: String, message: String) -> void:
 	_say_name(name, message)
@@ -904,6 +945,9 @@ func _note_name(name: String, message: String) -> void:
 func _leave_list() -> void:
 	if _walk and _list_kind == "cast":
 		_close_walk()
+		return
+	if _list_kind == "scribe" and not _who().scribe_pending().is_empty():
+		_open_pending()
 		return
 	if _list_kind == "memorize" and not _who().learning_spells().is_empty():
 		_open_pending()
@@ -1091,7 +1135,10 @@ func _act(choice: String) -> void:
 					_open_list("memorize")
 				return
 			if choice == "NO":
-				_who().cancel_learning()
+				if _list_kind == "scribe":
+					_who().cancel_scribing()
+				else:
+					_who().cancel_learning()
 			_magic_menu()
 		"display":
 			_pick = 3

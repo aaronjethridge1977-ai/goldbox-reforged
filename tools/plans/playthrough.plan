@@ -19,6 +19,10 @@ rest 1:24 inn
 rest 3:14 inn
 # Valhingen Graveyard: not until cleared.
 rest 4:10 inn
+# The kobold caves (chat 22): every rest is interrupted until the throne room's waves have begun
+# (8:13 on rest, 0xB428: 0x4A8D = 0 means a check every step at 100%); after that 5% every 8 hours,
+# the Clue Book's "rest in the large cave". Until then the inn, not a camp that brings a fight.
+rest 8:13 inn 4A8D 1
 # The level the game expects of a party in each area (research/pool-of-radiance-strategy.md,
 # section 4: Claude's estimates from the guides, the low end of each range). M6: a member more
 # than one level below it trains, or gets the level by shortcut (logged).
