@@ -55,7 +55,11 @@ static func build(map: GeoMap, px: int, py: int) -> Battlefield:
 ## of walls and door posts. From the original's tile table as documented by Pilgrim's
 ## reconstruction (move cost 1; the rest cost 0xFF, impassable); the lab saw a character
 ## step onto a door post's base (tile 8) in the original.
-const WALKABLE := [4, 8, 10, 12, 14, 16, 22, 23, 34, 35, 36, 37]
+## The original's ground table (DS:0x2744, 4 bytes a ground id: move cost (1, or 0xFF
+## impassable), 0, sight (2 blocks), picture; read in the lab, Combat Chat 3) agrees, and adds
+## ground 0x1E and 0x1F (pictures 0x26, 0x27: tiles 38 and 39, cost 1, see-through): 0x1F is a
+## fallen party member's square (P40).
+const WALKABLE := [4, 8, 10, 12, 14, 16, 22, 23, 34, 35, 36, 37, 38, 39]
 
 ## Clutter (GAME.OVR 0x0C5D2, read in side chat 2): when a fight starts, every bare floor cell
 ## (x 0..49, then y 0..24) rolls d100: 98 pebbles, 99 two stones, 100 a d100 of 1 and then

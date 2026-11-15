@@ -21,6 +21,9 @@ signal ally_attacked
 
 const VIEW_CELLS := 7
 const CELL := 24
+## RANDCOM's pictures 0x26 (ground 0x1E) and 0x27 (ground 0x1F, a fallen party member), P40.
+const CLOUD_TILE := 38
+const BODY_TILE := 39
 const SCALE := 3
 
 var _field: Battlefield
@@ -1508,6 +1511,20 @@ func _refresh() -> void:
 			var ti := _art.tile(t)
 			if ti:
 				img.blit_rect(ti, Rect2i(0, 0, CELL, CELL), Vector2i(c * CELL, r * CELL))
+	# P40: a fallen party member lies on its square: the original (GAME.OVR 0x3169B) puts it
+	# in the fallen list with the ground it covered and makes that ground 0x1F (RANDCOM's
+	# sixth picture, a body in its own colours; not when the ground is 0x1E), takes the figure
+	# off the map, and puts the ground back when it gets up (0x3188C). Monsters leave nothing.
+	# 0x1F is walkable and see-through (the ground table, DS:0x2744), so only the picture changes.
+	var body := _art.tile(BODY_TILE)
+	for i in _combatants.size():
+		var e: Dictionary = _combatants[i]
+		if body == null or not e.get("down", false) or e.get("fled", false) or not _party.has(e.who) \
+				or _lingering.has(i) or _skulls.has(i) or _field.tile(e.cell.x, e.cell.y) == CLOUD_TILE:
+			continue
+		var at: Vector2i = (e.cell - _view) * CELL
+		if at.x >= 0 and at.y >= 0 and at.x < size and at.y < size:
+			img.blit_rect(body, Rect2i(0, 0, CELL, CELL), at)
 	# Casting: the aim cursor and (QoL) the cells the spell will cover.
 	if _casting == "aim":
 		var cells: Array[Vector2i] = []
