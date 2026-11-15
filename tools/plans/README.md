@@ -72,6 +72,9 @@ an answer's question from its choice.
 - `rest <area> inn|camp [<hex addr> <value>]` (standing): where to rest in an area (the inn until script memory
   addr reaches value).
 - `heal`, `memorize`, `restuntil <hour>`, `campday <n>`, `grind <hex addr> <n>`, `level <n>`.
+- `mopup` (chat 28, Jeremy's Q1: honest experience): back to every area whose events `explore` left for later
+  (judged unwinnable then; not the plan's own skips), training first, taking on those it now judges winnable;
+  the list rides in the checkpoints' counters.
 - `town`: New Phlan's round (rewards, temple, training, inn). `inn x,y`, `shop x,y | <member> <item> | ...`,
   `sell x,y`, `trainat x,y`, `train`, `buy <member> <item>`.
 - `temple x,y [raise]`: cures at a temple. **Raise Dead only with `raise`**, in a test of the mechanic: a playthrough

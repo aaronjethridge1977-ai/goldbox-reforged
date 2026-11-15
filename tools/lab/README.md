@@ -148,6 +148,16 @@ from another run's checkpoint: copy `bot_<name>.cfg` and `.json` from that run's
 (`~/.local/share/godot/app_userdata/Gold Box Reforged bot <id>/`) and pass `--resume=<copy>:<name>`. ECL blocks
 disassembled: `godot --headless --path <repo> -s res://tools/dis.gd -- <game> <file> <block>`.
 A Monitor or tail pipeline must flush every stage (`cut` buffers; use `awk '{print substr($0,1,200); fflush()}'`).
+**Chat 28 (three lanes on one PC):** the Combat lane runs DOSBox on :98 and its fight tools prefer
+`/tmp/gbr_dosbox_98.pid`, a file every lab on the PC shares: in main's lab start DOSBox yourself on :99 (`setsid nohup
+Xvfb :99 ...`, `setsid nohup dosbox -conf $PWD/por.conf`, note both pids) and give the tools its pid:
+`GBR_DOSBOX_PID=<pid> python3 seed.py ...` (main's lab copy of `seed.py` reads it first; `trace.py` and `dsread.py` go
+through `seed.pid()`). Stop it by pid with `kill <pid>` (the Lead's guard refuses `pl.py stop`'s pattern kill). A save
+names its character files (SAVGAM 0x3209: CHRDATA1...), so a fight's start save copied to another letter must have those
+names patched (`slot.sh <fixture dir> <letter>`), or it loads slot A's party. Ours' first step of a recipe
+that runs before `tpseed` uses Godot's dice and may meet a random encounter: seed it too. The original's treasure list
+(DS:0x6810, far pointers; next item at record +0x2A) can be read while a fight waits for input. TREASURE with item list
+128+ is GAME.OVR 0x26F5 / 0x25C99 (`docs/diff-checks.md`, Chat 28).
 
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.

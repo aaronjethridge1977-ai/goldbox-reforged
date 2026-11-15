@@ -172,6 +172,34 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 28: fresh full run c28a (from creation, chat 28's code: random treasure, mop-ups)
+
+Reached the end, day 498, **0 teleports**, 0 level grants, 16 party restores on first retries. Fights won by shortcut
+(each beat the party twice): Sokal Keep 4:21 2,11's huge scorpions (day 27, levels 1-3: poison kills, and a death is a
+reload; c27a had left that room for later), the kobold king's hall once (c27a x4), 2:9 7,6's ettins, 5:4 14,9's hill
+giant and fighters once (c27a x2), and in 5:7 the guards (twice) and Tyranthraxus. The Player plays 2:9, 5:4 and
+Tyranthraxus in the original (its item 3); the guards and the king's hall lost in the original too (Player 2). The
+mop-ups: 2:20 events 13 and 15 and 7:17 event 1 won later; 2:20 20 and 4:2 18 still judged unwinnable; Sokal Keep has
+no travel route back. End levels: ARN 8, BRAM 8, CEDRIC 6, ELWEN 6/5/6, LIRA 7/6, DORN 7/8 (c27a: DORN 6/7, ELWEN
+6/6/5). Log: `data/logs28/full_c28a.log.gz`, checkpoints in the lab archive (`data/c28/cp_c28a`).
+
+## Chat 28: more honest experience before the finale (Jeremy, Q1: both)
+
+- **Where c27a's experience stood**: the bot trains as soon as anyone qualifies (`_can_train` after every event), so
+  the lag (ARN 6 on day 306, 7 on day 483, 8 only after the finale) is experience not earned, not training missed.
+  Commission rewards do count: the original gives a treasure's worth as experience (gold value, 250 a gem, 2200 a
+  piece of jewellery, 400 a plus; `Spoils`), and City Hall pays through TREASURE (no GIVE_EXP in any Pool script);
+  the random treasure (above) now adds its items' pluses too.
+- **Experience left on the table**: set fights `explore` judged unwinnable and never came back to (c27a: Sokal Keep
+  4:21 [9, 12, 8], the Textile House 4:2 [18], the nomads 7:17 [1], the graveyard 4:10 [28, 5]). Built: the plan's
+  **`mopup`** (after the graveyard and after Stojanow Gate): back to each such area once the party has gained half a
+  level a member since, training first, taking on those events it now judges winnable. Test (c27a's `graveyard`
+  checkpoint with those lists): 7:17's event won; 4:2's 18 and 4:10's 28/5 still judged unwinnable; Sokal Keep has no
+  travel route back (reached by the plan's own menu steps), so it stays logged.
+- **The hard fights in the original**: given to the Player (its item 3) with c27a's checkpoints named on the board.
+- **Tried and dropped**: weighing poisoners in the bot's odds (c28a's Sokal Keep scorpions killed members at levels 1-3):
+  the insect room is reached as event 5 too, where the bot sees no monsters ahead, so the rule didn't stop it.
+
 ## Chat 28: random treasure at TREASURE (combat's request)
 
 - **The original rolls an event's random treasure at the TREASURE, before the fight.** TREASURE's handler (GAME.OVR
@@ -196,7 +224,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - Where it plays: lists 129-131 at 2:20 (0xA390, 0xB0FB), 6:25 (0xAAA4), 7:23 (0xA3CF), 8:13 (0xAD3A), 8:27 (0xA39E,
   0xA5EC); 1:24, 3:8 and 8:16 take the list from a variable.
 - Lab note: a save's SAVGAM names its character files (CHRDATA1...), so a fixture copied to another slot letter
-  needs those names patched (lab `data/c28/slot.sh`), or it loads slot A's party.
+  needs those names patched (`tools/lab/slot.sh`), or it loads slot A's party.
 
 ## Chat 27: Valhingen's "dead forever" and the full run's teleports
 

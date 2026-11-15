@@ -469,6 +469,11 @@ travel 4:10
 explore
 checkpoint graveyard
 town
+# Chat 28 (Jeremy, Q1: earn more experience honestly before the finale): the set fights explore
+# left for later (Sokal Keep, the Textile House, the nomads...), taken on now that the party has
+# trained; what it still can't win waits for the next mop-up.
+mopup
+checkpoint mopup1
 
 log 17. Stojanow Gate (2:9)
 # Chat 13, from ECL2 block 9 (events are the square's info AND 31). The Clue Book's disguise:
@@ -516,6 +521,9 @@ face N
 step
 checkpoint stojanow
 town
+# Chat 28: once more before Valjevo.
+mopup
+checkpoint mopup2
 
 log 18. Valjevo Castle (5:3)
 # Chat 13, from ECL5 blocks 3-7. The patrols ask for the day's password (HARASH) or whose

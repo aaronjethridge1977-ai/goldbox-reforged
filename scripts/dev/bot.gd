@@ -26,6 +26,8 @@ extends Node
 ##   explore [events]      visit every event of this area, resting first, training on the way;
 ##            the listed events (and any whose first fight looks unwinnable) wait for training
 ##   grind <hex addr> <n> rest here, fighting what comes, until script memory addr reaches n
+##   mopup                 (chat 28, honest experience) back to every area whose events explore left for
+##            later, training first, and take on those it now judges winnable
 ##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
 ##   clerk                 City Hall twice (rewards, then up to three commissions a visit)
 ##   rest <set:block> inn|camp [<hex addr> <value>]   where to rest in an area (the inn until
@@ -52,6 +54,8 @@ var _skipped_fights: Array = []
 var _win_at: Array = []    # the plan's "shortcut win <n> at ...": [{n, at, ev, area}]
 var _expected_level := {}
 var _event_now := ""            # the event explore is walking to ("area map:event")
+## Chat 28: events explore left for later, by area: {"map": map index, "events": [...], "later": the plan's list}.
+var _left_later := {}
 var _skip_events := {}          # events passed by shortcut after they beat the party twice       # area -> the level the game expects there (plan: level)
 var _new_party: Array[PartyMember] = []
 var _rng := RandomNumberGenerator.new()
@@ -341,6 +345,8 @@ func _do(line: String) -> void:
 		"explore":
 			await _keep_level()
 			await _explore(w.slice(1))
+		"mopup":
+			await _mopup()
 		"expect_level":
 			# expect_level <set:block> <n>: the level the game expects of a party there (M6: the
 			# party is kept near it, since some encounters scale with the party).
@@ -1958,6 +1964,15 @@ func _explore_areas(later: Array) -> void:
 			break
 		if not _can_train() or trips >= 3 or not _round_trip(area):
 			_issue("explore %s: events %s left for later (the party can't win them yet)" % [area, str(deferred.keys())])
+			var plan_skip: Array = []
+			for e in later:
+				plan_skip.append(str(e))
+			var left: Array = []
+			for e in deferred.keys():
+				if not str(e) in plan_skip:
+					left.append(int(e))
+			if not left.is_empty():
+				_left_later[area] = {"map": main._map_index, "events": left, "later": plan_skip, "levels": _level_sum()}
 			break
 		trips += 1
 		after_town = true
@@ -2079,6 +2094,86 @@ func _explore_pass(skip: Array) -> Dictionary:
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_explore.cfg")
 	return deferred
+
+
+## Chat 28 (Jeremy, Q1: the bot earns more experience honestly before the finale): back to the
+## events explore left for later (the same set fights, taken on once the party has trained),
+## in the order they were left. Training first, as a player would.
+func _mopup() -> void:
+	for area in _left_later.keys():
+		if _wiped():
+			return
+		var info: Dictionary = _left_later[area]
+		# Only once the party has grown since (half a level a member): the odds that left them
+		# haven't changed otherwise, and the way there has its own fights (4:10's spectres).
+		var then := int(info.get("levels", 0))
+		if _level_sum() < then + _player_count() / 2:
+			print("== mopup %s: not yet (levels %d, %d when left)" % [area, _level_sum(), then])
+			continue
+		if not _round_trip(area):
+			_issue("mopup %s: no way there and back" % area)
+			continue
+		if _can_train():
+			await _town()
+		print("== mopup %s: events %s" % [area, str(info.get("events", []))])
+		await _travel(area)
+		if _here() != area:
+			_issue("mopup %s: travel didn't get there" % area)
+			continue
+		await _keep_level()
+		var later: Array = info.get("later", [])
+		main.avoid_events = {}
+		for e in later:
+			if str(e).is_valid_int():
+				main.avoid_events[int(e)] = true
+		_visited = {}
+		_ladders = {}
+		_no_route = {}
+		_climbed = false
+		var wanted: Array = []
+		for e in info.get("events", []):
+			wanted.append(int(e))     # (a checkpoint's JSON gives them back as floats)
+		var skip: Array = later.duplicate()
+		if main._map_index == int(info.get("map", main._map_index)):
+			var map: GeoMap = main._maps[main._map_index].map
+			for y in GeoMap.SIZE:
+				for x in GeoMap.SIZE:
+					var ev := map.flag(x, y) & 127
+					if ev != 0 and not ev in wanted and not str(ev) in skip:
+						skip.append(str(ev))
+		var deferred: Dictionary = await _explore_pass(skip)
+		main.avoid_events = {}
+		if _wiped() or _here() != area:
+			return
+		var still: Array = []
+		for e in deferred.keys():
+			if int(e) in wanted:
+				still.append(int(e))
+		_count("mopped up")
+		if still.is_empty():
+			print("== mopup %s: done" % area)
+			_left_later.erase(area)
+		else:
+			_issue("mopup %s: events %s still left (the party can't win them yet)" % [area, str(still)])
+			info["events"] = still
+			info["levels"] = _level_sum()
+
+
+## The player characters' top class levels, summed (hired NPCs aren't the bot's to train).
+func _level_sum() -> int:
+	var n := 0
+	for m in main._party:
+		if m.npc < 128 and m.status != PartyMember.STATUS_DEAD:
+			n += _top_level(m)
+	return n
+
+
+func _player_count() -> int:
+	var n := 0
+	for m in main._party:
+		if m.npc < 128:
+			n += 1
+	return n
 
 
 const TOWN := "3:0"
@@ -2961,7 +3056,7 @@ func _save_counters(path: String) -> void:
 	if f != null:
 		f.store_string(JSON.stringify({"stats": _stats, "ledger": _ledger, "gems": _gem_ledger,
 			"first": _first_day, "trainings": Array(_trainings), "shortcuts": _shortcuts,
-			"skipped_fights": _skipped_fights}))
+			"skipped_fights": _skipped_fights, "left_later": _left_later}))
 
 
 func _load_counters(path: String) -> void:
@@ -2977,6 +3072,7 @@ func _load_counters(path: String) -> void:
 	_trainings = PackedStringArray(d.get("trainings", []))
 	_shortcuts = d.get("shortcuts", [])
 	_skipped_fights = d.get("skipped_fights", [])
+	_left_later = d.get("left_later", {})
 	print("== counters carried on from %s" % path)
 
 
