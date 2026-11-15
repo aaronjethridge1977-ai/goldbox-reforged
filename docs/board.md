@@ -34,7 +34,7 @@ Later: number-prompt jobs (3:0), 6:1's state walk; the camp's rest end (back to 
 2. Differential checks 3, 5 and 10's fights, roll for roll, with key lists and seeds in `docs/diff-checks.md`.
 3. Magic for QUICK characters: Alt-Q, Space and Alt-M at the combat menu (faithfulness); MAGIC on DONE's menu (mockup to Jeremy first).
 
-Later: P40 downed party members vanish from the field; P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED messages; P30 loot shows as "(ITEM TYPE n)" (bug); P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
+Later: **P42 FIX in camp first** (Jeremy, 20:35: a pain point in his play-through; mockup first); P40 downed party members vanish from the field; P36 MOVE leaves at 0 movement beside an enemy; P35 rest's HAS MEMORIZED messages; P30 loot shows as "(ITEM TYPE n)" (bug); P21 wording and a clearer name than ORDERS; the P16 step 3 view rule against the original; ammunition and Darkstar's darts; spectre, troll, LEVEL 6 MU, Tyranthraxus (with his magic resistance); the 2:20 / 8:29 stalemate fights; screen reference captures; whether plain M is an original hot key.
 
 ## Now
 
