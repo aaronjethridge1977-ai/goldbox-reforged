@@ -1162,6 +1162,17 @@ func to_record() -> PackedByteArray:
 	d[0x11B] = clampi(hp, 0, 255)
 	d.encode_u32(0xAC, experience)
 	d[0x10C] = status
+	# Chat 27 (Player 2's request): the combat cache the original keeps in the record, from
+	# recalculate() (which reproduces the shipped characters' caches); left 0 for a member made
+	# in ours, the original's party list showed AC 60 until a fight worked it out.
+	if not is_monster:
+		d[0x110] = clampi(60 - thac0, 0, 255)
+		d[0x111] = clampi(60 - ac, 0, 255)
+		d[0x112] = clampi(60 - rear_ac, 0, 255)
+		d[0x115] = clampi(int(damage[0]), 0, 255)
+		d[0x117] = clampi(int(damage[1]), 0, 255)
+		d[0x119] = int(damage[2]) & 0xFF
+		d[0x11C] = clampi(movement, 0, 255)
 	for i in 7:
 		d.encode_u16(0x88 + i * 2, clampi(money[i], 0, 65535))
 	for i in spell_book.size():

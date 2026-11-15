@@ -1425,8 +1425,20 @@ func _save_original(letter: String) -> bool:
 			mem[0x4AFA + i] = WALL_SLOTS_RESET[i] & 0xFF
 			hi[0x4AFA + i] = WALL_SLOTS_RESET[i] >> 8
 	elif walls.size() == 3 and not _vm.on_overland:
+		# Chat 27 (Player 2's request): a slot with no wall set of its own (255, or an id with no
+		# WALLDEF block: the block before it fills it) is saved empty, id and number 0xFFFF; the
+		# original stopped on "Unable to load wallset" for ours' 255 (8:13) and 25 (5:x). Lab: the
+		# original's own save in 8:13 (LOAD_AREA_DECO 17, 18, 255) holds 17, 18, 0xFFFF / 1, 2, 0xFFFF.
+		var wd := DaxFile.open(_game_path.path_join("WALLDEF%d.DAX" % _vm_file))
 		for i in 3:
-			mem[0x4AFA + i] = int(walls[i]) & 255
+			var id := int(walls[i])
+			if id == 255 or id == 127 or (wd != null and not wd.blocks.has(id)):
+				mem[0x4AFA + i] = 0xFF
+				mem[0x4AFD + i] = 0xFF
+				hi[0x4AFA + i] = 0xFF
+				hi[0x4AFD + i] = 0xFF
+				continue
+			mem[0x4AFA + i] = id & 255
 			mem[0x4AFD + i] = i + 1
 			hi.erase(0x4AFA + i)
 			hi.erase(0x4AFD + i)
