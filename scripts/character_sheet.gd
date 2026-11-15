@@ -55,6 +55,9 @@ signal item_used(item: GameItem)
 
 ## Set once by the game: the item types (slots, hands, classes) and spell table.
 static var types: ItemTypes
+## A scroll's spell chosen on its page in a fight: the item -> its record byte (60-62), for
+## item_spell and spend_use when the fight casts it.
+static var scroll_pick := {}
 static var spells: SpellTable
 ## Set by the game: the game folder (portraits).
 static var game_path := ""
@@ -67,6 +70,7 @@ const COIN_NAMES := ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS",
 const LEVEL_WORDS := ["1ST LEVEL", "2ND LEVEL", "3RD LEVEL", "4TH LEVEL", "5TH LEVEL",
 	"6TH LEVEL", "7TH LEVEL", "8TH LEVEL", "9TH LEVEL"]
 const MESSAGE_TIME := 0.7       # lab: a message stays about 0.7 s
+const SAID_TIME := 0.8          # lab: a scroll spell's result, once typed out
 const MAX_ITEMS := 16
 const ID_PRICE := 200           # lab: "FOR 200 GOLD PIECES I'LL IDENTIFY YOUR BANDED MAIL"
 
@@ -85,8 +89,13 @@ var _note := ""          # the last thing said (also the bot's log)
 var _message := ""       # shown on row 24 for MESSAGE_TIME
 var _question := ""      # the confirm page's line at row 21
 var _reveal: GameItem = null   # ID's answer is up; this item's name changes after it
+var _scroll: GameItem = null   # USE on a clerical scroll: its spell page, then WHOM
+var _scroll_cursor := 0
+var _scroll_target: PartyMember = null
+var _said: Array = []          # the scroll spell's result lines still to show ([name, words])
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
+var camp_look := false   # opened from the camp: CAST SPELL ON WHOM shows the camp's picture
 var portrait := false    # opened from the party menu: the portrait shows
 ## In a fight (lab, chat 11): VIEW offers ITEMS DROP EXIT (DROP lit: VIEW's place), the item
 ## menu READY USE DROP HALVE JOIN EXIT. USE and CAST open their pages on the fight's grey
@@ -122,6 +131,7 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 		pick: int = 0, with_portrait: bool = false) -> void:
 	in_shop = shop
 	portrait = with_portrait
+	camp_look = false
 	_people = people
 	_title = title
 	_index = clampi(start, 0, maxi(people.size() - 1, 0))
@@ -177,6 +187,8 @@ func _build() -> void:
 		_message = ""
 		if _mode == "id_reply":
 			_end_id_reply()
+		elif _mode == "scroll_said":
+			_next_said()
 		_refresh())
 	add_child(_timer)
 
@@ -421,9 +433,12 @@ func _spell_ids() -> Array[int]:
 
 
 ## The walking screen with a prompt (TRADE WITH WHOM?, TRADE TO?) and SELECT EXIT.
-func _draw_whom(prompt: String) -> void:
-	_scr.draw_walk(OverlayLook.last_view, _people, _target, OverlayLook.last_place, PackedStringArray(),
-		[], OverlayLook.last_wild, OverlayLook.last_overland, -1)
+func _draw_whom(prompt: String, camp: bool = false) -> void:
+	if camp and OverlayLook.camp_view != null:
+		_scr.draw_walk(OverlayLook.camp_view, _people, _target, OverlayLook.camp_place, PackedStringArray(), [])
+	else:
+		_scr.draw_walk(OverlayLook.last_view, _people, _target, OverlayLook.last_place, PackedStringArray(),
+			[], OverlayLook.last_wild, OverlayLook.last_overland, -1)
 	_rows = []
 	for r in 25:
 		_rows.append(" ".repeat(40))
@@ -486,6 +501,10 @@ func _current_menu() -> Array:
 			return ["SELECT", "EXIT"]
 		"confirm", "id_reply":
 			return ["YES", "NO"]
+		"scroll":
+			return ["CAST", "EXIT"]
+		"scroll_whom", "scroll_said":
+			return ["SELECT", "EXIT"]
 	return []
 
 
@@ -520,6 +539,15 @@ func _refresh() -> void:
 				_menu(["YES", "NO"], prompt.length() + 1)
 		"spells":
 			_draw_spells(m)
+		"scroll":
+			_draw_scroll(m)
+		"scroll_whom":
+			_draw_whom("CAST SPELL ON WHOM", camp_look)
+		"scroll_said":
+			_draw_whom("CAST SPELL ON WHOM")
+			if not _said.is_empty():
+				_t(1, 18, _said[0][0], GameScreen.CYAN)
+				_t(1, 19, _said[0][1], GameScreen.GREEN)
 		"cast":
 			_draw_spells(m)
 			_t(0, 24, "CHOOSE SPELL:", MAGENTA)
@@ -600,6 +628,11 @@ static func reveal_name(it: GameItem) -> void:
 	if it.raw.size() < GameItem.SIZE:
 		return
 	it.raw[53] = 0
+	recache_name(it)
+
+
+## The item's name worked out again from its words, also into the record's cached name.
+static func recache_name(it: GameItem) -> void:
 	it.name = ""
 	var label := item_label(it)
 	var words := label.split(" ", false, 1)
@@ -684,6 +717,14 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	if _is_scroll(it):
 		if m.class_level(0) == 0 and m.class_level(1) == 0:
 			return "OOPS!"
+		if not wasted and spells != null and it.raw.size() >= GameItem.SIZE:
+			# Lab (Combat Chat 5, camp, Restoration and Cure Light Wounds scrolls): the
+			# scroll's own page, "<NAME>'S SPELLS ON SCROLL", the last one lit.
+			_scroll = it
+			_scroll_cursor = clampi(_cursor, 0, maxi(_scroll_ids().size() - 1, 0))
+			_mode = "scroll"
+			_pick = 0
+			return "\u0001"
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] & 0x7F > 0:
 				id = it.raw[k] & 0x7F
@@ -705,6 +746,113 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	return " / ".join(lines)
 
 
+## A clerical scroll's spells, in the record's order (bytes 60-62).
+func _scroll_ids() -> Array[int]:
+	var out: Array[int] = []
+	if _scroll == null:
+		return out
+	for k in [60, 61, 62]:
+		if _scroll.raw[k] & 0x7F > 0:
+			out.append(_scroll.raw[k] & 0x7F)
+	return out
+
+
+## The record byte of the spell lit on the scroll's page.
+func _scroll_slot() -> int:
+	var n := 0
+	for k in [60, 61, 62]:
+		if _scroll.raw[k] & 0x7F > 0:
+			if n == _scroll_cursor:
+				return k
+			n += 1
+	return 60
+
+
+func _draw_scroll(m: PartyMember) -> void:
+	_frame(2)
+	_heading(m, "SPELLS ON SCROLL")
+	var ids := _scroll_ids()
+	var row := 5
+	var last := -1
+	for i in ids.size():
+		var lv := spells.level(ids[i]) if spells != null else 1
+		if lv != last:
+			_t(1, row, LEVEL_WORDS[clampi(lv - 1, 0, LEVEL_WORDS.size() - 1)], MAGENTA)
+			row += 1
+			last = lv
+		_t(3, row, spells.name_of(ids[i]).to_upper(), GameScreen.WHITE if i == _scroll_cursor else GameScreen.GREEN)
+		row += 1
+	_t(0, 24, "CHOOSE SPELL:", MAGENTA)
+	_menu(["CAST", "EXIT"], 14)
+
+
+## The scroll's chosen spell on `target` (lab: no CASTS line; "<NAME>" cyan on row 18,
+## the result green on row 19, typed out, held about 0.8 s; then the item list. Restoration
+## on someone not drained says nothing.) The spell leaves the scroll.
+func _cast_scroll(m: PartyMember, target: PartyMember) -> void:
+	var it := _scroll
+	var id: int = _scroll_ids()[clampi(_scroll_cursor, 0, _scroll_ids().size() - 1)]
+	var lines := PackedStringArray()
+	if id == 56:
+		var ct := ClassTables.shared(game_path) if game_path != "" else null
+		if ct != null:
+			var said := LevelDrain.restore(target, ct, spells)
+			if said != "":
+				lines.append(said)
+	else:
+		lines = SpellCaster.cast_outside(spells, m, id, _people, target, _rng, true)
+		if not lines.is_empty():
+			lines.remove_at(0)      # "<NAME> USES AN ITEM": not shown for a scroll
+	_spend_scroll(m, it, _scroll_slot())
+	_scroll = null
+	_said.clear()
+	for l in lines:
+		var who := ""
+		for p in _people:
+			if l.begins_with(p.name + " ") and p.name.length() > who.length():
+				who = p.name
+		if who != "":
+			_said.append([who, l.substr(who.length() + 1)])
+		else:
+			_said.append(["", l])
+	if _said.is_empty():
+		_mode = "items"
+		_after_change()
+		return
+	_mode = "scroll_said"
+	_after_change()
+	_hold_said()
+
+
+func _hold_said() -> void:
+	if _timer != null and not _said.is_empty():
+		var chars: int = String(_said[0][0]).length() + String(_said[0][1]).length()
+		_timer.start(SAID_TIME + chars / 33.0)
+
+
+func _next_said() -> void:
+	if not _said.is_empty():
+		_said.remove_at(0)
+	if _said.is_empty():
+		_mode = "items"
+		_after_change()
+	else:
+		_hold_said()
+
+
+## A clerical scroll gives up the spell in `slot`; its name says one spell fewer (word 48:
+## 212 "With 3 Spells", 211 "With 2 Spells", 210 "With 1 Spell"; lab: 211 -> 210 after
+## one of two Cure Light Wounds); an empty scroll is gone.
+static func _spend_scroll(m: PartyMember, it: GameItem, slot: int) -> void:
+	it.raw[slot] = 0
+	if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
+		m.items.erase(it)
+		return
+	if it.raw[48] in [211, 212]:
+		it.raw[48] -= 1
+		recache_name(it)
+
+
 ## The spell a readied item casts when used (a scroll: its first spell; a wand, potion or
 ## other charged item: record byte 61), 0 if none. Scrolls need a caster.
 static func item_spell(m: PartyMember, it: GameItem) -> int:
@@ -714,6 +862,9 @@ static func item_spell(m: PartyMember, it: GameItem) -> int:
 	if slot >= 11 and slot <= 13:
 		if m.class_level(0) == 0 and m.class_level(1) == 0:
 			return 0
+		var k0: int = scroll_pick.get(it, -1)
+		if k0 >= 60 and it.raw[k0] & 0x7F > 0:
+			return it.raw[k0] & 0x7F
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] & 0x7F > 0:
 				return it.raw[k] & 0x7F
@@ -726,12 +877,16 @@ static func item_spell(m: PartyMember, it: GameItem) -> int:
 static func spend_use(m: PartyMember, it: GameItem, id: int) -> void:
 	var slot := types.slot(it.type) if types != null else 0
 	if slot >= 11 and slot <= 13:
-		for k in [60, 61, 62]:
-			if it.raw[k] & 0x7F == id:
-				it.raw[k] = 0
-				break
-		if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
-			m.items.erase(it)
+		var k0: int = scroll_pick.get(it, -1)
+		scroll_pick.erase(it)
+		if k0 < 60 or it.raw[k0] & 0x7F != id:
+			k0 = -1
+			for k in [60, 61, 62]:
+				if it.raw[k] & 0x7F == id:
+					k0 = k
+					break
+		if k0 >= 60:
+			_spend_scroll(m, it, k0)
 		return
 	if it.raw[60] > 0:
 		if it.count > 1:
@@ -807,6 +962,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_message = ""
 		if _timer != null:
 			_timer.stop()
+	if _mode == "scroll_said":  # a key moves on, as other messages here
+		if _timer != null:
+			_timer.stop()
+		_next_said()
+		_refresh()
+		return
 	if _mode == "id_reply":    # a key ends ID's answer early, as other messages here
 		if _timer != null:
 			_timer.stop()
@@ -869,6 +1030,44 @@ func _unhandled_input(event: InputEvent) -> void:
 			if choice == "EXIT":
 				_mode = "view"
 			_refresh()
+		"scroll":
+			var ids := _scroll_ids()
+			if key == KEY_HOME and not ids.is_empty():
+				_scroll_cursor = (_scroll_cursor - 1 + ids.size()) % ids.size()
+			elif key == KEY_END and not ids.is_empty():
+				_scroll_cursor = (_scroll_cursor + 1) % ids.size()
+			elif choice == "EXIT" or cancel:
+				_mode = "items"
+			elif choice == "CAST" and not ids.is_empty():
+				var id: int = ids[clampi(_scroll_cursor, 0, ids.size() - 1)]
+				if in_combat:
+					var used := _scroll
+					scroll_pick[used] = _scroll_slot()
+					_scroll = null
+					_close()
+					item_used.emit(used)
+					return
+				if not SpellCaster.castable_outside(spells, id):
+					_pending = "use"
+					_question = "THAT ITEM IS A COMBAT-ONLY ITEM..."
+					_mode = "confirm"
+					_pick = 1
+				elif SpellCaster.needs_member(spells, id):
+					_mode = "scroll_whom"
+					_pick = 0
+				else:
+					_cast_scroll(m, m)
+			_refresh()
+		"scroll_whom":
+			if key == KEY_HOME:
+				_target = (_target - 1 + _people.size()) % _people.size()
+			elif key == KEY_END:
+				_target = (_target + 1) % _people.size()
+			elif choice == "EXIT" or cancel:
+				_mode = "items"
+			elif choice == "SELECT":
+				_cast_scroll(m, _people[_target])
+			_refresh()
 		"cast":
 			var ids := _spell_ids()
 			if key == KEY_HOME and not ids.is_empty():
@@ -913,6 +1112,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif choice == "USE" and in_combat:
 				if not it.readied:
 					_say("MUST BE READIED")
+				elif _is_scroll(it) and item_spell(m, it) > 0 and it.raw.size() >= GameItem.SIZE:
+					# Lab (Combat Chat 5, the Slums' orcs): the scroll's page as in camp, then AIM.
+					_scroll = it
+					_scroll_cursor = clampi(_cursor, 0, maxi(_scroll_ids().size() - 1, 0))
+					_mode = "scroll"
+					_pick = 0
 				elif item_spell(m, it) > 0:
 					_close()
 					item_used.emit(it)
@@ -981,6 +1186,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					_identify(it)
 					_after_change()
 					return
+				elif _pending == "use" and _scroll != null and _mode == "confirm":
+					var ids := _scroll_ids()
+					if not ids.is_empty():
+						_spend_scroll(m, _scroll, _scroll_slot())
+					_scroll = null
 				elif _pending == "use" and it != null:
 					_say(_use_item(m, it, true))
 				_mode = "items"

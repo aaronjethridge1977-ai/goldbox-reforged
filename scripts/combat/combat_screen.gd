@@ -563,7 +563,9 @@ func _draw_original(field: Image) -> void:
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
 		# A spell's aim shows the spell on row 23, an attack's the range (lab, Combat Chat 4:
 		# "SPELL:SLOW POISON" over AIM: and over (USE CURSOR KEYS)).
-		if _aim_for == "spell":
+		if _aim_for == "spell" and _use_item != null:
+			pass
+		elif _aim_for == "spell":
 			g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
 		else:
 			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
@@ -1077,8 +1079,10 @@ func _start_aim(purpose: String = "attack") -> void:
 	_aiming = true
 	_cmode = "aim"
 	_aim_index = 0
-	if purpose == "spell" and _aim_list.size() > 1:
+	if purpose == "spell" and _aim_list.size() > 1 and _use_item == null:
 		_aim_index = 1      # a spell aims at the nearest other figure first
+	# (A spell from an item starts on the user, with no SPELL: line: lab, Combat Chat 5, a
+	# Restoration scroll used in the Slums' orc fight.)
 	_show_aim()
 
 

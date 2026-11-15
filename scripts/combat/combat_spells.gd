@@ -614,6 +614,14 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 						t.status = PartyMember.STATUS_OKAY
 						c.message.emit("%s GETS BACK UP" % t.name)
 				SpellCaster.add_affect(t, SpellCaster.POISON_TICK, id, 10, 0xFF)
+		56:         # Restoration (GAME.OVR 0x29C5B): LevelDrain; nothing on the undrained
+			var ct := ClassTables.shared(CharacterSheet.game_path) if CharacterSheet.game_path != "" else null
+			for j in targets:
+				if ct == null:
+					break
+				var said := LevelDrain.restore(c.combatants[j].who, ct, table)
+				if said != "":
+					c.message.emit(said)
 		48, 55:     # Haste, Slow: up to the caster's level of figures, the other cancelled first
 			var other := EFFECT_SLOW if id == 48 else EFFECT_HASTE
 			var left := lvl

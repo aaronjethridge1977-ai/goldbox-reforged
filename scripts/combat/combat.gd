@@ -1180,38 +1180,19 @@ func _save(m: PartyMember, kind: int, bonus: int) -> bool:
 	return d != 1 and (d == 20 or d + bonus + SpecialAffects.save_bonus(m, kind) >= (m.saves[kind] if kind < m.saves.size() else 20))
 
 
-## Level drain as GAME.OVR does it (overlay 0x10D7D): "<NAME> IS DRAINED A LEVEL" (or
-## " 2 LEVELS"); for each level the HP lost is max HP / total levels (max, rolled and
-## current HP all drop), and the highest class loses a level; someone with fewer than two
-## levels left "IS DEAD FOREVER".
+## Level drain as GAME.OVR does it (overlay 0x10D7D): LevelDrain.drain (the record keeps
+## the drained levels and HP for Restoration). A figure left dead or gone falls.
 func drain(j: int, levels: int) -> void:
 	var t: Dictionary = combatants[j]
 	var m: PartyMember = t.who
-	message.emit("%s IS DRAINED %s" % [m.name, "A LEVEL" if levels == 1 else "%d LEVELS" % levels])
-	for k in levels:
-		var total := 0
-		var top := -1
-		for c in 8:
-			total += m.level_in(c)
-			if top < 0 or m.level_in(c) > m.level_in(top):
-				top = c
-		if total < 2:
-			m.hp = 0
-			m.hp_max = 0
-			m.status = 8      # GONE
-			t.down = true
-			message.emit("%s IS DEAD FOREVER" % m.name)
-			return
-		var per := m.hp_max / total
-		m.hp_max = maxi(m.hp_max - per, 0)
-		m.hp_rolled = maxi(m.hp_rolled - per, 0)
-		m.hp = maxi(m.hp - per, 0)
-		m.set_level(top, m.level_in(top) - 1)
-		if m.hp == 0:
-			m.status = PartyMember.STATUS_DEAD
-			t.down = true
-			message.emit("%s IS KILLED" % m.name)
-			return
+	var ct := ClassTables.shared(CharacterSheet.game_path) if CharacterSheet.game_path != "" else null
+	if ct == null or m.raw.size() <= LevelDrain.DRAINED_HP:
+		message.emit("%s IS DRAINED %s" % [m.name, "A LEVEL" if levels == 1 else "%d LEVELS" % levels])
+		return
+	for line in LevelDrain.drain(m, levels, ct, CharacterSheet.spells):
+		message.emit(line)
+	if m.status == LevelDrain.STATUS_GONE or m.status == PartyMember.STATUS_DEAD:
+		t.down = true
 
 
 ## A thief's backstab (as the original): a thief with no weapon or a club, dagger or sword

@@ -17,6 +17,10 @@ static var last_view: Image
 static var last_place := ""
 static var last_wild := false
 static var last_overland := false
+## The camp's picture and place line as it last drew them (the sheet's CAST SPELL ON WHOM
+## in camp shows them: lab, Combat Chat 5).
+static var camp_view: Image
+static var camp_place := ""
 
 var layout := "page"
 var head: Control

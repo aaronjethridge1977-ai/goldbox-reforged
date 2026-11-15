@@ -478,6 +478,8 @@ func _draw_walk() -> void:
 	else:
 		var view: Image = _fire[_fire_frame] if not _fire.is_empty() else OverlayLook.last_view
 		_scr.draw_walk(view, _party, _sel, (place + " CAMPING").strip_edges(), PackedStringArray(), [])
+		OverlayLook.camp_view = view
+		OverlayLook.camp_place = (place + " CAMPING").strip_edges()
 	if _plain_rope:
 		_scr.tile(16, 16, 22)
 	_draw_lines()
@@ -1220,7 +1222,9 @@ func _act(choice: String) -> void:
 		"camp":
 			match choice:
 				"SAVE": _to_menu("save", SAVE_LETTERS)
-				"VIEW": _sheet.open(_party, "PARTY", _sel, false, 1)
+				"VIEW":
+					_sheet.open(_party, "PARTY", _sel, false, 1)
+					_sheet.camp_look = not _walk
 				"MAGIC":
 					if spells != null:
 						_magic_menu()

@@ -87,7 +87,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 53 | Protection From Good, 10' Radius | magic-user 3 |  | built |  |
 | 54 | Protection From Normal Missiles | magic-user 3 | 1 | built | missiles without a plus are avoided (handler 0x29) |
 | 55 | Slow | magic-user 3 |  | built | halves moves and attacks |
-| 56 | Restoration | cleric 7 |  | built | temples only (Restoration) |
+| 56 | Restoration | cleric 7 |  | checked | from clerical scrolls (26 in the treasure lists, two Restorations each): GAME.OVR 0x29C5B gives back one drained level (the class whose next level costs least, not at its race cap), the drained HP / drained levels, the experience up to that level's total; nothing on the undrained. Camp USE checked against the original record for record (Combat Chat 5); Pool's temples don't offer it |
 | 57 | Potion of Speed | item/monster 6 |  | built | Potion of Speed: haste 5d4 rounds unless slowed, 'IS SPEEDY' |
 | 58 | (item spell 81) | item/monster 6 |  | partial | Neutralize Poison item built (0x29E65, main chat 23); the not-poisoned branch (heals 1d4+8) missing |
 | 59 | Potion of Giant Strength | item/monster 6 |  | built | Potion of Giant Strength: STR 21 for 1d4x10+40, 'IS STRONGER' |
@@ -341,7 +341,7 @@ VIEW -> ITEMS and the treasure screen.
 |---|---|---|---|
 | READY, USE, TRADE, DROP, HALVE, JOIN, money TRADE / DROP | checked | yes | 30 lab captures pixel for pixel, messages included (chat 11) |
 | Encumbrance and movement from weight | checked | yes | matches the cached weight in all six shipped characters |
-| Using items in a fight (wands, potions, scrolls) | built | yes | items' spells as the table above; spells from items assumed instant |
+| Using items in a fight (wands, potions, scrolls) | built | yes | items' spells as the table above; spells from items assumed instant; a clerical scroll's USE opens its SPELLS ON SCROLL page, then AIM starting on the user with no SPELL: line (lab, Combat Chat 5) |
 | Computer-run figures using items (monsters' wands, QUICK members' items) | checked | yes | GAME.OVR 0xAFA4: d7 tries, priority 7 down; on each, the first readied item (not a scroll, byte 62 below 0x80, a spell in byte 61) whose spell passes the spell weighing (0xAEAB) is used at once (0x22AC4: USES, a charge spent); no MAGIC ON test, so QUICK members use theirs too. Check 10's fight (Yarash's wand, 7:23) matches all 3689 draws (Combat Chat 2) |
 | Cursed items | partial |  | IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing) |
 | Treasure: results, experience, TAKE, POOL, SHARE | checked | yes | 464 XP for the Slums orcs; screens matched (chat 10) |
@@ -359,7 +359,7 @@ What can happen to a character (status byte 0x10C and the effect list).
 | Fled (RUNNING) and left behind | partial | yes | the party keeps members left down after a flee; what the original does with them not checked |
 | Poison | partial | yes | kills at once; Slow Poison (spell 26) and the poisoned state missing |
 | Disease (mummy rot) | built |  | 0x57; cured at temples |
-| Level drain | checked |  | wights, wraiths (one), spectres, vampires (two) |
+| Level drain | checked |  | wights, wraiths (one), spectres, vampires (two); GAME.OVR 0x10D7D rebuilt in Combat Chat 5 (`LevelDrain`): the record counts drained levels and HP (0x74, 0x75) for Restoration, the experience drops to the new level's total, the drained class as the original picks it (0x10C5D), dead forever when the highest level is under 2 |
 | Paralysis (ghouls, thri-kreen) | checked | yes |  |
 | Stoning (basilisk, medusa) | built |  | a readied mirror reflects the gaze |
 | Charm | partial |  | lasts the fight, not after it |
