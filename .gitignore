@@ -1,5 +1,6 @@
 # --- Game data: NEVER commit the original game files ---
 /Pool of Radiance/
+/Curse of the Azure Bonds/
 /game/
 *.DAX
 *.dax
