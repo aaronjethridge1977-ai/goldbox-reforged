@@ -1052,7 +1052,13 @@ func class_indices() -> Array[int]:
 
 
 ## What the hall (its class bits) would do with this character: {"error": text} or
-## {"classes": [class indices that would advance]}.
+## {"classes": [class indices that would advance]}. As the original's TRAIN (GAME.OVR 0x1C32B;
+## Player 3 played each hall, chat 28): once the fee can be paid, every class not at its race's
+## cap whose next level the experience reaches is ready, and the experience is lowered at once
+## (trained or not) to the largest "experience for the level after next, less 1" among the ready
+## classes that it reaches (0x1C5A3..0x1C61C: no carrying two levels' worth); then the hall
+## trains every ready class it teaches (a cleric/fighter/magic-user trains fighter in the
+## fighters' hall when that class is ready).
 func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
 	if status != STATUS_OKAY:
 		return {"error": "WE ONLY TRAIN CONSCIOUS PEOPLE"}
@@ -1060,26 +1066,20 @@ func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
 		return {"error": "TRAINING COSTS 1000 GP."}
 	var have_mask := 0
 	var exp_mask := 0
-	var last_level := 0
+	var cap := 0
 	for c in class_indices():
 		have_mask |= ClassTables.CLASS_MASKS[c]
-		last_level = level_in(c)
+		if LevelDrain.race_capped(self, c):
+			continue
 		var need := t.needed(c, level_in(c) + 1)
-		if need > 0 and experience >= need:
-			exp_mask |= ClassTables.CLASS_MASKS[c]
-	# Several classes ready: the original keeps the one whose table entry (for the level
-	# after the last class it looked at) is the largest, so a multi-class character trains
-	# its slowest class first.
-	var best := -1
-	var best_exp := 0
-	for c in class_indices():
-		if exp_mask & ClassTables.CLASS_MASKS[c]:
-			var e := t.needed(c, last_level + 1)
-			if e > best_exp:
-				best_exp = e
-				best = c
-	if best >= 0:
-		exp_mask = ClassTables.CLASS_MASKS[best]
+		if need <= 0 or experience < need:
+			continue
+		exp_mask |= ClassTables.CLASS_MASKS[c]
+		var after := t.needed(c, level_in(c) + 2)
+		if after > 0 and experience >= after and after - 1 > cap:
+			cap = after - 1
+	if cap > 0:
+		experience = cap
 	if have_mask & hall_mask == 0:
 		return {"error": "WE DON'T TRAIN THAT CLASS HERE"}
 	if exp_mask & hall_mask == 0:
@@ -1093,8 +1093,11 @@ func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
 
 ## Trains: pays, raises the levels in `classes` and recalculates everything that depends
 ## on level. Returns true if the character is a magic-user who should now learn a spell.
+## Hit points (0x1C923): one roll of each trained class's dice (DS:0x8B6 count, 0x8BE size,
+## the game's dice at 0x1DC04; at level 1 at least two thirds of the die), summed; record 0xB1
+## gains that / the number of classes (at least 1), max HP that plus the CON bonus, / classes.
 func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNumberGenerator) -> bool:
-	pay_gold(1000)
+	pay_training(1000)
 	var old_mu := level_in(5)
 	for c in classes:
 		set_level(c, level_in(c) + 1)
@@ -1110,7 +1113,12 @@ func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNu
 	var rolled := 0
 	for c in classes:
 		var die: int = t.hit_die[c]
-		rolled += maxi(rng.randi_range(1, die), rng.randi_range(1, die))
+		var r := 0
+		for k in maxi(int(t.first_dice[c]), 1):
+			r += (TpDice.random(die, "training HP") + 1) if TpDice.on else rng.randi_range(1, die)
+		if level_in(c) == 1:
+			r = maxi(r, die * 2 / 3)
+		rolled += r
 	hp_rolled += maxi(rolled / count, 1)
 	var con := 0
 	for c in class_indices():
@@ -1122,6 +1130,31 @@ func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNu
 	raw[0x32] = hp_max
 	raw[0xB1] = hp_rolled
 	return level_in(5) > old_mu
+
+
+## Training's fee as the original takes it (GAME.OVR 0x1DC6C): coin by coin from copper up,
+## each kind giving what it has up to one coin past the rest of the fee; what was paid over
+## comes back as change from platinum down (1500 gold pays 1001 and gets 1 back: 500 left;
+## 144 silver and 500 platinum: 144 silver and 199 platinum, change 2 gold 4 silver).
+func pay_training(gold: int) -> bool:
+	var left := gold * 200
+	if wealth_copper() < left:
+		return false
+	for i in 5:
+		if left <= 0:
+			break
+		var n := mini(left / COIN_VALUE[i] + 1, money[i])
+		left -= n * COIN_VALUE[i]
+		money[i] -= n
+	if left < 0:
+		left = -left
+		for i in range(4, -1, -1):
+			if left <= 0:
+				break
+			var n: int = left / COIN_VALUE[i]
+			left -= n * COIN_VALUE[i]
+			money[i] += n
+	return true
 
 
 ## THAC0, saving throws, attacks and spells per day from the levels (and clerics' spell
