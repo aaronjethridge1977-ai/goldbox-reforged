@@ -94,7 +94,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 58 | (item spell 81) | item/monster 6 |  | missing | no item uses it (cures poison or heals 1d4+8) |
 | 59 | Potion of Giant Strength | item/monster 6 |  | built | Potion of Giant Strength: STR 21 for 1d4x10+40, 'IS STRONGER' |
 | 60 | Javelin of Lightning | item/monster 6 |  | partial | Javelin of Lightning: 1d6+20 electricity, half on a save, one target (the original's line not traced) |
-| 61 | Wand of Paralyzation | item/monster 6 |  | built | Wand of Paralyzation: held 5d4 rounds, 'IS PARALYZED' |
+| 61 | Wand of Paralyzation | item/monster 6 |  | checked | held 5d4 rounds, 'IS PARALYZED'; the save before the 5d4 (Yarash's wand roll for roll, Combat Chat 2) |
 | 62 | Potion of Healing | item/monster 6 |  | built | Potion of Healing: 2d4+2, 'IS HEALED' |
 | 63 | Dust of Disappearance | item/monster 6 |  | built | Dust of Disappearance: the user's side invisible (0x47, -4 to hit) |
 | 64 | Necklace of Missiles | item/monster 6 |  | built | Necklace of Missiles: Fireball's handler |
@@ -127,7 +127,7 @@ Scrolls (any spell above) are left out. Where: the ITEM lists (treasure) and MON
 | Wand of Lightning | spell 51 | MON2ITM, MON5ITM, MON6ITM | partial | level d6; runs straight, doesn't bounce off walls |
 | Wand of Lightning Bolt | spell 51 | ITEM4 | partial | level d6; runs straight, doesn't bounce off walls |
 | Wand of Magic Missiles | spell 65 (88) | ITEM1, ITEM4, ITEM7, MON2ITM, MON3ITM, MON7ITM, MON8ITM | built | Wand of Magic Missiles: 2d4+2 magic damage |
-| Wand of Paralyzation | spell 61 (84) | MON7ITM | built | Wand of Paralyzation: held 5d4 rounds, 'IS PARALYZED' |
+| Wand of Paralyzation | spell 61 (84) | MON7ITM | checked | held 5d4 rounds, 'IS PARALYZED'; Yarash's, roll for roll (Combat Chat 2) |
 
 ## Script opcodes
 
@@ -332,7 +332,7 @@ Encamp (E): SAVE VIEW MAGIC REST ALTER EXIT.
 | Heal and memorized messages while resting | partial | yes | drawn as the rest; not seen in the original |
 | ALTER: ORDER, DROP, SPEED, ICON, PICS | checked |  | screens matched (chat 10-11); SPEED paces fights (P16) |
 
-### Items (5 checked, 1 built, 1 partial, 1 missing)
+### Items (6 checked, 1 built, 1 partial, 1 missing)
 
 VIEW -> ITEMS and the treasure screen.
 
@@ -341,7 +341,7 @@ VIEW -> ITEMS and the treasure screen.
 | READY, USE, TRADE, DROP, HALVE, JOIN, money TRADE / DROP | checked | yes | 30 lab captures pixel for pixel, messages included (chat 11) |
 | Encumbrance and movement from weight | checked | yes | matches the cached weight in all six shipped characters |
 | Using items in a fight (wands, potions, scrolls) | built | yes | items' spells as the table above; spells from items assumed instant |
-| Computer-run figures using items (monsters' wands, QUICK members' items) | missing | yes | the original weighs each readied item with charges and a spell on d7 tries (GAME.OVR 0xAFA4, priority 7 down, the same weighing as spells 0xAEAB) and uses it (0x22AC4); ours only draws the d7. Found by check 10's fight: Yarash used an item at draw 1038 (Combat Chat 1). Magic armour's movement (+3) is main's file (board request) |
+| Computer-run figures using items (monsters' wands, QUICK members' items) | checked | yes | GAME.OVR 0xAFA4: d7 tries, priority 7 down; on each, the first readied item (not a scroll, byte 62 below 0x80, a spell in byte 61) whose spell passes the spell weighing (0xAEAB) is used at once (0x22AC4: USES, a charge spent); no MAGIC ON test, so QUICK members use theirs too. Check 10's fight (Yarash's wand, 7:23) matches all 3689 draws (Combat Chat 2) |
 | Cursed items | partial |  | IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing) |
 | Treasure: results, experience, TAKE, POOL, SHARE | checked | yes | 464 XP for the Slums orcs; screens matched (chat 10) |
 | Treasure: load and item-count limits when taking | missing | yes | a character can take more than the original allows |

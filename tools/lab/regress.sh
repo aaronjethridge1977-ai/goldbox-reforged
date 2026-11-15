@@ -38,3 +38,11 @@ run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $W
 run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # matches to the end since Combat Chat 1
 run orig_C_kobolds22 1 env KW=8 ./cmpfight2.sh C 22222222 up up $WHAT   # the net trap on a second seed (Combat Chat 1: checks the sort list fitted on the first)
 run orig_D_ogrechief 1 env KW=4 ./cmpfight2.sh D 11111111 up up,enter,enter $WHAT   # check 3: 4:2 the ogre chief, 15863 draws (~10 min in the original)
+# Check 10: 7:23 Yarash and 6 MUTANT LIZ-MEN (Combat Chat 2: Yarash's wand of paralyzation, 0xAFA4; the party is
+# held one by one and slain, 3689 draws). Save G = `mksave.py J G 7 23 5 1 W strong`, `fixthac0.py J G`. Needs main's
+# magic-armour movement fix (party_member.gd; until it lands the line is skipped).
+if grep -q "armor.plus != 0" ../../scripts/game/party_member.gd 2>/dev/null || grep -q "armor.plus != 0" "${REPO:-/home/claude/goldbox-reforged}/scripts/game/party_member.gd" 2>/dev/null; then
+  run orig_G_yarash 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT   # check 10
+else
+  echo "orig_G_yarash: skipped (main's magic-armour movement fix not in party_member.gd yet)"
+fi

@@ -90,8 +90,21 @@ if ustart:
         problems.append("positions of %d figures" % len(bad))
     else:
         print("positions: every figure's cells agree (%d figures%s)" % (len(ustart), ", up to that draw" if first is not None else ""))
+def _same_end(o, u):
+    # A party record the original no longer holds ("PARTY n ?": the party was wiped and the
+    # game left for its death screen, Combat Chat 2's 7:23 fight) matches ours' member at 0 HP.
+    if len(o) != len(u):
+        return False
+    for a, b in zip(o, u):
+        if a == b:
+            continue
+        if a.startswith("PARTY ") and a.endswith(" ?") and b.split()[:2] == a.split()[:2] and b.split()[2] == "0":
+            continue
+        return False
+    return True
 if oend or uend:
-    if oend == uend:
+    uend = [x for x in uend if not (x.startswith("ASKED ") and not any(y.startswith("ASKED ") for y in oend) and any(y.endswith(" ?") for y in oend))]
+    if _same_end(oend, uend):
         print("end: the same (%s)" % "; ".join(x.replace("PARTY ", "") for x in oend))
     else:
         print("end differs:\n  orig %s\n  ours %s" % (" | ".join(oend), " | ".join(uend)))

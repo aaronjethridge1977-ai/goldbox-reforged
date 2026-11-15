@@ -421,6 +421,12 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
 	var lvl := m.caster_level(table, id)
+	# A wand of paralyzation's target saves before its 5d4 rounds are rolled, and they are
+	# rolled saved or not (lab, Combat Chat 2: Yarash's wand in 7:23, d20 then 5d4, 13 times).
+	var saved := {}
+	if id == 61:
+		for j in targets:
+			saved[j] = table.field(id, 8) == 1 and save(c.combatants[j].who, table.field(id, 9), 0, m)
 	var dur := SpellTable.special_duration(id, func(n, d): return c.roll(n, d, "duration"), true)
 	if dur < 0:
 		dur = table.duration_for(id, lvl)
@@ -602,19 +608,21 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 						SpellCaster.ended(t, a, PackedStringArray())
 					c.message.emit("%s IS AFFECTED" % t.name)
 		_:
-			_effects(i, id, targets, dur, lvl)
+			_effects(i, id, targets, dur, lvl, saved)
 
 
-func _effects(i: int, id: int, targets: Array, dur: int, lvl: int) -> void:
+## `saved`: saves already rolled (figure -> saved), else each target rolls its save here.
+func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictionary = {}) -> void:
 	var m: PartyMember = c.combatants[i].who
 	var effect := table.effect(id)
 	for j in targets:
 		var t: PartyMember = c.combatants[j].who
 		var no_save := table.field(id, 8) == 0
-		if not no_save and table.field(id, 8) == 1 and save(t, table.field(id, 9), 0, m):
-			c.message.emit("%s IS UNAFFECTED" % t.name)
-			continue
-		if effect in [SpecialAffects.SLEEP, SpecialAffects.CHARM, SpecialAffects.PARALYZED] and resists(t, effect):
+		var was_saved: bool = saved.get(j, false) if saved.has(j) else \
+				(not no_save and table.field(id, 8) == 1 and save(t, table.field(id, 9), 0, m))
+		# The add-effect routine's resistances run saved or not (GAME.OVR 0x2C540).
+		var blocked := effect > 0 and resists(t, effect)
+		if was_saved or blocked:
 			c.message.emit("%s IS UNAFFECTED" % t.name)
 			continue
 		if effect > 0:
@@ -779,6 +787,52 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 			return true
 		priority -= 1
 	return false
+
+
+## A computer-run figure weighs its items (GAME.OVR 0xAFA4), with the d7 `tries` already
+## drawn: on each try (priority 7 counting down) it goes through its items in order and
+## takes the first that is readied, not a scroll (item class 11-13, 0x2A255), byte 62 below
+## 0x80 and with a spell in byte 61 (over 56 less 23) that passes the spell weighing
+## (0xAEAB: the spell table's priority, then the same plan test as a memorized spell). No
+## MAGIC ON test, unlike spells (0xB105): QUICK party members use their wands either way.
+## Charges are not looked at here (the use spends one, 0x22AC4). A silenced or coughing
+## figure uses none (0xF36A, 0xF6C0 clear record +0x108's byte 2, set each round 0x127FB).
+## Used (0x22AC4 -> 0x27C38): "USES <item>" and its spell goes off at once. True: used.
+func ai_use_item(i: int, tries: int) -> bool:
+	var me: Dictionary = c.combatants[i]
+	var m: PartyMember = me.who
+	if m.has_affect(EFFECT_SILENCED) or not _enemy_left(i) or CharacterSheet.types == null:
+		return false
+	var chosen: GameItem = null
+	var chosen_id := 0
+	var priority := 7
+	for k in tries:
+		for it in m.items:
+			if it.raw.size() < GameItem.SIZE or not it.readied:
+				continue
+			var slot := CharacterSheet.types.slot(it.type)
+			if (slot >= 11 and slot <= 13) or it.raw[62] >= 0x80 or it.raw[61] == 0:
+				continue
+			var id := SpellTable.from_item(it.raw[61])
+			if table.field(id, 13) < priority or _ai_plan(i, id).is_empty():
+				continue
+			chosen = it
+			chosen_id = id
+			break
+		if chosen != null:
+			break
+		priority -= 1
+	if chosen == null:
+		return false
+	if OS.get_environment("APDBG") != "":
+		print("APDBG %s uses item %s spell %d" % [m.name, chosen.name, chosen_id])
+	var plan := _ai_plan(i, chosen_id, true)
+	if plan.is_empty():
+		me.moves = 0
+		me.attacks = 0
+		return true
+	cast(i, chosen_id, plan.cell, plan.picked, chosen)
+	return true
 
 
 ## An enemy of i still standing, or one that surrendered.

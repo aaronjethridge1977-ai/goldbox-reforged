@@ -136,6 +136,11 @@ func outcome() -> int:
 		for c in combatants:
 			if c.team == 0 and c.get("fled", false):
 				return 3
+		# With the whole party down the original also plays out the round before the fight is
+		# lost (lab, Combat Chat 2: 7:23, the party held by Yarash's wand, the last one slain,
+		# then the round's remaining turns and picks, 29 draws).
+		if not order.is_empty():
+			return 0
 		return 2
 	return 0
 
@@ -182,8 +187,9 @@ func start_round() -> void:
 		c.acted = false
 		if magic:
 			magic.adjust_round(c)
-			if CombatSpells.held(m):
-				continue
+		# A held figure still draws its initiative (GAME.OVR 0x1289F tests only record +0x10d,
+		# the figure in the fight; lab, Combat Chat 2: Brother Sean paralysed by Yarash's wand
+		# in 7:23) and is picked in the turn order (next_turn passes it by).
 		var d := roll(1, 6, "initiative %s" % m.name) + m.dex_missile_bonus()
 		d = maxi(d, 1)
 		if round_no == 1 and (c.team == surprised_team or ((c.team + 1) & surprise_flags) != 0):
@@ -1663,9 +1669,12 @@ func ai_act() -> bool:
 		# After its morale check (a goblin that surrendered drew nothing more) the original's
 		# computer turn weighs its items with d7 tries (GAME.OVR 0xAFA4), then turning undead
 		# (0xADC3), then its spells with d7 tries (0xB105; the d7 is drawn even with nothing
-		# memorized). Ours don't use items yet, so that d7 is drawn only.
+		# memorized).
 		var spell_d7 := -1
-		roll(1, 7, "%s weighs an item" % c.who.name)
+		var item_d7 := roll(1, 7, "%s weighs an item" % c.who.name)
+		if magic and not (smart and SmartQuick.order(self, active) in [SmartQuick.NOSPELL, SmartQuick.MELEE]) \
+				and magic.ai_use_item(active, item_d7):
+			return false
 		# A spell begun last turn goes off now (GAME.OVR 0xACEE, after the item weighing).
 		if magic and magic.resolve_pending(active):
 			return false

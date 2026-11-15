@@ -175,15 +175,19 @@ static func save_bonus(m: PartyMember, kind: int) -> int:
 
 
 ## Whether `m` throws off an effect of `type` (SLEEP, CHARM, PARALYZED, POISONED);
-## `roll_d100` gives the elves' and half-elves' chance roll.
+## `roll_d100` gives the elves' and half-elves' chance roll. The original's add-effect routine
+## (GAME.OVR 0x2C540) runs category 9 for every effect it adds, saved or not, so an elf or
+## half-elf draws its d100 whatever the effect (handlers 0x115ED, 0x11A3F), and only Sleep or
+## Charm is thrown off by it (lab, Combat Chat 2: Bakshi, a half-elf, drew one after a
+## wand's paralysis in 7:23).
 static func blocks(m: PartyMember, type: int, roll_d100: Callable) -> bool:
-	if type == SLEEP or type == CHARM:
-		if m.has_affect(0x6C) or m.has_affect(0x7D):
-			return true
-		if m.has_affect(0x6B) and int(roll_d100.call()) <= 90:
-			return true
-		if m.has_affect(0x7C) and int(roll_d100.call()) <= 30:
-			return true
+	var mind := type == SLEEP or type == CHARM
+	if mind and (m.has_affect(0x6C) or m.has_affect(0x7D)):
+		return true
+	if m.has_affect(0x6B) and int(roll_d100.call()) <= 90 and mind:
+		return true
+	if m.has_affect(0x7C) and int(roll_d100.call()) <= 30 and mind:
+		return true
 	if type == PARALYZED and (m.has_affect(0x6D) or m.has_affect(0x6F) or m.has_affect(0x7D)):
 		return true
 	if type == POISONED and (m.has_affect(0x6F) or m.has_affect(0x7D)):
