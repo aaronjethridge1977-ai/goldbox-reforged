@@ -105,6 +105,8 @@ need `wait`s after `fightend,n` before Enter (the won screen and the treasure ta
 (c23c's `valjevo6` checkpoint, `route_v3.txt` to 5:7's 3,6, `hall_door_v3.cfg` saved there, `finale_keys.txt` from it to
 New Phlan); `screen=` now also captures the closing pictures.
 
+**Lab rule (Methods 5):** a script stops only the DOSBox it started: `orig.sh` keeps its DOSBox's pid in `/tmp/gbr_dosbox_98.pid` (reused while alive), `./orig.sh stop` stops that one and the trace reader in `/tmp/gbr_trace_98.pid`; `seed.py`/`trace.py` attach to it first.
+
 **Combat Chat 4 (cloud lab):** `fallen.py` prints the running original's fallen list, figure table and ground around
 the fight (a body is ground 0x1F); `poison=<member>` in an open fight now also downs the fight's copy of the member
 (poisoned dead on its square, for Slow Poison on the body). In the original, MOVE's **Esc undoes the walk** (use Enter to

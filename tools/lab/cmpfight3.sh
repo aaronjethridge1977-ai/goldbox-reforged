@@ -14,7 +14,7 @@ cd "$(dirname "$0")"
 L=$1; SEED=$2; PRE=$3; POST=$4; WHAT=${5:-both}; SEED2=$6; POST2=$7
 NAMES="THRENDER GRONE,BAKSHI,RHIANNON,BROTHER SEAN,DARKSTAR,PHINEAS"
 if [ $WHAT != ours ]; then
-  pkill -f presser.py; pkill -f "trace.py run"; pkill -f dosbox; sleep 1
+  ./orig.sh stop
   CONF=$([ -n "$SLOW" ] && echo por_slow.conf || echo por.conf) ./orig.sh wait=15 enter wait=6 l wait=4 ${L,,} wait=10 $(echo $PRE | tr ',' ' ' | sed "s/\([a-z0-9]*\)/\1 wait=${KW:-3}/g") >/dev/null
   python3 trace.py install >/dev/null && python3 seed.py set $SEED >/dev/null
   if [ -n "$SEED2" ]; then
@@ -22,12 +22,12 @@ if [ $WHAT != ours ]; then
     python3 seed.py set $SEED2 >/dev/null
   fi
   S=${OSECS:-880}   # OSECS: how long the original may fight (seconds; long fights, Combat Chat 1)
-  (DISPLAY=:98 timeout $((S + 20)) python3 trace.py run $S > /tmp/cmp_orig.txt &)
+  (DISPLAY=:98 timeout $((S + 20)) python3 trace.py run $S > /tmp/cmp_orig.txt & echo $! > /tmp/gbr_trace_98.pid)
   sleep 1
   KEYS2=$POST; [ -n "$SEED2" ] && KEYS2=$POST2
   for k in $(echo $KEYS2 | tr ',' ' '); do ./orig.sh $k wait=4 >/dev/null; done
   DISPLAY=:98 timeout $((S - 20)) python3 presser.py $((S - 30)) noenter ${MAGIC:+magic} > /tmp/cmp_orig_end.txt
-  sleep 2; pkill -f "trace.py run"; sleep 1
+  sleep 2; kill $(cat /tmp/gbr_trace_98.pid) 2>/dev/null; sleep 1
   cat /tmp/cmp_orig_end.txt >> /tmp/cmp_orig.txt
   (IFS=,; python3 partyrec.py $NAMES) >> /tmp/cmp_orig.txt
 fi
