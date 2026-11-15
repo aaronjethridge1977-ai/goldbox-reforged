@@ -196,6 +196,8 @@ class Plan:
         if kind == "camp" or kind == "saveslot":
             return p.save_step(scr)
         if kind == "treasure":
+            if self.defaults.get("treasure") == "stop":     # Player 4: lab probes (`default treasure stop`)
+                raise_stop(p, "treasure: stop asked by the plan")
             if not p.shared and "SHARE" in scr["bottom"].split():
                 p.shared = True
                 return "s", "treasure: SHARE the coins"

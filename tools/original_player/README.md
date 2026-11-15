@@ -304,3 +304,37 @@ Tool changes: plan goal `keys <name> <k1>,...` (camp, REST: keys whatever the sc
 CONTINUE" is a text box (2:9, 5:4); `segment.py` reads keys logged with a negative time (WSL's clock stepped back during a
 run: a stairs YES was dropped from the replay); Player 2's `queue.sh` reuses DOSBox and every second boot timed out at the
 title, `p3/queue.sh` stops it before each boot.
+
+## Player 4 (2026-11-15): item 1's reruns (c) and (d), TAKE first seen
+
+Stopped early by the Lead (the design office: one lane at a time, Combat's gate items first). Ours on main's code before
+chat 29 (origin/main eba466e: chat 28's training, Combat Chat 6's draw 961), replaying the original's runs from Player 2
+and 3 (lab `p4/rerun_cd.sh`, no DOSBox needed; the old outputs kept in `logs/p3old/`):
+
+- **(d) Training: all four halls match now.** `segment.py p3t_<hall> entry trained` + `p3/cmprec.py`: thieves', fighters'
+  and clerics' halls **0 differences** (levels, experience, HP, coins); the magic-users' hall differs only in the spell
+  learned (ELWEN and LIRA: the original SHOCKING GRASP, spell 20; ours BURNING HANDS, 9): the page lights the last spell
+  in the original, the first in ours (Player 3's screen request to Combat, still open).
+- **(c) 6:1: Combat's fix holds to draw 1010.** `segment.py p2e entry gate --tplog`, `cmpdraws.py logs/p2i.trace.txt`:
+  7348 draws in the original, 9849 in ours; **the first difference is draw 1011**: ELWEN's target pick (d31 = 28) is the
+  same in both, then the original rolls her to-hit d20 at GAME.OVR 0x2BBBF (a missile: she shoots), ours re-picks a
+  target (d31) and walks (Combat's open "next split at 1010": ELWEN's bow). Ours still asks CONTINUE BATTLE at the end
+  and still ends in the stalemate pattern (a buccaneer FLEES IN PANIC, members guarding); the original's fight ends won.
+  Rerun this after Combat's bow fix (and on chat 29's ADD_NPC change, record 0x10E).
+- (a) and (b) not run: main's load fix landed during this chat (chat 29, e0f20a3), Combat's rest dice not yet.
+
+**TAKE in the original, first look** (lab, p1d's tavern checkpoint loaded as slot I: it loads c24f's party ARN...DORN;
+the duel won by ARN, the tavern's treasure with items and no coins):
+- Treasure menu `VIEW TAKE POOL SHARE EXIT` (SHARE only while coins lie there). **VIEW** is the selected member's sheet
+  (`VIEW:ITEMS TRADE DROP EXIT`), the member lit in the party list (ARN here).
+- **TAKE** -> `TAKE: MONEY ITEMS EXIT`; **ITEMS** -> a full-screen list headed `LOOT` (row 1), items from row 4
+  (LONG SWORD, CHAIN MAIL), the lit one white, row 24 `ITEMS: TAKE EXIT`; **End** moves the light down (as the
+  vertical menus). T on CHAIN MAIL for ARN left the list unchanged and showed no message the probe caught (ARN carries
+  about 55,000 jewelry coins: overloaded? not confirmed). Not yet seen: how the member who takes is chosen (End on the
+  treasure menu didn't move ARN's light), the refusal's message, a taken item's list.
+- Plan line for probes: `default treasure stop` (the run stops at the treasure screen, DOSBox left up for
+  `explore.py --attach`). Probe plan: lab `p4/probe_take.plan` (start p1d/tavern, seed 9d100b63).
+
+Next for TAKE (Player 5): pick the member, take an item, read the refusal; then the policy: the same items main's bot
+takes (`bot.gd` `_worth_taking`: magic and keepers, plain gear priced 20+ and weighing 400 or less, handed round the
+party in turn), which needs each item's price and weight from memory (the treasure's item list) rather than its name.
