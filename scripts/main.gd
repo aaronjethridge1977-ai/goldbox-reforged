@@ -1038,10 +1038,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_try_move(_facing)
 		elif event.is_action("ui_down"):
 			_try_move((_facing + 2) % 4)
-		elif event.is_action("ui_left"):
-			_facing = ((_facing + 3) % 4) as DungeonView.Dir
-		elif event.is_action("ui_right"):
-			_facing = ((_facing + 1) % 4) as DungeonView.Dir
+		elif event.is_action("ui_left") or event.is_action("ui_right"):
+			# A turn redraws the view from the map, as a step does: a figure an encounter left
+			# standing (THE MONSTERS FLEE, a parley's end) is gone (P38; the original draws a
+			# figure only on the script's SPRITE commands).
+			_facing = ((_facing + (3 if event.is_action("ui_left") else 1)) % 4) as DungeonView.Dir
+			_vm.sprite_id = -1
 		else:
 			return
 	elif _mode == Mode.MAPS and event.is_action("ui_accept"):
