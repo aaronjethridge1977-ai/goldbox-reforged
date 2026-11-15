@@ -53,3 +53,8 @@ if [ -d combat2/saveG_held ]; then
 else
   echo "orig_G_yarash_held: skipped (no combat2/saveG_held in the lab)"
 fi
+# Combat Chat 4: check 5 goes on to Tyranthraxus (save B, the guards on 11111111, the vote seeded 22222222, A x6, QUICK);
+# 1718 draws. The trace was recorded by the lab archive's combat4/tyr2.sh (the original's guards played QUICK first), so
+# `record` skips it; its first POS line has Darkstar's and Tyranthraxus's start cells added from a HOLD dump (the trace
+# logs only changes, and the guards' fight had left those bytes the same).
+[ $WHAT = ours ] && run orig_B_tyranthraxus 1 env GTIME=900 ./cmpfight3.sh B 11111111 up up,enter,enter,c,quickall,magic,fightend,n,wait,wait,wait,enter,wait,wait,e,wait,wait,n,wait,wait,enter,wait,enter,wait $WHAT 22222222 a,wait,a,wait,a,wait,a,wait,a,wait,a,wait,wait

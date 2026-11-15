@@ -80,8 +80,8 @@ extends RefCounted
 ##                 SOME BLOOD" for 1d4 instead of attacking, until it has had ~12 or a side falls
 ##   0x68          (thri-kreen) avoids 60% of missiles ("AVOIDS IT")
 ##   0x71          (efreeti) fire: one less a die
-## Not built: magic resistance (0x69 50%, 0x6A 15% for Tyranthraxus: chance less 5 per
-## spell level under 11, so never against Pool's spells).
+##   0x69, 0x6A    magic resistance (magic_resists; Combat Chat 4: the byte wraps, so 0x6A
+##                 resists every Pool spell).
 ## Categories (when each type runs) are the lists of the dispatcher at GAME.OVR 0x2B1E4.
 
 const POISONED := 0x37
@@ -180,7 +180,9 @@ static func save_bonus(m: PartyMember, kind: int) -> int:
 ## half-elf draws its d100 whatever the effect (handlers 0x115ED, 0x11A3F), and only Sleep or
 ## Charm is thrown off by it (lab, Combat Chat 2: Bakshi, a half-elf, drew one after a
 ## wand's paralysis in 7:23).
-static func blocks(m: PartyMember, type: int, roll_d100: Callable) -> bool:
+static func blocks(m: PartyMember, type: int, roll_d100: Callable, spell_level: int = 0) -> bool:
+	if magic_resists(m, spell_level, roll_d100):
+		return true
 	var mind := type == SLEEP or type == CHARM
 	if mind and (m.has_affect(0x6C) or m.has_affect(0x7D)):
 		return true
@@ -192,6 +194,21 @@ static func blocks(m: PartyMember, type: int, roll_d100: Callable) -> bool:
 		return true
 	if type == POISONED and (m.has_affect(0x6F) or m.has_affect(0x7D)):
 		return true
+	return false
+
+
+## Magic resistance (Combat Chat 4; GAME.OVR 0x11570, types 0x69 at 50 and 0x6A at 15, first in
+## the add-effect list, category 9, and among the damage ones, category 6): the chance is
+## base - 5 x (11 - the spell's level), worked out in a byte, so it wraps; a d100 at or under it
+## resists (0xEC5B clears the effect being added, DS:0x6817). So 0x6A (Tyranthraxus) resists
+## every spell of levels 1-7 and every effect with no spell behind it (level 0: 216), each time
+## with a draw; 0x69 resists level 1 never (but draws), level 2 5%, level 3 10%.
+static func magic_resists(m: PartyMember, spell_level: int, roll_d100: Callable) -> bool:
+	for pair in [[0x69, 50], [0x6A, 15]]:
+		if m.has_affect(pair[0]):
+			var chance: int = (int(pair[1]) - 5 * (11 - spell_level)) & 0xFF
+			if int(roll_d100.call()) <= chance:
+				return true
 	return false
 
 

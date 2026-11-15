@@ -15,7 +15,7 @@ Main-path entries below that are partial or missing (the engine-feature sections
 - **Items: Treasure: load and item-count limits when taking** (missing): a character can take more than the original allows
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
 - **Conditions and effects: Poison** (built): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight built (Combat Chat 4: aimed at the body, GAME.OVR 0x157B9)
-- **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (missing): the final fight; see monster power 0x6a (Combat Chat 3: the byte arithmetic wraps, so when it is tested it resists every Pool spell and draws a d100)
+- **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (checked): the byte arithmetic wraps, so it resists every Pool spell with a d100 (Combat Chat 4: built, seen in DOSBox: Curse, IS UNAFFECTED)
 - **Spell 5, Detect Magic** (missing): effect added; the original marks magic items (handler 5 is empty: VIEW reads it)
 - **Spell 11, Detect Magic** (missing): as 5
 - **Spell 13, Reduce** (missing): effect added, nothing happens
@@ -204,7 +204,7 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | type | monsters | status | notes |
 |---|---|---|---|
 | 0x00 | VAMPIRE | built | empty record (a vampire's) |
-| 0x18 | TYRANITHRAXUS | missing | sees invisible (Invisibility's handler 0x19 checks it) |
+| 0x18 | TYRANITHRAXUS | built | sees invisible: the computer's target pick (0x13880) strikes off figures under Invisibility (0x19) unless the attacker has 0x18 (Combat Chat 4) |
 | 0x25 | PHASE SPIDER | missing | blinks: attacks against it miss (Blink's effect) |
 | 0x40 | GIANT SNAKE, HUGE SCORPION, MEDUSA, WYVERN | checked | poison on a hit |
 | 0x41 | POISONOUS FROG | built | poison, save +4 |
@@ -226,8 +226,8 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | 0x55 | WIGHT, WRAITH | checked | drains a level |
 | 0x56 | FERRAN MARTINEZ, SPECTRE, VAMPIRE | checked | drains two levels |
 | 0x57 | MUMMY | built | mummy rot |
-| 0x58 | TYRANITHRAXUS | checked | lightning breath |
-| 0x59 | TYRANITHRAXUS | built | the first attack against it misses (also the Cloak of Displacement's) |
+| 0x58 | TYRANITHRAXUS | checked | lightning breath: no 50% d100 before the round counter passes 0, breathes on 51-100, aims with a fresh target pick, Lightning Bolt's walk and bounce from the square beside it (0x2A0F1, 0x29973; check 5's fight roll for roll, Combat Chat 4) |
+| 0x59 | TYRANITHRAXUS | checked | one free miss: in round 1 each attack resets it, from round 2 the first attack misses (0x110EB; also the Cloak of Displacement's; Combat Chat 4) |
 | 0x5b | JUJU ZOMBIE | built | no electricity, no Magic Missile |
 | 0x5d | JUJU ZOMBIE | built | half fire |
 | 0x5e | JUJU ZOMBIE | built | half from arrows and quarrels |
@@ -238,7 +238,7 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | 0x65 | TROLL | built | troll regenerates after 3 rounds |
 | 0x67 | VAMPIRE | built | turns gaseous |
 | 0x68 | THRI-KREEN | built | thri-kreen: avoids 60% of missiles |
-| 0x6a | TYRANITHRAXUS | missing | magic resistance (0x11570): 15 - 5 x (11 - spell level) in a byte, so it wraps for levels 1-7 and a d100 always loses: every Pool spell resisted when tested (DS:0x6817 or 0x6819 & 8); a d100 drawn; to check in the lab |
+| 0x6a | TYRANITHRAXUS | checked | magic resistance (0x11570): 15 - 5 x (11 - spell level) in a byte, so it wraps for levels 1-7: every effect added (DS:0x6817, first of the add-effect checks) and magic damage (0x6819 & 8) resisted, a d100 each time (Combat Chat 4; lab: Curse) |
 | 0x6c | FERRAN MARTINEZ, GHOUL, SPECTRE, WIGHT, WRAITH | built | no Sleep or Charm |
 | 0x6d | FERRAN MARTINEZ, SPECTRE, WIGHT, WRAITH | built | no Hold |
 | 0x6e | FERRAN MARTINEZ, GIANT SKELETON, JUJU ZOMBIE, MUMMY, SKELETON, SPECTRE, WIGHT, WRAITH, ZOMBIE | built | no cold |
@@ -365,5 +365,5 @@ What can happen to a character (status byte 0x10C and the effect list).
 | Charm | partial |  | lasts the fight, not after it |
 | Blindness | built |  | Cause Blindness; temples can't see it (above) |
 | Aging (Haste) | built |  | a year once per Haste |
-| Magic resistance (Tyranthraxus 15%) | missing | yes | the final fight; see monster power 0x6a |
+| Magic resistance (Tyranthraxus 15%) | checked | yes | the final fight; see monster power 0x6a (Combat Chat 4) |
 

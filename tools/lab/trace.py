@@ -156,6 +156,15 @@ def holddump(r, base):
         to, ts = struct.unpack_from("<HH", cr, 0xA)
         print("HOLD %2d %-15s target %-2s %s | +10c %s" % (i, name, recs.get((ts, to), "-" if not ts else "?"),
               cr.hex(" "), rd(rec + 0x10C, 0x14).hex(" ")), flush=True)
+        # Its standing effects (Combat Chat 4): the list at record +0x7F (far pointer), 9-byte
+        # nodes: type, minutes (u16), power, next (far pointer at +5) (START.EXE 0xBA:0x2199).
+        fx = []
+        lo, ls = struct.unpack("<HH", rd(rec + 0x7F, 4))
+        while ls and len(fx) < 40:
+            node = rd(base + ls * 16 + lo, 9)
+            fx.append("%02x:%d/%d" % (node[0], struct.unpack_from("<H", node, 1)[0], node[3]))
+            lo, ls = struct.unpack_from("<HH", node, 5)
+        print("HOLD %2d effects %s" % (i, " ".join(fx) or "-"), flush=True)
     # The combat map's ground icons (far pointer DS:0x6716, +7 + y * 50 + x; 0x1F: a fallen
     # figure lies there) and the fallen list (DS:0x66D6, 7 bytes each, count DS:0x6715: the
     # figure, x, y, the icon it covered), Combat Chat 1.

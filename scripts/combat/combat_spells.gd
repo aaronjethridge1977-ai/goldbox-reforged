@@ -239,7 +239,11 @@ static func racial_save_bonus(m: PartyMember, kind: int) -> int:
 
 ## Whether `t` throws off Sleep, Charm, Hold or poison (SpecialAffects.blocks).
 func resists(t: PartyMember, type: int) -> bool:
-	return SpecialAffects.blocks(t, type, func(): return c.roll(1, 100, "%s resists" % t.name))
+	return SpecialAffects.blocks(t, type, func(): return c.roll(1, 100, "%s resists" % t.name),
+			table.level(_resolving) if _resolving > 0 else 0)
+
+
+var _resolving := 0     # the spell going off (the original's DS:0x681B), for magic resistance
 
 
 # --- Choosing and aiming ------------------------------------------------------------------
@@ -418,6 +422,12 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 
 
 func _resolve(i: int, id: int, targets: Array[int]) -> void:
+	_resolving = id
+	_resolve_spell(i, id, targets)
+	_resolving = 0
+
+
+func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
 	var lvl := m.caster_level(table, id)
@@ -672,6 +682,10 @@ func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 	dmg = SpecialAffects.efreeti_fire(t, kind, dmg, dice)
 	if (id == 15 or id == 65) and t.has_affect(0x5B):
 		dmg = 0                 # juju zombies ignore Magic Missile
+	# Magic resistance against magic damage (DS:0x6819 bit 8; category 6, after the elements).
+	if dmg > 0 and (kind & SpecialAffects.MAGIC) and SpecialAffects.magic_resists(t, table.level(id),
+			func(): return c.roll(1, 100, "%s resists" % t.name)):
+		dmg = 0
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return

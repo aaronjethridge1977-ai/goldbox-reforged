@@ -597,7 +597,8 @@ func shoot(i: int, j: int) -> void:
 		need -= SpecialAffects.hit_bonus(am, tm)
 		need -= script_hit_mod(am)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
+		var free_miss := _free_miss(t)     # runs on every attack, hit or not (to-hit category 16)
+		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 		else:
@@ -1047,7 +1048,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			continue
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not _free_miss(t)
+		var free_miss := _free_miss(t)     # runs on every attack, hit or not (to-hit category 16)
+		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
 		if not hit:
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
@@ -1263,8 +1265,25 @@ const CLASS_MAGE := 5
 
 
 func _enemy_of(c: Dictionary, j: int) -> bool:
-	return j >= 0 and j < combatants.size() and not combatants[j].down and combatants[j].team != c.team \
-			and not SpecialAffects.repels(c.who, combatants[j].who)
+	return j >= 0 and j < combatants.size() and not combatants[j].down and combatants[j].team != c.team
+
+
+## Can figure i attack figure j (GAME.OVR 0x13880: the effect dispatcher's category 1 on the
+## target, then category 0 on the attacker, either setting DS:0x681E; Combat Chat 4): not a
+## figure under Invisibility (0x19) unless the attacker sees invisible (0x18, Tyranthraxus),
+## nor one under Disappearance (0x47); a vampire (0x7E) not one with a readied mirror or wooden
+## holy symbol. (0x25, the phase spider's blink, also refuses when its fight record's +3 is
+## above 0: not built.)
+func targetable(i: int, j: int) -> bool:
+	if i == j:
+		return true
+	var a: PartyMember = combatants[i].who
+	var t: PartyMember = combatants[j].who
+	if t.has_affect(0x19) and not a.has_affect(0x18):
+		return false
+	if t.has_affect(0x47):
+		return false
+	return not SpecialAffects.repels(a, t)
 
 
 ## Line of sight between two cells: a straight line across the grid (the original's own
@@ -1308,10 +1327,15 @@ func _within(i: int, j: int, reach: int) -> bool:
 	return line_steps(a, b).y == 1 and line_steps(a, b, false).x / 2 <= maxi(reach, 1)
 
 
-## Keeps the combatant's target if it still stands, else picks a new one (see above).
+## Keeps the combatant's target if it still stands and can be attacked, else picks a new one
+## (GAME.OVR 0x15FDF, Combat Chat 4): first among the enemies in sight, then, if that found
+## nobody, among all of them; each pass up to 20 tries of a die the size of the list, a figure
+## that can't be attacked (targetable) struck off and the die rolled again (its size kept),
+## until the list is empty. (Check 5's Tyranthraxus drew his d6 twice at 0x160DB: draw 794.)
 func find_target(i: int) -> bool:
 	var c: Dictionary = combatants[i]
-	if _enemy_of(c, c.get("target", -1)):
+	var keep: int = c.get("target", -1)
+	if _enemy_of(c, keep) and targetable(i, keep):
 		return true
 	c.target = -1
 	var seen: Array[int] = []
@@ -1321,20 +1345,36 @@ func find_target(i: int) -> bool:
 			all.append(j)
 			if clear_line(c, combatants[j]).y == 1:
 				seen.append(j)
-	var pool := seen if not seen.is_empty() else all
-	if pool.is_empty():
-		return false
-	_by_distance(c, pool, seen.is_empty())
-	if OS.has_environment("APDBG"):
-		var ps := ""
-		for j in pool:
-			ps += " %d@%s" % [j, combatants[j].cell]
-		print("   @%d find_target %d at %s seen %d pool%s" % [TpDice.calls, i, c.cell, seen.size(), ps])
-	if SmartQuick.smart(self, i):
-		c.target = SmartQuick.weakest(self, i, pool)
-	else:
-		c.target = pool[roll(1, pool.size(), "%s picks a target" % c.who.name) - 1]
-	return true
+	for blind in [false, true]:
+		var pool: Array[int] = (all if blind else seen).duplicate()
+		if pool.is_empty():
+			continue
+		_by_distance(c, pool, blind)
+		if OS.has_environment("APDBG"):
+			var ps := ""
+			for j in pool:
+				ps += " %d@%s" % [j, combatants[j].cell]
+			print("   @%d find_target %d at %s seen %d pool%s" % [TpDice.calls, i, c.cell, seen.size(), ps])
+		if SmartQuick.smart(self, i):
+			var left: Array[int] = pool.filter(func(j): return targetable(i, j))
+			if not left.is_empty():
+				c.target = SmartQuick.weakest(self, i, left)
+				return true
+			continue
+		var n := pool.size()
+		var tries := 20
+		while tries > 0 and n > 0:
+			tries -= 1
+			var k := roll(1, n, "%s picks a target" % c.who.name) - 1
+			if pool[k] < 0:
+				continue
+			if targetable(i, pool[k]):
+				c.target = pool[k]
+				return true
+			pool[k] = -1
+			if pool.all(func(j): return j < 0):
+				n = 0
+	return false
 
 
 ## The original lists figures nearest first (GAME.OVR 0x3045B builds the list of every
@@ -1817,12 +1857,26 @@ func _dice(count: int, size: int) -> int:
 	return roll(count, size, "power")
 
 
-## Tyranthraxus (0x59): the first attack roll against it in a fight misses.
+## Tyranthraxus (0x59; handler GAME.OVR 0x110EB, Combat Chat 4): while the round counter
+## DS:0x6DE3 is 0 (round 1; ours' round_no is the counter + 1) and no other to-hit change is
+## under way (DS:0x6822), each attack on it clears bit 0x10 of the effect's power; otherwise
+## an attack with the bit clear misses and sets it. So the first attack after round 1 misses
+## (power 0x1F starts with the bit set: no miss before round 1 has cleared it). Check 5's
+## Thrender hit it in round 1 where ours had missed (draw 828).
 func _free_miss(t: Dictionary) -> bool:
-	if not (t.who as PartyMember).has_affect(0x59) or t.first_miss:
+	var tm: PartyMember = t.who
+	for a in tm.affects:
+		if int(a.effect) != 0x59:
+			continue
+		var other := tm.has_affect(0x19) or tm.has_affect(0x47)    # their -4 (0x6822)
+		if round_no <= 1 and not other:
+			a.value = int(a.value) & 0x0F
+			return false
+		if (int(a.value) & 0x10) == 0:
+			a.value = int(a.value) | 0x10
+			return true
 		return false
-	t.first_miss = true
-	return true
+	return false
 
 
 ## Adds a condition the way the original's add-effect routine (GAME.OVR 0x2C540) does:
@@ -2072,34 +2126,39 @@ func _act_powers(i: int) -> void:
 		if dmg > 0:
 			message.emit(SpecialAffects.damage_words(t.who.name, dmg, SpecialAffects.ACID))
 			hurt(j, dmg, SpecialAffects.ACID)
-	if m.has_affect(0x58) and not t.down and (round_no == 0 or roll(1, 100, "breathe?") <= 50):
-		_breathe(i, j)
+	# Tyranthraxus's breath (GAME.OVR 0x2A0F1): the 50% d100 (it breathes on 51-100) only once the round counter
+	# DS:0x6DE3 is past 0 (it counts at each round's end, so not before or in round 1: ours'
+	# round_no is that counter + 1); then the breath aims as a spell does, with a fresh target
+	# pick (0x15FDF from the spell's aim, which becomes its target). Lab, Combat Chat 4: check
+	# 5's Tyranthraxus drew his d6 twice in round 1 and no d100 (draws 793-794).
+	if m.has_affect(0x58) and not t.down and (round_no <= 1 or roll(1, 100, "breathe?") > 50):
+		c.target = -1
+		if find_target(i):
+			_breathe(i, int(c.target))
 
 
-## Tyranthraxus's breath (GAME.OVR 0x2A0F1): lightning along a line from it through its
-## target, its own HP in damage, half on a save vs breath; three breaths a fight (the
-## effect's power counts down from 0xFF). The line runs as Lightning Bolt's does, up to
-## 10 squares; which figures the original's line routine (0x98D4) takes is not traced.
+## Tyranthraxus's breath (GAME.OVR 0x2A0F1; Combat Chat 4): its max HP (record 0x32) in
+## lightning, half on a save vs breath, as Lightning Bolt goes (0x298D4, 0x29973): it starts on
+## the square beside it towards its target (one step each way, past its own 2x2 body), hits
+## the figure there, then walks a Bresenham line (0x2FCF2 / 0x2FE1E: 2 a straight step, 3 a
+## diagonal one) on from there, away from it, with 20 half-moves; it stops at each new figure
+## (hit), at a wall (it bounces back: a new line from the wall the other way, the budget less
+## the half-moves walked) or when the budget is spent. Three breaths a fight (the effect's power
+## counts down from 0xFF). Check 5's breath at draw 1147 hit three where ours' straight line hit two.
 func _breathe(i: int, j: int) -> void:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
 	message.emit("%s BREATHES!" % m.name)
-	var line := _line_from(c.cell, combatants[j].cell, 20)
 	var dmg := m.hp_max
-	for k in combatants.size():
-		var t: Dictionary = combatants[k]
-		if k == i or t.down:
-			continue
-		var hit_it := false
-		for p in cells(t):
-			if p in line:
-				hit_it = true
-		if not hit_it:
-			continue
-		var hit := dmg / 2 if _save(t.who, 3, 0) else dmg
-		hit = SpecialAffects.element_damage(t.who, SpecialAffects.ELECTRIC, hit)
-		message.emit(SpecialAffects.damage_words(t.who.name, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC))
-		hurt(k, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC)
+	var from: Vector2i = c.cell
+	var to: Vector2i = combatants[j].cell
+	var aim := Vector2i(from.x + signi(to.x - from.x), from.y + signi(to.y - from.y))
+	if aim.x == from.x + 1:
+		aim.x += 1
+	if aim.y == from.y + 1:
+		aim.y += 1
+	_bolt_hit(aim, dmg)
+	_bolt(from, aim, 10, dmg)
 	for a in m.affects:
 		if int(a.effect) == 0x58:
 			if int(a.value) > 0xFD:
@@ -2111,38 +2170,98 @@ func _breathe(i: int, j: int) -> void:
 	c.attacks = 0
 
 
-## Cells on a straight line from `from` through `to` and on, `reach` half-steps long
-## (2 a straight step, 3 a diagonal one), stopping at walls.
-func _line_from(from: Vector2i, to: Vector2i, reach: int) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	var d := to - from
-	if d == Vector2i.ZERO:
-		return out
-	var dx := absi(d.x)
-	var dy := absi(d.y)
-	var sx := signi(d.x)
-	var sy := signi(d.y)
-	var cur := from
-	var err := 0
-	var steps := 0
-	while steps < reach:
-		if dx >= dy:
-			cur.x += sx
-			err += dy * 2
-			steps += 2
-			if err >= dx:
-				cur.y += sy
-				err -= dx * 2
-				steps += 1
+## The bolt's hit on one square (0x298D4): the figure standing there, if any, takes `dmg`
+## (half on a save vs breath). True if the square is a wall.
+func _bolt_hit(p: Vector2i, dmg: int) -> bool:
+	var k := occupant(p)
+	if k >= 0:
+		var t: Dictionary = combatants[k]
+		var hit := dmg / 2 if _save(t.who, 3, 0) else dmg
+		hit = SpecialAffects.element_damage(t.who, SpecialAffects.ELECTRIC, hit)
+		message.emit(SpecialAffects.damage_words(t.who.name, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC))
+		hurt(k, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC)
+	return field != null and field.tile(p.x, p.y) > 0 and not field.walkable(p.x, p.y)
+
+
+## The bolt's walk on from `aim` (0x29973): see _breathe. `from` is the caster's square.
+func _bolt(from: Vector2i, aim: Vector2i, reach: int, dmg: int) -> void:
+	if from == aim:
+		return
+	var budget := reach * 2
+	var sgn := 1
+	var last := occupant(aim)
+	while budget > 0:
+		var end := aim + (aim - from) * sgn * budget
+		var w := _walker(aim, end)
+		while true:
+			while true:
+				if w.cur == end:
+					break
+				var moved := _walk_step(w)
+				var fig := occupant(w.cur)
+				var ground: int = field.tile(w.cur.x, w.cur.y) if field != null else 1
+				if not moved or (fig >= 0 and fig != last) or ground <= 0 \
+						or (field != null and not field.walkable(w.cur.x, w.cur.y)):
+					break
+				if int(w.steps) >= budget:
+					break
+			var cur: Vector2i = w.cur
+			last = occupant(cur)
+			var ground2: int = field.tile(cur.x, cur.y) if field != null else 1
+			if ground2 <= 0:
+				budget = 0
+			var wall := _bolt_hit(cur, dmg)
+			if wall:
+				aim = cur
+				sgn = -sgn
+				last = -1
+			budget = 0 if int(w.steps) >= budget else budget - int(w.steps)
+			if wall or budget <= 0:
+				break
+	return
+
+
+## A Bresenham walker as the original's (0x2FCF2): x-major only when |dx| > |dy|.
+func _walker(a: Vector2i, b: Vector2i) -> Dictionary:
+	var dx := absi(b.x - a.x)
+	var dy := absi(b.y - a.y)
+	var w := {"a": a, "b": b, "dx": dx, "dy": dy, "sx": signi(b.x - a.x), "sy": signi(b.y - a.y),
+		"cur": a, "steps": 0}
+	if dx > dy:
+		w.err = dy * 2 - dx
+		w.d1 = (dy - dx) * 2
+		w.d2 = dy * 2
+	else:
+		w.err = dx * 2 - dy
+		w.d1 = (dx - dy) * 2
+		w.d2 = dx * 2
+	return w
+
+
+## One step (0x2FE1E): false at the end of the line.
+func _walk_step(w: Dictionary) -> bool:
+	var cur: Vector2i = w.cur
+	if int(w.dx) > int(w.dy):
+		if cur.x == w.b.x:
+			return false
+		if int(w.err) >= 0:
+			cur.y += int(w.sy)
+			w.err = int(w.err) + int(w.d1)
+			w.steps = int(w.steps) + 3
 		else:
-			cur.y += sy
-			err += dx * 2
-			steps += 2
-			if err >= dy:
-				cur.x += sx
-				err -= dy * 2
-				steps += 1
-		if not field.in_bounds(cur.x, cur.y) or not field.walkable(cur.x, cur.y):
-			break
-		out.append(cur)
-	return out
+			w.err = int(w.err) + int(w.d2)
+			w.steps = int(w.steps) + 2
+		cur.x += int(w.sx)
+	else:
+		if cur.y == w.b.y:
+			return false
+		if int(w.err) >= 0:
+			cur.x += int(w.sx)
+			w.err = int(w.err) + int(w.d1)
+			w.steps = int(w.steps) + 3
+		else:
+			w.err = int(w.err) + int(w.d2)
+			w.steps = int(w.steps) + 2
+		cur.y += int(w.sy)
+	w.cur = cur
+	return true
