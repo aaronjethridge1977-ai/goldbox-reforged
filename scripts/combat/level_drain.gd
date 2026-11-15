@@ -183,3 +183,5 @@ static func recount(m: PartyMember, t: ClassTables, spells: SpellTable) -> void:
 	for c in 8:
 		top = maxi(top, m.level_in(c))
 	m.raw[HIGHEST] = maxi(m.raw[HIGHEST], top)
+	if CharacterSheet.types != null:
+		m.recalculate(CharacterSheet.types)      # THAC0 and the rest from the new levels

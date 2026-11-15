@@ -81,6 +81,16 @@ if ustart:
         xy = lambda c: tuple(int(v) for v in c.split(","))
         orig = [c for i, c in enumerate(orig) if not (0 < i < len(orig) - 1 and (orig[i - 1], orig[i + 1]) in pairs
                 and xy(c) == (xy(orig[i + 1])[0], xy(orig[i - 1])[1]))]
+        # A step that draws free attacks shows twice: the original moves the figure, puts it
+        # back on its square while the blows land, then moves it again (Combat Chat 5: the
+        # graveyard's turned spectre, 20,12 19,12 20,12 19,12 around two free attacks). The
+        # repeat is left out when ours made that step.
+        i = 0
+        while i + 3 < len(orig):
+            if orig[i] == orig[i + 2] and orig[i + 1] == orig[i + 3] and (orig[i], orig[i + 1]) in pairs:
+                del orig[i + 2:i + 4]
+            else:
+                i += 1
         it = iter(ours)
         sub = all(c in it for c in orig)
         if not orig or not sub or orig[-1] != ours[-1]:

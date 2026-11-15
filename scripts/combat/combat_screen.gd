@@ -50,6 +50,9 @@ var _morale_base := 99      # the encounter's morale (from the script)
 ## Set by the caller just before a scripted fight: ECL 0x6E70, 0x6E71, 0x6E72 (bytes, signed)
 ## (monsters' to-hit, the party's to-hit, the party's movement); see Combat.
 var area_mods: Array[int] = [0, 0, 0]
+## The area's ECL block (0x49F2, main sets it): the original's clutter skips bones and flowers
+## in block 10 (GAME.OVR 0xC67B tests DS:0x84DC, its copy of the block).
+var area_block := 0
 var anti_magic := false                  # set by main before a fight: ECL 0x49E5 above 0 (the shell)
 var _surprise := 0          # the script's ambush flag
 var _px := 0
@@ -700,7 +703,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	else:
 		clutter_rng.randomize()
 	_field.scatter(func(n: int) -> int:
-		return TpDice.random(n, "clutter") + 1 if TpDice.on else clutter_rng.randi_range(1, n))
+		return TpDice.random(n, "clutter") + 1 if TpDice.on else clutter_rng.randi_range(1, n), area_block == 10)
 	_place()
 	if TpDice.on:
 		for c in _combatants:

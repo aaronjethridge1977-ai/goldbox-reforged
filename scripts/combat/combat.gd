@@ -1446,24 +1446,28 @@ func _ai_begin(i: int) -> void:
 
 # --- Turning undead ----------------------------------------------------------------------
 # Clerics, and paladins from 3rd level as a cleric two levels lower, can try once a fight
-# (TURN on the fight menu; quick clerics do it when undead are in sight). The undead's
-# kind is record byte 0x76 (1 skeleton, 2 zombie, 3 ghoul, 5 wight, 7 wraith, 8 mummy,
-# 9 spectre, 10 vampire: the rule book's turning table order) and undead have 0x9F = 4.
-# One d20 against the table for the turner's level; 2d6 undead are affected, the weakest
-# first: turned ones run for the rest of the fight, destroyed ones are gone. The table is
-# the AD&D one the rule book prints; the original's own code is not yet traced.
-const T := -1
-const D := -2
-const TURN_TABLE := [
-	[10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0, 0, 0],
-	[7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0, 0],
-	[4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0, 0],
-	[T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0, 0],
-	[T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0, 0],
-	[D, T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0, 0],
-	[D, D, T, T, 4, 7, 10, 13, 16, 19, 20, 0, 0],
-	[D, D, D, T, T, 4, 7, 10, 13, 16, 19, 20, 0],
-	[D, D, D, D, T, T, 4, 7, 10, 13, 16, 19, 20]]
+# (TURN on the fight menu; quick clerics do it when undead are in sight). As GAME.OVR 0x13965
+# does it (Combat Chat 5, the graveyard's spectres roll for roll): a d12 for how many, then
+# one d20 for all of them. The column is the cleric level (record 0x96): 1-8, 9 for 9-13,
+# else 10. Again and again it takes, from the nearest-first list of the standing figures in
+# sight (0xBA:0x2433 with no range limit), the one with the lowest undead kind (record 0x76,
+# above 0; 1 skeleton, 2 zombie, 3 ghoul, 5 wight, 7 wraith, 8 mummy, 9 spectre, 10 vampire)
+# not yet turned; the game's table (DS:0x447 + kind x 10 + column) gives a value: the d20
+# must reach its size, or the turning stops; above 0 the figure IS TURNED (it runs), 0 or
+# below it IS DESTROYED (gone, status 8). Each success spends one of the d12; a destroyed one
+# gives it back while the six extra last. None: "NOTHING HAPPENS...".
+const TURN_VALUES := [
+	[],
+	[10, 7, 4, 1, 1, 0, 0, -1, -1, -1],
+	[13, 10, 7, 1, 1, 0, 0, 0, -1, -1],
+	[16, 13, 10, 4, 1, 1, 0, 0, 0, -1],
+	[19, 16, 13, 7, 4, 1, 1, 0, 0, -1],
+	[20, 19, 16, 10, 7, 4, 1, 1, 0, 0],
+	[99, 20, 19, 13, 10, 7, 4, 1, 1, 0],
+	[99, 99, 20, 16, 13, 10, 7, 4, 1, 0],
+	[99, 99, 99, 20, 16, 13, 10, 7, 4, 1],
+	[99, 99, 99, 99, 20, 16, 13, 10, 7, 1],
+	[99, 99, 99, 99, 99, 20, 16, 13, 10, 4]]
 
 
 static func turn_level(m: PartyMember) -> int:
@@ -1494,34 +1498,62 @@ func can_turn(i: int) -> bool:
 func turn_undead(i: int) -> void:
 	var c: Dictionary = combatants[i]
 	c.tried_turning = true
-	var undead := _undead_in_sight(i)
-	undead.sort_custom(func(a, b): return combatants[a].who.raw[0x76] < combatants[b].who.raw[0x76])
-	var row: Array = TURN_TABLE[clampi(turn_level(c.who), 1, 9) - 1]
-	var d20 := roll(1, 20, "%s turns undead" % c.who.name)
-	var count := roll(2, 6, "how many undead")
+	var m: PartyMember = c.who
+	var count := roll(1, 12, "how many undead")
+	var d20 := roll(1, 20, "%s turns undead" % m.name)
+	var lv := m.level_in(0)
+	var col := lv if lv >= 1 and lv <= 8 else (9 if lv >= 9 and lv <= 13 else 10)
+	var extra := 6
 	var any := false
-	for j in undead:
-		if count <= 0:
+	while count > 0:
+		var j := _turn_pick(i)
+		if j < 0:
 			break
 		var e: Dictionary = combatants[j]
-		var need: int = row[clampi(int(e.who.raw[0x76]), 1, 13) - 1]
-		if need == 0 or (need > 0 and d20 < need):
-			continue
-		count -= 1
+		var kind: int = clampi(int(e.who.raw[0x76]), 1, TURN_VALUES.size() - 1)
+		var v: int = TURN_VALUES[kind][col - 1]
+		if d20 < absi(v):
+			break
 		any = true
-		if need == D:
-			e.down = true
-			(e.who as PartyMember).hp = 0
-			(e.who as PartyMember).status = PartyMember.STATUS_DEAD
-			message.emit("%s IS DESTROYED" % e.who.name)
-		else:
+		if v > 0:
 			e.turned_undead = true
 			e.fleeing = true
 			message.emit("%s IS TURNED" % e.who.name)
+		else:
+			e.down = true
+			(e.who as PartyMember).hp = 0
+			(e.who as PartyMember).status = LevelDrain.STATUS_GONE
+			message.emit("%s IS DESTROYED" % e.who.name)
+		if extra > 0:
+			extra -= 1
+		count -= 1
+		if count == 0 and extra > 0 and v < 0:
+			count += 1
 	if not any:
 		message.emit("NOTHING HAPPENS...")   # the original's line (lab: a turn at Ferran Martinez)
 	c.moves = 0
 	c.attacks = 0
+
+
+## 0x13B4C: the next figure to turn (-1: none).
+func _turn_pick(i: int) -> int:
+	var list: Array[int] = []
+	for j in combatants.size():
+		var e: Dictionary = combatants[j]
+		if not e.down and (j == i or clear_line(combatants[i], e).y == 1):
+			list.append(j)
+	_by_distance(combatants[i], list)
+	var best := 13
+	var pick := -1
+	for j in list:
+		var e: Dictionary = combatants[j]
+		var raw: PackedByteArray = (e.who as PartyMember).raw
+		var kind: int = raw[0x76] if raw.size() > 0x76 else 0
+		if e.get("turned_undead", false) or kind <= 0 or kind >= best:
+			continue
+		best = kind
+		pick = j
+	return pick
 
 
 # --- Morale, fleeing and surrender -------------------------------------------------------
@@ -1580,7 +1612,9 @@ func _flee_step(i: int) -> String:
 	if c.moves / 2 <= 0:
 		return "stop"
 	var base := flee_dir if c.team == 1 else (flee_dir + 4) % 8
-	var turns: Array = PATTERN_TURNS[roll(1, 2, "%s runs" % m.name) - 1]   # patterns 1-2 (rows 0-1)
+	# The d2 becomes the figure's pattern (GAME.OVR 0xB49A): the next turn's pattern check reads it.
+	c.pattern = roll(1, 2, "%s runs" % m.name)
+	var turns: Array = PATTERN_TURNS[c.pattern - 1]   # patterns 1-2 (rows 0-1)
 	for k in 5:
 		var dir := (base + int(turns[k])) % 8
 		var off_field := false
@@ -1594,9 +1628,35 @@ func _flee_step(i: int) -> String:
 			c.moves = 0
 			return "blocked"
 		if _can_step(c, dir):
+			# A step straight back is a failure too (0xB5A7), but the step is still taken.
+			if (dir + 4) % 8 == c.last_step and _step_failed(i):
+				return "stop"
+			c.last_step = dir
 			return "moved" if step(dir) == "moved" else "stop"
-	c.moves = 0
-	return "stop"
+	# No step fits (GAME.OVR 0xB5CA, the same code as an approach; Combat Chat 5, the
+	# graveyard's turned spectre): a failure, and the run goes on with a new d2 unless the
+	# failures end the moving.
+	if _step_failed(i):
+		return "stop"
+	return "retry"
+
+
+## A failed step (all five directions blocked, or straight back): the pattern moves on; the
+## second clears the target and picks again (none: guard), the third ends the movement.
+## True: this turn's moving is over.
+func _step_failed(i: int) -> bool:
+	var c: Dictionary = combatants[i]
+	c.fails += 1
+	c.pattern = c.pattern % 6 + 1
+	if c.fails > 1:
+		c.target = -1
+		if c.fails > 2:
+			c.moves = 0
+			return true
+		if not find_target(i):
+			guard(i)
+			return true
+	return false
 
 
 func _gets_away(i: int) -> bool:
@@ -1743,13 +1803,19 @@ func ai_act() -> bool:
 			return false
 	if c.get("fleeing", false):
 		var fr := _flee_step(active)
-		if fr == "moved":
+		if fr == "moved" or fr == "retry":
 			return true
+		c.fleeing_was = fr == "stop" and c.moves <= 0
 		c.fleeing = false
 		if fr == "gone" or fr == "blocked" or c.down:
 			c.moves = 0
 			c.attacks = 0
 			return false
+	# Out of movement while running, it strikes an enemy within reach at once (GAME.OVR
+	# 0xB75F-0xB958: the action's run loop, then the blow's d-count pick; no target pick:
+	# Combat Chat 5, the graveyard's turned spectre).
+	var ran_out: bool = c.get("fleeing_was", false)
+	c.fleeing_was = false
 	while true:
 		c.tries += 1
 		if c.tries > 20 or c.down:
@@ -1759,9 +1825,10 @@ func ai_act() -> bool:
 		# (0x15FDF: kept if it still stands, else a new pick); ours did only when nothing was in
 		# reach (lab, side chat 5: Darkstar's dart killed its kobold mid-volley, and the next
 		# dart's d17 target pick was missing).
-		if not _enemy_of(c, c.get("target", -1)) and not find_target(active):
+		if not ran_out and not _enemy_of(c, c.get("target", -1)) and not find_target(active):
 			guard(active)
 			return false
+		ran_out = false
 		if c.moves > 0 and _enemy_of(c, c.get("target", -1)):
 			_act_powers(active)
 			if c.down:

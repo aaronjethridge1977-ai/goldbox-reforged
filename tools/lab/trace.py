@@ -169,8 +169,9 @@ def holddump(r, base):
     # figure lies there) and the fallen list (DS:0x66D6, 7 bytes each, count DS:0x6715: the
     # figure, x, y, the icon it covered), Combat Chat 1.
     mo, ms = struct.unpack("<HH", rd(ds + 0x6716, 4))
-    for y in range(8, 18):
-        row = rd(base + ms * 16 + mo + 7 + y * 50 + 22, 14)
+    full = os.environ.get("HOLDFULL")      # HOLDFULL=1: the whole 50 x 25 map (Combat Chat 5)
+    for y in (range(25) if full else range(8, 18)):
+        row = rd(base + ms * 16 + mo + 7 + y * 50 + (0 if full else 22), 50 if full else 14)
         print("HOLD icon %2d %s" % (y, " ".join("%02x" % b for b in row)), flush=True)
     nf = rd(ds + 0x6715, 1)[0]
     for k in range(1, nf + 1):

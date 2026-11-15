@@ -114,6 +114,16 @@ keep steps in lab key lists) and EXIT from a spell's aim asks ABORT SPELL? (YES 
 save: `mksave.py J A 4 21 14 9 N`, walk to 12,7, then east and north into 14,6 (Sokal Keep's frogs; flee the undead patrols);
 give the party 200 HP, AC 10 so they are hit and poisoned. Ad hoc scripts in the lab archive's `combat4/`.
 
+**Combat Chat 5 (cloud lab):** the late fights need start saves that `mksave.py` alone can't make (4:10's first visit puts the
+party at the gate whatever the save says: area entry clears 0x4A00-0x4A1F). Recipe: `mksave.py J A ...` plus
+`combat5/levels.py A` (the party at levels 4-6 with the class tables' THAC0 and saves written, since ours reads them and the
+original recomputes them), let the original walk in and SAVE to A, then set the square in SAVGAMA.DAT at 0x3201 (x, y,
+facing x 2). The result is kept in the lab archive as `combat5/saves/<fight>/` (game data: never in a repo) and
+`savein.sh <fight>` copies it into save A (scratch) before `cmpfight2.sh A ...` (regress.sh's `orig_A_spectre`).
+`HOLDFULL=1` with `HOLD=` makes `trace.py` dump the original's whole 50 x 25 combat map (ground icons). `combat5/chrpoke.py
+<letter> <n> off=val[,4]` pokes character-file bytes. cmpdraws.py leaves out a step the trace shows twice around free
+attacks (the original puts the mover back on its square while the blows land).
+
 **Chat 25:** `pl.py stop` (and `start`) now kill only this lab's DOSBox (`[d]osbox -conf .*/por.conf`): the Player lane
 runs its own beside it (`player_lab`, display :97). Lab rule (Methods 5): a script stops only what it started
 (Combat Chat 4's `orig.sh` pid files for the fight tools). Keyed checks need `wait`s between keys (a Y sent before a menu is up is

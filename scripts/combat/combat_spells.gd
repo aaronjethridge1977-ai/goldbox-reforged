@@ -970,7 +970,9 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 		var kind := table.field(id, 15)
 		var any := false
 		for t in c.combatants:
-			if t.down or t.team == me.team or c.range_of(me, t) > reach:
+			# Only figures in sight count (0xBA:0x2433 counts the in-sight list 0x3DB:0x3E
+			# builds; Combat Chat 5: the graveyard's turned spectre, out of sight at range 16).
+			if t.down or t.team == me.team or c.range_of(me, t) > reach or c.clear_line(me, t).y != 1:
 				continue
 			any = true
 			if kind > 0:

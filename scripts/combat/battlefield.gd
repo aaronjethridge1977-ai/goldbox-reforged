@@ -65,12 +65,13 @@ const WALKABLE := [4, 8, 10, 12, 14, 16, 22, 23, 34, 35, 36, 37, 38, 39]
 ## (x 0..49, then y 0..24) rolls d100: 98 pebbles, 99 two stones, 100 a d100 of 1 and then
 ## d10 1-6 a bone, 7-10 a potted flower (all four walkable). The pictures are RANDCOM.DAX's
 ## first four (the original's tile ids 0x1A-0x1D, pictures 0x22-0x25: tiles 34-37 here).
-## (The original skips the 100 branch when DS:0x84DC is 10; not yet known what that is.)
+## The original skips the 100 branch, with no more draws, when DS:0x84DC is 10: its copy of
+## the area's ECL block (0x49F2; Combat Chat 5: 4:10, the graveyard's spectres, matched only so).
 const CLUTTER := [34, 35, 36, 37]
 
 
-## `roll` is the fight's die: roll.call(n) gives 1..n.
-func scatter(roll: Callable) -> void:
+## `roll` is the fight's die: roll.call(n) gives 1..n. `no_bones`: the area's block is 10.
+func scatter(roll: Callable, no_bones: bool = false) -> void:
 	for x in WIDTH:
 		for y in HEIGHT:
 			var i := y * WIDTH + x
@@ -81,7 +82,7 @@ func scatter(roll: Callable) -> void:
 				cells[i] = CLUTTER[0]
 			elif r == 99:
 				cells[i] = CLUTTER[1]
-			elif r == 100 and roll.call(100) == 1:
+			elif r == 100 and not no_bones and roll.call(100) == 1:
 				cells[i] = CLUTTER[2] if roll.call(10) <= 6 else CLUTTER[3]
 
 
