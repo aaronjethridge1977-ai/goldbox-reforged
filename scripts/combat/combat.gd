@@ -1825,7 +1825,11 @@ func _approach(i: int) -> String:
 	if c.moves / 2 <= 0 or (m.class_id == CLASS_MAGE and m.armor == null):
 		guard(i)
 		return "end"
-	var pair := closest(c, combatants[c.target])
+	# The base direction is GAME.OVR 0x14E38's (called at 0xB47D): from the mover's own square
+	# to the target's (their positions 0x5F27/0x5F28; a large figure's first cell), not between
+	# their nearest cells (Combat Chat 7, the troll fight: Brother Sean at 28,14 went NE for a troll
+	# on 24,10-24,11, its own square NW of him, where ours aimed W at 24,11).
+	var pair := [c.cell, combatants[c.target].cell]
 	var base := wedge_dir(pair[0], pair[1])
 	# Pattern p is row p - 1 (the original's table at DS:0x02AE, read in side chat 2: pattern p
 	# takes bytes p * 5 + 1 .. p * 5 + 5; ours read the row of p + 1).
@@ -1841,7 +1845,7 @@ func _approach(i: int) -> String:
 			var f := fits(i, c.cell + DIRS[dd])
 			tried += " d%d:%s/%d" % [dd, f[0], f[1]]
 		print(tried)
-		print("   @%d approach %d at %s target %d at %s base %d pattern %d k %d dir %d last %d fails %d moves %d" % [TpDice.calls, i, c.cell, c.target, combatants[c.target].cell, base, c.pattern, k, dir, c.last_step, c.fails, c.moves])
+		print("   @%d approach %d at %s target %d at %s base %d pattern %d k %d dir %d last %d fails %d moves %d pair %s" % [TpDice.calls, i, c.cell, c.target, combatants[c.target].cell, base, c.pattern, k, dir, c.last_step, c.fails, c.moves, pair])
 	if k == 5 or (dir + 4) % 8 == c.last_step:
 		c.fails += 1
 		c.pattern = c.pattern % 6 + 1

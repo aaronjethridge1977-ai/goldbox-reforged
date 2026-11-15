@@ -992,7 +992,16 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			any = true
 			if kind > 0:
 				for e in c.combatants:
-					if not e.down and e.team == me.team and c.range_of(e, t) <= kind:
+					# The area is built round the enemy's own square (GAME.OVR 0xAF63: its position
+					# 0x5F27/0x5F28, a large figure's first cell), not its nearest cell (Combat Chat
+					# 7, the troll fight: Thrender at 27,13 beside an ogre on 26,11-27,12 is 2 away).
+					var near_e := 1 << 30
+					for q in c.cells(e):
+						near_e = mini(near_e, c.range_between(t.cell, q))
+					if not e.down and e.team == me.team and near_e <= kind:
+						if OS.has_environment("APDBG"):
+							print("   @%d weigh %s spell %d: %s at %s within %d of enemy %s at %s (range %d)" % [TpDice.calls,
+								me.who.name, id, e.who.name, e.cell, kind, t.who.name, t.cell, near_e])
 						return {}
 		if not any:
 			return {}
