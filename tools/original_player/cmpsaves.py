@@ -44,8 +44,17 @@ def compare(a, b):
             x, y = bytearray(x), bytearray(y)
         if len(x) != len(y):
             diffs.append("%s: sizes %d and %d" % (name, len(x), len(y)))
+        pad = set()
+        if name == "SAVGAM":     # the character file names (Pascal string[40] each): bytes past the length are
+            for k in range(8):   # leftover memory, not game state
+                o = 0x3209 + k * 41
+                used = [0 < z[o] <= 12 and z[o + 1:o + 7] == b"CHRDAT" for z in (x, y)]
+                if not any(used):                    # an unused entry (party under 8): all leftover
+                    pad |= set(range(o, o + 41))
+                else:
+                    pad |= set(range(o + 1 + max(x[o], y[o]), o + 41))
         for i in range(min(len(x), len(y))):
-            if x[i] != y[i]:
+            if x[i] != y[i] and i not in pad:
                 if name == "SAVGAM" and 0x3209 <= i and chr(x[i]).isalpha() and chr(y[i]).isalpha():
                     continue      # a CHRDAT<slot> name
                 diffs.append("%s %s: %d / %d" % (name, where(name, i), x[i], y[i]))

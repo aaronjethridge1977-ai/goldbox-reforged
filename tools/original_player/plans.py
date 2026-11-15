@@ -11,7 +11,7 @@
                                  <words> gets <choice> (an item's name, or a member's name)
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
 """
-import os, sys
+import os, re, sys
 import orig
 
 sys.path.insert(0, orig.LAB)
@@ -172,7 +172,7 @@ def load(path):
     base = os.path.dirname(os.path.abspath(path))
     main_rules = []
     for line in open(path):
-        line = line.split("#")[0].strip() if not line.lstrip().startswith("answer") else line.strip()
+        line = line.split("#")[0].strip() if not line.lstrip().startswith("answer") else re.split(r"\s#", line)[0].strip()
         if not line or line.startswith("#"):
             continue
         w = line.split(None, 1)
