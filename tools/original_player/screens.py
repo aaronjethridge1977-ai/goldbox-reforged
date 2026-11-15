@@ -49,6 +49,17 @@ def classify(st):
         out["kind"] = "treasure"
     elif b.startswith("CHOOSE A FUNCTION"):
         out["kind"] = "mainmenu"
+        # Player 3: the party menu (also a training hall's, PROGRAM 0): the party at rows 4-9 from column 1, the
+        # chosen member white (End = next, Home = previous); the functions by their first letters.
+        names, hl = [], None
+        for r in range(4, 10):
+            name = rows[r][1:16].strip("? ").strip()
+            if not name:
+                continue
+            names.append(name)
+            if _rowcol(im, r, 8, 16 * 8) == WHITE:
+                hl = len(names) - 1
+        out["names"], out["highlight"] = names, hl
     elif b.startswith("LOAD WHICH GAME"):
         out["kind"] = "load"
     elif b.startswith("SAVE WHICH GAME"):

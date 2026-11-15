@@ -83,9 +83,14 @@ class Player:
         cp.done = True
         d = os.path.join(SAVES, self.run, cp.name)
         os.makedirs(d, exist_ok=True)
+        # Player 3: only the character files this save wrote: an older save in the slot with a larger party leaves
+        # its CHRDAT<slot>7.* behind (the original doesn't delete them), and statediff read them as party members.
+        t0 = os.path.getmtime(os.path.join(orig.GAME, "SAVGAM%s.DAT" % self.slot)) - 30
         for f in os.listdir(orig.GAME):
-            if f.upper() == "SAVGAM%s.DAT" % self.slot or f.upper().startswith("CHRDAT%s" % self.slot):
-                shutil.copy(os.path.join(orig.GAME, f), d)
+            p = os.path.join(orig.GAME, f)
+            if f.upper() == "SAVGAM%s.DAT" % self.slot or (f.upper().startswith("CHRDAT%s" % self.slot)
+                                                          and os.path.getmtime(p) >= t0):
+                shutil.copy(p, d)
         x, y, f = self.where()
         a = self.area()
         line = index_line(self, cp.name, a, x, y, f, d)

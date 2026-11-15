@@ -9,6 +9,12 @@
   checkpoint <name>              ENCAMP, SAVE to the run's slot, index line, copy to .lab/player/saves
   exit 7:26                      walk is over when the party is in that area
   answer <words>|snap:<name>:<key>  (Player 2) the screen's picture and rows to logs/<run>_snap_<name>.*, once, then <key>
+  answer <words>|seq:<name>:<k1>,<k2>,...
+                                 (Player 3) once: the keys in turn, one a wait, whatever the screen, each screen's
+                                 picture and rows snapped first (logs/<run>_snap_<name>_<i>.*); a key "@NAME" presses
+                                 End/Home until the party menu or member list has that member lit
+  alias 3:11                     (Player 3) the walks' area may also be this one (an ECL block on the same map:
+                                 New Phlan's training halls)
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
                                  <words> gets <choice> (an item's name, or a member's name)
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
@@ -26,6 +32,7 @@ class Walk:
     def __init__(self, x, y, area, through=()):
         self.x, self.y, self.area = x, y, area
         self.through = set(through)     # event numbers the route may cross (Player 2: Podol Plaza's 9s and 11s)
+        self.aliases = set()            # Player 3: other ECL blocks on this map (plan line `alias`)
 
     def __repr__(self):
         return "walk %d,%d" % (self.x, self.y)
@@ -35,7 +42,7 @@ class Walk:
         if (x, y) == (self.x, self.y):
             return True, None, ""
         a = p.area()
-        if a != self.area:
+        if a != self.area and a not in self.aliases:
             raise_stop(p, "walk: in area %d:%d, not %d:%d" % (a + self.area))
         R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
         avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
@@ -129,11 +136,43 @@ class Plan:
         self.area = None
         self.goals = []
         self.answers = []        # (words, choice, source)
+        self.aliases = set()     # Player 3: `alias` areas
         self.defaults = {"enter": "enter", "combat": "q", "encounter": "c", "continue": "n",
                          "treasure": "e"}
 
+    def _snap(self, p, st, name):
+        base = os.path.join(orig.LAB, "logs", "%s_snap_%s" % (p.run, name))
+        st["im"].save(base + ".png")
+        open(base + ".txt", "w").write("\n".join("%2d %s" % (r, st["rows"][r]) for r in range(25)) + "\n")
+        p.note("snap", "%s: %s.png/.txt" % (name, base))
+
+    def _seq(self, scr, st, p):
+        """Player 3: the next key of a running seq: answer (or None when it is over)."""
+        name, keys = p.seq
+        while keys:
+            k = keys[0]
+            if k.startswith("@"):
+                names, hl = scr.get("names"), scr.get("highlight")
+                if not names or hl is None or k[1:] not in names:
+                    raise_stop(p, "seq %s: no member list with %s on screen %s" % (name, k[1:], scr["kind"]))
+                d = names.index(k[1:]) - hl
+                if d == 0:
+                    keys.pop(0)
+                    continue
+                return ("end" if d > 0 else "home"), "seq %s: to %s" % (name, k[1:])
+            p.seq_n += 1
+            self._snap(p, st, "%s_%02d" % (name, p.seq_n))
+            keys.pop(0)
+            return k, "seq %s: key %d" % (name, p.seq_n)
+        p.seq = None
+        return None, ""
+
     def answer(self, scr, st, p):
         kind = scr["kind"]
+        if getattr(p, "seq", None):
+            k, why = self._seq(scr, st, p)
+            if k:
+                return k, why
         if kind == "camp" or kind == "saveslot":
             return p.save_step(scr)
         if kind == "treasure":
@@ -149,6 +188,16 @@ class Plan:
             return "n", "never quit to DOS (asked after SAVE)"
         text = scr.get("text", "") + " " + scr.get("question", "") + " " + scr["bottom"]
         for words, choice, src in self.answers:
+            if words in text and choice.startswith("seq:"):
+                _, name, keys = choice.split(":", 2)
+                if name in p.snapped:
+                    continue
+                p.snapped.add(name)
+                p.seq, p.seq_n = (name, keys.split(",")), 0
+                k, why = self._seq(scr, st, p)
+                if k:
+                    return k, "%s: %s" % (src, why)
+                continue
             if words in text and choice.startswith("snap:"):
                 # Player 2: snap:<name>:<key>: the screen's picture and its 25 rows to logs/<run>_snap_<name>.*,
                 # once, then the key (any key name; the services sweep reads shops, temples and halls this way).
@@ -201,6 +250,8 @@ def load(path):
         cmd, rest = w[0], (w[1] if len(w) > 1 else "")
         if cmd == "area":
             pl.area = area_of(rest)
+        elif cmd == "alias":
+            pl.aliases.add(area_of(rest))
         elif cmd == "rules":
             main_rules.append(os.path.normpath(os.path.join(base, rest)))
         elif cmd == "walk":
@@ -208,6 +259,7 @@ def load(path):
             x, y = (int(v) for v in w[0].split(","))
             through = [int(v) for v in w[2].split(",")] if len(w) > 2 and w[1] == "through" else []
             pl.goals.append(Walk(x, y, pl.area, through))
+            pl.goals[-1].aliases = pl.aliases
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":
