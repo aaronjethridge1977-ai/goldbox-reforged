@@ -183,8 +183,18 @@ func _editable() -> bool:
 
 
 static func item_label(it: GameItem) -> String:
+	# P30: an item read from a character's .ITM file (a save) keeps the record's cached name,
+	# which is blank for monster loot (MONnITM); name it from its words as the original does.
+	var named := false
+	if game_path != "":
+		var names := ItemNames.shared(game_path)
+		named = names.is_loaded()
+		if named and it.name == "":
+			it.name = names.name_of(it)
 	var label := it.name if it.name != "" else "(item type %d)" % it.type
-	if it.plus != 0 and not label.contains("+") and not label.contains("-"):
+	# The plus shows only through the name's words (lab: the orc leader's scroll, plus 1, is
+	# "CLERICAL SCROLL WITH 2 SPELLS"; an unidentified item's "+1" word stays hidden).
+	if not named and it.plus != 0 and not label.contains("+") and not label.contains("-"):
 		label += " %+d" % it.plus
 	if it.count > 1:
 		# The cached name may carry the count from when the record was written.
