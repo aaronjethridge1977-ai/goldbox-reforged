@@ -857,7 +857,11 @@ func _hook() -> bool:
 		# A gate travel is going through (gate lines): its choice.
 		# (Several choices, comma-separated, for a way through more than one menu: the
 		# rowboat's YES, then the pyramid door's ENTER.)
-		for g in _gate_answer.split(",", false):
+		# Chat 27: not the band's random site (7:26 0xA44C, "A SMALL WOODED GROVE" / "SOME
+		# RUINED HUTS", a sub-map; 0x49E6 = 1) met on a gate's square: c26a's ENTER at the
+		# nomad camp's 12,11 went into the grove, and travel lost its way.
+		var random_site := said.contains("SMALL WOODED GROVE") or said.contains("SOME RUINED HUTS")
+		for g in ([] if random_site else Array(_gate_answer.split(",", false))):
 			if g.strip_edges() in items:
 				# Chat 17: the same gate answer over and over (6:19 empty: in, out at once, the
 				# cave's menu again) ends the trip through it.
@@ -1708,6 +1712,11 @@ func _travel(goal: String) -> void:
 	if _here() != goal and not _wiped() and goal.contains(":"):
 		var from := _here()
 		var a := goal.split(":")
+		# Chat 27: out of a band's sub-map (the grove, the huts: 0x49E6 = 1) as its own way out
+		# leaves it (7:26 0xAAE7: 0x49E6 and 0x4A9E to 0); c26a's teleport kept 0x49E6, and the
+		# next arrival in 7:26 put the party back in the grove's map (a third teleport).
+		main._vm.write_byte(0x49E6, 0)
+		main._vm.write_byte(0x4A9E, 0)
 		var ok: bool = main.dev_teleport(int(a[0]), int(a[1]), Vector2i(-1, -1), 0)
 		await _settle()
 		_shortcut("teleport", "%s -> %s%s" % [from, goal, "" if ok and _here() == goal else " FAILED"],
@@ -2086,6 +2095,7 @@ const HALLS := ["8,0", "5,0", "7,0", "9,0"]
 ## Full HP and spells before an event (resting can bring random encounters; they are
 ## fought or fled as any other).
 func _prepare() -> void:
+	_restore_drained()
 	_pick_spells()
 	if not _learning() and not _needs_rest():
 		return
@@ -2103,6 +2113,34 @@ func _prepare() -> void:
 	await _memorize()
 	if _needs_rest():
 		await _heal()
+
+
+## Methods 5 (level drain earned back in play): a drained member (record 0x74 above 0) gets a
+## Restoration (spell 56) from a clerical scroll a cleric of the party carries, as camp's USE
+## does (Combat Chat 5: the scroll's page, CAST, WHOM; GAME.OVR 0x29C5B). One scroll spell gives
+## one level back. Logged as play, not a shortcut. (The bot doesn't ready the scroll first.)
+func _restore_drained() -> void:
+	var t := ClassTables.shared(main._game_path)
+	var spells := SpellTable.shared(main._game_path)
+	for target in main._party:
+		while target.status == PartyMember.STATUS_OKAY and target.raw[0x74] > 0:
+			var used := false
+			for caster in main._party:
+				if used or caster.status != PartyMember.STATUS_OKAY or caster.class_level(0) == 0:
+					continue
+				for it in caster.items:
+					if used or it.raw.size() < GameItem.SIZE or CharacterSheet.types == null or \
+							CharacterSheet.types.slot(it.type) < 11 or CharacterSheet.types.slot(it.type) > 13:
+						continue
+					for k in [60, 61, 62]:
+						if not used and it.raw[k] & 0x7F == 56:
+							var said := LevelDrain.restore(target, t, spells)
+							CharacterSheet._spend_scroll(caster, it, k)
+							used = true
+							_count("restorations")
+							print("   camp: %s USES A SCROLL ON %s: %s" % [caster.name, target.name, said])
+			if not used:
+				break
 
 
 ## Hurt (anyone down, or under 60% of the party's HP) or the casters' spells mostly spent.
@@ -3314,6 +3352,12 @@ func _keep_level() -> void:
 		var area := _here()
 		await _town()
 		await _travel(area)
+	if _cover_area == "":
+		# Methods 5: no free levels in a full run. A member behind the area's level is
+		# reported (drained levels are earned back by Restoration scrolls or training).
+		for m in behind.call():
+			_issue("%s is behind: level %d, %s expects %d (no grant in a full run)" % [m.name, _top_level(m), _here(), want + 1])
+		return
 	for m in behind.call():
 		for k in 8:
 			if _top_level(m) >= want - _extra_classes(m):

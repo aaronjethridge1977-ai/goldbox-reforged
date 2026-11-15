@@ -443,6 +443,12 @@ answer 6:28 HOW DO YOU SPEND THE NIGHT|SLEEP WITH A WATCH
 answer 6:28 RETURN TO THEM NOW|RETURN
 answer 6:28 THE WALL IS CLIMBABLE|CLIMB OVER WALL
 answer 6:28 SURRENDER OR DIE|ATTACK
+# Chat 27 (c27a's teleport, day 392): an ankheg fight in 6:25 on the way left the party hurt; inside,
+# the escort confines it to its quarters (6:28 0x9E57, "DO NOT LEAVE THIS AREA") and the rest rule's
+# trip to the inn found no way out. Heal in the band first (play guide 7: whole before a story event).
+travel 6:25
+heal
+memorize
 travel 6:28
 expect 6:28
 # The escort leaves the party on 5,0 facing east; the quarters' menu comes on the next arrival.

@@ -1616,7 +1616,9 @@ func _quick_load() -> void:
 	if not members.is_empty() and (members[0] as Dictionary).has("record"):
 		var rebuilt: Array[PartyMember] = []
 		for saved in members:
-			rebuilt.append(PartyMember.from_bytes(saved.record, PackedByteArray()))
+			var m := PartyMember.from_bytes(saved.record, PackedByteArray())
+			m.raise_highest()     # the original's recount as the party is loaded (0x1F55A)
+			rebuilt.append(m)
 		_party.assign(rebuilt)
 	_party_menu.roster.clear()
 	for saved in cfg.get_value("party", "roster", []):

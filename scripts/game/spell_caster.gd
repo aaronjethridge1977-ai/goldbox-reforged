@@ -116,14 +116,28 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				out.append("%s IS STRONGER" % t.name)
 			return out
 		58:                 # Neutralize Poison (an item's power): GAME.OVR 0x29E65
-			# The poison and Slow Poison's effects go, without a word; a member dead of it stays
-			# dead. (Not poisoned, the original tries other cures, 0x292A2, then heals 1d4 + 8
-			# "IS HEALED": not built.)
+			# The poison and Slow Poison's effects go, "IS CURED" (0x2BF6B: a found effect is
+			# named cured and removed); a member dead of it stays dead. Chat 27: not poisoned,
+			# the other cures (0x292A2): effect 0x22; 0x2B (with 0x2C and 0x1F); 0x32, the
+			# mummy's disease (with 0x39, the rot), each "IS CURED"; none of them: 1d4 + 8 HP
+			# (0x2BCCD, the heal 0x2C647), "IS HEALED" when it heals.
 			var t: PartyMember = targets[0]
 			if t.has_affect(POISONED):
 				for b in t.affects.duplicate():
 					if int(b.effect) in [POISONED, SLOWED_POISON, POISON_TICK]:
 						t.affects.erase(b)
+				out.append("%s IS CURED" % t.name)
+				return out
+			var cured := false
+			for pair in [[0x22, []], [0x2B, [0x2C, 0x1F]], [0x32, [0x39]]]:
+				if t.has_affect(pair[0]):
+					cured = true
+					out.append("%s IS CURED" % t.name)
+					for b in t.affects.duplicate():
+						if int(b.effect) == pair[0] or int(b.effect) in pair[1]:
+							t.affects.erase(b)
+			if not cured and _heal(t, _roll(rng, 1, 4) + 8):
+				out.append("%s IS HEALED" % t.name)
 			return out
 		57:                 # Potion of Speed: haste, unless slowed
 			var t: PartyMember = targets[0]

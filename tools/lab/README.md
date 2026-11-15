@@ -141,6 +141,12 @@ book; the highlight starts on the last entry there), and keys sent before a list
 or City Hall brings the watch or the guards: City Hall rests quietly with `4AC0=1` in the save. Checks driver:
 `data/c26/checks/run.sh <n> <area>` (keys from chat 25's logs).
 The bot's full runs reload the last checkpoint at a member's death (chat 26); full run c26a: `data/logs26/full_c26a.log.gz`.
+**Chat 27:** a record edit is checked by letting the original load and save it: `mksave.py J G ...`, patch
+`game/CHRDATG<n>.SAV`, `pl.py boot g`, then E (ENCAMP), S (SAVE), E (the letter), N (not QUIT TO DOS), and read
+`game/CHRDATE<n>.SAV` (the original's recount ran on load: 0x73). Clear `game/CHRDATE*` first. A full run resumed
+from another run's checkpoint: copy `bot_<name>.cfg` and `.json` from that run's user folder
+(`~/.local/share/godot/app_userdata/Gold Box Reforged bot <id>/`) and pass `--resume=<copy>:<name>`. ECL blocks
+disassembled: `godot --headless --path <repo> -s res://tools/dis.gd -- <game> <file> <block>`.
 A Monitor or tail pipeline must flush every stage (`cut` buffers; use `awk '{print substr($0,1,200); fflush()}'`).
 
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`

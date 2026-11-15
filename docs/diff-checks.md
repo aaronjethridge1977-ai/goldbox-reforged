@@ -172,6 +172,51 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 27: Valhingen's "dead forever" and the full run's teleports
+
+- **Record byte 0x73, the highest level.** A level drain (0x10D7D) kills "forever" when 0x73 is under 2 (0x10F15).
+  The original raises 0x73 only in its level recount (0x2AA87: to the highest class level, never down), which runs
+  **after training** (0x1C8D9, after "CONGRATULATIONS...") and **as a character joins the party** (0x1F55A: loading a
+  save, ADD CHARACTER); creation sets 1 (0x1A521). Ours never raised it, so every drained character of any level died
+  forever (c26a's 8 reloads at 4:10). Lab: `mksave.py J G 3 0 4 13 N`, CHRDATG1 patched to fighter 3 with 0x73 = 1;
+  the original loaded it and saved it to E with **0x73 = 3** (lab `data/c27/o_73_load_*.SAV`). Built:
+  `PartyMember.raise_highest()`, called from `apply_class_tables` (training, the drain's recount) and as a party is
+  loaded (`load_files`, the quick save). Also from 0x1C89C: **a level trained while drained pays back the drain's
+  record** (0x75 less 0x75 / 0x74, 0x74 - 1), so a later Restoration doesn't give that level twice.
+  Run c27v (c26a's `zhentil` checkpoint, this code): the spectres now drain levels ("DRAINED 2 LEVELS", no "DEAD
+  FOREVER"), the graveyard is checkpointed, and the party reaches the plan's end.
+- **c26a's three teleports** (`data/logs26/data_full_c26a.log.gz`):
+  1. *8:29 -> 3:0, day 26*: the training trip began at the bottom of Kuto's Well (8:29's well map, 0x4ADB = 2, after
+     CLIMB DOWN YES), whose only way out is the rungs' menu (0xA1DA "CLIMB UP THE RUNGS?" YES, then LOAD_AREA_MAP); the
+     area graph has no walking exit from it. Rare (a trip starting there); not fixed, logged with its cause.
+  2. *7:26 -> 7:17, day 60*: on the nomad camp's square (12,11) the band's **random site** came first (7:26 0xA10E ->
+     0xA44C: "A SMALL WOODED GROVE" or "SOME RUINED HUTS", a sub-map, 0x49E6 = 1), and the gate's answer ENTER took
+     the party into it. Bot fixed: a gate's answer is never given at those two sites (travel leaves them).
+  3. *7:26 -> 3:0, day 68*: a knock-on of 2: the teleport left 0x49E6 = 1, so the next arrival in 7:26 from the
+     nomads ran the grove's edge ("ABOUT TO LEAVE THIS AREA", 0xAA9A) and RETURN put the party in the grove's map.
+     Bot fixed: a teleport out clears 0x49E6 and 0x4A9E as the site's own LEAVE does (0xAAE7).
+
+## Chat 27: fresh full run c27a (from creation, no level grants)
+
+Code: chat 27's (0x73, Restoration scrolls in the bot, no level grants in a full run). From creation to the plan's
+end (plan line 612, after Tyranthraxus), game day 497, in about 40 minutes of wall time. Lab log
+`data/logs27/full_c27a.log.gz`. Counters: won 17, lost 11, wipes 4, deaths 10 (each a reload), **restorations 12**
+(the drained given levels back by the clerical scrolls the party found), **0 level grants**. Final levels: ARN 8,
+BRAM 8, CEDRIC 6, ELWEN 6/6/5, LIRA 7/6, DORN 6/7, DIRTEN 6. Every shortcut and its cause:
+
+| Shortcut | Where | Cause |
+|---|---|---|
+| teleport 6:28 -> 3:0 | Zhentil Outpost, day 392 | Arrived hurt (an ankheg fight in 6:25 on the way); the escort confines the party to its quarters and the rest rule's inn trip found no way out. Plan fixed: heal and memorize in 6:25 before going in. |
+| win x4 | 8:13 4,3 (the kobold king's hall) | Difficulty: the Player lane's throne-room fight (its queue item 2). |
+| win | 2:9 7,6 (ettins and company) | Difficulty: a fight the party lost twice at level 6-8; not yet compared with the original (Combat's LEVEL 6 MU fight is in this area). |
+| win x2 | 5:4 15,9 / 14,9 (a hill giant, five 6th-level fighters) | Difficulty: lost twice; not yet compared. |
+| win | 5:7 3,8 (**Tyranthraxus**) | Difficulty: his fight matches the original roll for roll (check 5, Combat Chat 4); the party (levels 6-8) lost it twice. Question for design on the board. |
+| restore x14 | the first reload after each loss | The run's rule: the party restored on the first retry from the checkpoint (logged). |
+
+The finale's guards (5:7, 85 x12) were won in play this time. Left as issues, not shortcuts: events left "for later"
+(the party couldn't win them yet) in 7:17, 7:23, 5:5, 4:2, 4:21, 4:10, 2:9, 2:20; CEDRIC behind at 3:14 (level 3,
+the area expects 5); 4:2's "WHAT DO YOU DO WITH THE MAN?" repeating.
+
 ## Proposed next five (chat 21, for Jeremy)
 
 One per closed area without a check, story flags first: the flags below are written in that area and read by another area's

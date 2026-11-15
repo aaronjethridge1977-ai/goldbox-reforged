@@ -119,6 +119,8 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 	if FileAccess.file_exists(itm_path):
 		item_data = FileAccess.get_file_as_bytes(itm_path)
 	var m := from_bytes(d, item_data)
+	if m != null:
+		m.raise_highest()     # a character joining the party: the recount (0x1F55A)
 	var spc_path := sav_path.get_basename() + ".SPC"
 	if m != null and FileAccess.file_exists(spc_path):
 		SpecialAffects.add_records(m, FileAccess.get_file_as_bytes(spc_path))
@@ -1005,6 +1007,21 @@ func set_level(c: int, value: int) -> void:
 	raw[0x96 + c] = value
 
 
+## Record byte 0x73, the highest level the character has had: the original's level recount
+## (GAME.OVR 0x2AA87, after training and as a character joins the party, 0x1F55A) raises it
+## to the highest class level and never lowers it. A level drain kills "forever" below 2
+## (0x10F15), so a trained character left at creation's 1 died forever at the first drain
+## (chat 26's full run, Valhingen Graveyard).
+func raise_highest() -> void:
+	if raw.size() <= 0x9E:
+		return
+	var top := 0
+	for c in 8:
+		top = maxi(top, level_in(c))
+	if raw[0x73] < top:
+		raw[0x73] = top
+
+
 func class_indices() -> Array[int]:
 	var out: Array[int] = []
 	for c in ClassTables.CLASS_COUNT:
@@ -1060,6 +1077,12 @@ func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNu
 	var old_mu := level_in(5)
 	for c in classes:
 		set_level(c, level_in(c) + 1)
+		# GAME.OVR 0x1C89C: a level trained while drained pays back one drained level's share
+		# of the drain's record (0x75 less 0x75 / 0x74, 0x74 - 1); the hit points come from the
+		# roll below, not from the drain.
+		if raw[0x74] > 0:
+			raw[0x75] -= raw[0x75] / raw[0x74]
+			raw[0x74] -= 1
 	apply_class_tables(t, table)
 	# Hit points.
 	var count := class_indices().size()
@@ -1092,6 +1115,7 @@ func apply_class_tables(t: ClassTables, table: SpellTable) -> void:
 			best_saves[k] = mini(best_saves[k], s[k])
 	base_thac0_60 = best_thac0
 	saves = best_saves
+	raise_highest()
 	raw[0x2D] = base_thac0_60
 	for k in 5:
 		raw[0x6D + k] = saves[k]

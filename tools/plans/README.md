@@ -9,6 +9,23 @@ that isn't obvious, the source of each square or answer (the Clue Book, an area'
 The Player lane adds fields it needs by a request on the board (`docs/board.md`), and they are added here first:
 the bot logs any line it doesn't know as an issue ("unknown plan command") and goes on.
 
+## The play guide and the bot (chat 27)
+
+Each of the guide's general rules, and where main's bot keeps it (`scripts/dev/bot.gd`) or where it doesn't:
+
+| Guide rule | The bot |
+|---|---|
+| 1 No resurrection; a death is a reload | A member dead, stoned or gone in a full run reloads the last `checkpoint` (counted "deaths"); temples raise only on `temple x,y raise`; `explore` never checkpoints with a member dead. |
+| 2 The inn, not the streets; GO to the watch | `rest 3:0 inn` and the other `rest <area> inn` lines; `answer 3:0 ROUSTED BY THE CITY WATCH\|GO`; before the doors open at 14:00 it waits at the inn, not in the street (`_wait_for_day`). |
+| 3 Coin for the inn, platinum included | Reactive: on "ENOUGH PLATINUM" the richest member buys arrows for change and the inn is tried again. Training is skipped while the purse is short of 1000 gold. |
+| 4 Rest at the inn until whole and memorized | The inn rests, cures with Cure Light Wounds and rests again until everyone is whole (up to 12 rounds; a day a hit point without a cleric). |
+| 5 Leave where rests are interrupted | An interrupted camp rest walks to the inn when town is near (`_rest_at_inn`); the caves rest outside (`rest 8:13 inn 4A8D 1`). |
+| 6 Train as soon as due | `_can_train` sends it to town when anyone has the experience and the purse holds 1000 gold. |
+| 7 Heal and memorize before a story fight | `_prepare` before each event; in `rest ... inn` areas cures first, the inn only when worn down (under 60% or spells mostly spent). |
+| 8 Locks: best thief, then BREAK or KNOCK | Pick, then bash, then Knock (the library's doors). |
+| 9 A stalemate: flee and come back | **Not kept**: after 40 rounds with nobody hurt the bot wins by a logged `win` shortcut, listed for the Player lane, which plays these fights in the original (its queue item 2). |
+| 10 Don't raise an area's alarm | Plan answers (Bane's altar's box and crosse left; Valjevo by clean tries at a way out). |
+
 ## Files
 
 - `playthrough.plan`: the whole game, a new party to Tyranthraxus (the full run). Standing rules first (rest,
