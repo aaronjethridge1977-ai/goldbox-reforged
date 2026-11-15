@@ -14,7 +14,9 @@ extends Control
 ## - TRAIN: "<NAME>" (cyan) "WILL BECOME:" at row 4 column 4, "A LEVEL n <CLASS>" at row 5
 ##   column 10, "DO YOU WISH TO TRAIN?" (magenta) YES NO with NO lit; YES: "CONGRATULATIONS..."
 ##   (green, row 24) for a moment, then the menu. One who can't train (too little experience
-##   or money): nothing happens. Then a magic-user who gained a level picks a new spell.
+##   or money): nothing happens. Ours (P57, an exception, Jeremy 2026-11-14) says why on row 24
+##   for a moment, white, in place of CHOOSE A FUNCTION. Then a magic-user who gained a level
+##   picks a new spell.
 ## - DROP: "DROP <NAME> FOREVER?" (yellow) YES NO, NO lit. REMOVE: at once, no question.
 ## - ADD: the waiting characters listed from row 2 at column 1, "ADD A CHARACTER:" ADD EXIT.
 ## - SAVE: "SAVE WHICH GAME:" A to J. EXIT TO DOS: "QUIT TO DOS" (yellow) YES NO, NO lit.
@@ -52,6 +54,7 @@ var _cursor := 0
 var _list: Array[int] = []
 var _scr: GameScreen
 var _note := Label.new()               # what happened, for the bot's log
+var _row24 := ""                       # P57: training's refusal, on row 24 for a moment
 var _sheet: CharacterSheet
 var _rng := RandomNumberGenerator.new()
 
@@ -163,7 +166,10 @@ func _refresh() -> void:
 				_scr.menu_line(12 + i, [items[i]], 2, -1)
 			match _mode:
 				"menu":
-					_scr.text(0, 24, "CHOOSE A FUNCTION", MAGENTA)
+					if _row24 != "":
+						_scr.text(0, 24, _row24, GameScreen.WHITE)
+					else:
+						_scr.text(0, 24, "CHOOSE A FUNCTION", MAGENTA)
 				"confirm_drop":
 					var q := "DROP %s FOREVER?" % _who().name
 					_scr.text(0, 24, q, PROMPT)
@@ -180,6 +186,16 @@ func _refresh() -> void:
 func _show_menu() -> void:
 	_mode = "menu"
 	_refresh()
+
+
+## P57: why training refused, on row 24 for a moment (as the camp's refusals), then the menu.
+func _say_24(text: String) -> void:
+	_row24 = text
+	_refresh()
+	await get_tree().create_timer(1.5 * CampScreen.delay_scale()).timeout
+	if _row24 == text:
+		_row24 = ""
+		_refresh()
 
 
 # --- Actions (the bot calls these too) ----------------------------------------------------
@@ -223,7 +239,8 @@ func _train() -> void:
 		return
 	var plan := m.training_plan(tables, hall_mask)
 	if plan.has("error"):
-		_note.text = plan.error       # the original says nothing
+		_note.text = plan.error       # the original says nothing; ours shows it (P57)
+		_say_24(plan.error)
 		return
 	_plan.assign(plan.classes)
 	_note.text = ""
@@ -274,6 +291,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
 	var enter := key in [KEY_ENTER, KEY_KP_ENTER]
 	var esc := key == KEY_ESCAPE
+	if _row24 != "":                  # any key ends the refusal's moment
+		_row24 = ""
+		_refresh()
 	match _mode:
 		"menu":
 			if up or down:
