@@ -428,6 +428,8 @@ func _replay_keys(names: PackedStringArray) -> void:
 			for o in [_combat, _combat._sheet, _party_menu, _camp, _temple, _treasure, _shop, _party_menu._sheet, _camp._sheet, _treasure._sheet, _sheet]:
 				if o != null and o.visible and o.get("_scr") != null:
 					scr = o._scr
+			if _ending != null and _ending.visible:
+				scr = _ending._screen   # the closing pictures (PROGRAM 8)
 			if scr != null and scr.img != null:
 				scr.img.save_png(n.trim_prefix("screen="))
 			continue

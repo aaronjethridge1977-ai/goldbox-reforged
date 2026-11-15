@@ -520,21 +520,47 @@ checkpoint valjevo6
 town
 
 log 18e. Valjevo Castle and Tyranthraxus (5:7)
-travel 5:7
+# The way up to 5:7 (hand-played, chat 24): the exits graph has no 5:5 -> 5:7 edge, and 5:5 is
+# four maps that change at the edges (the on-move tables at 0x9AEB: map 5 north -> 4, 4 west -> 3).
+# The stairs up are event 4 at map 3's 13,15, taken by a step east FROM that square (0x9B28).
+# From the gate (map 5) no hedge is cut: each hedge is save vs poison or 201 damage (0x9BC3), and
+# 12,11 on map 3 is a teleport trap. Then at 5:7's 5,7 the way on is a secret door to the north,
+# found by LOOK (0x9AEB: a d5 a member, 0x4A6C bit 8).
+travel 5:5
+tour 4,0
+face N
+step
+tour 0,11
+face W
+step
+tour 15,10 11,10 11,14 12,14 12,15
+face E
+step
+answer 5:7 GO DOWN THESE STAIRS|NO
+step
+key l
+key enter
+key l
+key enter
+key l
+key enter
+answer 5:7 GO DOWN THESE STAIRS|YES
 # The audience hall (event 8) ends the game: the rest of the inner tower first. The party
 # arrives from 5:5 at the foot of the tower's stairs (5,7); every way on is up the stairs
 # (the step script's table at 0x9ACC); down (back toward the hall and 5:5) is left to explore,
 # which goes down once a floor is done.
 answer 5:7 GO UP THESE STAIRS|YES
 fight 5:7 TWO GUARDS MOVE TO BAR YOUR PATH
-explore 8
+# explore 8 dropped (chat 24): in c24b it met the medusa (Arn stoned) and wore the party down before the hall; the
+# rest of 5:7 is the coverage runs'. The hand-played party went straight to the hall and won.
 # The step script's stair table (0x99DA.., two bytes past the listing): from 5,7 west down to
 # 5:5, east down to 11,7; 5,6 north up to 5,4 and back; 11,7 west up to 5,7; 3,6 south down to
 # the audience hall at 3,8, and back north. So: up from 5,6, across to 3,6, then south.
 tour 5,6
 face N
 step
-tour 3,6
+# From 5,4 west first: 5,5 is the stairs back down (chat 24).
+tour 4,4 4,5 4,6 3,6
 face S
 answer 5:7 GO DOWN THESE STAIRS|YES
 step

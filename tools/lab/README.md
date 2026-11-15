@@ -95,6 +95,16 @@ now find DOSBox under `pl.py` too (they took its `sh` wrapper's pid). The origin
 the ground table DS:0x2744 (4 bytes an id: move cost, 0, sight, picture). Ad hoc scripts in the lab archive's
 `combat3/` film the original's screen (`p40film.py`, `restfilm.py`).
 
+**Chat 24:** `trace.py` needs `re/start.img` (the unpacked START.EXE: `mkdir -p re && python3 unexepack.py game/START.EXE
+re/start.img`); without it the trace reader dies at once and `cmpfight2.sh` compares an empty original trace. This lab's fight
+tools are synced from the repo's `tools/lab/` (older copies in `data/old_tools_c23/`). With the trace patch installed the
+original waits for a reader at every draw: keep `trace.py run` going whenever `seed.py` has been used. Ours' keyed runs
+need `wait`s after `fightend,n` before Enter (the won screen and the treasure take a few frames). `pathkeys.gd`
+(`geo.sh pathkeys <GEO> <block> <x,y> <goal> <facing> [hedges|-] [avoid x,y ...]`): the shortest walk on one map as
+`--keys`, never through an event of 30 or more (5:5's ways out), and the open edges. The ending by hand: `data/ending_c24/`
+(c23c's `valjevo6` checkpoint, `route_v3.txt` to 5:7's 3,6, `hall_door_v3.cfg` saved there, `finale_keys.txt` from it to
+New Phlan); `screen=` now also captures the closing pictures.
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
