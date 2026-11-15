@@ -2167,6 +2167,10 @@ func _run_program() -> void:
 				_ending = EndingScreen.new()
 				add_child(_ending)
 				_ending.finished.connect(func() -> void:
+					# The original redraws the 3D view after the closing scene: "KNOWING THAT
+					# TYRANTHRAXUS..." shows over the hall, not the dragon's portrait (lab, chat 24).
+					_event_image = null
+					_vm.sprite_id = -1
 					_vm.close_program()
 					_after_vm()
 					_show())
