@@ -49,6 +49,26 @@ save), EXIT; the save and its character files copied to `$OP_LAB/.lab/player/sav
 
 Stops (with the reason in the summary): a screen no rule answers, the party destroyed (a loss), the same key 20
 times on an unchanged screen, no goal done in 300 keys, 60 s with no input wanted and no dice drawn.
+**A stalled fight** (Player 2): while a fight plays itself the heartbeat (every 30 s while dice are drawn) logs
+`BEAT figures <n> standing <n> hp <sum>` for the whole fight list (the party, then the monsters); when no figure's
+hit points or status change for `OP_STALE` seconds (default 600) the run stops with "stalemate: ..." and the
+monsters still standing. A boot that meets a screen it doesn't know (the original refusing a save: "Unable to load
+wallset in LoadWallSet.") stops with the screen's text and `logs/boot_stop_<time>.png`.
+
+## Starts from ours' saves (Player 2)
+
+The hard fights are played from the state ours' bot had before them (main's full run c24f). In the Player lab's
+`p2/` (lab files, not in git): `p2bot.sh` runs a private copy of c24f's bot (main lab `botproj_c24f`, read only;
+its own user folder "Gold Box Reforged p2 <id>") resumed from a c24f checkpoint, with two lab hooks: `P2_RING=1`
+(a quick save at every walking key, the last 32 kept) and `P2_FIGHT="<area> <min monsters> [x,y]"` (quit as such a
+fight opens; the ring save before it is the start). `mkorig.sh <cfg> <name>` writes a quick save in the original's
+format through ours' camp SAVE (slot I only: A-D and J are the shipped saves, G and H Player 1's) and keeps it in
+`.lab/player/saves/p2start/<name>`; `useslot.sh <name>` puts it back in slot I; `queue.sh` plays several plans in
+turn in the one DOSBox. **`fixwalls.py`** is needed on every such save until main's save writer is fixed (Findings,
+2026-11-15): ours writes a wall-set slot whose id is 255 or has no WALLDEF block as that id, and the original stops
+with "Unable to load wallset in LoadWallSet."; written as 0xFFFF (id and slot number) it loads.
+
+Plans can cross event squares on a walk: `walk 12,9 through 10,11` (Podol Plaza is all event squares).
 
 ## Screens and keys (lab, 2026-11-15)
 
@@ -149,3 +169,27 @@ screen), F2, and `statediff.gd` against the `<to>` save. On a difference:
 
 Open: the treasure's items (the pilot takes coins only); the wilderness square (ECL 0x49C3/0x49C4 on the bands;
 DS:0x6AAD/0x6AAE hold the 3D map's square there); member menus tried only with the first member highlighted.
+
+## Queue item 2: the full run's hard fights (Player 2, 2026-11-15)
+
+Played in the original from c24f's party (starts above), every fight on QUICK, two seeds each (12345678, 2468ace1):
+
+| fight (c24f) | in ours (c24f's bot) | the original | verdict |
+|---|---|---|---|
+| 8:13 4,3, the kobold king's throne room [31 x4, 0 x35, 1 x11] | beat the party twice, then won by shortcut | **party destroyed** on both seeds (p2a, p2f: 3.4 and 4.3 min) | the game: the party is too weak there; no rule bug shown |
+| 5:7 3,8, the finale's guards [85 x12] | beat the party twice (c24f); lost once, won once (p2 bot from valjevo6) | **party destroyed** on both seeds (p2g, p2h: about a minute) | the game (Combat's checks: this fight matches roll for roll) |
+| 6:1 7,2, the run for the gate [100 x4, 99 x30] | stalemate at round 47 (c24f); won (p2 bot from buccaneers) | **won** on both seeds (p2c: two waves; p2e: one) | decided in the original: **rule difference found** (below) |
+| 1:18, Podol Plaza's goblin hordes (13,9 [2 x40, 3 x5], random) | stalemate at round 52 (c24f) | **won**: waves of 11, 22, 27 and 29 figures (p2d, one seed) | decided in the original; ours' replay of the same stretch: below |
+
+**6:1, first difference** (README triage: p2i = p2e rerun with `OP_TRACE=1`, `segment.py p2e entry gate --tplog`,
+`cmpdraws.py logs/p2i.trace.txt logs/p2e.segment_entry-gate.txt`): the first 960 draws match (the walk, the alarm,
+initiative, every "who acts next" d100); at **draw 961** LIRA (QUICK, round 1, nobody down yet) picks a target: the
+original rolls **d32 at GAME.OVR 0x160DB** and attacks, ours rolls **d31** (one enemy fewer in sight) and re-picks.
+Request to Combat on the board.
+
+Both of ours' stalemates end alike: one monster left "FLEES IN PANIC" and "IS GUARDING" every round (it can't get
+away) while every member on QUICK guards. Not seen in the original in five decided fights.
+
+Tool changes on the way: stalemate stop and fight heartbeat (`OP_STALE`), `walk ... through`, `step` done on an area
+change (out onto a band), the 5:7 text box (PRESS BUTTON OR RETURN TO CONTINUE), a plan's stop under `__main__`, back-
+to-back fights counted, boot stops with the screen's text and picture, `segment.py --tplog`.

@@ -1,6 +1,9 @@
 """Segment check: one of the Player's stretches of the original replayed in ours.
 
-  segment.py <run id> <from checkpoint> <to checkpoint> [--magic]
+  segment.py <run id> <from checkpoint> <to checkpoint> [--magic] [--tplog]
+
+--tplog (Player 2) prints ours' dice after every key (`tplog`: each draw with what drew it), for step 2 of the
+README's triage.
 
 Ours (the lab's Godot copy, `proj` built by check_godot.sh) loads the original's <from> save (copied to lab slot
 F), takes `tpseed=` the seed in its index line (the original's dice from there), then the keys the original was
@@ -27,7 +30,7 @@ def index(run, name):
     raise SystemExit("no checkpoint %s in run %s" % (name, run))
 
 
-def keys_between(run, a, b, magic):
+def keys_between(run, a, b, magic, tplog=False):
     """The original's keys after checkpoint a's save until checkpoint b's ENCAMP, as ours' --keys."""
     out, on, camp, fight = [], False, False, False
     for line in open(os.path.join(LOGS, "%s.log" % run)):
@@ -47,13 +50,15 @@ def keys_between(run, a, b, magic):
             continue
         if why.startswith("default for combat"):
             if not fight:
-                out += ["quickall"] + (["magic"] if magic else []) + ["fightend"]
+                out += ["quickall"] + (["magic"] if magic else []) + ["fightend"] + (["tplog"] if tplog else [])
                 fight = True
             continue
         if fight:            # the won screen and the treasure take a few frames in ours (chat 24)
             out += ["wait", "wait", "wait"]
             fight = False
         out.append(GKEY.get(k, k))
+        if tplog:
+            out.append("tplog")
         if not ("ENCAMP" in bottom and bottom.endswith("LOOK")):
             out += ["wait", "wait"]      # ours' menus and treasure take a few frames (chat 24)
     return out
@@ -78,10 +83,11 @@ def install(cp):
 def main():
     run, a, b = sys.argv[1:4]
     magic = "--magic" in sys.argv
+    tplog = "--tplog" in sys.argv
     ca, cb = index(run, a), index(run, b)
     install(ca)
     seed = ca[4].split()[1]
-    ks = ["load=" + SLOT, "tpseed=" + seed] + keys_between(run, a, b, magic) + ["wait", "F2"]
+    ks = ["load=" + SLOT, "tpseed=" + seed] + keys_between(run, a, b, magic, tplog) + ["wait", "F2"]
     cfg = os.path.join(LOGS, "%s.segment_%s-%s.cfg" % (run, a, b))
     shutil.copy(os.path.join(orig.LAB, "qs.cfg"), cfg)
     G = os.path.join(orig.LAB, "godot", "Godot_v4.7.2-stable_linux.x86_64")

@@ -120,9 +120,9 @@ class Player:
                 self.fights += 1
                 self.in_fight = True
                 self.note("fight", "fight %d begins at %d,%d %s (seed %08x)" % ((self.fights,) + self.where() + (self.g.mem.seed(),)))
-        if scr["kind"] == "walking":
+        if scr["kind"] in ("walking", "treasure", "continue"):   # Player 2: waves fought back to back
             self.in_fight = False
-            if not self.g.party_size:
+            if not self.g.party_size and scr["kind"] == "walking":
                 self.g.party_size = len(self.g.party())
         if scr["kind"] not in self.seen_kinds:
             self.seen_kinds.add(scr["kind"])

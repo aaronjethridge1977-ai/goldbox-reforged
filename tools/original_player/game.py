@@ -32,6 +32,10 @@ class Timeout(Exception):
     pass
 
 
+class Stalemate(Timeout):
+    """A fight that draws dice but in which no figure's hit points change for OP_STALE seconds (Player 2)."""
+
+
 KINDS = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "waits.json")))
 
 
@@ -47,6 +51,8 @@ class Game:
         self.unknown_sites = set()
         self.party_size = 0
         self.beat = time.time()
+        self.stale = None         # (the figures' hit points, since when) while dice are drawn
+        self.stale_limit = float(os.environ.get("OP_STALE", "600"))
 
     # -- reading ------------------------------------------------------------------------------------------
     def wait_kind(self, dt=0.06):
@@ -89,6 +95,41 @@ class Game:
             o, s = struct.unpack_from("<HH", r, 0x104)
         return out
 
+    def figures(self, limit=90):
+        """[(name, hp, status)] for the whole list from DS:0x5D96: the party, and in fights the monsters after
+        it (README.md). Player 2: read at every heartbeat to tell a fight that goes on from one that stalls."""
+        out = []
+        s, o = self.mem.farptr(0x5D96)
+        while s and len(out) < limit:
+            r = self.mem.far(s, o, 0x120)
+            out.append((r[1:1 + min(r[0], 15)].decode("latin1"), r[0x11B], r[0x10C]))
+            o, s = struct.unpack_from("<HH", r, 0x104)
+        return out
+
+    def fight_beat(self):
+        """The heartbeat's look at the fight: a log line (figures, standing, hit points) and the stalemate
+        clock: Stalemate once no figure's hit points or status changed for stale_limit seconds."""
+        try:
+            f = self.figures()
+        except Exception as e:     # the list is rebuilt between fights
+            self.log("BEAT figures unreadable: %s" % e)
+            return
+        sig = tuple((h, st) for _, h, st in f)
+        up = sum(1 for _, h, st in f if h > 0 and st == 0)
+        self.log("BEAT figures %d standing %d hp %d" % (len(f), up, sum(h for _, h, _ in f)))
+        now = time.time()
+        if self.stale is None or self.stale[0] != sig:
+            self.stale = (sig, now)
+        elif now - self.stale[1] > self.stale_limit:
+            names = {}
+            for n, h, st in f[self.party_size or 0:]:
+                if h > 0 and st == 0:
+                    names[n] = names.get(n, 0) + 1
+            raise Stalemate("stalemate: no hit point or status changed for %d s while the fight drew dice "
+                            "(%d figures, %d standing; monsters standing: %s)" % (
+                                now - self.stale[1], len(f), up,
+                                ", ".join("%s x%d" % kv for kv in names.items()) or "none"))
+
     def status(self):
         s, o = self.mem.farptr(0x5D96)
         out = []
@@ -118,8 +159,10 @@ class Game:
                 if time.time() - self.beat > 30:     # the watchdog's heartbeat while a fight plays itself
                     self.beat = time.time()
                     self.log("BEAT seed %08x" % now[0])
+                    self.fight_beat()
             kind, site = self.wait_kind()
             if kind == "key" or (kind == "poll" and site in KINDS):
+                self.stale = None
                 rows, im = self.rows()
                 if prev is not None and rows == prev[0] and site == prev[1]:
                     self.last = {"wait": kind, "site": site, "rows": rows, "im": im,
@@ -193,6 +236,11 @@ def boot(save, log=print):
             continue
         key = {"title": "enter", "mainmenu": "l", "load": save.lower()}.get(k)
         if key is None:
-            raise Timeout("boot: unexpected screen %s %r" % (k, st["bottom"]))
+            # Player 2: a save the original refuses stops on a DOS line ("Unable to load wallset in
+            # LoadWallSet."): keep the picture and every row of text.
+            shot = os.path.join(orig.LAB, "logs", "boot_stop_%s.png" % time.strftime("%H%M%S"))
+            st["im"].save(shot)
+            text = " / ".join(r.strip() for r in st["rows"].values() if r.strip())
+            raise Timeout("boot: unexpected screen %s %r (screen text: %s; %s)" % (k, st["bottom"], text, shot))
         g.press(key)
     raise Timeout("boot: never reached the walking screen")

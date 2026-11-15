@@ -1,0 +1,12 @@
+# Player 2 (queue item 2): the buccaneers' compound after the boy's rescue (6:1): the alarm and the run for the
+# front gate (c24f's stalemate at 7,2: [100 x4, 99 x30]), with c24f's party.
+# Start save: c24f's checkpoint buccaneers (6:1 7,6 N, the boy taken, the slaves out), written in the original's
+# format by ours' camp SAVE (Player lab p2/mkorig.sh).
+area 6:1
+rules ../../plans/playthrough.plan
+
+checkpoint entry
+walk 7,0
+checkpoint gate            # after the fights, before the gate (segment check entry -> gate)
+step N                     # out of the front gate (c24f: travel 6:1 -> 6:25 by 7,0 N)
+exit 6:25

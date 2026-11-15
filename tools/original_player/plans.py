@@ -3,7 +3,8 @@
   area 1:18                      the area this plan plays (GEO<set>.DAX block <block> is its map)
   rules ../../tools/plans/playthrough.plan
                                  main's plan: its `answer <area> <words>|<choice>` lines for this area are used
-  walk 5,8                       walk there (route on the map, from the square read in memory)
+  walk 5,8                       walk there (route on the map, from the square read in memory), round every event
+  walk 12,9 through 9,11         the same, but the route may cross squares with those event numbers
   step W                         face W and step (into an event square)
   checkpoint <name>              ENCAMP, SAVE to the run's slot, index line, copy to .lab/player/saves
   exit 7:26                      walk is over when the party is in that area
@@ -21,8 +22,9 @@ DX = {"N": (0, -1), "E": (1, 0), "S": (0, 1), "W": (-1, 0)}
 
 
 class Walk:
-    def __init__(self, x, y, area):
+    def __init__(self, x, y, area, through=()):
         self.x, self.y, self.area = x, y, area
+        self.through = set(through)     # event numbers the route may cross (Player 2: Podol Plaza's 9s and 11s)
 
     def __repr__(self):
         return "walk %d,%d" % (self.x, self.y)
@@ -35,7 +37,7 @@ class Walk:
         if a != self.area:
             raise_stop(p, "walk: in area %d:%d, not %d:%d" % (a + self.area))
         R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
-        avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)}
+        avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
         path = R.route((x, y), {(self.x, self.y)}, avoid)
         if path is None:
             raise_stop(p, "walk: no route from %d,%d to %d,%d" % (x, y, self.x, self.y))
@@ -62,9 +64,12 @@ class Step:
         """Done once the party has moved, or once an event has taken keys after the step (an event can put
         the party back where it stood: the tavern's LEAVE)."""
         x, y, f = p.where()
+        a = p.area()
         if self.start is None:
             self.start = (x, y)
-        if (x, y) != self.start:
+            self.area = a
+        # Player 2: out of an area onto a wilderness band the 3D square (DS:0x6AAD) stays put: the area tells.
+        if (x, y) != self.start or a != self.area:
             return True, None, ""
         if self.sent is not None and p.g.nkeys > self.sent:
             return True, None, ""
@@ -105,8 +110,12 @@ class Checkpoint:
 
 
 def raise_stop(p, why):
-    import player
-    raise player.Stop(why)
+    # player.py runs as __main__: its Stop is __main__.Stop, not player.Stop (Player 2: a plan's stop escaped as
+    # a traceback with no summary).
+    m = sys.modules.get("__main__")
+    if not hasattr(m, "Stop"):
+        import player as m
+    raise m.Stop(why)
 
 
 def area_of(s):
@@ -182,8 +191,10 @@ def load(path):
         elif cmd == "rules":
             main_rules.append(os.path.normpath(os.path.join(base, rest)))
         elif cmd == "walk":
-            x, y = (int(v) for v in rest.split(","))
-            pl.goals.append(Walk(x, y, pl.area))
+            w = rest.split()
+            x, y = (int(v) for v in w[0].split(","))
+            through = [int(v) for v in w[2].split(",")] if len(w) > 2 and w[1] == "through" else []
+            pl.goals.append(Walk(x, y, pl.area, through))
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":

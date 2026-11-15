@@ -1,0 +1,11 @@
+# Player 2 (queue item 2): the finale's guards (5:7 3,8: two guards, 'GUARDS, KILL THESE PESTS'), with c24f's party.
+# Start save: c24f's bot resumed from its valjevo6 checkpoint in the Player lab (a quick save at every walking key),
+# the one at 5:7 3,6 S before the stairs down to the audience hall, written in the original's format by ours'
+# camp SAVE (Player lab p2/mkorig.sh). After the guards: the vote (ATTACK, main's plan) and Tyranthraxus.
+area 5:7
+rules ../../plans/playthrough.plan
+answer GO DOWN THESE STAIRS|YES
+
+checkpoint entry           # 3,6 S, before the stairs
+step S                     # down to the audience hall: the guards
+checkpoint after

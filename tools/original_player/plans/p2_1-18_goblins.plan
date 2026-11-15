@@ -1,0 +1,16 @@
+# Player 2 (queue item 2): Podol Plaza's goblin hordes (1:18; c24f's stalemate: 13,9 [2 x40, 3 x5], a random
+# 'GOBLINS RUSH TO ATTACK' encounter on the way out), with c24f's party.
+# Start save: c24f's checkpoint podol (1:18 1,15 S, day 72, after the bot's 1:18 fights), written in the
+# original's format by ours' camp SAVE (Player lab p2/mkorig.sh). The party walks between the inn and the
+# shrine for the area's own random encounters; each fight on QUICK; OP_STALE stops a fight that stalls.
+area 1:18
+rules ../../plans/playthrough.plan
+
+checkpoint entry
+walk 12,9 through 10,11
+walk 2,13 through 10,11
+walk 12,9 through 10,11
+walk 2,13 through 10,11
+walk 12,9 through 10,11
+walk 2,13 through 10,11
+checkpoint end

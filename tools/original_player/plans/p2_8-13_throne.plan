@@ -1,0 +1,10 @@
+# Player 2 (queue item 2): the kobold caves' throne room (8:13 4,3), with c24f's party.
+# Start save: c24f's bot (main lab botproj_c24f) resumed from its band3 checkpoint in the Player lab, a quick save
+# at every walking key; this is the one at 8:13 4,4 N just before the step into the throne room (after the bot's
+# two wipes and restore there), written in the original's format by ours' camp SAVE (Player lab p2/mkorig.sh).
+area 8:13
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # before the throne room
+step N                     # 4,3: a horde of kobolds, two men and the kobold king
+checkpoint after
