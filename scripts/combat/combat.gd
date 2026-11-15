@@ -406,6 +406,25 @@ static func save_quick_bandages(on: bool) -> void:
 	cf.save(GameData.SETTINGS_PATH)
 
 
+## SETTINGS: MAGIC ON DONE (decided, Methods 3): DONE's menu gains MAGIC after SPEED, showing
+## whether QUICK party members may cast (the original's Alt-M). Off: the original's DONE menu.
+const MAGIC_MENU_KEY := "magic_menu"
+
+
+static func magic_menu_on() -> bool:
+	var cf := ConfigFile.new()
+	if cf.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(cf.get_value("qol", MAGIC_MENU_KEY, true))
+
+
+static func save_magic_menu(on: bool) -> void:
+	var cf := ConfigFile.new()
+	cf.load(GameData.SETTINGS_PATH)
+	cf.set_value("qol", MAGIC_MENU_KEY, on)
+	cf.save(GameData.SETTINGS_PATH)
+
+
 ## The active combatant bandages the first dying party member; its turn ends.
 func bandage() -> bool:
 	if active < 0:

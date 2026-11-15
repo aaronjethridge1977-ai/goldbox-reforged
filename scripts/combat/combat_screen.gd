@@ -1124,7 +1124,10 @@ func _bottom_menu() -> Array:
 			items.append_array(["DELAY", "QUIT"])
 			if _combat.first_dying(_combatants[_combat.active].team) >= 0:
 				items.append("BANDAGE")
-			items.append_array(["SPEED", "EXIT"])
+			items.append("SPEED")
+			if Combat.magic_menu_on():
+				items.append(_magic_item())
+			items.append("EXIT")
 			return items
 	var items := ["MOVE", "VIEW", "AIM", "USE"]
 	var c: Dictionary = _combatants[_combat.active]
@@ -1807,6 +1810,10 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 				_cmode = "speed"
 				_pick = 0
 				_refresh()
+			"MAGIC:ON", "MAGIC:OFF":
+				toggle_magic()
+				_pick = maxi(_bottom_menu().find(_magic_item()), 0)
+				_refresh()
 			"EXIT":
 				_cmode = "menu"
 				_refresh()
@@ -1844,6 +1851,11 @@ func quick_all() -> void:
 			c.quick = true
 	if _combat.active >= 0 and _ai_timer.is_stopped():
 		_ai_timer.start(0.2)
+
+
+## DONE's MAGIC item (SETTINGS: MAGIC ON DONE): its text shows the setting, the original's Alt-M.
+func _magic_item() -> String:
+	return "MAGIC:ON" if _combat != null and _combat.magic_on else "MAGIC:OFF"
 
 
 ## Alt-M in a computer turn or at the combat menu (and --keys magic in the lab): the party's
