@@ -206,6 +206,8 @@ Format: `date · lane (chat) · change · may affect`
 
 Items for Jeremy's "Gold Box Reforged – Test List" (the desk moves them). Newest first.
 
+**In the doc:** everything below as of 2026-11-15 09:40 (Feedback Desk 2: four "New since P21" groups, walking and town / camp and saves / fights / poison). New lines go above this note.
+
 - 2026-11-15 · combat (Combat Chat 4) · **Slow Poison in a fight:** when a party member is poisoned and killed in a fight (frogs, snakes, spiders), a cleric with SLOW POISON memorized: MOVE next to the body (it lies on its square), CAST, SLOW POISON, MANUAL, move the cursor onto the body (the right side shows the member, HITPOINTS 0), TARGET: "<NAME> IS AFFECTED", "<NAME> GETS BACK UP", the member stands there at 1 HP and acts from the next round. Not next to the body: no TARGET (touch range).
 - 2026-11-15 · combat (Combat Chat 4) · **ABORT SPELL? and MOVE's Esc, as the original:** (1) In a fight, CAST a spell that's aimed, then EXIT: the bottom line asks ABORT SPELL? YES NO (the spell's name above it). NO goes back to the aim; YES: SPELL ABORTED, the spell is gone from memory and the turn ends. (2) MOVE a few squares, then Esc: the figure goes back to where it started, with all its movement; MOVE again, a few squares, then Enter: it stays, and the rest of its movement is still there.
 - 2026-11-15 · combat (Combat Chat 4) · **The clock after a fight:** note the time (the walking screen's clock), fight a battle of several rounds, then look again: a minute has passed for every round (before, the clock didn't move).
