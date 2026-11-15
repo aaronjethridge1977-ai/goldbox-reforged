@@ -272,7 +272,7 @@ New Phlan's shops (opened by the area scripts with their own stock).
 | BUY: pages, prices, the buyer's coins and change | checked | yes | screens pixel for pixel (chat 11); 140 gold - 80 = 12 platinum and two more cases (chat 10) |
 | POOL (the party's coins to the buyer) | built | yes | Jeremy hand-tested 2026-11-10; not compared |
 | VIEW -> SELL (half the price) | checked | yes | the shop's VIEW and SELL prompts matched (chat 11) |
-| VIEW -> ID (200 gp) | checked |  | screens matched (chat 11); what ID reveals not compared |
+| VIEW -> ID (200 gp) | checked |  | screens matched (chat 11); what ID reveals (GAME.OVR 0x22F8D: byte 53 cleared, the two answers) pixel-matched (Combat Chat 5) |
 | APPRAISE gems and jewelry, SELL or KEEP | checked |  | values by d100 from GAME.OVR 0x26680, lab chat 8 |
 | NOT ENOUGH MONEY. | partial |  | the original's words when money is short not checked |
 | BOUGHT (the item) on row 24 | built |  | QoL addition (the original says nothing) |

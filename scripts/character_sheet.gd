@@ -39,8 +39,13 @@ extends Control
 ##   HALVE JOIN SELL ID EXIT: SELL offers half the price, "I'LL GIVE YOU n GOLD PIECES FOR
 ##   YOUR <item>" (yellow from row 21, wrapped at 37) / "IS IT A DEAL?" YES NO, paid in the
 ##   largest coins; a readied item can't be sold. ID: "FOR 200 GOLD PIECES I'LL IDENTIFY YOUR
-##   <item>" / "IS IT A DEAL?"; NOT ENOUGH MONEY when short. What identifying reveals is not
-##   built yet (the hidden parts of magic items' names).
+##   <item>" / "IS IT A DEAL?"; NOT ENOUGH MONEY when short (row 24, the question kept). Paid,
+##   GAME.OVR 0x22F8D (lab, Combat Chat 5): an item whose record byte 53 (the hidden name
+##   words) is 0 gets "I CAN'T TELL ANYTHING NEW ABOUT YOUR <item>"; otherwise byte 53 is
+##   cleared and "IT LOOKS LIKE SOME SORT OF <whole name>" (HAMMER +1). Either answer shows
+##   yellow from row 21 under the item list (still the old name) with IS IT A DEAL? YES NO
+##   left on row 24, for about 0.7 s; then the item menu, the list with the new name. The
+##   record keeps the new name and byte 53 = 0 (the original's save: " No   Hammer +1 ").
 ## Not compared yet: the combat-only USE question and what using an item prints.
 
 signal closed
@@ -79,6 +84,7 @@ var _amount := ""
 var _note := ""          # the last thing said (also the bot's log)
 var _message := ""       # shown on row 24 for MESSAGE_TIME
 var _question := ""      # the confirm page's line at row 21
+var _reveal: GameItem = null   # ID's answer is up; this item's name changes after it
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 var portrait := false    # opened from the party menu: the portrait shows
@@ -169,6 +175,8 @@ func _build() -> void:
 	_timer.one_shot = true
 	_timer.timeout.connect(func() -> void:
 		_message = ""
+		if _mode == "id_reply":
+			_end_id_reply()
 		_refresh())
 	add_child(_timer)
 
@@ -476,7 +484,7 @@ func _current_menu() -> Array:
 			return SmartQuick.ORDER_NAMES + ["EXIT"]
 		"whom", "coin_whom":
 			return ["SELECT", "EXIT"]
-		"confirm":
+		"confirm", "id_reply":
 			return ["YES", "NO"]
 	return []
 
@@ -501,14 +509,15 @@ func _refresh() -> void:
 			_draw_items(m, true)
 			if _message == "":
 				_menu(_item_menu(), 0)
-		"confirm":
+		"confirm", "id_reply":
 			_draw_items(m, false)
 			var q := GameScreen.wrap(_question, 37)   # lab: "...IDENTIFY" (33) then "YOUR BANDED MAIL"
 			for i in q.size():
 				_t(1, 21 + i, q[i], GameScreen.YELLOW)
 			var prompt := {"drop": "DROP IT?", "sell": "IS IT A DEAL?", "id": "IS IT A DEAL?", "use": "USE IT?"}.get(_pending, "?") as String
-			_t(0, 24, prompt, MAGENTA)
-			_menu(["YES", "NO"], prompt.length() + 1)
+			if _message == "":
+				_t(0, 24, prompt, MAGENTA)
+				_menu(["YES", "NO"], prompt.length() + 1)
 		"spells":
 			_draw_spells(m)
 		"cast":
@@ -556,6 +565,51 @@ func _caster() -> bool:
 func _item() -> GameItem:
 	var m := _who()
 	return m.items[_cursor] if m != null and _cursor < m.items.size() else null
+
+
+## ID paid for (GAME.OVR 0x22F8D): the answer, held like a message; the name changes after it.
+func _identify(it: GameItem) -> void:
+	_mode = "id_reply"
+	if it.raw.size() < GameItem.SIZE or it.raw[53] == 0:
+		_question = "I CAN'T TELL ANYTHING NEW ABOUT YOUR %s" % item_label(it).to_upper()
+		_reveal = null
+	else:
+		var shown := it.copy()
+		shown.raw[53] = 0
+		shown.name = ""
+		shown.count = it.count
+		_question = "IT LOOKS LIKE SOME SORT OF %s" % item_label(shown).to_upper()
+		_reveal = it
+	_note = _question
+	if _timer != null:
+		_timer.start(MESSAGE_TIME)
+
+
+func _end_id_reply() -> void:
+	if _reveal != null:
+		reveal_name(_reveal)
+	_reveal = null
+	_message = ""
+	_mode = "items"
+	_after_change()
+
+
+## Clears the hidden name words (record byte 53) and caches the whole name in the record,
+## as the original's ID does.
+static func reveal_name(it: GameItem) -> void:
+	if it.raw.size() < GameItem.SIZE:
+		return
+	it.raw[53] = 0
+	it.name = ""
+	var label := item_label(it)
+	var words := label.split(" ", false, 1)
+	if it.count > 1 and words.size() == 2 and words[0].is_valid_int():
+		label = words[1]
+	it.name = label
+	var bytes := label.to_ascii_buffer().slice(0, 41)
+	it.raw[0] = bytes.size()
+	for i in 41:
+		it.raw[1 + i] = bytes[i] if i < bytes.size() else 0
 
 
 func _say(text: String) -> void:
@@ -753,6 +807,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_message = ""
 		if _timer != null:
 			_timer.stop()
+	if _mode == "id_reply":    # a key ends ID's answer early, as other messages here
+		if _timer != null:
+			_timer.stop()
+		_end_id_reply()
+		_refresh()
+		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	# P33/P45 (an exception, Jeremy 2026-11-14): Up/Down move through every list here as
 	# Home/End do (the item list, combat's CAST list, TRADE's and the coins' picks).
@@ -914,7 +974,13 @@ func _unhandled_input(event: InputEvent) -> void:
 					# Lab: paid from all the coins (1000 gold, 2 platinum, 144 silver -> 163
 					# platinum, 2 gold); with too little, NOT ENOUGH MONEY.
 					if not m.pay_gold_in_shop(ID_PRICE):
+						_mode = "id_reply"
 						_say("NOT ENOUGH MONEY")
+						_after_change()
+						return
+					_identify(it)
+					_after_change()
+					return
 				elif _pending == "use" and it != null:
 					_say(_use_item(m, it, true))
 				_mode = "items"
