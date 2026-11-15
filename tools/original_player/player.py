@@ -41,6 +41,7 @@ class Player:
         self.prev_kind = None
         self.seen_kinds = set()
         self.saving = None        # the Checkpoint being saved
+        self.snapped = set()      # snap answers done (plans.py)
         self.slot = os.environ.get("OP_SLOT", "H")   # the original's save slot for checkpoints (lab slots only)
 
     def save_step(self, scr):

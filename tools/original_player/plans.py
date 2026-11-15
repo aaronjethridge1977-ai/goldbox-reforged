@@ -8,6 +8,7 @@
   step W                         face W and step (into an event square)
   checkpoint <name>              ENCAMP, SAVE to the run's slot, index line, copy to .lab/player/saves
   exit 7:26                      walk is over when the party is in that area
+  answer <words>|snap:<name>:<key>  (Player 2) the screen's picture and rows to logs/<run>_snap_<name>.*, once, then <key>
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
                                  <words> gets <choice> (an item's name, or a member's name)
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
@@ -148,6 +149,18 @@ class Plan:
             return "n", "never quit to DOS (asked after SAVE)"
         text = scr.get("text", "") + " " + scr.get("question", "") + " " + scr["bottom"]
         for words, choice, src in self.answers:
+            if words in text and choice.startswith("snap:"):
+                # Player 2: snap:<name>:<key>: the screen's picture and its 25 rows to logs/<run>_snap_<name>.*,
+                # once, then the key (any key name; the services sweep reads shops, temples and halls this way).
+                _, name, key = choice.split(":", 2)
+                if name in p.snapped:
+                    continue
+                p.snapped.add(name)
+                base = os.path.join(orig.LAB, "logs", "%s_snap_%s" % (p.run, name))
+                st["im"].save(base + ".png")
+                open(base + ".txt", "w").write("\n".join("%2d %s" % (r, st["rows"][r]) for r in range(25)) + "\n")
+                p.note("snap", "%s: %s.png/.txt" % (name, base))
+                return key, "%s: %s|%s" % (src, words, choice)
             if words in text:
                 k = self.choose(scr, choice)
                 if k:

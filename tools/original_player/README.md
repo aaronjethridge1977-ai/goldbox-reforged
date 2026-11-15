@@ -193,3 +193,24 @@ away) while every member on QUICK guards. Not seen in the original in five decid
 Tool changes on the way: stalemate stop and fight heartbeat (`OP_STALE`), `walk ... through`, `step` done on an area
 change (out onto a band), the 5:7 text box (PRESS BUTTON OR RETURN TO CONTINUE), a plan's stop under `__main__`, back-
 to-back fights counted, boot stops with the screen's text and picture, `segment.py --tplog`.
+
+## Queue item 3: the service sweeps (Player 2, started 2026-11-15)
+
+New Phlan (3:0) from c24f's `shopped` checkpoint (`p2start/3-0_shopped`, written with the record cache: `p2/cachepatch.py`).
+The door plans are generated in the Player lab (`p2/svc/*.plan`: walk to the open side, step in, `snap` every screen);
+ours from the same checkpoint with `at=<square>,up,y,b,screen=...`; `p2/cmpshop.py <door>` merges every list page of
+both and compares them line by line (`p2/rows.py` reads a capture's 25 rows in the game's font).
+
+- **Shops: all 13 doors match** item for item and price for price: the general store (event 19 at 15,8 9,10 12,10 9,11
+  11,11: 7 items), the jeweller (21 at 8,10: 11), arms and armour (22 at 13,8 8,11 11,12 8,13 9,13: 57), silver (23 at
+  11,10 10,13: 13). Both open the list one item down (the original's highlight is kept from an earlier menu).
+  **One difference, row 24**: the original offers NEXT only when items lie below the window and PREV only when the
+  window isn't at the first item (`ITEMS: BUY EXIT` for a short list at its top); ours always shows `BUY NEXT PREV EXIT`.
+- **Temples** (Tyr: event 6 at 11,3 8,4 8,6; Sune: 7 at 1,1 3,1 1,3; Tempus: 24 at 0,12 2,12): DO YOU SEEK HEALING,
+  then HEAL VIEW POOL APPRAISE EXIT, then the same nine services in both (CURE BLINDNESS ... STONE TO FLESH, EXIT).
+  Open: the prices (shown after a choice), and Tyr's 8,6 addressed DORN in the original where ours (and Sune, Tempus in
+  both) addressed ARN, with no selection key sent.
+- **Training halls** (3:0 row 0: clerics 5,0, magic-users 7,0, fighters 8,0, thieves 9,0 from 10,0 W): the thieves' hall
+  answers WE TRAIN ONLY THIEVES HERE in both; its training screen (the party menu, `mainmenu` to screens.py) not compared yet.
+- The town's other event squares, read in ours: 8 the river, 25 the gateway, 1 the pier (boat to 4:21), 2 the harbour
+  master, 26 and 10 into 3:11, 9 the inn (WHO WILL PAY?).
