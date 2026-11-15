@@ -21,13 +21,13 @@ Files not listed: whoever needs them asks here first.
 
 Each building lane takes item 1 first and doesn't start Later items while 1-3 are open. Only the design office and the feedback desk add items; only Jeremy reorders. A lane ticks an item here (and its request below) when it lands.
 
-**Main** (chat 22 ended; done: 1 play-through fixes incl. P39, 2 the full run's bot causes, 3 checks 6-9 MATCH, Later P41, P38, Read Magic and SCRIBE, the caves' tactics. Chat 23's order as chat 22 would set it; the design office sets it with Jeremy.)
-1. Jeremy's play-through items as they come (P31 no monster picture on an approach: the original at distance 0, a wall ahead, still to capture in DOSBox; the anti-magic shell's "cannot cast spells in this area" in camp and walking, GAME.OVR 0x17BBA).
-2. The full run past the end of the plan: the finale (5:5 -> 5:7 reached only by teleport, no closing pictures), then the run's other shortcuts by cause (7:22 <-> 7:23 teleports, 6:28 -> 3:0, the throne room's two shortcut wins, multi-class level grants); a fresh run from creation after each fix.
-3. Main-path gaps outside combat: poison and Slow Poison outside fights, treasure load and item limits, Raise Dead's constitution loss, Detect Magic.
-4. Differential checks 3, 5 and 10 when Combat posts their fights; then the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20).
+**Main** (set by Jeremy with the design office, 20:48, for chat 23)
+1. Jeremy's play-through items and the rule bugs found in main's files, smallest first: magic armour's movement (combat's request); check 5's start recipe (strong magic weapons, tell combat); P44, P52, P49, P33 (main's lists), P31; the anti-magic shell outside fights (0x17BBA). New desk P-numbers join here.
+2. The full run to the true end (5:5 -> 5:7 by teleport, no closing pictures), then its other shortcuts by cause; the scout ahead of Jeremy.
+3. Main-path gaps outside combat: poison and Slow Poison first; saving in the wilderness after the pyramid (untraced CALLs); treasure limits; Raise Dead's CON; Detect Magic.
+Checks 3, 5 and 10: run each as soon as Combat posts its fight.
 
-Later: number-prompt jobs (3:0), 6:1's state walk; the camp's rest end (back to the camp or the REST menu: chat 10's note and chat 22's capture disagree); MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
+Later: the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20); the CLAUDE.md team section; number-prompt jobs (3:0), 6:1's state walk; the camp's rest end; MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
 
 **Combat**
 1. ✓ (Combat Chat 1) The kobold net-trap fight to the end (draw 8079 of 8905; kobold 23 one square off): matches all 8905 draws, and a second seed (6825).
