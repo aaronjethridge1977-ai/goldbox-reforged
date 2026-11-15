@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, quick bandages, DONE's MAGIC, quick tactics, monster tactics),
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, FIX in camp, quick bandages, DONE's MAGIC, quick tactics, monster tactics),
 ##                   one line each; Up/Down highlights one and the box below explains it (P21)
 ##   ABOUT           a menu (P21): FEATURES (each addition: a list, then a page each) and CREDITS
 ##                   (Gold Box Reforged's credits and the Godot license)
@@ -406,6 +406,7 @@ static func setting_value(id: String) -> int:
 		"memorized": return int(CampScreen.start_memorized_on())
 		"bandages": return int(Combat.quick_bandages_on())
 		"magicmenu": return int(Combat.magic_menu_on())
+		"fix": return int(CampScreen.fix_on())
 		"tactics": return int(SmartQuick.on())
 		"monsters": return int(SmartQuick.monsters_on())
 		"fullscreen": return int(DisplayMode.load_on())
@@ -420,6 +421,7 @@ static func change_setting(id: String) -> void:
 		"memorized": CampScreen.save_start_memorized(not CampScreen.start_memorized_on())
 		"bandages": Combat.save_quick_bandages(not Combat.quick_bandages_on())
 		"magicmenu": Combat.save_magic_menu(not Combat.magic_menu_on())
+		"fix": CampScreen.save_fix(not CampScreen.fix_on())
 		"tactics": SmartQuick.save(not SmartQuick.on())
 		"monsters": SmartQuick.save_monsters(not SmartQuick.monsters_on())
 		"fullscreen": DisplayMode.toggle(Engine.get_main_loop() as SceneTree)

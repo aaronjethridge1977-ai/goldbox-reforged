@@ -74,6 +74,7 @@ const MAGENTA := 13
 const PROMPT := 14          # yellow
 
 const CAMP_MENU := ["SAVE", "VIEW", "MAGIC", "REST", "ALTER", "EXIT"]
+const CAMP_MENU_FIX := ["SAVE", "VIEW", "MAGIC", "REST", "ALTER", "FIX", "EXIT"]
 const MAGIC_MENU := ["CAST", "MEMORIZE", "SCRIBE", "DISPLAY", "REST", "EXIT"]
 const ALTER_MENU := ["ORDER", "DROP", "SPEED", "ICON", "PICS", "EXIT"]
 const SAVE_LETTERS := ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
@@ -318,6 +319,106 @@ static func start_memorized_on() -> bool:
 	return bool(c.get_value("qol", START_MEMORIZED_KEY, true))
 
 
+# --- FIX (QoL, P42; Jeremy 2026-11-14: an exception to the QoL pause) -----------------------------
+# The sequels' FIX (Curse of the Azure Bonds on): one press is one rest just long enough for the
+# party's clerics to cast and memorize again their first-level spells as Cure Light Wounds, then
+# everyone is healed by those cures. Rules as Pilgrim's reconstruction reads them (fix_menu,
+# format documentation only) and checked in DOSBox with Jeremy's own Curse of the Azure Bonds
+# (Combat Chat 2: two FIXes of 5:15 each, 315 minutes = 240 + 5 slots x 15; the cures' total
+# went to the hurt in party order, the first one first):
+# - nothing when no one is hurt;
+# - the cures already memorized by living, conscious members roll now (1d8 each, kept);
+# - the rest: for each living, conscious member with first-level cleric slots, 4 hours plus
+#   15 minutes a slot; the longest one; shortened by the whole number of times 27 HP a
+#   healer exceeds the HP missing; it is a normal rest (spells memorized, may be interrupted);
+# - unless interrupted: every first-level slot of those healers rolls 1d8 more, and the total
+#   goes to the hurt in party order, each up to their maximum (dying -> unconscious).
+# Press FIX again for another round. Curse of the Azure Bonds' Cure Serious / Critical Wounds
+# don't exist in Pool of Radiance (cleric spells stop at the third level).
+
+const FIX_KEY := "fix"
+
+
+static func fix_on() -> bool:
+	var c := ConfigFile.new()
+	if c.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(c.get_value("qol", FIX_KEY, true))
+
+
+static func save_fix(on: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", FIX_KEY, on)
+	c.save(GameData.SETTINGS_PATH)
+
+
+## The camp menu: the original's, with FIX before EXIT when the setting is on (the sequels'
+## menu, "CAMP:" then the items with no space: 40 columns).
+func _camp_menu() -> Array:
+	return CAMP_MENU_FIX if fix_on() else CAMP_MENU
+
+
+var _fixing := false       # the rest under way is a FIX
+var _fix_pool := 0         # the cures rolled so far
+var _fix_slots := 0        # first-level cleric slots of the healers (rolled after the rest)
+
+
+static func _hp_lost(party: Array) -> int:
+	var n := 0
+	for m in party:
+		n += maxi(m.hp_max - m.hp, 0)
+	return n
+
+
+func _fix() -> void:
+	var lost := _hp_lost(_party)
+	if lost == 0:
+		return
+	_fix_pool = 0
+	_fix_slots = 0
+	var most := 0
+	var can := 0
+	for m in _party:
+		if m.status != PartyMember.STATUS_OKAY:
+			continue
+		for s in m.memorized:
+			if s == 3:          # Cure Light Wounds, memorized
+				_fix_pool += _rng.randi_range(1, 8)
+		var slots: int = m.spell_slots[0][0]
+		_fix_slots += slots
+		if slots > 0:
+			most = maxi(most, 240 + slots * 15)
+			can += 27
+	if can > lost:
+		most /= can / lost
+	if most < 5:
+		_fix_heal()
+		return
+	_fixing = true
+	_to_rest = (most + 4) / 5
+	_start_rest()
+
+
+func _fix_heal() -> void:
+	for k in _fix_slots:
+		_fix_pool += _rng.randi_range(1, 8)
+	_fix_slots = 0
+	for m in _party:
+		if _fix_pool <= 0:
+			break
+		if not m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING]:
+			continue
+		var want := mini(m.hp_max - m.hp, _fix_pool)
+		if want <= 0:
+			continue
+		m.hp += want
+		_fix_pool -= want
+		if m.status == PartyMember.STATUS_DYING:
+			m.status = PartyMember.STATUS_UNCONSCIOUS
+	_fix_pool = 0
+
+
 static func save_start_memorized(on: bool) -> void:
 	var c := ConfigFile.new()
 	c.load(GameData.SETTINGS_PATH)
@@ -382,7 +483,7 @@ func _draw_walk() -> void:
 		"walk":
 			_scr.menu_line(24, _walk_menu, 0, 0)
 		"camp":
-			_labelled("CAMP:", CAMP_MENU, 6)
+			_labelled("CAMP:", _camp_menu(), 5 if fix_on() else 6)
 		"save":
 			_scr.text(0, 24, "SAVE WHICH GAME:", MAGENTA)
 			_scr.menu_line(24, SAVE_LETTERS, 17, -1)
@@ -570,7 +671,7 @@ func _to_menu(mode: String, items: Array) -> void:
 
 
 func _show_menu() -> void:
-	_to_menu("camp", CAMP_MENU)
+	_to_menu("camp", _camp_menu())
 
 
 func _magic_menu() -> void:
@@ -628,6 +729,10 @@ func _start_rest() -> void:
 func _stop_rest() -> void:
 	_resting = false
 	_timer.stop()
+	if _fixing:
+		_fixing = false
+		if _to_rest <= 0:
+			_fix_heal()
 	if minutes_passed > 0:
 		time_passed.emit(minutes_passed)
 		minutes_passed = 0
@@ -667,6 +772,7 @@ func _interrupt() -> void:
 	await get_tree().create_timer(1.5 * delay_scale()).timeout
 	_resting = false
 	_to_rest = 0
+	_fixing = false        # an interrupted FIX heals no one
 	# Lab (chat 22, save J resting at 14,5, twice): spells picked and not yet memorized are
 	# lost; the next camp's REST TIME is 00:00:00 and they must be picked again.
 	for m in _party:
@@ -987,7 +1093,7 @@ func _pick_member(d: int) -> void:
 
 func _items() -> Array:
 	match _mode:
-		"camp": return CAMP_MENU
+		"camp": return _camp_menu()
 		"save": return SAVE_LETTERS
 		"rest": return REST_MENU.map(func(it): return it[0])
 		"magic": return MAGIC_MENU
@@ -1072,6 +1178,7 @@ func _act(choice: String) -> void:
 						_magic_menu()
 				"REST": _rest_menu()
 				"ALTER": _alter_menu()
+				"FIX": _fix()
 				"EXIT":
 					visible = false
 					_anim.stop()

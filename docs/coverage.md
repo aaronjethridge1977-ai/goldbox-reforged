@@ -11,7 +11,6 @@ Main-path entries below that are partial or missing (the engine-feature sections
 
 - **Temples: Raise Dead** (partial): back at 1 HP; the constitution loss is missing
 - **Training halls and the party menu: A magic-user's new spell after training** (partial): built; the original's spell-learning page never seen
-- **Camp: SCRIBE (scrolls into the spell book, 15 minutes a level)** (partial): built; the original's SCRIBE list never seen; whether the original needs Read Magic first not checked (spell 18 does nothing)
 - **Camp: Heal and memorized messages while resting** (partial): drawn as the rest; not seen in the original
 - **Items: Treasure: load and item-count limits when taking** (missing): a character can take more than the original allows
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
@@ -20,7 +19,6 @@ Main-path entries below that are partial or missing (the engine-feature sections
 - **Spell 5, Detect Magic** (missing): effect added; the original marks magic items (handler 5 is empty: VIEW reads it)
 - **Spell 11, Detect Magic** (missing): as 5
 - **Spell 13, Reduce** (missing): effect added, nothing happens
-- **Spell 18, Read Magic** (missing): effect added; nothing reads it
 - **Spell 26, Slow Poison** (missing): poison still kills at once (handler 0x16 delays it)
 - **Spell 28, Spiritual Hammer** (missing): no hammer appears
 - **Spell 34, Stinking Cloud** (partial): helpless 1d4+1 rounds; the cloud doesn't linger
@@ -28,7 +26,7 @@ Main-path entries below that are partial or missing (the engine-feature sections
 - **Spell 51, Lightning Bolt** (partial): level d6; runs straight, doesn't bounce off walls
 - **Script CALLs** (partial): 0x2C4E, 0x2C51, 0xC003, 0xC009 (wilderness, after the pyramid) not traced
 
-## Spells (4 checked, 41 built, 9 partial, 13 missing)
+## Spells (5 checked, 41 built, 9 partial, 12 missing)
 
 Monsters: how many monster records have the spell memorized (record bytes 0x17-0x2B), i.e. what the computer casts.
 
@@ -51,7 +49,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 15 | Magic Missile | magic-user 1 | 35 | checked | (level / 2)d4 + level / 2, nothing at level 1 (GAME.OVR 0x28451); Shield stops it; roll for roll in regress.sh's six H fights |
 | 16 | Protection From Evil | magic-user 1 |  | built |  |
 | 17 | Protection From Good | magic-user 1 |  | built |  |
-| 18 | Read Magic | magic-user 1 | 1 | missing | effect added; nothing reads it |
+| 18 | Read Magic | magic-user 1 | 1 | checked | lets SCRIBE read unread scrolls (GAME.OVR 0x1838D, 0x17B9D; main, chat 22, lab) |
 | 19 | Shield | magic-user 1 | 3 | built | AC 4 or better against missiles, +1 saves, stops Magic Missile |
 | 20 | Shocking Grasp | magic-user 1 |  | built | touch, 1d8 + level |
 | 21 | Sleep | magic-user 1 | 22 | built | 4d4 hit dice, weakest first; elves resist |
@@ -317,17 +315,19 @@ Script programs and calls around New Phlan.
 | Arena duel (CALL 0x8000 / 0x8001), WHO | built |  | 100 experience a level for the duelist; the duel's opponent as GAME.OVR loads it |
 | Hirelings and their treasure shares | built |  | chat 4 |
 
-### Camp (4 checked, 2 built, 2 partial)
+### Camp (6 checked, 3 built, 1 partial)
 
-Encamp (E): SAVE VIEW MAGIC REST ALTER EXIT.
+Encamp (E): SAVE VIEW MAGIC REST ALTER EXIT (with HEALING FIX on: CAMP:SAVE VIEW MAGIC REST ALTER FIX EXIT).
 
 | feature | status | main path | notes |
 |---|---|---|---|
 | SAVE (the original's own format, slots A-J) and LOAD SAVED GAME | checked | yes | our saves load in the original and back (lab saves E-I) |
 | REST: the timer, 1 HP a day, interruptions | checked | yes | save J, 4 -> 5 HP after 24 hours; interruptions from the area scripts |
 | MEMORIZE and resting to memorize | checked | yes | 4 h 15 min for one 1st-level spell, as the lab showed |
-| CAST in camp (cures on a member) | built | yes | screens drawn as the original's; CAN'T BE CAST HERE not seen |
-| SCRIBE (scrolls into the spell book, 15 minutes a level) | partial | yes | built; the original's SCRIBE list never seen; whether the original needs Read Magic first not checked (spell 18 does nothing) |
+| CAST in camp (cures on a member) | checked | yes | as walking CAST (main, chat 22, lab): IS A COMBAT-ONLY SPELL... LOSE IT?, HAS NO SPELLS MEMORIZED |
+| The anti-magic shell (ECL 0x49E5, the ruined castle) | built | yes | outside fights (main, chat 23, DOSBox): CAST says CANNOT CAST SPELLS IN THIS AREA (0x17BB2). In fights (Combat Chat 2, from the code): no CAST on the menu (0x9F59), no USE in the item list (0x21FD6, in fights; outside fights main's), no computer item use (0xAFF6); the computer's spells not stopped (0xB105 doesn't test it); not yet seen in DOSBox |
+| SCRIBE (scrolls into the spell book, 15 minutes a level) | checked | yes | the original's list and refusals (main, chat 22, lab): any level, Read Magic for unread scrolls |
+| FIX (QoL, P42: Curse of the Azure Bonds' camp item; SETTINGS HEALING FIX) | built | yes | one rest of 4 h + 15 min a cleric first-level slot (shortened when little is missing), then the cures to the hurt in party order; checked against Jeremy's Curse of the Azure Bonds in DOSBox (Combat Chat 2) |
 | DISPLAY (spell effects on each member) | built |  |  |
 | Heal and memorized messages while resting | partial | yes | drawn as the rest; not seen in the original |
 | ALTER: ORDER, DROP, SPEED, ICON, PICS | checked |  | screens matched (chat 10-11); SPEED paces fights (P16) |

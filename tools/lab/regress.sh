@@ -38,11 +38,18 @@ run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $W
 run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # matches to the end since Combat Chat 1
 run orig_C_kobolds22 1 env KW=8 ./cmpfight2.sh C 22222222 up up $WHAT   # the net trap on a second seed (Combat Chat 1: checks the sort list fitted on the first)
 run orig_D_ogrechief 1 env KW=4 ./cmpfight2.sh D 11111111 up up,enter,enter $WHAT   # check 3: 4:2 the ogre chief, 15863 draws (~10 min in the original)
-# Check 10: 7:23 Yarash and 6 MUTANT LIZ-MEN (Combat Chat 2: Yarash's wand of paralyzation, 0xAFA4; the party is
-# held one by one and slain, 3689 draws). Save G = `mksave.py J G 7 23 5 1 W strong`, `fixthac0.py J G`. Needs main's
-# magic-armour movement fix (party_member.gd; until it lands the line is skipped).
-if grep -q "armor.plus != 0" ../../scripts/game/party_member.gd 2>/dev/null || grep -q "armor.plus != 0" "${REPO:-/home/claude/goldbox-reforged}/scripts/game/party_member.gd" 2>/dev/null; then
-  run orig_G_yarash 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT   # check 10
+# Differential checks 5 and 10's fights with main's start recipe (chat 23: each member's weapon +10, `strong`):
+# save B = `mksave.py J B 5 7 3 7 S strong wplus1=10 ... wplus6=10` (5:7's guards, 9284 draws, the party wins);
+# save G = `mksave.py J G 7 23 5 1 W strong wplus1=10 ... wplus6=10` (Yarash, 1323 draws, wins; his wand once).
+# orig_G_yarash_held: the same fight from `mksave.py J G 7 23 5 1 W strong` (no +10): the wand holds the party one by
+# one and the held are slain (3689 draws; Combat Chat 2's item-use check); that save is kept in the lab as
+# combat2/saveG_held and swapped in for its run. All three need main's magic-armour movement fix (landed, chat 23).
+run orig_B_guards 1 env KW=4 ./cmpfight2.sh B 11111111 up up,enter,enter,c $WHAT   # check 5
+run orig_G_yarash_win 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT   # check 10
+if [ -d combat2/saveG_held ]; then
+  mkdir -p /tmp/saveG_win && cp game/SAVGAMG.DAT game/CHRDATG* /tmp/saveG_win/ && cp combat2/saveG_held/* game/
+  run orig_G_yarash_held 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT
+  cp /tmp/saveG_win/* game/
 else
-  echo "orig_G_yarash: skipped (main's magic-armour movement fix not in party_member.gd yet)"
+  echo "orig_G_yarash_held: skipped (no combat2/saveG_held in the lab)"
 fi

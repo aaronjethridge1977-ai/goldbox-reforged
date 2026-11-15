@@ -46,6 +46,7 @@ var _morale_base := 99      # the encounter's morale (from the script)
 ## Set by the caller just before a scripted fight: ECL 0x6E70, 0x6E71, 0x6E72 (bytes, signed)
 ## (monsters' to-hit, the party's to-hit, the party's movement); see Combat.
 var area_mods: Array[int] = [0, 0, 0]
+var anti_magic := false                  # set by main before a fight: ECL 0x49E5 above 0 (the shell)
 var _surprise := 0          # the script's ambush flag
 var _px := 0
 var _py := 0
@@ -711,6 +712,8 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_combat.party_hit_mod = (area_mods[1] & 0xFF ^ 0x80) - 0x80
 	_combat.party_move_mod = (area_mods[2] & 0xFF ^ 0x80) - 0x80
 	area_mods = [0, 0, 0]
+	_combat.anti_magic = anti_magic
+	CharacterSheet.anti_magic = anti_magic
 	_combat.surprise_flags = _surprise
 	_combat.message.connect(_on_combat_message)
 	_messages.clear()
@@ -1133,7 +1136,8 @@ func _bottom_menu() -> Array:
 	var c: Dictionary = _combatants[_combat.active]
 	var who: PartyMember = c.who
 	# CAST: not once the figure has been wounded this round (GAME.OVR 0x9F46, record byte 1).
-	if _combat.magic != null and not c.get("no_spells", false) and \
+	# Nor inside the anti-magic shell (0x9F59).
+	if _combat.magic != null and not c.get("no_spells", false) and not _combat.anti_magic and \
 			not _combat.magic.castable(_combat.active).is_empty():
 		items.append("CAST")
 	if Combat.turn_level(who) > 0:
@@ -1707,6 +1711,8 @@ func _leave() -> void:
 	_last_dropped = _combat.dropped if _combat != null else ([] as Array[GameItem])
 	_combat = null
 	_event_fight = false
+	anti_magic = false
+	CharacterSheet.anti_magic = false    # outside fights main sets it (the shell's USE, 0x21FD6)
 	visible = false
 	if was_event:
 		finished.emit(result)

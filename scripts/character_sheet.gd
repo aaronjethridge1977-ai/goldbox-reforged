@@ -53,6 +53,9 @@ static var types: ItemTypes
 static var spells: SpellTable
 ## Set by the game: the game folder (portraits).
 static var game_path := ""
+## The anti-magic shell (ECL 0x49E5 above 0): the item list offers no USE (GAME.OVR 0x21FD6, in and out of fights).
+## Set by the fight (CombatScreen) and by main.
+static var anti_magic := false
 
 const MAGENTA := 13
 const COIN_NAMES := ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS", "JEWELRY"]
@@ -441,11 +444,12 @@ func _orders_on(m: PartyMember) -> bool:
 func _item_menu() -> Array:
 	var m := _who()
 	var room := m != null and m.items.size() < MAX_ITEMS
+	var use: Array = [] if anti_magic else ["USE"]
 	if in_combat:
-		return ["READY", "USE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
+		return ["READY"] + use + ["DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
 	if in_shop:
 		return ["READY", "TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "SELL", "ID", "EXIT"]
-	return ["READY", "USE", "TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
+	return ["READY"] + use + ["TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
 
 
 func _current_menu() -> Array:

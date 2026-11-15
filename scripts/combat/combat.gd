@@ -74,6 +74,10 @@ var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
 var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
 var magic_on := false                # Alt-M: the party's QUICK members cast (the original's DS:0x6E30)
+## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
+## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
+## spells (0xB105) are not stopped.
+var anti_magic := false
 var magic: CombatSpells = null      # spells and their effects (when the spell table is loaded)
 
 

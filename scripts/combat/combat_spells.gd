@@ -801,7 +801,7 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 func ai_use_item(i: int, tries: int) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	if m.has_affect(EFFECT_SILENCED) or not _enemy_left(i) or CharacterSheet.types == null:
+	if m.has_affect(EFFECT_SILENCED) or c.anti_magic or not _enemy_left(i) or CharacterSheet.types == null:
 		return false
 	var chosen: GameItem = null
 	var chosen_id := 0
