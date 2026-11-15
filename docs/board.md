@@ -21,13 +21,12 @@ Files not listed: whoever needs them asks here first.
 
 Each building lane takes item 1 first and doesn't start Later items while 1-3 are open. Only the design office and the feedback desk add items; only Jeremy reorders. A lane ticks an item here (and its request below) when it lands.
 
-**Main** (set by Jeremy with the design office, 20:48, for chat 23)
-1. ✓ (chat 23; P49, P54 wait on the desk's answers) Jeremy's play-through items and the rule bugs found in main's files, smallest first: magic armour's movement (combat's request); check 5's start recipe (strong magic weapons, tell combat); P53 (typed answers don't show as typed), P54 (forced doors lock again), P56 with P39 (quick load from anywhere; exception), P44, P49, P33 (main's lists), P31 (P52 withdrawn: matches the original); the anti-magic shell outside fights (0x17BBA). New desk P-numbers join here.
-2. The full run to the true end (5:5 -> 5:7 by teleport, no closing pictures), then its other shortcuts by cause; the scout ahead of Jeremy.
-3. Main-path gaps outside combat: poison and Slow Poison first (✓ chat 23: camp, walking, the Neutralize Poison item; fights are Combat's); saving in the wilderness after the pyramid (untraced CALLs); treasure limits; Raise Dead's CON; Detect Magic.
-Checks 3, 5 and 10: run each as soon as Combat posts its fight.
+**Main** (design office, 2026-11-15, for chat 24)
+1. New desk P-numbers and rule bugs found in main's files, smallest first; P49 and P54 once the desk answers.
+2. Checks 3, 5 and 10's state comparisons (needs `ptrace_scope` 0, see Findings).
+3. **Prove the ending by hand** (hand-play rule, ~1 hour): from a lab save before the finale, 5:5 -> 5:7, the audience hall, the guards and Tyranthraxus to the closing pictures in ours, checked against the original; a key list and a save before the closing pictures. Then the bot's full run to the true end (the guards, the heal-trip teleport, the pyramid's exits).
 
-Later: the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20); the CLAUDE.md team section; number-prompt jobs (3:0), 6:1's state walk; the camp's rest end; MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
+Later: main-path gaps outside combat (the wilderness save after the pyramid first, treasure limits, Raise Dead's CON, Detect Magic, Neutralize Poison's not-poisoned branch); the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20); the CLAUDE.md team section; number-prompt jobs (3:0), 6:1's state walk; the camp's rest end; MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
 
 **Combat**
 1. ✓ (Combat Chat 1) The kobold net-trap fight to the end (draw 8079 of 8905; kobold 23 one square off): matches all 8905 draws, and a second seed (6825).
