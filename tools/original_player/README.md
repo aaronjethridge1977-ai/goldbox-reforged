@@ -64,8 +64,8 @@ its own user folder "Gold Box Reforged p2 <id>") resumed from a c24f checkpoint,
 fight opens; the ring save before it is the start). `mkorig.sh <cfg> <name>` writes a quick save in the original's
 format through ours' camp SAVE (slot I only: A-D and J are the shipped saves, G and H Player 1's) and keeps it in
 `.lab/player/saves/p2start/<name>`; `useslot.sh <name>` puts it back in slot I; `queue.sh` plays several plans in
-turn in the one DOSBox. **`fixwalls.py`** is needed on every such save until main's save writer is fixed (Findings,
-2026-11-15): ours writes a wall-set slot whose id is 255 or has no WALLDEF block as that id, and the original stops
+turn in the one DOSBox. **`fixwalls.py`** was needed on every such save until main fixed the save writer (chat 27, 6a8fd16; neither it
+nor `cachepatch.py` is needed since): ours wrote a wall-set slot whose id is 255 or has no WALLDEF block as that id, and the original stops
 with "Unable to load wallset in LoadWallSet."; written as 0xFFFF (id and slot number) it loads.
 
 Plans can cross event squares on a walk: `walk 12,9 through 10,11` (Podol Plaza is all event squares).
