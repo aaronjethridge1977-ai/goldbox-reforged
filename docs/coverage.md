@@ -14,12 +14,12 @@ Main-path entries below that are partial or missing (the engine-feature sections
 - **Camp: Heal and memorized messages while resting** (partial): drawn as the rest; not seen in the original
 - **Items: Treasure: load and item-count limits when taking** (missing): a character can take more than the original allows
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
-- **Conditions and effects: Poison** (partial): kills at once; Slow Poison (spell 26) and the poisoned state missing
-- **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (missing): the final fight; see monster power 0x6a
+- **Conditions and effects: Poison** (partial): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight missing
+- **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (missing): the final fight; see monster power 0x6a (Combat Chat 3: the byte arithmetic wraps, so when it is tested it resists every Pool spell and draws a d100)
 - **Spell 5, Detect Magic** (missing): effect added; the original marks magic items (handler 5 is empty: VIEW reads it)
 - **Spell 11, Detect Magic** (missing): as 5
 - **Spell 13, Reduce** (missing): effect added, nothing happens
-- **Spell 26, Slow Poison** (missing): poison still kills at once (handler 0x16 delays it)
+- **Spell 26, Slow Poison** (partial): built in camp and walking (main, chat 23); cast in a fight missing (the target is a fallen member's square, ground 0x1F)
 - **Spell 28, Spiritual Hammer** (missing): no hammer appears
 - **Spell 34, Stinking Cloud** (partial): helpless 1d4+1 rounds; the cloud doesn't linger
 - **Spell 43, Remove Curse** (missing): cursed items can't be freed
@@ -57,7 +57,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 23 | Hold Person | cleric 2 | 23 | built | 1-3 targets, save penalty by count |
 | 24 | Resist Fire | cleric 2 |  | built | fire damage halved, +3 to the save (handler 0x14) |
 | 25 | Silence, 15' Radius | cleric 2 | 2 | partial | a silenced caster loses the spell ('IS SILENCED'); the spell's own area and save not traced |
-| 26 | Slow Poison | cleric 2 | 3 | missing | poison still kills at once (handler 0x16 delays it) |
+| 26 | Slow Poison | cleric 2 | 3 | partial | camp and walking built (GAME.OVR 0x28873); in fights missing |
 | 27 | Snake Charm | cleric 2 |  | partial | holds snakes as Hold Person does; not limited to snakes |
 | 28 | Spiritual Hammer | cleric 2 | 3 | missing | no hammer appears |
 | 29 | Detect Invisibility | magic-user 2 | 1 | missing | effect added; invisible figures stay hidden |
@@ -89,7 +89,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 55 | Slow | magic-user 3 |  | built | halves moves and attacks |
 | 56 | Restoration | cleric 7 |  | built | temples only (Restoration) |
 | 57 | Potion of Speed | item/monster 6 |  | built | Potion of Speed: haste 5d4 rounds unless slowed, 'IS SPEEDY' |
-| 58 | (item spell 81) | item/monster 6 |  | missing | no item uses it (cures poison or heals 1d4+8) |
+| 58 | (item spell 81) | item/monster 6 |  | partial | Neutralize Poison item built (0x29E65, main chat 23); the not-poisoned branch (heals 1d4+8) missing |
 | 59 | Potion of Giant Strength | item/monster 6 |  | built | Potion of Giant Strength: STR 21 for 1d4x10+40, 'IS STRONGER' |
 | 60 | Javelin of Lightning | item/monster 6 |  | partial | Javelin of Lightning: 1d6+20 electricity, half on a save, one target (the original's line not traced) |
 | 61 | Wand of Paralyzation | item/monster 6 |  | checked | held 5d4 rounds, 'IS PARALYZED'; the save before the 5d4 (Yarash's wand roll for roll, Combat Chat 2) |
@@ -238,7 +238,7 @@ Handlers decoded from GAME.OVR's table at DS:0x682C; see `scripts/combat/special
 | 0x65 | TROLL | built | troll regenerates after 3 rounds |
 | 0x67 | VAMPIRE | built | turns gaseous |
 | 0x68 | THRI-KREEN | built | thri-kreen: avoids 60% of missiles |
-| 0x6a | TYRANITHRAXUS | missing | magic resistance 15% (never matters against Pool's spells) |
+| 0x6a | TYRANITHRAXUS | missing | magic resistance (0x11570): 15 - 5 x (11 - spell level) in a byte, so it wraps for levels 1-7 and a d100 always loses: every Pool spell resisted when tested (DS:0x6817 or 0x6819 & 8); a d100 drawn; to check in the lab |
 | 0x6c | FERRAN MARTINEZ, GHOUL, SPECTRE, WIGHT, WRAITH | built | no Sleep or Charm |
 | 0x6d | FERRAN MARTINEZ, SPECTRE, WIGHT, WRAITH | built | no Hold |
 | 0x6e | FERRAN MARTINEZ, GIANT SKELETON, JUJU ZOMBIE, MUMMY, SKELETON, SPECTRE, WIGHT, WRAITH, ZOMBIE | built | no cold |
@@ -288,7 +288,8 @@ New Phlan's temples of Tyr, Sune and Tempus (TEMPLE_FLAG + COMBAT).
 | Raise Dead | partial | yes | back at 1 HP; the constitution loss is missing |
 | Cure Disease (mummy rot) | checked |  | temples and the spell |
 | Stone to Flesh | built |  | back at 1 HP (GAME.OVR 0x4EB4) |
-| Cure Blindness, Neutralize Poison, Remove Curse | partial |  | listed and paid for, but the temple doesn't see these conditions on a character, so it always asks CAST CURE ANYWAY |
+| Neutralize Poison | built |  | the temple sees effect 0x37 and removes 0x37, 0x16 and 0x0F (GAME.OVR 0x4CC9; a member dead of poison stays dead) |
+| Cure Blindness, Remove Curse | partial |  | listed and paid for, but the temple doesn't see these conditions on a character, so it always asks CAST CURE ANYWAY |
 | APPRAISE | missing |  | on the menu, does nothing |
 | The look after paying | partial |  | (NAME) IS CURED. shown; the screen after it not compared |
 

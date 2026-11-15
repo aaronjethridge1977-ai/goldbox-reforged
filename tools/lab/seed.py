@@ -8,7 +8,16 @@ CODE_OFF = 0xC18F          # its place in the unpacked START.EXE image
 DS_SEG = 0xC7C             # the program's data segment, image-relative (System init, 0AF8:0000)
 SEED = 0x4428
 def pid():
-    return int(subprocess.check_output(["pgrep", "-f", "dosbox.*-conf"]).split()[0])
+    # The DOSBox process itself, not a shell that started it (pl.py's `sh -c ... dosbox -conf`
+    # comes first in pgrep's list; Combat Chat 3).
+    found = subprocess.check_output(["pgrep", "-f", "dosbox.*-conf"]).split()
+    for p in found:
+        try:
+            if open("/proc/%s/comm" % p.decode()).read().strip() == "dosbox":
+                return int(p)
+        except OSError:
+            pass
+    return int(found[0])
 def find(p):
     maps = open(f"/proc/{p}/maps").read().splitlines()
     mem = open(f"/proc/{p}/mem", "rb", 0)

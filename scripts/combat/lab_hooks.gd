@@ -2,8 +2,8 @@ class_name LabHooks
 ## The side lane's lab keys for main.gd's `--keys` replay (moved out of main.gd, decided 2026-11-14,
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
-const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who"]
-const PREFIXES := ["order=", "memorize=", "stage=", "hp=", "foehp="]
+const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who", "temple"]
+const PREFIXES := ["order=", "memorize=", "stage=", "hp=", "foehp=", "poison="]
 
 
 ## Whether `n` is one of these keys.
@@ -79,6 +79,13 @@ static func handle(main: Node, n: String) -> bool:
 		for c in combat._combatants:
 			if not c.down:
 				print("   %s %s %d,%d" % ["P" if c.team == 0 else "M", c.who.name, c.cell.x, c.cell.y])
+	elif n == "temple":                 # temple: the temple screen on the party (as a script's temple opens it)
+		main._temple.open(main._party)
+	elif n.begins_with("poison="):      # poison=<member>: poisoned as a fight's failed save leaves one (dead, 0x37)
+		var m: PartyMember = main._party[int(n.trim_prefix("poison="))]
+		SpellCaster.add_affect(m, SpecialAffects.POISONED, 0, 0, 0)
+		m.hp = 0
+		m.status = PartyMember.STATUS_DEAD
 	elif n.begins_with("foehp="):       # foehp=<n>: every monster in the open fight at n HP (a blow that lands kills; side chat 6)
 		for c in combat._combatants:
 			if c.team != 0:

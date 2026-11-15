@@ -19,8 +19,11 @@ extends Control
 ## HP); an unconscious character wakes; Raise Dead brings the dead back at 1 HP; Cure Disease
 ## ends a mummy's disease; Stone to Flesh brings the stoned back at 1 HP (GAME.OVR 0x4EB4).
 ## The wound cures don't heal the diseased (the original's heal skips them).
-## Not yet: blindness, poison and curses aren't conditions our characters can have, so those
-## cures always ask "cast cure anyway"; APPRAISE; Raise Dead's loss of constitution.
+## NEUTRALIZE POISON (GAME.OVR 0x4CC9, Combat Chat 3): needed when the member has effect 0x37
+## (poisoned); paid, it removes 0x37, Slow Poison's 0x16 and its tick 0x0F, nothing else (a
+## member dead of poison stays dead: Raise Dead after).
+## Not yet: blindness and curses aren't conditions our characters can have, so those cures
+## always ask "cast cure anyway"; APPRAISE; Raise Dead's loss of constitution.
 
 signal closed
 
@@ -176,7 +179,9 @@ func _needs(m: PartyMember, i: int) -> bool:
 			return m.status == PartyMember.STATUS_DEAD
 		"STONE TO FLESH":
 			return m.status == SpecialAffects.STONED
-	return false   # blindness, poison, curses: not modelled yet
+		"NEUTRALIZE POISON":
+			return m.has_affect(SpellCaster.POISONED)
+	return false   # blindness, curses: not modelled yet
 
 
 func _pay() -> void:
@@ -206,6 +211,10 @@ func _pay() -> void:
 			if m.status == SpecialAffects.STONED:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
+		"NEUTRALIZE POISON":
+			for b in m.affects.duplicate():
+				if int(b.effect) in [SpellCaster.POISONED, SpellCaster.SLOWED_POISON, SpellCaster.POISON_TICK]:
+					m.affects.erase(b)
 	_say([["%s IS CURED." % m.name, GameScreen.GREEN]])
 	_mode = "list"
 	_refresh()

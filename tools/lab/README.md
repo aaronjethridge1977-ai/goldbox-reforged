@@ -89,6 +89,12 @@ hold on a flag: `answer <area> [4A4D&1=1] <words>|<choice>`. `seed.py` and `trac
 `kernel.yama.ptrace_scope` 0 (`sudo sysctl kernel.yama.ptrace_scope=0`; WSL starts with 1, and the fight traces come
 back empty). Never `pkill -f` with a pattern that is in your own command line (it kills the shell running it).
 
+**Combat Chat 3 (cloud lab):** lab keys `temple` (the temple screen on the party) and `poison=<member>` (poisoned as a
+fight leaves one: dead, effect 0x37); `posdump.py` prints the running original's figures and cells; `seed.py`/`trace.py`
+now find DOSBox under `pl.py` too (they took its `sh` wrapper's pid). The original's memory while a fight runs:
+the ground table DS:0x2744 (4 bytes an id: move cost, 0, sight, picture). Ad hoc scripts in the lab archive's
+`combat3/` film the original's screen (`p40film.py`, `restfilm.py`).
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
