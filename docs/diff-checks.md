@@ -125,6 +125,53 @@ time; before, 36). Then each check against its original save (`statediff.sh` now
 
 Keyed runs are not always repeatable when the PC is busy (check 5's first run lost a key during a reference check and ended with another member dead; run again, it matched). Reference check (seeded), with all of chat 25's changes: 3:11 87/84, 5:5 91/88 (= baseline).
 
+## Chat 26: 10 of 10
+
+**All ten checks match** (5 with the usual ignore list, its save-time wall-set slots), re-run after the two rule changes
+below; driver and logs in the lab, `data/c26/checks/` (`run.sh <n> <area>` takes the keys from chat 25's log of that
+check, with Left/Right/Down kept).
+
+- **Check 2** was never broken: `data/diff_6-19_orig/` held an end save the original made from another start (its
+  clock, map square 5,5 and other bytes differ too). Played again in DOSBox from `data/diff_6-19_start/` (G: Up; Enter on
+  the dragon text; Up to the cave 10,9; ENTER CAVE, Diogenes's three pages, back on the band; IGNORE CAVE; save F),
+  the original has 0x49F0/1 = 10, 10 and the map square 10, 10, as ours: **0 differences**. The old save is kept as
+  `data/diff_6-19_orig_old/`. Lesson: a check's original save belongs with its start save; re-take both together.
+- **Check 5's sky** (0x49FD/E): after any NEW_ECL the original (GAME.OVR 0x3EFA) runs the new block's init, then its
+  **on-move** (0x3FFF, the entry at DS:0x49E3) and, unless that moves on, the square's event (0x400E). Ours ran the
+  on-move only when a step brought the party (chat 13's rule); the closing scene's NEW_ECL into New Phlan comes from a
+  square's event, so 3:0's on-move (sky 11/10 before 14:00) never ran and 5:7's 8/9 stayed. Lab: a jump into 3:0 0,4 E
+  saved at once has 0x49FE = 10 (J's was 9). Ours now runs the on-move after every NEW_ECL; a new game and a load go
+  through the main loop (0x403E: the init, then the adventure menu) and don't. Check 5: **0 differences**. Its keys
+  need ~75 s of `wait` after the closing scene starts (Combat Chat 4's timed pages): `...,fightend,n,wait x6,enter,wait,
+  wait,e,wait x150,enter,wait,wait,enter,wait,wait,wait x150,F2` (`data/c26/checks/5.log`).
+- **Script DELAY** (opcode 0x3A, GAME.OVR 0x3465) waits game speed x 225 ms, no key (START.EXE 0x709:0xDBE); ours waited
+  0.45 s x (speed + 1) / 5, half the original's at speed 4 (P59: the hemp market's "YOU WANDER..." then two DELAYs and a
+  random overheard line, 2:20 0xA535). No check moves (the checks run `--fast`).
+
+## Chat 26: main-path gaps (queue item 2)
+
+Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that use them are Combat's (board request).
+
+- **Load and item limits.** 0x23795 (an item for a character; treasure TAKE via 0x6F0D, the shop's BUY, TRADE): refused
+  when the character holds more than 15 items (0xC7) or load (0x102) + the item's weight (0x37, x the count 0x39 when
+  above 0) > START.EXE 0xBA:0x13AB (the STR allowance table, ours `load_allowance`) + 1500. Money (0x24CDD, TAKE MONEY
+  0x2570F): every coin, gem or jewel weighs 1; over the ceiling nothing is taken. Lab: save E = `mksave.py J E 3 8 4 5 E
+  4AE7=254 pp1=1351` (Thrender at 1995 of 2000), the clerk's reward: TAKE, MONEY, GOLD 6 refused, 5 taken.
+  `PartyMember.max_load`, `can_take_item`, `can_take_coins`, `coins_room`.
+- **Raise Dead** (the temple, 0x4A86): HP 1, status 0, effects 0x20 and 0x37 off; CON - 1; then if CON >= 14:
+  cut = (max HP - HP rolled 0xB1) / w, w = the sum over classes of level x (fighters CON - 14, others 2 above CON 15,
+  else 1); max HP - cut, except at CON 17+ without fighter levels. Lab: `mksave.py J E 3 0 8 6 W pp1=3000`, Brother
+  Sean's CHRDAT patched dead; POOL, HEAL (End moves the list), RAISE DEAD, YES: CON 15, max HP 5 (from 10, rolled 5),
+  as `PartyMember.raised_from_dead`.
+- **Detect Magic** (spells 5 and 11, effect 5; its handler is empty): START.EXE 0xBA:0x443 builds an item list's line
+  and puts "* " before the name when any party member has effect 5 and the item's byte 50 or 51 is above 0 or byte 54
+  is set. Lab: `mksave.py J E 3 8 4 5 E wplus1=1 4AC0=1` (0x4AC0 stops City Hall's rest interruptions), Darkstar
+  memorizes and casts Detect Magic in camp; Thrender's items: " YES  * FLAIL", " YES  BANDED MAIL".
+  `GameItem.detect_magic_marks`, `PartyMember.party_detects_magic`.
+- **CALL 0x2C4E, 0x2C51, 0xC003, 0xC009** (7:26 and 8:27's wilderness recovery): the original's CALL handler (0x3A36,
+  value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
+  (chat 24's note confirmed).
+
 ## Proposed next five (chat 21, for Jeremy)
 
 One per closed area without a check, story flags first: the flags below are written in that area and read by another area's

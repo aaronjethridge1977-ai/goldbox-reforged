@@ -65,6 +65,18 @@ static func list_from(data: PackedByteArray) -> Array[GameItem]:
 	return out
 
 
+## Whether Detect Magic marks the item: START.EXE 0xBA:0x443 (an item list's line) puts "* " before the
+## name when any party member has effect 5 and the item's byte 50 (plus) or 51 is above 0 (signed),
+## or byte 54 (cursed) is set (lab, chat 26: Darkstar's Detect Magic in camp, VIEW, ITEMS showed
+## " YES  * FLAIL" for a +1 flail, the banded mail unmarked).
+func detect_magic_marks() -> bool:
+	var b := func(i: int) -> int:
+		if raw.size() <= i:
+			return 0
+		return raw[i] - 256 if raw[i] > 127 else raw[i]
+	return b.call(50) > 0 or b.call(51) > 0 or (raw.size() > 54 and raw[54] != 0)
+
+
 ## Weight of the whole stack, in coins (11 darts at 5 weigh 55).
 func total_weight() -> int:
 	return weight * maxi(count, 1)

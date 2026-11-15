@@ -866,6 +866,77 @@ func receive_gold(gold: int) -> void:
 	money[3] += gold % 5
 
 
+## What Raise Dead costs the raised (the temple's RAISE DEAD, GAME.OVR 0x4B76-0x4C9D, after it sets HP 1
+## and status 0): one point of constitution (if above 0); then, only when the new constitution is still
+## 14 or more, max HP drops by (max HP - HP rolled) / w, where w sums each class's level x its new
+## per-level bonus (fighters CON - 14, other classes 2 above 15, else 1), all in bytes as the original
+## computes them; no drop at constitution 17 or more for a character without fighter levels.
+func raised_from_dead() -> void:
+	if stats[4] > 0:
+		stats[4] -= 1
+	if raw.size() > 0x14:
+		raw[0x14] = stats[4]
+	var con := stats[4]
+	if con < 14:
+		return
+	var cut := (hp_max - hp_rolled) & 0xFF if hp_max > hp_rolled else 0
+	var w := 0
+	for c in 8:
+		var lv := level_in(c)
+		if lv > 127 or lv == 0:
+			continue
+		if c == 2:
+			w += lv * (con - 14)
+		elif con > 15:
+			w += lv * 2
+		else:
+			w += lv
+		w &= 0xFF
+	if w > 0:
+		cut = (cut / w) & 0xFF
+	if con >= 17 and level_in(2) == 0:
+		return
+	hp_max = (hp_max - cut) & 0xFF
+	if raw.size() > 0x32:
+		raw[0x32] = hp_max
+
+
+## Detect Magic (spells 5 and 11, effect 5) is on while any member of the party has its effect; the
+## item lists then mark magic items (GameItem.detect_magic_marks). The effect's handler does nothing else.
+const DETECT_MAGIC := 5
+
+static func party_detects_magic(party: Array) -> bool:
+	for m in party:
+		if m != null and m.has_affect(DETECT_MAGIC):
+			return true
+	return false
+
+
+## The most a character may carry, in coins of load: the strength allowance + 1500 (GAME.OVR
+## 0x24C89 calls START.EXE 0xBA:0x13AB, the same table as load_allowance, and adds 0x5DC).
+func max_load() -> int:
+	return load_allowance() + 1500
+
+
+## Whether the character can take an item (treasure TAKE, a shop's BUY, TRADE): GAME.OVR 0x23795
+## refuses ("OVERLOADED") a 17th item (record byte 0xC7 above 15) or one whose weight (x its count
+## when that is above 0) takes the load above max_load().
+func can_take_item(it: GameItem) -> bool:
+	if items.size() > 15:
+		return false
+	return encumbrance() + it.total_weight() <= max_load()
+
+
+## Whether `n` coins (any kind: each weighs 1) fit: GAME.OVR 0x24CDD. The treasure's TAKE of money
+## (0x2570F) takes nothing at all when they don't ("OVERLOADED"); coins_room() is what still fits.
+func can_take_coins(n: int) -> bool:
+	return encumbrance() + n <= max_load()
+
+
+func coins_room() -> int:
+	return maxi(max_load() - encumbrance(), 0)
+
+
 ## Encumbrance in coins: every coin, gem and piece of jewelry weighs 1, plus item weights (stacks count each piece).
 ## Matches the record's cached weight on all six shipped characters.
 func encumbrance() -> int:

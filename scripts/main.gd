@@ -41,12 +41,12 @@ var _vm_map := -1           # map index whose script is loaded
 var _vm_file := 0           # ECL file number of the loaded script
 var _vm_block := -1         # ECL block id of the loaded script
 var _pending_move := -1     # direction of a move waiting on an on-move menu
+var _by_new_ecl := false    # the area change under way comes from a script's NEW_ECL
 var _event_image: Image     # picture shown in the view by an event (null = 3D view)
 var _message: Label
 var _dax_cache := {}
 
 # Timed playback: script DELAYs and script-driven walks
-const DELAY_SECONDS := 0.45
 const WALK_STEP_SECONDS := 0.22
 var _timer: Timer
 var _busy := false                  # a delay or walk is playing; input waits
@@ -2075,7 +2075,7 @@ func _on_timer() -> void:
 				_held_message = ""
 			if _vm.state == EclVM.State.WAIT:
 				_busy = true
-				_timer.start(DELAY_SECONDS * CampScreen.delay_scale())
+				_timer.start(_script_delay())
 		else:
 			_timer.start(WALK_STEP_SECONDS)
 		_show()
@@ -2088,6 +2088,12 @@ func _on_timer() -> void:
 	_vm.resume()
 	_after_vm()
 	_show()
+
+
+## A script DELAY: the original waits game speed x 225 ms, no key (GAME.OVR 0x3465, opcode 0x3A,
+## START.EXE 0x709:0xDBE). A Timer can't start at 0, hence the floor.
+func _script_delay() -> float:
+	return maxf(CampScreen.speed * 0.225, 0.001)
 
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
@@ -2123,7 +2129,7 @@ func _after_vm() -> void:
 		EclVM.State.WAIT:
 			if not _busy:
 				_busy = true
-				_timer.start(DELAY_SECONDS * CampScreen.delay_scale())
+				_timer.start(_script_delay())
 			return
 		EclVM.State.MENU:
 			if _vm.menu_vertical:
@@ -2168,6 +2174,7 @@ func _after_vm() -> void:
 		EclVM.State.NEW_ECL:
 			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
 			var set_no := _vm.read_byte(EclVM.FILE_SET)
+			_by_new_ecl = true
 			_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true)
 			return
 		EclVM.State.ERROR:
@@ -2597,7 +2604,13 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
 	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
 	var carry := _pending_move if arrive and _vm.stepped_through else -1
-	var from_step := arrive and _pending_move >= 0
+	# After a NEW_ECL the original (GAME.OVR 0x3EFA) runs the new block's init, then its on-move
+	# (0x3FFF) and, unless that moves on again, the square's event (0x400E), whatever started it:
+	# a step, a square's event (the closing scene into New Phlan: its on-move sets the sky,
+	# 0x49FD/E, differential check 5) or a menu. A new game or a load goes through the main
+	# loop (0x403E) instead: the init, then the adventure menu.
+	var from_step := arrive and (_pending_move >= 0 or _by_new_ecl)
+	_by_new_ecl = false
 	_vm.stepped_through = false
 	if arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).

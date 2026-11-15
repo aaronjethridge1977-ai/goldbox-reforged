@@ -31,7 +31,8 @@ def start():
 
 def stop():
     # Only this lab's DOSBox (its por.conf): the Player lane runs its own beside it (chat 25).
-    subprocess.run("pkill -f '[d]osbox -conf .*/por.conf' ; pkill -f '[X]vfb :99'", shell=True)
+    # The full path: player_lab has a por.conf of its own (chat 26).
+    subprocess.run("pkill -f '[d]osbox -conf %s/por.conf' ; pkill -f '[X]vfb :99'" % HERE, shell=True)
     time.sleep(0.3)
     for f in ("/tmp/.X99-lock", "/tmp/.X11-unix/X99"):
         try:

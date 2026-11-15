@@ -121,6 +121,16 @@ lost). Saves: ours' original-format saves are now the original's layout (wildern
 of checks 1 and 2 are kept in `data/diff_3-8_start/` and `data/diff_6-19_start/` (letter G). GAME.OVR listing: build one with
 `ovr.units()` and `ovr.dis(fo, size, stop=False)` (about 76,000 lines, a few seconds).
 
+**Chat 26:** `pl.py stop` matches this lab's own `por.conf` by its full path (`player_lab` has a `por.conf` too). The
+GAME.OVR listing needs the lab's `ndisasm` on the PATH (`PATH=$PWD:$PATH python3 -c "import ovr; ..."`); START.EXE
+segments: slice `ovr.image()` at seg x 16 and run `./ndisasm -b16 -o <offset>` on the slice (the stand-in ignores `-e`).
+A check's original end save belongs with its start save: re-take both together (check 2's stored end save came from
+another start). Clear `game/CHRDATF*` before copying a check's original save in (a stale `CHRDATF5.ITM` showed as an item
+difference). In the original, **lists move with Home/End**, not the arrows (the temple's cure list, MEMORIZE's spell
+book; the highlight starts on the last entry there), and keys sent before a list is drawn are lost. Resting in New Phlan
+or City Hall brings the watch or the guards: City Hall rests quietly with `4AC0=1` in the save. Checks driver:
+`data/c26/checks/run.sh <n> <area>` (keys from chat 25's logs).
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
