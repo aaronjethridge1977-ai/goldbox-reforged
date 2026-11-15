@@ -825,13 +825,14 @@ func _exec(ins: Dictionary) -> void:
 					# the party back a square and calls this; the original shows the 3D view
 					# (the door), ours kept the priest's portrait (P44, Jeremy 2026-11-14).
 					picture = 255
-				0x2C4E, 0x2C51:
-					# Bracket the bands' loops that rewrite wilderness tiles (WRITE_MEM_BASE_OFF
-					# into 0x6300 and 0xD000): the river cleaned once Yarash is beaten (7:26
-					# 0xAD66..0xAE29), 8:27's at 0xAB25..0xAB99. Taken to be the original's
-					# hold-the-screen / redraw pair (chat 12: an assumption, not yet checked in
-					# the lab); our wilderness view draws those squares from 0x4AB3 itself
-					# (OverlandMap.tile), so nothing is needed here.
+				0x2C4E, 0x2C51, 0xC003, 0xC009:
+					# Around the bands' loops that rewrite wilderness tiles (7:26's land recovering
+					# after the pyramid, 0xAD66..0xAE89 with 0xC003/0xC009 a row at a time; 8:27's
+					# at 0xAB25..0xAB99). The original's CALL handler (GAME.OVR 0x3A36, value -
+					# 0x7FFF) acts only on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E and 0xC018:
+					# these do nothing there (chat 24). Our wilderness view draws those squares
+					# from 0x4AB3 itself (OverlandMap.tile). Before, ours printed "[not built
+					# yet: call C003 ...]" in the message box after the recovery text.
 					pass
 				0xBA03:
 					pass    # plays sound effect [0x03DE] (8 the Rolf tour's, 10 thunder); silent here

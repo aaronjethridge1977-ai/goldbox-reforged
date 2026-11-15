@@ -69,6 +69,25 @@ need `wait`s after `fightend,n` (the won screen and the treasure take a few fram
 checks 3 and 10 should match with 0 differences. Also seen: the original keeps the party on QUICK from one fight
 to the next (Tyranthraxus's fight played itself); ours' QUICK is per fight.
 
+## The wilderness after the pyramid: save and load (chat 24, main-path gap)
+
+Start: `mksave.py J G 7 26 0 5 E 4AB3=254 4AA2=0` (Yarash beaten, the land not yet seen recovering; into 7:26 from 1:24's
+edge, as the pyramid's own way out isn't in the exits graph). Both: Up ("AS YOU LEAVE THE SORCERER'S PYRAMID..."), Enter,
+G (GO BACK at the pyramid's door, 20,17), save F (`data/diff_7-26_orig/`; ours `load=G,up,wait,wait,enter,wait,wait,g,wait,wait,F2`).
+Then both load that save (ours loads the original's F) and step north twice (19,14 -> 19,12), save again (`data/diff_7-26_orig2/`,
+ours `data/diff_7-26_ours2.cfg`, keys `load=F,wait,up,wait,up,wait,F2`).
+
+- First save: **1 difference**, 0x4A0A (original 0, ours 7): the tile loop's `ADD [6E7E], [6E7B], [4A09]` is a word write
+  (operand type 3) that can pass 255; ours spills the high byte into 0x4A0A, the original keeps each ECL address of this
+  window as its own 16-bit slot (GAME.OVR reads 0x49E5 at [0x49D2] + 0xE5 x 2). A per-visit byte, so the harm ends at the
+  next area change; the general rule (word writes in the 0x4900-0x4AFF and 0x6B00-0x6EFF windows) needs an audit.
+- Fixed: CALL 0xC003 / 0xC009 printed "[not built yet: call C003 ...]" in the message box after the recovery text. The
+  original's CALL handler (GAME.OVR 0x3A36) acts only on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E, 0xC018: the rest do nothing.
+- After the load: **0x4A1E** original 0, ours 1. The original runs 7:26's init on load and keeps what it writes (its tile
+  routine zeroes 0x4A1E at 0xAD6A); ours' `load_original_save` runs the init, then puts all of 0x4900-0x52FF back as saved.
+  Next chat: drop the second restore (keep the square), re-run checks 1-10 to see nothing else moves. Also **0x4AFA-0x4AFF**:
+  ours writes the last dungeon's wall sets in a wilderness save, the original 0 / 255 (they are read back on a load).
+
 ## Proposed next five (chat 21, for Jeremy)
 
 One per closed area without a check, story flags first: the flags below are written in that area and read by another area's
