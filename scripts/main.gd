@@ -967,6 +967,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_V:
 			for m in _party:
 				m.recalculate(_types)
+			_sync_shell()
 			_sheet.open(_party, "PARTY", clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), false, 2)
 			get_viewport().set_input_as_handled()
 			return
@@ -1043,7 +1044,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _vm.on_overland:
 					menu.erase("AREA")
 				_camp.spells = SpellTable.shared(_game_path)
-				_camp.anti_magic = _vm.read_byte(0x49E5) > 0   # the shell: GAME.OVR 0x17BB2
+				_sync_shell()
 				_camp.open_cast(_party, clampi(_vm.selected, 0, _party.size() - 1), menu)
 				_dev_reseed([_camp._rng2])
 			get_viewport().set_input_as_handled()
@@ -1239,6 +1240,15 @@ func _save_path() -> String:
 		DirAccess.make_dir_recursive_absolute(dir)
 		return dir.path_join("quicksave.cfg")
 	return "user://quicksave.cfg"
+
+
+## The anti-magic shell (ECL 0x49E5 above 0) outside fights: no CAST in walking and camp CAST (GAME.OVR
+## 0x17BB2), no USE in any item list (0x21FD6 tests it for the walking, camp and shop lists too).
+## Set as each screen opens; the fight sets and clears the sheet's flag itself.
+func _sync_shell() -> void:
+	var on: bool = _vm.read_byte(0x49E5) > 0
+	_camp.anti_magic = on
+	CharacterSheet.anti_magic = on
 
 
 func _quick_save() -> void:
@@ -2078,6 +2088,7 @@ func _after_vm() -> void:
 		EclVM.State.TEMPLE:
 			for m in _party:
 				m.recalculate(_types)
+			_sync_shell()
 			_temple.open(_party)
 			_dev_reseed([_temple._rng])
 			return
@@ -2139,6 +2150,7 @@ func _run_program() -> void:
 			_party_menu.spells = SpellTable.shared(_game_path)
 			_party_menu.types = _types
 			_party_menu.game_path = _game_path
+			_sync_shell()
 			_party_menu.open(_party, _vm.read_byte(EclVM.TRAINING_MASK))
 			_dev_reseed([_party_menu._rng])
 		9:
@@ -2199,6 +2211,7 @@ func _open_shop() -> void:
 		it.name = names.name_of(it)
 		if it.price == 0:
 			it.price = 1
+	_sync_shell()
 	_shop.open(stock, _party)
 	_dev_reseed([_shop._rng])
 
@@ -2248,7 +2261,7 @@ func _make_camp() -> void:
 	# (one selection in the original; lab, chat 22: End x4, ENCAMP, MAGIC, SCRIBE answered for
 	# DARKSTAR).
 	_camp._sel = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
-	_camp.anti_magic = _vm.read_byte(0x49E5) > 0   # the shell: GAME.OVR 0x17BB2
+	_sync_shell()
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
 	_dev_reseed([_camp._rng, _camp._rng2])
 
@@ -2433,6 +2446,7 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	for m in _party:
 		m.recalculate(_types)
 	_treasure.picture = _event_picture(255, 1)     # the chest (lab: PIC block 1)
+	_sync_shell()
 	_treasure.open(spoils, _party, won_text, share)
 
 
