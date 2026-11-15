@@ -561,6 +561,11 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 			return true
 		0x10C:
 			m.script_team = v
+			# The original keeps it in the record (GAME.OVR 0x8074-0x80C5): 0x10E the side, 0x10F
+			# computer-run; so a save carries it (combat lane, Combat Chat 6).
+			if m.raw.size() > 0x10F and v in [0, 0x80, 0x81]:
+				m.raw[0x10E] = 1 if v == 0x81 else 0
+				m.raw[0x10F] = 0 if v == 0 else 1
 			return true
 		0xD8:
 			if m.raw.size() > 0xA0:

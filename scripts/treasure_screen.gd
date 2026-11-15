@@ -42,6 +42,8 @@ var _typed := ""
 var _won_text := ""
 var _share_xp := 0
 var _note := Label.new() # the last thing that happened (the bot logs it)
+var _flash := ""         # a refusal on row 24 for a moment (OVERLOADED)
+var _flash_id := 0
 var _scr: GameScreen
 var _sheet: CharacterSheet
 
@@ -108,6 +110,13 @@ func _show_treasure() -> void:
 func _refresh() -> void:
 	if _scr == null:
 		return
+	_draw_mode()
+	if _flash != "":
+		_scr.text(0, 24, _flash.rpad(40), GameScreen.GREEN)
+		_scr.update()
+
+
+func _draw_mode() -> void:
 	match _mode:
 		"results":
 			_page_frame()
@@ -213,6 +222,10 @@ func _take_item(i: int) -> bool:
 		return false
 	var m := _party[_who]
 	var it: GameItem = _spoils.items[i]
+	# GAME.OVR 0x6F0D: 0x23795 refuses a 17th item or one over the load ceiling ("OverLoaded").
+	if not m.can_take_item(it):
+		_refuse("OVERLOADED")
+		return false
 	_spoils.items.remove_at(i)
 	m.items.append(it)
 	_note.text = "%s TAKES THE %s." % [m.name, it.name.to_upper()]
@@ -223,9 +236,30 @@ func _take_item(i: int) -> bool:
 
 func _take_money(c: int, n: int) -> void:
 	n = clampi(n, 0, _spoils.money[c])
+	# GAME.OVR 0x2570F: when the amount doesn't fit under the load ceiling (0x24CDD), nothing
+	# is taken (main's lab, chat 26: Thrender at 1995 of 2000 took 5 gold, 6 refused).
+	if not _party[_who].can_take_coins(n):
+		_refuse("OVERLOADED")
+		return
 	_party[_who].money[c] += n
 	_spoils.money[c] -= n
 	_note.text = "%s TAKES %d %s." % [_party[_who].name, n, MONEY_LABELS[c]]
+
+
+## The original's refusal (START.EXE 0xBA:0x1693, as the sheet's messages): row 24 for a moment.
+func _refuse(text: String) -> void:
+	_note.text = text + "."
+	_flash = text
+	_flash_id += 1
+	var id := _flash_id
+	_refresh()
+	if not is_inside_tree():
+		_flash = ""
+		return
+	await get_tree().create_timer(CharacterSheet.MESSAGE_TIME * CampScreen.delay_scale()).timeout
+	if id == _flash_id:
+		_flash = ""
+		_refresh()
 
 
 func _pool() -> void:

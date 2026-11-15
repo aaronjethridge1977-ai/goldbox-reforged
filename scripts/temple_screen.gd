@@ -204,9 +204,15 @@ func _pay() -> void:
 		"CURE DISEASE":
 			SpecialAffects.cure_disease(m)
 		"RAISE DEAD":
+			# GAME.OVR 0x4A86: HP 1, status 0, effects 0x20 and 0x37 off, then the loss
+			# (main's PartyMember.raised_from_dead: CON - 1 and the max-HP cut; chat 26's lab).
 			if m.status == PartyMember.STATUS_DEAD:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
+				for b in m.affects.duplicate():
+					if int(b.effect) in [0x20, SpellCaster.POISONED]:
+						m.affects.erase(b)
+				m.raised_from_dead()
 		"STONE TO FLESH":
 			if m.status == SpecialAffects.STONED:
 				m.status = PartyMember.STATUS_OKAY

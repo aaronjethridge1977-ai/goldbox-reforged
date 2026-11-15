@@ -173,6 +173,11 @@ def holddump(r, base):
     for y in (range(25) if full else range(8, 18)):
         row = rd(base + ms * 16 + mo + 7 + y * 50 + (0 if full else 22), 50 if full else 14)
         print("HOLD icon %2d %s" % (y, " ".join("%02x" % b for b in row)), flush=True)
+    # The pick list (DS:0x671A count, then 3 bytes an entry from 0x671B: figure, distance, direction),
+    # built by 0x13880 for a target pick (0x160DB's die is its count). Combat Chat 6.
+    nn = rd(ds + 0x671A, 1)[0]
+    nl = rd(ds + 0x671B, 3 * min(nn, 80))
+    print("HOLD picklist %d %s" % (nn, " ".join("%d:%d:%d" % tuple(nl[3 * i:3 * i + 3]) for i in range(min(nn, 80)))), flush=True)
     nf = rd(ds + 0x6715, 1)[0]
     for k in range(1, nf + 1):
         e = rd(ds + 0x66D6 + 7 * k, 7)

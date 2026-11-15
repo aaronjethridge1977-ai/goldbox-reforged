@@ -9,24 +9,19 @@ Owner: the side lane (from 2026-11-14, Methods 3). Refresh it after a feature la
 
 Main-path entries below that are partial or missing (the engine-feature sections, then the spells and items the party or the monsters use most).
 
-- **Temples: Raise Dead** (partial): back at 1 HP; the constitution loss is missing
 - **Training halls and the party menu: A magic-user's new spell after training** (partial): built; the original's spell-learning page never seen
 - **Camp: Heal and memorized messages while resting** (partial): drawn as the rest; not seen in the original
-- **Items: Treasure: load and item-count limits when taking** (missing): a character can take more than the original allows
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
 - **Conditions and effects: Poison** (built): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight built (Combat Chat 4: aimed at the body, GAME.OVR 0x157B9)
 - **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (checked): the byte arithmetic wraps, so it resists every Pool spell with a d100 (Combat Chat 4: built, seen in DOSBox: Curse, IS UNAFFECTED)
-- **Spell 5, Detect Magic** (missing): effect added; the original marks magic items (handler 5 is empty: VIEW reads it)
-- **Spell 11, Detect Magic** (missing): as 5
 - **Spell 13, Reduce** (missing): effect added, nothing happens
 - **Spell 26, Slow Poison**: built in camp and walking (main, chat 23) and in fights (Combat Chat 4: the MANUAL aim on a fallen member's body, GAME.OVR 0x157B9; checked in DOSBox)
 - **Spell 28, Spiritual Hammer** (missing): no hammer appears
 - **Spell 34, Stinking Cloud** (partial): helpless 1d4+1 rounds; the cloud doesn't linger
 - **Spell 43, Remove Curse** (missing): cursed items can't be freed
 - **Spell 51, Lightning Bolt** (partial): level d6; runs straight, doesn't bounce off walls
-- **Script CALLs** (partial): 0x2C4E, 0x2C51, 0xC003, 0xC009 (wilderness, after the pyramid) not traced
 
-## Spells (5 checked, 41 built, 9 partial, 12 missing)
+## Spells (10 checked, 39 built, 10 partial, 8 missing)
 
 Monsters: how many monster records have the spell memorized (record bytes 0x17-0x2B), i.e. what the computer casts.
 
@@ -36,13 +31,13 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 2 | Curse | cleric 1 | 6 | built | -1 to hit on the other side |
 | 3 | Cure Light Wounds | cleric 1 | 15 | checked | 1d8; not on the diseased |
 | 4 | Cause Light Wounds | cleric 1 | 3 | built | touch attack, 1d8 |
-| 5 | Detect Magic | cleric 1 | 2 | missing | effect added; the original marks magic items (handler 5 is empty: VIEW reads it) |
+| 5 | Detect Magic | cleric 1 | 2 | checked | handler 5 is empty; while a member has effect 5 the item list puts "* " before magic items (START.EXE 0xBA:0x443; main's chat 26 lab: " YES  * FLAIL"); the sheet's ITEMS list shows it (Combat Chat 6) |
 | 6 | Protection From Evil | cleric 1 |  | built | -2 to be hit by evil, +2 saves |
 | 7 | Protection from Good | cleric 1 | 1 | built | as Protection from Evil, against good |
 | 8 | Resist Cold | cleric 1 |  | built | cold damage halved, +3 to the save (handler 0x0A) |
 | 9 | Burning Hands | magic-user 1 |  | built | the caster's level in fire damage |
 | 10 | Charm Person | magic-user 1 | 2 | partial | fights only; lasts the fight, not after it |
-| 11 | Detect Magic | magic-user 1 |  | missing | as 5 |
+| 11 | Detect Magic | magic-user 1 |  | checked | as 5 |
 | 12 | Enlarge | magic-user 1 |  | built | STR 18/00..18/100 by caster level (0x282BD), back when it ends |
 | 13 | Reduce | magic-user 1 | 3 | missing | effect added, nothing happens |
 | 14 | Friends | magic-user 1 |  | missing | effect added; CHA not raised |
@@ -177,7 +172,7 @@ Uses: instructions reached by following each script's control flow. `tools/sweep
 | COPY_MEM | 271 | built |  |
 | MENU_HORIZONTAL | 204 | built |  |
 | PARLAY | 41 | built | the script's own replies |
-| CALL | 180 | partial | 0x2C4E, 0x2C51, 0xC003, 0xC009 (wilderness, after the pyramid) not traced |
+| CALL | 180 | checked | 0x2C4E, 0x2C51, 0xC003, 0xC009 do nothing in the original's handler 0x3A36 either (main, chat 26) |
 | DAMAGE | 48 | built |  |
 | AND | 356 | built |  |
 | OR | 208 | built |  |
@@ -285,7 +280,7 @@ New Phlan's temples of Tyr, Sune and Tempus (TEMPLE_FLAG + COMBAT).
 |---|---|---|---|
 | HEAL: the cure list and prices | checked | yes | screens and keys (chat 10); list and prices from GAME.OVR |
 | Cure Light / Serious / Critical Wounds, waking the unconscious | built | yes | 1d8, 2d8+1, 3d8+3 to full HP; not on the diseased |
-| Raise Dead | partial | yes | back at 1 HP; the constitution loss is missing |
+| Raise Dead | checked | yes | back at 1 HP, effects 0x20 and 0x37 off, CON - 1 and the max-HP cut (GAME.OVR 0x4A86; main's chat 26 lab: CON 16 -> 15, max HP 10 -> 5; the temple calls it, Combat Chat 6) |
 | Cure Disease (mummy rot) | checked |  | temples and the spell |
 | Stone to Flesh | built |  | back at 1 HP (GAME.OVR 0x4EB4) |
 | Neutralize Poison | built |  | the temple sees effect 0x37 and removes 0x37, 0x16 and 0x0F (GAME.OVR 0x4CC9; a member dead of poison stays dead) |
@@ -345,7 +340,7 @@ VIEW -> ITEMS and the treasure screen.
 | Computer-run figures using items (monsters' wands, QUICK members' items) | checked | yes | GAME.OVR 0xAFA4: d7 tries, priority 7 down; on each, the first readied item (not a scroll, byte 62 below 0x80, a spell in byte 61) whose spell passes the spell weighing (0xAEAB) is used at once (0x22AC4: USES, a charge spent); no MAGIC ON test, so QUICK members use theirs too. Check 10's fight (Yarash's wand, 7:23) matches all 3689 draws (Combat Chat 2) |
 | Cursed items | partial |  | IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing) |
 | Treasure: results, experience, TAKE, POOL, SHARE | checked | yes | 464 XP for the Slums orcs; screens matched (chat 10) |
-| Treasure: load and item-count limits when taking | missing | yes | a character can take more than the original allows |
+| Treasure: load and item-count limits when taking | checked | yes | GAME.OVR 0x23795 / 0x24CDD (main's chat 26 lab): OVERLOADED at a 17th item or above STR allowance + 1500; TAKE MONEY takes nothing when it doesn't fit; the shop's BUY checks the money first, then the load, and pays only for a taken item (0x7080); TRADE the same rule (Combat Chat 6) |
 | Monsters' worthless items on a d10 of 1-3 | checked |  | roll for roll (side chat 3) |
 | The original's item names | checked | yes | treasure and VIEW |
 

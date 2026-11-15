@@ -32,13 +32,13 @@ SPELLS = {
     2: ("built", "-1 to hit on the other side"),
     3: ("checked", "1d8; not on the diseased"),
     4: ("built", "touch attack, 1d8"),
-    5: ("missing", "effect added; the original marks magic items (handler 5 is empty: VIEW reads it)"),
+    5: ("checked", "handler 5 is empty; while a member has effect 5 the item list puts \"* \" before magic items (START.EXE 0xBA:0x443; main's chat 26 lab: \" YES  * FLAIL\"); the sheet's ITEMS list shows it (Combat Chat 6)"),
     6: ("built", "-2 to be hit by evil, +2 saves"),
     7: ("built", "as Protection from Evil, against good"),
     8: ("built", "cold damage halved, +3 to the save (handler 0x0A)"),
     9: ("built", "the caster's level in fire damage"),
     10: ("partial", "fights only; lasts the fight, not after it"),
-    11: ("missing", "as 5"),
+    11: ("checked", "as 5"),
     12: ("built", "STR 18/00..18/100 by caster level (0x282BD), back when it ends"),
     13: ("missing", "effect added, nothing happens"),
     14: ("missing", "effect added; CHA not raised"),
@@ -167,7 +167,7 @@ FEATURES = [
     ("Temples", "New Phlan's temples of Tyr, Sune and Tempus (TEMPLE_FLAG + COMBAT).", [
         ("HEAL: the cure list and prices", "checked", True, "screens and keys (chat 10); list and prices from GAME.OVR"),
         ("Cure Light / Serious / Critical Wounds, waking the unconscious", "built", True, "1d8, 2d8+1, 3d8+3 to full HP; not on the diseased"),
-        ("Raise Dead", "partial", True, "back at 1 HP; the constitution loss is missing"),
+        ("Raise Dead", "checked", True, "back at 1 HP, effects 0x20 and 0x37 off, CON - 1 and the max-HP cut (GAME.OVR 0x4A86; main's chat 26 lab: CON 16 -> 15, max HP 10 -> 5; the temple calls it, Combat Chat 6)"),
         ("Cure Disease (mummy rot)", "checked", False, "temples and the spell"),
         ("Stone to Flesh", "built", False, "back at 1 HP (GAME.OVR 0x4EB4)"),
         ("Cure Blindness, Neutralize Poison, Remove Curse", "partial", False,
@@ -205,7 +205,7 @@ FEATURES = [
         ("Using items in a fight (wands, potions, scrolls)", "built", True, "items' spells as the table above; spells from items assumed instant"),
         ("Cursed items", "partial", False, "IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing)"),
         ("Treasure: results, experience, TAKE, POOL, SHARE", "checked", True, "464 XP for the Slums orcs; screens matched (chat 10)"),
-        ("Treasure: load and item-count limits when taking", "missing", True, "a character can take more than the original allows"),
+        ("Treasure: load and item-count limits when taking", "checked", True, "GAME.OVR 0x23795 / 0x24CDD (main's chat 26 lab): OVERLOADED at a 17th item or above STR allowance + 1500; TAKE MONEY takes nothing when it doesn't fit; the shop's BUY checks the money first, then the load, and pays only for a taken item (0x7080); TRADE the same rule (Combat Chat 6)"),
         ("Monsters' worthless items on a d10 of 1-3", "checked", False, "roll for roll (side chat 3)"),
         ("The original's item names", "checked", True, "treasure and VIEW"),
     ]),
@@ -229,7 +229,7 @@ FEATURES = [
 MAIN_SPELLS = [5, 11, 13, 18, 26, 28, 34, 43, 51]
 
 OPCODES_NOTE = {
-    "CALL": ("partial", "0x2C4E, 0x2C51, 0xC003, 0xC009 (wilderness, after the pyramid) not traced"),
+    "CALL": ("checked", "0x2C4E, 0x2C51, 0xC003, 0xC009 do nothing in the original's handler 0x3A36 either (main, chat 26)"),
     "SURPRISE": ("built", ""), "PARLAY": ("built", "the script's own replies"),
     "PRINT_RUNES": ("built", ""), "PROGRAM": ("built", "0 party menu, 3 lost, 8 won, 9 inn"),
     "LOAD_AREA_MAP": ("checked", ""), "LOAD_AREA_DECO": ("checked", ""),

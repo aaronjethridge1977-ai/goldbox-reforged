@@ -26,8 +26,9 @@ extends Control
 ## After a purchase the original says nothing (lab, side chat 2, 2026-11-13: BUY on the SHOP page
 ## twice gave Thrender two hand axes, row 24 never changed). QoL (Jeremy: he bought two long
 ## swords without noticing): row 24 shows "BOUGHT <ITEM>" for a moment, with how many the buyer
-## now carries when it's more than one, or "NOT ENOUGH MONEY." (the original's words when the
-## money is short are not yet checked).
+## now carries when it's more than one. Refusals are the original's (GAME.OVR 0x7080-0x7136,
+## Combat Chat 6): the money is checked first ("NOT ENOUGH MONEY."), then the buyer's load and item
+## count ("OVERLOADED", main's PartyMember.can_take_item), and only then is the price paid.
 
 signal closed
 
@@ -38,6 +39,7 @@ const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]
 var _items: Array[GameItem] = []
 var _party: Array[PartyMember] = []
 var _buyer := 0
+var _flash_green := false   # the flash is the original's refusal, not our BOUGHT line
 ## The character sheet main uses, for VIEW (set by main).
 var sheet: CharacterSheet
 var _mode := "menu"      # menu, list, appraise (the collection), value (SELL / KEEP)
@@ -132,7 +134,7 @@ func _draw_list() -> void:
 		var price := str(it.price)
 		_scr.text(31 - price.length(), 4 + i, price, color)
 	if _flash != "":
-		_scr.text(0, 24, _flash, GameScreen.YELLOW)
+		_scr.text(0, 24, _flash, GameScreen.GREEN if _flash_green else GameScreen.YELLOW)
 	else:
 		_scr.text(0, 24, "ITEMS:", 13)
 		_scr.menu_line(24, LIST_MENU, 7, _pick)
@@ -149,10 +151,18 @@ func _buy() -> void:
 		return
 	var it := _items[i]
 	var member := _party[_buyer]
-	if not member.pay_gold_in_shop(it.price):
+	# GAME.OVR 0x7080-0x7136: the money first ("Not enough Money."), then the item is added
+	# through 0x6F0D (refused as "OverLoaded" by 0x23795, main's PartyMember.can_take_item),
+	# and only then paid for.
+	if member.wealth_copper() < it.price * 200:
 		_note.text = "NOT ENOUGH MONEY."
-		_show_flash("NOT ENOUGH MONEY.")
+		_show_flash("NOT ENOUGH MONEY.", true)
 		return
+	if not member.can_take_item(it):
+		_note.text = "OVERLOADED."
+		_show_flash("OVERLOADED", true)
+		return
+	member.pay_gold_in_shop(it.price)
 	member.items.append(it.copy())
 	_note.text = ""
 	var has := 0
@@ -164,15 +174,19 @@ func _buy() -> void:
 	_show_flash("BOUGHT " + name.left(39 - 7 - tail.length()) + tail)
 
 
-## Row 24 shows `text` in place of the menu for a moment (QoL; see the top).
-func _show_flash(text: String) -> void:
+## Row 24 shows `text` in place of the menu for a moment (QoL; see the top). A refusal is the
+## original's own message (GAME.OVR 0x712C / 0x6F2F through START.EXE 0xBA:0x1693, the routine
+## that shows combat's "Magic On"): green, for the sheet's MESSAGE_TIME.
+func _show_flash(text: String, refusal: bool = false) -> void:
 	_flash = text
+	_flash_green = refusal
 	_flash_id += 1
 	var id := _flash_id
 	_refresh()
 	if not is_inside_tree():
 		return
-	await get_tree().create_timer(1.2 * CampScreen.delay_scale()).timeout
+	var t := CharacterSheet.MESSAGE_TIME if refusal else 1.2
+	await get_tree().create_timer(t * CampScreen.delay_scale()).timeout
 	if id == _flash_id and _flash != "":
 		_flash = ""
 		_refresh()

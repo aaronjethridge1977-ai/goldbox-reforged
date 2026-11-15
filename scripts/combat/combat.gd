@@ -91,7 +91,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 	for c in combatants:
 		c["down"] = false
 		# The computer runs monsters, NPCs (0x6BB8 128+) and members a script set to 0x80.
-		c["quick"] = c.team == 1 or c.who.npc >= 128 or c.who.script_team == 0x80
+		c["quick"] = c.team == 1 or c.who.npc >= 128 or c.who.script_team == 0x80 or record_quick(c.who)
 		c["moves"] = 0
 		c["attacks"] = 0
 		c["acted"] = false
@@ -262,7 +262,11 @@ func _pick_next() -> int:
 	var best_init := 0
 	var best_roll := 0
 	var chosen := -1
-	for i in combatants.size():
+	for f in _figure_order():
+		if f is String:
+			roll(1, 100, "who acts next: %s (aside)" % f)
+			continue
+		var i: int = f
 		var c: Dictionary = combatants[i]
 		var r := roll(1, 100, "who acts next: %s" % c.who.name)
 		var init: int = c.get("init", 0) if not c.down else 0
@@ -277,6 +281,42 @@ func _pick_next() -> int:
 	combatants[chosen]["init_was"] = best_init
 	combatants[chosen]["init"] = 0
 	return chosen
+
+
+## The members standing aside in a duel (CALL 0x8000 / 0x8001): [party position, name] each. The
+## original keeps them in its figure list, so they roll the d100 above in their party places, but they
+## get no initiative (0x1289F rolls for the two duellists only), no square and are never picked as
+## targets (Player 1's segment check, 1:18's tavern duel: seven d100s, two d6s, the target picks d1).
+var aside: Array = []
+
+
+## Who rolls the d100 above, in the original's figure order: the party in party order (the members
+## standing aside at their places, as their names), then everyone else.
+func _figure_order() -> Array:
+	var out: Array = []
+	if aside.is_empty():
+		out.assign(range(combatants.size()))
+		return out
+	var party: Array = []
+	var rest: Array = []
+	for i in combatants.size():
+		if combatants[i].team == 0 and combatants[i].who is PartyMember and not combatants[i].who.is_monster:
+			party.append(i)
+		else:
+			rest.append(i)
+	var places := {}
+	for a in aside:
+		places[int(a[0])] = String(a[1])
+	var k := 0
+	while not party.is_empty() or places.has(k):
+		if places.has(k):
+			out.append(places[k])
+			places.erase(k)
+		else:
+			out.append(party.pop_front())
+		k += 1
+	out.append_array(rest)
+	return out
 
 
 ## A spell with a casting time (GAME.OVR 0x14C0F: the table's delay / 3, here `d`) goes off
@@ -388,6 +428,22 @@ func first_dying(team: int) -> int:
 ## ally first, as a player would from the DONE menu. Off by default, as the original (its
 ## QUICK never bandages). CombatScreen sets it for each fight; headless runs (the bot, the
 ## lab) and the lab dice keep it off, so they play as before.
+## QUICK is kept in the character record, byte 0x10F (Combat Chat 6, GAME.OVR): QUICK sets it
+## (0xAA38), Space in a fight clears it for members who aren't NPCs (0x9D16; 0xBC26 during a
+## computer-run turn, not for status 1), a script's team change sets or clears it (0x808F-0x80C5);
+## nothing clears it when a fight ends, so the party stays on QUICK into the next fight (check 5:
+## Tyranthraxus's fight played itself after the guards'). The record goes into saves with it.
+const RECORD_QUICK := 0x10F
+
+static func record_quick(m) -> bool:
+	return m is PartyMember and not m.is_monster and m.raw.size() > RECORD_QUICK and m.raw[RECORD_QUICK] != 0
+
+
+static func set_record_quick(m, on: bool) -> void:
+	if m is PartyMember and not m.is_monster and m.raw.size() > RECORD_QUICK:
+		m.raw[RECORD_QUICK] = 1 if on else 0
+
+
 var quick_bandages := false
 const QUICK_BANDAGES_KEY := "quick_bandages"
 ## SETTINGS: TACTICS FOR QUICK, SMARTER (B1; SmartQuick). Set like quick_bandages.
@@ -591,8 +647,6 @@ func shoot(i: int, j: int) -> void:
 				var copy := gone.copy()
 				copy.name = gone.name
 				dropped.append(copy)
-		if magic and magic.image_takes_it(tm):
-			continue
 		var need: int = am.thac0 - ac - bonus
 		need -= SpecialAffects.hit_bonus(am, tm)
 		need -= script_hit_mod(am)
@@ -604,6 +658,8 @@ func shoot(i: int, j: int) -> void:
 		else:
 			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
+			if magic:
+				magic.image_die(tm)
 			var weapon: GameItem = gone if gone != null else am.readied_weapon(types)
 			var notes: Array = []
 			var before := dmg
@@ -1044,8 +1100,6 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var second: bool = int(a.get("second", 0)) > 0
 		if second:
 			a.second -= 1
-		if magic and magic.image_takes_it(tm):
-			continue
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var free_miss := _free_miss(t)     # runs on every attack, hit or not (to-hit category 16)
@@ -1056,6 +1110,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var dice: Array = am.base_damage_2 if second else (am.damage_large if tm.is_large() else am.damage)
 		var dmg := roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2])
 		dmg = maxi(dmg, 0)
+		if magic:
+			magic.image_die(tm)
 		if stab:
 			dmg *= (am.thief_level() - 1) / 4 + 2
 		if magic:

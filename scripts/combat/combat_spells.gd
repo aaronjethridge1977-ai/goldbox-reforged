@@ -160,7 +160,18 @@ func damage_after(am: PartyMember, dmg: int) -> int:
 	return dmg
 
 
-## An attack aimed at a figure with mirror images may strike an image instead.
+## A weapon's hit on a figure with mirror images (Combat Chat 6): the original's effect 0x1C
+## handler (GAME.OVR 0xF61B) runs after the to-hit and damage dice and rolls d(images + 1), but
+## only takes an image when a spell is being cast (DS:0x681B, the spell's id, above 0; 0x6820 0),
+## so a blow always lands on the figure (2:9's MUs, `orig_A_mu29`: d20, d10, then the d5).
+func image_die(tm: PartyMember) -> void:
+	var a := _affect(tm, EFFECT_MIRROR)
+	if not a.is_empty():
+		c.roll(1, (int(a.value) >> 4) + 1, "%s's images" % tm.name)
+
+
+## A spell aimed at a figure with mirror images may strike an image instead (0xF61B with a spell
+## in progress). Not yet called from the spells (open).
 func image_takes_it(tm: PartyMember) -> bool:
 	var a := _affect(tm, EFFECT_MIRROR)
 	if a.is_empty():

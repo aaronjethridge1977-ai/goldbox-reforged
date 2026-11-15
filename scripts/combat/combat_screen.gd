@@ -648,37 +648,62 @@ func _place() -> void:
 		else:
 			foes.append(_monsters[i])
 			foe_pictures.append(_pictures[i])
-	var side_list: Array = _party + allies
+	# A member turned against the party (a script's 0x6C0C = 0x81, kept in the record as byte
+	# 0x10E = 1 with 0x10F = 1, so it survives a save: GAME.OVR 0x80B2) is placed with the monsters,
+	# before them, and the rest of the party in the formation for its own size (Combat Chat 6, the
+	# Player's 6:1 run for the gate: DIRTEN, saved so, stood at the monsters' first place in the
+	# original and was in LIRA's target list). The figure order stays the party's.
+	var home: Array = []
+	var turned: Array = []
+	for m in _party:
+		if _turned(m):
+			turned.append(m)
+		else:
+			home.append(m)
+	var side_list: Array = home + allies
 	var party_sizes := side_list.map(func(m): return Combat.foot_size(m))
 	var party_cells := placer.place_team(side_list.size(), _facing, Vector2i.ZERO, true, party_sizes)
 	var party_dir: int = Placement.FACING_TO_DIR[_facing]
-	for i in _party.size():
-		if party_cells[i].x < 0:
+	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
+	var mon_list: Array = turned + foes
+	var mon_sizes := mon_list.map(func(m): return Combat.foot_size(m))
+	var mon_cells := placer.place_team(mon_list.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
+	for m in _party:
+		var t := turned.find(m)
+		var cell: Vector2i = mon_cells[t] if t >= 0 else party_cells[home.find(m)]
+		if cell.x < 0:
 			continue
-		# A member a script turned against the party (0x6C0C = 0x81) fights with the monsters.
-		var side := 1 if _party[i].script_team == 0x81 else 0
-		_combatants.append({"who": _party[i], "team": side, "cell": party_cells[i],
-			"icon": _art.character_icon(_party[i]), "dir": party_dir, "pic": -1})
-	for i in range(_party.size(), side_list.size()):
+		_combatants.append({"who": m, "team": 1 if t >= 0 else 0, "cell": cell,
+			"icon": _art.character_icon(m), "dir": (party_dir + 4) % 8 if t >= 0 else party_dir, "pic": -1})
+	for i in range(home.size(), side_list.size()):
 		if party_cells[i].x < 0:
 			continue
 		var k := _monsters.find(side_list[i])
 		_combatants.append({"who": side_list[i], "team": 0, "cell": party_cells[i],
 			"icon": _art.monster_icon(_mon_file, _pictures[k]) if _pictures[k] >= 0 else _art.character_icon(side_list[i]),
 			"dir": party_dir, "pic": _pictures[k]})
-	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
-	var mon_sizes := foes.map(func(m): return Combat.foot_size(m))
-	var mon_cells := placer.place_team(foes.size(), (_facing + 2) % 4, ahead, false, mon_sizes)
 	for i in foes.size():
-		if mon_cells[i].x < 0:
+		var cell: Vector2i = mon_cells[turned.size() + i]
+		if cell.x < 0:
 			continue
 		var icon: Variant = _art.character_icon(foes[i]) if foe_pictures[i] < 0 \
 			else _art.monster_icon(_mon_file, foe_pictures[i])
-		_combatants.append({"who": foes[i], "team": 1, "cell": mon_cells[i],
+		_combatants.append({"who": foes[i], "team": 1, "cell": cell,
 			"icon": icon, "dir": (party_dir + 4) % 8, "pic": foe_pictures[i]})
 
 
+## Is party member `m` on the monsters' side: a script's 0x81 this session, or the record's
+## byte 0x10E (the original keeps the side there, so a save carries it).
+static func _turned(m: PartyMember) -> bool:
+	return m.script_team == 0x81 or (m.script_team == 0 and m.raw.size() > 0x10E and m.raw[0x10E] != 0)
+
+
 # --- Fighting ---------------------------------------------------------------------------
+
+## Set by main before open_event for a duel (CALL 0x8000 / 0x8001): the whole party, of whom only
+## the duellist fights (Combat.aside).
+var duel_party: Array[PartyMember] = []
+
 
 func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	if copy_party:
@@ -714,6 +739,19 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 				row.append("%02d" % _field.tile(x, y))
 			TpDice.log.append("field %02d %s" % [y, " ".join(row)])
 	_combat = Combat.new(_field, _combatants, seed_value)
+	# A duel: the members standing aside keep their places in the original's figure list.
+	var k := 0
+	for m in duel_party:
+		if not m.can_fight():
+			continue
+		var fights := false
+		for p in _party:
+			if p == m or p.name == m.name:
+				fights = true
+		if not fights:
+			_combat.aside.append([k, m.name])
+		k += 1
+	duel_party = []
 	_combat.quick_bandages = Combat.quick_bandages_on() and DisplayServer.get_name() != "headless" and not TpDice.on
 	_combat.smart_quick = SmartQuick.on() and DisplayServer.get_name() != "headless" and not TpDice.on
 	_combat.smart_monsters = SmartQuick.monsters_on() and DisplayServer.get_name() != "headless" and not TpDice.on
@@ -1742,8 +1780,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			for c in _combatants:
 				var w: PartyMember = c.who
-				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80):
+				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80) and w.status != 1:
 					c.quick = false
+					Combat.set_record_quick(w, false)   # GAME.OVR 0xBC26
 			return
 	if (_event_fight or _cmode == "move") and _result == 0 and _combat != null:
 		_fight_input(event, key)     # (a test fight's Esc leaves it, but not from inside MOVE)
@@ -1866,6 +1905,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			var w: PartyMember = c.who
 			if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80):
 				c.quick = false
+				Combat.set_record_quick(w, false)   # GAME.OVR 0x9D16
 		return
 	var items := _bottom_menu()
 	var choice := _menu_choice(event, key, items)
@@ -1948,6 +1988,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			_advance()
 		"QUICK":
 			_combatants[_combat.active].quick = true
+			Combat.set_record_quick(_combatants[_combat.active].who, true)   # kept for the next fight (0xAA38)
 			_ai_timer.start(0.2)
 		"DONE":
 			_cmode = "done"
@@ -1961,6 +2002,7 @@ func quick_all() -> void:
 	for c in _combatants:
 		if c.team == 0:
 			c.quick = true
+			Combat.set_record_quick(c.who, true)
 	if _combat.active >= 0 and _ai_timer.is_stopped():
 		_ai_timer.start(0.2)
 

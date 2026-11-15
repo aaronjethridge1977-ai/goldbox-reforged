@@ -372,11 +372,15 @@ func _draw_items(m: PartyMember, cursor_lit: bool) -> void:
 	_heading(m, "ITEMS")
 	_t(1, 3, "READY", GameScreen.WHITE)
 	_t(7, 3, "ITEM", GameScreen.WHITE)
+	# Detect Magic (START.EXE 0xBA:0x443, main's chat 26 lab): while any member has its effect,
+	# "* " goes before the name of a magic item (" YES  * FLAIL" for a +1 flail).
+	var detect := PartyMember.party_detects_magic(_people)
 	for i in mini(m.items.size(), MAX_ITEMS):
 		var it := m.items[i]
 		var color := GameScreen.WHITE if i == _cursor and cursor_lit and _message == "" else GameScreen.GREEN
 		_t(2, 5 + i, "YES" if it.readied else "NO", color)
-		_t(7, 5 + i, item_label(it).to_upper(), color)
+		var mark := "* " if detect and it.detect_magic_marks() else ""
+		_t(7, 5 + i, mark + item_label(it).to_upper(), color)
 
 
 func _spell_rows(m: PartyMember) -> Array:
@@ -902,10 +906,9 @@ func _spend(m: PartyMember, it: GameItem, id: int) -> void:
 	spend_use(m, it, id)
 
 
+## TRADE's limit: GAME.OVR 0x23795, main's rule (PartyMember.can_take_item).
 func _can_take(p: PartyMember, it: GameItem) -> bool:
-	if p.items.size() >= MAX_ITEMS:
-		return false
-	return p.encumbrance() + it.total_weight() <= p.load_allowance() + 1500
+	return p.can_take_item(it)
 
 
 ## What a shop pays for an item: half its price.
