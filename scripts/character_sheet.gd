@@ -744,6 +744,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _timer != null:
 			_timer.stop()
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+	# P33/P45 (an exception, Jeremy 2026-11-14): Up/Down move through every list here as
+	# Home/End do (the item list, combat's CAST list, TRADE's and the coins' picks).
+	if key in [KEY_UP, KEY_KP_7]:
+		key = KEY_HOME
+	elif key in [KEY_DOWN, KEY_KP_1]:
+		key = KEY_END
 	var cancel := event.is_action("ui_cancel")
 	var items := _current_menu()
 	if (event.is_action("ui_left") or event.is_action("ui_right")) and not items.is_empty() and _mode != "amount":
