@@ -341,6 +341,7 @@ VIEW -> ITEMS and the treasure screen.
 | READY, USE, TRADE, DROP, HALVE, JOIN, money TRADE / DROP | checked | yes | 30 lab captures pixel for pixel, messages included (chat 11) |
 | Encumbrance and movement from weight | checked | yes | matches the cached weight in all six shipped characters |
 | Using items in a fight (wands, potions, scrolls) | built | yes | items' spells as the table above; spells from items assumed instant |
+| Computer-run figures using items (monsters' wands, QUICK members' items) | missing | yes | the original weighs each readied item with charges and a spell on d7 tries (GAME.OVR 0xAFA4, priority 7 down, the same weighing as spells 0xAEAB) and uses it (0x22AC4); ours only draws the d7. Found by check 10's fight: Yarash used an item at draw 1038 (Combat Chat 1). Magic armour's movement (+3) is main's file (board request) |
 | Cursed items | partial |  | IT'S CURSED blocks unreadying; nothing frees them (Remove Curse missing) |
 | Treasure: results, experience, TAKE, POOL, SHARE | checked | yes | 464 XP for the Slums orcs; screens matched (chat 10) |
 | Treasure: load and item-count limits when taking | missing | yes | a character can take more than the original allows |

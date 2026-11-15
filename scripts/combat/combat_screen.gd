@@ -1740,16 +1740,28 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			if _cmode == "move" and _combat.active == _selected and _combatants[_selected].moves <= 0:
 				_cmode = "menu"
 		return
+	# The original's reference card keys work at the combat menu too (lab, Combat Chat 1, the
+	# kobold net trap; GAME.OVR 0x9CAE for Alt-M): Alt-M switches MAGIC ON / OFF, Alt-Q puts the
+	# whole party on QUICK (this member's turn runs at once), Space takes every party member off
+	# QUICK (nothing to see at the menu; the turn goes on). Space used to end the turn here.
+	if _cmode == "menu" and event is InputEventKey and (event as InputEventKey).alt_pressed:
+		if key == KEY_M:
+			toggle_magic()
+			return
+		if key == KEY_Q:
+			quick_all()
+			return
+	if _cmode == "menu" and key == KEY_SPACE:
+		for c in _combatants:
+			var w: PartyMember = c.who
+			if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80):
+				c.quick = false
+		return
 	var items := _bottom_menu()
 	var choice := _menu_choice(event, key, items)
 	if choice == "" and _cmode in ["done", "speed"] and event.is_action("ui_cancel"):
 		choice = "EXIT"
 	if choice == "":
-		# Modern extras (not in the original's menus): Space ends the turn.
-		if key == KEY_SPACE:
-			_combat.done()
-			_cmode = "menu"
-			_advance()
 		return
 	_pick = items.find(choice)
 	if _cmode == "speed":
@@ -1834,9 +1846,9 @@ func quick_all() -> void:
 		_ai_timer.start(0.2)
 
 
-## Alt-M in a computer turn (and --keys magic in the lab): the party's QUICK members cast
-## spells or not ("MAGIC ON" / "MAGIC OFF" on the bottom line; off at the start of each fight,
-## GAME.OVR 0xE457).
+## Alt-M in a computer turn or at the combat menu (and --keys magic in the lab): the party's
+## QUICK members cast spells or not ("MAGIC ON" / "MAGIC OFF" on the bottom line; off at the
+## start of each fight, GAME.OVR 0xE457).
 func toggle_magic() -> void:
 	if _combat == null:
 		return
