@@ -159,6 +159,14 @@ that runs before `tpseed` uses Godot's dice and may meet a random encounter: see
 (DS:0x6810, far pointers; next item at record +0x2A) can be read while a fight waits for input. TREASURE with item list
 128+ is GAME.OVR 0x26F5 / 0x25C99 (`docs/diff-checks.md`, Chat 28).
 
+**Combat Chat 6 (Jeremy's PC):** DOSBox Staging ignores SIGTERM, so a stop by `kill` leaves it running and the next
+`orig.sh` reuses it: the PC lab's `killmine.sh` sends SIGKILL a second later. Never run `killmine.sh`/`pgrep -f` with the
+pattern on your own shell's command line (it matches the shell). `savein.sh` also reads `combat6/saves/<fixture>`
+(`mu`: 4:10's LEVEL 6 MU at 8,10 N, 0x4A42 = 3; `mu29`: 2:9's event 13 from 7,5 S, 0x4A77 = 16). `trace.py`'s HOLD
+prints the pick list (`HOLD picklist <count> figure:distance:direction ...`, DS:0x671A; the figures are 1-based, as the
+occupancy grid). Ours on a separate game folder (so regress's slots stay): the lab archive's `combat6/oursg.sh <keys>`
+with `combat6/g61` (a copy of `game/` without saves; `combat6/mksave.py` writes there through the `combat6/game` link).
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
