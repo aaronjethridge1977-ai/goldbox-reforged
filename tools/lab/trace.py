@@ -187,6 +187,39 @@ def holddump(r, base):
               e[4], e[5], e[6], st), flush=True)
 
 
+def holdstack(r, base, locate):
+    """HOLDSTACK=<OVR offset>[,...] (Combat Chat 7): the held draw's call chain. Finds in guest RAM
+    every far return address that locate() names as the given GAME.OVR offset (e.g. 2bbbf, as the
+    trace names roll_dice's caller; the overlay's segment changes from run to run) and prints the
+    word pairs above it that are far returns into named code: the stack's callers, innermost
+    first (stale frames show too; the real chain is the one whose callers call each other)."""
+    rd = lambda a, n: (r.m.seek(a), r.m.read(n))[1]
+    ram = rd(base, 0xA0000)
+    for spec in os.environ["HOLDSTACK"].split(","):
+        # spec: the OVR offset of the innermost return (e.g. 2bbbf, as the trace names roll_dice's
+        # caller); each word pair (ip, cs) in RAM that locate() names so is a frame to show.
+        want = "OVR:%05x" % int(spec, 16)
+        import ovr as _ovr
+        uip = int(spec, 16) - _ovr.unit_of(int(spec, 16))
+        at = -1
+        while True:
+            at = ram.find(struct.pack("<H", uip), at + 1)
+            if at < 0 or at >= len(ram) - 100:
+                break
+            wip, wcs = struct.unpack_from("<HH", ram, at)
+            if not (0x0800 <= wcs < 0x9000) or not locate(wcs, wip).startswith(want):
+                continue
+            words = struct.unpack_from("<48H", ram, at)
+            out = []
+            for k in range(0, 47):
+                wip, wcs = words[k], words[k + 1]
+                if 0x0800 <= wcs < 0x9000:
+                    w = locate(wcs, wip)
+                    if w != "?":
+                        out.append("+%d %04x:%04x %s" % (2 * k, wcs, wip, w))
+            print("HOLDSTACK at %05x: %s" % (at, " | ".join(out)), flush=True)
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "install":
         install()
@@ -242,7 +275,10 @@ if __name__ == "__main__":
                 if pb != held_pb:
                     held_pb, held_t = pb, time.time()
                 elif time.time() - held_t > 3:
-                    holddump(r, base); holds.pop(0); held_pb = None
+                    holddump(r, base)
+                    if os.environ.get("HOLDSTACK"):
+                        holdstack(r, base, locate)
+                    holds.pop(0); held_pb = None
                     hold = holds[0] if holds else 0
             for e in r.new(hold - 8 if hold else None):
                 if e is None:

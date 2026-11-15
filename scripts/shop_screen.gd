@@ -5,7 +5,8 @@ extends Control
 ##   the adventure screen (view, party list, text box) with BUY VIEW POOL APPRAISE EXIT; the
 ##     party list's selected member is the buyer (Up/Down);
 ##   BUY: a page headed SHOP, 19 items a page (name, price in gold at column 30), the selected
-##     one white and the rest light green, menu "ITEMS: BUY NEXT PREV EXIT". It opens a line in,
+##     one white and the rest light green, menu "ITEMS: BUY NEXT PREV EXIT" (NEXT and PREV only
+##     when they would move the list: _list_menu). It opens a line in,
 ##     on the second item (HAND AXE; PREV shows BATTLE AXE, the first); NEXT and PREV turn a
 ##     page (the last page ends on the last item).
 ##   Menus as everywhere: the hot letter, or Left/Right and Enter.
@@ -34,7 +35,7 @@ signal closed
 
 const PAGE := 19
 const MENU := ["BUY", "VIEW", "POOL", "APPRAISE", "EXIT"]
-const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]
+const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]   # every item; row 24 shows _list_menu()
 
 var _items: Array[GameItem] = []
 var _party: Array[PartyMember] = []
@@ -137,7 +138,7 @@ func _draw_list() -> void:
 		_scr.text(0, 24, _flash, GameScreen.GREEN if _flash_green else GameScreen.YELLOW)
 	else:
 		_scr.text(0, 24, "ITEMS:", 13)
-		_scr.menu_line(24, LIST_MENU, 7, _pick)
+		_scr.menu_line(24, _list_menu(), 7, mini(_pick, _list_menu().size() - 1))
 	_scr.update()
 
 
@@ -220,6 +221,20 @@ func _reselect(i: int) -> void:
 	if _cursor < _top or _cursor >= _top + PAGE:
 		_top = clampi(_cursor, 0, maxi(_items.size() - PAGE, 0))
 	_refresh()
+
+
+## The list's row 24 offers NEXT and PREV only when they'd move it (Player 2's sweep of New Phlan's
+## 13 shop doors, Combat Chat 7): "ITEMS: BUY PREV EXIT" as the general store opens (a line in),
+## "BUY EXIT" once its first item is at the top; a long list "BUY NEXT EXIT" at the top, "BUY NEXT
+## PREV EXIT" in the middle, "BUY PREV EXIT" at the end.
+func _list_menu() -> Array:
+	var m: Array = ["BUY"]
+	if _top + PAGE < _items.size():
+		m.append("NEXT")
+	if _top > 0:
+		m.append("PREV")
+	m.append("EXIT")
+	return m
 
 
 func _page(step: int) -> void:
@@ -364,10 +379,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode
 	var items: Array = MENU
 	match _mode:
-		"list": items = LIST_MENU
+		"list": items = _list_menu()
 		"appraise": items = ["GEMS", "JEWELRY", "EXIT"]
 		"value": items = ["SELL", "KEEP"]
 	var choice := ""
+	_pick = mini(_pick, items.size() - 1)
 	if key == KEY_ENTER or key == KEY_KP_ENTER:
 		choice = items[_pick]
 	elif key == KEY_LEFT or key == KEY_RIGHT:
@@ -406,8 +422,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		"list":
 			match choice:
 				"BUY": _buy()
-				"NEXT": _page(1)
-				"PREV": _page(-1)
+				"NEXT", "PREV":
+					_page(1 if choice == "NEXT" else -1)
+					var now := _list_menu()      # the menu may have lost the item just used
+					_pick = now.find(choice) if choice in now else mini(_pick, now.size() - 1)
+					_refresh()
 				"EXIT": _exit()
 		"appraise":
 			match choice:

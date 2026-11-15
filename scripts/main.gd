@@ -2185,7 +2185,7 @@ func _after_vm() -> void:
 			for m in _party:
 				m.recalculate(_types)
 			_sync_shell()
-			_temple.open(_party)
+			_temple.open(_party, _vm.selected)   # opens on the selected member (combat lane, Combat Chat 7)
 			_dev_reseed([_temple._rng])
 			return
 		EclVM.State.COMBAT:

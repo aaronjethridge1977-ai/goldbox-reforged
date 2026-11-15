@@ -1,7 +1,10 @@
 """Lines up the original's draws (trace.py run) and ours (tplog) and shows where they part;
 then compares where every figure went, whether CONTINUE BATTLE was asked, and the party's HP
 and status at the end. The last line is the verdict: MATCH, or what differs."""
-import re, sys
+import os, re, sys
+# DRAWS_ONLY=1 (Combat Chat 7): the draws alone decide (a Player's trace logs figures 1-31 only
+# and no end lines: 6:1's buccaneers run to figure 40).
+DRAWS_ONLY = bool(os.environ.get("DRAWS_ONLY"))
 o = []; opos = {}; upos = {}; omoves = {}; umoves = {}; ustart = []
 oend = []; uend = []
 for l in open(sys.argv[1]):
@@ -59,7 +62,9 @@ else:
 # Where everyone went. The original's cells are sampled as the trace polls (a step between two
 # polls can be missed, and figures pass through odd cells while being placed), so its list must
 # be a subsequence of ours, from ours' starting cell on, and end on the same cell.
-if ustart:
+if DRAWS_ONLY:
+    print("positions and end: not compared (DRAWS_ONLY)")
+if ustart and not DRAWS_ONLY:
     if first is not None:          # only the moves made before the draws part
         omoves = {}; umoves = {}
         for src, dst in ((opos, omoves), (upos, umoves)):
@@ -112,7 +117,7 @@ def _same_end(o, u):
             continue
         return False
     return True
-if oend or uend:
+if (oend or uend) and not DRAWS_ONLY:
     uend = [x for x in uend if not (x.startswith("ASKED ") and not any(y.startswith("ASKED ") for y in oend) and any(y.endswith(" ?") for y in oend))]
     if _same_end(oend, uend):
         print("end: the same (%s)" % "; ".join(x.replace("PARTY ", "") for x in oend))

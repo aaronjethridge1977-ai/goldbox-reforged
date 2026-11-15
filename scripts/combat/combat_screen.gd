@@ -1317,7 +1317,9 @@ func _attack_aimed(j: int) -> void:
 	var shown_before := _message_count
 	var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
 	var up_before := _standing()
-	if (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
+	if _combat.sweep(me, j):
+		pass                      # GAME.OVR 0xA5BD: the sweep comes first (Combat Chat 7)
+	elif (_combatants[me].who as PartyMember).weapon_ranged and not _combat.touching(_combatants[me], _combatants[j]):
 		_combat.shoot(me, j)
 	else:
 		_combat.attack(me, j)

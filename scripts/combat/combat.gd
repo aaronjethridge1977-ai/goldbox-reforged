@@ -179,6 +179,7 @@ func start_round() -> void:
 		# dropped (not forgotten), and a wounded figure may cast again.
 		c["pending"] = {}
 		c["no_spells"] = false
+		c.erase("kept_attacks")
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
 		if c.down:
@@ -245,6 +246,9 @@ func next_turn() -> int:
 		c.turned = 0
 		c.guarding = false
 		c.ai = false
+		if c.has("kept_attacks"):
+			c.attacks = c.kept_attacks      # back for the turn after BEGINS CASTING (CombatSpells.cast)
+			c.erase("kept_attacks")
 		return active
 	active = -1
 	return -1
@@ -680,9 +684,12 @@ func shoot(i: int, j: int) -> void:
 
 # --- The computer's choice of weapon -----------------------------------------------------
 # As the original does it at the start of each computer-run turn (rules as documented by
-# Pilgrim's reconstruction): every weapon the combatant may use (its class bits, record
-# 0xB0) is rated: dice count x size, + 8 per plus, + 2 per point of damage bonus, + 2 per
-# extra missile attack for a launcher, + 3 if one-handed; cursed ones count 0. The best
+# Pilgrim's reconstruction; read in GAME.OVR by Combat Chat 7: 0xBF8A, the rating 0xBE4D):
+# every weapon the combatant may use (its class bits, record 0xB0) is rated: dice count x
+# size, + 8 per plus, + 2 per point of damage bonus, + (ITEMS byte 5 - 1) x 2 for a
+# launcher, + 3 if one-handed; cursed ones count 0. (Not built, rare: item type 85's
+# rating 8 against some targets, 0 for an item whose bytes 61/62 mark it, or when the
+# hands in use would pass 3.) The best
 # missile weapon (thrown or launcher) is readied if it rates over half the best melee
 # weapon (or bare hands), has its ammunition, and either no enemy is adjacent or it can
 # also be used in melee; otherwise the best melee weapon (none: bare hands). A two-handed
@@ -698,11 +705,14 @@ func _rate(m: PartyMember, it: GameItem) -> int:
 		r += it.plus * 8
 	if dmg[2] > 0:
 		r += dmg[2] * 2
+	# GAME.OVR 0xBEF4: a launcher adds (ITEMS byte 5 - 1) x 2, byte 5 as it is (bows 4 -> 6;
+	# javelins, flagged thrown and launcher, 2 -> 2). Combat Chat 7: ours halved byte 5 first,
+	# so 6:1's ELWEN kept her +1 melee weapon (19) over her javelins (9; the original's 11).
 	if types.flags(it.type) & ItemTypes.FLAG_LAUNCHER:
-		r += (maxi(types.half_attacks(it.type), 2) / 2 - 1) * 2
+		r += (types.half_attacks(it.type) - 1) * 2
 	if types.hands(it.type) <= 1:
 		r += 3
-	return r
+	return r & 0xFF                 # the original keeps the rating in a byte
 
 
 func choose_weapon(i: int) -> void:
@@ -745,6 +755,10 @@ func choose_weapon(i: int) -> void:
 			has_ammo = false           # B3: MELEE keeps a hand weapon
 		if has_ammo and (melee_too or not enemy_adjacent(i)):
 			pick = best_missile
+	if OS.has_environment("APDBG"):
+		print("   @%d choose_weapon %s attacks %d moves %d melee %s=%d missile %s=%d pick %s (had %s)" % [TpDice.calls, m.name, c.attacks, c.moves,
+			best_melee.type if best_melee else -1, melee_rate, best_missile.type if best_missile else -1,
+			missile_rate, pick.type if pick else -1, m.weapon.type if m.weapon else -1])
 	if pick == m.weapon:
 		return
 	if m.weapon != null:
@@ -981,7 +995,8 @@ func step(dir: int) -> String:
 	if other >= 0:
 		if combatants[other].team == c.team or c.attacks <= 0:
 			return "blocked"
-		attack(active, other)
+		if not sweep(active, other):
+			attack(active, other)
 		return "attacked"
 	if not fit[0]:
 		return "blocked"
@@ -1029,7 +1044,15 @@ func guard_attacks(i: int) -> void:
 ## Free attacks on combatant `i` as it leaves its cell for `to` (see the rules above).
 func free_attacks(i: int, to: Vector2i) -> void:
 	var c: Dictionary = combatants[i]
+	# In the order of the mover's reach-1 list (GAME.OVR 0x130AD: 0xBA:0x2433, nearest first
+	# from the mover), not by figure number (Combat Chat 7, 6:1's draw 6519: DORN's long sword
+	# struck the runner before BRAM's mace).
+	var near: Array[int] = []
 	for j in combatants.size():
+		if not combatants[j].down and combatants[j].team != c.team and touching(combatants[j], c):
+			near.append(j)
+	_by_distance(c, near)
+	for j in near:
 		var e: Dictionary = combatants[j]
 		if c.down:
 			return
@@ -1138,6 +1161,57 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		# turn for this round (GAME.OVR 0x142AB ends the attacker's turn, 0xBA:0x2637; lab:
 		# Thrender, on guard, struck a goblin and didn't act again that round).
 		_spend_turn(i)
+
+
+## The sweep (GAME.OVR 0x1367D, "<NAME> SWEEPS"), tried before every blow at an adjacent
+## target (the computer's attack 0xBA3C, AIM 0xA5BD, 0x154F2): when the target is of level 0
+## (record 0x73 = 0: the buccaneers, the city's thugs), the attacker's attacks (its first
+## weapon's, +0x113) are below its sweep level (fight record +5 = record 0x6B, START.EXE
+## 0xBA:0x1003: the fighter level, record 0x98, for a character of a race, else 1), and more
+## level-0 enemies stand next to it (the reach-1 list 0xBA:0x2433, nearest first) than it has
+## attacks: it strikes min(that many, its sweep level) of them once each, the target first
+## (swapped to the list's front), each turned to face it (0x13FF1), and its turn ends.
+## Combat Chat 7, 6:1's draw 1772: DORN (fighter 5) swept the two buccaneers beside him.
+func sweep(i: int, j: int) -> bool:
+	var a: Dictionary = combatants[i]
+	var am: PartyMember = a.who
+	var tm: PartyMember = combatants[j].who
+	var fighter: int = am.raw[0x98] if am.raw.size() > 0x98 else 0
+	var race: int = am.raw[0x2E] if am.raw.size() > 0x2E else 0
+	var cap: int = fighter if fighter > 0 and fighter < 128 and race > 0 and race < 128 else 1
+	var first: int = a.attacks - int(a.get("second", 0))
+	if first >= cap or tm.raw.size() <= 0x73 or tm.raw[0x73] != 0 or not touching(a, combatants[j]):
+		return false
+	var near: Array[int] = []
+	for k in combatants.size():
+		if _enemy_of(a, k) and touching(a, combatants[k]):
+			near.append(k)
+	_by_distance(a, near)
+	var low := 0
+	for k in near:
+		if combatants[k].who.raw.size() > 0x73 and combatants[k].who.raw[0x73] == 0:
+			low += 1
+	if low <= first:
+		return false
+	low = mini(low, cap)
+	message.emit("%s SWEEPS" % am.name)
+	var p := near.find(j)
+	if p > 0:
+		near[p] = near[0]
+		near[0] = j
+	for k in near:
+		if low <= 0:
+			break
+		if combatants[k].who.raw[0x73] != 0:
+			continue
+		a.attacks = 1
+		a.second = 0
+		if not combatants[k].down:
+			attack(i, k)
+		low -= 1
+	a.attacks = 0
+	a.second = 0
+	return true
 
 
 ## Ends combatant i's turn out of turn: no initiative left this round, guard and any
@@ -1937,9 +2011,19 @@ func ai_act() -> bool:
 				c.moves = 0
 				c.attacks = 0
 				return false
+		if OS.has_environment("APDBG"):
+			print("   @%d strike %s t %d attacks %d moves %d" % [TpDice.calls, c.who.name, t, c.attacks, c.moves])
 		if c.attacks <= 0:
 			return false
 		c.target = t
+		if sweep(active, t):
+			# The sweep ends the action loop (0xB6FC) as "not done", so the turn loop (0xAD72)
+			# finds a target once more (kept if the last one swept still stands, else a pick:
+			# 6:1's d23 at draw 3563) before the turn ends (initiative 0: 0xBB0F).
+			c.moves = 0
+			if not _enemy_of(c, c.get("target", -1)):
+				find_target(active)
+			return false
 		if shooting:
 			shoot(active, t)
 		else:

@@ -159,8 +159,7 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_period = period
 	_percent = percent
 	_rest_steps = 0
-	_since_check = 0
-	_to_rest = 0
+	_to_rest = 0                 # (_since_check carries over, as the original's 0x49FB)
 	_resting = false
 	_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
 	_rng2.randomize()
@@ -775,17 +774,41 @@ func _tick() -> void:
 		if _rest_steps % STEPS_PER_HEAL == 0:
 			_heal_day()
 		_learn_step()
+		var hit := _interrupt_check()
 		if not _held.is_empty():
-			_show_held()
+			if hit:
+				_held_then_interrupt()
+			else:
+				_show_held()
 			return
-		if _period > 0:
-			_since_check += 1
-			if _since_check >= _period:
-				_since_check = 0
-				if _rng.randi_range(1, 100) <= _percent:
-					_interrupt()
-					return
+		if hit:
+			_interrupt()
+			return
 	_refresh()
+
+
+## The interruption check after each 5-minute step (GAME.OVR 0x24B9B, after the clock,
+## effects, healing and memorizing): with the area's period above 0, a step counter (the
+## original's word DS:0x49FB, cleared only at a new game 0xE980: it carries from one camp to
+## the next) counts up to the period, goes back to 0 and the game's dice roll 1d100 (0x24BC4);
+## <= the area's percent interrupts. Combat Chat 7 (Player 3's request): from the shared dice,
+## so a lab run is the original's roll for roll; the check is made on a step that memorized a
+## spell too (before, ours skipped it).
+func _interrupt_check() -> bool:
+	if _period <= 0:
+		return false
+	_since_check += 1
+	if _since_check < _period:
+		return false
+	_since_check = 0
+	var roll: int = (TpDice.random(100, "rest interrupted?") + 1) if TpDice.on else _rng.randi_range(1, 100)
+	return roll <= _percent
+
+
+func _held_then_interrupt() -> void:
+	await _show_held()
+	if _resting and visible:
+		_interrupt()
 
 
 ## "THE PARTY IS RUDELY INTERRUPTED!" for a moment, then the area's script takes over.

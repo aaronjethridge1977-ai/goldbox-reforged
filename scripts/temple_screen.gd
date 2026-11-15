@@ -60,9 +60,12 @@ func cure_index(name: String) -> int:
 	return -1
 
 
-func open(party: Array[PartyMember]) -> void:
+## `who`: the member selected on the walking screen (the original's temple opens on it: Player 3's
+## sweep, Tyr's greeting runs the mad-man check, LOAD_CHAR 0..7, which leaves the last member
+## selected, and the HEAL page reads "DORN, HOW CAN WE HELP YOU?"; Combat Chat 7).
+func open(party: Array[PartyMember], who: int = 0) -> void:
 	_party = party
-	_who = 0
+	_who = clampi(who, 0, maxi(party.size() - 1, 0))
 	_cure = 0
 	_mode = "menu"
 	_pick = 0

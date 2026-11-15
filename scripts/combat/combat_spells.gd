@@ -399,6 +399,10 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 		# (Spells from items: assumed instant; not yet checked.)
 		var keep: Array[int] = picked.duplicate()
 		me.pending = {"id": id, "cell": cell, "picked": keep}
+		# The original only lowers the caster's initiative here; its attacks (+0x113) stay, so
+		# a caster whose spell a wound spoils still strikes at its later turn (Combat Chat 7:
+		# 6:1's DIRTEN). Kept aside until then (Combat.next_turn puts them back).
+		me.kept_attacks = me.attacks
 		me.moves = 0
 		me.attacks = 0
 		c.message.emit("%s BEGINS CASTING" % m.name)

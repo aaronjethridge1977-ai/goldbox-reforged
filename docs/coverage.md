@@ -318,7 +318,7 @@ Encamp (E): SAVE VIEW MAGIC REST ALTER EXIT (with HEALING FIX on: CAMP:SAVE VIEW
 | feature | status | main path | notes |
 |---|---|---|---|
 | SAVE (the original's own format, slots A-J) and LOAD SAVED GAME | checked | yes | our saves load in the original and back (lab saves E-I) |
-| REST: the timer, 1 HP a day, interruptions | checked | yes | save J, 4 -> 5 HP after 24 hours; interruptions from the area scripts |
+| REST: the timer, 1 HP a day, interruptions | checked | yes | save J, 4 -> 5 HP after 24 hours; interruptions from the area scripts: every `period` steps a 1d100 from the game's dice (GAME.OVR 0x24BA7/0x24BC4, the step counter 0x49FB carried from camp to camp; Combat Chat 7, from the code; the Player's 5:4 trace not yet replayed in ours) |
 | MEMORIZE and resting to memorize | checked | yes | 4 h 15 min for one 1st-level spell, as the lab showed |
 | CAST in camp (cures on a member) | checked | yes | as walking CAST (main, chat 22, lab): IS A COMBAT-ONLY SPELL... LOSE IT?, HAS NO SPELLS MEMORIZED |
 | The anti-magic shell (ECL 0x49E5, the ruined castle) | built | yes | outside fights (main, chat 23, DOSBox): CAST says CANNOT CAST SPELLS IN THIS AREA (0x17BB2). In fights (Combat Chat 2, from the code): no CAST on the menu (0x9F59), no USE in the item list (0x21FD6, in fights; outside fights main's), no computer item use (0xAFF6); the computer's spells not stopped (0xB105 doesn't test it); not yet seen in DOSBox |
@@ -361,4 +361,15 @@ What can happen to a character (status byte 0x10C and the effect list).
 | Blindness | built |  | Cause Blindness; temples can't see it (above) |
 | Aging (Haste) | built |  | a year once per Haste |
 | Magic resistance (Tyranthraxus 15%) | checked | yes | the final fight; see monster power 0x6a (Combat Chat 4) |
+
+### Combat rules (4 checked)
+
+How a fight's turns run, beyond spells, items and powers (Combat Chat 7, each from GAME.OVR and matched roll for roll).
+
+| feature | status | main path | notes |
+|---|---|---|---|
+| The computer's choice of weapon (QUICK members, monsters) | checked | yes | GAME.OVR 0xBF8A, the rating 0xBE4D: dice count x size, + 8 a plus, + 2 a point of damage bonus, + (ITEMS byte 5 - 1) x 2 for a launcher (javelins are flagged one too), + 3 one-handed, kept in a byte; the best missile weapon if it rates over half the best hand weapon, has ammunition and no enemy is adjacent (or it works in melee). Not built (rare): item type 85's rating, items marked in bytes 61/62, more than 3 hands in use. 6:1's run for the gate |
+| The sweep (a fighter against level-0 enemies) | checked | yes | GAME.OVR 0x1367D "<NAME> SWEEPS": a character with a race and fighter levels (record 0x6B = record 0x98, START.EXE 0xBA:0x1003), beside more level-0 enemies (record 0x73 = 0) than its attacks, strikes up to its fighter level of them once each, the target first; after it the computer's turn loop picks a target once more (0xAD72). 6:1's buccaneers |
+| Free attacks on a figure leaving | checked | yes | in the order of the mover's reach-1 list, nearest first (0x130AD, 0xBA:0x2433) |
+| Casting time and the caster's attacks | checked | yes | BEGINS CASTING only lowers the initiative (0x14C0F); a caster whose spell a wound spoils still strikes at its later turn |
 
