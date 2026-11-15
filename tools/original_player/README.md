@@ -114,3 +114,38 @@ buffer [DS:0x49D2] at offset (addr - 0x4900) x 2; 0x6B00-0x6EFF = words in [DS:0
 | record fields | name +0 (length byte first), max HP +0x32, HP +0x11B, class levels +0x96..+0x9D, status +0x10C | the CHRDAT .SAV layout (0x32, 0x11B) and the lab: HP 0 after a lost duel |
 | dice seed | DS:0x4428 (Turbo Pascal RandSeed) | the lab's seed.py |
 | key-wait hook | linear 0x300: enter, leave, caller IP, CS, key, polls, poll caller IP, CS | `hooks.py` |
+| game speed | DS:0x49E2 (x 225 ms a message; ALTER's setting) | research/pool-of-radiance-formats.md; the Player sets 0 |
+
+## Segment checks and first-difference triage
+
+`segment.py <run> <from checkpoint> <to checkpoint>`: ours (`$OP_LAB/proj`, rebuilt by `check_godot.sh` after each
+rebase) loads the `<from>` save as lab slot F, `tpseed=` its index line's seed, then the original's keys from the
+log (camp keys left out; a fight's QUICK keys become `quickall,fightend`; two `wait`s after every key off the walking
+screen), F2, and `statediff.gd` against the `<to>` save. On a difference:
+
+1. **Count the original's draws between keys** from the log: every KEY line has the seed, and Turbo Pascal's
+   generator is an LCG (`tp.steps(a, b)` in the lab), so the draws between two keys are the steps between seeds.
+2. **Ours' draws**: the same keys with `tplog` after each one (each draw printed with what drew it).
+3. **The original's draw list**: rerun the stretch from its checkpoint with `OP_TRACE=1` (the lab's `trace.py`
+   installed after the seed is set, its reader writing `logs/<run>.trace.txt`; the lab copy of `seed.py` finds this
+   lab's DOSBox by its pid file). Compare the two lists draw by draw (size and result): the first difference, with
+   the original's caller (GAME.OVR offset), goes to the board.
+
+## Pilot (Player 1, 2026-11-15): passed
+
+- **Unattended, save to exit**: `plans/pilot_1-18.plan` from check 9's start with `strong` (Podol Plaza 1:18 8,4 W):
+  the tavern (CHALLENGE, THRENDER GRONE, the duel on QUICK, main's DRINK HEAVILY|LEAVE), a hobgoblin patrol at 5,4
+  (QUICK, about 50,000 draws), out the west gate to 7:26; 69 keys, about 8.5 minutes at speed 0; checkpoints entry,
+  tavern, exit. (A level-1 party J loses the duel and is wiped by ATTACK: hence `strong`.)
+- **Repeatable**: runs p1d and p1e (same save, seed 12345678) byte-identical at all three checkpoints; key lists,
+  squares and seeds identical. A restart from the tavern checkpoint replays p1b key for key.
+- **Segment check**: entry -> tavern 0 differences (walking: the patrol rolls draw for draw); entry -> exit splits
+  at the duel's draw 926: the original rolls the turn-order d100 (GAME.OVR 0x9969) for all seven figures, ours for
+  the two duellists (request to Combat on the board).
+- **Watchdog**: restarted p1b from its tavern checkpoint after a heartbeat miss (fixed: a BEAT line every 30 s while
+  dice are drawn); the restored run replayed exactly.
+- **Screen state from memory**: no screen misread in the final runs; each new screen met (the wilderness walking
+  menu, the band's NORTH SOUTH LEAVE) stopped the run with its reason and a screenshot, as intended.
+
+Open: the treasure's items (the pilot takes coins only); the wilderness square (ECL 0x49C3/0x49C4 on the bands;
+DS:0x6AAD/0x6AAE hold the 3D map's square there); member menus tried only with the first member highlighted.
