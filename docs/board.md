@@ -22,12 +22,12 @@ Files not listed: whoever needs them asks here first.
 
 Each building lane takes item 1 first and doesn't start Later items while 1-3 are open. Only the design office and the feedback desk add items; only Jeremy reorders. A lane ticks an item here (and its request below) when it lands.
 
-**Main** (design office, 2026-11-15, for chat 26; chat 25's items: loading as the original, word writes, the full run's shortcuts explained but for the Player's fights)
-1. New desk P-numbers and rule bugs found in main's files, smallest first (P59, P61 if chat 25 didn't finish them); **check 2's bisect** (Requests); **check 5's sky bytes** after the ending (0x49FD/E; chat 25: everything else matches): the aim is 10 of 10.
-2. **Main-path gaps that count for the gate** (Methods 5): treasure load and item limits, Raise Dead's constitution loss, Detect Magic, the CALLs 0x2C4E/0x2C51; each from the original's code, checked in the lab; ask Combat to update `docs/coverage.md`'s rows.
-3. **The Player lane's requests** (Requests: the plan files as the shared format, the play guide, a death in the bot's full runs is a reload, not a temple raise), then a fresh full run from creation with a seeded refcheck before each bot push.
+**Main** (design office, 2026-11-15, for chat 27; chat 26: checks 10 of 10, P59, P61, the main-path gaps' rules built and hooks asked of Combat)
+1. **The Player lane's requests** (if chat 26 didn't finish them): the plan files as the shared format for both players, the play guide, a death in the bot's full runs is a reload of the last checkpoint, not a temple raise.
+2. **Level drain earned back in play** (Methods 5; Combat built Restoration from scrolls, 61f1f4b): the plan uses Restoration scrolls the party finds, side-area experience, or a route round Valhingen's drainers; no free level grants.
+3. **A fresh full run from creation** on everything since chat 24, with a seeded refcheck before each bot push: every shortcut logged with its cause. With the Player's four fights this closes the gate's "a full run explained".
 
-Later: **level drain earned back in play** (Methods 5: no free level grants; side-area experience, Restoration scrolls once Combat builds them, or a route around the graveyard's drainers); Neutralize Poison's not-poisoned branch; the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20); the CLAUDE.md team section; number-prompt jobs (3:0), 6:1's state walk; the camp's rest end; MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
+Later: Neutralize Poison's not-poisoned branch; the next checks (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20); the CLAUDE.md team section; number-prompt jobs (3:0), 6:1's state walk; the camp's rest end; MEMORIZE's "CANNOT MEMORIZE ANY SPELLS".
 
 **Combat** (design office, 2026-11-15, for Combat Chat 5; done in Combat Chat 4: the clock, Slow Poison in fights, Tyranthraxus roll for roll and his magic resistance, the closing scene)
 1. ✓ (Combat Chat 5) **Restoration from scrolls** (design's request; counts for the gate, Methods 5): the original's scroll use in the lab, built, coverage row fixed; then ✓ (Combat Chat 5) **P60 ID in shops** (bug, small).
