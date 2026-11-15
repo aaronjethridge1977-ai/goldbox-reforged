@@ -172,6 +172,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 28: random treasure at TREASURE (combat's request)
+
+- **The original rolls an event's random treasure at the TREASURE, before the fight.** TREASURE's handler (GAME.OVR
+  0x26F5) reads the coins and the item list; a list of 128 or more makes (list - 128) items at once (0x2886..0x2AA9),
+  each put at the front of the treasure list DS:0x6810 (so the last made shows first). Per item a d100 (0x28B4) picks
+  the kind: 1-60 a weapon or armour (a second d100, 0x28D3, gives the type; 60-90 a d10 at 0x2910), 61-85 a
+  magic-user's scroll (type 61), 86-92 a cleric's scroll (62), 93-98 a d16 among wands, rings and the like, 99-100
+  type 69. The item is then built from its type (0x25C99): a d20 plus (0x25C5B: 1-14 +1, 15-19 +2, 20 +3), name words,
+  weight and price by type; scrolls get d3 spells, each a d3 for its level and a die for the spell (0x26224...); the
+  other kinds take an entry of START.EXE's table DS:0x970 (eight words: three name words, weight, price, three special
+  bytes). The second d100's 48 and 49 set no type (the variable keeps the last item's). Built:
+  `scripts/game/treasure_maker.gd`, called at ECL TREASURE (`ecl_vm.gd`); the treasure screen shows those items.
+- **The monsters' records load at LOAD_MON, not at the fight.** LOAD_MON's handler (0x1196) loads the record at once
+  (0x78E4 -> 0x1EEAA: the five icon-colour d6s); ours loaded them when the fight began, which put the colours after
+  the treasure's dice. Lab dice now draw them at LOAD_MON (`PartyMember.draw_colours`), the fight takes them.
+- **Lab, 2:20 0,14's ogres and trolls** (`TREASURE 0,0,0,30,50,0,1,131`; Combat's start `combat5/saves/troll`, seed
+  11111111 after the step into the building): the original's 16 treasure draws and ours' are the same, and the three
+  items are **byte for byte the original's** (bytes 0x2E-0x3E of each record read from DS:0x6810 in DOSBox, held
+  after the treasure): BASTARD SWORD +1, TWO-HANDED SWORD +1, a CLERICAL SCROLL with spells 38, 42, 6 (2100 gold). The fight then
+  matches to **draw 701 of 2561** (was 11; MAGIC on): at 702 the original aims Bakshi's spell (d6 target pick,
+  0x160DB) where ours picks a spell again (Combat's). Spectre (`orig_A_spectre`, MAGIC): 3195 of 3195 draws on this code.
+- Where it plays: lists 129-131 at 2:20 (0xA390, 0xB0FB), 6:25 (0xAAA4), 7:23 (0xA3CF), 8:13 (0xAD3A), 8:27 (0xA39E,
+  0xA5EC); 1:24, 3:8 and 8:16 take the list from a variable.
+- Lab note: a save's SAVGAM names its character files (CHRDATA1...), so a fixture copied to another slot letter
+  needs those names patched (lab `data/c28/slot.sh`), or it loads slot A's party.
+
 ## Chat 27: Valhingen's "dead forever" and the full run's teleports
 
 - **Record byte 0x73, the highest level.** A level drain (0x10D7D) kills "forever" when 0x73 is under 2 (0x10F15).

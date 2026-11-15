@@ -80,6 +80,11 @@ func _word(off: int) -> int:
 	return _ds.decode_u16(_base + off)
 
 
+## A word of START.EXE's data segment, for other rules' tables (TreasureMaker).
+func ds_word(off: int) -> int:
+	return _word(off)
+
+
 func _pstring(off: int) -> String:
 	var n := _byte(off)
 	return _ds.slice(_base + off + 1, _base + off + 1 + n).get_string_from_ascii().to_upper()

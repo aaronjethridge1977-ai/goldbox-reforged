@@ -83,6 +83,7 @@ func _dev_reseed(gens: Array) -> void:
 const REST_PERIOD := 0x6DD2       # set by the area's "on rest" script: steps between checks
 const REST_PERCENT := 0x6DD3      # ... and the chance (d100) that rest is interrupted
 var _fight_treasure := []        # the event's TREASURE operands, kept for after the fight
+var _fight_made: Array[GameItem] = []   # the items its list 128+ made at the TREASURE
 var _combat: CombatScreen
 var _types: ItemTypes
 
@@ -207,6 +208,7 @@ func _ready() -> void:
 	_vm.open_ahead = _open_ahead
 	_vm.tables = ClassTables.shared(_game_path)
 	_vm.overland = OverlandMap.shared(_game_path)
+	_vm.treasure_maker = TreasureMaker.shared(_game_path)
 	var battle_only := false
 	for arg in OS.get_cmdline_user_args():
 		battle_only = battle_only or arg.begins_with("--battle=")
@@ -2400,6 +2402,7 @@ func _show_time_news(news: PackedStringArray) -> void:
 ## treasure but no monsters is a treasure find: straight to the treasure.
 func _start_event_fight() -> void:
 	_fight_treasure = _vm.treasure.duplicate()
+	_fight_made = _vm.treasure_items.duplicate()
 	# CALL 0x8000 (the arena): the opponent is a copy of the duelist, as GAME.OVR builds it
 	# (overlay at file 0x74D3, routine +0x1A6F): the whole record and its items copied,
 	# named ROLF, no money, morale 0xB2, drawn as combat picture 11. Lab 2026-11-11: ROLF
@@ -2517,7 +2520,11 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	if _fight_treasure.size() >= 8:
 		coins = _fight_treasure.slice(0, 7)
 		list_id = int(_fight_treasure[7])
-	var found := _item_list(list_id)
+	var found: Array[GameItem] = _fight_made.duplicate() if list_id >= 128 else _item_list(list_id)
+	_fight_made = []
+	for it in found:
+		if it.name == "":
+			it.name = ItemNames.shared(_game_path).name_of(it)
 	found.append_array(field_items)
 	var spoils := Spoils.gather(defeated, coins, found, _vm.read_byte(0x6DE3) != 1)
 	var hidden := _hirelings_take_shares(spoils)

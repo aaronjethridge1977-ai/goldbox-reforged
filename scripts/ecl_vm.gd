@@ -107,6 +107,10 @@ var on_overland := false
 ## Last TREASURE operands: coin amounts (copper, silver, electrum, gold, platinum),
 ## gems, jewelry, item list id (ITEM block; 255 = none).
 var treasure := []
+## The items a TREASURE with list 128+ made (TreasureMaker, at the TREASURE as the original,
+## before the fight's dice); the treasure list shows them after the fight.
+var treasure_items: Array[GameItem] = []
+var treasure_maker: TreasureMaker = null
 var error := ""
 ## PROGRAM n: hands over to a game screen (0 the party menu / training, 9 camp, 8 the end
 ## of the game, 3 the party is lost); the caller resumes with close_program().
@@ -352,6 +356,8 @@ func end_combat(result: int) -> State:
 	monsters = []
 	monster_teams = []
 	treasure = []
+	treasure_items = []
+	PartyMember.colours_drawn.clear()
 	state = State.RUNNING
 	return run()
 
@@ -984,6 +990,7 @@ func _exec(ins: Dictionary) -> void:
 			sprite_id = -1
 			monsters = []
 			monster_teams = []
+			PartyMember.colours_drawn.clear()
 		"DELAY":
 			state = State.WAIT
 		"PICTURE":
@@ -1093,10 +1100,15 @@ func _exec(ins: Dictionary) -> void:
 			treasure = []
 			for i in a.size():
 				treasure.append(_value(a[i]))
+			# GAME.OVR 0x26F5: a list of 128+ is made at once from the dice (list - 128 items).
+			treasure_items = []
+			if treasure.size() >= 8 and treasure[7] >= 128 and treasure[7] != 255 and treasure_maker != null and treasure_maker.ok:
+				treasure_items = treasure_maker.make(treasure[7] - 128, _ri)
 
 		"LOAD_MON":
 			if monsters.size() < 63:
 				monsters.append([_value(a[0]), maxi(_value(a[1]), 1), _value(a[2])])
+				PartyMember.draw_colours(_value(a[0]))   # the record loads now in the original
 				for n in maxi(_value(a[1]), 1):
 					if monster_teams.size() < 63:
 						monster_teams.append(0)

@@ -127,6 +127,24 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 	return m
 
 
+## Lab dice (TpDice): icon colours the original drew as the script's LOAD_MON loaded the
+## record (GAME.OVR 0x1EF8B under the LOAD_MON handler, before a TREASURE's random items and
+## the fight), by monster id, oldest first; load_monster takes them instead of drawing.
+static var colours_drawn := {}
+
+
+## LOAD_MON's draws: five d6 for the record's colours (lab dice only, as load_monster's).
+static func draw_colours(id: int) -> void:
+	if not TpDice.on:
+		return
+	var five := []
+	for k in 5:
+		five.append(TpDice.random(6, "monster colour") + 1)
+	if not colours_drawn.has(id):
+		colours_drawn[id] = []
+	colours_drawn[id].append(five)
+
+
 ## A monster: block `id` of MON<file_no>CHA.DAX, with its items from MON<file_no>ITM.DAX.
 static func load_monster(game_path: String, file_no: int, id: int) -> PartyMember:
 	var cha := DaxFile.open(game_path.path_join("MON%dCHA.DAX" % file_no))
@@ -149,8 +167,11 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 			m.raw[0xC0] = 1
 		elif race in [2, 4, 6, 7]:
 			m.raw[0xC0] = 2
+		var drawn: Array = colours_drawn[id].pop_front() if not colours_drawn.get(id, []).is_empty() else []
+		var j := 0
 		for k in [0xC1, 0xC2, 0xC3, 0xC5, 0xC6]:
-			var r := TpDice.random(6, "monster colour") + 1
+			var r: int = drawn[j] if j < drawn.size() else TpDice.random(6, "monster colour") + 1
+			j += 1
 			m.raw[k] = ((r + 8) * 16 + r) & 0xFF
 			if k == 0xC3:
 				m.raw[0xC4] = 0xC4
