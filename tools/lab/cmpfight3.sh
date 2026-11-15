@@ -21,11 +21,12 @@ if [ $WHAT != ours ]; then
     for k in $(echo $POST | tr ',' ' '); do ./orig.sh $k wait=4 >/dev/null; done
     python3 seed.py set $SEED2 >/dev/null
   fi
-  (DISPLAY=:98 timeout 900 python3 trace.py run 880 > /tmp/cmp_orig.txt &)
+  S=${OSECS:-880}   # OSECS: how long the original may fight (seconds; long fights, Combat Chat 1)
+  (DISPLAY=:98 timeout $((S + 20)) python3 trace.py run $S > /tmp/cmp_orig.txt &)
   sleep 1
   KEYS2=$POST; [ -n "$SEED2" ] && KEYS2=$POST2
   for k in $(echo $KEYS2 | tr ',' ' '); do ./orig.sh $k wait=4 >/dev/null; done
-  DISPLAY=:98 timeout 860 python3 presser.py 850 noenter ${MAGIC:+magic} > /tmp/cmp_orig_end.txt
+  DISPLAY=:98 timeout $((S - 20)) python3 presser.py $((S - 30)) noenter ${MAGIC:+magic} > /tmp/cmp_orig_end.txt
   sleep 2; pkill -f "trace.py run"; sleep 1
   cat /tmp/cmp_orig_end.txt >> /tmp/cmp_orig.txt
   (IFS=,; python3 partyrec.py $NAMES) >> /tmp/cmp_orig.txt
@@ -35,6 +36,7 @@ if [ $WHAT != orig ]; then
   PRE=$(echo "$PRE" | sed 's/wait=[0-9.]*,\?//g; s/,$//'); POST=$(echo "$POST" | sed 's/wait=[0-9.]*,\?//g; s/,$//')
   K="load=$L"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
   [ -n "$SEED2" ] && K="$K,tpseed=$SEED2${POST2:+,$POST2}"
-  GTIME=300 ./ours.sh --save=$PWD/qs.cfg --fast "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,wait,wait,wait,wait,wait,wait,tplog,partyhp" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /tmp/cmp_ours.txt
+  W=$(printf "wait,%.0s" $(seq ${OWAITS:-6})); W=${W%,}   # OWAITS: more waits for long fights
+  GTIME=${GTIME:-300} ./ours.sh --save=$PWD/qs.cfg --fast "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,$W,tplog,partyhp" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /tmp/cmp_ours.txt
 fi
 python3 cmpdraws.py /tmp/cmp_orig.txt /tmp/cmp_ours.txt

@@ -177,7 +177,7 @@ func start_round() -> void:
 		var m: PartyMember = c.who
 		c.moves = _round_movement(m) * 2
 		c.attacks = attacks_for(m)
-		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
+		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 0 else 0)) / 2
 		c.attacks += c.second
 		c.acted = false
 		if magic:
@@ -319,13 +319,16 @@ func continue_battle(yes: bool) -> void:
 
 
 ## Attacks this round with the readied weapon: half-attacks (missile weapons: the ITEMS
-## table's) rounded up on odd rounds, and never more shots than are left.
+## table's) rounded up on even rounds, and never more shots than are left. The original rounds
+## up when its round counter (DS:0x6DE3) is odd (GAME.OVR 0x1364D), and that counter is 0 at the
+## fight's start and counts up at the end of each round (0xA098): odd in rounds 2, 4, ... (lab,
+## Combat Chat 1: 5:7's 8TH LVL FIGHTERs, 3/2 attacks, struck once in round 1; ours twice).
 func attacks_for(m: PartyMember) -> int:
 	var half: int = m.half_attacks
 	var shooting := m.weapon_ranged and m.missile_ready
 	if shooting:
 		half = m.missile_half_attacks
-	if round_no % 2 == 1:
+	if round_no % 2 == 0:
 		half += 1
 	var n := half / 2
 	if shooting:
@@ -672,7 +675,7 @@ func choose_weapon(i: int) -> void:
 	m.recalculate(types)
 	if c.attacks > 0:
 		c.attacks = attacks_for(m)
-		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 1 else 0)) / 2
+		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 0 else 0)) / 2
 		c.attacks += c.second
 
 

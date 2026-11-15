@@ -6,6 +6,8 @@
 # Past the early game (side chat 5): save I = `python3 mksave.py E I 2 15 5 5 N` (Mendor's library); save C =
 # `python3 mksave.py E C 8 13 9 9 E`, then every CHRDATC?.SAV's bytes 0x32 and 0x11B set to 40 (the kobold caves'
 # net trap at 10,9 with 20 kobolds; the party at 40 HP so the fight runs long).
+# Differential checks' fights (Combat Chat 1, docs/diff-checks.md): save D = `python3 mksave.py J D 4 2 11 14 E 4A97=255 strong`
+# then `python3 fixthac0.py J D` (the original ignores a file's THAC0; ours doesn't).
 cd "$(dirname "$0")"
 WHAT=ours; [ "$1" = record ] && WHAT=both
 run() { # name magic script args...
@@ -35,3 +37,4 @@ done
 run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $WHAT
 run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # matches to the end since Combat Chat 1
 run orig_C_kobolds22 1 env KW=8 ./cmpfight2.sh C 22222222 up up $WHAT   # the net trap on a second seed (Combat Chat 1: checks the sort list fitted on the first)
+run orig_D_ogrechief 1 env KW=4 ./cmpfight2.sh D 11111111 up up,enter,enter $WHAT   # check 3: 4:2 the ogre chief, 15863 draws (~10 min in the original)

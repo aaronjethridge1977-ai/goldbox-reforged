@@ -35,6 +35,20 @@ All five reach their event in both games from lab saves made as below (chat 20, 
 | 4 | 2:9 paying past the gate | `mksave.py J C 2 9 7 12 N 4A77=96 4A64=0 4A78=0 4AB9=0` | Up, Up (7,11): the bugbear's 15 gold, YES; Enter (at 8,5) | **MATCH** (chat 20): 3 platinum paid, 2 by the first member and 1 by the second, in both |
 | 5 | 5:7 the finale | `mksave.py J I 5 7 3 7 S strong` | Up, Up: the audience hall (event 8 at 3,8) | reachable; fights to Tyranthraxus follow (as 3) |
 
+## The fights before checks 3, 5 and 10 (combat lane, Combat Chat 1)
+
+Each fight is played roll for roll in both games with `cmpfight2.sh` (the combat lab: everyone on QUICK with MAGIC on,
+CONTINUE BATTLE answered NO), so the state comparison can go on from the fight's end with both games' dice in step.
+The start saves are made as above, then **`fixthac0.py J <letter>`**: the original ignores a character file's THAC0
+(bytes 0x2D and 0x110; it works it out again before the fight, lab: the strong save's THAC0 1 fought as THAC0 19-20),
+ours uses it, so `strong` alone gives ours a party that hits every time. Seeds are Turbo Pascal Random seeds set
+with `seed.py` in the original and `tpseed=` in ours, at the point shown.
+
+| check | save | keys before the seed | seed | keys after | fight | result |
+|---|---|---|---|---|---|---|
+| 3 | D: `mksave.py J D 4 2 11 14 E 4A97=255 strong`, `fixthac0.py J D` | Up | 11111111 | Up, Enter, Enter | the ogre chief, 18 hobgoblins and 4 leaders | **MATCH** roll for roll (15863 draws; regress.sh `orig_D_ogrechief`). Ours: `--keys=load=D,up,tpseed=11111111,up,enter,enter,quickall,magic,fightend,n` |
+| 5 | B (not I: I is regress.sh's basilisk save): `mksave.py J B 5 7 3 7 S strong`, `fixthac0.py J B` | Up | 11111111 | Up, Enter, Enter, C (COMBAT at the menu) | the audience hall's guards (8TH LVL FIGHTERs) before Tyranthraxus | **matches 53157 draws** (122 rounds, everything recorded) once main lands the magic-armour movement fix (board request); without it ours splits at draw 960. **But the fight is a stalemate**: the strong party (AC -10) and the guards hit each other only on a 20, and the original had not finished after 45 minutes (59574 draws). For the state check this start needs a party that ends the fight (proposal on the board). Long fights: `OSECS=<s>`, `OWAITS=<n>`, `GTIME=<s>` (cmpfight3.sh) |
+
 Kept in the lab: `data/diff_<area>_ours.cfg` and `data/diff_<area>_orig/` for each check run.
 
 ## Proposed next five (chat 21, for Jeremy)
