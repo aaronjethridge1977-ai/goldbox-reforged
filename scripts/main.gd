@@ -878,15 +878,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif _vm._menu_kind == "who":
 				# WHO (lab, chat 22, New Phlan's inn): "WHO WILL PAY?" SELECT on row 24; Home/End
 				# move the white member on the party list, Enter (or SELECT's S) takes them.
-				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1]:
-					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1] else -1), _vm.menu.size())
+				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
+				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1, KEY_UP, KEY_DOWN]:
+					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1, KEY_DOWN] else -1), _vm.menu.size())
 				elif event.is_action("ui_accept") or key == KEY_S:
 					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			elif _vm.menu_vertical:
 				# A vertical menu (lab, chat 13): Home and End move the highlight up and down,
 				# wrapping round; Enter takes it. Letters and the left/right arrows do nothing.
-				if key == KEY_HOME or key == KEY_END:
-					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key == KEY_END else -1), _vm.menu.size())
+				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
+				if key in [KEY_HOME, KEY_END, KEY_UP, KEY_DOWN]:
+					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_DOWN] else -1), _vm.menu.size())
 				elif event.is_action("ui_accept"):
 					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			elif key >= KEY_A and key <= KEY_Z:
@@ -1003,6 +1005,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _vm.on_overland:
 					menu.erase("AREA")
 				_camp.spells = SpellTable.shared(_game_path)
+				_camp.anti_magic = _vm.read_byte(0x49E5) > 0   # the shell: GAME.OVR 0x17BB2
 				_camp.open_cast(_party, clampi(_vm.selected, 0, _party.size() - 1), menu)
 				_dev_reseed([_camp._rng2])
 			get_viewport().set_input_as_handled()
@@ -2207,6 +2210,7 @@ func _make_camp() -> void:
 	# (one selection in the original; lab, chat 22: End x4, ENCAMP, MAGIC, SCRIBE answered for
 	# DARKSTAR).
 	_camp._sel = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
+	_camp.anti_magic = _vm.read_byte(0x49E5) > 0   # the shell: GAME.OVR 0x17BB2
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
 	_dev_reseed([_camp._rng, _camp._rng2])
 

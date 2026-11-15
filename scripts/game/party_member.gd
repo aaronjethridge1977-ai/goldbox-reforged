@@ -799,6 +799,10 @@ func recalculate(types: ItemTypes) -> void:
 		var w := armor.weight
 		if w > 150:
 			movement = 9 if w < 400 else 6
+		# Magic body armour (any plus or minus, item byte 0x32) lightens the step: +3 when
+		# the movement is 9 or less here (START.EXE 0xDF4-0xE19, body armour only, slot 2).
+		if armor.plus != 0 and movement <= 9 and types.slot(armor.type) == ItemTypes.SLOT_ARMOR:
+			movement += 3
 	var over := weight - load_allowance()
 	var by_load := movement
 	if over > 0x400:

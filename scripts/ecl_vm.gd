@@ -821,6 +821,10 @@ func _exec(ins: Dictionary) -> void:
 					# walks up, YES to "DO YOU LEAVE?" puts the party outside and calls this;
 					# ours kept drawing the guard over the street (Jeremy, 2026-11-13).
 					sprite_id = -1
+					# ... and a picture: the temple's "THEN YOU MUST LEAVE." (3:0 0xAA3B) puts
+					# the party back a square and calls this; the original shows the 3D view
+					# (the door), ours kept the priest's portrait (P44, Jeremy 2026-11-14).
+					picture = 255
 				0x2C4E, 0x2C51:
 					# Bracket the bands' loops that rewrite wilderness tiles (WRITE_MEM_BASE_OFF
 					# into 0x6300 and 0xD000): the river cleaned once Yarash is beaten (7:26
@@ -1030,6 +1034,7 @@ func _exec(ins: Dictionary) -> void:
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
 			sprite_distance = encounter_distance
+			_arrived()
 			_show_encounter_menu()
 		"TREASURE":
 			treasure = []
@@ -1140,8 +1145,20 @@ func _close_in() -> bool:
 		encounter_distance -= 1
 		encounter_advances += 1
 		sprite_distance = encounter_distance
+		_arrived()
 		return true
 	return false
+
+
+## Monsters at distance 0 show their picture, not the nearest figure frame: P31, Jeremy's
+## capture of the original (New Phlan 14,5 S: "YOU ARE BEING APPROACHED BY SOME ANGRY
+## GOBLINS." with no ADVANCE, a wall ahead, the goblin's picture in the view). As an
+## approaching figure's arrival at the end of a DELAY (main).
+func _arrived() -> void:
+	if sprite_id >= 0 and encounter_distance == 0:
+		picture = sprite_picture
+		picture_head = sprite_head
+		sprite_id = -1
 
 
 ## Resolves a choice; returns false when the menu should be shown again.

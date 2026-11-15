@@ -107,6 +107,8 @@ var _fire_frame := 0
 var _sheet: CharacterSheet
 
 var spells: SpellTable = null      # set by the game before opening
+## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): set by main before opening.
+var anti_magic := false
 var _sel := 0                      # selected character
 var _mode := "camp"   # camp save rest magic list pending confirm whom display alter order drop speed pics ask
 var _pick := 0                     # the lit menu item
@@ -757,6 +759,11 @@ func _build_list(ids: Array, mark: String = "") -> void:
 func _open_list(kind: String) -> void:
 	var m := _who()
 	var ids: Array = []
+	# CAST inside the anti-magic shell (GAME.OVR 0x17BA8-0x17BCD, checked before the member's
+	# condition, CAST only): "<NAME>" / "CANNOT CAST SPELLS IN THIS AREA", the same display.
+	if kind == "cast" and anti_magic:
+		_note_name(m.name, "CANNOT CAST SPELLS IN THIS AREA")
+		return
 	# Someone not fit to act (GAME.OVR 0x17B9D, the same check for all three): "<NAME>" / "IS IN
 	# NO CONDITION TO CAST ANY SPELLS" (MEMORIZE SPELLS, SCRIBE ANY SCROLLS).
 	if m.status != PartyMember.STATUS_OKAY:
