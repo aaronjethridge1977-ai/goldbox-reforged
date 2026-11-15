@@ -46,8 +46,9 @@ extends Control
 ##     SPEED: "GAME SPEED = n (0=FASTEST 9=SLOWEST)", "GAME SPEED:" FASTER SLOWER EXIT (4 at
 ##       the start).
 ##     ICON: the icon editor. PICS: "MONSTERS ON  PORTRAITS ON  EXIT", M and P switch them.
-## Not yet seen in the original (drawn the same way as the rest, to check): the heal and
-## memorized messages while resting, SCRIBE's list, "CAN'T BE CAST HERE".
+## Not yet seen in the original (drawn the same way as the rest, to check): the heal message
+## while resting, SCRIBE's list, "CAN'T BE CAST HERE". The memorized messages are read from
+## its code (P35, _show_held).
 ##
 ## Rules (as documented by Pilgrim's reconstruction, checked in the lab: save J rested 24
 ## hours in the Slums' "dirty room" and Bakshi and Phineas each went from 4 to 5 HP):
@@ -396,6 +397,7 @@ func _fix() -> void:
 		_fix_heal()
 		return
 	_fixing = true
+	_rest_back = "camp"
 	_to_rest = (most + 4) / 5
 	_start_rest()
 
@@ -515,11 +517,14 @@ func _draw_walk() -> void:
 
 
 
-## The text box from row 17; a line "<NAME> CASTS" has the name cyan.
+## The text box from row 17; a line "<NAME> CASTS" has the name cyan, as has a line with a
+## third value (the length of a cyan name at its start; P35).
 func _draw_lines() -> void:
 	for i in mini(_lines.size(), 6):
 		var t: String = _lines[i][0]
 		_scr.text(1, 17 + i, t, _lines[i][1])
+		if _lines[i].size() > 2:
+			_scr.text(1, 17 + i, t.left(int(_lines[i][2])), GameScreen.CYAN)
 		if t.ends_with(" CASTS"):
 			_scr.text(1, 17 + i, t.trim_suffix(" CASTS"), GameScreen.CYAN)
 
@@ -683,7 +688,11 @@ func _alter_menu() -> void:
 	_to_menu("alter", ALTER_MENU)
 
 
-func _rest_menu() -> void:
+var _rest_back := "camp"   # the menu REST was chosen from (lab: MAGIC's REST ends on MAGIC's menu)
+
+
+func _rest_menu(from: String = "camp") -> void:
+	_rest_back = from
 	_mode = "rest"
 	_resting = false
 	_to_rest = 0
@@ -715,6 +724,7 @@ func _start_rest() -> void:
 	_resting = true
 	_hour_steps = 0
 	_learn_timer.clear()
+	_held.clear()
 	if spells != null:
 		for m in _party:
 			m.learn_hours = 0
@@ -736,7 +746,17 @@ func _stop_rest() -> void:
 	if minutes_passed > 0:
 		time_passed.emit(minutes_passed)
 		minutes_passed = 0
-	_show_menu()
+	_back_from_rest()
+
+
+## Back to the menu REST came from (lab, Combat Chat 3: a rest begun from MAGIC's menu ends
+## on CAST MEMORIZE SCRIBE DISPLAY REST EXIT).
+func _back_from_rest() -> void:
+	if _rest_back == "magic":
+		_pick = MAGIC_MENU.find("REST")
+		_magic_menu()
+	else:
+		_show_menu()
 
 
 func _tick() -> void:
@@ -753,6 +773,9 @@ func _tick() -> void:
 		if _rest_steps % STEPS_PER_HEAL == 0:
 			_heal_day()
 		_learn_step()
+		if not _held.is_empty():
+			_show_held()
+			return
 		if _period > 0:
 			_since_check += 1
 			if _since_check >= _period:
@@ -782,6 +805,31 @@ func _interrupt() -> void:
 	interrupted.emit()
 
 
+var _held: Array = []   # P35: this step's HAS MEMORIZED / HAS SCRIBED messages, [name, verb, spell]
+
+
+## P35 (GAME.OVR 0x246F8 -> 0x2A332, Combat Chat 3): each spell learnt while resting prints
+## "<NAME>" (cyan) "HAS MEMORIZED" (green) on row 19 and the spell (green) on row 20, the rest
+## screen staying, waits the game speed x 225 ms (START.EXE 0x709:0xDBE, no key) and clears
+## the box (0x17E3); then the rest goes on (lab, New Phlan, save F: BROTHER SEAN HAS MEMORIZED /
+## RESIST COLD, then DARKSTAR HAS MEMORIZED / SLEEP, each for a moment, then the camp menu).
+## Ours pauses the rest's clock for each one the same way (ALTER's SPEED 0: no wait).
+func _show_held() -> void:
+	_timer.stop()
+	while not _held.is_empty() and _resting and visible:
+		var h: Array = _held.pop_front()
+		var line := "%s %s" % [h[0], h[1]]
+		_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], [line, GameScreen.GREEN, String(h[0]).length()],
+			[String(h[2]).to_upper(), GameScreen.GREEN]])
+		_refresh()
+		await get_tree().create_timer(speed * 0.225 + 0.001).timeout
+		_lines = []
+		_refresh()
+	_held.clear()
+	if _resting and visible:
+		_timer.start()
+
+
 ## One 5-minute step of memorizing (see PartyMember "Spells"): the hours of study count
 ## down every 12 steps; then each spell takes 3 steps per spell level.
 func _learn_step() -> void:
@@ -797,10 +845,10 @@ func _learn_step() -> void:
 				var id: int = pending[0]
 				var k := m.memorized.find(id + PartyMember.LEARNING)
 				m.memorized[k] = id
-				_say_name(m.name, "HAS MEMORIZED %s" % spells.name_of(id))
+				_held.append([m.name, "HAS MEMORIZED", spells.name_of(id)])
 			elif not m.scribe_pending().is_empty():
 				var id := m.scribe_next()
-				_say_name(m.name, "HAS SCRIBED %s" % spells.name_of(id))
+				_held.append([m.name, "HAS SCRIBED", spells.name_of(id)])
 			t = _next_learn_steps(m)
 		_learn_timer[m] = t
 	_hour_steps += 1
@@ -1206,7 +1254,7 @@ func _act(choice: String) -> void:
 				"DEC": _change(-1)
 				"EXIT":
 					_pick = 3
-					_show_menu()
+					_back_from_rest()
 			_refresh()
 		"magic":
 			match choice:
@@ -1216,7 +1264,7 @@ func _act(choice: String) -> void:
 				"DISPLAY":
 					_mode = "display"
 					_refresh()
-				"REST": _rest_menu()
+				"REST": _rest_menu("magic")
 				"EXIT":
 					_pick = 2
 					_show_menu()

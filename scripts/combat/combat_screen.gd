@@ -1135,9 +1135,17 @@ func _bottom_menu() -> Array:
 				items.append(_magic_item())
 			items.append("EXIT")
 			return items
-	var items := ["MOVE", "VIEW", "AIM", "USE"]
 	var c: Dictionary = _combatants[_combat.active]
 	var who: PartyMember = c.who
+	# P36 (lab, Combat Chat 3: the original at 0 movement shows VIEW AIM USE QUICK DONE): MOVE
+	# only with movement left (GAME.OVR 0x9E8E, fight record +6), USE only with items
+	# (0x9EE8, the character's item count 0xC7).
+	var items := []
+	if int(c.get("moves", 0)) > 0:
+		items.append("MOVE")
+	items.append_array(["VIEW", "AIM"])
+	if not who.items.is_empty():
+		items.append("USE")
 	# CAST: not once the figure has been wounded this round (GAME.OVR 0x9F46, record byte 1).
 	# Nor inside the anti-magic shell (0x9F59).
 	if _combat.magic != null and not c.get("no_spells", false) and not _combat.anti_magic and \
@@ -1749,6 +1757,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	if _cmode == "move":
 		if event.is_action("ui_cancel"):
 			_cmode = "menu"
+			if _combatants[_combat.active].moves < 2:     # leaving the MOVE loop (0xA51D)
+				_combatants[_combat.active].moves = 0
 			_centre_on_selected()
 			_refresh()
 		elif _STEP_KEYS.has(key):
@@ -1762,9 +1772,16 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			_note_falls(up_before)
 			if paced() and what != "moved":
 				_after_blow(me, shown_before, weapon_before)
+			# P36: the original's MOVE loop (GAME.OVR 0xA236) runs only while more than one
+			# half-move is left, and on leaving it a last half-move is dropped (0xA51D): MOVE
+			# ends and the menu comes back without MOVE (lab, Combat Chat 3: VIEW AIM USE QUICK
+			# DONE after the step that left 1 of 3). Computer turns don't use this loop.
+			if _combatants[me].moves < 2:
+				_combatants[me].moves = 0
 			_after_player_action(what)
 			if _cmode == "move" and _combat.active == _selected and _combatants[_selected].moves <= 0:
 				_cmode = "menu"
+				_refresh()
 		return
 	# The original's reference card keys work at the combat menu too (lab, Combat Chat 1, the
 	# kobold net trap; GAME.OVR 0x9CAE for Alt-M): Alt-M switches MAGIC ON / OFF, Alt-Q puts the
@@ -1843,7 +1860,10 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		return
 	match choice:
 		"MOVE":
-			_cmode = "move"
+			if _combatants[_combat.active].moves < 2:       # the loop doesn't start (0xA23E)
+				_combatants[_combat.active].moves = 0
+			else:
+				_cmode = "move"
 			_refresh()
 		"VIEW":
 			_sheet.open_combat(_party_view(), 0, "view", _pick)
