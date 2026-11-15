@@ -26,6 +26,10 @@ const CURE_BLINDNESS := 37
 const CURE_DISEASE := 39
 const REMOVE_CURSE := 43
 const KNOCK := 31
+const SLOW_POISON := 26
+const POISONED := 0x37        # a failed save against poison: dead, until slowed or neutralized
+const SLOWED_POISON := 0x16   # Slow Poison's effect (table effect 22)
+const POISON_TICK := 0x0F     # while slowed: 1 HP every 10 minutes, never below 1
 
 ## Words for each spell that leaves an effect on its target.
 const WORDS := {1: "IS BLESSED", 2: "IS CURSED", 5: "IS AFFECTED", 6: "IS PROTECTED",
@@ -85,6 +89,23 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			return out
 		REMOVE_CURSE:
 			return out      # cursed items: not built yet
+		SLOW_POISON:
+			# GAME.OVR 0x28873 (lab, chat 23: save J's Thrender poisoned, Brother Sean casts in
+			# camp: "IS AFFECTED", "GETS BACK UP", HP 1, OKAY; resting, about an hour later
+			# "DIES FROM POISON"): only on the poisoned; HP 0 becomes 1, the effect for its
+			# duration (60 minutes a level), the member back up, and the 10-minute tick.
+			var t: PartyMember = targets[0]
+			if t.status == PartyMember.STATUS_ANIMATED or not t.has_affect(POISONED):
+				return out
+			if t.hp <= 0:
+				t.hp = 1
+			add_affect(t, SLOWED_POISON, id, table.duration_for(id, lvl), lvl)
+			out.append("%s IS AFFECTED" % t.name)
+			if t.status != PartyMember.STATUS_OKAY:
+				t.status = PartyMember.STATUS_OKAY
+				out.append("%s GETS BACK UP" % t.name)
+			add_affect(t, POISON_TICK, id, 10, 0xFF)
+			return out
 		12, 35, 59:         # Enlarge, Strength, Giant Strength
 			var t: PartyMember = targets[0]
 			var v := Strength.enlarge_target(lvl) if id == 12 else Vector2i(21, 0)
@@ -93,6 +114,16 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			var minutes := special_duration(table, id, lvl, rng, false)
 			if Strength.add(t, table.effect(id), id, v.x, v.y, minutes):
 				out.append("%s IS STRONGER" % t.name)
+			return out
+		58:                 # Neutralize Poison (an item's power): GAME.OVR 0x29E65
+			# The poison and Slow Poison's effects go, without a word; a member dead of it stays
+			# dead. (Not poisoned, the original tries other cures, 0x292A2, then heals 1d4 + 8
+			# "IS HEALED": not built.)
+			var t: PartyMember = targets[0]
+			if t.has_affect(POISONED):
+				for b in t.affects.duplicate():
+					if int(b.effect) in [POISONED, SLOWED_POISON, POISON_TICK]:
+						t.affects.erase(b)
 			return out
 		57:                 # Potion of Speed: haste, unless slowed
 			var t: PartyMember = targets[0]
@@ -159,6 +190,22 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 		MANUAL_READING:
 			out.append("%s STARTS TO TRAIN" % m.name)
 			m.affects.append({"effect": MANUAL_TRAINING, "spell": 67, "minutes": 43200, "value": 0xFF})
+		SLOWED_POISON:
+			# 0xF3D0: still poisoned when it ends, the member dies; the tick stops.
+			if m.has_affect(POISONED):
+				m.hp = 0
+				m.status = PartyMember.STATUS_DEAD
+				out.append("%s DIES FROM POISON" % m.name)
+			for b in m.affects.duplicate():
+				if int(b.effect) == POISON_TICK:
+					m.affects.erase(b)
+		POISON_TICK:
+			# 0xF246: every 10 minutes while slowed, 1 point of damage above 1 HP.
+			if m.has_affect(SLOWED_POISON):
+				m.affects.append({"effect": POISON_TICK, "spell": int(a.get("spell", 0)), "minutes": 10, "value": 0xFF})
+				if m.hp > 1:
+					m.hp -= 1
+					out.append("%s TAKES 1 POINT OF DAMAGE" % m.name)
 		MANUAL_TRAINING:
 			out.append("%s IS HARDIER" % m.name)
 			if m.stats.size() > 4:

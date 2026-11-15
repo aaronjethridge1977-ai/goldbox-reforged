@@ -618,7 +618,7 @@ func _tour(goal: Vector2i) -> void:
 			# turning right towards a square to the north walked the party east for an hour).
 			await _press(["up", "right", "down", "left"][d])
 		else:
-			while int(_facing) != d:
+			while int(_facing) != d and not _lost:
 				await _press("right" if (d - int(_facing) + 4) % 4 != 3 else "left")
 			await _press("up")
 		await _step_wait()
@@ -667,7 +667,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		var path := _find_path(at, next)
 		if path.size() != 2:
 			continue
-		while int(_facing) != k:
+		while int(_facing) != k and not _lost:
 			await _press("right" if (k - int(_facing) + 4) % 4 != 3 else "left")
 		await _press("up")
 		await _step_wait()
@@ -676,7 +676,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		if _pos != next:
 			continue
 		var back := (k + 2) % 4
-		while int(_facing) != back:
+		while int(_facing) != back and not _lost:
 			await _press("right" if (back - int(_facing) + 4) % 4 != 3 else "left")
 		await _press("up")
 		await _step_wait()

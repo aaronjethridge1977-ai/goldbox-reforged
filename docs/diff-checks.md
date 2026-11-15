@@ -52,6 +52,15 @@ with `seed.py` in the original and `tpseed=` in ours, at the point shown.
 
 Kept in the lab: `data/diff_<area>_ours.cfg` and `data/diff_<area>_orig/` for each check run.
 
+**State checks after the fights (chat 23): blocked on Jeremy's PC.** The fights for 3, 5 and 10 match roll for roll in the
+combat lane's lab. Here, `seed.py` and `trace.py` read DOSBox's memory through `/proc/<pid>/mem`, which WSL's
+`kernel.yama.ptrace_scope` = 1 refuses (`cmpfight2.sh` then reports "draws: identical" on two empty traces). With
+`sudo sysctl kernel.yama.ptrace_scope=0` (until WSL restarts) the original takes the seed. Check 10 tried without it
+(start save `data/diff_7-23_start/`, the original's F in `data/diff_7-23_orig/`, ours `data/diff_7-23_ours.cfg`): after
+the fight, Enter, EXIT, NO (don't go back for the treasure), save: 5 differences (clock 11:00 against 10:57, Bakshi
+200 / 188 HP, one dart), not meaningful while the original rolls other dice. Ours' keys:
+`load=G,up,tpseed=11111111,up,enter,c,quickall,magic,fightend,n,enter,E,N,F2`.
+
 ## Proposed next five (chat 21, for Jeremy)
 
 One per closed area without a check, story flags first: the flags below are written in that area and read by another area's

@@ -82,6 +82,13 @@ coverage files, not merged; about an hour to the end of the plan). Start saves f
 (copy into `game/`); lab save G is the scratch slot; ours can write a start save in the original's format from inside an area
 (`at=`, `mem=`, ENCAMP, SAVE): such saves load in DOSBox since chat 22.
 
+**Chat 23:** a full run resumes at a checkpoint of an earlier run: copy `bot_<name>.cfg` and `.json` from that run's
+user folder (`~/.local/share/godot/app_userdata/Gold Box Reforged bot <id>/`) and add
+`--resume=<path>/bot_<name>.cfg:<name>` after the plan (about 10 minutes from `valjevo4` to the end). Plan answers can
+hold on a flag: `answer <area> [4A4D&1=1] <words>|<choice>`. `seed.py` and `trace.py` need
+`kernel.yama.ptrace_scope` 0 (`sudo sysctl kernel.yama.ptrace_scope=0`; WSL starts with 1, and the fight traces come
+back empty). Never `pkill -f` with a pattern that is in your own command line (it kills the shell running it).
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 

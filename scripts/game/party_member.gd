@@ -507,6 +507,7 @@ func thief_level() -> int:
 	return raw[0x9C] if raw.size() > 0x9C else 0
 
 
+const STATUS_ANIMATED := 1
 const STATUS_RUNNING := 3
 const STATUS_UNCONSCIOUS := 4
 const STATUS_DYING := 5

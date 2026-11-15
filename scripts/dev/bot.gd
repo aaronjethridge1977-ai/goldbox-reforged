@@ -215,7 +215,7 @@ func _do(line: String) -> void:
 					return
 		"face":
 			var d := "NESW".find(w[1])
-			while int(main._facing) != d:
+			while int(main._facing) != d and not _wiped():
 				await main._press("right")
 		"step":
 			await main._press("up")
@@ -425,10 +425,19 @@ func _do(line: String) -> void:
 			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": " ".join(w.slice(4)).to_upper()})
 		"answer":
 			# answer <set:block> <words of the question>|<choice>: answer that question so.
+			# Chat 23: "[XXXX&M=V] <words>|<choice>" holds only while ECL byte XXXX AND M is V (the
+			# pyramid's rocks room goes elsewhere in 7:22 while 0x4A4D bit 0 is set: throw first).
 			var spec := " ".join(w.slice(2)).split("|")
+			var cond := []
+			var q := spec[0].strip_edges()
+			if q.begins_with("[") and q.contains("]"):
+				var c := q.substr(1, q.find("]") - 1)
+				cond = [c.get_slice("&", 0).hex_to_int(), c.get_slice("&", 1).get_slice("=", 0).hex_to_int(),
+					c.get_slice("=", 1).hex_to_int()]
+				q = q.substr(q.find("]") + 1).strip_edges()
 			if not _answer_rules.has(w[1]):
 				_answer_rules[w[1]] = []
-			_answer_rules[w[1]].append([spec[0].strip_edges(), spec[1].strip_edges().to_upper(), 0])
+			_answer_rules[w[1]].append([q, spec[1].strip_edges().to_upper(), 0, cond])
 		"fight":
 			# fight <set:block> <words of the encounter's text>: COMBAT there (a story fight the
 			# bot's odds would flee: Tyranthraxus's guards). Lost twice, it goes by shortcut.
@@ -836,6 +845,9 @@ func _hook() -> bool:
 		rules.reverse()
 		for rule in rules:
 			if not said.contains(rule[0]):
+				continue
+			if rule.size() > 3 and not (rule[3] as Array).is_empty() \
+					and (main._vm.read_byte(int(rule[3][0])) & int(rule[3][1])) != int(rule[3][2]):
 				continue
 			var picks: PackedStringArray = String(rule[1]).split(",")
 			var pick: String = picks[int(rule[2]) % picks.size()].strip_edges()
@@ -1775,10 +1787,16 @@ func _travel_hops(goal: String) -> void:
 			return
 		print("   travel %s -> %s by %d,%d %s" % [_here(), next, best.x, best.y, "NESW"[best.dir]])
 		var before := _here()
-		for attempt in 6:
+		# Chat 23: only a clean try at the way out counts (the party on the square, the step
+		# taken, nothing in between); walks cut short by fights don't. Valjevo's alarm (5:5
+		# 0x995D: a patrol roll on every step while it rings) spent chat 22's six tries at the
+		# stairs up to 5:7 on fights and heals, so travel gave the stairs up and teleported.
+		var clean := 0
+		for attempt in 24:
 			# A wandering monster can interrupt the walk: fight it out and try again.
-			if _wiped() or _here() != before:
+			if _wiped() or _here() != before or clean >= 3:
 				break
+			var fights_before := _fights_seen
 			# (On the way to the inn, push on: camping where the party is, Podol Plaza say,
 			# only brings more patrols.)
 			if _interrupted:
@@ -1810,10 +1828,12 @@ func _travel_hops(goal: String) -> void:
 			_gate_answer = ""
 			_gate_picks = []
 			if _here() == before and best.entry == "move" and main._pos == Vector2i(best.x, best.y):
-				while int(main._facing) != int(best.dir):
+				while int(main._facing) != int(best.dir) and not _wiped():
 					await main._press("right")
 				await main._press("up")
 				await _settle()
+			if _fights_seen == fights_before and not _interrupted:
+				clean += 1
 		if _wiped():
 			return
 		if _here() == before:
@@ -2763,7 +2783,12 @@ var _last_said := ""
 var _rest_rules := {}     # area -> {rule, addr, value}
 
 
+var _fights_seen := 0   # encounters met (fought, fled or avoided): travel's clean tries (chat 23)
+
+
 func _count(key: String) -> void:
+	if key in ["won", "lost", "fled", "avoided", "parleys", "interrupted"]:
+		_fights_seen += 1
 	var a := _here()
 	if not _stats.has(a):
 		_stats[a] = {}
@@ -2990,7 +3015,7 @@ func _clerk() -> void:
 		await _settle()
 		await main._tour(Vector2i(4, 5))
 		await _settle()
-		while int(main._facing) != 1:
+		while int(main._facing) != 1 and not _wiped():
 			await main._press("right")
 		await main._press("up")
 		await _settle()
@@ -3014,7 +3039,7 @@ func _summoned() -> void:
 	await _settle()
 	await main._tour(Vector2i(4, 5))
 	await _settle()
-	while int(main._facing) != 1:
+	while int(main._facing) != 1 and not _wiped():
 		await main._press("right")
 	await main._press("up")
 	await _settle()
@@ -3222,7 +3247,7 @@ func _keep_level() -> void:
 	var behind := func() -> Array:
 		var out := []
 		for m in main._party:
-			if m.npc < 128 and m.status == PartyMember.STATUS_OKAY and _top_level(m) < want:
+			if m.npc < 128 and m.status == PartyMember.STATUS_OKAY and _top_level(m) < want - _extra_classes(m):
 				out.append(m)
 		return out
 	if behind.call().is_empty():
@@ -3233,13 +3258,25 @@ func _keep_level() -> void:
 		await _travel(area)
 	for m in behind.call():
 		for k in 8:
-			if _top_level(m) >= want:
+			if _top_level(m) >= want - _extra_classes(m):
 				break
 			var got := DevShortcuts.grant_level(m, main._vm.tables, SpellTable.shared(main._game_path),
 				_child_rng(), _pick_spell)
 			if got == "":
 				break
 			_shortcut("level", "%s to %s" % [m.name, got], "%s expects level %d" % [_here(), want + 1])
+
+
+## Chat 23: a multi-class character splits its experience between its classes, so on the same
+## experience as a single-class member it stands about one level lower for each class beyond the
+## first (chat 22's full run granted 9 levels to ELWEN, cleric/fighter/magic-user, and LIRA,
+## fighter/thief, for being 1-2 levels under the plan's single-class levels).
+func _extra_classes(m: PartyMember) -> int:
+	var n := 0
+	for x in m.raw.slice(0x96, 0x9E):
+		if x > 0:
+			n += 1
+	return clampi(n - 1, 0, 2)
 
 
 func _top_level(m: PartyMember) -> int:

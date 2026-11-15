@@ -127,7 +127,10 @@ parley 7:23 THEY RECOIL IN FEAR
 # it asks GO BACK / MOVE ON / THROW A ROCK. MOVE ON goes to 7:23 unless a thrown rock has turned
 # the teleporter (0x4A4D bit 0), and then MOVE ON again does. (The sweep recorded this exit on
 # the first visit, so the lab's exits.txt keeps no picks for it.)
-answer 7:22 THROW A ROCK|MOVE ON
+answer 7:22 [4A4D&1=0] THROW A ROCK|MOVE ON
+# Chat 23: with bit 0 set (7:23's room or the dial sent the party back), MOVE ON goes elsewhere in
+# 7:22 (0xA030 -> 0x992D: 5,11): throw a rock first, which flips the bit (0xA12B).
+answer 7:22 [4A4D&1=1] THROW A ROCK|THROW A ROCK
 # 7:23's rocks room: 7:22's sends the party in with 0x4A4D bit 0 set, and MOVE ON with it set
 # goes back to 7:22 (a loop). THROW A ROCK flips it; then MOVE ON goes to 11,3, the way to
 # the dial, the mage and the desk.
@@ -485,6 +488,12 @@ answer 5:5 SPARE ME AND I WILL LEAVE|LET HIM GO
 answer 5:5 I'LL GIVE YOU ALL MY NOTES|LET HIM GO
 answer 5:6 ACCEPT THE BLESSING OF LORD BANE|LEAVE
 answer 5:7 HOW DO YOU VOTE|ATTACK
+# Chat 23: leave Bane's altar alone in 5:6 (the offering box and the crossed swords set 0x4A6A bits
+# 0-1, 0xA7B0 / 0xA857). With either set, Valjevo's gate in 5:5 (0xA08A) answers THIEF!, throws
+# boulders and starts the alarm (0x99D9), whose patrols on every step (0x995D) are giant snakes:
+# their poison killed chat 23's run b nine times on the way to 5:7.
+answer 5:6 OFFERING BOX WITH SOME CHANGE|NO
+answer 5:6 TWO CROSSED SWORDS|NO
 travel 5:3
 explore
 checkpoint valjevo3
