@@ -76,6 +76,12 @@ export.
 **Walking-screen checks (chat 22):** `ours.sh --save=<writable .cfg> "--keys=load=F,...,screen=<png>"` saves our
 320x200 screen; lab save F (New Phlan 14,5) has poked spells for CAST; `automap` prints the squares the automap holds.
 
+**Full runs and lab saves (chat 22):** a full run from creation: `BOT_ID=<id> BOT_TIMEOUT=36000 BOT_COVERAGE=$PWD/data/cov_<id>.json
+BOT_BRANCHES=$PWD/data/br_<id>.json BOT_CHECKPOINTS=$PWD/data/checkpoints_<id> ./bot.sh playthrough.plan > data/<log> &` (its own
+coverage files, not merged; about an hour to the end of the plan). Start saves for checks 6-9 are kept in `data/diff_<area>_start/`
+(copy into `game/`); lab save G is the scratch slot; ours can write a start save in the original's format from inside an area
+(`at=`, `mem=`, ENCAMP, SAVE): such saves load in DOSBox since chat 22.
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 
