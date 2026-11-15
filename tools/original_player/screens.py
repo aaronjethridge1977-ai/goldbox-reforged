@@ -36,7 +36,7 @@ def classify(st):
         out["kind"] = "wheel"
     elif "ENCAMP" in b and b.endswith("LOOK"):     # AREA CAST VIEW ENCAMP SEARCH LOOK; CAST ... LOOK in the wilderness
         out["kind"] = "walking"
-    elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b or b.startswith("PRESS BUTTON OR RETURN"):   # the last: 5:7 (Player 2)
+    elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b or b.startswith("PRESS BUTTON OR"):   # 5:7 (Player 2); 2:9's "PRESS BUTTON OR <RETURN>" (Player 3)
         out["kind"] = "enter"
     elif b.startswith("MOVE VIEW AIM") or ("QUICK" in b and "DONE" in b):
         out["kind"] = "combat"

@@ -13,6 +13,7 @@
                                  (Player 3) once: the keys in turn, one a wait, whatever the screen, each screen's
                                  picture and rows snapped first (logs/<run>_snap_<name>_<i>.*); a key "@NAME" presses
                                  End/Home until the party menu or member list has that member lit
+  keys <name> <k1>,<k2>,...     (Player 3) at the walking screen: these keys in turn whatever the screens
   alias 3:11                     (Player 3) the walks' area may also be this one (an ECL block on the same map:
                                  New Phlan's training halls)
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
@@ -85,6 +86,25 @@ class Step:
         if k == "up":
             self.sent = p.g.nkeys + 1
         return False, k, "step %s from %d,%d" % (self.d, x, y)
+
+
+class Keys:
+    """Player 3: `keys <name> <k1>,<k2>,...` on the walking screen: the keys in turn whatever the screens (a seq, as the
+    answer `seq:`), e.g. ENCAMP and REST until something interrupts."""
+    def __init__(self, name, keys):
+        self.name, self.keys, self.started = name, keys, False
+
+    def __repr__(self):
+        return "keys %s" % self.name
+
+    def next(self, p):
+        if self.started:
+            return True, None, ""
+        self.started = True
+        p.seq, p.seq_n = (self.name, list(self.keys)), 0
+        k = p.seq[1].pop(0)
+        p.seq_n = 1
+        return False, k, "keys %s: key 1" % self.name
 
 
 class Exit:
@@ -264,6 +284,9 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":
             pl.goals.append(Checkpoint(rest.strip()))
+        elif cmd == "keys":
+            name, ks = rest.split(None, 1)
+            pl.goals.append(Keys(name, ks.replace(" ", "").split(",")))
         elif cmd == "exit":
             pl.goals.append(Exit(area_of(rest)))
         elif cmd == "answer":

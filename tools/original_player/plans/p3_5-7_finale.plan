@@ -1,0 +1,12 @@
+# Player 3 (queue item 3, c27a's shortcut-won fights): the finale, 5:7 3,8: the guards [85 x12], the vote (ATTACK, main's
+# plan) and Tyranthraxus [66 x1], c27a's party (levels 6-8). Start: c27a's bot resumed from its valjevo6 checkpoint
+# (p3/p3bot.sh), the quick save at 3,6 S before the stairs (ours has no walking screen between the guards and the
+# dragon), in the original's format (p2/mkorig.sh): p2start/c27a_5-7_finale. The same save with ECL 0x4A6D |= 0x0C
+# (the hall's speech seen, the guards beaten: 5:7 0xA455/0xA558) is p2start/c27a_5-7_dragon: the dragon alone.
+area 5:7
+rules ../../plans/playthrough.plan
+answer GO DOWN THESE STAIRS|YES
+
+checkpoint entry           # 3,6 S, before the stairs
+step S                     # down to the audience hall
+checkpoint after

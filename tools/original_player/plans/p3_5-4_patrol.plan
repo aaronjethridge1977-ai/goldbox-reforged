@@ -1,0 +1,12 @@
+# Player 3 (queue item 3, c27a's shortcut-won fights): 5:4's patrol of giants led by a human fighter [75 x1 (a hill giant),
+# 55 x5 (6th-level fighters)]: 5:4's "on rest interrupted" (0x9BD1, LOAD_MON 75,1 / 55,5 at 0x9DE0) while Valjevo's
+# alarm is up (0x4A64 = the hour it ends; c27a's bot had raised it and met the patrol while camping at 13,12).
+# Start: p2start/c27a_5-4_alarm = c27a_5-4_giant (c27a's bot from its valjevo3 checkpoint, 13,12 E, written in the
+# original's format) with the alarm set as the script sets it (0x4A62 hour 13, 0x4A63, 0x4A64 = 14). ENCAMP, REST one
+# hour; the patrol interrupts (or not: then the run stops in camp); COMBAT, QUICK.
+area 5:4
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 13,12 E
+keys rest e,r,h,i,r
+checkpoint after

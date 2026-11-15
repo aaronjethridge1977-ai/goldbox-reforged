@@ -1,0 +1,12 @@
+# NOTE (Player 3): this step meets 5:4's fixed event at 14,12 (two officers, "YOU DON'T BELONG HERE!"), not the patrol:
+# c27a met the patrol while camping (p3_5-4_patrol.plan). Kept as the record of runs p3x_giant1b / p3x_giant2.
+# Player 3 (queue item 3, c27a's shortcut-won fights): 5:4 14,12, "A PATROL OF GIANTS LED BY A HUMAN FIGHTER"
+# [75 x1, 55 x5: a hill giant and five 6th-level fighters] (c27a met the group at 14,12, 15,9 and 14,9), c27a's party.
+# Start: c27a's bot resumed from its valjevo3 checkpoint (p3/p3bot.sh), the quick save at 13,12 E before the step,
+# in the original's format (p2/mkorig.sh): p2start/c27a_5-4_giant. COMBAT, then QUICK.
+area 5:4
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 13,12 E
+step E                     # 14,12: the patrol
+checkpoint after

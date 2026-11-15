@@ -1,0 +1,11 @@
+# Player 3 (queue item 3, c27a's shortcut-won fights): 2:9 7,6, "A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF
+# THE WALL" [24 x2, 53 x2, 71 x6], c27a's party (levels 6-8). Start: c27a's bot resumed from its graveyard checkpoint in
+# the Player lab (p3/p3bot.sh, a quick save at every walking key), the one at 7,7 N before the step, written in the
+# original's format by ours' camp SAVE (p2/mkorig.sh): p2start/c27a_2-9_ettins. The bot answered FLEE here (its odds
+# 0.05) and the fight came anyway; the Player answers COMBAT (its default), then QUICK.
+area 2:9
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 7,7 N
+step N                     # 7,6: the fight
+checkpoint after

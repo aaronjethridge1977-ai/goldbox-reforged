@@ -39,7 +39,7 @@ def keys_between(run, a, b, magic, tplog=False):
             continue
         if not on:
             continue
-        m = re.match(r"\s*[\d.]+ KEY #\d+ (\S+)\s+\| ", line)
+        m = re.match(r"\s*-?[\d.]+ KEY #\d+ (\S+)\s+\| ", line)   # Player 3: also a negative time (below)
         if not m:
             continue
         f = line.rstrip("\n").split(" | ", 5)    # key, area and square, seed, wait, row 24, reason
