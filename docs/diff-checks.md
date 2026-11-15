@@ -172,6 +172,47 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 30: check 5 was the driver's, 10 of 10; c29b's three new shortcuts
+
+- **Check 5 never regressed in the code.** Chat 26's matched commit cc5a14d fails the same way (8 differences) under chat
+  29's `run1.sh`, while every commit up to origin/main (b242219) gives **0 differences** with chat 26's key list. The
+  driver took its keys from chat 25's logs (`data/c25/checks/<n>_<area>.log`), which have 2 `wait`s after the
+  treasure's `e` at 5:7 3,8; since chat 26's P59 fix (DELAY waits game speed x 225 ms, twice what it was) the closing
+  scene needs ~150, so ours got F2 before the scene ran. Chat 26 ran check 5 with longer waits (its
+  `data/c26/checks/5.log`). Lab driver now `data/c30/run1.sh <n> <area> <abs dir>` (keys from chat 26's ten logs; it
+  also clears slot F before copying the original's save in, as chat 26's did); `data/c29/run1.sh` calls it.
+  **All ten checks: 0 differences on b242219** (lab `data/c30/checks_main.out`, check 5 `data/c30/ck_main`).
+- **The checks join the push gate** (Jeremy, Methods 5): `~/gbr/checks/diffcheck.sh <repo or worktree>` runs all ten
+  from its own data (`~/gbr/checks/data`, copied from this lab: start saves, ours' start cfgs, the original's end
+  saves, chat 26's key lists), each in its own temporary game copy and Godot user folder, so lanes can run it at the
+  same time; per check MATCH or the first difference, `DIFFCHECKS n/10`, exit 0 only on 10/10. **Wall time: 36 s for
+  all ten** (3 at once, with refcheck's two bots running beside it). Checked failing: check 5 with chat 25's keys gives
+  `DIFFERS (8 differences)`, exit 1. CLAUDE.md's "Before every push" runs it for any push touching `scripts/` or
+  `content/`.
+  Safeguards (design office): `~/gbr/checks/known_failures.txt` (a check failing for a known reason, with its lane and
+  board entry; exit 0 only when every failure is listed; empty since chat 30, and empty before the acceptance run) and a
+  `manifest` per check (sha256 of keys, start cfg, start save, the original's end save; a mismatch is `INVALID`;
+  `seal.sh <n>` after a deliberate change). Checked: a stale key list gives INVALID (exit 1); a listed failure exit 0.
+- **c29b's three new shortcut wins** (against c28a), from `data/logs29/full_c29b.log.gz`:
+  - **8:13 14,8, the wyvern** (event 17, 1 wyvern): won all three times, but each time a sting's failed save killed a
+    member (CEDRIC and DORN; then LIRA; then the third try), and in a full run a death is a reload. The poison rule
+    (effect 0x40, save or die) is Combat's, `checked` in `docs/coverage.md`. **The game's difficulty under the run's
+    death rule.** A poisoned member is the original's poison, not death proper: Slow Poison stands them up at 1 HP and a
+    temple's NEUTRALIZE POISON cures them, which the bot never tries (question to design on the board: whether a full
+    run may cure poison before counting a death). Same cause as c28a's 4:21 scorpions.
+  - **4:10 9,1, the brass doors' two spectres** (event 23, [17 x2]): won both times, but BRAM drained 2 levels a hit
+    until DEAD FOREVER (the original's rule: a drain below level 2 kills, GAME.OVR 0x10F15) and CEDRIC killed. The fight
+    is Combat's `orig_A_spectre`, matched roll for roll. **The game's difficulty**, with a party weaker than c28a's at
+    that point (c29b ends ARN 7 / BRAM 7 / LIRA 6/6 / DORN 6/7, c28a ARN 8 / BRAM 8 / LIRA 7/6 / DORN 7/8).
+  - **5:4 9,1, four fire giants** ([56 x4]): **the bot's.** It beat the party only once (won, with ELWEN killed), but the
+    bot's retry counter was per checkpoint, not per fight: 14,9's patrol had used tries 2 and 3, so 9,1's first loss
+    (try 4) took a shortcut win and logged "this fight beat the party twice". Fixed in `bot.gd` (`_losses`: a fight
+    is won by shortcut only after it has beaten the party twice itself; a first loss restores and retries). The
+    acceptance run will show whether the giants' room is hard (melee only; Combat's melee rules are in regress.sh).
+- **For the Player:** none of the three needs the original: the wyvern's and the spectres' rules are checked, and the
+  giants' room was not actually lost twice. If the acceptance run loses the giants' room twice, that one is for the
+  Player.
+
 ## Chat 29: loading 5:4/5:7, P63, NPCs' side, full runs c29a/c29b (stopped by the Lead)
 
 - **The original's LOAD** (GAME.OVR 0x1FBB3): with the view byte 0x49FA below 2 it loads GEO<data set> block

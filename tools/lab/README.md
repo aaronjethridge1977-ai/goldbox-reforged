@@ -16,7 +16,9 @@ This page is the lab as it is used now. The history, chat by chat, with the deta
 - The original runs in DOSBox Staging and our engine in Godot 4.7.2, both on virtual displays (Xvfb).
   Game files, `font.json` and `wheel.json` stay in the git-ignored `.lab` folder or the lab, never in a repo.
 
-**Before every push** (CLAUDE.md): fetch and rebase; `./check_godot.sh`; `refcheck.sh` after any change to
+**Before every push** (CLAUDE.md): fetch and rebase; `./check_godot.sh`; `~/gbr/checks/diffcheck.sh <repo>` when
+`scripts/` or `content/` changed (10/10 or no push; lab-independent, its own data in `~/gbr/checks/data`, chat 30);
+`refcheck.sh` after any change to
 `scripts/dev/bot.gd` (3:11 and 5:5 must not drop below `data/refcheck_base.txt`; since chat 21 each area replays the
 baseline's dice seed from `data/refcheck_seeds.txt`, so a difference is the code's, not the dice's: on one code a fresh
 seed had moved 3:11 between 83% and 88%); `git status`. A push that
@@ -170,6 +172,13 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 (2N + 0x6E00) & 0xFFFF (GAME.OVR 0x1FC04). `slotfrom.sh <fixture dir> <from> <to>`: `slot.sh` for a fixture saved in
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
+
+**Chat 30:** a check's key list holds its `wait`s, and how many a scene needs depends on the code (chat 26's DELAY
+fix made 5:7's closing scene ~150 waits long): chat 29's driver took chat 25's lists and check 5 "failed" on every
+commit. Checks now come from chat 26's lists: in the lab `data/c30/run1.sh <n> <area> <abs dir>` (`data/c29/run1.sh`
+calls it), for the push gate `~/gbr/checks/diffcheck.sh <repo>` (its own copy of everything; README beside it).
+Bisect builds: `data/c30/mkproj.sh <commit>` makes `proj_<commit>` (for `PROJ=`). The bot's shortcut win now needs the
+same fight to have beaten the party twice since the checkpoint (`_losses`), not just a third try.
 
 **Combat Chat 6 (Jeremy's PC):** DOSBox Staging ignores SIGTERM, so a stop by `kill` leaves it running and the next
 `orig.sh` reuses it: the PC lab's `killmine.sh` sends SIGKILL a second later. Never run `killmine.sh`/`pgrep -f` with the

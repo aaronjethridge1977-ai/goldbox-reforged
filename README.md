@@ -50,3 +50,7 @@ docs/              Engine notes
 ## Built with AI
 
 The code is written by Claude (Anthropic) under the direction of Aaron Ethridge, as a showcase of what AI-assisted development can do.
+
+## License
+
+Gold Box Reforged, Copyright (C) 2026 Aaron J Ethridge. Licensed under the GNU GPL v3; see LICENSE. Game data is not included: bring your own copy.

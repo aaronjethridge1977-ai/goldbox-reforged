@@ -44,6 +44,10 @@ var _pc := 0
 var _checkpoint := ""
 var _checkpoint_pc := 0
 var _retries := 0
+## Losses since the checkpoint, by the fight's key (or the event's, when no fight was open): a
+## fight is won by shortcut only once it has beaten the party twice itself (chat 30: c29b's
+## 5:4 9,1 was waved through on its first loss because 14,9 had used up the retries before it).
+var _losses := {}
 var _raise_ok := false     # this temple trip may raise the dead (plan "temple x,y raise")
 ## M6 shortcuts: the last scripted fight opened ({key, area, at, monsters}), the fights to win
 ## by shortcut (keys), and the log of every shortcut used and every fight it skipped.
@@ -160,8 +164,15 @@ func run(plan_path: String) -> void:
 			# smallest shortcut that works, logged, and the run moves on: first the party
 			# restored before trying again, then the fight that beat it won by shortcut (it
 			# goes on the list for the combat test suite). This replaced grinding a level.
+			var what: String = beaten.key if not beaten.is_empty() else event_then
+			var lost := 0
+			if what != "":
+				lost = int(_losses.get(what, 0)) + 1
+				_losses[what] = lost
 			if _retries == 1:
 				_shortcut("restore", DevShortcuts.restore(main._party), "wiped at plan line %d" % (_pc + 1))
+			elif lost == 1:
+				_shortcut("restore", DevShortcuts.restore(main._party), "first loss to %s" % what)
 			elif beaten.is_empty() and event_then != "":
 				# Beaten twice by something that isn't a fight (a trap, a script): the smallest
 				# shortcut is to pass that event by, logged.
@@ -563,6 +574,7 @@ func _do(line: String) -> void:
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
 			_retries = 0
+			_losses.clear()
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_%s.cfg" % w[1])
 			_save_counters("user://bot_%s.json" % w[1])

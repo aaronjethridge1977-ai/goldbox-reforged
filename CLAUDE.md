@@ -19,7 +19,10 @@ Several chats work on this repo at once. Jeremy is the designer and decides; the
   small, contained changes there and says so on the board in the same push.
 - **The board:** read `docs/board.md` when you start and after every pull; update it before you push (what
   you're on, requests, findings that matter to other lanes). It replaces Jeremy relaying messages by hand.
-- **Before every push:** `git fetch` and rebase onto origin/main; `./check_godot.sh`; after any change to
+- **Before every push:** `git fetch` and rebase onto origin/main; `./check_godot.sh`; if the push touches `scripts/`
+  or `content/`, `~/gbr/checks/diffcheck.sh <your repo or worktree>` (the ten differential checks, ~1 minute; it must
+  exit 0: any check failing that isn't in `~/gbr/checks/known_failures.txt`, or any `INVALID`, blocks the push until
+  fixed, or the difference is explained on the board to design for Jeremy to accept; see `~/gbr/checks/README.md`); after any change to
   `scripts/dev/bot.gd`, `refcheck.sh` (3:11 and 5:5 must not drop); `git status` (no game data, no saves).
 - **Godot `.uid` files:** commit a new script's or scene's `.uid` together with it.
 - **Ending a chat:** board updated, repos pushed, lab archive saved, a dated entry at the top of ai-business-ideas `plans/chat-log.md`,
