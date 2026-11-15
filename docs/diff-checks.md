@@ -30,7 +30,7 @@ All five reach their event in both games from lab saves made as below (chat 20, 
 | # | event | start save | keys to the event | check |
 |---|---|---|---|---|
 | 1 | 3:8 the clerk's reward (Podol Plaza cleared) | `mksave.py J G 3 8 4 5 E 4AE7=254` | Up, Up, Enter x2 (ours Enter x3) to the treasure; SHARE, EXIT; Enter x5 | **MATCH** (chat 20) |
-| 2 | 6:19 the silver bottle | `mksave.py J B 6 25 10 10 N 4A87=1 49C3=10 49C4=10 item1=ITEM8:50:0` | Up, Up (the dragon's cave, 10,9), Enter, ENTER CAVE: Diogenes's thanks (0xA3C7) | reachable |
+| 2 | 6:19 the silver bottle | `mksave.py J B 6 25 10 10 N 4A87=1 49C3=10 49C4=10 item1=ITEM8:50:0` | Up, Up (the dragon's cave, 10,9), Enter, ENTER CAVE: Diogenes's thanks (0xA3C7) | **MATCH** (chat 20, after two engine fixes: a band's LOAD_AREA_MAP leaves 0x49C5; a band step writes 0x49F0/0x49F1) |
 | 3 | 4:2 the chest and seal | `mksave.py J D 4 2 11 14 E 4A97=255 strong` | Up, Up: the ogre chief's fight (ogre, 18 hobgoblins, 4 more), then OPEN IT / TAKE IT UNOPENED | reachable; the original's QUICK fight took ~16 minutes and stalls on GUARDING: the check needs a fight played with fixed keys and the original's dice (`cmpfight2.sh`, side lane) |
 | 4 | 2:9 paying past the gate | `mksave.py J C 2 9 7 12 N 4A77=96 4A64=0 4A78=0 4AB9=0` | Up, Up (7,11): the bugbear's 15 gold, YES; Enter (at 8,5) | **MATCH** (chat 20): 3 platinum paid, 2 by the first member and 1 by the second, in both |
 | 5 | 5:7 the finale | `mksave.py J B 5 7 3 7 S strong wplus1=10 wplus2=10 wplus3=10 wplus4=10 wplus5=10 wplus6=10` (chat 23) | Up, Up: the audience hall (event 8 at 3,8) | reachable; fights to Tyranthraxus follow (as 3) |
@@ -52,14 +52,22 @@ with `seed.py` in the original and `tpseed=` in ours, at the point shown.
 
 Kept in the lab: `data/diff_<area>_ours.cfg` and `data/diff_<area>_orig/` for each check run.
 
-**State checks after the fights (chat 23): blocked on Jeremy's PC.** The fights for 3, 5 and 10 match roll for roll in the
-combat lane's lab. Here, `seed.py` and `trace.py` read DOSBox's memory through `/proc/<pid>/mem`, which WSL's
-`kernel.yama.ptrace_scope` = 1 refuses (`cmpfight2.sh` then reports "draws: identical" on two empty traces). With
-`sudo sysctl kernel.yama.ptrace_scope=0` (until WSL restarts) the original takes the seed. Check 10 tried without it
-(start save `data/diff_7-23_start/`, the original's F in `data/diff_7-23_orig/`, ours `data/diff_7-23_ours.cfg`): after
-the fight, Enter, EXIT, NO (don't go back for the treasure), save: 5 differences (clock 11:00 against 10:57, Bakshi
-200 / 188 HP, one dart), not meaningful while the original rolls other dice. Ours' keys:
-`load=G,up,tpseed=11111111,up,enter,c,quickall,magic,fightend,n,enter,E,N,F2`.
+**State checks after the fights (chat 24, main lab, `ptrace_scope` 0).** Each fight replayed with `cmpfight2.sh` as in the
+table, then the same keys in both games to the next walking menu and a save (the original: ENCAMP, SAVE, F; ours F2). Ours' keys
+need `wait`s after `fightend,n` (the won screen and the treasure take a few frames). Kept: `data/diff_<area>_start/`,
+`data/diff_<area>_orig/`, `data/diff_<area>_ours.cfg`.
+
+| check | after the fight (both) | ours' keys | result |
+|---|---|---|---|
+| 10 (7:23) | Enter, E (EXIT), N (don't go back for the treasure) | `load=G,up,tpseed=11111111,up,enter,c,quickall,magic,fightend,n,wait,wait,wait,enter,wait,wait,e,wait,wait,n,wait,wait,F2` | fight MATCH; state **3 differences, the clock only**: original 11:00, ours 10:57 (3 rounds) |
+| 3 (4:2) | Enter, E, N, T (TAKE IT UNOPENED: the iron box with Cadorna's seal) | `load=D,up,tpseed=11111111,up,enter,enter,quickall,magic,fightend,n,wait,wait,wait,enter,wait,wait,e,wait,wait,n,wait,wait,t,wait,wait,F2` | all 15863 draws identical; state **3 differences, the clock only**: 11:18 against 10:57 (21 rounds) |
+| 5 (5:7) | Enter, E, N, Enter x2 (the dragon's offer), **seed 22222222** in both, A x6 (each member votes ATTACK), Tyranthraxus's fight on QUICK, then Enter, E and Enter through the spirit's scene (PROGRAM 8) to New Phlan's gateway (3:0 0,4 E); save | `load=B,up,tpseed=11111111,up,enter,enter,c,quickall,magic,fightend,n,wait,wait,wait,enter,wait,wait,e,wait,wait,n,wait,wait,enter,wait,enter,wait,tpseed=22222222,a,wait,a,wait,a,wait,a,wait,a,wait,a,wait,wait,quickall,magic,fightend,n,...` | the guards MATCH (9284 draws); **Tyranthraxus's fight splits at draw 794 of 1718** (his first own turn: the original draws a second target d6 at OVR 0x160DB, then the breath's saves; ours draws "breathe? d100"); request to Combat. The original's trace: lab `data/fin_orig_c24.txt` |
+
+**Found: fights don't move our clock.** The original adds a minute at each round's end (GAME.OVR 0xA093: the clock routine
+0x241A1 with digit 1, count 1, which also runs the effects down). Ours' `main.gd` adds `_combat.rounds()` after a fight, but
+`combat_screen.gd` `_leave()` sets `_combat = null` before `finished`, so it adds 0 (request to Combat). With that fixed,
+checks 3 and 10 should match with 0 differences. Also seen: the original keeps the party on QUICK from one fight
+to the next (Tyranthraxus's fight played itself); ours' QUICK is per fight.
 
 ## Proposed next five (chat 21, for Jeremy)
 
