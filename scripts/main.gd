@@ -115,6 +115,8 @@ func _ready() -> void:
 	_typed.offset_top = -40
 	_typed.offset_bottom = -8
 	_typed.text_submitted.connect(_on_typed)
+	# The box itself sits under the game screen; what's typed is drawn on row 24 (P53).
+	_typed.text_changed.connect(func(_t: String) -> void: _show())
 	add_child(_typed)
 	_screen = GameScreen.new()
 	_screen.visible = false
@@ -277,6 +279,13 @@ func _ready() -> void:
 			add_child(bot)
 			bot.run.call_deferred(arg.trim_prefix("--play="))
 			return
+	# F3 from a screen or an event (P56): the scene was started afresh to load the quick save.
+	if _reload_quick:
+		_reload_quick = false
+		_on_start_chosen("continue", "")
+		if not _replay_left.is_empty():
+			_replay_keys.call_deferred(_replay_left)   # lab: a --keys replay carries on
+		return
 	# Testing aid: with --keys=, start straight in the last quick save and replay.
 	var keys_arg := ""
 	for arg in OS.get_cmdline_user_args():
@@ -380,7 +389,9 @@ const NO_COORDINATES := 0x49FB   # 1: no square on the place line, no AREA map (
 ## the clock, what is on screen and the message, one line per key; then quits.
 func _replay_keys(names: PackedStringArray) -> void:
 	print("start  ", _state_line())
-	for n in names:
+	for ki in names.size():
+		var n := names[ki]
+		_replay_left = names.slice(ki + 1)   # lab: what's left if F3 restarts the scene (P56)
 		if n == "wait":
 			await get_tree().create_timer(0.5).timeout
 		elif n.begins_with("program="):     # program=0:120 runs PROGRAM 0 with hall mask 120
@@ -521,6 +532,8 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var key_name: String = {"enter": "Enter", "esc": "Escape", "home": "Home", "end": "End", "pgup": "PageUp", "pgdn": "PageDown",
 				"up": "Up", "down": "Down", "left": "Left", "right": "Right"}.get(n, n.to_upper())
 			ev.keycode = OS.find_keycode_from_string(key_name)
+			if n.length() == 1:
+				ev.unicode = n.to_upper().unicode_at(0)   # so a typed answer's box takes it (P53)
 			ev.pressed = true
 			Input.parse_input_event(ev)
 			var up := ev.duplicate()
@@ -843,6 +856,31 @@ func _state_line() -> String:
 func _input(event: InputEvent) -> void:
 	if DisplayMode.handle_key(get_tree(), event):
 		get_viewport().set_input_as_handled()
+		return
+	# P56 (Jeremy's exception, 2026-11-14): F3 quick-loads from any part of the game, fights,
+	# camp, shops, sheets and events included. Off the plain walking screen the whole game
+	# scene is started afresh and loads the quick save as it starts (every screen's timers and
+	# waits go with it); on the walking screen the usual path below does it.
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F3 \
+			and _game_path != "" and not (_start_menu != null and is_instance_valid(_start_menu) and _start_menu.visible) \
+			and FileAccess.file_exists(_save_path()) and _quick_load_needs_reset():
+		get_viewport().set_input_as_handled()
+		_reload_quick = true
+		get_tree().reload_current_scene()
+
+
+## The quick load restarts the scene first when anything but the plain walking screen is up.
+static var _reload_quick := false
+static var _replay_left := PackedStringArray()
+
+
+func _quick_load_needs_reset() -> bool:
+	for o in [_shop, _sheet, _combat, _treasure, _camp, _temple, _party_menu]:
+		if o != null and o.visible:
+			return true
+	if _ending != null and is_instance_valid(_ending):
+		return true
+	return _busy or _door_options != "" or _lost or not _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -2910,6 +2948,11 @@ func _draw_screen() -> void:
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
 	if note24:
 		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
+		_screen.update()
+	if _vm.state == EclVM.State.INPUT and _typed.visible:
+		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU
+		# SAY?" then O, H: " OH" in white on row 24 from column 1, no box, no cursor seen). P53.
+		_screen.text(1, 24, _typed.text.to_upper(), GameScreen.WHITE)
 		_screen.update()
 	if who_label != "":
 		_screen.text(0, 24, who_label, 13)
