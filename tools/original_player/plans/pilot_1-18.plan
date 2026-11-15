@@ -1,0 +1,21 @@
+# Pilot (Player 1): Podol Plaza (1:18) from check 9's start, in through the tavern, out the west gate.
+# Start save: lab `mksave.py J G 1 18 8 4 W strong` (the shipped party J; its first step lands at 1:18 8,4 W).
+# J's cover in the plaza is already blown (0x4A35 = 255), so no arrival menu: the dialogue choices are the tavern's.
+area 1:18
+rules ../../plans/playthrough.plan
+
+step N                     # any step: the save's patched on-move takes the party into 1:18
+checkpoint entry           # area entry
+walk 5,8                   # before the tavern's door ('THE PITT.')
+checkpoint tavern          # before the dialogue choice and the fight
+step W                     # 4,8: the tavern, a drunk buccaneer
+# Level-1 party J loses the duel (THRENDER GRONE, 11 HP, against a 4th level fighter) and is wiped by ATTACK
+# (the whole tavern): the start save is check 9's with the lab's `strong` (200 HP, AC -10, THAC0 untouched).
+# Main's plan answers the tavern's own menu (LEAVE).
+answer WHO WILL IT BE|CHALLENGE
+answer WHO WILL CHALLENGE|THRENDER GRONE
+walk 0,4
+step W                     # out the west gate
+answer WHICH ENTRANCE WILL YOU TAKE|LEAVE   # 7:26's edge: NORTH SOUTH LEAVE (LEAVE: onto the band)
+exit 7:26
+checkpoint exit            # the segment check's end state

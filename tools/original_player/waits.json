@@ -1,0 +1,4 @@
+{
+  "OVR:2ce3a": "menu: every menu, text box, the walking screen and the combat menu poll KeyPressed here, then GetKey (OVR 0x2ce41)",
+  "OVR:0010f": "title picture: any key"
+}

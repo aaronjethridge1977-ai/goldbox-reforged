@@ -28,4 +28,6 @@ desktop.ini
 /captures/
 /.lab/
 /saves/
+# Claude Code worktrees (the Player lane's `claude --worktree` checkout)
+.claude/worktrees/
 __pycache__/
