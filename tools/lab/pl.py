@@ -16,29 +16,43 @@ os.environ.setdefault("DISPLAY", ":99")
 sys.path.insert(0, HERE)
 
 
+PIDS = os.path.join(HERE, "data")
+
+
+def _spawn(cmd, name):
+    p = subprocess.Popen(cmd, shell=False, start_new_session=True, cwd=HERE, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    open(os.path.join(PIDS, name + ".pid"), "w").write("%d\n" % p.pid)
+
+
 def start():
+    # chat 29: by pid file only (data/xvfb.pid, data/dosbox.pid; seed.py reads the latter).
     stop()
-    subprocess.Popen("Xvfb :99 -screen 0 800x600x24 >/dev/null 2>&1", shell=True, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    _spawn(["Xvfb", ":99", "-screen", "0", "800x600x24"], "xvfb")
     for _ in range(50):
         if os.path.exists("/tmp/.X11-unix/X99"):
             break
         time.sleep(0.1)
     d = os.path.join(HERE, "dosbox-staging-linux-x86_64-0.83.0-7b400", "dosbox")
-    subprocess.Popen("DISPLAY=:99 SDL_AUDIODRIVER=dummy %s -conf %s/por.conf > %s/dosbox.log 2>&1" % (d, HERE, HERE),
-                     shell=True, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    os.environ["SDL_AUDIODRIVER"] = "dummy"
+    _spawn([d, "-conf", os.path.join(HERE, "por.conf")], "dosbox")
     print("started")
 
 
 def stop():
-    # Only this lab's DOSBox (its por.conf): the Player lane runs its own beside it (chat 25).
-    # The full path: player_lab has a por.conf of its own (chat 26).
-    subprocess.run("pkill -f '[d]osbox -conf %s/por.conf' ; pkill -f '[X]vfb :99'" % HERE, shell=True)
-    time.sleep(0.3)
-    for f in ("/tmp/.X99-lock", "/tmp/.X11-unix/X99"):
+    # Only what start() started, by its pid files (lab rule; DOSBox ignores SIGTERM: SIGKILL).
+    import signal
+    for name in ("dosbox", "xvfb"):
+        f = os.path.join(PIDS, name + ".pid")
+        if not os.path.exists(f):
+            continue
+        p = int(open(f).read().split()[0])
         try:
-            os.remove(f)
+            os.kill(p, signal.SIGKILL)
         except OSError:
             pass
+        os.remove(f)
+    time.sleep(0.3)
 
 
 def dump():

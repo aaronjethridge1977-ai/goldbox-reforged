@@ -1550,6 +1550,20 @@ func load_original_save(letter: String) -> bool:
 			_vm.hi[a] = s[2 + 2 * k]
 	# GAME.OVR 0x1F8F6: the load zeroes the party-size cell (ours counts the party).
 	_vm.mem[EclVM.PARTY_SIZE] = 0
+	# The map the save names (GAME.OVR 0x1FBB3, in LOAD before the init): in a 3D area (view
+	# byte 0x49FA below 2) the original loads GEO<data set> block [0x49C5], the map last loaded,
+	# then the wall sets of 0x4AFA-0x4AFF. Inits that see 0x49F2 already naming their block skip
+	# their LOAD_AREA_MAP (5:4 0x9B6D, 5:7 0x9A42), so without this the party stood on whatever
+	# map was up before (chat 29, Player 3: New Phlan's).
+	if s[0x3206] < 2:
+		var geo := "GEO%d.DAX" % set_no
+		for i in _maps.size():
+			if _maps[i].file == geo and _maps[i].id == _vm.read_byte(EclVM.AREA_MAP_ID):
+				_maps[i].map = GeoMap.decode(_maps[i].block)
+				_map_index = i
+				_vm_map = i
+				_walls_for = -1
+				break
 	# The saved square, so the init sees it (_enter_script writes _pos and _facing to the VM).
 	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
 	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
@@ -2216,6 +2230,12 @@ func _add_npcs() -> void:
 			continue
 		m.is_monster = false
 		m.npc = 128 + int(req[1]) / 2
+		# ADD_NPC (GAME.OVR 0x38C4) sets the side byte 0x10E: 0 (with the party) for every NPC but
+		# monster 0x18, which joins turned (1). The monster record's own 0x10E stayed before chat 29,
+		# so with Combat Chat 6's turned members (0x10E = 1 fights with the monsters) DIRTEN fought
+		# the party from his first fight (full run c29a, 2:15).
+		if m.raw.size() > 0x10F:
+			m.raw[0x10E] = 1 if int(req[0]) == 0x18 else 0
 		m.recalculate(_types)
 		_party.append(m)
 		_vm.selected = _party.size() - 1
@@ -2364,6 +2384,10 @@ func _on_camp_closed() -> void:
 	GameClock.add_minutes(_vm, _camp.minutes_passed)   # the camp has already run the effects
 	if not _party.is_empty():
 		_vm.selected = clampi(_camp._sel, 0, _party.size() - 1)
+	# Leaving camp redraws the 3D view (P63, lab chat 29: the inn at New Phlan 6,12, PICTURE 24 then
+	# PROGRAM 9; after EXIT the original shows the street at 6,13 N, not the innkeeper).
+	_event_image = null
+	_vm.sprite_id = -1
 	_show()
 
 

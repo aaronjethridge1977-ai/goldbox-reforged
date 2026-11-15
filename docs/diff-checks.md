@@ -172,6 +172,30 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 29: loading 5:4/5:7, P63, NPCs' side, full runs c29a/c29b (stopped by the Lead)
+
+- **The original's LOAD** (GAME.OVR 0x1FBB3): with the view byte 0x49FA below 2 it loads GEO<data set> block
+  **[0x49C5]** (the map last loaded; not 0x49F2), then the wall sets from 0x4AFA-0x4AFF. Ours now loads that map before
+  the init. The Player's fixtures (`c27a_5-7_finale`, `c27a_5-4_alarm`, `c27a_5-4_giant`, slot I, lab `data/c29/fx`):
+  GEO5 block 7 / 4 after load; 5:7 3,6's stairs ask; 5:4 13,12 E, Up: "YOU ENTER A BRIGHTLY LIT BUILDING ..." at 13:27, the
+  same as the original from the same save (DOSBox).
+- **Checks on chat 29's load change:** 1, 2, 3, 4, 10: 0 differences. **Check 5: 8 differences** (ours ends in 5:7 3,8:
+  the guards surrender at once, Tyranthraxus's fight ends at CONTINUE BATTLE and the closing scene never comes). **The
+  same on origin/main, on 6eff49e (chat 28's end, before Combat Chat 6) and on 464f521 (before chat 28's random
+  treasure)**: not chat 29's, and older than chat 28's treasure. Next: bisect further back (chat 26's cc5a14d matched),
+  then hand the fight to Combat if it is a fight rule. Checks 6-9 not re-run (stopped). Driver:
+  `data/c29/run1.sh <n> <area> <abs dir>` (an absolute folder: a relative `--save` replays no keys and idles 25 minutes).
+- **P63** (the inn at New Phlan 6,12, `PICTURE 24 ... PROGRAM 9`): after paying and EXIT from camp the original shows the 3D
+  view (the party at 6,13 N); ours kept the innkeeper. Leaving camp now clears the event picture (lab: before/after
+  screens `data/c29/ours_inn3*.png`, the original's `data/c29/inn3.png`). Seen on the way, not fixed: **indoor squares
+  draw a pink ceiling in the original** (6,13, map flag 137; both games hold sky 11/10), ours always the sky colour.
+- **ADD_NPC** (GAME.OVR 0x38C4) sets record 0x10E = 0 (1 only for monster 0x18). Full run **c29a** (before the fix):
+  DIRTEN fought the party from his first fight (2:15's lizardmen, BRAM ATTACKS DIRTEN in round 1) and the run ended wiped at
+  1:18 (plan line 244, 8 retries). **c29b** (with the fix, training as the original): **reached the plan's end** (line
+  626, day ~558, 0 teleports), 10 fights won by shortcut (c28a 7): 4:21 2,11; 8:13 14,8; 8:13 4,3 x2 (one a stalemate);
+  4:10 9,1; 2:9 7,6; 5:4 14,9; 5:4 9,1; 5:7 3,8 x2. **Not yet explained one by one** (new against c28a: 8:13 14,8, 4:10 9,1,
+  5:4 9,1); levels at the end ARN 7, BRAM 7, CEDRIC 6, ELWEN 5/6/6, LIRA 6/6, DORN 6/7, DIRTEN 6. Logs: lab `data/logs29/`.
+
 ## Chat 28: fresh full run c28a (from creation, chat 28's code: random treasure, mop-ups)
 
 Reached the end, day 498, **0 teleports**, 0 level grants, 16 party restores on first retries. Fights won by shortcut

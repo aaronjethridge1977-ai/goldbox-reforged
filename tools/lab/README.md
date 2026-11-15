@@ -158,6 +158,18 @@ names patched (`slot.sh <fixture dir> <letter>`), or it loads slot A's party. Ou
 that runs before `tpseed` uses Godot's dice and may meet a random encounter: seed it too. The original's treasure list
 (DS:0x6810, far pointers; next item at record +0x2A) can be read while a fight waits for input. TREASURE with item list
 128+ is GAME.OVR 0x26F5 / 0x25C99 (`docs/diff-checks.md`, Chat 28).
+**Chat 29 (DOSBox by this lab only, the Lead's finding; main's lab copies of Combat's `seed.py`, `orig.sh`, `cmpfight*.sh`,
+`origvid.sh`, which stay as they are in the repo):** `seed.pid()` (and so `trace.py`, `dsread.py`, `partyrec.py`,
+`origfight.py`) takes `GBR_DOSBOX_PID`, else the lab's pid file `data/dosbox.pid` if that process lives, else the one
+DOSBox whose working directory is this lab (none or several: it stops and asks for `GBR_DOSBOX_PID`). `pl.py start`
+starts Xvfb :99 and DOSBox and writes `data/xvfb.pid` / `data/dosbox.pid`; `pl.py stop` SIGKILLs only those pids.
+`orig.sh` uses :99 and `pl.py start` (no `pgrep`); `cmpfight.sh`, `cmpfight3.sh`, `origvid.sh` and `botstop.sh` stop
+helpers with `killmine.py <word>...` (SIGKILL to processes whose command line holds a word **and** whose working
+directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g. origin/main's, beside `proj`).
+`eclread.py <cell> [n]` reads ECL cells (words) in the running original: cell N at the far pointer DS:0x49D2 +
+(2N + 0x6E00) & 0xFFFF (GAME.OVR 0x1FC04). `slotfrom.sh <fixture dir> <from> <to>`: `slot.sh` for a fixture saved in
+another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
+(chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
 **Combat Chat 6 (Jeremy's PC):** DOSBox Staging ignores SIGTERM, so a stop by `kill` leaves it running and the next
 `orig.sh` reuses it: the PC lab's `killmine.sh` sends SIGKILL a second later. Never run `killmine.sh`/`pgrep -f` with the
