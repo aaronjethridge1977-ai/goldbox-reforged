@@ -114,6 +114,13 @@ keep steps in lab key lists) and EXIT from a spell's aim asks ABORT SPELL? (YES 
 save: `mksave.py J A 4 21 14 9 N`, walk to 12,7, then east and north into 14,6 (Sokal Keep's frogs; flee the undead patrols);
 give the party 200 HP, AC 10 so they are hit and poisoned. Ad hoc scripts in the lab archive's `combat4/`.
 
+**Chat 25:** `pl.py stop` (and `start`) now kill only this lab's DOSBox (`[d]osbox -conf .*/por.conf`): the Player lane
+runs its own beside it (`player_lab`, display :97). Lab rule (Methods 5): a script stops only what it started
+(Combat Chat 4's `orig.sh` pid files for the fight tools). Keyed checks need `wait`s between keys (a Y sent before a menu is up is
+lost). Saves: ours' original-format saves are now the original's layout (wilderness saves load in DOSBox); the start saves
+of checks 1 and 2 are kept in `data/diff_3-8_start/` and `data/diff_6-19_start/` (letter G). GAME.OVR listing: build one with
+`ovr.units()` and `ovr.dis(fo, size, stop=False)` (about 76,000 lines, a few seconds).
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 

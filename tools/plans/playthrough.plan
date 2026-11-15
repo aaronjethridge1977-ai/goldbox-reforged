@@ -324,9 +324,48 @@ town
 
 log 12. Sorcerer's Island: Yarash's pyramid (7:22)
 # Chat 12: the pollution commission ends in 7:23 (event 15's mage and his mutated guards,
-# "SUBDUE THEM!": 0x4AB3 = 254), Yarash's desk beside it. No town trip in between: the
-# pyramid's only way out is a priest's hole in 7:22 (the priest asks only on a lucky roll).
+# "SUBDUE THEM!": 0x4AB3 = 254), Yarash's desk beside it.
+# Chat 25: the ways out of the pyramid are 7:22's secret doors, events 1 at 15,0 (a step north) and 2
+# at 15,15 (south): once the event's bit of 0x4A4B is set the step goes to the island (0x9C60, NEW_ECL
+# 26), before that it is refused. LOOK on the square finds the door (0x9A0B: the first member, a d5
+# against 0, 1 with SEARCH on, +1 for an elf or half-elf). And the priest's hole (0x9E43, bit 7),
+# only after the priest's lucky roll. 7:22's init puts the party on 15,0 facing south, so the north
+# door is found on arrival and the area graph gets the edge (c24f had no way out: two teleports).
 travel 7:22
+search on
+face N
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+key l
+key enter
+search off
+exit 7:22 15,0 N 7:26 wall
+# The pyramid's parts are joined by teleports the path finder must know (chat 25, the tables at
+# 7:22 0x9955/0x995F): 7:22 14,8 -> 5,11 and 14,9 -> 0,0 (events 15, 16). The corridor with the
+# doors out (x 15) is reached on first arrival, from 7:23's teleporter at 6,0 (dial BLUE: 15,8) or
+# from 7:23's rocks room (below).
+warp 7:22 14,8 5,11
+warp 7:22 14,9 0,0
+# 7:23's rocks room (event 12, 15,12; 0x9C9D): MOVE ON with 0x4A4D bit 0 set goes to 7:22's corridor
+# (15,7, 0x9E08), the way out; with it clear THROW A ROCK flips it first.
+gate 7:23 15,12 7:22 [4A4D&1=1] MOVE ON
+gate 7:23 15,12 7:22 [4A4D&1=0] THROW A ROCK,MOVE ON
 explore
 checkpoint pyramid1
 

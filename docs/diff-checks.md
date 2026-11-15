@@ -85,8 +85,45 @@ ours `data/diff_7-26_ours2.cfg`, keys `load=F,wait,up,wait,up,wait,F2`).
   original's CALL handler (GAME.OVR 0x3A36) acts only on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E, 0xC018: the rest do nothing.
 - After the load: **0x4A1E** original 0, ours 1. The original runs 7:26's init on load and keeps what it writes (its tile
   routine zeroes 0x4A1E at 0xAD6A); ours' `load_original_save` runs the init, then puts all of 0x4900-0x52FF back as saved.
-  Next chat: drop the second restore (keep the square), re-run checks 1-10 to see nothing else moves. Also **0x4AFA-0x4AFF**:
-  ours writes the last dungeon's wall sets in a wilderness save, the original 0 / 255 (they are read back on a load).
+  Chat 25: done (below). Also **0x4AFA-0x4AFF**: ours wrote the last dungeon's wall sets in a wilderness save, the
+  original 0 / 0xFFFF (words; they are read back on a load).
+
+**Chat 25: fixed, 0 differences in both halves** (wall-set slots included, no ignore list). (1) A load keeps the
+init's writes: `load_original_save` runs the init from the saved image (the original's main loop skips its block load
+while 0x49F8 is set, GAME.OVR 0x4093/0x7799) and puts nothing back but the square. (2) Each ECL address of
+0x4900-0x4CFF, 0x6B00-0x6EFF and 0x9700-0x98FF is a 16-bit cell (GAME.OVR 0x814A write, 0x82DF read, classes at
+0x7BCE), whatever the operand's type; the script image holds bytes. (3) The save's 0x1400 bytes after the data set are
+those three cell arrays (0x800, 0x800, 0x400 bytes; the save writer at 0x1FE77), not 0x4900-0x52FF: ours' old
+"0x5012" and "0x503E" were 0x6E12 (the data set) and 0x6E3E (the party's size). (4) The wall-set slots: in the
+wilderness the original saves them as they stand (stale after a NEW_ECL, as the first save shows); a load in a band,
+a new game and `LOAD_AREA_DECO 127` (the city: checks 1 and 5's original saves) leave wall set 0 in slot 1 and -1 in
+2-3 (0, 0xFFFF, 0xFFFF / 1, 0xFFFF, 0xFFFF). (5) Byte 0x3206 of a save is the view (DS 0x49FA): 1 a 3D area, 2-4 the
+bands 6:25, 7:26, 8:27; ours wrote 1 and **the original stopped on ours' wilderness saves with "Unable to load geo in
+Load3DMap"**; now they load and walk (lab). Bytes 0x3204-5 are the wall ahead and the square's info (0xC04E/F), and
+the image is restored whole on load (0x1E00 bytes: what longer scripts left past this one's end). Ours' save after
+loading the original's and walking the same steps now equals it byte for byte up to the names but for 3 bytes (a
+scratch cell, and the wall ahead / square info the original keeps from the last 3D square).
+
+## Chat 25: checks re-run after the load and word-cell changes
+
+Every check's start save and the original's end save loaded in ours before and after the change, saved at once:
+only 7:26's moved (its init's writes, now as the original's), and the shipped save A's 0x6B00-0x6EFF cells, which
+the old layout didn't restore (loading A in DOSBox and saving at once: ours now differs from the original in 4 of
+the 0xA00 cells, the door-menu flags ours keeps at 0x6DDE-0x6DE0 and the party size the original writes at save
+time; before, 36). Then each check against its original save (`statediff.sh` now compares words):
+
+| # | keys, ours (with waits; saves in `data/diff_<area>_start/`) | result |
+|---|---|---|
+| 1 | `load=G,Up,Up,Enter,Enter,Enter,S,E,Enter x5,F2` | **MATCH** |
+| 2 | `load=G,Up,Up,Enter,Enter,Enter,2 (IGNORE CAVE),F2` | 0x49F0/0x49F1 (original 5, 5; ours 10, 10), **the same on the old engine**; it matched in chat 20, so bisect (chat 26). Lead: a band step writes the party's map square there (main.gd `_overland_step`); the original's save has the map square 5, 5 (bytes 0x3201-2), ours keeps the 10, 10 `mksave.py` put in 0xC04B/C: find what sets 5, 5 in the original (the band's LOAD_AREA_MAP 4,4,0?) |
+| 3 | chat 24's seeded keys (`tpseed=11111111`) | **MATCH** (after Combat Chat 4's clock fix: fights move the clock) |
+| 4 | `load=C,Up,Up,Y,Enter x3,F2` | **MATCH** (needs waits: a Y before the menu is up is lost) |
+| 6, 7, 9 | as above | **MATCH** (7 with the ignore list) |
+| 8 | as above | **MATCH** with the ignore list (its quick save doesn't hold the save-time slots) |
+| 10 | chat 24's seeded keys | **MATCH** (the same) |
+| 5 | chat 24's seeded keys through the vote, both fights and the closing scene to New Phlan, F2 (after Combat Chat 4's 49a5ec7) | **all but 2 bytes**: 0x49FD/0x49FE (the sky) original 11/10, ours 8/9 after the ending (the same on origin/main without chat 25's changes); the fights MATCH draw for draw (Tyranthraxus: 1718 draws, the same survivors), party and flags agree. Open for chat 26: where the original sets the sky after the closing scene (New Phlan's day values 11/10; ours keeps the night or 5:7's) |
+
+Keyed runs are not always repeatable when the PC is busy (check 5's first run lost a key during a reference check and ended with another member dead; run again, it matched). Reference check (seeded), with all of chat 25's changes: 3:11 87/84, 5:5 91/88 (= baseline).
 
 ## Proposed next five (chat 21, for Jeremy)
 

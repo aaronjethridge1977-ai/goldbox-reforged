@@ -49,6 +49,9 @@ const VIEW_3D := 0x49E6         # 1 on entering an area; the bands' scripts clea
 enum State { IDLE, RUNNING, MENU, WAIT, SHOP, COMBAT, DONE, NEW_ECL, ERROR, TEMPLE, PROGRAM, INPUT }
 
 var mem := PackedByteArray()
+## The high bytes of the 16-bit cells (see is_cell), by address; only those not 0. `mem` holds
+## the low byte, so the engine's byte reads see what they always saw.
+var hi := {}
 var ecl: EclScript
 var state := State.IDLE
 var pc := 0                      # offset into script.code
@@ -167,6 +170,7 @@ func fork(cov: ScriptCoverage) -> EclVM:
 ## puts the game back to a snapshot this way.
 func copy_from(src: EclVM) -> void:
 	mem = src.mem.duplicate()
+	hi = src.hi.duplicate()
 	ecl = src.ecl
 	state = src.state
 	pc = src.pc
@@ -398,6 +402,51 @@ func write_byte(addr: int, value: int) -> void:
 	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300 and _char_set(addr - CHAR_WINDOW, value & 0xFF):
 		return
 	mem[addr] = value & 0xFF
+	if not hi.is_empty():
+		hi.erase(addr)
+
+
+## The original keeps each ECL address of three windows as a 16-bit cell of its own: 0x4900-0x4CFF
+## (the flags), 0x6B00-0x6EFF (the character window and the scratch bytes) and 0x9700-0x98FF.
+## Its variable write (GAME.OVR 0x814A, the address classed at 0x7BCE) stores the whole value
+## there, whatever the operand's type, and its read (0x82DF, from 0x7609 for types 1 and 3)
+## gives the whole cell back. The script image (0x9900-0xB6FF) holds bytes. Chat 25 (lab, 7:26's
+## tile loop: ADD into [4A09] as a word left 0x4A0A at 7 in ours, 0 in the original).
+static func is_cell(addr: int) -> bool:
+	return (addr >= 0x4900 and addr < 0x4D00) or (addr >= 0x6B00 and addr < 0x6F00) \
+			or (addr >= 0x9700 and addr < 0x9900)
+
+
+## A script's variable read: the whole cell in the windows (the character window's named fields
+## as the original gives them, coins as words), else a byte.
+func read_var(addr: int) -> int:
+	addr &= 0xFFFF
+	if addr == PARTY_SIZE and party != null:
+		return party.size()
+	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300:
+		var v := _char_get(addr - CHAR_WINDOW, true)
+		if v >= 0:
+			return v & 0xFFFF
+	if is_cell(addr):
+		return mem[addr] | (int(hi.get(addr, 0)) << 8)
+	return read_byte(addr)
+
+
+## A script's variable write (GAME.OVR 0x814A): the whole value (16 bits) into a cell, a byte
+## elsewhere.
+func write_var(addr: int, value: int) -> void:
+	addr &= 0xFFFF
+	value &= 0xFFFF
+	if addr >= CHAR_WINDOW and addr < CHAR_WINDOW + 0x300 and _char_set(addr - CHAR_WINDOW, value, true):
+		return
+	if not is_cell(addr):
+		write_byte(addr, value)
+		return
+	mem[addr] = value & 0xFF
+	if value >> 8:
+		hi[addr] = value >> 8
+	elif not hi.is_empty():
+		hi.erase(addr)
 
 
 # ---------------------------------------------------------------- character window
@@ -419,7 +468,7 @@ func selected_member() -> PartyMember:
 
 
 ## A field of the selected member, or -1 if `off` isn't one (then it's plain memory).
-func _char_get(off: int) -> int:
+func _char_get(off: int, whole := false) -> int:
 	if off == 0x2B1 or off == 0x2B4:
 		return maxi(selected, 0)
 	if selected < 0 and selected_creature >= 0 and off == 0x10C:
@@ -438,6 +487,10 @@ func _char_get(off: int) -> int:
 	if off >= 0xBB and off <= 0xC4:
 		var base := off - ((off - 0xBB) & 1)
 		var coins: int = m.money[_COIN_AT[base]]
+		# A script's read (whole) gets the coins as a word (GAME.OVR 0x7D26-0x7D8A); the byte
+		# after each is a plain cell there. The engine's byte reads keep the two halves.
+		if whole:
+			return coins if off == base else -1
 		return coins & 0xFF if off == base else (coins >> 8) & 0xFF
 	if off >= 0x21 and off <= 0x35:
 		return m.memorized[off - 0x21] if off - 0x21 < m.memorized.size() else 0
@@ -455,7 +508,7 @@ func _char_get(off: int) -> int:
 	return -1
 
 
-func _char_set(off: int, v: int) -> bool:
+func _char_set(off: int, v: int, whole := false) -> bool:
 	if selected < 0 and selected_creature >= 0 and off == 0x10C:
 		monster_teams[selected_creature] = v
 		return true
@@ -477,6 +530,12 @@ func _char_set(off: int, v: int) -> bool:
 	if off >= 0xBB and off <= 0xC4:
 		var base := off - ((off - 0xBB) & 1)
 		var i: int = _COIN_AT[base]
+		if whole:
+			# A script's write stores the word (GAME.OVR 0x7FB3-0x8017); the byte after is a cell.
+			if off != base:
+				return false
+			m.money[i] = v
+			return true
 		if off == base:
 			m.money[i] = (m.money[i] & 0xFF00) | v
 		else:
@@ -661,10 +720,10 @@ func _value(a: Dictionary) -> int:
 	match t:
 		0x00, 0x02, 0x04:
 			return int(a.value)
-		0x01, 0x05:
+		0x01, 0x03:
+			return read_var(int(a.value))
+		0x05:
 			return read_byte(int(a.value))
-		0x03:
-			return read_byte(int(a.value)) | (read_byte(int(a.value) + 1) << 8)
 	return 0
 
 
@@ -685,11 +744,8 @@ func _string(a: Dictionary) -> String:
 func _write(dest: Dictionary, value: int, offset: int = 0) -> void:
 	var t: int = dest.get("type", -1)
 	var addr: int = int(dest.get("value", 0)) + offset
-	if t == 0x03:
-		write_byte(addr, value)
-		write_byte(addr + 1, value >> 8)
-	elif t == 0x01 or t == 0x05 or t == 0x81:
-		write_byte(addr, value)
+	if t == 0x01 or t == 0x03 or t == 0x05 or t == 0x81:
+		write_var(addr, value)
 
 
 func _write_string(dest: Dictionary, s: String) -> void:
@@ -876,11 +932,11 @@ func _exec(ins: Dictionary) -> void:
 			var d := _value(a[1])
 			_write(a[2], _value(a[0]) / d if d != 0 else 0)
 		"AND":
-			var r := _value(a[0]) & _value(a[1])
+			var r := _value(a[0]) & _value(a[1]) & 0xFF   # a byte (GAME.OVR 0x1B6B)
 			_write(a[2], r)
 			compare = 0 if r == 0 else 1
 		"OR":
-			var r := _value(a[0]) | _value(a[1])
+			var r := (_value(a[0]) | _value(a[1])) & 0xFF
 			_write(a[2], r)
 			compare = 0 if r == 0 else 1
 		"RANDOM":
@@ -900,12 +956,8 @@ func _exec(ins: Dictionary) -> void:
 		"WRITE_MEM_BASE_OFF":
 			_write(a[1], _value(a[0]), _value(a[2]))
 		"COPY_MEM":
-			var src: Dictionary = a[0]
-			var addr := int(src.value) + _value(a[1])
-			var v := read_byte(addr)
-			if src.type == 0x03:
-				v |= read_byte(addr + 1) << 8
-			_write(a[2], v)
+			# GAME.OVR 0x1BA7: the cell at the address plus a byte offset, whatever the source's type.
+			_write(a[2], read_var(int(a[0].value) + (_value(a[1]) & 0xFF)))
 		"PRINT":
 			text += _string(a[0])
 			text_changed = true

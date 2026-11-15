@@ -370,6 +370,8 @@ func _new_game() -> void:
 	_mode = Mode.WALK
 	# A fresh start: no flags or places from an earlier game.
 	_vm.mem.fill(0)
+	_vm.hi.clear()
+	_wall_slots_reset()
 	_vm.on_overland = false
 	_vm.overland_band = 0
 	GameClock.set_time(_vm, 0, 0)
@@ -1267,6 +1269,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "file", _vm_file)
 	cfg.set_value("script", "block", _vm_block)
 	cfg.set_value("script", "memory", _vm.mem)
+	cfg.set_value("script", "memory_hi", _vm.hi)
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
 	var members := []
@@ -1385,7 +1388,7 @@ func _save_original(letter: String) -> bool:
 		# the save (lab: these three and the 0 at 0x3207 are enough).
 		blank[0x49FC] = 1
 		blank[0x49FF] = 3
-		blank[0x5012] = 3
+		blank[EclVM.FILE_SET] = 3
 		var ok0 := OriginalSave.write(_game_path, letter, 3, blank, 15, 1, 3, _party, false)
 		_party_menu.save_failed = not ok0
 		print("   (saved game %s before the adventure%s)" % [letter.to_upper(), "" if ok0 else ": FAILED"])
@@ -1397,20 +1400,40 @@ func _save_original(letter: String) -> bool:
 	if not _vm.on_overland:
 		_sync_position_to_vm(_facing)
 	# The engine values the original writes into the image only at save time (GAME.OVR
-	# 0x1FE77-0x1FEFE) and reads back on load: the data set at 0x5012 (its GEO and WALLDEF
+	# 0x1FE77-0x1FEFE) and reads back on load: the data set at 0x6E12 (its GEO and WALLDEF
 	# files) and the three wall-set slots at 0x4AFA-0x4AFC with their numbers 1-3 at
 	# 0x4AFD-0x4AFF. Lab (chat 22): a save ours made in Sokal Keep after the Slums kept the
 	# Slums' 2 and 2, 4, 1 there, and the original stopped with "Unable to load geo in
 	# Load3DMap" (then "...wallset in LoadWallSet"); with 4 and 1, 5, 9 it loads and plays.
 	var mem := _vm.mem.duplicate()
-	mem[0x5012] = _vm_file
+	mem[EclVM.FILE_SET] = _vm_file
+	# Ours keeps the door menu's flags in these cells; the original keeps them elsewhere (DS
+	# 0x6DDE), so its saves have 0 here. _enter_script sets them again on a load.
+	for a in [DOOR_TRY_BASH, DOOR_TRY_PICK, DOOR_TRY_KNOCK]:
+		mem[a] = 0
+	var hi := _vm.hi.duplicate()
+	# In the wilderness the original keeps its slots as they stand (lab, chat 25: after a NEW_ECL into
+	# 7:26 from the Slums its save still had the Slums' 2, 4, 1; after loading a game there, wall set
+	# 0 in slot 1 and nothing in 2-3, 0 / 0xFFFF, the state a new game starts with): the cells hold
+	# them (load_original_save puts the reset state there). In a dungeon, its own wall sets.
 	var walls: Array = _vm.area_deco if _vm.area_deco.size() == 3 else _deco
-	if walls.size() == 3:
+	if walls.size() == 3 and int(walls[0]) == 127 and not _vm.on_overland:
+		# LOAD_AREA_DECO 127 (the city's) loads wall set 0 into slot 1, which fills all three
+		# (GAME.OVR 0x1A6B; WALLDEF3's block 0 is three slots long): the original's saves in New
+		# Phlan (checks 1 and 5) hold the reset state.
+		for i in 6:
+			mem[0x4AFA + i] = WALL_SLOTS_RESET[i] & 0xFF
+			hi[0x4AFA + i] = WALL_SLOTS_RESET[i] >> 8
+	elif walls.size() == 3 and not _vm.on_overland:
 		for i in 3:
 			mem[0x4AFA + i] = int(walls[i]) & 255
 			mem[0x4AFD + i] = i + 1
+			hi.erase(0x4AFA + i)
+			hi.erase(0x4AFD + i)
 	var ok := OriginalSave.write(_game_path, letter, _vm_file, mem, _vm.read_byte(EclVM.PARTY_X),
-		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party)
+		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party, true, hi,
+		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
+		_vm.read_byte(EclVM.SQUARE_INFO))
 	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save()}):
 		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
@@ -1419,9 +1442,21 @@ func _save_original(letter: String) -> bool:
 	return ok
 
 
+## The original's wall-set slots as a new game starts them (GAME.OVR 0xE906-0xE963): wall set 0
+## in slot 1, slots 2 and 3 empty (-1), in the cells 0x4AFA-0x4AFC (ids) and 0x4AFD-0x4AFF
+## (numbers). A game loaded in the wilderness has them so too (lab, chat 25, 7:26).
+const WALL_SLOTS_RESET := [0, 0xFFFF, 0xFFFF, 1, 0xFFFF, 0xFFFF]
+
+
+func _wall_slots_reset() -> void:
+	for i in 6:
+		_vm.write_var(0x4AFA + i, WALL_SLOTS_RESET[i])
+
+
 ## Loads one of the original's own saved games (SAVGAM<letter>.DAT with its CHRDAT<letter>n
 ## character files) as found in the game folder. The save holds: byte 0 the data set
-## (ECLn/GEOn), then ECL memory 0x4900-0x52FF as words (the game's flags, clock and the engine's own data), the
+## (ECLn/GEOn), then the ECL memory cells as words (0x4900-0x4CFF the game's flags and clock, 0x6B00-0x6EFF,
+## 0x9700-0x98FF: OriginalSave.cell_address), the
 ## area's script with its tables as they stood (from 0x1401, the block identifies the area),
 ## the party's square at 0x3201 (x, y, facing x2), and from 0x3209 the character file names
 ## (a length byte and 40 bytes each).
@@ -1491,21 +1526,31 @@ func load_original_save(letter: String) -> bool:
 	_event_image = null
 	_message.text = ""
 	_mode = Mode.WALK
-	var flags := func() -> void:
-		for a in range(0x4900, 0x5300):
-			_vm.write_byte(a, s[1 + 2 * (a - 0x4900)])
-	flags.call()
-	_vm.write_byte(EclVM.PARTY_X, s[0x3201])
-	_vm.write_byte(EclVM.PARTY_Y, s[0x3202])
-	_vm.write_byte(EclVM.PARTY_DIR, s[0x3203] / 2)
-	_enter_script(set_no, block_id, true, false, true)
-	# Back to the saved state after the area's init: flags, the script's tables, the square.
-	flags.call()
+	# The three cell arrays, a word each (OriginalSave.cell_address), straight into memory (the
+	# character window's cells too, not through its fields).
+	_vm.hi.clear()
+	for k in OriginalSave.CELLS:
+		var a := OriginalSave.cell_address(k)
+		_vm.mem[a] = s[1 + 2 * k]
+		if s[2 + 2 * k] != 0:
+			_vm.hi[a] = s[2 + 2 * k]
+	# GAME.OVR 0x1F8F6: the load zeroes the party-size cell (ours counts the party).
+	_vm.mem[EclVM.PARTY_SIZE] = 0
+	# The saved square, so the init sees it (_enter_script writes _pos and _facing to the VM).
+	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
+	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
+	# The area's init runs from the saved image with the saved flags, and what it writes stays
+	# (the original: LOAD sets 0x49F8, the main loop skips the block load, runs the area entry
+	# 0x7689 and the init, and puts nothing back; lab, chat 24: 7:26's init zeroes 0x4A1E and
+	# the original's save after a load and two steps has 0). Only the square goes back.
 	var code_len := EclScript.decode(ecl.blocks[block_id]).code.size()
-	for i in code_len:
+	_enter_script(set_no, block_id, true, false, true, s.slice(0x1401, 0x1401 + code_len))
+	# The rest of the image (0x1E00 bytes in all) as saved: what longer scripts left past this one's
+	# end, which the original loads back and saves again (lab, chat 25: 7:26's save, 856 bytes).
+	for i in range(code_len, OriginalSave.SCRIPT_BYTES):
 		_vm.mem[EclScript.BASE + i] = s[0x1401 + i]
-	# The original runs the saved image, so run that rather than the block as shipped.
-	_vm.ecl = EclScript.decode(s.slice(0x1401, 0x1401 + code_len))
+	if _vm.on_overland:
+		_wall_slots_reset()
 	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
 	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
 	_sync_position_to_vm(_facing)
@@ -1556,6 +1601,7 @@ func _quick_load() -> void:
 	var memory: PackedByteArray = cfg.get_value("script", "memory", PackedByteArray())
 	if memory.size() == _vm.mem.size():
 		_vm.mem = memory
+		_vm.hi = cfg.get_value("script", "memory_hi", {})
 	var wild: Array = cfg.get_value("script", "overland", [false, 0])
 	_vm.on_overland = wild[0]
 	_vm.overland_band = wild[1]
@@ -1966,16 +2012,28 @@ func _adopt_position_from_vm() -> void:
 ## Lab (PlayBot): event codes whose squares walks keep off unless they are the goal (explore's
 ## skipped events: Yarash's pyramid's teleporter beside the dial, chat 12).
 var avoid_events := {}
+## Dev (the bot): squares of an area that move the party elsewhere in it when stepped on (the
+## pyramid's teleports), "file:block" -> {square: where it lands}; the path finder walks through
+## them. Empty in play.
+var warps := {}
 
 
 func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	var map: GeoMap = _maps[_map_index].map
 	var came := {from: from}
 	var queue: Array[Vector2i] = [from]
+	var warp: Dictionary = warps.get("%d:%d" % [_vm_file, _vm_block], {})
 	while not queue.is_empty():
 		var cur: Vector2i = queue.pop_front()
 		if cur == to:
 			break
+		if cur != from and warp.has(cur):
+			# Stepping on it lands elsewhere: go on from there (the walk finds its path again).
+			var dst: Vector2i = warp[cur]
+			if not came.has(dst):
+				came[dst] = cur
+				queue.append(dst)
+			continue
 		for d in 4:
 			if map.wall(cur.x, cur.y, d) > 0 and map.door(cur.x, cur.y, d) == 0:
 				continue
@@ -2516,7 +2574,7 @@ func _ensure_area_script() -> void:
 
 
 ## Switches to another ECL block (NEW_ECL or area change) and runs its init.
-func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false, loading: bool = false) -> void:
+func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false, loading: bool = false, image := PackedByteArray()) -> void:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
 	if ecl == null or not ecl.blocks.has(block_id):
 		# Look in the other script files.
@@ -2545,7 +2603,10 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 		_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
-	_vm.load_script(ecl.blocks[block_id], "%d:%d" % [file_no, block_id])
+	# A loaded game runs the script image it saved (tables as they stood), not the block as
+	# shipped: the original's main loop skips its block load (GAME.OVR 0x7814) while 0x49F8,
+	# set by LOAD at 0x19D91, is 1, and runs the init from the image in memory.
+	_vm.load_script(image if not image.is_empty() else ecl.blocks[block_id], "%d:%d" % [file_no, block_id])
 	# Entering an area zeroes ECL 0x4A00-0x4A1F, the scripts' per-visit bytes (the Slums'
 	# greeting 0x4A00, Sokal Keep's dead elf, City Hall's "visited this time" 0x4A01 that
 	# keeps the clerk from looking for rewards). 0x4A20-0x4AFF carries over from area to
@@ -3046,17 +3107,15 @@ func dev_teleport(file_no: int, block: int, pos: Vector2i, facing: int) -> bool:
 ## Dev (M6 coverage runs): the game's state between steps, in memory: place, script (its
 ## memory, dice and any open menu), party. Debug builds only.
 ## Lab (chat 16): the game saved here and loaded again, as load_original_save does it: the
-## area's init runs with the saved flags (0x4900-0x52FF, the per-visit bytes too), then the
-## flags and the square go back as saved. Scripts test for it (0x49F2 already this block).
+## area's init runs from the script image with the saved flags (0x4900-0x52FF, the per-visit bytes
+## too) and keeps what it writes (chat 25, as the original); the square goes back as saved. Scripts test for it (0x49F2 already this block).
 func dev_reload() -> bool:
 	if _vm.ecl == null or _vm.on_overland or _busy or not _vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
 		return false
-	var saved := _vm.mem.slice(0x4900, 0x5300)
 	var at := _pos
 	var facing := int(_facing)
-	_enter_script(_vm_file, _vm_block, true, false, true)
-	for i in saved.size():
-		_vm.mem[0x4900 + i] = saved[i]
+	var image := _vm.mem.slice(EclScript.BASE, EclScript.BASE + _vm.ecl.code.size())
+	_enter_script(_vm_file, _vm_block, true, false, true, image)
 	_pos = at
 	_facing = facing as DungeonView.Dir
 	_sync_position_to_vm(_facing)

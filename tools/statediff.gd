@@ -41,11 +41,13 @@ func _init() -> void:
 		return
 	var diffs := 0
 	var mem: PackedByteArray = cfg.get_value("script", "memory", PackedByteArray())
+	# Each address is a 16-bit cell in the original (chat 25): ours keeps the high bytes apart.
+	var hi: Dictionary = cfg.get_value("script", "memory_hi", {})
 	for a in range(0x4900, 0x4B00):
 		if ignore.has(a):
 			continue
-		var o: int = orig[1 + 2 * (a - 0x4900)]
-		var u: int = mem[a] if a < mem.size() else -1
+		var o: int = orig[1 + 2 * (a - 0x4900)] | (orig[2 + 2 * (a - 0x4900)] << 8)
+		var u: int = (mem[a] | (int(hi.get(a, 0)) << 8)) if a < mem.size() else -1
 		if o != u:
 			diffs += 1
 			print("memory %04X%s: original %d, ours %d" % [a, " (%s)" % NAMES[a] if NAMES.has(a) else "", o, u])

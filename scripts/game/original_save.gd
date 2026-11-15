@@ -7,13 +7,19 @@ extends RefCounted
 ## SAVGAM<letter>.DAT (13,137 bytes), as the original writes it (lab, chat 10: a save made in
 ## DOSBox matched this layout byte for byte apart from the unused name slots):
 ##   0          the data set (ECLn/GEOn)
-##   1..0x1400  ECL memory 0x4900-0x52FF, one word each (the byte, then 0); 0x503E is the
-##              party's size
+##   1..0x1400  the ECL memory cells, one word each (low byte first; EclVM.is_cell): 0x4900-0x4CFF,
+##              then 0x6B00-0x6EFF, then 0x9700-0x98FF (GAME.OVR 0x1FE77-0x1FF60 writes the three
+##              arrays at [0x49D2], [0x49D6], [0x49DA], 0x800, 0x800 and 0x400 bytes; chat 25: earlier
+##              notes read the whole stretch as 0x4900-0x52FF). 0x6E3E is the party's size, 0x6E12 the
+##              data set (both written at save time)
 ##   0x1401..   the current block's script as it stands in memory, from 0x9900, 0x1E00 bytes
-##   0x3201     x, y, facing x 2
-##   0x3204     0, 0, 1, 2 (the same in every save seen so far), then the party's size;
-##              0, 0, 1, 0 in a game saved before the adventure starts (from the party menu
-##              after PARTY CREATION): with 2 there the original goes straight to walking
+##   0x3201     x, y, facing x 2, the wall ahead and the square's info byte (ECL 0xC04B-0xC04F: the
+##              engine's five bytes at DS 0x6AAD)
+##   0x3206     the view (DS 0x49FA): 1 a 3D area, 2-4 the wilderness bands 6:25, 7:26, 8:27 (chat 25:
+##              ours wrote 1 in the wilderness and the original stopped with "Unable to load geo in
+##              Load3DMap"); then the game mode (DS 0x49F3): 2, or 0 in a game saved before the
+##              adventure starts (from the party menu after PARTY CREATION): with 2 there the original
+##              goes straight to walking; then the party's size
 ##   0x3209     eight character file names, a length byte and 40 bytes each
 ## CHRDAT<letter><n>.SAV: the 285-byte character record (PartyMember.to_record) with its far
 ## pointers zeroed: the original rebuilds them from the files (lab: a save with every pointer
@@ -22,35 +28,46 @@ extends RefCounted
 ## .SPC: the standing effects, 9 bytes each (type, minutes u16, power, 5 bytes of pointer).
 
 const SIZE := 0x3351
-const MEM_FROM := 0x4900
-const MEM_TO := 0x5300
+const CELLS := 0xA00            # words from byte 1
 const SCRIPT_AT := 0x1401
 const SCRIPT_BYTES := 0x1E00
 const POS_AT := 0x3201
-const PARTY_SIZE_AT := 0x503E
+const PARTY_SIZE_AT := 0x6E3E
+
+
+## The ECL address of the save's word k (from byte 1).
+static func cell_address(k: int) -> int:
+	if k < 0x400:
+		return 0x4900 + k
+	if k < 0x800:
+		return 0x6B00 + k - 0x400
+	return 0x9700 + k - 0x800
 const NAMES_AT := 0x3209
 
 
 static func write(game_path: String, letter: String, set_no: int, mem: PackedByteArray,
-		x: int, y: int, facing: int, party: Array[PartyMember], started: bool = true) -> bool:
+		x: int, y: int, facing: int, party: Array[PartyMember], started: bool = true, hi: Dictionary = {},
+		view: int = 1, ahead: int = 0, square: int = 0) -> bool:
 	letter = letter.to_upper()
 	var s := PackedByteArray()
 	s.resize(SIZE)
 	s[0] = set_no
-	for a in range(MEM_FROM, MEM_TO):
-		s[1 + 2 * (a - MEM_FROM)] = mem[a] if a < mem.size() else 0
+	for k in CELLS:
+		var a := cell_address(k)
+		s[1 + 2 * k] = mem[a] if a < mem.size() else 0
+		s[2 + 2 * k] = int(hi.get(a, 0)) & 0xFF
 	for i in SCRIPT_BYTES:
 		var a := EclScript.BASE + i
 		s[SCRIPT_AT + i] = mem[a] if a < mem.size() else 0
 	# The party's size in the engine's own memory (lab: dropping one, the original's re-save
-	# of our save changed only 0x503E, 6 to 5).
-	s[1 + 2 * (PARTY_SIZE_AT - MEM_FROM)] = party.size()
+	# of our save changed only this word, 6 to 5).
+	s[1 + 2 * (0x400 + PARTY_SIZE_AT - 0x6B00)] = party.size()
 	s[POS_AT] = x
 	s[POS_AT + 1] = y
 	s[POS_AT + 2] = (facing & 3) * 2
-	s[POS_AT + 3] = 0
-	s[POS_AT + 4] = 0
-	s[POS_AT + 5] = 1
+	s[POS_AT + 3] = ahead & 0xFF
+	s[POS_AT + 4] = square & 0xFF
+	s[POS_AT + 5] = view
 	s[POS_AT + 6] = 2 if started else 0
 	s[POS_AT + 7] = party.size()
 	for k in mini(party.size(), 8):

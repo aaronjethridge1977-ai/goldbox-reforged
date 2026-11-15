@@ -115,7 +115,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "expect_level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -408,13 +408,24 @@ func _do(line: String) -> void:
 				if _hurt():
 					_cure_in_camp()
 		"exit":
-			# exit <from set:block> <x>,<y> <N|E|S|W> <to set:block>: a map edge the area graph
-			# can't name (scripts that pick the next area from a table: the Temple of Bane).
+			# exit <from set:block> <x>,<y> <N|E|S|W> <to set:block> [wall]: a map edge the area graph
+			# can't name (scripts that pick the next area from a table: the Temple of Bane). "wall":
+			# a step through what the map draws as a wall (a secret door the script opens: the
+			# pyramid's 7:22 15,0, chat 25).
 			_load_exits()
 			var xy := w[2].split(",")
 			if not _exits.has(w[1]):
 				_exits[w[1]] = []
-			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[3]), "entry": "move", "to": w[4]})
+			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": "NESW".find(w[3]), "entry": "move", "to": w[4],
+				"wall": w.size() > 5 and w[5] == "wall"})
+		"warp":
+			# warp <set:block> <x>,<y> <x>,<y>: a square that moves the party elsewhere in the same
+			# area (the pyramid's teleports, chat 25); walks and travel go through it.
+			var a := w[2].split(",")
+			var b := w[3].split(",")
+			if not main.warps.has(w[1]):
+				main.warps[w[1]] = {}
+			main.warps[w[1]][Vector2i(int(a[0]), int(a[1]))] = Vector2i(int(b[0]), int(b[1]))
 		"gate":
 			# gate <from set:block> <x>,<y> <to set:block> <choice>: a way between areas that
 			# a menu opens (the band outside the walls: "EASTERN EDGE ... NORTH SOUTH BOAT").
@@ -422,7 +433,16 @@ func _do(line: String) -> void:
 			var xy := w[2].split(",")
 			if not _exits.has(w[1]):
 				_exits[w[1]] = []
-			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": " ".join(w.slice(4)).to_upper()})
+			# Chat 25: "[XXXX&M=V] <choice>" holds only while ECL byte XXXX AND M is V (as answer's).
+			var ans := " ".join(w.slice(4))
+			var gcond := []
+			if ans.begins_with("[") and ans.contains("]"):
+				var c := ans.substr(1, ans.find("]") - 1)
+				gcond = [c.get_slice("&", 0).hex_to_int(), c.get_slice("&", 1).get_slice("=", 0).hex_to_int(),
+					c.get_slice("=", 1).hex_to_int()]
+				ans = ans.substr(ans.find("]") + 1).strip_edges()
+			_exits[w[1]].append({"x": int(xy[0]), "y": int(xy[1]), "dir": 0, "entry": "gate", "to": w[3], "answer": ans.to_upper(),
+				"cond": gcond})
 		"answer":
 			# answer <set:block> <words of the question>|<choice>: answer that question so.
 			# Chat 23: "[XXXX&M=V] <words>|<choice>" holds only while ECL byte XXXX AND M is V (the
@@ -460,7 +480,7 @@ func _do(line: String) -> void:
 			var text := FileAccess.get_file_as_string("res://tools/plans/" + w[1])
 			for rule in text.split("\n"):
 				rule = rule.strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "expect_level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level"]:
 					await _do(rule)
 		"start":
 			# start <checkpoint name>: load bot_<name>.cfg from the folder given by
@@ -1692,14 +1712,21 @@ func _climb_to_exits() -> void:
 		_ladder_ok = false
 
 
+## A gate's condition (chat 25): none, or ECL byte AND mask equal to the value now.
+func _exit_holds(e: Dictionary) -> bool:
+	var c: Array = e.get("cond", [])
+	return c.is_empty() or (main._vm.read_byte(int(c[0])) & int(c[1])) == int(c[2])
+
+
 ## The ways out of this area the party can walk to from where it stands.
 func _open_exits() -> Array:
 	var map: GeoMap = main._maps[main._map_index].map
 	var out := []
 	for e in _exits.get(_here(), []):
-		if _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]):
+		if _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]) or not _exit_holds(e):
 			continue
-		if not main._vm.on_overland and e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
+		if not main._vm.on_overland and e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0 \
+				and not e.get("wall", false):
 			continue
 		var at := Vector2i(e.x, e.y)
 		var here: Vector2i = _overland_at() if main._vm.on_overland else main._pos
@@ -1723,7 +1750,9 @@ func _travel_hops(goal: String) -> void:
 		# Nodes are an area and, in a wilderness band, the part of it the party is in (the
 		# river splits them): learned arrivals say which part an exit leads to.
 		var open_here := _open_exits()
-		var start := _here() + "#" + str(_part_now())
+		# (Chat 25: "@" marks where the party stands, so coming back into this area by another
+		# way, the pyramid's teleporter into 7:22's corridor, counts as a new place with all its exits.)
+		var start := _here() + "#" + str(_part_now()) + "@"
 		var came := {start: ""}
 		var via := {}
 		var queue := [start]
@@ -1773,9 +1802,9 @@ func _travel_hops(goal: String) -> void:
 		var best := {}
 		var best_len := 1 << 20
 		for e in _exits.get(_here(), []):
-			if e.to != next or _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]):
+			if e.to != next or _bad_exits.has("%s %d,%d %d" % [_here(), e.x, e.y, e.dir]) or not _exit_holds(e):
 				continue
-			if e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0:
+			if e.entry == "move" and map.wall(e.x, e.y, e.dir) > 0 and map.door(e.x, e.y, e.dir) == 0 and not e.get("wall", false):
 				continue
 			var path: Array = _overland_path(Vector2i(e.x, e.y)) if main._vm.on_overland \
 				else main._find_path(main._pos, Vector2i(e.x, e.y))
@@ -3344,6 +3373,8 @@ var _dungeon_parts := {}
 
 
 func _dungeon_part(area: String, at: Vector2i) -> int:
+	if main.warps.has(area):
+		return -1       # chat 25: teleports join its parts one way (the pyramid): any
 	if not _dungeon_parts.has(area):
 		var a := area.split(":")
 		var map: GeoMap = null
