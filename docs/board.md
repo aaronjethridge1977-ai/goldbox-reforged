@@ -12,7 +12,7 @@ Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk an
 |---|---|---|---|
 | Main (differential checks, the full run and bot, walking screen, engine gaps outside combat, saves) | Gold Box Chat 25 (running) | Claude Code on Jeremy's PC, lab `/home/claude/lab` | `scripts/main.gd`, `scripts/ecl_vm.gd` (shared core: see CLAUDE.md), `scripts/game/`, `scripts/formats/`, `scripts/dev/`, `project.godot`, `tools/` coverage, report and check scripts, `tools/plans/`, `docs/coverage-areas.md`, `docs/cover-fights.md`, `docs/diff-checks.md` |
 | Combat (combat fidelity, combat display, screens and UI) | Gold Box Combat Chat 4 (next; Combat Chat 3 ended) | Cloud, its own lab (rebuild: side chat 6's steps in `tools/lab/README.md` / the chat-log) | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`, `stagefight.sh`), `docs/coverage.md` (the engine-feature scoreboard), `docs/combat-tests.md` |
-| Feedback desk (Jeremy's play notes; builds nothing) | Gold Box Feedback Desk 1 | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
+| Feedback desk (Jeremy's play notes; builds nothing) | Gold Box Feedback Desk 2 | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
 | Player (plays the **original** in DOSBox by program: plan, memory reads, QUICK fights, recording; Methods 4) | Gold Box Player 1 (running) | Claude Code on Jeremy's PC, a second Ubuntu tab, its own worktree and lab folder; long runs as background jobs overnight | `tools/original_player/` (to be created); reads main's plans and lab tools, asks main for changes |
 | Design office | Gold Box Methods N | claude.ai | no code; proposals and Jeremy's decisions (`ideas/game-modernizer.md`) |
 
@@ -204,7 +204,7 @@ Format: `date · lane (chat) · change · may affect`
 
 ## For the Test List
 
-Items for Jeremy's "Gold Box Reforged – Test List" (Jeremy moves them). Newest first.
+Items for Jeremy's "Gold Box Reforged – Test List" (the desk moves them). Newest first.
 
 - 2026-11-15 · combat (Combat Chat 4) · **Slow Poison in a fight:** when a party member is poisoned and killed in a fight (frogs, snakes, spiders), a cleric with SLOW POISON memorized: MOVE next to the body (it lies on its square), CAST, SLOW POISON, MANUAL, move the cursor onto the body (the right side shows the member, HITPOINTS 0), TARGET: "<NAME> IS AFFECTED", "<NAME> GETS BACK UP", the member stands there at 1 HP and acts from the next round. Not next to the body: no TARGET (touch range).
 - 2026-11-15 · combat (Combat Chat 4) · **ABORT SPELL? and MOVE's Esc, as the original:** (1) In a fight, CAST a spell that's aimed, then EXIT: the bottom line asks ABORT SPELL? YES NO (the spell's name above it). NO goes back to the aim; YES: SPELL ABORTED, the spell is gone from memory and the turn ends. (2) MOVE a few squares, then Esc: the figure goes back to where it started, with all its movement; MOVE again, a few squares, then Enter: it stays, and the rest of its movement is still there.
