@@ -86,6 +86,17 @@ static func handle(main: Node, n: String) -> bool:
 		SpellCaster.add_affect(m, SpecialAffects.POISONED, 0, 0, 0)
 		m.hp = 0
 		m.status = PartyMember.STATUS_DEAD
+		# In an open fight, its copy of the member falls there too (Combat Chat 4: Slow Poison
+		# on the body).
+		if combat._combat != null:
+			for j in combat._combat.combatants.size():
+				var c: Dictionary = combat._combat.combatants[j]
+				if c.team == 0 and not c.down and c.who.name == m.name:
+					SpellCaster.add_affect(c.who, SpecialAffects.POISONED, 0, 0, 0)
+					c.who.hp = 0
+					c.who.status = PartyMember.STATUS_DEAD
+					c.down = true
+					combat._combat._went_down(j)
 	elif n.begins_with("foehp="):       # foehp=<n>: every monster in the open fight at n HP (a blow that lands kills; side chat 6)
 		for c in combat._combatants:
 			if c.team != 0:

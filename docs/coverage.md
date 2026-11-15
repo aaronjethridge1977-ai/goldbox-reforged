@@ -14,12 +14,12 @@ Main-path entries below that are partial or missing (the engine-feature sections
 - **Camp: Heal and memorized messages while resting** (partial): drawn as the rest; not seen in the original
 - **Items: Treasure: load and item-count limits when taking** (missing): a character can take more than the original allows
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
-- **Conditions and effects: Poison** (partial): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight missing
+- **Conditions and effects: Poison** (built): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight built (Combat Chat 4: aimed at the body, GAME.OVR 0x157B9)
 - **Conditions and effects: Magic resistance (Tyranthraxus 15%)** (missing): the final fight; see monster power 0x6a (Combat Chat 3: the byte arithmetic wraps, so when it is tested it resists every Pool spell and draws a d100)
 - **Spell 5, Detect Magic** (missing): effect added; the original marks magic items (handler 5 is empty: VIEW reads it)
 - **Spell 11, Detect Magic** (missing): as 5
 - **Spell 13, Reduce** (missing): effect added, nothing happens
-- **Spell 26, Slow Poison** (partial): built in camp and walking (main, chat 23); cast in a fight missing (the target is a fallen member's square, ground 0x1F)
+- **Spell 26, Slow Poison**: built in camp and walking (main, chat 23) and in fights (Combat Chat 4: the MANUAL aim on a fallen member's body, GAME.OVR 0x157B9; checked in DOSBox)
 - **Spell 28, Spiritual Hammer** (missing): no hammer appears
 - **Spell 34, Stinking Cloud** (partial): helpless 1d4+1 rounds; the cloud doesn't linger
 - **Spell 43, Remove Curse** (missing): cursed items can't be freed
@@ -57,7 +57,7 @@ Monsters: how many monster records have the spell memorized (record bytes 0x17-0
 | 23 | Hold Person | cleric 2 | 23 | built | 1-3 targets, save penalty by count |
 | 24 | Resist Fire | cleric 2 |  | built | fire damage halved, +3 to the save (handler 0x14) |
 | 25 | Silence, 15' Radius | cleric 2 | 2 | partial | a silenced caster loses the spell ('IS SILENCED'); the spell's own area and save not traced |
-| 26 | Slow Poison | cleric 2 | 3 | partial | camp and walking built (GAME.OVR 0x28873); in fights missing |
+| 26 | Slow Poison | cleric 2 | 3 | checked | camp and walking (GAME.OVR 0x28873), in fights on the body (0x157B9; Combat Chat 4, DOSBox) |
 | 27 | Snake Charm | cleric 2 |  | partial | holds snakes as Hold Person does; not limited to snakes |
 | 28 | Spiritual Hammer | cleric 2 | 3 | missing | no hammer appears |
 | 29 | Detect Invisibility | magic-user 2 | 1 | missing | effect added; invisible figures stay hidden |

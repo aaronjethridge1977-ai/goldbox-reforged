@@ -105,6 +105,13 @@ need `wait`s after `fightend,n` before Enter (the won screen and the treasure ta
 (c23c's `valjevo6` checkpoint, `route_v3.txt` to 5:7's 3,6, `hall_door_v3.cfg` saved there, `finale_keys.txt` from it to
 New Phlan); `screen=` now also captures the closing pictures.
 
+**Combat Chat 4 (cloud lab):** `fallen.py` prints the running original's fallen list, figure table and ground around
+the fight (a body is ground 0x1F); `poison=<member>` in an open fight now also downs the fight's copy of the member
+(poisoned dead on its square, for Slow Poison on the body). In the original, MOVE's **Esc undoes the walk** (use Enter to
+keep steps in lab key lists) and EXIT from a spell's aim asks ABORT SPELL? (YES spends the spell). A poison fight from a lab
+save: `mksave.py J A 4 21 14 9 N`, walk to 12,7, then east and north into 14,6 (Sokal Keep's frogs; flee the undead patrols);
+give the party 200 HP, AC 10 so they are hit and poisoned. Ad hoc scripts in the lab archive's `combat4/`.
+
 **Running the original from Claude Code (WSL):** `export DISPLAY=:99` before `pl.py` (WSL sets `:0` and `pl.py`
 only defaults to `:99`; the symptom is an X `BadMatch` in `X_GetImage`), and run `pl.py` outside the sandbox.
 

@@ -583,6 +583,27 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 						t.status = PartyMember.STATUS_UNCONSCIOUS
 						c.combatants[j].bleeding = 0
 					c.message.emit("%s IS HEALED" % t.name)
+		26:         # Slow Poison (GAME.OVR 0x28873, as outside fights: SpellCaster)
+			# Lab, Combat Chat 4 (4:21's frogs, Bakshi poisoned dead, Brother Sean beside his body,
+			# CAST, MANUAL onto the body, TARGET): "BAKSHI / IS AFFECTED", "BAKSHI / GETS BACK
+			# UP", standing on his square at 1 HP; he acted again from the next round. Nothing on
+			# a target that isn't poisoned (or is animated).
+			for j in targets:
+				var e: Dictionary = c.combatants[j]
+				var t: PartyMember = e.who
+				if t.status == PartyMember.STATUS_ANIMATED or not t.has_affect(SpellCaster.POISONED):
+					continue
+				if t.hp <= 0:
+					t.hp = 1
+				SpellCaster.add_affect(t, SpellCaster.SLOWED_POISON, id, table.duration_for(id, lvl), lvl)
+				c.message.emit("%s IS AFFECTED" % t.name)
+				if t.status != PartyMember.STATUS_OKAY:
+					if e.down:
+						c.stand_up(j, t.hp)     # "GETS BACK UP" (someone on the body: stays down, assumed)
+					else:
+						t.status = PartyMember.STATUS_OKAY
+						c.message.emit("%s GETS BACK UP" % t.name)
+				SpellCaster.add_affect(t, SpellCaster.POISON_TICK, id, 10, 0xFF)
 		48, 55:     # Haste, Slow: up to the caster's level of figures, the other cancelled first
 			var other := EFFECT_SLOW if id == 48 else EFFECT_HASTE
 			var left := lvl

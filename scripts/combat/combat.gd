@@ -1924,6 +1924,25 @@ func _power_timers() -> void:
 				message.emit("%s FALLS DEAD" % m.name)
 
 
+## A fallen party member's body on `cell`, or -1 (Combat Chat 4, GAME.OVR 0x157B9): a spell's
+## aim on a square whose ground is 0x1F takes the member at that square from the fallen list
+## (DS:0x66D6: party members only); an attack's aim never targets a body (0x15889). Under a
+## Stinking Cloud the ground stays 0x1E, so no body is found there (ground 38 in ours).
+func body_at(cell: Vector2i) -> int:
+	if field != null and field.tile(cell.x, cell.y) == 38:
+		return -1
+	for d in combatants.size():
+		var e: Dictionary = combatants[d]
+		if e.down and not e.get("fled", false) and not e.who.is_monster and e.cell == cell:
+			return d
+	return -1
+
+
+## Slow Poison's "back up" (Combat Chat 4): `_revive` with 1 hit point, for CombatSpells.
+func stand_up(i: int, hp: int) -> bool:
+	return _revive(i, hp)
+
+
 ## Gets a downed figure back up with `hp` (GAME.OVR 0x2C753), if its square is free.
 func _revive(i: int, hp: int) -> bool:
 	var c: Dictionary = combatants[i]

@@ -33,6 +33,7 @@ var _monsters: Array[PartyMember] = []
 var _combatants: Array = []      # [{who: PartyMember, team: 0 party / 1 monsters, cell: Vector2i, icon: Image}]
 var _selected := 0
 var _last_dropped: Array[GameItem] = []
+var _last_rounds := 0          # rounds() after _leave: main adds them to the clock (finished)
 var _aiming := false          # AIM: choosing a target
 var _aim_list: Array[int] = []
 var _aim_index := 0
@@ -261,9 +262,11 @@ func set_morale_base(value: int) -> void:
 
 
 ## The monsters brought down in the fight just finished (for experience and treasure).
-## Rounds fought (a minute of game time each).
+## Rounds fought (a minute of game time each: GAME.OVR 0xA093 calls the clock routine 0x241A1
+## at each round's end). Kept past _leave, which runs before `finished` (main's request: the
+## clock lost the fight's minutes, checks 3 and 10).
 func rounds() -> int:
-	return _combat.round_no if _combat != null else 0
+	return _combat.round_no if _combat != null else _last_rounds
 
 
 func defeated() -> Array:
@@ -548,13 +551,22 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		g.text(0, 24, "ATTACK ALLY:", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 13)
+	elif _asking_abort:
+		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+		g.text(0, 24, "ABORT SPELL?", GameScreen.WHITE)
+		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_continue:
 		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 17)
 	elif _combat != null and _result != 0:
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
-		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
+		# A spell's aim shows the spell on row 23, an attack's the range (lab, Combat Chat 4:
+		# "SPELL:SLOW POISON" over AIM: and over (USE CURSOR KEYS)).
+		if _aim_for == "spell":
+			g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+		else:
+			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		var prompt := "AIM:" if _cmode == "aim" else "(USE CURSOR KEYS)"
 		g.text(0, 24, prompt, MAGENTA)
 		var items := _bottom_menu()
@@ -733,6 +745,8 @@ var _asking_continue := false
 ## morale over 127 against the party (record +0x10C = 0, +0x84 > 0x7F; +0x10E = 1). The lab:
 ## the player characters stay the player's.
 var _asking_ally := false
+var _move_start := {}          # where MOVE began (Esc puts the figure back there)
+var _asking_abort := false     # ABORT SPELL? (EXIT from a spell's aim)
 var _ally_target := -1
 
 
@@ -1196,6 +1210,8 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 			_aim_cell += moves[key]
 			_spell_cell = _aim_cell
 			var who := _combat.occupant(_aim_cell)
+			if who < 0 and _aim_for == "spell":
+				who = _combat.body_at(_aim_cell)    # a fallen member's body (0x157B9)
 			if who >= 0:
 				_selected = who
 			if not _on_screen(_aim_cell):
@@ -1223,10 +1239,13 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 				_cmode = "aim"
 				_refresh()
 				return
+			if _aim_for == "spell":
+				# The original in a fight (GAME.OVR 0x27EF2): "ABORT SPELL?" YES / NO.
+				_asking_abort = true
+				_refresh()
+				return
 			_aiming = false
 			_cmode = "menu"
-			if _aim_for == "spell":
-				_casting = ""
 			_selected = _combat.active
 			_centre_on_selected()
 			_refresh()
@@ -1393,7 +1412,7 @@ func _menu_choice(event: InputEvent, key: Key, items: Array) -> String:
 # caster alone) the aim, with "ABORT SPELL?" on leaving. QoL: the cells an area spell will
 # cover are shaded while aiming. Modern controls: C casts, ↑/↓ choose the spell, Enter
 # picks it; arrows move the aim, Tab jumps to the next figure, Enter casts (or picks a
-# figure, D when done picking), Esc aborts and the spell is kept.
+# figure, D when done picking), Esc asks ABORT SPELL? (YES: the spell is lost, the turn ends).
 
 var _use_items: Array[GameItem] = []    # kept for the developer layout (empty)
 
@@ -1470,6 +1489,8 @@ func _spell_target() -> void:
 		return
 	var who := _combat.occupant(_aim_cell)
 	if who < 0:
+		who = _combat.body_at(_aim_cell)     # a spell aimed at a body takes the fallen member
+	if who < 0:
 		_say("NO TARGET THERE")
 	elif who in _spell_picks:
 		_say("ALREADY BEEN TARGETED")
@@ -1477,6 +1498,25 @@ func _spell_target() -> void:
 		_spell_picks.append(who)
 		if _spell_picks.size() >= _combat.magic.max_picks(_spell_id):
 			_finish_cast()
+
+
+## YES at ABORT SPELL? (GAME.OVR 0x27F19): "SPELL ABORTED", the spell is forgotten as if
+## cast (0xBA:0x148B; not for an item's), and the turn ends (lab, Combat Chat 4: Brother Sean
+## aborted Slow Poison twice; both were gone, and the next figure acted).
+func _abort_spell() -> void:
+	var me: int = _combat.active
+	_casting = ""
+	_aiming = false
+	_cmode = "menu"
+	_selected = me
+	if _use_item == null:
+		(_combatants[me].who as PartyMember).forget(_spell_id)
+	_use_item = null
+	_spell_picks.clear()
+	_on_message("SPELL ABORTED")
+	_combat.done()
+	_refresh()
+	_advance()
 
 
 func _finish_cast() -> void:
@@ -1663,6 +1703,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			_asking_ally = false
 			_attack_aimed(_ally_target)
 		return
+	if _asking_abort:
+		get_viewport().set_input_as_handled()
+		if key == KEY_N or event.is_action("ui_cancel"):
+			_asking_abort = false
+			_refresh()
+		elif key == KEY_Y:
+			_asking_abort = false
+			_abort_spell()
+		return
 	if _aiming:
 		_aim_input(event, key)
 		get_viewport().set_input_as_handled()
@@ -1689,8 +1738,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80):
 					c.quick = false
 			return
-	if _event_fight and _result == 0 and _combat != null:
-		_fight_input(event, key)
+	if (_event_fight or _cmode == "move") and _result == 0 and _combat != null:
+		_fight_input(event, key)     # (a test fight's Esc leaves it, but not from inside MOVE)
 		return
 	if event.is_action("ui_cancel") or (_result != 0 and event.is_action("ui_accept")):
 		_leave()
@@ -1734,6 +1783,7 @@ func _leave() -> void:
 	var was_event := _event_fight
 	var result := _result
 	_last_dropped = _combat.dropped if _combat != null else ([] as Array[GameItem])
+	_last_rounds = _combat.round_no if _combat != null else 0
 	_combat = null
 	_event_fight = false
 	anti_magic = false
@@ -1755,10 +1805,20 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	if _draining or _result != 0 or _combat.active < 0 or _combatants[_combat.active].get("quick", false):
 		return
 	if _cmode == "move":
-		if event.is_action("ui_cancel"):
+		if event.is_action("ui_cancel") or event.is_action("ui_accept"):
+			# Leaving MOVE (GAME.OVR 0xA2D2, Combat Chat 4; lab: Brother Sean stepped SE, then Esc
+			# put him back): Esc undoes the walk, the figure back on the square where MOVE began
+			# with its movement and facing as they were; Enter keeps it.
+			var mc: Dictionary = _combatants[_combat.active]
+			if event.is_action("ui_cancel") and not _move_start.is_empty() \
+					and (mc.cell == _move_start.cell or _combat.fits(_combat.active, _move_start.cell)[0]):
+				mc.cell = _move_start.cell
+				mc.moves = _move_start.moves
+				mc.dir = _move_start.dir
+			_move_start = {}
 			_cmode = "menu"
-			if _combatants[_combat.active].moves < 2:     # leaving the MOVE loop (0xA51D)
-				_combatants[_combat.active].moves = 0
+			if mc.moves < 2:     # leaving the MOVE loop (0xA51D)
+				mc.moves = 0
 			_centre_on_selected()
 			_refresh()
 		elif _STEP_KEYS.has(key):
@@ -1864,6 +1924,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 				_combatants[_combat.active].moves = 0
 			else:
 				_cmode = "move"
+				var mc: Dictionary = _combatants[_combat.active]
+				_move_start = {"cell": mc.cell, "moves": mc.moves, "dir": mc.dir}
 			_refresh()
 		"VIEW":
 			_sheet.open_combat(_party_view(), 0, "view", _pick)
