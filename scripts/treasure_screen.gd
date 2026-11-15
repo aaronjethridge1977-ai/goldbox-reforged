@@ -83,6 +83,20 @@ func open(spoils: Spoils, party: Array[PartyMember], won_text: String, share: in
 	_refresh()
 
 
+## The treasure menu (lab, Combat Chat 4): after Tyranthraxus's fight and the frogs', with
+## nothing to take, the original showed VIEW POOL EXIT; with money, VIEW TAKE POOL SHARE EXIT.
+## (TAKE with items only, SHARE only with money: assumed from those two.)
+func _menu() -> Array:
+	var items := ["VIEW"]
+	if _spoils == null or _spoils.has_treasure():
+		items.append("TAKE")
+	items.append("POOL")
+	if _spoils == null or _spoils.has_money():
+		items.append("SHARE")
+	items.append("EXIT")
+	return items
+
+
 func _show_treasure() -> void:
 	_mode = "menu"
 	_pick = 0
@@ -103,7 +117,7 @@ func _refresh() -> void:
 			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.GREEN)
 			_scr.update()
 		"menu":
-			_walk(MENU, PackedStringArray())
+			_walk(_menu(), PackedStringArray())
 		"take":
 			_walk(TAKE_MENU, PackedStringArray(), "TAKE:")
 		"ask_exit":
@@ -269,10 +283,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 	if _mode == "results":
 		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_SPACE]:
-			if _spoils.has_treasure():
-				_show_treasure()
-			else:
-				_close()
+			# The menu comes with nothing to take too (the original's VIEW POOL EXIT; lab,
+			# Combat Chat 4: 4:21's frogs, Tyranthraxus; main's closing-scene request).
+			_show_treasure()
 		return
 	if _mode == "amount":
 		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
@@ -289,7 +302,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mode = "coins"
 		_refresh()
 		return
-	var items: Array = MENU
+	var items: Array = _menu()
 	match _mode:
 		"take": items = TAKE_MENU
 		"items": items = LIST_MENU
