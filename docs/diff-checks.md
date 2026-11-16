@@ -193,6 +193,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   status 0, HP 1 and no 0x37 or 0x16 (lab `data/c31/slotJ_cured`). Neither costs constitution. The bot keeps one
   Slow Poison memorized (the first free level-2 cleric slot), casts it on a member dead of poison before it counts a
   death, and buys NEUTRALIZE POISON at a temple.
+- **The acceptance run, first try c31a** (from creation, on Combat Chat 7's three fights + chat 31; refcheck held at
+  87% / 91%): **stopped at plan line 557 of 626** in 5:4, the bot's 8 retries spent on the 14,9 giant patrol (won by
+  shortcut four times; each time more patrols came until a wipe). Shortcut wins before it: 2:15 5,4, 8:13 4,3, 6:1 7,0
+  (stalemate, round 54), 2:9 7,6; a teleport 3:0 -> 2:9 (travel found no way). Not yet explained (board, Main item 4).
+  Five Slow Poisons replaced five reloads.
 - In the original's lists (temple cures, spell targets) **End moves the cursor down and Home up**; Up and Down don't
   (lab note for `pl.py`).
 
