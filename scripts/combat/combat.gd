@@ -162,12 +162,23 @@ func enemies_all_gone() -> bool:
 	return true
 
 
+## The original's end of round (GAME.OVR 0xA087): the effects' clocks (0x241A1), then each
+## figure's bleeding, before the enemies are counted for CONTINUE BATTLE (0xA139). Once a round.
+## (Combat Chat 10, Player 8's 2:20 0,14 seed 2468ace1: a troll whose 3d6 rounds ran out stood
+## up at that round's end and the fight went on, where ours asked CONTINUE BATTLE first.)
+func _end_round() -> void:
+	if round_no <= 0 or ended_round == round_no:
+		return
+	ended_round = round_no
+	_bleed()
+	if magic:
+		magic.tick()
+	_power_timers()
+
+
 func start_round() -> void:
 	if round_no > 0:
-		_bleed()
-		if magic:
-			magic.tick()
-		_power_timers()
+		_end_round()
 	else:
 		_battle_start_powers()
 	round_no += 1
@@ -224,6 +235,7 @@ func next_turn() -> int:
 			# running doesn't), it asks "CONTINUE BATTLE:" (answered by continue_battle()). YES
 			# plays another round. (Combat Chat 8: ours also asked when every enemy standing was
 			# on the run; Tyranthraxus, his morale failed, breathed and fought on.)
+			_end_round()
 			if round_no > 0 and asked_round != round_no and standing(1) == 0:
 				asked_round = round_no
 				return ASK_CONTINUE
@@ -338,6 +350,7 @@ func delay_cast(i: int, d: int) -> void:
 		order.append(i)      # someone is left to act this round
 
 
+var ended_round := -1           # the round whose end has been played (_end_round)
 ## DELAY (the original's DONE menu): the active combatant acts again after everyone else
 ## this round, keeping what it has left. Once a round.
 func delay() -> bool:
@@ -1222,7 +1235,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		_hurt(j, dmg)
 		a["hits"] = int(a.get("hits", 0)) + 1
 		if not t.down:
-			_on_hit_specials(i, j)
+			_on_hit_specials(i, j, second)
 		if am.has_affect(0x49) and int(a.hits) == 2 and not t.down:
 			# A tiger whose two claws both hit rakes with its rear claws: two more attacks of
 			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
@@ -1325,17 +1338,26 @@ func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> void:
 
 
 ## What a hit does besides damage, from the attacker's standing effects (SpecialAffects):
-## poison, paralysis, level drain.
-func _on_hit_specials(i: int, j: int) -> void:
+## poison, paralysis, level drain. The original runs them per hit (GAME.OVR 0x13F49) as the
+## effect category of the attack's slot + 1 (0x2B1E4): a hit from the first slot runs
+## category 2 (0x44, 0x4C, 0x4D, 0x4F, 0x50, 0x55-0x57), from the second (`slot2`, the slot
+## the original's attack loop uses first) category 3 (0x40-0x46, 0x4F, 0x55-0x57). (Combat
+## Chat 10, Player 9's 4:21 2,11: the huge scorpion's d3 sting poisons, its d8 claws don't.)
+const HIT_SLOT1 := [0x44, 0x4C, 0x4D, 0x4F, 0x50, 0x55, 0x56, 0x57]
+const HIT_SLOT2 := [0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x4F, 0x55, 0x56, 0x57]
+
+func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 	var am: PartyMember = combatants[i].who
+	var allowed: Array = HIT_SLOT2 if slot2 else HIT_SLOT1
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
 	if t.down:
 		return
 	for type in SpecialAffects.POISON_BONUS:
-		if am.has_affect(type) and not t.down:
-			if SpecialAffects.blocks(tm, SpecialAffects.POISONED, func(): return roll(1, 100, "resists")):
-				continue
+		if _hit_has(am, allowed, type) and not t.down:
+			# The poison routine (GAME.OVR 0x101A0): the save, and on a failure the effect goes on
+			# through 0x2BD3C, not the add-effect routine 0x2C540, so no resistance (no d100s:
+			# Combat Chat 10, Player 9's 4:21 2,11, LIRA's elven d100 is not drawn).
 			if not _save(tm, 0, int(SpecialAffects.POISON_BONUS[type])):
 				message.emit("%s IS POISONED" % tm.name)
 				SpellCaster.add_affect(tm, SpecialAffects.POISONED, 0, 0, 0)
@@ -1344,20 +1366,20 @@ func _on_hit_specials(i: int, j: int) -> void:
 				t.down = true
 				message.emit("%s IS KILLED" % tm.name)
 				_went_down(j)
-	if am.has_affect(0x4D) and int(combatants[i].get("gripping", -1)) < 0 and not t.down \
+	if _hit_has(am, allowed, 0x4D) and int(combatants[i].get("gripping", -1)) < 0 and not t.down \
 			and tm.stats[0] < 19:
 		# A giant mantis grips anyone with STR under 19 ("IS HELD FAST", GAME.OVR 0x10590).
 		combatants[i]["gripping"] = j
 		message.emit("%s IS HELD FAST" % tm.name)
-	if am.has_affect(0x4C) and int(combatants[i].get("latched", -1)) < 0 and not t.down:
+	if _hit_has(am, allowed, 0x4C) and int(combatants[i].get("latched", -1)) < 0 and not t.down:
 		combatants[i]["latched"] = j        # a stirge latches on (0x4C)
 		combatants[i]["drink"] = 207 >> 4
 	var paralysis := 0
-	if am.has_affect(0x43):
+	if _hit_has(am, allowed, 0x43):
 		paralysis = roll(2, 8, "paralysis rounds")
-	if am.has_affect(0x44) and tm.race_id != 2:
+	if _hit_has(am, allowed, 0x44) and tm.race_id != 2:
 		paralysis = 63
-	if am.has_affect(0x45):
+	if _hit_has(am, allowed, 0x45):
 		paralysis = roll(1, 9, "paralysis rounds") + 10     # drider (GAME.OVR 0x10341)
 	if paralysis > 0 and not t.down and not CombatSpells.held(tm) \
 			and not SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists")) \
@@ -1365,23 +1387,28 @@ func _on_hit_specials(i: int, j: int) -> void:
 		message.emit("%s IS PARALYZED" % tm.name)
 		SpellCaster.add_affect(tm, SpecialAffects.PARALYZED, 0, paralysis, 12)
 	for type in [0x55, 0x56]:
-		if am.has_affect(type) and not t.down:
+		if _hit_has(am, allowed, type) and not t.down:
 			drain(j, 1 if type == 0x55 else 2)
-	if am.has_affect(0x57) and not t.down:
+	if _hit_has(am, allowed, 0x57) and not t.down:
 		# A mummy's touch (GAME.OVR 0x11047): disease, no save.
 		if SpecialAffects.infect(tm, roll(1, 6, "months of rot")):
 			message.emit("%s IS DISEASED" % tm.name)
-	if am.has_affect(0x4F) and not t.down:
+	if _hit_has(am, allowed, 0x4F) and not t.down:
 		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
 		var burn := SpecialAffects.element_damage(tm, SpecialAffects.FIRE, roll(2, 10, "fire"))
 		if burn > 0:
 			message.emit(SpecialAffects.damage_words(tm.name, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC))
 			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC)
-	if am.has_affect(0x50) and not t.down:
+	if _hit_has(am, allowed, 0x50) and not t.down:
 		# An ankheg's acid (0x106A7): 1d4 more.
 		var acid := roll(1, 4, "acid")
 		message.emit(SpecialAffects.damage_words(tm.name, acid, SpecialAffects.ACID))
 		_hurt(j, acid, SpecialAffects.ACID)
+
+
+## Has `m` effect `type` among the ones this hit's category runs (`_on_hit_specials`)?
+func _hit_has(m: PartyMember, allowed: Array, type: int) -> bool:
+	return type in allowed and m.has_affect(type)
 
 
 func _save(m: PartyMember, kind: int, bonus: int) -> bool:
@@ -2124,6 +2151,11 @@ func ai_act() -> bool:
 				t = SmartQuick.weakest(self, active, near)
 			else:
 				t = near[roll(1, near.size(), "%s picks who to hit" % c.who.name) - 1]
+			if OS.has_environment("APDBG"):
+				var ns := ""
+				for j in near:
+					ns += " %s@%s" % [combatants[j].who.name, combatants[j].cell]
+				print("   @%d hit list%s" % [TpDice.calls, ns])
 			if shooting and not m.weapon_ranged_melee and enemy_adjacent(active):
 				# Someone is next to it: it changes weapons, and that is its turn.
 				choose_weapon(active)

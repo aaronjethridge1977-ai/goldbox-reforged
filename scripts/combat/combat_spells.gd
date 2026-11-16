@@ -127,8 +127,11 @@ func hit_bonus(am: PartyMember, tm: PartyMember) -> int:
 		b -= 1
 	if am.has_affect(EFFECT_PRAYER):
 		b += 1
-	if _protected_from(tm, am):
-		b -= 2
+	# Protection from Evil / Good (effects 8, 9, 0x2D, 0x2E; handler GAME.OVR 0xEFD2) takes 2 off
+	# DS:0x6822 in category 0xB, which the attack (0x13D89) and a touch spell (0x279CA) run on
+	# the target before the to-hit routine (0x2BBA1) writes a fresh d20 there: no effect on the
+	# to-hit. Its +2 on a save (category 0xC, 0x2BC9A) stays (`save`). (Combat Chat 10, Player
+	# 8's 2:20 0,14 seed 2468ace1: the ogre's d20 of 16 hits CEDRIC under it in the original.)
 	if tm.has_affect(EFFECT_INVISIBLE) or tm.has_affect(EFFECT_DISAPPEAR):
 		b -= 4
 	if am.has_affect(EFFECT_BLIND):
@@ -491,26 +494,38 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 		9:          # Burning Hands: the caster's level in damage
 			for j in targets:
 				_damage(i, id, j, lvl)
-		10, 23, 49: # Charm Person, Hold Person
-			var bonus := 0
-			if id != 10:
-				bonus = [0, -3 if id == 49 else -2, -1, 0, 0][mini(targets.size(), 4)]
+		10:         # Charm Person
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				var immune: bool = (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1
 				if not immune:
-					immune = resists(t, SpecialAffects.CHARM if id == 10 else SpecialAffects.PARALYZED)
-				if t.is_large() or immune or save(t, table.field(id, 9), bonus, m):
+					immune = resists(t, SpecialAffects.CHARM)
+				if t.is_large() or immune or save(t, table.field(id, 9), 0, m):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
-				if id == 10:
-					c.combatants[j].team = me.team
-					c.combatants[j].quick = true
-					c.combatants[j].target = -1
-					c.message.emit("%s IS CHARMED" % t.name)
-				else:
-					SpellCaster.add_affect(t, EFFECT_PARALYZE, id, dur, lvl)
-					c.message.emit("%s IS HELD" % t.name)
+				c.combatants[j].team = me.team
+				c.combatants[j].quick = true
+				c.combatants[j].target = -1
+				c.message.emit("%s IS CHARMED" % t.name)
+		23, 49:     # Hold Person
+			# The original's handler (GAME.OVR 0x28670) takes the targets last to first; each
+			# saves (d20; -2 for the cleric's, -3 for the magic-user's on one target, -1 on two),
+			# is unaffected anyway with record 0x9F or 0x6C over 1, and then the add-effect
+			# routine (0x2C540) runs its resistances (d100s), saved or not. (Combat Chat 10,
+			# Player 8's 4:2 3,11: LIRA's elven d100 came after her save.)
+			var bonus: int = [0, -3 if id == 49 else -2, -1, 0, 0][mini(targets.size(), 4)]
+			for n in range(targets.size() - 1, -1, -1):
+				var j: int = targets[n]
+				var t: PartyMember = c.combatants[j].who
+				var kept := save(t, table.field(id, 9), bonus, m)
+				if (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1 or t.size > 1:
+					kept = true
+				var blocked := resists(t, SpecialAffects.PARALYZED)
+				if kept or blocked:
+					c.message.emit("%s IS UNAFFECTED" % t.name)
+					continue
+				SpellCaster.add_affect(t, EFFECT_PARALYZE, id, dur, lvl)
+				c.message.emit("%s IS HELD" % t.name)
 		15:         # Magic Missile: the original's handler (GAME.OVR 0x28451) rolls (level / 2)d4
 			# + level / 2, not the rule book's (level + 1) / 2 missiles: at level 1 no damage
 			# and no dice (lab 2026-11-14, a QUICK Bakshi's missile drew nothing).
@@ -1017,27 +1032,23 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 			if t.down or t.team == me.team or c.range_of(me, t) > reach or c.clear_line(me, t).y != 1:
 				continue
 			any = true
-			if kind > 0:
-				for e in c.combatants:
-					# The area is built round the enemy's own square (GAME.OVR 0xAF63: its position
-					# 0x5F27/0x5F28, a large figure's first cell), not its nearest cell (Combat Chat
-					# 7, the troll fight: Thrender at 27,13 beside an ogre on 26,11-27,12 is 2 away).
-					var near_e := 1 << 30
-					for q in c.cells(e):
-						near_e = mini(near_e, c.range_between(t.cell, q))
-					if not e.down and e.team == me.team and near_e <= kind:
-						if OS.has_environment("APDBG"):
-							print("   @%d weigh %s spell %d: %s at %s within %d of enemy %s at %s (range %d)" % [TpDice.calls,
-								me.who.name, id, e.who.name, e.cell, kind, t.who.name, t.cell, near_e])
-						return {}
+			if kind > 0 and _area_catches_own(i, t, kind, id):
+				return {}
 		if not any:
 			return {}
 		var none: Array[int] = []
 		return {"cell": me.cell, "picked": none, "weighed": true}
-	# Aiming it: a random enemy in range with a clear shot, from the list nearest first, the
-	# same pick (GAME.OVR 0x160DB) as a target for a blow, and it becomes the caster's
-	# target (lab 2026-11-14: a QUICK Bakshi's Magic Missile, then its next blow drew no
-	# new pick).
+	# Aiming it (GAME.OVR 0x148BE): a spell that picks figures (area code 1-7) aims (code & 3)
+	# + 1 times, an area spell once; each aim (0x14611) is up to 20 tries of the target pick
+	# (0x15FDF -> 0x160DB: a random enemy in range with a clear shot, from the list nearest
+	# first, the same pick as a target for a blow; it becomes the caster's target: lab
+	# 2026-11-14, a QUICK Bakshi's Magic Missile, then its next blow drew no new pick). A try
+	# is thrown away and the pick drawn again when the spell's effect is one of the holding
+	# ones (DS:0x286C: snake charm, paralysis, sleep, helpless) and the figure already has
+	# one of them (START.EXE 0xBA:0x0B73), or for an area spell (byte 15) when the area round
+	# the figure would catch one of the caster's side. A figure picked twice counts once
+	# (0x14B3C; the player gets "Already been targeted"); an aim with 20 failed tries adds
+	# nobody. (Combat Chat 10, Player 8's 4:2 3,11: GRISHNAK's Hold Person draws three aims.)
 	var near: Array[int] = []
 	for j in c.combatants.size():
 		var e: Dictionary = c.combatants[j]
@@ -1046,18 +1057,40 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 	if near.is_empty():
 		return {}
 	c._by_distance(me, near)
-	var t: int = near[c.roll(1, near.size(), "%s aims" % me.who.name) - 1]
-	me.target = t
-	if held(c.combatants[t].who):
-		for j in near:
-			if not held(c.combatants[j].who):
-				t = j
-				break
-	var picked: Array[int] = [t]
-	if aim_kind(id) == "pick":
-		for j in near:
-			if picked.size() >= max_picks(id):
-				break
-			if not j in picked:
-				picked.append(j)
-	return {"cell": c.combatants[t].cell, "picked": picked}
+	var holds := table.field(id, 10) in HELD
+	var kind := table.field(id, 15)
+	var aims := max_picks(id) if aim_kind(id) == "pick" else 1
+	var picked: Array[int] = []
+	for a in aims:
+		for k in 20:
+			var t: int = near[c.roll(1, near.size(), "%s aims" % me.who.name) - 1]
+			me.target = t
+			if holds and held(c.combatants[t].who):
+				continue
+			if kind > 0 and _area_catches_own(i, c.combatants[t], kind, id):
+				continue
+			if not t in picked:
+				picked.append(t)
+			break
+	if picked.is_empty():
+		return {}
+	return {"cell": c.combatants[picked[0]].cell, "picked": picked}
+
+
+## Would an area of reach `kind` round enemy figure `t` (its own square) catch a standing
+## figure of i's side, the caster included (GAME.OVR 0xAE15 weighing, 0x14740 aiming)?
+func _area_catches_own(i: int, t: Dictionary, kind: int, id: int) -> bool:
+	var me: Dictionary = c.combatants[i]
+	for e in c.combatants:
+		# The area is built round the enemy's own square (GAME.OVR 0xAF63: its position
+		# 0x5F27/0x5F28, a large figure's first cell), not its nearest cell (Combat Chat
+		# 7, the troll fight: Thrender at 27,13 beside an ogre on 26,11-27,12 is 2 away).
+		var near_e := 1 << 30
+		for q in c.cells(e):
+			near_e = mini(near_e, c.range_between(t.cell, q))
+		if not e.down and e.team == me.team and near_e <= kind:
+			if OS.has_environment("APDBG"):
+				print("   @%d area %s spell %d: %s at %s within %d of enemy %s at %s (range %d)" % [TpDice.calls,
+					me.who.name, id, e.who.name, e.cell, kind, t.who.name, t.cell, near_e])
+			return true
+	return false
