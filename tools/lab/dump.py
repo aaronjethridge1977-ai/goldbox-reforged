@@ -1,4 +1,4 @@
-"""./run.sh --py dump.py <steps>: key names, wait=s, solve (code wheel), grab=file.png, and
+"""./run.sh --py dump.py <steps>: key names, wait=s, solve (the code wheel, with the lab's wheel_solver.py), grab=file.png, and
 'dump', which prints every text row of the original's screen (read with its own font)."""
 import sys, time, lab, keys
 for a in sys.argv[1:]:

@@ -57,11 +57,9 @@ def grab(path):
 
 
 # --- Code wheel ---------------------------------------------------------------------
-# Loading a game asks the translation-wheel question: an Espruar rune (two 8x8 font cells,
-# under "MATCH THE"), a Dethek rune (one cell, under "WITH THE"), and a path drawn as dots,
-# dashes with ticks, or plain dashes. The runes are characters of the game's own font
-# (8X8D1.DAX block 201), so the lab reads them exactly. The wheel itself (rune numbers,
-# words, formula) is kept in wheel.json in the git-ignored lab folder, not in the repo.
+# Loading a game asks the code-wheel question. The lab's answer is kept outside the repo:
+# wheel_solver.py and wheel.json, beside this file in the lab and in the git-ignored .lab
+# folder (chat 38; Jeremy, before the repo goes public).
 
 class _XImage(ctypes.Structure):
     _fields_ = [("width", ctypes.c_int), ("height", ctypes.c_int), ("xoffset", ctypes.c_int),
@@ -103,59 +101,14 @@ def screen320():
 
 
 def solve_wheel(log=print, tries=5):
-    """Answers the question; tries again while it is still being drawn."""
-    import json
-    w = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "wheel.json")))
-    for _ in range(tries):
-        word = _solve_once(w, log)
-        if word:
-            return word
-        time.sleep(1.5)
-    return None
-
-
-def _solve_once(w, log):
-    im = screen320()
-    red = lambda p: p[0] > 150 and p[1] < 120
-
-    def cell(x0, y0):
-        return bytes(sum(1 << (7 - x) for x in range(8) if red(im.getpixel((x0 + x, y0 + y))))
-                     for y in range(8)).hex()
-
-    # Runes may sit a few pixels off the text grid: look around the expected cell.
-    def find(table, x0, y0, wide):
-        for dy in (0, -1, 1, -2, 2, -3, 3, -4, 4):
-            for dx in (0, -1, 1, -2, 2, -3, 3, -4, 4):
-                k = cell(x0 + dx, y0 + dy) + (cell(x0 + dx + 8, y0 + dy) if wide else "")
-                if k in table:
-                    return table[k]
+    """Answers the code-wheel question with the lab's wheel_solver.py (not in the repo)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import wheel_solver
+    except ImportError:
+        log("no wheel_solver.py beside keys.py: it is kept in the lab and the git-ignored .lab folder, not in the repo")
         return None
-
-    e = find(w["espruar"], 64, 48, True)
-    d = find(w["dethek"], 64, 72, False)
-    runs = []
-    for y in range(100, 112):
-        n = 0
-        for x in range(8, 313):
-            if x < 312 and red(im.getpixel((x, y))):
-                n += 1
-            elif n:
-                runs.append(n)
-                n = 0
-    longest = max(runs) if runs else 0
-    short = sum(1 for r in runs if r <= 2)
-    path = "dots" if longest < 5 else ("ticks" if short else "dashes")
-    log("espruar %s dethek %s path %s" % (e, d, path))
-    if e is None or d is None:
-        log("unknown rune cells", cell(64, 48), cell(72, 48), cell(64, 72))
-        return None
-    word = w["words"][(e + d + w["paths"][path] + 35) % 36]
-    for _ in range(4):   # the menu key that opened the question is already in the box
-        key("backspace")
-    for ch in word:
-        key(ch)
-    key("enter")
-    return word
+    return wheel_solver.solve(log, tries)
 
 
 if __name__ == "__main__":

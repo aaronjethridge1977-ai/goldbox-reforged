@@ -18,6 +18,15 @@ static var on := false
 static var seed := 0
 static var calls := 0
 static var log := PackedStringArray()
+static var _live := -1
+
+
+## Lab (chat 38, the showcase's draw log): with --tplive each draw is also printed as it is made
+## ("DRAW #n ..."), so a recording's draws can be stamped as they come and placed in the clip.
+static func live() -> bool:
+	if _live < 0:
+		_live = 1 if "--tplive" in OS.get_cmdline_user_args() else 0
+	return _live == 1
 
 
 static func start(value: int) -> void:
@@ -33,6 +42,8 @@ static func random(n: int, why: String = "") -> int:
 	calls += 1
 	var r := (seed >> 16) % n if n > 0 else 0
 	log.append("#%d %s Random(%d) = %d" % [calls, why, n, r])
+	if live():
+		print("DRAW ", log[-1])
 	if log.size() > 200000:      # a long fight (the kobold caves: ~9000 draws) is kept whole
 		log = log.slice(100000)
 	return r

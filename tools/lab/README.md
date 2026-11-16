@@ -14,7 +14,7 @@ This page is the lab as it is used now. The history, chat by chat, with the deta
 - Side lane: the cloud workspace, its own lab built with `rebuild.sh` (see "The whole lab inside the cloud
   workspace").
 - The original runs in DOSBox Staging and our engine in Godot 4.7.2, both on virtual displays (Xvfb).
-  Game files, `font.json` and `wheel.json` stay in the git-ignored `.lab` folder or the lab, never in a repo.
+  Game files, `font.json`, `wheel.json` and `wheel_solver.py` stay in the git-ignored `.lab` folder or the lab, never in a repo.
 
 **Before every push** (CLAUDE.md): fetch and rebase; `./check_godot.sh`; `~/gbr/checks/diffcheck.sh <repo>` when
 `scripts/` or `content/` changed (10/10 or no push; lab-independent, its own data in `~/gbr/checks/data`, chat 30);
@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 38:** the showcase's cold-open pair (main's lab only): `coldorig38.sh <save> <seed> <out.mkv> <secs> <log>`
+(origvid.sh with `trace.py run` going, each line stamped by `tstamp.py`; REC/ENTER/END in `<log>`, the draws in
+`<log>.trace`) and `coldours38.sh <out.mkv> <secs> "<keys>" <log>` (oursvid36.sh with `--anim --tplive`: ours prints
+each TpDice draw as it is made, `DRAW #n ...`; stamped into `<log>.out`); then `coldlog38.py <orig log> <ours log>
+<out dir>` checks the two draw lists are identical, trims both clips to the fight and writes the draw logs. Stamps
+use the monotonic clock: WSL steps the wall clock (Findings). The take: `coldours38.sh data/c38/ours_H22.mkv 75
+"load=H,up,up,tpseed=22222222,enter,quickall,magic,fightend,n,wait,wait,wait,wait,wait,wait,tplog,partyhp"
+data/c38/ours_H22.log`; `coldorig38.sh H 22222222 data/c38/orig_H22.mkv 75 data/c38/orig_H22.log`. Never put
+`dosbox` in the command line that runs `coldorig38.sh` (its `killmine.py ... dosbox` kills that shell, and the
+orphaned script then runs on beside the next one). The code-wheel answer is `wheel_solver.py`, kept out of the repo.
+
 **Chat 37:** `oursvid36.sh` records with no pointer (Xvfb `-nocursor` and ffmpeg `-draw_mouse 0`: Godot sets its
 own pointer, which x11grab draws unless told not to). `fullrun37.sh <out.mkv>`: showcase item 7, c34d's 37 checkpoints
 in the plan's order, 4 s each, with the automap off through a scratch `HOME` whose user settings say `automap=false`
@@ -277,17 +288,16 @@ Setup (in the Linux workspace on the PC):
 1. Unpack `.lab/dosbox-staging-linux-x86_64-v0.83.0.tar.xz` into `~/lab/`.
 2. Copy `Pool of Radiance/POOLRAD` to `~/lab/root/POOLRAD` (a copy: the lab never touches real
    saves; the game's POOL.CFG expects `C:\POOLRAD\`).
-3. Copy these scripts to `~/lab/`, with `font.json` and `wheel.json` from `.lab`, and link the
+3. Copy these scripts to `~/lab/`, with `font.json`, `wheel.json` and `wheel_solver.py` from `.lab`, and link the
    game copy for our engine: `ln -s root/POOLRAD ~/lab/game`.
 4. For our engine: unzip `.lab/Godot_v4.7.2-stable_linux.x86_64.zip` into `~/lab/godot/`.
 
 The lab's home path changes between sessions; `run.sh` rewrites the paths in `por.conf` each
 time.
 
-Loading a game asks the code-wheel question; the `solve` step reads the runes and path off
-the screen and types the word, using `wheel.json` from the git-ignored `.lab` folder. (Espruar runes 17-27 are the cell
-pairs 98/99 to 118/119 of `8X8D1.DAX` block 201; fixed 2026-11-10, when one boot in two
-failed on them.)
+Loading a game asks the code-wheel question; the `solve` step answers it with `wheel_solver.py`, which is kept
+outside the repo (chat 38, Jeremy: before the repo goes public), beside `wheel.json` in the git-ignored `.lab` folder
+and in each lab; `keys.solve_wheel()` only calls it.
 From launch to a loaded save: `./run.sh wait=7 enter wait=3 l wait=3 solve wait=3 l wait=3 a wait=8 grab=cap/game.png`.
 
 Use: `./run.sh wait=7 enter wait=3 grab=cap/a.png ...` starts everything, runs the steps
