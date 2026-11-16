@@ -172,6 +172,41 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 35: checks 11-17 (the next seven: 1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20), DIFFCHECKS 17/17
+
+Approved by Jeremy (Q6). One event per area, each with no fight and a fixed answer, story flags first (found with
+`writers.py`, now `ECL_PY=` for the lab, and a readers grep over every block's listing). Made with the lab's
+`mkcheck35.sh <n> <area> <original's keys> <ours' keys>` (`SEED=<hex>` sets the original's dice after boot; ours'
+key list then has `tpseed=` after `load=G`). Installed as `~/gbr/checks/data/11`-`17`, sealed (`seal.sh`), and
+`diffcheck.sh` runs all seventeen: **DIFFCHECKS 17/17 in about 30 s** (4 at once), on 56a7d30 and on this push.
+
+| # | area | event | flag (readers) | start save | keys (ours) | result |
+|---|---|---|---|---|---|---|
+| 11 | 1:24 | the goblin slaves, LET THEM GO (map 31, 14,8) | 0x4A2E bit 32 (1:24) | ours at 13,8 E (mksave J G 1 24 13 8 E 49C5=31 49F2=24, then ENCAMP SAVE) | `load=G,wait,tpseed=11111111,Up,wait,L,wait,wait,F2` | **MATCH** |
+| 12 | 4:10 | the black marble coffin: read the scroll, SANCTIFY (12,4) | 0x4A43 = 251 (4:10's vampire) | ours at 12,5 N after the arrival scene | `load=G,wait,Up,wait,Enter,wait,Y,wait,Enter,wait,Y,wait,S,wait,F2` | **MATCH** |
+| 13 | 7:17 | the nomads: PARLAY, the feast refused, LEAVE (7,14) | **0x4AD2 = 1 (7:26)**; out to 7:26 13,0 | ours at 6,14 E | `load=G,wait,tpseed=11111111,Up,wait,wait,Enter,wait,P,wait,wait,Enter,wait,N,wait,Y,wait,wait,F2` | **MATCH** |
+| 14 | 8:13 | the kobold king falls into his pit (10,1) | **0x4AB6 = 254 (3:8, 8:27)**, 0x4A8D = 6 | mksave J G 8 13 10 2 N 4A8D=5 (jump save) | `load=G,wait,Up,wait,Up,wait,F2` | **MATCH** |
+| 15 | 6:28 | the outpost's wall, CLIMB OVER WALL (14,3) | **0x4AB4 = 253 (3:8, 6:25)**; out to 6:25 | the original's own save at 14,4 N (jump with 49F2=28, then ENCAMP SAVE G in DOSBox) | `load=G,wait,tpseed=11111111,Up,wait,C,wait,wait,F2` | **MATCH** |
+| 16 | 2:15 | the mad fighter, IGNORE (11,12) | **0x4A31 bit 1 (3:8)** | ours at 10,12 E | `load=G,wait,tpseed=11111111,Up,wait,I,wait,wait,F2` | **MATCH** |
+| 17 | 2:20 | the old woman: PAY, the fortune, LEAVE (3,5) | 0x4A0B = 251, the party put at 3,4 N | mksave J G 2 20 3 4 S (jump save) | `load=G,wait,Up,wait,Up,wait,P,wait,Enter,wait,Enter,wait,L,wait,F2` | **MATCH** |
+
+The original's keys are in each check's `orig.log` in the lab (`data/c35/chk<area>/`).
+
+- **Why the original's seed in 15 (and 11, 13, 16):** the first 6:28 end save from DOSBox had a wandering giant-snake
+  encounter at 14,3 instead of the wall (the original's dice, not the script's); with the seed set (seed.py set
+  11111111) and `tpseed=11111111` in ours both games take the same path. Checks 11-17 hold only ours' side in the
+  gate (as 1-10), so the stored end save fixes the original's run once.
+- **Lab-only, not a game difference:** a jump save (mksave) with 49F2 (the current block) set loads in the original
+  with that value kept (so an area's init that tests 49F2 skips its arrival scene); ours sets 49F2 from the area
+  it loads into, so it plays the arrival scene. Real saves always hold the current block there, so start saves for
+  6:28 were made in the original instead. A jump save into 1:24's map 31 (49C5=31) crashed the original to DOS;
+  ours' start save there loads in both.
+- **Deliberate-break test repeated** (Lead, 2026-11-16, on the seventeen): SUBTRACT off by one in `ecl_vm.gd`:
+  **caught**, check 4 DIFFERS (THRENDER GRONE coins 4: 0 vs 65535), `DIFFCHECKS 16/17`, exit 1. ADD off by one only
+  when the sum is over 200: **still not caught (17/17)**: none of the seventeen paths adds past 200 (the candidates,
+  4:10's `WRITE_MEM 249` then `ADD 5` and 2:20's kill count to 25, both follow fights). Scratch worktree in /tmp,
+  removed, never pushed.
+
 ## Chat 34: c33b's 5:4 and 4:10 shortcuts: three bot causes, then the dice; the acceptance run's fourth try
 
 c33b's shortcut wins at 4:10 9,1 (the spectres) and 5:4 9,1 (four fire giants) were not the game: the original wins
@@ -480,7 +515,7 @@ run like checks 1, 2 and 4. The fifth follows a set fight and waits on the side 
 
 **Recommendation:** run 6-9 next (no fight, about an hour together in the lab), and ask the side lane for 10's fight with
 checks 3 and 5's. The other closed areas without a check (1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20...) follow in the same
-way after these.
+way after these (done in chat 35: checks 11-17, section "Chat 35").
 
 ## Checks 6-9 (chat 22)
 

@@ -151,11 +151,18 @@ func run(plan_path: String) -> void:
 		if died != "" and not _wiped() and _game_won():
 			# Chat 33: the game's last fight won (the plan's "won" line: Pool of Radiance's
 			# 0x4ABA = 254, written as Tyranthraxus falls): nothing after depends on the
-			# member, so a death there ends the run as won, logged; no reload.
+			# member, so a death there ends the run, logged; no reload. Chat 35 (Q4, Jeremy:
+			# a fight won with a member dead is a loss, in both games): not a plain win but a
+			# shortcut-won fight, the game's difficulty (Player 7: the original never beats
+			# Tyranthraxus without a death).
 			if not _won_logged:
 				_won_logged = true
 				_count("deaths after the win")
 				_issue("%s died in the fight that won the game (plan line %d): the run's end, no reload" % [died, _pc])
+				var key: String = _last_fight.get("key", "%s %d,%d" % [_here(), main._pos.x, main._pos.y])
+				_shortcut("win", key, "won with %s dead: a loss under Q4; the game's difficulty (Player 7: the original never wins it without a death)" % died)
+				_skipped_fights.append(key + " (won with a death)")
+				print("SKIPPED FIGHT ", key, " (won with a death)")
 			died = ""
 		if _wiped() or died != "":
 			# Methods 4 (Jeremy): a playthrough never depends on resurrection; in a full run a

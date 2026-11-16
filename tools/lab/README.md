@@ -173,6 +173,15 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 35:** new differential checks: `mkcheck35.sh <n> <area> "<pl.py do steps for the original>" "<ours' keys>"`
+plays a check in both games from `game/SAVGAMG.DAT` (+ CHRDATG*), saves the original's end in F (ENCAMP SAVE F, N at
+the quit prompt), writes `data/c35/chk<n>/` and prints `statediff`; `SEED=<hex>` sets the original's dice after boot
+(then put `tpseed=<hex>` after `load=G` in ours' keys). Start saves: a jump save (mksave) where the area has no
+arrival scene; else ours' `at=x;y;dir,E,S,G,N,E` after the scene; or, where ours' load re-derives 49F2 (6:28's init
+skips its escort only on 49F2 = 28), the original's own ENCAMP SAVE G after a jump with `49F2=28`. `writers.py` takes
+`ECL_PY=` (the lab has no `../ecl.py`). In DOSBox the dungeon screens show coordinates only after a redraw: trust
+ours' log for positions. LOOK in the original moves the clock at once (P67).
+
 **Chat 34:** short test plans can live untracked in the repo's `tools/plans/` (`t34_*.plan`: `playthrough.plan` with a
 `stop` after an area's checkpoint; bot.sh copies every plan), so no source copy is needed; resume from another run's
 checkpoint with random dice and count the outcomes (`data/c34/count.py "<explore: event N at (x, y)>" <logs>`: each

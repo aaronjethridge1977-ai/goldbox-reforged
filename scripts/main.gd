@@ -1075,6 +1075,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				if not _searching:
 					_vm.write_byte(SEARCH_FLAG, 0)
 				_after_vm()
+				# P67 (chat 35, DOSBox 7:17 6,14: L on a square with nothing shows nothing new
+				# and the place line's clock moves 10 minutes at once): redraw it now, not at
+				# the next step.
+				if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+					_show()
 			get_viewport().set_input_as_handled()
 			return
 		elif key == KEY_G:

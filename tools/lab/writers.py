@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ECL = os.path.join(HERE, "..", "ecl.py")
+ECL = os.environ.get("ECL_PY", os.path.join(HERE, "..", "ecl.py"))
 DEST = {"WRITE_MEM": -1, "ADD": -1, "SUBTRACT": -1, "MULTIPLY": -1, "DIVIDE": -1, "AND": -1, "OR": -1,
         "RANDOM": -1, "RANDOM0": 0, "COPY_MEM": -1, "WRITE_MEM_BASE_OFF": 1, "MENU_HORIZONTAL": 0,
         "MENU_VERTICAL": 0, "INPUT_STRING": -1, "INPUT_NUMBER": -1, "ENCOUNTER_MENU": 3, "PARLAY": -1,
