@@ -22,6 +22,8 @@ Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk an
 
 Files not listed: whoever needs them asks here first.
 
+**Opening posts for chats on claude.ai** (the feedback desk, Methods, any cloud chat; design office, 2026-11-16) include this line: "Attach ai-business-ideas with add_repo and clone it in the cloud workspace; the PC link has no internet and the Project's GitHub sync can't be read by path." (Lanes the Lead starts run on the PC and already have both repos.)
+
 ## Queues
 
 **Gate closed 2026-11-16: faithfulness first, then QoL** (was: gate items only) (Jeremy and the design office, Methods 5, "Usage goes further"; the Lead runs at most two lanes at once, only when both have independent gate items). A run that lands an item goes on to its next gate item. Everything else waits in Later; a Later item moves up only if it blocks a gate item. Only the design office (the Lead) and the feedback desk add items; only Jeremy reorders. Ticked items of earlier queues: `docs/board-archive.md`.
