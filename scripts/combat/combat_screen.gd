@@ -956,6 +956,14 @@ func _show_messages() -> void:
 		if who != "":
 			_shown_by[who] = true
 		var dying := msg == "YOUR TEAMMATE IS DYING"
+		if msg.begins_with("SPELL: "):
+			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
+			_row24_msg = "SPELL:" + msg.substr(7)
+			_refresh()
+			await get_tree().create_timer(message_hold()).timeout
+			_row24_msg = ""
+			_refresh()
+			continue
 		if not _continues(msg) and not dying:
 			_panel_msgs.clear()
 			_refresh()
@@ -998,6 +1006,11 @@ func _show_messages() -> void:
 			var sf := _spell_flight
 			_spell_flight = {}
 			_panel_msgs.clear()
+			# The original names the spell on row 24 while it flies ("SPELL:MAGIC MISSILE",
+			# main's cold-open capture, chat 38), not in the panel.
+			if not _pending_msgs.is_empty() and _pending_msgs[0].begins_with("SPELL: "):
+				_row24_msg = "SPELL:" + _pending_msgs[0].substr(7)
+				_pending_msgs.remove_at(0)
 			_refresh()
 			_fly(sf.from, sf.to, [5, 133], 240.0)
 			await flight_done

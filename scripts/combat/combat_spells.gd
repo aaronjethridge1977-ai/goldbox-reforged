@@ -535,6 +535,10 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				if t.has_affect(EFFECT_SHIELD):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
+				if n == 0:
+					# At level 1 the original shows nothing after the missile's flight (main's
+					# cold-open capture, chat 38: no "IS UNAFFECTED").
+					continue
 				_damage(i, id, j, n + c.roll(n, 4, "magic missile"))
 		21:         # Sleep: 4d4 worth of hit dice, the weakest first in the order hit
 			var power := c.roll(4, 4, "sleep")

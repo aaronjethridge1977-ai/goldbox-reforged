@@ -904,6 +904,8 @@ func _quick_load_needs_reset() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _battle_begins:
+		return
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
 			or _treasure.visible or _camp.visible or _temple.visible or _party_menu.visible:
 		return
@@ -2494,6 +2496,13 @@ func _start_event_fight() -> void:
 	_combat.area_block = _vm.read_byte(CURRENT_BLOCK)   # the clutter rule (combat lane, Combat Chat 5)
 	if _duelist != null:
 		_combat.duel_party = _party.duplicate()   # a duel's figure order (combat lane, Combat Chat 6)
+	if CombatScreen.paced():
+		# Combat's: the original's fight setup prints "A battle begins..." on row 24 (light green)
+		# before the battlefield shows (GAME.OVR 0xE448; ~0.2 s in main's cold-open capture).
+		_battle_begins = true
+		_show()
+		await get_tree().create_timer(0.2).timeout
+		_battle_begins = false
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams)
@@ -2501,6 +2510,7 @@ func _start_event_fight() -> void:
 
 var _duelist: PartyMember = null
 var _arena := false
+var _battle_begins := false    # row 24 says A BATTLE BEGINS... for a moment before a fight (Combat)
 var _ending: EndingScreen
 
 
@@ -3131,7 +3141,7 @@ func _draw_screen() -> void:
 	OverlayLook.last_overland = _vm.on_overland
 	OverlayLook.last_place = place
 	var note24 := _row24_note != "" and Time.get_ticks_msec() < _row24_until
-	if note24:
+	if note24 or _battle_begins:
 		menu = []
 	var lit := clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 	if who_label != "":
@@ -3139,6 +3149,9 @@ func _draw_screen() -> void:
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
 	if note24:
 		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
+		_screen.update()
+	elif _battle_begins:
+		_screen.text(0, 24, "A BATTLE BEGINS...", GameScreen.GREEN)   # GAME.OVR 0xE448 (Combat)
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU
