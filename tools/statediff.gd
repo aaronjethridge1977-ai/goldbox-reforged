@@ -55,12 +55,23 @@ func _init() -> void:
 	var letter := orig_path.get_file().get_basename().right(1)
 	var folder := orig_path.get_base_dir()
 	var theirs := {}
-	for n in range(1, 9):
-		var sav := folder.path_join("CHRDAT%s%d.SAV" % [letter, n])
+	# Chat 41: only the files the save names (its party: 0x3208 the count, 41-byte names from 0x3209); a
+	# slot keeps older files past the party's size (the original leaves them), which aren't the party.
+	var stems: Array[String] = []
+	if orig.size() >= 0x3209 + 41 * 8:
+		for k in mini(orig[0x3208], 8):
+			var ln: int = orig[0x3209 + k * 41]
+			if ln > 0 and ln <= 12:
+				stems.append(orig.slice(0x3209 + k * 41 + 1, 0x3209 + k * 41 + 1 + ln).get_string_from_ascii())
+	else:
+		for n in range(1, 9):
+			stems.append("CHRDAT%s%d" % [letter, n])
+	for stem in stems:
+		var sav := folder.path_join(stem + ".SAV")
 		if not FileAccess.file_exists(sav):
 			continue
 		var d := FileAccess.get_file_as_bytes(sav)
-		var itm := folder.path_join("CHRDAT%s%d.ITM" % [letter, n])
+		var itm := folder.path_join(stem + ".ITM")
 		var items := FileAccess.get_file_as_bytes(itm) if FileAccess.file_exists(itm) else PackedByteArray()
 		theirs[_name(d)] = {"record": d, "items": items}
 	var ours := {}

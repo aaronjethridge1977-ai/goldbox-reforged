@@ -86,7 +86,6 @@ static func _write_character(stem: String, m: PartyMember) -> bool:
 		return false
 	for o in range(0x7F, 0x83):
 		d[o] = 0
-	d[0xC7] = mini(m.items.size(), 255)
 	for o in range(0xC8, 0x100):
 		d[o] = 0
 	for o in range(0x104, 0x108):
@@ -107,7 +106,20 @@ static func _write_character(stem: String, m: PartyMember) -> bool:
 		r.encode_u16(1, clampi(int(a.get("minutes", 0)), 0, 65535))
 		r[3] = int(a.get("value", 0)) & 255
 		spc.append_array(r)
-	return _put(stem + ".SAV", d) and _put(stem + ".ITM", itm) and _put(stem + ".SPC", spc)
+	d[0xC7] = mini(itm.size() / GameItem.SIZE, 255)
+	return _put(stem + ".SAV", d) and _put_or_remove(stem + ".ITM", itm) and _put_or_remove(stem + ".SPC", spc)
+
+
+## Chat 41 (Player 12's request; DOSBox): the original writes no .ITM for a member with no items and no
+## .SPC for one with no standing effects, and removes that member's old file from the slot (saving over
+## slot F, a stale CHRDATF1.ITM went). A 0-byte .ITM loads in the original as one garbage readied item.
+## Files of slots past the party's size are left as they were, as the original leaves them.
+static func _put_or_remove(path: String, data: PackedByteArray) -> bool:
+	if not data.is_empty():
+		return _put(path, data)
+	if FileAccess.file_exists(path):
+		return DirAccess.remove_absolute(path) == OK
+	return true
 
 
 static func _put(path: String, data: PackedByteArray) -> bool:

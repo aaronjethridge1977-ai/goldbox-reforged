@@ -172,6 +172,36 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 41: check 22 (the save files), DIFFCHECKS 22/22
+
+Player 12's request (Lead's item 1): ours' save writer left 0-byte `CHRDAT<x><n>.ITM` / `.SPC` files for a member with
+no items / no standing effects; the original loads a 0-byte .ITM as one garbage readied item (THAC0 148, ENCUMBRANCE
+60420, every purchase refused as overloaded).
+
+- **The original (DOSBox, lab `data/c41/`):** from save G with member 1's items taken out (record 0xC7 = 0, no .ITM)
+  and member 4 (a human: only a Bless) without its .SPC, ENCAMP SAVE F over a slot holding a stale `CHRDATF1.ITM`,
+  a stale `CHRDATF4.SPC` and a whole stale member 7: the original writes **no** .ITM for member 1 and **no** .SPC
+  for member 4, and **removes** the stale ones; member 7's files (past the party's size) **stay as they were**.
+- **Ours (`scripts/game/original_save.gd`):** an empty list now writes no file and removes the member's old one
+  (`_put_or_remove`); files past the party's size are left, as the original. The record's item count (0xC7) is now
+  the number of records written.
+- **Check 22** (`~/gbr/checks/data/22`, sealed): that start, ours' keys `load=G,wait,E,wait,S,wait,F,wait,wait,N,
+  wait,E,wait,wait,F2` (F2 is ignored while ours' camp is open: EXIT first). A check with a `files` list (new in
+  `diffcheck.sh`) clears slots F and G in its game copy before the start (the shared copy's own G files would fill
+  the start's gaps), then compares the `CHRDATF*` files ours left (names and sizes) with the original's before the
+  usual statediff. **MATCH**; on the old writer: `DIFFERS (files) > CHRDATF1.ITM 0 > CHRDATF4.SPC 0`.
+  **DIFFCHECKS 22/22, ~35 s.**
+- **statediff fix:** it read every `CHRDAT<X>1-8.SAV` beside the save as the party; it now reads the members the
+  save names (count at 0x3208, names from 0x3209), so a stale member past the party's size isn't counted (check 22's
+  member 7 showed as "DIRTEN is in the original's party"). The other twenty-one still MATCH.
+- **Break test repeated** (lab copy `data/c41/oldrepo`): SUBTRACT off by one caught (checks 4, 18, 20, 21: 18/22);
+  ADD off by one over 200 caught (check 18: 21/22).
+- `tools/check_save_files.gd <game folder> <slot> <scratch>`: the same rule without either game (loads a slot,
+  empties member 1, saves over stale files, checks the files): PASS on the fix, 2 FAILs on the old writer.
+- Seen, not changed: a dwarf whose .SPC is missing loads in ours with its racial effect (0x7C) back (`from_bytes`
+  adds the race's effects), where the original would have none. Only a hand-edited save gets there (every original
+  save of a demihuman carries the .SPC), so it is noted, not matched.
+
 ## Chat 40: check 21 (3:11 the dueling room), DIFFCHECKS 21/21
 
 The standing list (Q6, item 1). Areas no check visits now: 5:3, 5:4, 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27 (6:25, 7:26 and 8:27 are wilderness: their events sit on the overland's coordinate tables, e.g. 6:25 0xADD6 / 0xADDE; 6:25's outpost approach writes 0x4AB4 253 -> 254 with no menu when 0x4A98 = 255).
