@@ -1,0 +1,10 @@
+# Player 9 (Lead's gate item: c34e's new shortcut win): Sokal Keep 4:21 2,11, event 8 ("THE INTERIOR IS OVERRUN WITH
+# INSECTS") [39 x2], c34e's party (six, no DIRTEN). Start: c34e's bot (main lab botproj_c34e) resumed from its sokal0
+# checkpoint in the Player lab (p9/p9bot.sh), the quick save at 2,12 N before the step, in the original's format
+# (p2/mkorig.sh): p2start/c34e_4-21_2-11. QUICK in the records.
+area 4:21
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 2,12 N
+step N                     # 2,11: the fight
+checkpoint after

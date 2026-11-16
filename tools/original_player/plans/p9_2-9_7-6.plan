@@ -1,0 +1,12 @@
+# Player 9 (Lead's gate item: c34d's shortcut wins): 2:9 7,6, "A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE
+# WALL" [24 x2, 53 x2, 71 x6], c34d's party. Start: c34d's bot (main lab botproj_c34d) resumed from its mopup1
+# checkpoint in the Player lab (p9/p9bot.sh, a quick save at every walking key), the one at 7,7 N before the step, in the
+# original's format (p2/mkorig.sh): p2start/c34d_2-9_7-6. No lock at 7,6 on c34d's way (KNOCK kept in case). The bot
+# answered FLEE (odds 0.03) and the fight came anyway; the Player answers COMBAT (its default), then QUICK.
+area 2:9
+rules ../../plans/playthrough.plan
+answer LOCKED. BASH|KNOCK
+
+checkpoint entry           # 7,7 N
+step N                     # 7,6: the fight
+checkpoint after
