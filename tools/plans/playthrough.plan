@@ -23,6 +23,14 @@ rest 4:10 inn
 # (8:13 on rest, 0xB428: 0x4A8D = 0 means a check every step at 100%); after that 5% every 8 hours,
 # the Clue Book's "rest in the large cave". Until then the inn, not a camp that brings a fight.
 rest 8:13 inn 4A8D 1
+# Valjevo Castle (chat 32): while its alarm sounds (0x4A64 > 0, set by the scribes' officers at 5:4 14,12,
+# a fled fight and others) every 5-minute step of a rest has a 17% patrol (5:3-5:6 on rest), and only a
+# step taken after the alarm's hour clears it: c31a camped in 5:4 after each fight and met patrol after
+# patrol until a wipe. A player leaves the castle to rest.
+rest 5:3 inn-while 4A64 1
+rest 5:4 inn-while 4A64 1
+rest 5:5 inn-while 4A64 1
+rest 5:6 inn-while 4A64 1
 # The level the game expects of a party in each area (research/pool-of-radiance-strategy.md,
 # section 4: Claude's estimates from the guides, the low end of each range). M6: a member more
 # than one level below it trains, or gets the level by shortcut (logged).

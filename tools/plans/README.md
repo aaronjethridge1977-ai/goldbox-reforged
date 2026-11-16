@@ -70,7 +70,8 @@ an answer's question from its choice.
 
 **Resting and town**
 - `rest <area> inn|camp [<hex addr> <value>]` (standing): where to rest in an area (the inn until script memory
-  addr reaches value).
+  addr reaches value). `rest <area> inn-while <hex addr> <value>` (chat 32): the inn only while memory addr is at
+  value or above, else camp (Valjevo's alarm 0x4A64).
 - `heal`, `memorize`, `restuntil <hour>`, `campday <n>`, `grind <hex addr> <n>`, `level <n>`.
 - `mopup` (chat 28, Jeremy's Q1: honest experience): back to every area whose events `explore` left for later
   (judged unwinnable then; not the plan's own skips), training first, taking on those it now judges winnable;

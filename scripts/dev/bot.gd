@@ -31,7 +31,8 @@ extends Node
 ##   town                  New Phlan's round: the clerk's rewards, temple, training halls, inn
 ##   clerk                 City Hall twice (rewards, then up to three commissions a visit)
 ##   rest <set:block> inn|camp [<hex addr> <value>]   where to rest in an area (the inn until
-##            script memory addr reaches value, then camp); unlisted areas camp
+##            script memory addr reaches value, then camp); unlisted areas camp; "inn-while":
+##            the inn while memory addr is at value or above (Valjevo's alarm)
 ##   status                print the counters (fights, rests, wipes, gold by source, trainings)
 ##   checkpoint <name>     quick save to user://bot_<name>.cfg; a wipe goes back to the last
 ##   expect <set>:<block>  log a mismatch if the party isn't in that area
@@ -405,7 +406,8 @@ func _do(line: String) -> void:
 		"rest":
 			# rest <set:block> inn|camp [<hex address> <value>]: where a player rests in that
 			# area (the Clue Book's table). "inn" with an address: the inn until script
-			# memory there reaches the value (the area's condition for safe rests), then camp.
+			# memory there reaches the value (the area's condition for safe rests), then camp;
+			# "inn-while" with an address: the inn while memory there is at the value or above.
 			_rest_rules[w[1]] = {"rule": w[2], "addr": w[3].hex_to_int() if w.size() > 4 else -1,
 				"value": int(w[4]) if w.size() > 4 else 0}
 		"status":
@@ -1744,8 +1746,13 @@ func _travel(goal: String) -> void:
 	# 13,27's NORTH into 3:14 the guard answered LEAVE first (chat 21's teleport 7:26 -> 3:14).
 	if not was_travelling:
 		_asked.clear()
+	# Chat 32: explore's avoided events are walked round on a trip, and through when there's
+	# no way round (2:9's gate passage between the towers and the way out).
+	var was_fallback: bool = main.avoid_fallback
+	main.avoid_fallback = true
 	await _climb_to_exits()
 	await _travel_hops(goal)
+	main.avoid_fallback = was_fallback
 	_travelling = was_travelling
 	# M6: stuck short of the goal (no way found or every way failed): the smallest shortcut
 	# is a teleport there, entering the area as its init places the party. Logged.
@@ -1955,6 +1962,7 @@ func _travel_hops(goal: String) -> void:
 func _explore(later: Array) -> void:
 	# Events the plan leaves out are walked round, not through (a teleporter on the way).
 	main.avoid_events = {}
+	main.avoid_area = _here()
 	for e in later:
 		if str(e).is_valid_int():
 			main.avoid_events[int(e)] = true
@@ -2157,6 +2165,7 @@ func _mopup() -> void:
 		await _keep_level()
 		var later: Array = info.get("later", [])
 		main.avoid_events = {}
+		main.avoid_area = _here()
 		for e in later:
 			if str(e).is_valid_int():
 				main.avoid_events[int(e)] = true
@@ -2642,8 +2651,12 @@ func _open_camp() -> bool:
 ## Rests in camp a day at a time until everyone is healed; an interruption is fought out
 ## and the rest begun again.
 func _heal() -> void:
-	if _needs_rest() and _rest_rule() == "inn" and not _at_inn and await _rest_safe():
-		return
+	if _needs_rest() and _rest_rule() == "inn" and not _at_inn:
+		# Chat 32: the memorized cures before the walk (no rest, so nothing interrupts): c32v's
+		# trip out of Valjevo met a patrol at half strength.
+		_cure_in_camp()
+		if _needs_rest() and await _rest_safe():
+			return
 	# Cure Light Wounds first, rest for the rest (the guides): cast every cure on the most
 	# hurt, rest just long enough to memorize them again, and repeat while that heals more
 	# than a day's rest would.
@@ -3218,6 +3231,10 @@ func _rest_rule() -> String:
 		return "camp"
 	if r.rule == "inn" and int(r.addr) >= 0 and main._vm.read_byte(int(r.addr)) >= int(r.value):
 		return "camp"
+	# Chat 32: "inn-while": the inn only while script memory is at the value or above (Valjevo's
+	# alarm, 0x4A64: every rest step has a 17% patrol until a step after the alarm's hour clears it).
+	if r.rule == "inn-while":
+		return "inn" if int(r.addr) >= 0 and main._vm.read_byte(int(r.addr)) >= int(r.value) else "camp"
 	return String(r.rule)
 
 
@@ -3343,6 +3360,13 @@ func _stalemate(round_no: int) -> bool:
 	_shortcut("win", key, "stalemate: no one hurt for %d rounds, round %d" % [STALEMATE, round_no])
 	_skipped_fights.append(key + " (stalemate)")
 	print("SKIPPED FIGHT ", key, " (stalemate)")
+	# Chat 32: where everyone still up stands, for the combat lane.
+	var where := PackedStringArray()
+	for c in main._combat._combat.combatants:
+		if not c.down and not c.get("fled", false):
+			where.append("%s%s %d,%d%s" % ["" if int(c.team) == 0 else "*", c.who.name, c.cell.x, c.cell.y,
+				" fleeing" if c.get("fleeing", false) else ""])
+	print("   stalemate figures: %s" % ", ".join(where))
 	return true
 
 

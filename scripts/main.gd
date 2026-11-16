@@ -2051,14 +2051,21 @@ func _adopt_position_from_vm() -> void:
 ## Lab (PlayBot): event codes whose squares walks keep off unless they are the goal (explore's
 ## skipped events: Yarash's pyramid's teleporter beside the dial, chat 12).
 var avoid_events := {}
+## ... and the area ("file:block") they belong to: event numbers are the area's own, so another
+## area's squares with those numbers are walked as usual (chat 32: a training trip from 2:9's
+## explore found no way off New Phlan's dock, events 2, 3 and 6 round it).
+var avoid_area := ""
+## True while the bot travels between areas: with no way round the avoided squares, walk through.
+var avoid_fallback := false
 ## Dev (the bot): squares of an area that move the party elsewhere in it when stepped on (the
 ## pyramid's teleports), "file:block" -> {square: where it lands}; the path finder walks through
 ## them. Empty in play.
 var warps := {}
 
 
-func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+func _find_path(from: Vector2i, to: Vector2i, keep_off := true) -> Array[Vector2i]:
 	var map: GeoMap = _maps[_map_index].map
+	var avoiding := keep_off and not avoid_events.is_empty() and avoid_area == "%d:%d" % [_vm_file, _vm_block]
 	var came := {from: from}
 	var queue: Array[Vector2i] = [from]
 	var warp: Dictionary = warps.get("%d:%d" % [_vm_file, _vm_block], {})
@@ -2081,13 +2088,14 @@ func _find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 			var nxt: Vector2i = cur + DungeonView.DELTA[d]
 			if nxt.x < 0 or nxt.y < 0 or nxt.x >= GeoMap.SIZE or nxt.y >= GeoMap.SIZE or came.has(nxt):
 				continue
-			if nxt != to and not avoid_events.is_empty() and avoid_events.has(map.flag(nxt.x, nxt.y) & 127):
+			if nxt != to and avoiding and avoid_events.has(map.flag(nxt.x, nxt.y) & 127):
 				continue
 			came[nxt] = cur
 			queue.append(nxt)
 	var path: Array[Vector2i] = []
 	if not came.has(to):
-		return path
+		# Travelling, with no way round the avoided squares: through them, not no way at all.
+		return _find_path(from, to, false) if avoiding and avoid_fallback else path
 	var p := to
 	while p != from:
 		path.push_front(p)
