@@ -8,6 +8,7 @@ PLAN=${1:-playthrough.plan}; shift
 P=$L/botproj_$ID
 rm -rf $P && mkdir $P
 cp -r $S/project.godot $S/icon.svg $S/scenes $S/scripts $P/
+[ -d $S/content ] && cp -r $S/content $P/   # chat 39: content packs (quests.json: the offers recorded)
 sed -i "s/^config\/name=\"\(.*\)\"/config\/name=\"\1 bot $ID\"/" $P/project.godot
 mkdir -p $P/tools/plans && cp $S/tools/*.gd $P/tools/ 2>/dev/null; cp $S/tools/plans/* $P/tools/plans/
 # Chat 21: COVER_SEED=<hex> replays a coverage run's dice (the plan's cover lines get seed=<hex>; refcheck.sh uses it).

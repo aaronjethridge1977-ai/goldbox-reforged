@@ -173,6 +173,20 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 39:** the cold-open pair re-shot on the monotonic clock: `coldorig39.sh` / `coldours39.sh` (same arguments as
+the chat 38 scripts) film with `moncap.py`, a copy of Player 11's `p11/moncap.py` (frame k grabbed at start + k/30 s
+on CLOCK_MONOTONIC, a late grab repeats the frame for the missed slot; its count of frames and repeats goes to
+`<log>.cap`; REC in `<log>` is moncap's own start). The lab's copy takes `MONCAP_FAST=1` (lossless x264 RGB, qp 0,
+ultrafast): at 1280x800 beside Godot, FFV1 dropped 11% of slots, x264 2%. Then `coldlog38.py` as before. The take:
+`coldorig39.sh H 22222222 data/c39/orig_H22.mkv 75 data/c39/orig_H22.log`; `MONCAP_FAST=1 coldours39.sh
+data/c39/ours_H22b.mkv 75 "<chat 38's keys>" data/c39/ours_H22b.log`. `check_godot.sh` and `bot.sh` now copy
+`content/` into their project copies (the area names, the quest data and FEATURES were missing there; the bot
+recorded no quest offers). Checks 19 and 20 were made with `mkcheck35.sh 19 8-29 ...` / `mkcheck35.sh 20 3-0 ...`
+(docs/diff-checks.md "Chat 39"; the original's keys in `data/c35/chk19|20/orig.log`). A jump save leaves the
+original's 0xC04F stale until the first real step: start one step before an on-move event. `route.py` routes on any
+area once its tables are swapped (`R.NE, R.SW, R.INFO, R.DOORS = R.load(set, block)`). `tools/save_list.gd ...
+--label <slot> <name>` names a slot. Lab archive: `lab39.tar.gz`.
+
 **Chat 38:** the showcase's cold-open pair (main's lab only): `coldorig38.sh <save> <seed> <out.mkv> <secs> <log>`
 (origvid.sh with `trace.py run` going, each line stamped by `tstamp.py`; REC/ENTER/END in `<log>`, the draws in
 `<log>.trace`) and `coldours38.sh <out.mkv> <secs> "<keys>" <log>` (oursvid36.sh with `--anim --tplive`: ours prints

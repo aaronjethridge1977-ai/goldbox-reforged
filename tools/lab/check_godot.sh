@@ -8,6 +8,7 @@ G="$LAB/godot/Godot_v4.7.2-stable_linux.x86_64"
 SRC="$1"
 rm -rf "$LAB/proj" && mkdir "$LAB/proj"
 cp -r "$SRC/project.godot" "$SRC/icon.svg" "$SRC/scenes" "$SRC/scripts" "$LAB/proj/"
+[ -d "$SRC/content" ] && cp -r "$SRC/content" "$LAB/proj/"   # chat 39: content packs (areas.json, quests.json, features.json)
 mkdir -p "$LAB/proj/tools" && cp "$SRC"/tools/*.gd "$LAB/proj/tools/" 2>/dev/null
 cd "$LAB/proj"
 timeout 60 "$G" --headless --path . --import >/dev/null 2>&1
