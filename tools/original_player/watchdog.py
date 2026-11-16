@@ -74,16 +74,16 @@ def main():
         logp = os.path.join(LOGS, "%s.log" % run)
         proc = subprocess.Popen(cmd, cwd=HERE, stdout=open(os.path.join(LOGS, "%s.out" % run), "a"),
                                 stderr=subprocess.STDOUT)
-        last_size, last_t = -1, time.time()
+        last_size, last_t = -1, time.monotonic()
         fault = None
         while proc.poll() is None:
             time.sleep(5)
             size = os.path.getsize(logp) if os.path.exists(logp) else 0
             if size != last_size:
-                last_size, last_t = size, time.time()
-            elif time.time() - last_t > beat:
+                last_size, last_t = size, time.monotonic()
+            elif time.monotonic() - last_t > beat:
                 fault = "no heartbeat for %d s" % beat
-            if orig.pid() is None and time.time() - last_t > 30:
+            if orig.pid() is None and time.monotonic() - last_t > 30:
                 fault = "DOSBox is gone"
             if fault:
                 break

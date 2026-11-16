@@ -29,9 +29,9 @@ class Player:
         self.logf = open(log_path, "a")
         self.g = G.Game(log=self.log)
         self.events = []          # (kind, text) for the summary
-        self.t0 = time.time()
+        self.t0 = time.monotonic()
         self.goal = 0
-        self.last_progress = time.time()
+        self.last_progress = time.monotonic()
         self.fights = 0
         self.in_fight = False
         self.slot_sent = False
@@ -43,6 +43,7 @@ class Player:
         self.seen_kinds = set()
         self.saving = None        # the Checkpoint being saved
         self.snapped = set()      # snap answers done (plans.py)
+        self.start_names = []     # the party's names at the first walking screen
         self.slot = os.environ.get("OP_SLOT", "H")   # the original's save slot for checkpoints (lab slots only)
 
     def save_step(self, scr):
@@ -60,7 +61,7 @@ class Player:
 
     # -- log ----------------------------------------------------------------------------------------------
     def log(self, *a):
-        s = "%7.1f %s" % (time.time() - self.t0, " ".join(str(x) for x in a))
+        s = "%7.1f %s" % (time.monotonic() - self.t0, " ".join(str(x) for x in a))
         self.logf.write(s + "\n")
         self.logf.flush()
         if os.environ.get("OP_ECHO"):
@@ -145,6 +146,7 @@ class Player:
             self.in_fight = False
             if not self.g.party_size and scr["kind"] == "walking":
                 self.g.party_size = len(self.g.party())
+                self.start_names = [m[0] for m in self.g.party()]   # Player 11: members lost show in the summary
         if scr["kind"] not in self.seen_kinds:
             self.seen_kinds.add(scr["kind"])
             shot = os.path.join(LOGS, "%s_screen_%s.png" % (self.run, scr["kind"]))
@@ -172,7 +174,7 @@ class Player:
                 self.log("GOAL done:", gl)
                 self.goal += 1
                 self.goal_key = self.g.nkeys
-                self.last_progress = time.time()
+                self.last_progress = time.monotonic()
                 continue
             if k is None:
                 return True
@@ -203,6 +205,9 @@ def run(plan_path, save, seed, run_id, boot=True, after=None):
     p = Player(plan, run_id, log_path)
     p.log("RUN", run_id, "plan", plan_path, "save", save, "seed", "%08x" % seed if seed is not None else None,
           "after", after)
+    # Player 11: the log's times are CLOCK_MONOTONIC seconds since this start (WSL steps the wall clock); a film
+    # records its own start on the same clock (lab p11/film.sh) to line its video up with the log exactly.
+    p.log("CLOCK monotonic %.3f" % p.t0)
     if after:      # resumed by the watchdog from a checkpoint: its goals and the ones before it are done
         import plans
         names = [g.name for g in plan.goals if isinstance(g, plans.Checkpoint)]
@@ -265,8 +270,11 @@ def summary(p, result, plan_path, save, seed):
         "1. Plan %s from save %s, seed %s; goals done %d of %d; ended at %s." % (
             os.path.basename(plan_path), save, "%08x" % seed if seed is not None else "as loaded", p.goal,
             len(p.plan.goals), where),
-        "2. Keys sent: %d; fights: %d; time %.0f s." % (p.g.nkeys, p.fights, time.time() - p.t0),
-        "3. Party: %s." % ", ".join("%s L%s %d/%d" % m for m in party),
+        "2. Keys sent: %d; fights: %d; time %.0f s." % (p.g.nkeys, p.fights, time.monotonic() - p.t0),
+        "3. Party: %s%s." % (", ".join("%s L%s %d/%d" % m for m in party),
+                            "; gone since the start: " + ", ".join(n for n in p.start_names
+                                                                 if n not in [m[0] for m in party])
+                            if party and set(p.start_names) - set(m[0] for m in party) else ""),
         "4. Checkpoints: %s." % ("; ".join(t.split(" | ")[1] + " (" + t.split(" | ")[0] + ")" for k, t in p.events
                                           if k == "checkpoint") or "none"),
         "5. Screens seen: %s; polls that were not waits: %s." % (", ".join(sorted(p.seen_kinds)),

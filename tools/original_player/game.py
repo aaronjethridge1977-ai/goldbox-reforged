@@ -50,7 +50,7 @@ class Game:
         self.last = None
         self.unknown_sites = set()
         self.party_size = 0
-        self.beat = time.time()
+        self.beat = time.monotonic()
         self.stale = None         # (the figures' hit points, since when) while dice are drawn
         self.stale_limit = float(os.environ.get("OP_STALE", "600"))
 
@@ -117,7 +117,7 @@ class Game:
         sig = tuple((h, st) for _, h, st in f)
         up = sum(1 for _, h, st in f if h > 0 and st == 0)
         self.log("BEAT figures %d standing %d hp %d" % (len(f), up, sum(h for _, h, _ in f)))
-        now = time.time()
+        now = time.monotonic()
         if self.stale is None or self.stale[0] != sig:
             self.stale = (sig, now)
         elif now - self.stale[1] > self.stale_limit:
@@ -149,15 +149,15 @@ class Game:
     def settled(self, timeout=60):
         """Waits until the original waits for input at a known site (a GetKey wait counts always) and the
         screen reads the same twice; returns the state (also kept as self.last)."""
-        t = time.time()
+        t = time.monotonic()
         prev = None
         mark = None
-        while time.time() - t < timeout:
+        while time.monotonic() - t < timeout:
             now = (self.mem.seed(), self.mem.ds(0x6AAD, 3))
             if now != mark:            # dice drawn or the party moved: the game is working, not stuck
-                mark, t = now, time.time()
-                if time.time() - self.beat > 30:     # the watchdog's heartbeat while a fight plays itself
-                    self.beat = time.time()
+                mark, t = now, time.monotonic()
+                if time.monotonic() - self.beat > 30:     # the watchdog's heartbeat while a fight plays itself
+                    self.beat = time.monotonic()
                     self.log("BEAT seed %08x" % now[0])
                     self.fight_beat()
             kind, site = self.wait_kind()
@@ -180,8 +180,8 @@ class Game:
 
     # -- driving ------------------------------------------------------------------------------------------
     def until_waiting(self, timeout=60, step=0.1):
-        t = time.time()
-        while time.time() - t < timeout:
+        t = time.monotonic()
+        while time.monotonic() - t < timeout:
             kind, site = self.wait_kind()
             if kind != "busy":
                 return kind, site
@@ -198,8 +198,8 @@ class Game:
         self.nkeys += 1
         self.log("KEY %d %s at %s %s" % (self.nkeys, k, kind, site))
         _keys.key(k)
-        t = time.time()
-        while time.time() - t < 5:
+        t = time.monotonic()
+        while time.monotonic() - t < 5:
             now = self.keys.read()
             if now["leave"] != before["leave"]:
                 return kind, site
@@ -212,13 +212,13 @@ def boot(save, log=print):
     code word whenever it is asked). Returns at the save's first walking menu."""
     import screens
     orig.start()
-    t = time.time()
+    t = time.monotonic()
     while True:
         try:
             m = orig.Mem()
             break
         except (RuntimeError, SystemExit):
-            if time.time() - t > 30:
+            if time.monotonic() - t > 30:
                 raise Timeout("START.EXE never appeared in DOSBox's memory")
             time.sleep(0.05)
     hooks.install(m)
