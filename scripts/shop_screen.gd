@@ -11,7 +11,12 @@ extends Control
 ##     page (the last page ends on the last item).
 ##   Menus as everywhere: the hot letter, or Left/Right and Enter.
 ##   VIEW: the buyer's sheet, whose item menu offers SELL (CharacterSheet.in_shop)
-##   POOL: the party's coins to the buyer
+##   POOL: the player characters' coins go on the shop's pile (CoinPile; GAME.OVR's shop loop
+##     0x7212, Combat Chat 13 from Player 12's run): with money on it the menu is BUY VIEW TAKE POOL
+##     SHARE APPRAISE EXIT; TAKE is the treasure's coin page (SELECT TYPE OF COIN, HOW MUCH ... WILL
+##     YOU TAKE?), SHARE the treasure's split; leaving with money on the pile asks "AS YOU LEAVE THE
+##     SHOPKEEPER SAYS, "EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE."  DO YOU WANT TO GO BACK AND GET
+##     YOUR MONEY?" (YES back to the menu, NO leaves it behind). The pile is emptied as a shop opens.
 ##   APPRAISE: the buyer's gems and jewellery, one at a time, as the original (lab and
 ##     GAME.OVR 0x26680, chat 8): "YOU HAVE A FINE COLLECTION OF:" n GEMS / n PIECES OF
 ##     JEWELRY, then GEMS JEWELRY EXIT; each appraised piece leaves the count, "THE GEM IS
@@ -21,9 +26,10 @@ extends Control
 ##     jewellery 100 + Random(900) (1-10), 200 + Random(1000) (-20), 300 + Random(1500)
 ##     (-40), 500 + Random(2500) (-50), 1000 + Random(5000) (-70), 2000 + Random(6000)
 ##     (-90), 2000 + Random(10000).
-## Prices are in gold; the buyer pays from all their coins and the change comes back in
-## platinum and gold, the part under a gold piece lost (PartyMember.pay_gold_in_shop;
-## checked against the original: 140 gold - 80 = 12 platinum; lab chat 10, two more).
+## Prices are in gold (GAME.OVR 0x7035): the buyer pays if his purse is worth the price, else the
+## pile pays if it is; either way all its coins become its worth less the price, in platinum and
+## gold (CoinPile.gold_of / set_gold: the worth rounded to the nearest gold piece; checked against
+## the original: 140 gold - 80 = 12 platinum; lab chat 10, two more).
 ## After a purchase the original says nothing (lab, side chat 2, 2026-11-13: BUY on the SHOP page
 ## twice gave Thrender two hand axes, row 24 never changed). QoL (Jeremy: he bought two long
 ## swords without noticing): row 24 shows "BOUGHT <ITEM>" for a moment, with how many the buyer
@@ -35,6 +41,8 @@ signal closed
 
 const PAGE := 19
 const MENU := ["BUY", "VIEW", "POOL", "APPRAISE", "EXIT"]
+const POOL_MENU := ["BUY", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
+const ASK_MENU := ["YES", "NO"]
 const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]   # every item; row 24 shows _list_menu()
 
 var _items: Array[GameItem] = []
@@ -43,7 +51,12 @@ var _buyer := 0
 var _flash_green := false   # the flash is the original's refusal, not our BOUGHT line
 ## The character sheet main uses, for VIEW (set by main).
 var sheet: CharacterSheet
-var _mode := "menu"      # menu, list, appraise (the collection), value (SELL / KEEP)
+var _mode := "menu"      # menu, list, appraise (the collection), value (SELL / KEEP), coins, amount, ask_leave
+## The shop's money pile (CoinPile): POOL puts coins on it, TAKE and SHARE give them back.
+var pile := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
+var _coin := 0           # the chosen line of the coin page
+var _amount_coin := -1
+var _typed := ""
 var _value := 0
 var _jewel := false
 var _rng := RandomNumberGenerator.new()
@@ -68,6 +81,7 @@ func open(items: Array[GameItem], party: Array[PartyMember], _title: String = "S
 	_mode = "menu"
 	_pick = 0
 	_note.text = ""
+	pile = PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
 	_cursor = mini(1, maxi(items.size() - 1, 0))
 	_top = _cursor
 	_rng.randomize()
@@ -102,16 +116,77 @@ func _refresh() -> void:
 	if _mode == "list":
 		_draw_list()
 		return
-	var menu: Array = MENU
-	if _mode == "appraise":
-		menu = ["GEMS", "JEWELRY", "EXIT"]
-	elif _mode == "value":
-		menu = ["SELL", "KEEP"]
+	if _mode in ["coins", "amount"]:
+		_draw_coins()
+		return
+	var menu := _menu_items()
 	var lines := PackedStringArray()
-	for l in _note.text.split("\n"):
-		lines.append_array(GameScreen.wrap(l, 38))
+	if _mode != "ask_leave":
+		for l in _note.text.split("\n"):
+			lines.append_array(GameScreen.wrap(l, 38))
 	_scr.draw_walk(OverlayLook.last_view, _party, _buyer, "", lines, menu,
 		false, false, _pick)
+	if _mode == "ask_leave":
+		TreasureScreen.draw_ask(_scr, "AS YOU LEAVE THE SHOPKEEPER SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE.\"",
+			"DO YOU WANT TO GO BACK AND GET YOUR MONEY?")
+		_scr.update()
+
+
+## Row 24's words in the current mode (not the item list's).
+func _menu_items() -> Array:
+	match _mode:
+		"appraise": return ["GEMS", "JEWELRY", "EXIT"]
+		"value": return ["SELL", "KEEP"]
+		"ask_leave": return ASK_MENU
+		"coins": return ["EXIT"]
+	return POOL_MENU if CoinPile.has_money(pile) else MENU
+
+
+## TAKE's coin page, the treasure's (GAME.OVR 0x8F:0x34 in both): the pile's coins, copper first.
+func _draw_coins() -> void:
+	_scr.clear()
+	for c in 40:
+		_scr.tile(c, 0, 22)
+		_scr.tile(c, 23, 22)
+	for r in range(1, 23):
+		_scr.tile(0, r, 21)
+		_scr.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		_scr.tile(p.x, p.y, 20)
+	var kinds := _coin_kinds()
+	for i in kinds.size():
+		var c: int = kinds[i]
+		var lit := _mode == "coins" and i == _coin
+		_scr.text(2, 2 + i, "%s %d" % [TreasureScreen.MONEY_LABELS[c], pile[c]],
+			GameScreen.WHITE if lit else GameScreen.GREEN)
+	if _mode == "coins":
+		_scr.text(0, 24, "SELECT TYPE OF COIN", 13)
+		_scr.menu_line(24, ["EXIT"], 20, 0)
+	else:
+		var ask := "HOW MUCH %s WILL YOU TAKE? " % TreasureScreen.MONEY_LABELS[_amount_coin]
+		_scr.text(0, 24, ask, GameScreen.GREEN)
+		_scr.text(ask.length(), 24, _typed, GameScreen.WHITE)
+	_scr.update()
+
+
+func _coin_kinds() -> Array:
+	var out := []
+	for c in 7:
+		if pile[c] > 0:
+			out.append(c)
+	return out
+
+
+## TAKE n coins of kind c from the pile for the buyer (refused whole when over his load, as the
+## treasure's: GAME.OVR 0x2570F).
+func take_coins(c: int, n: int) -> void:
+	n = clampi(n, 0, pile[c])
+	var m := _party[_buyer]
+	if not m.can_take_coins(n):
+		_show_flash("OVERLOADED", true)
+		return
+	m.money[c] += n
+	pile[c] -= n
 
 
 func _draw_list() -> void:
@@ -152,10 +227,12 @@ func _buy() -> void:
 		return
 	var it := _items[i]
 	var member := _party[_buyer]
-	# GAME.OVR 0x7080-0x7136: the money first ("Not enough Money."), then the item is added
-	# through 0x6F0D (refused as "OverLoaded" by 0x23795, main's PartyMember.can_take_item),
-	# and only then paid for.
-	if member.wealth_copper() < it.price * 200:
+	# GAME.OVR 0x7080-0x7136: the money first, the buyer's purse and then the pile ("Not enough
+	# Money."), then the item is added through 0x6F0D (refused as "OverLoaded" by 0x23795, main's
+	# PartyMember.can_take_item), and only then paid for.
+	var purse := CoinPile.gold_of(member.money)
+	var from_pile := it.price > purse
+	if from_pile and it.price > CoinPile.gold_of(pile):
 		_note.text = "NOT ENOUGH MONEY."
 		_show_flash("NOT ENOUGH MONEY.", true)
 		return
@@ -163,7 +240,10 @@ func _buy() -> void:
 		_note.text = "OVERLOADED."
 		_show_flash("OVERLOADED", true)
 		return
-	member.pay_gold_in_shop(it.price)
+	if from_pile:
+		pile = CoinPile.set_gold(pile, CoinPile.gold_of(pile) - it.price)
+	else:
+		member.money = CoinPile.set_gold(member.money, purse - it.price)
 	member.items.append(it.copy())
 	_note.text = ""
 	var has := 0
@@ -194,15 +274,13 @@ func _show_flash(text: String, refusal: bool = false) -> void:
 
 
 func _pool() -> void:
-	if _party.is_empty():
-		return
-	var to := _party[_buyer]
-	for m in _party:
-		if m == to:
-			continue
-		for c in 5:
-			to.money[c] += m.money[c]
-			m.money[c] = 0
+	pile = CoinPile.pool(_party, pile)
+	_refresh()
+
+
+func _share() -> void:
+	pile = CoinPile.share(_party, pile)
+	_pick = mini(_pick, _menu_items().size() - 1)
 	_refresh()
 
 
@@ -254,12 +332,29 @@ func _move(step: int) -> void:
 func _exit() -> void:
 	if _mode != "menu":
 		_mode = "menu"
-		_pick = clampi(_pick, 0, MENU.size() - 1)
+		_pick = clampi(_pick, 0, _menu_items().size() - 1)
 		_note.text = ""
 		_refresh()
 		return
+	# Called by code (main's and the bot's ways out): the pile is shared back first; a player's E asks.
+	if CoinPile.has_money(pile):
+		_share()
+	_close()
+
+
+func _close() -> void:
 	visible = false
 	closed.emit()
+
+
+## E from the menu: with money on the pile the shopkeeper asks first (GAME.OVR 0x7357).
+func _leave() -> void:
+	if CoinPile.has_money(pile):
+		_mode = "ask_leave"
+		_pick = 0
+		_refresh()
+		return
+	_close()
 
 
 func _view() -> void:
@@ -377,15 +472,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	_flash = ""          # a key brings the menu back at once
 	var key := (event as InputEventKey).keycode
-	var items: Array = MENU
-	match _mode:
-		"list": items = _list_menu()
-		"appraise": items = ["GEMS", "JEWELRY", "EXIT"]
-		"value": items = ["SELL", "KEEP"]
+	if _mode == "amount":
+		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
+			_typed += char(key)
+		elif key == KEY_BACKSPACE:
+			_typed = _typed.left(-1)
+		elif key in [KEY_ENTER, KEY_KP_ENTER]:
+			take_coins(_amount_coin, _typed.to_int())
+			_mode = "coins"
+			_coin = 0
+			if _coin_kinds().is_empty():
+				_mode = "menu"
+				_pick = 0
+		elif key == KEY_ESCAPE:
+			_mode = "coins"
+		get_viewport().set_input_as_handled()
+		_refresh()
+		return
+	var items: Array = _list_menu() if _mode == "list" else _menu_items()
 	var choice := ""
 	_pick = mini(_pick, items.size() - 1)
 	if key == KEY_ENTER or key == KEY_KP_ENTER:
 		choice = items[_pick]
+		if _mode == "coins":
+			choice = "COIN"
 	elif key == KEY_LEFT or key == KEY_RIGHT:
 		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
@@ -396,8 +506,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_move(step)
 		elif _mode == "menu":
 			_change_buyer(step)
+		elif _mode == "coins":
+			_coin = clampi(_coin + step, 0, maxi(_coin_kinds().size() - 1, 0))
+			_refresh()
 	elif key == KEY_ESCAPE:
-		choice = "EXIT"
+		choice = "EXIT" if "EXIT" in items else "NO"
 	else:
 		for it in items:
 			if String(it).unicode_at(0) == key:
@@ -408,7 +521,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# The chosen item stays highlighted, and the index carries over to the next menu
 	# (lab, chat 10: EXIT, the fourth of the list's menu, leaves APPRAISE, the fourth of the
 	# shop's, highlighted).
-	_pick = items.find(choice)
+	if choice != "COIN":
+		_pick = items.find(choice)
 	match _mode:
 		"menu":
 			match choice:
@@ -416,9 +530,32 @@ func _unhandled_input(event: InputEvent) -> void:
 					_mode = "list"
 					_refresh()
 				"VIEW": _view()
+				"TAKE":
+					_mode = "coins"
+					_coin = 0
+					_refresh()
 				"POOL": _pool()
+				"SHARE": _share()
 				"APPRAISE": _appraise()
-				"EXIT": _exit()
+				"EXIT": _leave()
+		"coins":
+			if choice == "COIN":
+				var kinds := _coin_kinds()
+				if _coin < kinds.size():
+					_amount_coin = kinds[_coin]
+					_typed = ""
+					_mode = "amount"
+			else:
+				_mode = "menu"
+				_pick = _menu_items().find("TAKE") if CoinPile.has_money(pile) else 0
+			_refresh()
+		"ask_leave":
+			if choice == "YES":
+				_mode = "menu"
+				_pick = 0
+				_refresh()
+			else:
+				_close()
 		"list":
 			match choice:
 				"BUY": _buy()

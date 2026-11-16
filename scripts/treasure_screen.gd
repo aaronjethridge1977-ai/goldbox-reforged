@@ -16,8 +16,9 @@ extends Control
 ##     GO BACK AND CLAIM YOUR TREASURE?" (white), YES NO.
 ## Menus as everywhere: the hot letter, or Left/Right and Enter; the chosen item stays lit
 ## and its place carries over to the next menu (EXIT from LOOT leaves ITEMS lit).
-## POOL puts everyone's money on the pile; SHARE splits the pile's money evenly (the
-## remainder one coin at a time from the first character).
+## POOL puts the player characters' money on the pile; SHARE splits the pile's money among them
+## (CoinPile, GAME.OVR 0x25191 / 0x252C3: an NPC neither pools nor shares; the remainder one coin at
+## a time from the first character; a share over the load ceiling stays on the pile).
 ## Not yet: the original's load and item-count limits when taking.
 
 signal closed
@@ -179,11 +180,17 @@ func _walk(menu: Array, lines: PackedStringArray, label: String = "") -> void:
 
 ## "THERE IS STILL TREASURE LEFT." in light green, the question in white, wrapped together.
 func _ask_text() -> void:
+	draw_ask(_scr, "THERE IS STILL TREASURE LEFT.", "DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?")
+
+
+## A question under the view, as the original prints it from row 17 (GAME.OVR 0x73A4, 0x709:0x768
+## with 1, 17, 38, 22): `green` in light green, then `white` after two spaces, word-wrapped together.
+static func draw_ask(scr: GameScreen, green: String, white: String) -> void:
 	var words := []
-	for w in "THERE IS STILL TREASURE LEFT.".split(" "):
+	for w in green.strip_edges().split(" "):
 		words.append([w, GameScreen.GREEN])
 	words.append(["", GameScreen.GREEN])     # the original's two spaces after the full stop
-	for w in "DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?".split(" "):
+	for w in white.split(" "):
 		words.append([w, GameScreen.WHITE])
 	var col := 1
 	var row := 17
@@ -192,7 +199,7 @@ func _ask_text() -> void:
 		if col > 1 and col + w.length() > 39:
 			col = 1
 			row += 1
-		_scr.text(col, row, w, p[1])
+		scr.text(col, row, w, p[1])
 		col += w.length() + 1
 
 
@@ -264,29 +271,16 @@ func _refuse(text: String) -> void:
 		_refresh()
 
 
+## POOL and SHARE as the original (CoinPile: player characters only; Combat Chat 13).
 func _pool() -> void:
-	for m in _party:
-		for c in 7:
-			_spoils.money[c] += m.money[c]
-			m.money[c] = 0
+	_spoils.money = CoinPile.pool(_party, _spoils.money)
 	_refresh()
 
 
-## Splits the pile's money evenly; the remainder goes one coin at a time from the first
-## character, as the original does it.
 func _share() -> void:
 	if _party.is_empty():
 		return
-	var n := _party.size()
-	for c in range(6, -1, -1):
-		var each := _spoils.money[c] / n
-		var rest := _spoils.money[c] % n
-		for m in _party:
-			m.money[c] += each
-			if rest > 0:
-				m.money[c] += 1
-				rest -= 1
-		_spoils.money[c] = 0
+	_spoils.money = CoinPile.share(_party, _spoils.money)
 	_refresh()
 
 
