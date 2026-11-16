@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 39: check 19 (8:29 the nailed door and the woman), DIFFCHECKS 19/19
+## Chat 39: checks 19 and 20 (8:29 the nailed door and the woman; 3:0 the harbour master), DIFFCHECKS 20/20
 
 The standing list (Q6, item 1): the next checks go to the areas none of the eighteen visits (3:0, 3:11, 5:3-5:6, 6:1,
 6:25, 7:22, 7:26, 8:27, 8:29). One this chat:
@@ -183,10 +183,20 @@ The standing list (Q6, item 1): the next checks go to the areas none of the eigh
   lizard patrol before the door, a set fight, already beaten). Keys, both games: Up (the jump), Up, Up (7,13), Up (the
   question), Y, Enter, Enter; ours `load=G,wait,Up,wait,Up,wait,Up,wait,Up,wait,Y,wait,Enter,wait,Enter,wait,wait,F2`.
   **MATCH**, 0 differences (0x4A23 = 26 in both, the party at 7,14 S, 10:59). Lab `data/c35/chk19/` (made with
-  `mkcheck35.sh 19 8-29 ...`), installed and sealed as `~/gbr/checks/data/19`; `diffcheck.sh` runs nineteen:
-  **DIFFCHECKS 19/19, ~29 s**.
+  `mkcheck35.sh 19 8-29 ...`), installed and sealed as `~/gbr/checks/data/19`.
+- **Check 20, 3:0 (New Phlan): the harbour master** (event 2 at 11,1, entered facing N): EAST (0x4AC4 = 1), WHO WILL
+  PAY? the second member (End), BAKSHI's platinum 2 -> 1 (SUBTRACT on the member's record through LOAD_CHAR), 0x4A07
+  and 0x4A01 = 1. No dice on the path. Start `mksave.py J G 3 0 12 4 N 4AC5=1 4AA7=254` (Rolf's tour done; Sokal Keep
+  cleared, so the harbour offers all four boats and asks for the fare). Keys, both games: Up (the jump), Up, Up, Left,
+  Up (11,2: "TO THE NORTH IS THE PASSENGER DOCK."), Right, Up (the harbour master), E, End, Enter, Enter; ours
+  `load=G,wait,tpseed=11111111,Up,wait,Up,wait,Up,wait,Left,wait,Up,wait,Right,wait,Up,wait,E,wait,End,wait,Enter,wait,Enter,wait,wait,F2`.
+  **MATCH**, 0 differences. `~/gbr/checks/data/20`. `diffcheck.sh` runs twenty: **DIFFCHECKS 20/20, ~33 s**.
 - **Deliberate-break test repeated** (the check script's list changed; scratch copies in /tmp, removed): SUBTRACT off
-  by one **caught** (checks 4 and 18, `17/19`, exit 1); ADD off by one over 200 **caught** (check 18, `18/19`, exit 1).
+  by one **caught** (checks 4, 18 and now 20, `17/20`, exit 1); ADD off by one over 200 **caught** (check 18, `19/20`,
+  exit 1).
+- **Found making check 20 (not in the check): the original's WHO WILL PAY? ignores Down** (the first take with Down
+  had THRENDER GRONE pay in the original, BAKSHI in ours); End moves the choice in both. Ours also takes the arrows
+  in WHO menus (`main.gd`, the "who" menu keys): an addition, on the board to design.
 - **Lab-only, not a game difference: a jump save leaves the original's square byte (0xC04F) stale.** From the first
   start (`mksave ... 7 12 S`, the jump straight onto the square before the door) the original asked about the door on
   the first step from 7,12, at 10:56, then opened it into 7,13; ours (and the original after a real step, start
