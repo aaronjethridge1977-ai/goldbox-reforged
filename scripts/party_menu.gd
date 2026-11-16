@@ -151,6 +151,8 @@ func _refresh() -> void:
 		"add":
 			for i in roster.size():
 				_scr.text(1, 2 + i, roster[i].name, GameScreen.WHITE if i == _cursor else GameScreen.CYAN)
+				_scr.list_line(2 + i, i)
+			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "ADD A CHARACTER:", MAGENTA)
 			_scr.menu_line(24, ["ADD", "EXIT"], 17, _pick)
 		"learn":
@@ -172,7 +174,9 @@ func _refresh() -> void:
 					_scr.text(1, row, CharacterSheet.LEVEL_WORDS[clampi(lv - 1, 0, CharacterSheet.LEVEL_WORDS.size() - 1)], MAGENTA)
 					row += 1
 				_scr.text(3, row, spells.names[_list[i]].to_upper(), GameScreen.WHITE if i == _cursor else GameScreen.GREEN)
+				_scr.list_line(row, i)
 				row += 1
+			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "CHOOSE SPELL:", MAGENTA)
 			_scr.menu_line(24, ["LEARN"], 14, 0)
 		_:

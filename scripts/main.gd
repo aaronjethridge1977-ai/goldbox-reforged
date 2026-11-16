@@ -3185,6 +3185,8 @@ func _draw_screen() -> void:
 	if who_label != "":
 		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	if who_label != "":
+		_screen.party_clickable(_party.size(), lit)   # Combat Chat 13, mouse step 2: a WHO list's lines (Up / Down)
 	if _battle_begins:   # over any row-24 note (Combat Chat 12: a load's GAME LOADED. hid it)
 		_screen.text(0, 24, "A BATTLE BEGINS...", GameScreen.GREEN)   # GAME.OVR 0xE448 (Combat)
 		_screen.update()

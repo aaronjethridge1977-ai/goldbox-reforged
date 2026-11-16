@@ -31,6 +31,13 @@ static var _tiles: Array[Image] = []
 var img: Image
 ## Mouse (MouseInput): each menu word drawn since the last clear(): [row, first col, last col, text, hot letter].
 var _menu_hits: Array = []
+## Mouse, step 2 (lists): the list lines a screen marked since the last clear() (row -> the line's
+## index), the line now chosen, and the keys that move the choice one line (Up / Down, or Home /
+## End where only those move it). A click on a line presses the key as many times as it takes;
+## a double click on the chosen line presses the first menu word's letter (BUY, TAKE, VIEW...).
+var _list_rows := {}
+var _list_chosen := -1
+var _list_keys: Array = [KEY_UP, KEY_DOWN]
 var _hover := Vector2i(-1, -1)   # the text cell under the pointer
 var _unlit: Image                 # the picture as drawn, before a hovered word was lit
 
@@ -73,6 +80,26 @@ static func glyph(c: int) -> int:
 func clear() -> void:
 	img.fill(EGA[0])
 	_menu_hits.clear()
+	_list_rows.clear()
+	_list_chosen = -1
+
+
+## Marks row `row` as line `index` of a list whose chosen line is `chosen` (mouse step 2).
+func list_line(row: int, index: int) -> void:
+	_list_rows[row] = index
+
+
+func list_chosen(chosen: int, up: Key = KEY_UP, down: Key = KEY_DOWN) -> void:
+	_list_chosen = chosen
+	_list_keys = [up, down]
+
+
+## The party list (draw_walk's rows 4-11) as a clickable list, for screens where Up / Down choose a
+## member (the shop's buyer, the treasure's taker).
+func party_clickable(party_size: int, chosen: int) -> void:
+	for i in mini(party_size, 8):
+		list_line(4 + i, i)
+	list_chosen(chosen)
 
 
 func text(col: int, row: int, s: String, color: int = WHITE) -> void:
@@ -261,6 +288,15 @@ func _show() -> void:
 	texture = ImageTexture.create_from_image(shown)
 
 
+## Row 24's first menu word (the one a double click on a list line chooses).
+func _first_menu_word() -> Array:
+	var best: Array = []
+	for h in _menu_hits:
+		if h[0] == 24 and (best.is_empty() or h[1] < best[1]):
+			best = h
+	return best
+
+
 func _hit_at(cell: Vector2i) -> Array:
 	for h in _menu_hits:
 		if cell.y == h[0] and cell.x >= h[1] and cell.x <= h[2]:
@@ -292,10 +328,25 @@ func _gui_input(event: InputEvent) -> void:
 		var b := event as InputEventMouseButton
 		match b.button_index:
 			MOUSE_BUTTON_LEFT:
-				var hit := _hit_at(_cell_at(b.position))
+				var cell := _cell_at(b.position)
+				var hit := _hit_at(cell)
 				if not hit.is_empty():
 					accept_event()
 					MouseInput.press_letter(hit[4])
+				elif _list_rows.has(cell.y) and _list_chosen >= 0:
+					accept_event()
+					var to: int = _list_rows[cell.y]
+					if to == _list_chosen:
+						if b.double_click:
+							var first := _first_menu_word()
+							if not first.is_empty():
+								MouseInput.press_letter(first[4])
+							else:
+								MouseInput.press(KEY_ENTER)      # a vertical menu: Enter takes the line
+					else:
+						var key: Key = _list_keys[1] if to > _list_chosen else _list_keys[0]
+						for n in absi(to - _list_chosen):
+							MouseInput.press(key)
 			MOUSE_BUTTON_RIGHT:
 				accept_event()
 				MouseInput.press(KEY_ESCAPE)

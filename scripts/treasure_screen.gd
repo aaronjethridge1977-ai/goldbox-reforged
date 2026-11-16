@@ -144,6 +144,9 @@ func _draw_mode() -> void:
 				var lit := _mode == "coins" and i == _cursor
 				_scr.text(2, 2 + i, "%s %d" % [MONEY_LABELS[c], _spoils.money[c]],
 					GameScreen.WHITE if lit else GameScreen.GREEN)
+				_scr.list_line(2 + i, i)
+			if _mode == "coins":
+				_scr.list_chosen(_cursor)
 			if _mode == "coins":
 				_scr.text(0, 24, "SELECT TYPE OF COIN", 13)
 				_scr.menu_line(24, ["EXIT"], 20, 0)
@@ -163,6 +166,8 @@ func _draw_mode() -> void:
 				var it := _spoils.items[k]
 				var name := (it.name if it.name != "" else "ITEM").to_upper()
 				_scr.text(1, 4 + i, name.left(38), GameScreen.WHITE if k == _cursor else GameScreen.GREEN)
+				_scr.list_line(4 + i, k)
+			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "ITEMS:", 13)
 			_scr.menu_line(24, LIST_MENU, 7, _pick)
 			_scr.update()
@@ -170,6 +175,8 @@ func _draw_mode() -> void:
 
 func _walk(menu: Array, lines: PackedStringArray, label: String = "") -> void:
 	_scr.draw_walk(picture, _party, _who, "", lines, [], false, false, 0)
+	if _mode in ["menu", "take"]:
+		_scr.party_clickable(_party.size(), _who)
 	if label != "":
 		_scr.text(0, 24, label, 13)
 		_scr.menu_line(24, menu, label.length() + 1, _pick)

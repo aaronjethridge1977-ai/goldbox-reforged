@@ -381,6 +381,9 @@ func _draw_items(m: PartyMember, cursor_lit: bool) -> void:
 		_t(2, 5 + i, "YES" if it.readied else "NO", color)
 		var mark := "* " if detect and it.detect_magic_marks() else ""
 		_t(7, 5 + i, mark + item_label(it).to_upper(), color)
+		_scr.list_line(5 + i, i)
+	if cursor_lit:
+		_scr.list_chosen(_cursor, KEY_HOME, KEY_END)      # mouse step 2: a click picks the line
 
 
 func _spell_rows(m: PartyMember) -> Array:
@@ -785,7 +788,9 @@ func _draw_scroll(m: PartyMember) -> void:
 			row += 1
 			last = lv
 		_t(3, row, spells.name_of(ids[i]).to_upper(), GameScreen.WHITE if i == _scroll_cursor else GameScreen.GREEN)
+		_scr.list_line(row, i)
 		row += 1
+	_scr.list_chosen(_scroll_cursor, KEY_HOME, KEY_END)
 	_t(0, 24, "CHOOSE SPELL:", MAGENTA)
 	_menu(["CAST", "EXIT"], 14)
 

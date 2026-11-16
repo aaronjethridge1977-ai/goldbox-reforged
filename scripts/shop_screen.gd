@@ -126,6 +126,8 @@ func _refresh() -> void:
 			lines.append_array(GameScreen.wrap(l, 38))
 	_scr.draw_walk(OverlayLook.last_view, _party, _buyer, "", lines, menu,
 		false, false, _pick)
+	if _mode == "menu":
+		_scr.party_clickable(_party.size(), _buyer)
 	if _mode == "ask_leave":
 		TreasureScreen.draw_ask(_scr, "AS YOU LEAVE THE SHOPKEEPER SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE.\"",
 			"DO YOU WANT TO GO BACK AND GET YOUR MONEY?")
@@ -159,6 +161,9 @@ func _draw_coins() -> void:
 		var lit := _mode == "coins" and i == _coin
 		_scr.text(2, 2 + i, "%s %d" % [TreasureScreen.MONEY_LABELS[c], pile[c]],
 			GameScreen.WHITE if lit else GameScreen.GREEN)
+		_scr.list_line(2 + i, i)
+	if _mode == "coins":
+		_scr.list_chosen(_coin)
 	if _mode == "coins":
 		_scr.text(0, 24, "SELECT TYPE OF COIN", 13)
 		_scr.menu_line(24, ["EXIT"], 20, 0)
@@ -209,6 +214,8 @@ func _draw_list() -> void:
 		_scr.text(1, 4 + i, it.name.to_upper().left(26), color)
 		var price := str(it.price)
 		_scr.text(31 - price.length(), 4 + i, price, color)
+		_scr.list_line(4 + i, k)
+	_scr.list_chosen(_cursor)
 	if _flash != "":
 		_scr.text(0, 24, _flash, GameScreen.GREEN if _flash_green else GameScreen.YELLOW)
 	else:

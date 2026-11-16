@@ -222,6 +222,8 @@ func _draw() -> void:
 			var s: String = _items[i]
 			g.text(12, 7 + i * 2, s.substr(0, 1), GameScreen.WHITE)
 			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _sel else GameScreen.GREEN)
+			g.list_line(7 + i * 2, i)
+		g.list_chosen(_sel)
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
 		g.text(2, 21, "PLAYS HERE.", GameScreen.CYAN)
 	elif _stage == "settings":
@@ -233,6 +235,8 @@ func _draw() -> void:
 			var s: String = items[i]
 			g.text(12, 7 + i * 2, s.substr(0, 1), GameScreen.WHITE)
 			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _about_sel else GameScreen.GREEN)
+			g.list_line(7 + i * 2, i)
+		g.list_chosen(_about_sel)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -478,6 +482,8 @@ func _draw_settings(g: GameScreen) -> void:
 		g.text(4, top + i, label.substr(0, 1), GameScreen.WHITE)
 		g.text(5, top + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
 		g.text(24, top + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
+		g.list_line(top + i, i)
+	g.list_chosen(_set_sel)
 	if not sets.is_empty():
 		_box(g, FeatureText.box_lines(sets[_set_sel], true))
 	g.menu_line(24, FeatureText.menu("settings"))
@@ -516,6 +522,8 @@ func _draw_features(g: GameScreen) -> void:
 	var first := _feat_sel / FEATURES_PER_PAGE * FEATURES_PER_PAGE
 	for i in range(first, mini(first + FEATURES_PER_PAGE, fs.size())):
 		g.text(4, 4 + i - first, String(fs[i].name), GameScreen.WHITE if i == _feat_sel else GameScreen.GREEN)
+		g.list_line(4 + i - first, i)
+	g.list_chosen(_feat_sel)
 	if not fs.is_empty():
 		_box(g, FeatureText.box_lines(fs[_feat_sel], false))
 	g.menu_line(24, _features_menu())
