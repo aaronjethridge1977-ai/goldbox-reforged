@@ -36,6 +36,7 @@ class Player:
         self.in_fight = False
         self.slot_sent = False
         self.shared = False
+        self.take = {}            # Player 10: the TAKE policy's state (plans.py `_take`)
         self.same, self.last_sig = 0, None
         self.goal_key = 0
         self.prev_kind = None
@@ -70,8 +71,17 @@ class Player:
         self.log("NOTE", kind, text)
 
     # -- state --------------------------------------------------------------------------------------------
+    def on_band(self):
+        """Player 10: on a wilderness band the view DS:0x49FA is 2-4 (6:25, 7:26, 8:27; 1 in a 3D area)."""
+        return self.g.mem.u8(0x49FA) in (2, 3, 4)
+
     def where(self):
         x, y, f = self.g.mem.ds(0x6AAD, 3)
+        if self.on_band():
+            # Player 10 (lab, p1d/exit on 7:26): the band's square is ECL 0x49C3/0x49C4 (ours' OVERLAND_X/Y), x
+            # counted from the band's left edge (the screen shows x + 13 on 7:26: 12,27 -> "25,27"); the 3D
+            # square stays put, the facing DS:0x6AAF follows the last arrow.
+            x, y = self.g.mem.ecl(0x49C3, 2)
         return x, y, "NESW"[(f // 2) & 3]
 
     def area(self):
@@ -126,6 +136,11 @@ class Player:
                 self.fights += 1
                 self.in_fight = True
                 self.note("fight", "fight %d begins at %d,%d %s (seed %08x)" % ((self.fights,) + self.where() + (self.g.mem.seed(),)))
+        elif scr["kind"] == "continue" and not self.in_fight and self.prev_kind != "continue":
+            # Player 10: with every member already on QUICK the original shows no combat menu at all (the
+            # goblins' second to fourth fights, p10f1): the fight is seen only at its CONTINUE BATTLE.
+            self.fights += 1
+            self.note("fight", "fight %d ended at %d,%d %s, all on QUICK (no menu seen)" % ((self.fights,) + self.where()))
         if scr["kind"] in ("walking", "treasure", "continue"):   # Player 2: waves fought back to back
             self.in_fight = False
             if not self.g.party_size and scr["kind"] == "walking":

@@ -22,6 +22,7 @@
 """
 import os, re, sys
 import orig
+import loot, screens
 
 sys.path.insert(0, orig.LAB)
 import route as R   # noqa: E402  (the lab's map reader)
@@ -45,6 +46,8 @@ class Walk:
         a = p.area()
         if a != self.area and a not in self.aliases:
             raise_stop(p, "walk: in area %d:%d, not %d:%d" % (a + self.area))
+        if p.on_band():
+            return self.band_step(p, x, y)
         R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
         avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
         path = R.route((x, y), {(self.x, self.y)}, avoid)
@@ -53,6 +56,29 @@ class Walk:
         nx, ny = path[1]
         want = {(0, -1): "N", (1, 0): "E", (0, 1): "S", (-1, 0): "W"}[(nx - x, ny - y)]
         return False, turn(f, want), "walk to %d,%d via %d,%d" % (self.x, self.y, nx, ny)
+
+
+    def band_step(self, p, x, y):
+        """Player 10: on a wilderness band each arrow moves the party that way (no turning), and the original
+        refuses squares it can't enter (water, a ridge) by leaving the party where it stands. No map of the band
+        in the tools yet: the longer axis first, the other when a step was refused; stop when both are."""
+        if getattr(self, "_last", None) == (x, y):
+            self._refused.add(self._dir)
+        else:
+            self._refused = set()
+        dx, dy = self.x - x, self.y - y
+        order = [("E" if dx > 0 else "W", abs(dx)), ("S" if dy > 0 else "N", abs(dy))]
+        order.sort(key=lambda t: -t[1])
+        for d, n in order:
+            if n and d not in self._refused:
+                self._last, self._dir = (x, y), d
+                return False, band_key(d), "band walk to %d,%d: %s from %d,%d" % (self.x, self.y, d, x, y)
+        raise_stop(p, "band walk: stuck at %d,%d on the way to %d,%d (refused %s)" % (
+            x, y, self.x, self.y, "".join(sorted(self._refused))))
+
+
+def band_key(want):
+    return {"N": "up", "E": "right", "S": "down", "W": "left"}[want]
 
 
 def turn(f, want):
@@ -82,8 +108,8 @@ class Step:
             return True, None, ""
         if self.sent is not None and p.g.nkeys > self.sent:
             return True, None, ""
-        k = turn(f, self.d)
-        if k == "up":
+        k = band_key(self.d) if p.on_band() else turn(f, self.d)
+        if k == "up" or p.on_band():
             self.sent = p.g.nkeys + 1
         return False, k, "step %s from %d,%d" % (self.d, x, y)
 
@@ -195,13 +221,25 @@ class Plan:
                 return k, why
         if kind == "camp" or kind == "saveslot":
             return p.save_step(scr)
+        taking = self.defaults.get("treasure") == "take"
+        if taking and kind == "hmenu" and scr["bottom"].split()[0] in ("TAKE:", "ITEMS:"):
+            return self._take(scr, st, p)
         if kind == "treasure":
             if self.defaults.get("treasure") == "stop":     # Player 4: lab probes (`default treasure stop`)
                 raise_stop(p, "treasure: stop asked by the plan")
             if not p.shared and "SHARE" in scr["bottom"].split():
                 p.shared = True
                 return "s", "treasure: SHARE the coins"
-            return "e", "treasure: EXIT (items left: the pilot takes coins only)"
+            pk = taking and "TAKE" in scr["bottom"].split() and not p.take.get("done") and self._pick(p)
+            if pk:
+                # Player 10 (lab): End / Home here select the next / previous member (DS:0x5D92) too; with no
+                # coins left T goes straight to the ITEMS list (no TAKE: MONEY ITEMS EXIT menu).
+                sel = loot.selected(p.g.mem)
+                if sel != pk[1]:
+                    return ("end" if sel is None or pk[1] > sel else "home"), "treasure: select member %d" % (pk[1] + 1)
+                return "t", "treasure: TAKE (%s for member %d)" % (pk[2]["name"], pk[1] + 1)
+            p.take = {}
+            return "e", "treasure: EXIT" + ("" if taking else " (items left: the pilot takes coins only)")
         if kind != "treasure" and kind != "yesno":
             p.shared = False
         if kind == "yesno" and "CLAIM YOUR TREASURE" in scr["text"] + scr["bottom"]:
@@ -239,6 +277,58 @@ class Plan:
         if kind in self.defaults:
             return self.defaults[kind], "default for %s" % kind
         return None, ""
+
+    # -- Player 10: TAKE (`default treasure take`; loot.py) ------------------------------------------------
+    def _pick(self, p):
+        """(loot index, member index, item) of the first item worth taking (main's bot's rule), handed round the
+        party in turn from p.take["turn"], skipping members with 16 items, at 0 HP, or already refused it."""
+        t = p.take
+        L, P = loot.loot(p.g.mem), loot.party(p.g.mem)
+        for i, it in enumerate(L):
+            if not loot.worth_taking(it):
+                continue
+            sig = (it["name"], it["type"], it["plus"], it["price"], it["weight"])
+            for k in range(len(P)):
+                j = (t.get("turn", 0) + k) % len(P)
+                if P[j][2] < loot.LIMIT and P[j][3] > 0 and (sig, j) not in t.setdefault("refused", set()):
+                    return i, j, it, sig
+        return None
+
+    def _take(self, scr, st, p):
+        t, mem = p.take, p.g.mem
+        menu = scr["bottom"].split()[0]
+        if menu == "ITEMS:" and t.get("pending"):
+            n, sig, j = t.pop("pending")
+            if len(loot.loot(mem)) == n:
+                t.setdefault("refused", set()).add((sig, j))
+                p.note("take", "refused: %s to member %d (full or overloaded)" % (sig[0], j + 1))
+            else:
+                t["turn"] = j + 1
+                p.note("take", "%s took %s (+%d, %d gp, weight %d)" % (
+                    loot.party(mem)[j][1], sig[0], sig[2], sig[3], sig[4]))
+        pk = self._pick(p)
+        sel = loot.selected(mem)
+        if pk is None:
+            t["done"] = True
+            return "e", "take: nothing more worth taking"
+        i, j, it, sig = pk
+        if menu == "TAKE:":
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "take: select member %d for %s" % (j + 1, it["name"])
+            return "i", "take: ITEMS (%s for member %d)" % (it["name"], j + 1)
+        if sel != j:
+            return "e", "take: back to select member %d" % (j + 1)
+        n = len(loot.loot(mem))
+        if n > 18:
+            raise_stop(p, "take: a loot list of %d items (longer than the screen: scrolling not yet seen)" % n)
+        lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
+        if len(lit) != 1:
+            raise_stop(p, "take: no single lit item on the ITEMS list (rows %s)" % lit)
+        hl = lit[0] - 4
+        if hl == i:
+            t["pending"] = (n, sig, j)
+            return "t", "take: %s (%d gp, weight %d) for member %d" % (it["name"], it["price"], it["weight"], j + 1)
+        return ("end" if i > hl else "home"), "take: light to %s (row %d)" % (it["name"], i + 4)
 
     def choose(self, scr, choice):
         kind = scr["kind"]

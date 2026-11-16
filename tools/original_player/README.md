@@ -509,3 +509,54 @@ loses CEDRIC on both seeds there. To Combat (not gate: both games win).
 
 Lab: `p9/p9bot.sh`, `p9/oursrate.sh sk <seeds>`, `p9/ring/`, `p9/rate.log`, `p9/queue1-4.log`. A boot timeout at the
 title (`p9_sk3T`) was rerun as `p9_sk3Tb`.
+
+## Player 10 (2026-11-16): reruns on Combat Chat 10, showcase item 6, TAKE and the bands
+
+**Reruns on Combat Chat 10's 0d4be44** (`SEGX="--ours-key=2:quickall --ours-key=2:fightend --ours-key=2:tplog"
+p7/rerun1.sh`; rates `p9/oursrate.sh sk`, `p8/oursrate.sh pd`, seeds 12345678 2468ace1 13579bdf 0badf00d):
+
+| fight | draw for draw | ours (4 seeds) against the original (same 4) |
+|---|---|---|
+| 4:21 2,11 Sokal Keep (`p9_sk3Tb`, `p9_sk4T`) | **both to the end** (1002, 1119; every cell) | **won 4 of 4, 3 deathless; 0badf00d ELWEN and DORN dead: the original's result seed for seed** |
+| 4:2 3,11 (`p8_pd1T`, `p8_pd2T`) | seed 1 **to the end** (4839, every cell); seed 2 to 2506 of 3620 (GRISHNAK's to-hit at 2507: Combat's open item) | **won 3 of 4, every win with deaths, member for member as the original** (BRAM, DORN / BRAM, CEDRIC / ARN, BRAM, ELWEN, LIRA; 0badf00d lost) |
+| 2:20 0,14 (`p8_kt2T`) | **draws identical to the end** (2556); positions of 3 figures differ in the record (below) | (not rated: both won before) |
+
+`p8_kt2T`'s positions: figures 8, 9 and 11 in the original's record step back and forth (27,11 26,11 27,11 26,11 25,10
+...), ours' go straight (27,11 26,11 25,10 ...), ending on the same cells; the draws are identical, so it's likely how
+the original's trace records a move (figure redrawn on its old cell), not a rule. To Combat as a note, not gate. The
+"end differs: ours ASKED CONTINUE BATTLE" line in every cmpdraws output is the replay's `fightend` key, as before.
+
+**Showcase item 6** (`.lab/showcase/player/`, README.txt there): the Player driving the original (Podol Plaza's goblins,
+379 s, lossless 640x400, recorded from the save's load: no title screens), its own log as a terminal at the same
+pace, and a morning summary. Lab `p10/film.sh` (a Player run filmed), `p10/logtty.py`, `p10/termvid.py` (main's).
+**Fight count fixed:** with every member already on QUICK the original shows no combat menu, so the count missed
+those fights (the goblins: 1 of 4); a fight is now also counted at a CONTINUE BATTLE with no menu seen.
+
+**TAKE in the original** (lab, p10t2-p10t5, Podol Plaza's goblin treasure, c24f's party; `loot.py`):
+- The loot: the far pointer **DS:0x6810** to a list of 63-byte item records (next at +42; ours' `game_item.gd`
+  layout), in the ITEMS screen's order. The name is a display cache without the plus (a Long Sword +1 shows as
+  LONG SWORD; +50 holds the 1, the price 2000). A member's items: the far pointer at **record +0xC8** (+0xCC, +0xD0,
+  +0xD4 look like the readied weapon, shield and armour).
+- **Who takes: the selected member, the far pointer DS:0x5D92.** End / Home on the treasure menu (VIEW TAKE POOL
+  ... EXIT) and on TAKE: MONEY ITEMS EXIT select the next / previous member (Player 4 judged by the screen's light,
+  which doesn't show it). With coins left T opens TAKE: MONEY ITEMS EXIT; with none, T goes straight to the list.
+- On the list (`LOOT`, row 1; items from row 4, the lit one white; `ITEMS: TAKE EXIT`): T gives the lit item to the
+  selected member (appended to their list); the light stays on its row (the next item); End / Home move it and
+  wrap. **A 17th item, or one over the load, is refused with the screen unchanged** (no message seen, game speed 0).
+  Not yet seen: a list longer than the screen (the policy stops there).
+- **Policy** `default treasure take` (plans.py): SHARE the coins, then main's bot's rule (`_worth_taking`: magic,
+  quest types 74/75/82/91, the loot words, or plain gear priced 20+ and weighing 400 or less), handed round the party
+  in turn, skipping a member with 16 items, at 0 HP, or who was refused that item. p10t5: 13 items taken (the Mace left: 3 gp), 9 refusals
+  passed on (ARN and LIRA were over their load), then EXIT, the plan to its end.
+
+**The wilderness bands** (lab, p1d/exit on 7:26; `p10/wild.py`): the view **DS:0x49FA = 2-4** on the bands (6:25,
+7:26, 8:27; 1 in a 3D area); the band's square is **ECL 0x49C3 / 0x49C4** (ours' OVERLAND_X/Y), x from the band's
+left edge (7:26 shows x + 13 on screen: 12,27 -> "25,27"); the 3D square stays put, the facing DS:0x6AAF follows the
+last arrow; each arrow moves that way, no turning; a square it can't enter leaves the party where it stands.
+`player.py where()` reads the band's square there, `step` sends the arrow, and `walk x,y` on a band goes the longer
+axis first and the other when a step is refused (no band map in the tools yet), stopping when both are. p10b1
+(walks and a checkpoint saved on the band) and p10b2 (11,26 refused, around by 12,27; 12,26 is the city's north edge
+menu: a plan answer).
+
+Lab: `p10/` (film.sh, logtty.py, termvid.py, findlists.py, memitems.py, selptr.py, wild.py, band*.plan,
+gob_take*.plan, rates.sh), logs `p10*`.
