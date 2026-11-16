@@ -173,6 +173,12 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 31:** `--seed=<n>` seeds every generator of ours (the script's dice too), and the gate's `diffcheck.sh` runs
+ours with `--seed=1` (check 4's 1-in-5 failure was an unseeded script draw). `data/c31/one4.sh <src> <out>` plays check
+4 alone keeping its log (`EXTRA=--seed=<n>`); `data/c31/ten.sh <src>` runs ten full diffchecks two at a time. In the
+original's lists `pl.py do End` moves the cursor down, `Home` up. Lab slot J was used for the poison test and
+restored from `data/c31/slotJ_backup`.
+
 **Chat 30:** a check's key list holds its `wait`s, and how many a scene needs depends on the code (chat 26's DELAY
 fix made 5:7's closing scene ~150 waits long): chat 29's driver took chat 25's lists and check 5 "failed" on every
 commit. Checks now come from chat 26's lists: in the lab `data/c30/run1.sh <n> <area> <abs dir>` (`data/c29/run1.sh`

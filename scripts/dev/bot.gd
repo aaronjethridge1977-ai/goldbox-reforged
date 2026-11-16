@@ -199,13 +199,35 @@ func _issue(t: String) -> void:
 
 ## A full run's dead (or stoned, or gone) member, by name; "" if none, or in a coverage run (it
 ## restores the party by shortcut instead).
+## Chat 31 (Jeremy, poison question (b)): a member dead of poison (effect 0x37) is first given
+## Slow Poison by a cleric who has it memorized (`_slow_poison`); only one nobody can stand up
+## counts. Drained or killed outright is still a death.
 func _died() -> String:
 	if _cover_area != "" or main._party.is_empty():
 		return ""
+	_slow_poison()
 	for m in main._party:
 		if m.status >= PartyMember.STATUS_DEAD:
 			return m.name
 	return ""
+
+
+## Chat 31 (Jeremy, poison question (b), 2026-11-15): the death rule is there to keep constitution
+## (Raise Dead and Resurrection cost it); the poison cure costs none (checked in DOSBox: Slow Poison,
+## then New Phlan's NEUTRALIZE POISON: CON 16 before and after, HP 1, OKAY). So, as a player does,
+## a member dead of poison gets Slow Poison (back up at 1 HP, as GAME.OVR 0x28873) from any
+## cleric who has it memorized, and the next temple visit buys NEUTRALIZE POISON.
+func _slow_poison() -> void:
+	var table := SpellTable.shared(main._game_path)
+	for m in main._party:
+		if m.status != PartyMember.STATUS_DEAD or not m.has_affect(SpellCaster.POISONED):
+			continue
+		for caster in main._party:
+			if caster.status == PartyMember.STATUS_OKAY and caster.memorized.has(SpellCaster.SLOW_POISON):
+				var said := SpellCaster.cast_outside(table, caster, SpellCaster.SLOW_POISON, main._party, m, _rng)
+				_count("slow poison")
+				print("   poison: %s" % " / ".join(said))
+				break
 
 
 func _wiped() -> bool:
@@ -2767,6 +2789,9 @@ func _learning() -> bool:
 func _pick_spells() -> bool:
 	var table := SpellTable.shared(main._game_path)
 	var any := false
+	# Chat 31 (poison question (b)): one Slow Poison kept in the party, in the first level-2 cleric slot free.
+	var slow: bool = main._party.any(func(o): return o.memorized.has(SpellCaster.SLOW_POISON) \
+			or o.memorized.has(SpellCaster.SLOW_POISON + PartyMember.LEARNING))
 	for m in main._party:
 		if m.status != PartyMember.STATUS_OKAY:
 			continue
@@ -2774,6 +2799,11 @@ func _pick_spells() -> bool:
 			for lvl in range(1, 4):
 				var n: int = m.slots_left(table, c, lvl)
 				var picks: Array = PICKS[c][lvl - 1].filter(func(id): return m.knows(id))
+				if not slow and c == 0 and lvl == 2 and n > 0 and m.knows(SpellCaster.SLOW_POISON):
+					m.memorized.append(SpellCaster.SLOW_POISON + PartyMember.LEARNING)
+					slow = true
+					n -= 1
+					any = true
 				var k := 0
 				while n > 0 and not picks.is_empty():
 					m.memorized.append(int(picks[k % picks.size()]) + PartyMember.LEARNING)
@@ -2934,11 +2964,11 @@ func _temple_needed() -> bool:
 ## The cures the bot buys: Raise Dead only on a "temple ... raise" trip or in a coverage run.
 func _temple_list() -> Array:
 	if _raise_ok or _cover_area != "":
-		return ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE"]
-	return ["STONE TO FLESH", "CURE DISEASE"]
+		return ["RAISE DEAD", "STONE TO FLESH", "CURE DISEASE", "NEUTRALIZE POISON"]
+	return ["STONE TO FLESH", "CURE DISEASE", "NEUTRALIZE POISON"]
 
 
-## At an open temple: Raise Dead, Stone to Flesh and Cure Disease for whoever needs them,
+## At an open temple: Raise Dead, Stone to Flesh, Cure Disease and (chat 31) Neutralize Poison for whoever needs them,
 ## pooling the party's money with them first.
 func _temple_cures() -> void:
 	var t: TempleScreen = main._temple

@@ -172,6 +172,30 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 31: check 4's flake, the finale's vote, the poison cure
+
+- **Check 4 failed about 1 run in 5** (THRENDER GRONE coins 4: original 0, ours 2): not load or timing. 2:9 7,11 rolls
+  between the bugbear's toll (the original's end save) and "THEY ARE IMPOSTERS!" (then SURRENDER: 4,14, nothing paid).
+  Ours' script dice came from the clock: `--seed=` seeded only Godot's global generator. Now `--seed=<n>` seeds every
+  generator (the script's dice, the screens', the doors, the global one, as the bot's `_seed_all`), and
+  `~/gbr/checks/diffcheck.sh` runs ours with `--seed=1`. Seed 7 gives the impostors three times in three, seed 1 the
+  toll three in three (lab `data/c31/one4.sh`); **10 full diffcheck runs, two at a time (8 Godot jobs): 10/10 each**
+  (`data/c31/ten.log`). Checks 3, 5 and 10 switch to the original's dice (`tpseed=`) in their key lists as before. For a
+  check whose path hangs on a script draw, seed 1 is simply one that takes the original's branch (not the original's
+  own dice); a future check with such a draw either matches on seed 1 or gets `tpseed=` with the original's seed.
+- **The finale's vote** (Player 5): 5:7's script asks only members whose control byte (0x6BB8) is under 128 (0xA72D);
+  in the record it is byte **0xB8** (DIRTEN 150 = 128 + morale 44 / 2; player characters 0; in a monster record the
+  same byte is the experience value). Ours didn't read it from an original's save, so DIRTEN voted. From c27a's save
+  ours now asks ARN..DORN only (lab `data/c31/vote.sh`, before: DIRTEN seventh).
+- **Poison (Jeremy, (b))**: checked in DOSBox (slot G's party, THRENDER dead with effect 0x37, New Phlan's temple
+  at 3:0 2,12): Slow Poison from BROTHER SEAN in camp: "IS AFFECTED", "GETS BACK UP", HP 1, OKAY, **CON 16**; the
+  temple's NEUTRALIZE POISON (1000 gold): "IS CURED.", **CON 16**, and the original's own save after it has CON 16,
+  status 0, HP 1 and no 0x37 or 0x16 (lab `data/c31/slotJ_cured`). Neither costs constitution. The bot keeps one
+  Slow Poison memorized (the first free level-2 cleric slot), casts it on a member dead of poison before it counts a
+  death, and buys NEUTRALIZE POISON at a temple.
+- In the original's lists (temple cures, spell targets) **End moves the cursor down and Home up**; Up and Down don't
+  (lab note for `pl.py`).
+
 ## Chat 30: check 5 was the driver's, 10 of 10; c29b's three new shortcuts
 
 - **Check 5 never regressed in the code.** Chat 26's matched commit cc5a14d fails the same way (8 differences) under chat
