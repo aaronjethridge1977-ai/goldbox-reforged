@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 41: check 22 (the save files), DIFFCHECKS 22/22
+## Chat 41: checks 22 (the save files) and 23 (5:4 the records building), DIFFCHECKS 23/23
 
 Player 12's request (Lead's item 1): ours' save writer left 0-byte `CHRDAT<x><n>.ITM` / `.SPC` files for a member with
 no items / no standing effects; the original loads a 0-byte .ITM as one garbage readied item (THAC0 148, ENCUMBRANCE
@@ -198,6 +198,23 @@ no items / no standing effects; the original loads a 0-byte .ITM as one garbage 
   ADD off by one over 200 caught (check 18: 21/22).
 - `tools/check_save_files.gd <game folder> <slot> <scratch>`: the same rule without either game (loads a slot,
   empties member 1, saves over stale files, checks the files): PASS on the fix, 2 FAILs on the old writer.
+- **Check 23, 5:4 (Valjevo Castle, north side): the records building** (event 8, entered at 15,9 facing S): "YOU ARE
+  IN A BUILDING FULL OF RECORDS. DO YOU WISH TO SPEND HOURS READING THE RECORDS?" YES; with no alarm (0x4A64 = 0) and
+  the hour 17 or less, each round draws RANDOM 19 (under 3: a scribe walks in); seed 11111111 gives none: "...RED
+  WIZARDS OF THAY ARE ALLIED TO TYRANTHRAXUS" (0x4A68 = 1), the pattern of his activities (two texts, 0x4A68 = 2),
+  "TO FIND ANYTHING MORE YOU WILL HAVE TO SPEND SO MUCH TIME...". No fight; the steps roll no patrol while 0x4A64 = 0
+  (0x995D returns "less" and the step skips the RANDOM). **Start:** not a jump (chat 40: the original dropped to DOS
+  on 5:3's jump): c27a's own checkpoint `data/c29/fx/c27a_5-4_giant` (written by ours' bot, loaded by the original
+  since Player 5), at 13,12 E, slot I -> G, its 0-byte .SPC files left out (the writer's old bug). Route (route.py,
+  avoiding events): Left, Up x4 (13,8), Right, Up, Up (15,8), Right, Up (15,9 S). Keys, the original `wait=2` first;
+  ours `load=G,wait,tpseed=11111111,Left,wait,Up,wait,Up,wait,Up,wait,Up,wait,Right,wait,Up,wait,Up,wait,Right,wait,
+  Up,wait,Y,wait,Enter,wait,Enter,wait,Enter,wait,wait,F2`. **MATCH**, 0 differences (both at 15,9 S 13:33, 0x4A68
+  = 2). Lab `data/c35/chk23/` (`SEED=11111111 mkcheck35.sh 23 5-4 ...`), sealed as `~/gbr/checks/data/23`.
+- **`diffcheck.sh`: every check now clears slots F and G in its game copy before its start** (was only check 22):
+  the shared copy's own G files filled a start's gaps (check 23's members with no .SPC got the copy's). All 23 MATCH
+  after it; the break test repeated on 23: SUBTRACT caught (4, 18, 20, 21: 19/23), ADD over 200 caught (18: 22/23).
+- Areas no check visits now: 5:3, 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27. For the castle's other parts, start from an
+  original-loadable save already inside (c27a's checkpoints; the Player's) rather than a jump.
 - Seen, not changed: a dwarf whose .SPC is missing loads in ours with its racial effect (0x7C) back (`from_bytes`
   adds the race's effects), where the original would have none. Only a hand-edited save gets there (every original
   save of a demihuman carries the .SPC), so it is noted, not matched.
