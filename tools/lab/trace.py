@@ -137,8 +137,9 @@ def holddump(r, base):
     print("HOLD at draw %d: last dir %d fails %d 443e %d" % (r.count + 8, g[0], g[1], g[2]), flush=True)
     # The occupancy grid (DS:0x60DB + y * 50 + x: the figure standing there, 1-based) near
     # the party: rows 8-17, columns 22-35.
-    for y in range(8, 18):
-        row = rd(ds + 0x60DB + y * 0x32 + 22, 14)
+    full_grid = os.environ.get("HOLDFULL")   # HOLDFULL=1: the whole 50 x 25 grid too (Combat Chat 7)
+    for y in (range(25) if full_grid else range(8, 18)):
+        row = rd(ds + 0x60DB + y * 0x32 + (0 if full_grid else 22), 50 if full_grid else 14)
         print("HOLD grid %2d %s" % (y, " ".join("%2d" % b if b else " ." for b in row)), flush=True)
     recs = {}
     for i in range(1, NPOS):
@@ -165,6 +166,17 @@ def holddump(r, base):
             fx.append("%02x:%d/%d" % (node[0], struct.unpack_from("<H", node, 1)[0], node[3]))
             lo, ls = struct.unpack_from("<HH", node, 5)
         print("HOLD %2d effects %s" % (i, " ".join(fx) or "-"), flush=True)
+        if os.environ.get("HOLDITEMS"):
+            # HOLDITEMS=1 (Combat Chat 7): its items, the list at record +0xC8 (far pointer), 0x3F-byte
+            # records: name, +0x2E type, +0x32 plus, +0x34 readied, +0x39 count, +0x3A price, next +0x2A.
+            its = []
+            lo, ls = struct.unpack("<HH", rd(rec + 0xC8, 4))
+            while ls and len(its) < 40:
+                it = rd(base + ls * 16 + lo, 0x3F)
+                its.append("%s/t%d/n%d/p%d/r%d" % (it[1:1 + min(it[0], 40)].decode("latin1"), it[0x2E], it[0x39],
+                           struct.unpack_from("<H", it, 0x3A)[0], it[0x34]))
+                lo, ls = struct.unpack_from("<HH", it, 0x2A)
+            print("HOLD %2d items %s" % (i, " | ".join(its) or "-"), flush=True)
     # The combat map's ground icons (far pointer DS:0x6716, +7 + y * 50 + x; 0x1F: a fallen
     # figure lies there) and the fallen list (DS:0x66D6, 7 bytes each, count DS:0x6715: the
     # figure, x, y, the icon it covered), Combat Chat 1.

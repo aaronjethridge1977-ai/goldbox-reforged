@@ -49,6 +49,8 @@ static func gather(defeated: Array, script_money: Array, script_items: Array[Gam
 			s.money[i] += pm.money[i]
 		if not monster_items:
 			continue
+		if OS.has_environment("APDBG"):
+			print("   spoils: %s status %d hp %d items %s" % [pm.name, pm.status, pm.hp, ", ".join(pm.items.map(func(x): return "%s/%d/n%d/r%d" % [x.name, x.price, x.count, 1 if x.readied else 0]))])
 		for it in pm.items:
 			if it.price == 0 and (kept >= 8 or _d10() > 3):
 				continue

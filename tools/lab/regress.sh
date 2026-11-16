@@ -36,7 +36,7 @@ done
 # Past the early game (side chat 5): monster powers and casters, one fight each.
 run orig_I_basilisk 1 env KW=8 ./cmpfight2.sh I 11111111 up,up enter,wait=8,c $WHAT
 run orig_C_kobolds 1 env KW=8 ./cmpfight2.sh C 11111111 up up $WHAT   # matches to the end since Combat Chat 1
-run orig_C_kobolds22 1 env KW=8 ./cmpfight2.sh C 22222222 up up $WHAT   # the net trap on a second seed (Combat Chat 1: checks the sort list fitted on the first)
+run orig_C_kobolds22 1 env KW=8 OURS_SEED=1 ./cmpfight2.sh C 22222222 up up $WHAT   # the net trap on a second seed (Combat Chat 1: checks the sort list fitted on the first)
 run orig_D_ogrechief 1 env KW=4 ./cmpfight2.sh D 11111111 up up,enter,enter $WHAT   # check 3: 4:2 the ogre chief, 15863 draws (~10 min in the original)
 # Differential checks 5 and 10's fights with main's start recipe (chat 23: each member's weapon +10, `strong`):
 # save B = `mksave.py J B 5 7 3 7 S strong wplus1=10 ... wplus6=10` (5:7's guards, 9284 draws, the party wins);
@@ -60,5 +60,6 @@ fi
 [ $WHAT = ours ] && run orig_B_tyranthraxus 1 env GTIME=900 ./cmpfight3.sh B 11111111 up up,enter,enter,c,quickall,magic,fightend,n,wait,wait,wait,enter,wait,wait,e,wait,wait,n,wait,wait,enter,wait,enter,wait $WHAT 22222222 a,wait,a,wait,a,wait,a,wait,a,wait,a,wait,wait
 run orig_A_spectre 1 bash -c "./savein.sh spectre && KW=4 ./cmpfight2.sh A 11111111 '' up $WHAT"   # Combat Chat 5: 4:10's brass doors, two spectres (drain, turning, a turned spectre running), 3195 draws; the start save is lab-only (combat5/saves/spectre: the J party at levels 4-6, 200 HP, +1 weapons, saved by the original at 4:10's gate and moved to 10,1 W)
 run orig_A_mu 1 bash -c "./savein.sh mu && KW=4 ./cmpfight2.sh A 11111111 '' up,wait=4,enter,wait=3,enter,wait=3,s $WHAT"   # Combat Chat 6: 4:10's LEVEL 6 MU ("THEN DIE YOU SCUM", 8,9; start combat6/saves/mu: the spectre's party, 0x4A42 = 3), 952 draws; he casts Magic Missile (his Fireball plan fails beside the party)
-run orig_A_troll 1 bash -c "./savein.sh troll && KW=4 ./cmpfight2.sh A 11111111 up 'up,wait=6,enter' $WHAT"   # Combat Chat 7: 2:20 0,14's two ogres and four trolls (start combat5/saves/troll, 2:20 0,15 N, lab only; the event's random treasure first: main's chat 28), 2561 draws
+run orig_A_troll 1 bash -c "./savein.sh troll && KW=4 OURS_SEED=1 ./cmpfight2.sh A 11111111 up 'up,wait=6,enter' $WHAT"   # Combat Chat 7: 2:20 0,14's two ogres and four trolls (start combat5/saves/troll, 2:20 0,15 N, lab only; the event's random treasure first: main's chat 28), 2561 draws; OURS_SEED=1: ours' own generator seeded for the step before the dice (a random encounter there came and went run to run)
+run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 ./cmpfight2.sh A 11111111 up 'up,wait=4,enter,wait=3,c' $WHAT"   # Combat Chat 7: 2:9 event 13 at 7,6, two LEVEL 6 MUs, two aides, six ettins (start combat6/saves/mu29, lab only), 6973 draws; recorded again with OSECS=1700 (the fight is long)
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)

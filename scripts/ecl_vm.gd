@@ -78,7 +78,7 @@ var monsters: Array = []
 var monster_teams: Array[int] = []
 var selected_creature := -1
 ## Encounter distance: the maximum from SPRITE_START, less one per SPRITE_ADVANCE.
-var encounter_max := 2
+var encounter_max := 0          # 0 until a SPRITE_START / ENCOUNTER (combat lane, Combat Chat 7: Player 5's Tyranthraxus from a save: the original places him and DIRTEN beside the party, 28,14 / 27,13, as distance 0 does)
 var encounter_advances := 0
 var sprite_picture := 255
 var sprite_head := 255

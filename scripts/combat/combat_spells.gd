@@ -894,10 +894,20 @@ func ai_use_item(i: int, tries: int) -> bool:
 
 
 ## An enemy of i still standing, or one that surrendered.
+## The original's count of the other side's figures in the fight (DS:0x6814 + team, START.EXE
+## 0xBA:0x23DB over record +0x10D), which the computer's spells and items look at (GAME.OVR 0xB194,
+## 0xAFE8). It is counted again as a round starts and ends and when a figure falls (0x2C804,
+## 0x15256, 0x13B2E, 0xF107), not when one gets away: a figure that got away still counts until
+## then (Combat Chat 7, 2:9: Bakshi picks spells after the last ettin ran off the field that round).
 func _enemy_left(i: int) -> bool:
 	var me: Dictionary = c.combatants[i]
+	var fallen := c.fallen_count()
 	for e in c.combatants:
-		if e.team != me.team and (not e.down or e.get("surrendered", false)):
+		if e.team == me.team:
+			continue
+		if not e.down or e.get("surrendered", false):
+			return true
+		if e.get("fled", false) and int(e.get("away_round", -1)) == c.round_no and int(e.get("away_fallen", -1)) == fallen:
 			return true
 	return false
 

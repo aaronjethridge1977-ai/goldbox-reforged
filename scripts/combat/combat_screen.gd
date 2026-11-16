@@ -614,6 +614,10 @@ func _load_monsters() -> void:
 					break
 				var m := first if i == 0 else first.clone()
 				if i > 0:
+					# The original's copy of a monster holds its items in reverse order (lab, Combat
+					# Chat 7: 2:9's second AIDES held Long Sword, Chain Mail, Long Bow, 20 Arrows; the
+					# first the file's order), which decides the pile's d10s (no more after 8 items).
+					m.items.reverse()
 					m.recalculate(_types)
 				var k := _monsters.size()
 				m.script_team = _monster_teams[k] if k < _monster_teams.size() else 0

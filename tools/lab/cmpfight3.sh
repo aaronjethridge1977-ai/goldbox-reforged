@@ -9,6 +9,8 @@
 # Since 2026-11-14 the trace loses no draws, so the original runs at full speed (SLOW=1:
 # por_slow.conf, 1500 cycles, as before) and ours with --fast: a fight takes about a minute.
 # KW=<seconds>: the wait after each key before the seed (default 3; longer where texts print first).
+# OURS_SEED=<n> (Combat Chat 7): ours' own generator seeded (--seed), for keys walked before the dice
+# are seeded (a random encounter on the troll fixture's first step otherwise comes and goes run to run).
 # A wait=<s> token in the keys waits in the original only (ours leaves it out).
 cd "$(dirname "$0")"
 L=$1; SEED=$2; PRE=$3; POST=$4; WHAT=${5:-both}; SEED2=$6; POST2=$7
@@ -37,6 +39,6 @@ if [ $WHAT != orig ]; then
   K="load=$L"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
   [ -n "$SEED2" ] && K="$K,tpseed=$SEED2${POST2:+,$POST2}"
   W=$(printf "wait,%.0s" $(seq ${OWAITS:-6})); W=${W%,}   # OWAITS: more waits for long fights
-  GTIME=${GTIME:-300} ./ours.sh --save=$PWD/qs.cfg --fast "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,$W,tplog,partyhp" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /tmp/cmp_ours.txt
+  GTIME=${GTIME:-300} ./ours.sh --save=$PWD/qs.cfg --fast ${OURS_SEED:+--seed=$OURS_SEED} "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,$W,tplog,partyhp" 2>&1 | tee /tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /tmp/cmp_ours.txt
 fi
 python3 cmpdraws.py /tmp/cmp_orig.txt /tmp/cmp_ours.txt

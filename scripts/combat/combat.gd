@@ -1214,6 +1214,15 @@ func sweep(i: int, j: int) -> bool:
 	return true
 
 
+## Figures down in the fight, not counting those that got away.
+func fallen_count() -> int:
+	var n := 0
+	for e in combatants:
+		if e.down and not e.get("fled", false):
+			n += 1
+	return n
+
+
 ## Ends combatant i's turn out of turn: no initiative left this round, guard and any
 ## spell being cast gone (the original's 0xBA:0x2637).
 func _spend_turn(i: int) -> void:
@@ -1508,7 +1517,20 @@ func _by_distance(c: Dictionary, list: Array[int], any_sight := false) -> void:
 			continue
 		if j != me and not (j in list) and not any_sight and clear_line(c, combatants[j]).y != 1:
 			continue
+		# The distance and direction come from the nearest pair of cells with a clear line between
+		# them (GAME.OVR 0x3045B: each pair through 0x3FF74, the least distance kept with its pair);
+		# with none clear, the nearest pair. (Combat Chat 7, 2:9: an ettin on 33,19-33,20 sees
+		# Phineas at 29,12 only from its lower cell: 20, not 18.)
 		var pr := closest(c, combatants[j])
+		if j != me:
+			var best_r := 1 << 30
+			for p in cells(c):
+				for q in cells(combatants[j]):
+					if line_steps(p, q).y == 1:
+						var r := line_steps(p, q, false).x
+						if r < best_r:
+							best_r = r
+							pr = [p, q]
 		var d: Vector2i = (pr[1] - pr[0]).abs()
 		full.append([j, 2 * (maxi(d.x, d.y) - mini(d.x, d.y)) + 3 * mini(d.x, d.y), wedge_dir(pr[0], pr[1])])
 	for a in range(full.size() - 1):
@@ -1797,6 +1819,10 @@ func _gets_away(i: int) -> bool:
 	if not away and foes == m.movement:
 		away = roll(1, 2, "%s gets away?" % m.name) == 1
 	if away:
+		# Still counted in the fight (DS:0x6814, START.EXE 0xBA:0x23DB) until the next recount: the
+		# round's end or a figure falling (CombatSpells._enemy_left; Combat Chat 7, 2:9's last ettin).
+		c.away_round = round_no
+		c.away_fallen = fallen_count()
 		c.down = true
 		c.fled = true
 		m.status = PartyMember.STATUS_RUNNING
@@ -2075,8 +2101,10 @@ func _free_miss(t: Dictionary) -> bool:
 ## immunities first, then the save; "IS UNAFFECTED" when either stops it.
 func _afflict(j: int, effect: int, rounds: int, saved: bool, words: String) -> void:
 	var tm: PartyMember = combatants[j].who
-	var blocked := effect == SpecialAffects.PARALYZED \
-			and SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists"))
+	# The effect goes on through the add-effect routine (GAME.OVR 0x2C540), saved or not, which runs
+	# the race handlers for any effect: a half-elf draws its d100 even for fear's weakening
+	# (Player 5's request, Combat Chat 7: ELWEN at Tyranthraxus, draw 743).
+	var blocked := SpecialAffects.blocks(tm, effect, func(): return roll(1, 100, "resists"))
 	if blocked or saved:
 		message.emit("%s IS UNAFFECTED" % tm.name)
 		return
@@ -2095,7 +2123,9 @@ func _battle_start_powers() -> void:
 				if t.down or t.team == c.team:
 					continue
 				var saved := _save(t.who, 4, 0)
-				var lvl := SpecialAffects.level_of(t.who)
+				# The tier by record 0x73, the highest level the character has had (0x10705).
+				var tw: PartyMember = t.who
+				var lvl: int = tw.raw[0x73] if tw.raw.size() > 0x73 else SpecialAffects.level_of(tw)
 				if lvl <= 3:
 					_afflict(j, SpecialAffects.PARALYZED, 0, saved, "IS PARALYZED WITH FEAR")
 				elif lvl <= 5:

@@ -70,7 +70,7 @@ if ustart and not DRAWS_ONLY:
         for src, dst in ((opos, omoves), (upos, umoves)):
             for at in sorted(src):
                 if at < first:
-                    for t in src[at]:
+                    for t in " ".join(src[at]).split():     # a POS line can name several figures (Combat Chat 7)
                         k, _, xy = t.partition(":")
                         if k.isdigit(): dst.setdefault(int(k), []).append(xy)
     bad = []
@@ -94,6 +94,15 @@ if ustart and not DRAWS_ONLY:
         while i + 3 < len(orig):
             if orig[i] == orig[i + 2] and orig[i + 1] == orig[i + 3] and (orig[i], orig[i + 1]) in pairs:
                 del orig[i + 2:i + 4]
+            else:
+                i += 1
+        # A step that was only tried shows as there and back (a, b, a): the original's free-attack
+        # check (GAME.OVR 0x130AD) moves the figure for a moment to see who is still beside it, then
+        # puts it back (Combat Chat 7, 2:9's ettin at 32,11). Left out when ours never made a -> b.
+        i = 1
+        while i + 1 < len(orig):
+            if orig[i - 1] == orig[i + 1] and (orig[i - 1], orig[i]) not in pairs:
+                del orig[i:i + 2]
             else:
                 i += 1
         it = iter(ours)

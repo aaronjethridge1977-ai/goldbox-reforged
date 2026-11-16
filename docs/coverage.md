@@ -362,7 +362,7 @@ What can happen to a character (status byte 0x10C and the effect list).
 | Aging (Haste) | built |  | a year once per Haste |
 | Magic resistance (Tyranthraxus 15%) | checked | yes | the final fight; see monster power 0x6a (Combat Chat 4) |
 
-### Combat rules (6 checked)
+### Combat rules (9 checked)
 
 How a fight's turns run, beyond spells, items and powers (Combat Chat 7, each from GAME.OVR and matched roll for roll).
 
@@ -374,4 +374,7 @@ How a fight's turns run, beyond spells, items and powers (Combat Chat 7, each fr
 | Casting time and the caster's attacks | checked | yes | BEGINS CASTING only lowers the initiative (0x14C0F); a caster whose spell a wound spoils still strikes at its later turn |
 | The computer's approach: its first direction | checked | yes | from the mover's own square to the target's (GAME.OVR 0x14E38 at 0xB47D; a large figure's first cell), then the pattern's turns. The troll fight |
 | The computer's area spells weighed (Sleep, Stinking Cloud, Fireball) | checked | yes | refused when any enemy in range has a figure of the caster's side within the area round the enemy's own square (0xAEAB, 0xAE15). The troll fight: Bakshi's Sleep beside an ogre |
+| The nearest-first lists (targets, blows, spells, free attacks) | checked | yes | each figure's distance and direction from the nearest pair of cells with a clear line between them (GAME.OVR 0x3045B through 0x3FF74), the nearest pair only when none is clear. 2:9's ettins |
+| "Enemies left" for the computer's spells and items | checked | yes | each side's figures in the fight counted as a round starts and ends (START.EXE 0xBA:0x23DB, DS:0x6814), not at the turn: a caster whose foes all fell earlier in the round still picks spells. 2:9's magic-users |
+| A fight's copies of a monster | checked | yes | every copy after the first holds the monster's items in reverse order (the original's copy; seen in DOSBox, 2:9's AIDES), which decides which priceless items reach the pile (no d10 after 8 monster items) and, with two readied weapons, which one a copy wields. 2:9's aides |
 
