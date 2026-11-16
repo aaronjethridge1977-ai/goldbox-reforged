@@ -57,6 +57,8 @@ var _playback: AudioStreamGeneratorPlayback
 ## The wrapper 0x8BBC: plays sound `id` (2-20) on the speaker. `full`: as with DS:0x5374 at 0
 ## (a spell's sound), it plays to its end.
 static func play(id: int, full := false) -> void:
+	if OS.has_environment("SNDDBG"):           # lab: the sounds asked for, in order
+		print("   SOUND %d%s" % [id, " full" if full else ""])
 	if not on():
 		return
 	var s := _instance()

@@ -675,9 +675,7 @@ func shoot(i: int, j: int) -> void:
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
-			Speaker.play(Speaker.MISS)
 		else:
-			Speaker.play(Speaker.HIT)
 			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
 			if magic:
@@ -1201,12 +1199,10 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		if CombatSpells.held(tm):
 			a.attacks = 0
 			message.emit("%s SLAYS HELPLESS %s WITH ONE CRUEL BLOW" % [am.name, tm.name])
-			Speaker.play(Speaker.HIT)           # GAME.OVR 0x13C54
 			_hurt(j, tm.hp + 5)
 			return
 	var how := " (FROM BEHIND)" if behind and not stab else ""
 	var verb := "BACKSTABS" if stab else "ATTACKS"
-	var landed := 0
 	while a.attacks > 0 and not t.down:
 		a.attacks -= 1
 		var second: bool = int(a.get("second", 0)) > 0
@@ -1219,10 +1215,6 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		if not hit:
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
-		# The hit's sound (id 7) before its damage (GAME.OVR 0x13EF1); an attack that hit
-		# nothing sounds once at its end (id 9, 0x13F6F).
-		landed += 1
-		Speaker.play(Speaker.HIT)
 		var dice: Array = am.base_damage_2 if second else (am.damage_large if tm.is_large() else am.damage)
 		var dmg := roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2])
 		dmg = maxi(dmg, 0)
@@ -1249,8 +1241,6 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
 			message.emit("%s RAKES..." % am.name)
 			_extra_attacks(i, j, 2, 2, 4)
-	if landed == 0:
-		Speaker.play(Speaker.MISS)
 	if i != active and a.attacks <= 0:
 		# Out of turn (a guard's strike, a free attack) with its attacks spent: that is its
 		# turn for this round (GAME.OVR 0x142AB ends the attacker's turn, 0xBA:0x2637; lab:

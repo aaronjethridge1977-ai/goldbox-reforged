@@ -111,6 +111,7 @@ var _message_count := 0   # every message so far (_messages keeps only the last 
 var _flying := false
 var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
 var _spell_flight := {}
+var _cast_sound := 0         # the sound of the spell whose CASTS / USES line is still to show
 var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
 var _sparkle := -1                 # the figure showing a spell's sparkles
 ## A figure struck down stays standing through the blow's message; its fall shows COMSPR's
@@ -854,6 +855,21 @@ func _on_combat_message(text: String) -> void:
 			_show_messages.call_deferred()
 
 
+## The original's sound for a line as it shows (Speaker; GAME.OVR's attack routine 0x13C01):
+## each hit's line has the hit's (id 7, 0x13EF1), "slays helpless" too (0x13C54), and the one
+## miss line of an attack that hit nothing the miss's (id 9, 0x13F6F; ours shows that line
+## once, as the original); a cast's at its CASTS A SPELL / USES line (0x27E05), played on
+## through its flight. In the original each sound in a fight lasts 0.1 s (DS:0x5374).
+func _sound_for(msg: String) -> void:
+	if msg.contains(" HITTING FOR ") or msg.contains(" SLAYS HELPLESS "):
+		Speaker.play(Speaker.HIT)
+	elif msg.ends_with(" AND MISSES"):
+		Speaker.play(Speaker.MISS)
+	elif _cast_sound > 0 and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
+		Speaker.play(_cast_sound, true)
+		_cast_sound = 0
+
+
 ## A message that goes under the last one instead of replacing it.
 func _continues(msg: String) -> bool:
 	if _panel_msgs.is_empty():
@@ -907,6 +923,7 @@ func _show_messages() -> void:
 			if _flying:
 				await flight_done
 				await get_tree().create_timer(0.13).timeout
+		_sound_for(msg)
 		if dying:
 			_panel_msgs.clear()
 			_row24_msg = msg
@@ -939,6 +956,11 @@ func _show_messages() -> void:
 			_refresh()
 			_fly(sf.from, sf.to, [5, 133], 240.0)
 			await flight_done
+		if _cast_sound == 0 and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
+			# The cast's sound plays while its line is drawn; then the wrapper's wait is set
+			# again (0x27E56), which takes the driver off the timer: the sound stops there (in
+			# DOSBox a cast's 1.0 s sound lasted 0.31 s).
+			Speaker.play(0xFF)
 		_row24_msg = ""
 		if _pending_msgs.is_empty() or not _continues(_pending_msgs[0]):
 			_panel_msgs.clear()
@@ -1397,6 +1419,9 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():
 		return
 	_posed = i
+	# The cast's sound (GAME.OVR 0x27E05, in a fight once the aim is taken): id 11 for
+	# Fireball, 8 for Lightning Bolt, 2 for the rest.
+	_cast_sound = 11 if id == CombatSpells.FIREBALL else (8 if id == CombatSpells.LIGHTNING else 2)
 	var to := cell
 	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
 		to = _combatants[targets[0]].cell

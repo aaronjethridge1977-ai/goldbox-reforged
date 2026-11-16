@@ -68,5 +68,11 @@ Sound (Lead's approved item, started):
     cast 0x27C38: id 11 spell 47, id 8 spell 51, id 2 the rest (0x27E08 clears DS:0x5374 first: plays out); Hold Person
     id 2 0x286FE; id 6 / 12 in 0x14EAB (0x1501A / 0x15060); id 10 at 0x3AD2, 0x4219, 0x13071 (0x12F0D), 0x16E0D, 0x171DF,
     0x17224 (0x17054, "Not Here"); id 11 0x3AE2; id 5 in 0x3154B (0x31564, 0x31748); START.EXE id 4 0x2C0D, id 3 0x2C18.
-  Hooked in ours so far: hit, slays helpless, miss (melee and missiles). The rest: hear each in DOSBox first (sndcap.sh at
-  the right moment), then hook.
+  cap/audio0002.wav (lab only): 4:2 3,11 seed 12345678 to the fight's end: a cast's id 2 (row 1) cut at 0.31 s (distance 15
+                 against row 1 cut there): 0x27E56 sets DS:0x5374 back to 10, which takes the driver off the timer when the
+                 line has been drawn. Also a 0.75 s sound nearest row 3 (id 4) and a 0.5 s one (row 1 or 5): not placed yet.
+  Hooked in ours (combat_screen.gd `_sound_for`, as each line shows, since ours' logic runs ahead of the screen): a hit's
+  line and "slays helpless" id 7, the one miss line id 9, a cast's CASTS A SPELL / USES line id 11 / 8 / 2, stopped when
+  its flight ends. SNDDBG=1 prints "   SOUND <id>" (paced run: --anim). Not hooked: Hold Person's extra id 2 per further
+  target (0x286E9; ours draws no line per target), ids 10, 5, 6, 12, 3, 4 (walking, doors, START.EXE: main's files
+  mostly): hear each in DOSBox first (sndcap.sh at the right moment), then hook.
