@@ -112,6 +112,8 @@ var _flying := false
 var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
 var _spell_flight := {}
 var _cast_sound := 0         # the sound of the spell whose CASTS / USES line is still to show
+var _hold_flights := {}      # Hold Person's further targets (name: cell), each flown to before its line
+var _hold_from := Vector2i.ZERO
 var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
 var _sparkle := -1                 # the figure showing a spell's sparkles
 ## A figure struck down stays standing through the blow's message; its fall shows COMSPR's
@@ -868,6 +870,30 @@ func _sound_for(msg: String) -> void:
 	elif _cast_sound > 0 and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
 		Speaker.play(_cast_sound, true)
 		_cast_sound = 0
+	elif msg.contains(" TAKES ") and msg.contains(" OF DAMAGE"):
+		# START.EXE 0x2B8B shows a figure's line with its picture: magic damage (flag 0, from the
+		# damage routine 0x2C3C7) plays id 3 (0.15 s, played out).
+		Speaker.play(Speaker.DAMAGE, true)
+	elif _effect_line(msg):
+		# ... and an effect (flag 1: the add-effect routine's line 0x2C617, "is Paralyzed",
+		# "is turned", "is Healed", "is affected"...) id 4, cut when the picture's loop ends
+		# (DS:0x5374 set again): 0.75 s in DOSBox (Combat Chat 10's cap/audio0002.wav).
+		Speaker.play(Speaker.EFFECT, true, 0.75)
+
+
+## A figure's effect line that the original shows through START.EXE 0x2B8B with flag 1: the
+## monster powers' and turning's (0x10294 "is Paralyzed", 0x13AA1 "is turned") and a spell's
+## line on a figure it reached (not "is unaffected", which the original prints plainly).
+func _effect_line(msg: String) -> bool:
+	if msg.ends_with(" IS PARALYZED") or msg.ends_with(" IS TURNED"):
+		return true
+	if msg.ends_with(" IS UNAFFECTED") or msg.contains(" ATTACKS ") or msg.ends_with(" SAVES") \
+			or msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ") or _continues(msg):
+		return false
+	for k in _spell_hits:
+		if msg.begins_with((_combatants[k].who as PartyMember).name.to_upper() + " "):
+			return true
+	return false
 
 
 ## A message that goes under the last one instead of replacing it.
@@ -923,6 +949,11 @@ func _show_messages() -> void:
 			if _flying:
 				await flight_done
 				await get_tree().create_timer(0.13).timeout
+		if who != "" and _hold_flights.has(who):
+			var to: Vector2i = _hold_flights[who]
+			_hold_flights.erase(who)
+			_fly(_hold_from, to, [5, 133], 240.0, Speaker.SPELL)
+			await flight_done
 		_sound_for(msg)
 		if dying:
 			_panel_msgs.clear()
@@ -1067,6 +1098,7 @@ func _ai_step() -> void:
 	if paced() and not actor.is_empty():
 		_box_off = true
 		if actor.cell != before:
+			Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)
 			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
 			# GAME.OVR 0x12F0D: a computer-run step whose square is off the view first brings
 			# the walker's own square within 2, then keeps the new one in view.
@@ -1407,7 +1439,9 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 	elif f & ItemTypes.FLAG_THROWN:
 		frames = [3, 131]
 	if not frames.is_empty():
-		_fly(c.cell, _combatants[t].cell, frames, 720.0)
+		# GAME.OVR 0x14EAB: id 6 as the missile flies, played out; at its end id 12, and the wait
+		# set again at once (0x15065), which silences the speaker: id 12 is never heard.
+		_fly(c.cell, _combatants[t].cell, frames, 720.0, Speaker.MISSILE)
 
 
 ## A spell went off (paced): the caster's pose; for a spell aimed away from the caster, COMSPR's
@@ -1430,6 +1464,15 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	_spell_hits = []
 	for t in targets:
 		_spell_hits.append(int(t))
+	# Hold Person (GAME.OVR 0x286E9): the targets last to first; every one but the first taken
+	# gets the cast's sound again (id 2, played out) and a spark flown from the caster to it
+	# before its save and line.
+	_hold_flights = {}
+	if (id == 23 or id == 49) and targets.size() > 1:
+		_hold_from = _combatants[i].cell
+		for n in targets.size() - 1:
+			var t: int = targets[n]
+			_hold_flights[(_combatants[t].who as PartyMember).name.to_upper()] = _combatants[t].cell
 
 
 ## The arrow sprite for a flight from a to b, mirrored for the left diagonals (lab: Darkstar's
@@ -1447,9 +1490,12 @@ func _arrow(a: Vector2i, b: Vector2i) -> Image:
 	return img
 
 
-## A missile's flight from cell a to cell b (P16).
-func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float) -> void:
+## A missile's flight from cell a to cell b (P16); `sound` (if any) plays through it and stops
+## as it lands.
+func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> void:
 	_flying = true
+	if sound > 0:
+		Speaker.play(sound, true)
 	if not _on_screen(b):
 		_ensure_view(Vector2i((a.x + b.x + 1) / 2, (a.y + b.y + 1) / 2), 0)
 	var p0 := Vector2((a - _view) * CELL)
@@ -1469,6 +1515,8 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float) -> void:
 		await get_tree().process_frame
 	_flight = {}
 	_flying = false
+	if sound > 0:
+		Speaker.play(0xFF)
 	_refresh()
 	flight_done.emit()
 
@@ -1907,6 +1955,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			var up_before := _standing()
 			var what := _combat.step(_STEP_KEYS[key])
 			_note_falls(up_before)
+			if what == "moved":
+				Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)
 			if paced() and what != "moved":
 				_after_blow(me, shown_before, weapon_before)
 			# P36: the original's MOVE loop (GAME.OVR 0xA236) runs only while more than one

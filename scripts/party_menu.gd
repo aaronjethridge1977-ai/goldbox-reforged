@@ -154,9 +154,25 @@ func _refresh() -> void:
 			_scr.text(0, 24, "ADD A CHARACTER:", MAGENTA)
 			_scr.menu_line(24, ["ADD", "EXIT"], 17, _pick)
 		"learn":
-			_scr.text(1, 1, "LEARN WHICH SPELL?", GameScreen.WHITE)
+			# The original (Player 3's still after ELWEN trained): "<NAME>'S" cyan and " SPELLS TO
+			# CHOOSE FROM" green on row 1, rope on row 2; from row 5 a level heading (magenta,
+			# column 1) wherever the level changes and the spells at column 3, green, the lit one
+			# white (the last at first); row 24 "CHOOSE SPELL:" LEARN.
+			var who := _who().name + "'S"
+			_scr.text(1, 1, who, GameScreen.CYAN)
+			_scr.text(2 + who.length(), 1, "SPELLS TO CHOOSE FROM", GameScreen.GREEN)
+			for c in 40:
+				_scr.tile(c, 2, 22)
+			var row := 5
+			var last_level := 0
 			for i in _list.size():
-				_scr.text(3, 4 + i, spells.names[_list[i]].to_upper(), GameScreen.WHITE if i == _cursor else GameScreen.GREEN)
+				var lv := spells.level(_list[i])
+				if lv != last_level:
+					last_level = lv
+					_scr.text(1, row, CharacterSheet.LEVEL_WORDS[clampi(lv - 1, 0, CharacterSheet.LEVEL_WORDS.size() - 1)], MAGENTA)
+					row += 1
+				_scr.text(3, row, spells.names[_list[i]].to_upper(), GameScreen.WHITE if i == _cursor else GameScreen.GREEN)
+				row += 1
 			_scr.text(0, 24, "CHOOSE SPELL:", MAGENTA)
 			_scr.menu_line(24, ["LEARN"], 14, 0)
 		_:
@@ -256,7 +272,7 @@ func _do_train() -> void:
 	if learn and spells != null:
 		_list = m.learnable_spells(spells)
 		if not _list.is_empty():
-			_cursor = 0
+			_cursor = _list.size() - 1      # the original lights the last spell (Player 3)
 			_mode = "learn"
 			_refresh()
 			return

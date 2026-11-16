@@ -293,6 +293,10 @@ if __name__ == "__main__":
                     held_pb, held_t = pb, time.time()
                 elif time.time() - held_t > 3:
                     holddump(r, base)
+                    if os.environ.get("HOLDPROBE"):     # Combat Chat 11: combat11/probe.py
+                        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "combat11"))
+                        import probe
+                        probe.step(r, base)
                     if os.environ.get("HOLDSTACK"):
                         holdstack(r, base, locate)
                     holds.pop(0); held_pb = None

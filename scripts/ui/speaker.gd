@@ -33,8 +33,13 @@ const SETTINGS_KEY := "sound"
 
 ## The game's sound ids (the wrapper's argument; DS:0x2618-0x262C hold 2-12), named from their
 ## callers in GAME.OVR.
-const HIT := 7          # a blow lands, and "slays helpless" (0x13EF1, 0x13C54)
+const SPELL := 2        # a spell's cast (0x27C38), Hold Person's spark to each further target (0x286FE)
+const DAMAGE := 3       # magic damage on a figure in a fight (START.EXE 0x2B8B, flag 0, from 0x2C3D6)
+const EFFECT := 4       # an effect on a figure in a fight: held, healed, turned... (START.EXE 0x2B8B, flag 1)
+const MISSILE := 6      # a missile weapon's flight (0x14EAB: 6 as it flies, 12 at its end, cut at once)
+const HIT := 7          # a blow lands, "slays helpless", a door option that fails (0x13EF1, 0x13C54, 0x17702)
 const MISS := 9         # an attack that hit nothing (0x13F6F)
+const STEP := 10        # a step or a turn in the 3D view (0x16E06, 0x171DF, 0x17224), a square moved in a fight (0x13071)
 
 static var _node: Speaker = null
 static var _segment := PackedByteArray()
@@ -55,8 +60,10 @@ var _playback: AudioStreamGeneratorPlayback
 
 
 ## The wrapper 0x8BBC: plays sound `id` (2-20) on the speaker. `full`: as with DS:0x5374 at 0
-## (a spell's sound), it plays to its end.
-static func play(id: int, full := false) -> void:
+## (a spell's sound), it plays to its end, or until `cut` seconds when `cut` > 0 (where the
+## original sets DS:0x5374 again after a drawing of that length: START.EXE 0x1A5 takes the driver
+## off the timer and silences the speaker, 0x13B1).
+static func play(id: int, full := false, cut := 0.0) -> void:
 	if OS.has_environment("SNDDBG"):           # lab: the sounds asked for, in order
 		print("   SOUND %d%s" % [id, " full" if full else ""])
 	if not on():
@@ -68,6 +75,8 @@ static func play(id: int, full := false) -> void:
 		s._stop()
 	elif id >= 2:
 		s._start(id - 1, full)
+		if full and cut > 0.0:
+			s._left = int(cut * MIX_HZ)
 
 
 ## SETTINGS: SOUND (on by default, as the original with a PC speaker).

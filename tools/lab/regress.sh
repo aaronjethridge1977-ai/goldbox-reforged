@@ -78,6 +78,8 @@ run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wa
 # fight's last draw 4836: the spoils follow), 2:20 0,14 the ogres and trolls (Protection from Evil and the to-hit; a troll up
 # at the round's end), 4:21 2,11 the huge scorpion (poison from its second attack slot only, no d100 before the save).
 [ $WHAT = ours ] && run orig_I_grishnak1 1 ./combat10/pf.sh I 12345678 tmp/cmp_orig.txt reg_I1
+# Combat Chat 11: 4:2 seed 2468ace1 to the fight's last draw 3617 (melee attacks counted again: a third attacker strikes from behind).
+[ $WHAT = ours ] && run orig_I_grishnak2 1 ./combat10/pf.sh I 2468ace1 tmp/cmp_orig.txt reg_I2
 [ $WHAT = ours ] && run orig_K_ogres1 1 ./combat10/pf.sh K 12345678 tmp/cmp_orig.txt reg_K1
 [ $WHAT = ours ] && run orig_K_ogres2 1 ./combat10/pf.sh K 2468ace1 tmp/cmp_orig.txt reg_K2
 [ $WHAT = ours ] && run orig_L_scorp1 1 ./combat10/pf.sh L 13579bdf tmp/cmp_orig.txt reg_L1

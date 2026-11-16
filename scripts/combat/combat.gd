@@ -1180,7 +1180,11 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		# the target to face the attacker on its first two attacks of the round, and only
 		# then asks whether the attacker stands behind it (0x13DCF), so a second attacker
 		# never strikes from behind (lab, side chat 2: a goblin's d20 of 16 at Rhiannon's
-		# back missed against her front AC 0).
+		# back missed against her front AC 0). The count (0x13FF1, from the attack at 0x15519)
+		# was left out here from Combat Chat 3 to 10, so a melee target always turned and was
+		# never struck from behind (Combat Chat 11, 4:2 seed 2468ace1 draw 2506: GRISHNAK, DORN's
+		# third attacker of the round, hits his rear AC 56; a probe in the to-hit showed it).
+		_note_attack(a, t)
 		if t.received < 3:
 			t.dir = dir_between(t, a)
 		if t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4:

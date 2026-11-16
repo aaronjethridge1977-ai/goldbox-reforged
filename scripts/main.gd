@@ -185,6 +185,7 @@ func _ready() -> void:
 	_automap = Automap.new()
 	_automap.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_automap.gate = func() -> bool:
+		_automap.party_rows = _party.size()     # Combat: the mini-map stays below the party list
 		return _screen.visible and _mode == Mode.WALK and not _vm.on_overland and not (_shop.visible \
 			or _sheet.visible or _combat.visible or _treasure.visible or _camp.visible \
 			or _temple.visible or _party_menu.visible or (_start_menu != null and _start_menu.visible) \
@@ -1110,6 +1111,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			# figure only on the script's SPRITE commands).
 			_facing = ((_facing + (3 if event.is_action("ui_left") else 1)) % 4) as DungeonView.Dir
 			_vm.sprite_id = -1
+			Speaker.play(Speaker.STEP)    # GAME.OVR 0x171DF / 0x17224 (Combat's sound)
 		else:
 			return
 	elif _mode == Mode.MAPS and event.is_action("ui_accept"):
@@ -1839,6 +1841,7 @@ func _door_choice(c: String) -> void:
 				caster.memorized.erase(KNOCK)
 				opened = true
 	if not opened:
+		Speaker.play(Speaker.HIT)    # a door option that fails: GAME.OVR 0x17702 (Combat's sound)
 		_show()
 		return
 	map.set_door(_pos.x, _pos.y, direction, 1)
@@ -1891,6 +1894,7 @@ func _finish_move(direction: int) -> void:
 	var map: GeoMap = _maps[_map_index].map
 	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
+		Speaker.play(Speaker.HIT)    # a step into a wall: GAME.OVR 0x176FE, heard in DOSBox (Combat's sound)
 		return
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) >= 2:
 		_locked_door(direction)
@@ -1905,6 +1909,7 @@ func _finish_move(direction: int) -> void:
 
 ## The step itself, once nothing stops it: time passes and the new square's event runs.
 func _step_into(next: Vector2i) -> void:
+	Speaker.play(Speaker.STEP)    # a step in the 3D view: GAME.OVR 0x16E06 (Combat's sound)
 	_vm.write_byte(DOOR_TRY_BASH, 1)
 	_vm.write_byte(DOOR_TRY_PICK, 1)
 	_vm.write_byte(DOOR_TRY_KNOCK, 1)

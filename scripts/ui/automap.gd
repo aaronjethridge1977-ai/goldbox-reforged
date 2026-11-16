@@ -15,6 +15,7 @@ const FULL_CELL := 18
 
 var enabled := true             # the setting
 var mini_open := true
+var party_rows := 6          # members in the party list (main sets it): the mini-map stays below them
 var full_open := false
 var visited := {}               # map key -> PackedByteArray(256)
 var map: GeoMap
@@ -117,9 +118,15 @@ func _draw() -> void:
 	elif mini_open:
 		var w := MINI_RADIUS * 2 + 1
 		var n := MINI_CELL * w + MINI_MARGIN * 2
-		var size := Vector2(n, n) * px
 		# Bottom right of the upper panel, under the party list (the free rows above the
-		# place line), in window pixels of the scaled 320x200 screen.
+		# place line), in window pixels of the scaled 320x200 screen. The list's members
+		# start at text row 4 (8 pixels a row): with a 7th member the map shrinks to fit under
+		# its row, with an 8th there is no room and it isn't drawn (main's chat 36 request).
+		var room := 119.0 - (4 + maxi(party_rows, 6)) * 8.0
+		var fit := minf(1.0, room / (n / 2.0))
+		if fit < 0.75:
+			return
+		var size := Vector2(n, n) * px * fit
 		var screen := Vector2(320, 200) * scale
 		var top_left := (vp - screen) / 2
 		var origin := (top_left + Vector2(313 * scale - size.x, 119 * scale - size.y)).floor()
