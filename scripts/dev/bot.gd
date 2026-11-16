@@ -45,6 +45,7 @@ var _pc := 0
 var _checkpoint := ""
 var _checkpoint_pc := 0
 var _retries := 0
+var _retries_reset := {}     # chat 34: explore events whose checkpoint has reset _retries (once each)
 ## Losses since the checkpoint, by the fight's key (or the event's, when no fight was open): a
 ## fight is won by shortcut only once it has beaten the party twice itself (chat 30: c29b's
 ## 5:4 9,1 was waved through on its first loss because 14,9 had used up the retries before it).
@@ -2134,21 +2135,30 @@ func _explore_pass(skip: Array) -> Dictionary:
 			if _wiped() or _here() != area:
 				break
 		await _heal_if_low()
-		if not _wiped() and _can_train() and area != TOWN and _round_trip(area):
+		# Chat 34: never with a member dead (c33b went to train with DIRTEN dead at 5:4 and the
+		# reload blamed the patrols on the way); the main loop reloads at once instead.
+		if not _wiped() and _died() == "" and _can_train() and area != TOWN and _round_trip(area):
 			# Training first: to New Phlan and back, then on with the area.
 			var back: Vector2i = main._pos
+			var back_map: int = main._map_index
 			await _town()
 			await _travel(area)
 			if _here() != area:
 				return deferred
-			await main._tour(back)
-			await _settle()
+			await _tour_back(back, back_map)
 		if not _wiped() and _died() == "" and _here() == area:
 			# A checkpoint after each event; a wipe comes back here and explores again
 			# (events already done do nothing the second time). Never with a member dead:
 			# the main loop goes back to the last checkpoint instead (Methods 4).
 			_checkpoint = "explore"
 			_checkpoint_pc = _pc - 1
+			# Chat 34: an event done for the first time is progress, so the reloads count afresh
+			# from here (c34a's eight tries ran out across the whole of the kobold caves, several
+			# events apart). Once an event: an event done again after a reload isn't progress
+			# (resetting there kept the count at 1, so the ladder never reached the shortcut).
+			if not _retries_reset.has(_event_now):
+				_retries_reset[_event_now] = true
+				_retries = 0
 			main._quick_save()
 			DirAccess.copy_absolute(main._save_path(), "user://bot_explore.cfg")
 	return deferred
@@ -2323,6 +2333,7 @@ func _rest_at_inn(hops: int) -> bool:
 		return false
 	_at_inn = true      # not again from inside the trip (a rest on the way back)
 	var back: Vector2i = main._pos
+	var back_map: int = main._map_index
 	print("   == to the inn to rest")
 	await _travel(TOWN)
 	var ok := _here() == TOWN
@@ -2331,10 +2342,21 @@ func _rest_at_inn(hops: int) -> bool:
 		await _travel(area)
 		ok = _here() == area
 	if ok:
-		await main._tour(back)
-		await _settle()
+		await _tour_back(back, back_map)
 	_at_inn = false
 	return ok
+
+
+## Back to the square a trip to town left from, unless that square holds an event: a player
+## doesn't walk back into a fight already won (chat 34: c33b's tour back after training was
+## onto 4:10's 9,1, and the spectres there fought again: BRAM and LIRA died in that second
+## fight). Explore goes on to its next event from wherever the party came in.
+func _tour_back(back: Vector2i, back_map: int) -> void:
+	if main._map_index == back_map and main._maps[back_map].map.flag(back.x, back.y) & 127 != 0:
+		print("   (not back onto event %d at %s: on from here)" % [main._maps[back_map].map.flag(back.x, back.y) & 127, back])
+		return
+	await main._tour(back)
+	await _settle()
 
 
 ## Events still on explore's list for this map (the one underfoot excluded).
@@ -2545,7 +2567,9 @@ func _town() -> void:
 
 
 func _heal_if_low() -> void:
-	if _wiped() or _no_rest():
+	# Chat 34: not with a member dead (a full run reloads at once; a trip to the inn first
+	# put other fights between the death and the reload, and the reload blamed the last one).
+	if _wiped() or _no_rest() or _died() != "":
 		return
 	if _rest_rule() == "inn" and not _at_inn:
 		_cure_in_camp()

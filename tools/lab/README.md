@@ -173,6 +173,15 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 34:** short test plans can live untracked in the repo's `tools/plans/` (`t34_*.plan`: `playthrough.plan` with a
+`stop` after an area's checkpoint; bot.sh copies every plan), so no source copy is needed; resume from another run's
+checkpoint with random dice and count the outcomes (`data/c34/count.py "<explore: event N at (x, y)>" <logs>`: each
+fight of that event, won or lost, the members killed). `fight <area> <cue>` / `parley <area> <cue>` in a test plan
+choose an encounter menu's answer. Racial abilities are standing effects that only a load adds back
+(`SpecialAffects.RACIAL`): anything that clears `affects` has to keep them. Chat 34's runs and checkpoints:
+`data/c34/` (`cp_<id>`). Repo deletions are refused by the Lead's guard: move scratch files into the lab instead.
+Starting a second `refcheck.sh` while one runs spoils both (they reset `data/ref/` at the start): this chat did it once.
+
 **Chat 33:** c33a's and c33b's checkpoints are in `data/c33/cp_c33a`, `data/c33/cp_c33b` (copy them out of the
 user folder `~/.local/share/godot/app_userdata/Gold Box Reforged bot <id>/` after a run: `BOT_CHECKPOINTS` isn't
 where the quick saves go). Two `refcheck.sh` at once share `data/ref/` and spoil each other's figures: one at a

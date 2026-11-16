@@ -25,9 +25,13 @@ static func restore(party: Array) -> String:
 		if p.hp < p.hp_max:
 			what.append("%d/%d HP" % [p.hp, p.hp_max])
 			p.hp = p.hp_max
-		if not p.affects.is_empty():
-			what.append("%d effects" % p.affects.size())
-			p.affects.clear()
+		# Chat 34: the racial abilities stay (standing effects only a load gives back): c33b's
+		# retries after a restore had DORN fight 5:4's fire giants without the dwarf's 0x2F.
+		var racial: Array = SpecialAffects.RACIAL.get(p.race_id, [])
+		var kept := p.affects.filter(func(a): return int(a.effect) in racial and int(a.get("spell", 0)) == 0)
+		if kept.size() < p.affects.size():
+			what.append("%d effects" % (p.affects.size() - kept.size()))
+			p.affects = kept
 		var learned := 0
 		for i in p.memorized.size():
 			if p.memorized[i] >= PartyMember.LEARNING:

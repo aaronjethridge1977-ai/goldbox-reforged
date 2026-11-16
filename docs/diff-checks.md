@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 34: c33b's 5:4 and 4:10 shortcuts: three bot causes, then the dice; the acceptance run's fourth try
+
+c33b's shortcut wins at 4:10 9,1 (the spectres) and 5:4 9,1 (four fire giants) were not the game: the original wins
+them without a death about half the time (Player 7, Player 8), and so does ours from the same squares on QUICK.
+Three causes in the bot, all in main's files:
+- **The restore shortcut took the racial abilities away.** `DevShortcuts.restore` cleared every effect, and the racial
+  ones (`SpecialAffects.RACIAL`: the dwarf's 0x5A/0x61/0x1A/0x2F, the elf's 0x6B...) come back only on a load. The
+  restore runs right after the reload, so every try after a loss was fought without them: DORN without 0x2F (the
+  dwarf's defence against FIRE GIANT and HILL GIANT) at 5:4, ELWEN without the elf's sleep and charm resistance. The
+  log showed it as the same "ELWEN (1 effects); LIRA (1 effects); DORN (4 effects)" at every restore. Now the racial
+  standing effects stay; only spell effects and conditions go.
+- **Back onto the fight after training.** After an event, explore went to New Phlan to train and then toured back
+  to the square it had left, which is the event's own square: at 4:10 that was 9,1, and the spectres fought again.
+  In c33b's second try at 4:10, the first 9,1 fight was won with no death, and BRAM and LIRA died in that second
+  fight. `_tour_back` (also used by the inn trip) now stops if that square holds an event, and explore goes on from
+  wherever the party came in.
+- **A death was noticed late.** The training trip and `_heal_if_low` ran with a member already dead (c33b at 5:4:
+  DIRTEN killed at 9,1, then the trip to train, the patrols, a wipe at 5:6), so the reload blamed the last fight, not
+  the one that killed. Both now wait for the main loop's reload.
+
+Measured from c33b's own checkpoints (`zhentil`, `valjevo3`; resume plans that stop after the area, random seeds):
+**4:10 9,1** shortcut in 3 of 3 runs on the old code, 1 of 5 with the fixes. **5:4 9,1**: 48 bot fights over 20
+runs, 41 won, **23 without a death (48%)**, the same as Player 8's QUICK (4 of 8) and the original (1 of 2). FLEE,
+COMBAT and PARLAY at the giants' menu make no difference (5 runs each). So 5:4 is the dice: with the shortcut after
+two losses, about one run in four will take it there. Not a fight rule.
+
+**The retry budget.** A full run stops after 8 reloads since the plan's last `checkpoint` line. c34a (fresh, the first
+fourth try) was drained by random wights on the road from 4:2 at day 63 (ARN and BRAM back to level 3) and ran
+out of tries in the kobold caves (8:13), several events apart. Explore's own checkpoint now resets the count, once
+per event (a reset at every checkpoint looped: an event done again after a reload set the count back to 1 each time,
+and the ladder never got past "restore"; c34b and c34c were stopped for it).
+
 ## Chat 33: Tyranthraxus was a shared record (the bot's branch explorer), the acceptance run's third try
 
 - **Tyranthraxus (c32a, c33a: every bot fight lost): a bug in ours, now fixed.** `PartyMember.clone()` passed the
