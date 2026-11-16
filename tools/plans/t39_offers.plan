@@ -1,0 +1,6 @@
+# Chat 39: the clerk's offers recorded (Q11): from c34d's start, City Hall's clerk, then a checkpoint.
+rules playthrough.plan
+start start
+clerk
+checkpoint t39clerk
+stop

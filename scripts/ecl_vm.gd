@@ -1002,6 +1002,11 @@ func _exec(ins: Dictionary) -> void:
 		"SPRITE_ADVANCE":
 			sprite_distance = maxi(0, sprite_distance - 1)
 			encounter_advances += 1
+			# Reaching the party it becomes their picture at once (chat 40, DOSBox: the Slums'
+			# orcs, 2:20 0x9E22 START at 1, ADVANCE, PRINT: the orc's picture with the text and
+			# under A BATTLE BEGINS...; ours drew the nearest figure frame, then the corridor).
+			if sprite_distance == 0:
+				_arrived()
 		"SPRITE_OFF":
 			sprite_id = -1
 		"CLEAR_MON":
@@ -1236,7 +1241,7 @@ func _close_in() -> bool:
 ## Monsters at distance 0 show their picture, not the nearest figure frame: P31, Jeremy's
 ## capture of the original (New Phlan 14,5 S: "YOU ARE BEING APPROACHED BY SOME ANGRY
 ## GOBLINS." with no ADVANCE, a wall ahead, the goblin's picture in the view). As an
-## approaching figure's arrival at the end of a DELAY (main).
+## approaching figure's arrival at the end of a DELAY (main), and a SPRITE_ADVANCE to 0 (chat 40).
 func _arrived() -> void:
 	if sprite_id >= 0 and encounter_distance == 0:
 		picture = sprite_picture

@@ -2577,6 +2577,11 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
+	# The fight drew over the view: back on the walking screen the original shows the 3D view, not
+	# the encounter's picture (chat 40, DOSBox: the Slums' orcs at 13,1 W, the corridor after the
+	# treasure; the picture stays up only until the fight opens).
+	_event_image = null
+	_vm.sprite_id = -1
 	# ECL 0x6DC8: how many monsters the fight put down (GAME.OVR 0x672A counts the combatants it
 	# takes off the list). Lab, chat 18: 4:10's army of 105 skeletons, 63 on the field (the most a
 	# fight holds), all destroyed: after the script's SUBTRACT [6DC8], [4A01] and ADD [6DC8], [4A39]
