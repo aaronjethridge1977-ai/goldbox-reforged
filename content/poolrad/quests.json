@@ -1,6 +1,6 @@
 {
 	"game": "Pool of Radiance (DOS)",
-	"about": "The quest tracker's data (QoL 3, main lane, chat 37). Read from the game's own ECL scripts: City Hall's commission list and report loop (ECL3 block 8: offers 0xA845-0xAF4B, reports 0x9D0E-0x9F76) and every field event that writes a report flag (the lab's writers index). A quest is a set of conditions on ECL memory; scripts/game/quest_log.gd evaluates them. Nothing here is shown by the original: the tracker is an addition (QoL).",
+	"about": "The quest tracker's data (QoL 3, main lane, chat 37). Read from the game's own ECL scripts: City Hall's commission list and report loop (ECL3 block 8: offers 0xA845-0xAF4B, reports 0x9D0E-0x9F76) and every field event that writes a report flag (the lab's writers index). A quest is a set of conditions on ECL memory; scripts/game/quest_log.gd evaluates them. Nothing here is shown by the original: the tracker is an addition (QoL). Shown to the player: title, giver, where (its leading map number dropped), offer, steps' text; the references (a step's src, note, done_text) are not, so those carry the map numbers and addresses (chat 42).",
 	"conditions": "Each condition is a string. 'ADDR OP VALUE' compares the byte at ECL address ADDR (hex); OP is one of == != >= <= > <. 'ADDR & MASK' holds when all of MASK's bits are set. 'shown A:B ADDR' holds when the engine has shown the text at ECL area A:B address ADDR (the tracker records it: offers that set no flag). A list of conditions holds when all hold.",
 	"report_values": {
 		"254": "done in the field: the City Council's clerk pays the reward at the next City Hall visit",
@@ -14,7 +14,7 @@
 		{
 			"id": "slums",
 			"title": "Clear the Slums",
-			"giver": "City Council (City Hall, 3:8)",
+			"giver": "City Council (City Hall)",
 			"where": "2:20 the Slums",
 			"offer": "THE SLUMS IMMEDIATELY TO OUR WEST NEED TO BE CLEARED OF MONSTERS.",
 			"start": [["shown 3:8 A8B6"], ["4ABB >= 1"]],
@@ -213,7 +213,7 @@
 			"id": "zhentil_message",
 			"title": "Cadorna's message to the Zhentil outpost",
 			"giver": "Lord Cadorna (City Hall, the south door), once his treasure commission is given",
-			"where": "6:28 the Zhentil outpost (west, across the wilderness band 6:25)",
+			"where": "6:28 the Zhentil outpost (west, across the wilderness)",
 			"offer": "LORD CADORNA HAS A DELICATE DIPLOMATIC MISSION THAT REQUIRES YOUR PARTICULAR SKILLS.  YOU ARE SUMMONED TO HIS CHAMBERS. GO THROUGH THE SOUTH DOOR.",
 			"start": [["4A98 >= 254"]],
 			"steps": [
@@ -230,12 +230,12 @@
 			"id": "cadorna_traitor",
 			"title": "The traitor Cadorna",
 			"giver": "City Council",
-			"where": "Valjevo Castle (5:4 the north side, 5:3 the outer castle)",
+			"where": "Valjevo Castle (the north side, the outer castle)",
 			"start": [["4ABE >= 254"]],
 			"steps": [
-				{"text": "Proof of Cadorna's treachery (the swift mission's report, the reports found in Valjevo, 5:4 0xADA6, or the commission list running out of offers, 3:8 0xAF45)", "when": ["4ABE >= 254"]},
+				{"text": "Proof of Cadorna's treachery (the swift mission's report, the reports found in Valjevo, or the commission list running out of offers)", "src": "5:4 0xADA6, 3:8 0xAF45", "when": ["4ABE >= 254"]},
 				{"text": "The council declares Cadorna a traitor: 'IF YOU FIND HIM, KILL HIM.'", "when": ["4ABE == 255"]},
-				{"text": "Cadorna is killed (5:3 0xB19A)", "when": ["4ABF >= 254"]}
+				{"text": "Cadorna is killed", "src": "5:3 0xB19A", "when": ["4ABF >= 254"]}
 			],
 			"done": ["4ABF >= 254"],
 			"reported": ["4ABF == 255"],
@@ -277,7 +277,7 @@
 			"start": [["4A99 >= 254"], ["4AB9 >= 254"]],
 			"steps": [
 				{"text": "Urslingen: 'A SMALL BAND MUST SLIP INSIDE AND HOLD UNTIL RELIEVED.'", "when": ["4A99 == 255"]},
-				{"text": "The gate is taken (2:9 0xA702)", "when": ["4AB9 >= 254"]}
+				{"text": "The gate is taken", "src": "2:9 0xA702", "when": ["4AB9 >= 254"]}
 			],
 			"done": ["4AB9 >= 254"],
 			"reported": ["4AB9 == 255"],
@@ -287,11 +287,11 @@
 			"id": "valjevo",
 			"title": "Lead the attack on Valjevo Castle",
 			"giver": "The City Council in its chambers (a special meeting), once the gate is reported",
-			"where": "Valjevo Castle (5:3 to 5:7)",
+			"where": "Valjevo Castle",
 			"offer": "YOU ARE SUMMONED TO A SPECIAL COUNCIL MEETING.  YOU ARE TO BE AWARDED A VALUABLE COMMISSION. THE CITY GUARDS WILL SHOW YOU THE WAY.",
 			"start": [["4AB9 == 255"], ["4ABA >= 254"]],
 			"steps": [
-				{"text": "Tyranthraxus is defeated (5:7 0xA815)", "when": ["4ABA >= 254"]}
+				{"text": "Tyranthraxus is defeated", "src": "5:7 0xA815", "when": ["4ABA >= 254"]}
 			],
 			"done": ["4ABA >= 254"],
 			"reported": ["4ABA == 255"],
