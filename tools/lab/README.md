@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 42:** showcase item 5's new parts (main's lab only): `ui42.sh` = `ui40.sh` plus `SAVE=<cfg>` (start the
+`KEYS` replay from any save or checkpoint, copied); `uisteps.py` takes `esc`, not `Escape`; the recorder starts
+`LEAD` s after launch (`LEAD=6` keeps Godot's boot splash out of a take with `KEYS`). The takes' step lists are in
+`data/c42/shots/<take>` (README in the PC's `.lab/showcase/main/`, "Chat 42"). Test build 2's dry run: give the out
+dir as the third argument inside the lab (`windows_test.sh origin/main 0.1.0-test2 ~/gbr/lab/data/c42/build/...`) so
+it can be deleted after; the README comes from the checkout running the script, not from the commit. **A c34d
+checkpoint as an original start:** load the cfg in ours and ENCAMP SAVE an empty slot (`--keys=wait,E,wait,S,wait,
+G,wait,wait,N`): the original loads it (5:3 included). In the original's vertical menus End moves down (Up/Down
+don't). 5:3 routes: GEO5 block 3, events are `INFO & 31` (bits 32/64 are other flags). Check 24 with
+`SEED=11111111 mkcheck35.sh 24 5-3 "<orig keys>" "<ours keys>"`; `trace.py install` then `trace.py run 20 end enter`
+logged the original's DAMAGE draws (`data/c42/trace24.txt`). `tools/dis.gd` takes the game folder as its first
+argument (`-- <game> <file> <block>`; `--game-path=` hangs it).
+
 **Chat 41:** **test build 2: `tools/build/windows_test.sh <commit> <version> [<out dir>]`** (in the repo, not the lab):
 `tools/build/windows_test.sh origin/main 0.1.0-test2` builds into `/mnt/d/ai_projects/goldbox-reforged/builds/
 windows-0.1.0-test2/` (+ `.build-info.txt`, `.pck-list.txt` beside it; refuses an existing folder) from a `git archive`

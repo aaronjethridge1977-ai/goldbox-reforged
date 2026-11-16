@@ -1768,6 +1768,12 @@ func _try_move(direction: int) -> void:
 		var open := map.wall(_pos.x, _pos.y, direction) == 0 or map.door(_pos.x, _pos.y, direction) != 0
 		var off := next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE
 		_vm.write_byte(EclVM.LEAVING_MAP, 1 if off and open else 0)
+		# The original writes the square it stands on to 0x49F0/0x49F1 at the attempt, before
+		# the on-move script: a refused step leaves it the current square (5:3's gate, check 24).
+		# Not for a step off the map (8:16's south edge keeps the square before: check 7).
+		if not off:
+			_vm.write_byte(EclVM.PREVIOUS_X, _pos.x)
+			_vm.write_byte(EclVM.PREVIOUS_Y, _pos.y)
 		_vm.clear_output()
 		_step_from = _pos
 		_vm.start(0)

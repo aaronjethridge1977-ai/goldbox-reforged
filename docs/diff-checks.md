@@ -172,6 +172,40 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 42: check 24 (5:3 the portcullis), two engine fixes, DIFFCHECKS 24/24
+
+The standing list (Q6, item 1), after the Lead's items (showcase item 5, test build 2's dry run).
+
+- **The start (new way into the castle):** c34d's checkpoint `data/c34/cp_c34d/bot_valjevo5.cfg` (5:3 at 12,7 E,
+  17:04) loaded in ours and saved by ours' ENCAMP SAVE into an empty slot G (`--keys=wait,E,wait,S,wait,G,wait,wait,
+  N`): **the original loads it** (chat 40's jump into 5:3 dropped it to DOS). Any c34d checkpoint can start a check
+  this way.
+- **Check 24, 5:3 (Valjevo's outer castle): the portcullis** (the step west from 12,8 into the gate, on-move script
+  0xA8A0): "A DEEP VOICE CALLS DOWN, 'WHAT IS THE PASSWORD?'" GIVE THE PASSWORD / FORCE THE GATE OPEN; FORCE: "AN
+  ALARM STARTS RINGING!" (0x99D8: 0x4A64 = the hour + 1, the hour kept in 0x49C8/9), 0x4A6A bit 64, "A VOLLEY OF
+  BOULDERS..." (DAMAGE 12, 2, 6, 0, 48: twelve throws at random members, each a d20 to hit, 2d6), then the door's
+  LOCKED menu, EXIT. Seed 11111111: CEDRIC 5, ARN 10, BRAM 4, ELWEN 9 in both. (GIVE THE PASSWORD: the password is
+  RHODIA, 0xAA5C; it writes only 0x6DC9, so FORCE is the one checked.) Keys: the original `wait=2 up right up right
+  up up end enter wait=15 enter e` (End moves its vertical menu, Up/Down don't; it waits on PRESS <ENTER> after the
+  boulders); ours `load=G,wait,tpseed=11111111,Up,wait,Right,wait,Up,wait,Right,wait,Up,wait,Up,wait,End,wait,Enter,
+  wait,wait,wait,E,wait,wait,F2`. **MATCH**, 0 differences. Lab `data/c35/chk24/`, sealed as `~/gbr/checks/data/24`.
+- **Fix 1, DAMAGE's draws (`ecl_vm.gd _damage`):** the original rolls the damage, then **always** picks a random
+  member (dice 1 x party size, GAME.OVR 0x354C-0x355E) unless 0x40 (the whole party) is set, before it tests 0x80;
+  the volley form (no 0x80) and the selected member's form never use that pick. Ours drew it only in the random
+  member's form, so the volley form was one draw short (the first take: the same four hits but ARN's on the wrong
+  members). Found with `trace.py` (the draws in `data/c42/trace24.txt`: 2 damage, the pick at 0x355e, then per
+  throw member 0x36ad, d20 0x2bb4d, the next damage 0x3702).
+- **Fix 2, the previous square (`main.gd _try_move`):** the original writes the square it stands on to
+  0x49F0/0x49F1 at a step's attempt, before the on-move script, so a refused step (the gate) leaves the current
+  square there; ours wrote it only on a completed step (0x49F0: original 12, ours 13). Not for a step off the map:
+  check 7 (8:16's south edge into the wilderness) keeps the square before in the original. Inferred from these two
+  cases; a wall bump with no script in between wasn't seen separately.
+- `diffcheck.sh` runs 24 (**DIFFCHECKS 24/24, ~35 s**). Break test repeated (a lab copy, removed): SUBTRACT off by
+  one caught (4, 18, 20, 21: 20/24); ADD over 200 caught (18: 23/24).
+- Seen, not changed: ours doesn't wait on "PRESS <ENTER>" after the boulders' damage lines (the original does), so
+  the keys differ there; a pacing difference left open for main (board), not in the saved state.
+- Areas no check visits now: 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27. 5:6 next: `bot_valjevo6.cfg` the same way.
+
 ## Chat 41: checks 22 (the save files) and 23 (5:4 the records building), DIFFCHECKS 23/23
 
 Player 12's request (Lead's item 1): ours' save writer left 0-byte `CHRDAT<x><n>.ITM` / `.SPC` files for a member with

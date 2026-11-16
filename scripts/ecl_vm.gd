@@ -648,6 +648,10 @@ func _damage(a: Array) -> void:
 			t += _ri(1, maxi(size, 1))
 		return t
 	var damage: int = roll.call()
+	# The original picks a random member right after the damage roll whenever 0x40 (the whole
+	# party) is off, whatever the form: one Random(party size) the volley form and the selected
+	# member's form never use (GAME.OVR 0x354C-0x355E; trace of 5:3's gate, chat 42).
+	var picked: PartyMember = null if flags & 0x40 else _random_member()
 	if flags & 0x80:
 		var bonus := flags & 0x1F
 		var kind := extra & 7
@@ -660,7 +664,7 @@ func _damage(a: Array) -> void:
 			if m != null and (kind == 0 or not _save_roll(m, bonus, kind - 1) or flags & 0x10):
 				_hurt(m, damage)
 		else:
-			var m := _random_member()
+			var m := picked
 			if m != null and (not _save_roll(m, bonus, kind) or flags & 0x10):
 				_hurt(m, damage)
 	else:
