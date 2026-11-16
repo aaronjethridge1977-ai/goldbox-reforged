@@ -373,3 +373,22 @@ clutter (742 and 748 draws), then:
    Tyranthraxus breathes (ELWEN killed by 80 electricity in round 2) and the fight runs past segment's 600 s; the
    original wins in under a minute (seed 12345678: ARN, CEDRIC, ELWEN dead; seed 2468ace1: BRAM).
 Requests to Combat (1, 3) and main (2) on the board.
+
+## Player 6 (2026-11-15): Tyranthraxus alone, rerun: ours wins as the original does
+
+Ours on origin/main 62f27f6 (Combat Chat 7's fear d100 and encounter distance 0, chat 31's vote by record byte 0xB8);
+no `--ours-key`. Lab script `p6/rerun1.sh`: `segment.py p5_dragon1T|p5_dragon2T entry after --tplog` against Player 5's
+traces, then `cmpdraws.py` (ours' log kept as `logs/<run>.segment6.txt`, results `logs/<run>.cmpdraws6.txt`).
+
+**Ours now finishes and wins on both seeds** (seed 12345678 in 26 s, 2468ace1 in 39 s: "THE PARTY WINS."), as the
+original does. c27a's loss there is explained: the fear's half-elf d100, the vote asking DIRTEN and the placement (all
+three fixed). The vote asks the six; DIRTEN and Tyranthraxus stand beside the party. Draws now match much further:
+- **Seed 12345678: to draw 785.** Tyranthraxus casts a spell whose area takes in CEDRIC and himself (ours: three saves,
+  CEDRIC, TYRANITHRAXUS, TYRANITHRAXUS). The original rolls **a d100 at GAME.OVR 0x115BF after each of his saves**
+  (draws 786, 788): the magic-resistance check (`cmp ds:0x6817,0` / `ds:0x6819 & 8`, then d100 against the resistance
+  less `(11 - level) * 5`; at or under it calls 0x1EC5B). Ours rolls none. Who dies differs (the original: ARN,
+  CEDRIC, ELWEN; ours: CEDRIC). The original's trace has one lost draw (unchecked).
+- **Seed 2468ace1: to draw 817.** LIRA on QUICK steps 25,12 -> 26,13 and attacks once in the original (d20 2, then
+  initiative); ours shoots DIRTEN twice from her square (d20 2 and 1): the same split as 5:4's patrol (draw 780,
+  Combat's open request). Who dies differs (the original: BRAM; ours: ELWEN, DORN).
+Both to Combat (board): not gate gaps (both games win), but they are the next draw-for-draw differences.
