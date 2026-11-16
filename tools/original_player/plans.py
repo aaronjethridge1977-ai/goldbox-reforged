@@ -5,9 +5,12 @@
                                  main's plan: its `answer <area> <words>|<choice>` lines for this area are used
   walk 5,8                       walk there (route on the map, from the square read in memory), round every event
   walk 12,9 through 9,11         the same, but the route may cross squares with those event numbers
+  walk 12,9 avoid 9,12,16        (Player 13) the route crosses every event square but those (main's bot's tour in
+                                 `explore 9 12 16`: main.gd _find_path walks round only the plan's left-out events)
   step W                         face W and step (into an event square)
   checkpoint <name>              ENCAMP, SAVE to the run's slot, index line, copy to .lab/player/saves
   exit 7:26                      walk is over when the party is in that area
+  answer <words>|type:<WORD>      (Player 13) once: the word's letters, then Enter (a script's typed answer)
   answer <words>|snap:<name>:<key>  (Player 2) the screen's picture and rows to logs/<run>_snap_<name>.*, once, then <key>
   answer <words>|seq:<name>:<k1>,<k2>,...
                                  (Player 3) once: the keys in turn, one a wait, whatever the screen, each screen's
@@ -22,6 +25,9 @@
                                  (Player 12) the next camp's (the inn's) MAGIC MEMORIZE per member, then REST for the
                                  time the original offers, then EXIT the camp (main's bot at the inn)
   readyall                       (Player 12) main's bot's readying after a shop: every member's items READY (VIEW, ITEMS)
+  heal                           (Player 13) main's bot's heal in a camp area (bot.gd _heal_if_low / _heal): if a
+                                 member is below half HP or not OKAY: camp, Cure Light Wounds on the most hurt,
+                                 MEMORIZE the bot's picks, REST, in rounds; then day rests until no one is hurt
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
   buy <m> <item> | <m> <item> ...
                                  (Player 12) the next shop visit's purchases, main's `shop` list without the door:
@@ -41,8 +47,9 @@ DX = {"N": (0, -1), "E": (1, 0), "S": (0, 1), "W": (-1, 0)}
 
 
 class Walk:
-    def __init__(self, x, y, area, through=()):
+    def __init__(self, x, y, area, through=(), avoid=None):
         self.x, self.y, self.area = x, y, area
+        self.avoid = avoid              # Player 13: `walk x,y avoid 9,12,16`: cross every event but these
         self.through = set(through)     # event numbers the route may cross (Player 2: Podol Plaza's 9s and 11s)
         self.aliases = set()            # Player 3: other ECL blocks on this map (plan line `alias`)
 
@@ -59,7 +66,10 @@ class Walk:
         if p.on_band():
             return self.band_step(p, x, y)
         R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
-        avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
+        if self.avoid is not None:      # Player 13: the bot's tour (main.gd _find_path): only these are walked round
+            avoid = set(self.avoid) - {R.event(x, y), R.event(self.x, self.y)}
+        else:
+            avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
         path = R.route((x, y), {(self.x, self.y)}, avoid)
         if path is None:
             raise_stop(p, "walk: no route from %d,%d to %d,%d" % (x, y, self.x, self.y))
@@ -169,6 +179,104 @@ class ReadyAll:
         return False, "v", "readyall: VIEW %s" % P[self.j][1]
 
 
+class Heal:
+    """Player 13: `heal` on the walking screen: main's bot's `_heal_if_low` and `_heal` (scripts/dev/bot.gd) for an
+    area whose rest rule is camp. Nothing unless a member isn't OKAY or is below half HP. Then in camp: every
+    memorized Cure Light Wounds cast on the most hurt (by 4 HP or more; MAGIC, CAST, the member list), the free slots
+    filled with the bot's picks (MEMORIZE) and a REST for the time the original offers, round after round while the
+    cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
+    An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
+    The camp screens are answered in Plan._heal (p.heal holds the state)."""
+    def __repr__(self):
+        return "heal"
+
+    def next(self, p):
+        h = getattr(p, "heal", None)
+        if h is not None:
+            if h["done"]:
+                p.heal = None
+                p.note("heal", "healed: %s (%d cures, %d rests, %d day rests, %d interrupted)" % (
+                    party_hp(p.g.mem), h["cures"], h["rests"], h["days"], h["interrupts"]))
+                return True, None, ""
+            if h.get("op") and h["op"][0] == "rest" and p.fights > h["fights0"]:
+                h["interrupts"] += 1
+                h["op"] = None
+                p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
+                               " again)" % p.fights)
+                if h["interrupts"] > 4:
+                    raise_stop(p, "heal: rest interrupted %d times" % h["interrupts"])
+                if h["phase"] == "rounds":
+                    h["phase"], h["memo_any"], h["days_memo"] = "days", False, False
+            return False, "e", "heal: ENCAMP"
+        M = members(p.g.mem)
+        if any(m["status"] == 6 or m["status"] > 6 for m in M):
+            raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
+        if not any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M):
+            return True, None, ""
+        p.heal = {"done": False, "phase": "rounds", "round": 0, "cured": 0, "memo_any": False, "op": None,
+                  "cures": 0, "rests": 0, "days": 0, "interrupts": 0, "fights0": p.fights, "days_memo": False,
+                  "field": None}
+        p.note("heal", "low: %s" % party_hp(p.g.mem))
+        return False, "e", "heal: ENCAMP"
+
+
+# Player 13: spell ids (the record's memorized bytes 0x17-0x2B, + 0x80 while being memorized) by class and level
+# (ours' SpellTable): cleric level 1 is 1-8, magic-user level 1 9-21. The bot's picks (bot.gd PICKS): level 1
+# clerics Cure Light Wounds, Cure Light Wounds, Bless in turn; magic-users Sleep, Magic Missile.
+CLERIC1, MU1 = range(1, 9), range(9, 22)
+SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 15: "MAGIC MISSILE", 21: "SLEEP"}
+PICKS1 = ((CLERIC1, 0xB2, (3, 3, 1)), (MU1, 0xB5, (21, 15)))
+CLW = 3
+
+
+def members(mem):
+    out = []
+    for i, ((s, o), name, n, hp) in enumerate(loot.party(mem)):
+        r = mem.far(s, o, 0x120)
+        out.append({"i": i, "name": name, "hp": r[0x11B], "max": r[0x32], "status": r[0x10C],
+                    "mem": [b for b in r[0x17:0x2C] if b], "rec": r})
+    return out
+
+
+def party_hp(mem):
+    return " ".join("%s %d/%d%s" % (m["name"], m["hp"], m["max"], "" if m["status"] == 0 else " s%d" % m["status"])
+                    for m in members(mem))
+
+
+def needs_rest(M):
+    return any(m["status"] in (0, 4, 5) and m["hp"] < m["max"] for m in M)
+
+
+def next_cure(M):
+    """bot.gd _cure_in_camp: the first OKAY caster with a memorized Cure Light Wounds, on the most hurt (OKAY,
+    unconscious or dying, 4 HP or more missing; the first of equals). None when no cure is due."""
+    for c in M:
+        if c["status"] != 0 or CLW not in c["mem"]:
+            continue
+        worst = None
+        for m in M:
+            if m["status"] in (0, 4, 5) and m["max"] - m["hp"] >= 4 and (
+                    worst is None or m["max"] - m["hp"] > worst["max"] - worst["hp"]):
+                worst = m
+        return (c, worst) if worst else None
+    return None
+
+
+def picks(m):
+    """bot.gd _pick_spells for level 1: the spells to queue in the member's free level-1 slots (names)."""
+    if m["status"] != 0:
+        return []
+    out = []
+    for ids, slot, order in PICKS1:
+        used = sum(1 for b in m["mem"] if (b & 0x7F) in ids)
+        known = [s for s in order if m["rec"][0x33 + s - 1]]     # the spell book: a byte per spell id
+        if not known:
+            continue
+        for k in range(max(0, m["rec"][slot] - used)):
+            out.append(SPELL_NAMES[known[k % len(known)]])
+    return out
+
+
 class Exit:
     def __init__(self, area):
         self.area = area
@@ -257,6 +365,11 @@ class Plan:
             k, why = self._seq(scr, st, p)
             if k:
                 return k, why
+        h = getattr(p, "heal", None)
+        if h is not None and not h["done"]:
+            k = self._heal(scr, st, p, h)
+            if k:
+                return k
         if getattr(p, "saving", None) is None and self.memos and getattr(p, "memo_visit", 0) < len(self.memos):
             k = self._memorize(scr, st, p)
             if k:
@@ -346,6 +459,14 @@ class Plan:
                 if k:
                     return k, "%s: %s" % (src, why)
                 continue
+            if words in text and choice.startswith("type:"):
+                # Player 13: `answer <words>|type:OHLO`: the word typed once, then Enter (the bot types the word the
+                # script compares with: the Rope Guild booth's OHLO).
+                word = choice[5:]
+                if ("type", words) in p.snapped:
+                    continue
+                p.snapped.add(("type", words))
+                return [c.lower() for c in word] + ["enter"], "%s: typed %s" % (src, word)
             if words in text and choice.startswith("snap:"):
                 # Player 2: snap:<name>:<key>: the screen's picture and its 25 rows to logs/<run>_snap_<name>.*,
                 # once, then the key (any key name; the services sweep reads shops, temples and halls this way).
@@ -403,20 +524,47 @@ class Plan:
         if menu == "TAKE:":
             if sel != j:
                 return ("end" if sel is None or j > sel else "home"), "take: select member %d for %s" % (j + 1, it["name"])
+            t["start"], t["dir"] = 0, "n"
             return "i", "take: ITEMS (%s for member %d)" % (it["name"], j + 1)
         if sel != j:
             return "e", "take: back to select member %d" % (j + 1)
-        n = len(loot.loot(mem))
-        if n > 18:
-            raise_stop(p, "take: a loot list of %d items (longer than the screen: scrolling not yet seen)" % n)
+        L = loot.loot(mem)
+        n = len(L)
+        # Player 13: a list longer than the screen shows 19 rows a page (ITEMS: TAKE NEXT [PREV] EXIT; lab p13b2/b3: a
+        # 37-item pile's second page shows its last 19). The window is found from the rows' names (the tracked start
+        # first: piles repeat their names), not assumed.
+        bw = scr["bottom"].split()
+        rows = [re.sub(r"^\d+ ", "", st["rows"][4 + j].strip("?\\ *")) for j in range(19)]
+        k = len([r for r in rows if r])
+        starts = [s0 for s0 in range(0, max(1, n - k + 1)) if self._loot_rows_match(rows[:k], L[s0:s0 + k])]
+        s0 = t.get("start", 0)
+        if s0 not in starts:
+            if not starts:
+                p.log("TAKE rows %s | loot %s" % (rows[:k], [x["name"] for x in L]))
+                raise_stop(p, "take: the ITEMS rows match no window of the %d-item loot" % n)
+            s0 = starts[0] if t.get("dir", "n") == "p" or len(starts) == 1 else starts[-1]
+        t["start"] = s0
+        if not s0 <= i < s0 + k:
+            if i >= s0 + k and "NEXT" in bw:
+                t["start"], t["dir"] = s0 + k, "n"
+                return "n", "take: NEXT page for %s (item %d)" % (it["name"], i + 1)
+            if i < s0 and "PREV" in bw:
+                t["start"], t["dir"] = max(0, s0 - 19), "p"
+                return "p", "take: PREV page for %s (item %d)" % (it["name"], i + 1)
+            raise_stop(p, "take: item %d not in rows %d-%d and no way there (%s)" % (i + 1, s0 + 1, s0 + k, scr["bottom"]))
         lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
         if len(lit) != 1:
             raise_stop(p, "take: no single lit item on the ITEMS list (rows %s)" % lit)
-        hl = lit[0] - 4
+        hl = lit[0] - 4 + s0
         if hl == i:
             t["pending"] = (n, sig, j)
             return "t", "take: %s (%d gp, weight %d) for member %d" % (it["name"], it["price"], it["weight"], j + 1)
         return ("end" if i > hl else "home"), "take: light to %s (row %d)" % (it["name"], i + 4)
+
+    @staticmethod
+    def _loot_rows_match(rows, items):
+        names = [re.sub(r"^\d+ ", "", it["name"].upper()) for it in items]
+        return len(rows) == len(names) and all(r.startswith(nm[:len(r)]) or nm.startswith(r) for r, nm in zip(rows, names))
 
     # -- Player 12: BUY (`buy` lines; the shop's list is the loot pointer DS:0x6810, the buyer DS:0x5D92) ----
     def _buy(self, scr, st, p):
@@ -551,6 +699,171 @@ class Plan:
             return "e", "memorize: rest over, EXIT"
         return None
 
+    # -- Player 13: the heal in camp (`heal` goal; bot.gd _heal) --------------------------------------------------
+    def _heal_op(self, p, h):
+        """The next thing to do from the CAMP menu: ("cast", caster, target) | ("memorize", member, [names]) |
+        ("rest", minutes or None for the time offered) | ("leave",)."""
+        M = members(p.g.mem)
+        op = h["op"]
+        if op and op[0] == "rest":
+            h["op"], h["memo_last"] = None, None
+            if h["phase"] == "rounds":
+                h["round"] += 1
+                h["cured"], h["memo_any"] = 0, False
+                if h["round"] >= 12:
+                    h["phase"] = "days"
+            elif op[1] is not None:
+                h["days"] += 1
+        if not needs_rest(M):
+            return ("leave",)
+        if h["phase"] == "rounds":
+            c = next_cure(M)
+            if c:
+                h["cured"] += 1
+                return ("cast", c[0]["i"], c[1]["i"])
+            if not needs_rest(M):
+                return ("leave",)
+            if h["cured"] == 0 and h["round"] > 0:
+                h["phase"] = "days"
+            else:
+                for m in M:
+                    pk = picks(m)
+                    if pk:
+                        return self._memo_op(p, h, m, pk)
+                if h["memo_any"]:
+                    return ("rest", None)
+                h["phase"] = "days"
+        # days: the bot's picks and a rest to memorize them first, then rests of min(need, 10) days
+        if not h["days_memo"]:
+            for m in M:
+                pk = picks(m)
+                if pk:
+                    return self._memo_op(p, h, m, pk)
+            h["days_memo"] = True
+            if h["memo_any"]:
+                return ("rest", None)
+        if h["days"] >= 60:
+            p.note("heal", "60 day rests and still hurt: %s" % party_hp(p.g.mem))
+            return ("leave",)
+        need = max(m["max"] - m["hp"] for m in M if m["status"] in (0, 4, 5))
+        return ("rest", min(need, 10) * 24 * 60)
+
+    def _memo_op(self, p, h, m, pk):
+        if h.get("memo_last") == (m["i"], tuple(pk)):
+            raise_stop(p, "heal: %s's free slots still free after MEMORIZE (%s)" % (m["name"], pk))
+        h["memo_last"], h["memo_any"] = (m["i"], tuple(pk)), True
+        return ("memorize", m["i"], list(pk))
+
+    def _heal(self, scr, st, p, h):
+        bw = scr["bottom"].split()
+        mem = p.g.mem
+        sel = loot.selected(mem)
+        P = loot.party(mem)
+        row1 = st["rows"][1]
+        if bw[:1] == ["CAMP:"]:
+            if h["op"] is None or h["op"][0] == "rest" and h.get("rest_sent"):
+                h["rest_sent"] = False
+                h["op"] = self._heal_op(p, h)
+                h["sub"] = None
+                p.log("HEAL op %s (phase %s, round %d)" % (h["op"], h["phase"], h["round"]))
+            op = h["op"]
+            if op[0] == "leave":
+                h["done"] = True
+                return "e", "heal: done, leave camp"
+            if op[0] == "rest":
+                h["fights0"], h["field"] = p.fights, None
+                return "r", "heal: REST"
+            j = op[1]
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "heal: select %s" % P[j][1]
+            if h.get("sub") == "over":      # the cast / memorize finished: next op
+                h["op"] = None
+                return self._heal(scr, st, p, h)
+            return "m", "heal: MAGIC (%s)" % P[j][1]
+        op = h["op"]
+        if op is None:
+            return None
+        if bw[:2] == ["CAST", "MEMORIZE"]:
+            if h.get("sub") == "over":
+                return "e", "heal: EXIT MAGIC"
+            return ("c", "heal: CAST") if op[0] == "cast" else ("m", "heal: MEMORIZE")
+        if bw[:2] == ["CHOOSE", "SPELL:"] and "CAST" in bw and op[0] == "cast":
+            if h.get("sub") == "over":
+                return "e", "heal: EXIT the spells in memory"
+            rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+            hit = [r for r, t in rows.items() if t == "CURE LIGHT WOUNDS"]
+            lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+            if not hit:
+                raise_stop(p, "heal: no CURE LIGHT WOUNDS in %s's memory" % P[op[1]][1])
+            if len(lit) != 1:
+                raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
+            if lit[0] in hit:
+                return "c", "heal: CAST CURE LIGHT WOUNDS (%s)" % P[op[1]][1]
+            return ("end" if hit[0] > lit[0] else "home"), "heal: light to CURE LIGHT WOUNDS"
+        if "CAST SPELL ON WHOM" in scr["bottom"] and op[0] == "cast":
+            t = op[2]
+            hl = scr.get("highlight")
+            if hl is None:
+                raise_stop(p, "heal: no member lit on CAST SPELL ON WHOM")
+            if hl != t:
+                return ("end" if t > hl else "home"), "heal: target %s" % P[t][1]
+            h["sub"] = "over"
+            h["cures"] += 1
+            p.note("heal", "%s casts Cure Light Wounds on %s (%d/%d)" % (
+                P[op[1]][1], P[t][1], P[t][3], members(mem)[t]["max"]))
+            return "s", "heal: SELECT %s" % P[t][1]
+        if op[0] == "memorize":
+            spells = op[2]
+            if bw[:2] == ["CHOOSE", "SPELL:"] and "MEMORIZE" in bw:
+                if not spells or h.get("sub") == "over":
+                    return "e", "heal: the member's list done, EXIT"
+                want = spells[0]
+                rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+                hit = [r for r, t in rows.items() if t == want]
+                lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+                if not hit:
+                    if "NEXT" in bw and h.get("mpages", 0) < 8:
+                        h["mpages"] = h.get("mpages", 0) + 1
+                        return "n", "heal: page for %s" % want
+                    raise_stop(p, "heal: %s not in %s's book" % (want, P[op[1]][1]))
+                if len(lit) != 1:
+                    raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
+                if lit[0] == hit[0]:
+                    spells.pop(0)
+                    h["mpages"] = 0
+                    p.note("heal", "%s memorizes %s" % (P[op[1]][1], want))
+                    return "m", "heal: MEMORIZE %s" % want
+                return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % want
+            if bw == ["EXIT"] and "TO BE MEMORIZED" in row1:
+                return "e", "heal: the list to be memorized shown, EXIT"
+            if scr["kind"] == "yesno" and "MEMORIZE THESE SPELLS" in scr["bottom"]:
+                h["sub"] = "over"
+                return "y", "heal: YES"
+        if bw[:1] == ["REST"] and "DAYS" in bw and op[0] == "rest":
+            if h.get("rest_sent"):
+                return "e", "heal: rest over, EXIT"
+            m = re.search(r"REST TIME:\s*(\d+):(\d+):(\d+)", st["rows"][17])
+            if not m:
+                raise_stop(p, "heal: no REST TIME on row 17")
+            have = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            if op[1] is not None:
+                want = (op[1] // 1440, op[1] // 60 % 24, op[1] % 60)
+                for f, key in enumerate("yhm"):
+                    if have[f] != want[f]:
+                        if h["field"] != f:
+                            h["field"] = f
+                            return key, "heal: rest field %s" % ("DAYS", "HOURS", "MINS")[f]
+                        return ("i" if want[f] > have[f] else "d"), "heal: rest %02d:%02d:%02d to %02d:%02d:%02d" % (
+                            have + want)
+            if have == (0, 0, 0):
+                h["rest_sent"] = True
+                return "e", "heal: nothing to rest for, EXIT"
+            h["rest_sent"] = True
+            h["rests"] += 1
+            p.note("heal", "rest %02d:%02d:%02d (%s)" % (have + ("offered" if op[1] is None else "days",)))
+            return "r", "heal: REST %02d:%02d:%02d" % have
+        return None
+
     def choose(self, scr, choice):
         kind = scr["kind"]
         if kind == "vmenu":
@@ -591,7 +904,8 @@ def load(path):
             w = rest.split()
             x, y = (int(v) for v in w[0].split(","))
             through = [int(v) for v in w[2].split(",")] if len(w) > 2 and w[1] == "through" else []
-            pl.goals.append(Walk(x, y, pl.area, through))
+            avoid = [int(v) for v in w[2].split(",") if v] if len(w) > 2 and w[1] == "avoid" else None
+            pl.goals.append(Walk(x, y, pl.area, through, avoid))
             pl.goals[-1].aliases = pl.aliases
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
@@ -606,6 +920,8 @@ def load(path):
                 if b.strip():
                     who, sp = b.strip().split(None, 1)
                     pl.memos[-1].append((who, [x.strip() for x in sp.split(",") if x.strip()]))
+        elif cmd == "heal":
+            pl.goals.append(Heal())
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
