@@ -644,3 +644,46 @@ state) so ours replays them. Segment 1 can't be replayed in ours for the same re
 Lab: `p12/` (seg01.plan, seg02a.plan, cpdiff.sh, cfgparty.py: ours' checkpoint's members, botorder.py, lit.py,
 find.py, scr.py: probes), saves `p2start/c34d_start`, `c34d_start_noitm`, `c34d_shopped`, runs `p12a6` (segment 1),
 `p12b1` (segment 2's first pass), logs `p12*`.
+
+## Player 13 (2026-11-16): segment 2's three gaps closed; segment 2 runs to event 3; segment 1 in ours parts at the shop
+
+**Lead's item 2:** main's chat 41 (addbfc7) writes no empty `.ITM`/`.SPC`; lab `p2/mkorig.sh` no longer deletes 0-byte
+files. A fresh start save (`p2start/c34d_start13`, no 0-byte files) loads clean: segment 1 rerun from it (p13a1)
+matches ours' `shopped` as p12a6 did (statediff: only the clock, 06:04 against 06:00).
+
+**New plan lines and tools** (plans.py, segment.py):
+- `heal` (main's bot's `_heal_if_low` / `_heal`, camp areas): if a member is below half HP or not OKAY: ENCAMP; every
+  memorized Cure Light Wounds cast on the most hurt (4+ HP missing; MAGIC, CAST, the CHOOSE SPELL list, CAST SPELL ON
+  WHOM with End / Home and S); the bot's picks MEMORIZEd in the free level-1 slots (clerics CLW, CLW, Bless; magic-users
+  Sleep, Magic Missile, if in the book); REST for the time offered; in rounds while cures heal, then rests of
+  min(most missing HP, 10) days (REST: DAYS is Y, HOURS H, MINS M, INC / DEC). A member dead stops the run (death rule).
+  An interrupted rest is fought out and the heal goes on (the bot walks to the inn there; noted, not copied).
+  Probed in the original first: learning spells are id | 0x80 in record bytes 0x17-0x2B; the memorize list shows CAN
+  MEMORIZE: CLERIC SPELLS: n; a rest ends on the CAMP menu.
+- `walk x,y avoid 9,12,16`: the route crosses every event square but those, as the bot's tour (main.gd `_find_path`
+  walks round only `explore`'s left-out events). Player 12's 1,7 -> 1,5 dead end came from also avoiding the bot's
+  odds-deferred events (13 15 20).
+- `answer <words>|type:<WORD>`: a typed answer (the Rope Guild booth's OHLO).
+- TAKE pages a loot list longer than the screen: 19 rows a page, ITEMS: TAKE NEXT [PREV] EXIT; a 37-item pile's second
+  page shows its last 19 items (overlapping). The window is found from the rows' names (counts like "10 ARROWS"
+  stripped on both sides).
+- segment.py keeps the heal's and memorize's camp keys (only a checkpoint's camp keys are left out), adds ours' waits
+  for each REST's length, clears slot F before installing (an older save's .ITM/.SPC were loaded with a new .SAV), and
+  `segment.py <run> begin <to> --start=<p2start save>` replays from a run's own start.
+
+**Segment 2 (shopped -> slums)**, `p13/seg02b.plan` (the bot's event order 2 4 5 8 7 14 17 18 21 11 10 6 1 3 19, heal
+after each), traced: p13b5 won 15 fights on QUICK with 7 heals (every heal back to full HP, no rest interrupted), and
+stopped at event 3's commission menu (ACCEPT THE COMMISSION / REJECT IT: answer fixed to ACCEPT). p13b6 (with
+checkpoints `s2a` before event 3 and `s2b` before 19) was running when the chat ended.
+
+**Segment 1 replayed in ours** (`segment.py p13a1 begin shopped --start=c34d_start13`): ours stays in the shop. **First
+difference: on the shop's item list NEXT / PREV keep the light on its screen row in the original** (Long Sword lit on
+row 19, NEXT, one End lights Banded Mail on row 20); **ours puts the light on the page's top row**
+(`shop_screen.gd` `_page`: `_cursor = _top`), so the same keys buy a Voulge. With that changed in the lab's copy only,
+ours buys Banded Mail; a second difference remains around the pool's TAKE and EXIT (original keys 220-227: ours'
+pool after the purchases was 2 gp 64 pp against the original's 3 gp 9 pp before the patch; not yet rechecked).
+Request to Combat (board).
+
+Lab: `p13/` (seg02b.plan, heal_test.plan, idle.plan, sethp.py: probe HP in memory, align.py: a segment's ours lines
+next to the original's keys, oursat.py: ours' screens after chosen keys), saves `p2start/c34d_start13`,
+`c34d_shopped13`, runs `p13a1` (segment 1), `p13h1` (heal probe), `p13b1`-`p13b6` (segment 2).
