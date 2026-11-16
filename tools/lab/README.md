@@ -175,7 +175,10 @@ another slot (the Player's are slot I). Checks driver with its own output folder
 
 **Chat 36:** `mksave.py` takes `gp<n>=<gold>` (character file n's gold; `pp<n>=` the platinum). Check 18 (2:9 the
 wagon, `data/c35/chk2-9w/`) was made with `mkcheck35.sh 2-9w 2-9 "<keys>" "<ours' keys>"` (the first argument only
-names the lab folder). Area events: `evmap.py <ecl file> <block>`; every block's listing in a scratch folder:
+names the lab folder). Showcase captures: `oursvid36.sh <out.mkv> <secs> "<keys>"` (oursvid.sh on its own display
+`VD`, default :98, never :96/:97; `SAVE=<cfg>` loads a checkpoint, `LEAD=<s>` the delay before recording);
+`termvid.py <log> <timing> <out.mkv>` renders a `script --log-timing` recording as a 1280x800 terminal video (home
+folder shown as ~). Area events: `evmap.py <ecl file> <block>`; every block's listing in a scratch folder:
 `for s in 1..8: ecl.py list game/ECL$s.DAX`, then `ecl.py dis` per block (the repo's `tools/ecl.py`).
 
 **Chat 35:** new differential checks: `mkcheck35.sh <n> <area> "<pl.py do steps for the original>" "<ours' keys>"`
