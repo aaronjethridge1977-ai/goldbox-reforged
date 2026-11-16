@@ -82,6 +82,17 @@ func clear() -> void:
 	_menu_hits.clear()
 	_list_rows.clear()
 	_list_chosen = -1
+	_zones.clear()
+
+
+## Mouse step 2b: a region of the picture (pixels, 320 x 200) where a left click calls
+## `on_click(point: Vector2i in the region, double: bool)`; the screen turns it into key presses.
+## Menu words and list lines are tried first.
+var _zones: Array = []
+
+
+func click_zone(rect: Rect2i, on_click: Callable) -> void:
+	_zones.append([rect, on_click])
 
 
 ## Marks row `row` as line `index` of a list whose chosen line is `chosen` (mouse step 2).
@@ -241,7 +252,33 @@ func draw_walk(view: Image, party: Array, selected: int, place: String, lines: P
 	text_box(lines, GREEN, white_line)
 	if not menu.is_empty():
 		menu_line(24, menu, 0, menu_selected)
+	if "ENCAMP" in menu:
+		_walk_zones(overland)
 	update()
+
+
+## Mouse step 2b (C11-1): clicks in the view while the adventure menu is up. The 3D view: the left
+## third turns left, the right third turns right, the middle steps forward, the bottom strip steps
+## back (Left, Right, Up, Down). The wilderness map: the side clicked is the way stepped.
+func _walk_zones(overland: bool) -> void:
+	var view := Rect2i(8, 8, 120, 120)
+	if overland:
+		click_zone(view, func(p: Vector2i, _d: bool) -> void:
+			var c := p - Vector2i(60, 60)
+			if absi(c.x) > absi(c.y):
+				MouseInput.press(KEY_RIGHT if c.x > 0 else KEY_LEFT)
+			else:
+				MouseInput.press(KEY_DOWN if c.y > 0 else KEY_UP))
+		return
+	click_zone(view, func(p: Vector2i, _d: bool) -> void:
+		if p.y >= 96:
+			MouseInput.press(KEY_DOWN)
+		elif p.x < 40:
+			MouseInput.press(KEY_LEFT)
+		elif p.x >= 80:
+			MouseInput.press(KEY_RIGHT)
+		else:
+			MouseInput.press(KEY_UP))
 
 
 func party_list(party: Array, selected: int) -> void:
@@ -304,6 +341,15 @@ func _hit_at(cell: Vector2i) -> Array:
 	return []
 
 
+## The picture's pixel (320 x 200) under a point in this control's own coordinates.
+func _px_at(pos: Vector2) -> Vector2i:
+	if size.x <= 0.0 or size.y <= 0.0:
+		return Vector2i(-1, -1)
+	var k := minf(size.x / W, size.y / H)
+	var p := (pos - (size - Vector2(W, H) * k) / 2.0) / k
+	return Vector2i(int(floor(p.x)), int(floor(p.y)))
+
+
 ## The text cell (8x8, 40x25) under a point in this control's own coordinates.
 func _cell_at(pos: Vector2) -> Vector2i:
 	if size.x <= 0.0 or size.y <= 0.0:
@@ -347,6 +393,14 @@ func _gui_input(event: InputEvent) -> void:
 						var key: Key = _list_keys[1] if to > _list_chosen else _list_keys[0]
 						for n in absi(to - _list_chosen):
 							MouseInput.press(key)
+				else:
+					var px := _px_at(b.position)
+					for z in _zones:
+						var r: Rect2i = z[0]
+						if r.has_point(px):
+							accept_event()
+							(z[1] as Callable).call(px - r.position, b.double_click)
+							break
 			MOUSE_BUTTON_RIGHT:
 				accept_event()
 				MouseInput.press(KEY_ESCAPE)

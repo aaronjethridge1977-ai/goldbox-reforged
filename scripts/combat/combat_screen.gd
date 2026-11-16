@@ -508,6 +508,7 @@ func _draw_original(field: Image) -> void:
 	var f: Image = field.duplicate()
 	f.convert(Image.FORMAT_RGBA8)
 	g.img.blit_rect(f, Rect2i(0, 0, mini(f.get_width(), 168), mini(f.get_height(), 168)), Vector2i(8, 8))
+	g.click_zone(Rect2i(8, 8, VIEW_CELLS * CELL, VIEW_CELLS * CELL), _field_click)
 	if not _combatants.is_empty():
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
@@ -1995,6 +1996,46 @@ func _leave() -> void:
 		finished.emit(result)
 	else:
 		closed.emit()
+
+
+## Mouse step 2b (C11-1): a click on the battlefield's square `p` (pixels in the 7 x 7 window) as
+## the keys would do it. At the menu or in MOVE, a square next to the figure whose turn it is steps
+## there (MOVE first at the menu, when the figure can still move). In AIM a click aims there
+## (MANUAL's cursor, moved square by square as the keys move it); a click on the square already
+## aimed at is TARGET, when TARGET is offered.
+const _DIR_KEYS := [KEY_UP, KEY_PAGEUP, KEY_RIGHT, KEY_PAGEDOWN, KEY_DOWN, KEY_END, KEY_LEFT, KEY_HOME]
+
+
+func _field_click(p: Vector2i, _double: bool) -> void:
+	if _combat == null or _combat.active < 0 or _result != 0 or _combatants[_combat.active].get("quick", false) \
+			or _flash != "" or _asking_ally or _asking_abort or _casting != "":
+		return
+	var cell := _view + Vector2i(p.x / CELL, p.y / CELL)
+	var me: Dictionary = _combatants[_combat.active]
+	if _cmode == "menu" or _cmode == "move":
+		var d: Vector2i = cell - me.cell
+		if d == Vector2i.ZERO or absi(d.x) > 1 or absi(d.y) > 1:
+			return
+		var dir := [Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1),
+			Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1)].find(d)
+		if _cmode == "menu":
+			if me.moves < 2 or not "MOVE" in _bottom_menu():
+				return
+			MouseInput.press(KEY_M)
+		MouseInput.press(_DIR_KEYS[dir])
+	elif _cmode == "aim" or _cmode == "manual":
+		if cell == _aim_cell:
+			if "TARGET" in _bottom_menu():
+				MouseInput.press(KEY_T)
+			return
+		if _cmode == "aim":
+			MouseInput.press(KEY_M)
+		var at := _aim_cell
+		while at != cell:
+			var step := Vector2i(signi(cell.x - at.x), signi(cell.y - at.y))
+			at += step
+			MouseInput.press(_DIR_KEYS[[Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1),
+				Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1)].find(step)])
 
 
 const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIGHT: 2, KEY_KP_6: 2,
