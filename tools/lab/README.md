@@ -182,7 +182,8 @@ use the monotonic clock: WSL steps the wall clock (Findings). The take: `coldour
 "load=H,up,up,tpseed=22222222,enter,quickall,magic,fightend,n,wait,wait,wait,wait,wait,wait,tplog,partyhp"
 data/c38/ours_H22.log`; `coldorig38.sh H 22222222 data/c38/orig_H22.mkv 75 data/c38/orig_H22.log`. Never put
 `dosbox` in the command line that runs `coldorig38.sh` (its `killmine.py ... dosbox` kills that shell, and the
-orphaned script then runs on beside the next one). The code-wheel answer is `wheel_solver.py`, kept out of the repo.
+orphaned script then runs on beside the next one). The code-wheel answer is `wheel_solver.py`, kept out of the repo. `tools/save_list.gd <game folder> [<quick save>]` prints the save
+menu's data (SaveSlots). Lab archive: `lab38.tar.gz`.
 
 **Chat 37:** `oursvid36.sh` records with no pointer (Xvfb `-nocursor` and ffmpeg `-draw_mouse 0`: Godot sets its
 own pointer, which x11grab draws unless told not to). `fullrun37.sh <out.mkv>`: showcase item 7, c34d's 37 checkpoints
