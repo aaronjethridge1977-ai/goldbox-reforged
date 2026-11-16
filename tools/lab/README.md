@@ -173,6 +173,18 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 41:** **test build 2: `tools/build/windows_test.sh <commit> <version> [<out dir>]`** (in the repo, not the lab):
+`tools/build/windows_test.sh origin/main 0.1.0-test2` builds into `/mnt/d/ai_projects/goldbox-reforged/builds/
+windows-0.1.0-test2/` (+ `.build-info.txt`, `.pck-list.txt` beside it; refuses an existing folder) from a `git archive`
+of the commit without tools/ and docs/; stamps the version into the copy (project.godot, the .exe's file version
+0.1.0.2), scans the copy for game data, exports, checks the .pck list (only .godot/, content/, scenes/, scripts/, the
+icon, project.binary), writes the README (`tools/build/README-windows.txt`, the 8 steps) and the zip, and smoke-tests
+the same pack under the Linux release template: no game; check 22's start (load G, ENCAMP SAVE F, F2); the window
+title on Xvfb `:95` (`SMOKE_DISPLAY`; `tools/build/xtitle.py` reads it through libX11). ~45 s; dry run at addbfc7:
+BUILD OK (147 .pck files). Check 22 (the save files): the start and the original's end in `data/c41/chk22/`
+(DOSBox runs: `data/c41/orig22.log`), sealed as `~/gbr/checks/data/22`; a check with a `files` list compares the
+CHRDATF files ours leaves. `data/c41/oldrepo` is the break test's copy of the repo (SUBTRACT/ADD broken in turn).
+
 **Chat 40:** showcase item 5 (main's lab only, in `lab40.tar.gz`): `shot40.sh <out.mkv> <secs> "<keys>" <log>`
 (coldours39.sh without the draw log; each take gets a scratch copy of `qs.cfg`: an F2 in a take used to write the
 lab's own) and `ui40.sh <out.mkv> <secs> <log> <steps...>` (ours from the title, no `--keys`, or `KEYS="..."` for a
