@@ -1862,6 +1862,8 @@ func _door_choice(c: String) -> void:
 ## Completes a move once the on-move script has finished without refusing it.
 var _step_from := Vector2i(-1, -1)   # where the party stood when the step's on-move script began
 var _arrival_on_move := false        # an arrival's on-move script is paused (a menu) or running
+var _arrival_pending := false        # an arrival's init stopped for the player: its square's event follows
+var _arrival_after_init := false     # ... and the arrival was a step or NEW_ECL (the on-move script first)
 
 
 func _finish_move(direction: int) -> void:
@@ -2237,6 +2239,11 @@ func _after_vm() -> void:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		_finish_move(_pending_move)
+	elif _arrival_pending and _vm.state == EclVM.State.DONE:
+		# The arrival's init has ended after stopping for the player (see _enter_script).
+		_arrival_pending = false
+		if not _arrival_event(_arrival_after_init, -1):
+			_after_vm()
 	elif _arrival_on_move and _vm.state == EclVM.State.DONE:
 		# The arrival's on-move script is done (see _enter_script): a stop with the party moved
 		# runs the new square's event, as at the end of a step.
@@ -2674,6 +2681,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_vm_block = block_id
 	_step_from = Vector2i(-1, -1)
 	_arrival_on_move = false
+	_arrival_pending = false
 	# Only a step through the map's edge (the leaving script's CALL 0xC01E) carries on; a
 	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
 	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
@@ -2747,42 +2755,59 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	for a in [DOOR_TRY_BASH, DOOR_TRY_PICK, DOOR_TRY_KNOCK]:
 		_vm.write_byte(a, 1)
 	if arrive and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE]:
-		# As in the original, the square arrived on runs its event (New Phlan's gateway
-		# text when coming in from the Slums).
-		_sync_position_to_vm(_facing)
-		if from_step:
-			# The step goes on in the new area, starting again with its on-move script (lab,
-			# chat 13: a step that enters Podol Plaza shows its "HOW WILL YOU PROCEDE?" menu
-			# at once, before the square's own event). What it shows ends the step there;
-			# a stop it sets keeps the party on the arrival square.
-			var before := _vm.text
-			_step_from = _pos
-			_arrival_on_move = true
-			_vm.start(0)
-			if _vm.read_byte(EclVM.MOVEMENT_BLOCK) != 0:
-				carry = -1
-			var shown := _vm.text.strip_edges() != "" and _vm.text != before
-			if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
-				_after_vm()
-				return
-			_arrival_on_move = false
-			_vm.text = before
-			_sync_position_to_vm(_facing)
-		var keep := _vm.text
-		_vm.start(1)
-		if _vm.text == "" and not _vm.text_changed:
-			_vm.text = keep
-		# The step that crossed the edge carries on into the new area when nothing there
-		# stops it: the original lands one square further in, a minute later (lab, chat 6:
-		# Slums 0,4 west arrives in Kuto's Well at 14,4, not 15,4), but stays on the edge
-		# square when the arrival shows something (the Slums' greeting).
-		if carry >= 0 and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] \
-				and _vm.text.strip_edges() == "" and not _vm.on_overland:
-			var was := _pos
-			_finish_move(carry)
-			if _pos != was:
-				return
+		if _arrival_event(from_step, carry):
+			return
+	elif arrive and _vm.state != EclVM.State.NEW_ECL:
+		# The init stopped for the player (a menu, a text to read: Rolf's tour, 3:0's init when
+		# 0x4AC5 is 0). The original's arrival (GAME.OVR 0x3EFA) still goes on to the on-move
+		# script and the square's event once the init ends, on the square the init left the
+		# party on (lab, chat 36: after "OUR TOUR IS ENDED" DOSBox shows 0,4's gateway text,
+		# 0xAAD8). _after_vm runs it when the init is done.
+		_arrival_after_init = from_step
+		_arrival_pending = true
 	_after_vm()
+
+
+## The arrival on a new area's square after its init (see _enter_script): the on-move script
+## when a step or NEW_ECL brought the party, then the square's event, then the step carried on.
+## True when it has handed over (shown something or moved on): the caller returns.
+func _arrival_event(from_step: bool, carry: int) -> bool:
+	# As in the original, the square arrived on runs its event (New Phlan's gateway
+	# text when coming in from the Slums).
+	_sync_position_to_vm(_facing)
+	if from_step:
+		# The step goes on in the new area, starting again with its on-move script (lab,
+		# chat 13: a step that enters Podol Plaza shows its "HOW WILL YOU PROCEDE?" menu
+		# at once, before the square's own event). What it shows ends the step there;
+		# a stop it sets keeps the party on the arrival square.
+		var before := _vm.text
+		_step_from = _pos
+		_arrival_on_move = true
+		_vm.start(0)
+		if _vm.read_byte(EclVM.MOVEMENT_BLOCK) != 0:
+			carry = -1
+		var shown := _vm.text.strip_edges() != "" and _vm.text != before
+		if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
+			_after_vm()
+			return true
+		_arrival_on_move = false
+		_vm.text = before
+		_sync_position_to_vm(_facing)
+	var keep := _vm.text
+	_vm.start(1)
+	if _vm.text == "" and not _vm.text_changed:
+		_vm.text = keep
+	# The step that crossed the edge carries on into the new area when nothing there
+	# stops it: the original lands one square further in, a minute later (lab, chat 6:
+	# Slums 0,4 west arrives in Kuto's Well at 14,4, not 15,4), but stays on the edge
+	# square when the arrival shows something (the Slums' greeting).
+	if carry >= 0 and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] \
+			and _vm.text.strip_edges() == "" and not _vm.on_overland:
+		var was := _pos
+		_finish_move(carry)
+		if _pos != was:
+			return true
+	return false
 
 
 ## Frames of sprite `id` (SPRIT files, preferring the current script's file number).
@@ -3270,6 +3295,7 @@ func dev_restore(s: Dictionary) -> bool:
 	_searching = bool(s.searching)
 	_step_from = Vector2i(-1, -1)
 	_arrival_on_move = false
+	_arrival_pending = false
 	_synced = Vector3i(-1, -1, -1)
 	_sync_position_to_vm(_facing)
 	_show()
