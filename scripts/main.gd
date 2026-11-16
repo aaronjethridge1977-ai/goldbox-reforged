@@ -474,11 +474,15 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n.begins_with("tpseed="):      # tpseed=<hex>: the original's own dice from that seed (TpDice)
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
 		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
+			while _battle_begins:           # chat 39: the fight opens after A BATTLE BEGINS... (--anim)
+				await get_tree().process_frame
 			_combat.quick_all()
 		elif LabHooks.handles(n):          # the side lane's lab keys (scripts/combat/lab_hooks.gd)
 			if await LabHooks.handle(self, n):
 				continue
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
+			while _battle_begins:
+				await get_tree().process_frame
 			_combat.toggle_magic()
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:

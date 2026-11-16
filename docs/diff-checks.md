@@ -172,6 +172,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 39: check 19 (8:29 the nailed door and the woman), DIFFCHECKS 19/19
+
+The standing list (Q6, item 1): the next checks go to the areas none of the eighteen visits (3:0, 3:11, 5:3-5:6, 6:1,
+6:25, 7:22, 7:26, 8:27, 8:29). One this chat:
+
+- **Check 19, 8:29 (Kuto's Well's catacombs):** the nailed door south of 7,13 (event 21 facing S: "THE DOOR HAS BEEN
+  NAILED SHUT. WILL YOU FORCE IT OPEN?", YES: 0x4A23 bit 16, the step goes on into 7,14) and the wide-eyed woman behind
+  it (event 22: her warning, 0x4A23 bit 2). No dice, no fight. Start `mksave.py J G 8 29 7 11 S 4A23=8` (bit 8: the
+  lizard patrol before the door, a set fight, already beaten). Keys, both games: Up (the jump), Up, Up (7,13), Up (the
+  question), Y, Enter, Enter; ours `load=G,wait,Up,wait,Up,wait,Up,wait,Up,wait,Y,wait,Enter,wait,Enter,wait,wait,F2`.
+  **MATCH**, 0 differences (0x4A23 = 26 in both, the party at 7,14 S, 10:59). Lab `data/c35/chk19/` (made with
+  `mkcheck35.sh 19 8-29 ...`), installed and sealed as `~/gbr/checks/data/19`; `diffcheck.sh` runs nineteen:
+  **DIFFCHECKS 19/19, ~29 s**.
+- **Deliberate-break test repeated** (the check script's list changed; scratch copies in /tmp, removed): SUBTRACT off
+  by one **caught** (checks 4 and 18, `17/19`, exit 1); ADD off by one over 200 **caught** (check 18, `18/19`, exit 1).
+- **Lab-only, not a game difference: a jump save leaves the original's square byte (0xC04F) stale.** From the first
+  start (`mksave ... 7 12 S`, the jump straight onto the square before the door) the original asked about the door on
+  the first step from 7,12, at 10:56, then opened it into 7,13; ours (and the original after a real step, start
+  7,11) asks only when stepping south from 7,13. The original's on-move script reads 0xC04F, which the jump (the
+  patched on-move's NEW_ECL) doesn't refresh until a real step; ours refreshes it on loading the area. Start a
+  jump save at least one real step before any on-move event (as 7,11 here).
+
 ## Chat 37: Main item 7 (an init that stops for the player), no new check
 
 - **Fixed in `main.gd`:** after a step or NEW_ECL into an area, the original (GAME.OVR 0x3EFA) runs the init, the
