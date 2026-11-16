@@ -1,0 +1,9 @@
+# Player 7 (Lead's gate item: c32a's shortcut-won fights): 4:10 9,1 [17 x2], c32a's party. Start: c32a's bot (main lab
+# botproj_c32a) resumed from its zhentil checkpoint in the Player lab (p7/p7bot.sh, a quick save at every walking key),
+# the one at 10,1 W before the step, in the original's format (p2/mkorig.sh): p2start/c32a_4-10_9-1.
+area 4:10
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 10,1 W
+step W                     # 9,1: the fight
+checkpoint after

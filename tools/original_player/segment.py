@@ -1,6 +1,9 @@
 """Segment check: one of the Player's stretches of the original replayed in ours.
 
-  segment.py <run id> <from checkpoint> <to checkpoint> [--magic] [--tplog] [--ours-key=<n>:<key> ...]
+  segment.py <run id> <from checkpoint> <to checkpoint | end> [--magic] [--tplog] [--ours-key=<n>:<key> ...]
+
+<to> = end (Player 7): every key to the run's last (a run that stopped before its next checkpoint, as a loss or a
+stop after the fight); no statediff then, the draws (--tplog) are the comparison.
 
 --tplog (Player 2) prints ours' dice after every key (`tplog`: each draw with what drew it), for step 2 of the
 README's triage. --ours-key (Player 5) sends ours an extra key after the segment's n-th key (1-based, counted among the
@@ -96,7 +99,7 @@ def main():
         if arg.startswith("--ours-key="):
             k, key = arg.split("=", 1)[1].split(":", 1)
             extra.setdefault(int(k), []).append(key)
-    ca, cb = index(run, a), index(run, b)
+    ca, cb = index(run, a), (None if b == "end" else index(run, b))
     install(ca)
     seed = ca[4].split()[1]
     ks = ["load=" + SLOT, "tpseed=" + seed] + keys_between(run, a, b, magic, tplog, extra) + ["wait", "F2"]
@@ -113,6 +116,12 @@ def main():
                         "--save=" + cfg, "--keys=" + ",".join(ks)], capture_output=True, text=True)
     shutil.rmtree(tmp, ignore_errors=True)
     ours_log = r.stdout + r.stderr
+    if cb is None:
+        out = os.path.join(LOGS, "%s.segment_%s-%s.txt" % (run, a, b))
+        open(out, "w").write("keys: %s\n\n--- ours ---\n%s\n" % (",".join(ks), ours_log))
+        print("keys:", ",".join(ks))
+        print("full output:", out)
+        return
     orig_save = [os.path.join(cb[-1], f) for f in os.listdir(cb[-1]) if f.upper().startswith("SAVGAM")][0]
     d = subprocess.run(["timeout", "60", G, "--headless", "--path", proj, "--script", "res://tools/statediff.gd",
                         "--", "--ours=" + cfg, "--orig=" + orig_save], capture_output=True, text=True)

@@ -30,7 +30,8 @@ def classify(st):
     out = {"bottom": b, "text": text}
     if site == "OVR:0010f":
         out["kind"] = "title"
-    elif site == "EXE:07cc6" or "PARTY HAS BEEN DESTROYED" in " ".join(rows[r] for r in range(1, 10)):
+    elif (site == "EXE:07cc6" and "PRESS <ENTER>" not in b) or "HAS BEEN DESTROYED" in " ".join(rows[r] for r in range(1, 10)):
+        # Player 7: 2:9's damage text before a fight ("PRESS <ENTER>/<RETURN> TO CONTINUE") also waits at EXE:07cc6
         out["kind"] = "wiped"
     elif b.startswith("INPUT THE CODE WORD"):
         out["kind"] = "wheel"

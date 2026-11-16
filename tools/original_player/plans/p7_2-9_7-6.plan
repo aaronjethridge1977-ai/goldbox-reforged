@@ -1,0 +1,13 @@
+# Player 7 (Lead's gate item: c32a's shortcut-won fights): 2:9 7,6, "A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF
+# THE WALL" [24 x2, 53 x2, 71 x6] (the two magic-users), c32a's party. Start: c32a's bot (main lab botproj_c32a) resumed
+# from its mopup1 checkpoint (p7/p7bot.sh), the quick save at 7,7 N before its second try at the gate (the first, PICK,
+# failed; it rested, then KNOCK opened it), in the original's format (p2/mkorig.sh): p2start/c32a_2-9_7-6. The gate is
+# locked here (unlike c27a's, p3_2-9_ettins.plan): KNOCK as the bot did. The bot answered FLEE to the monsters (its
+# odds 0.03) and the fight came anyway; the Player answers COMBAT (its default, as Player 3), then QUICK.
+area 2:9
+rules ../../plans/playthrough.plan
+answer LOCKED. BASH|KNOCK
+
+checkpoint entry           # 7,7 N
+step N                     # 7,6: rocks from the gate, KNOCK, the fight
+checkpoint after
