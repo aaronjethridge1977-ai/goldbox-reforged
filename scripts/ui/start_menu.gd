@@ -326,6 +326,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_feat_sel = (_feat_sel + 1) % n
 		elif event.is_action("ui_accept") or key == KEY_V:
 			_stage = "feature"
+		elif key == KEY_N and "NEXT" in _features_menu():
+			_feat_sel = (_feat_sel / FEATURES_PER_PAGE + 1) * FEATURES_PER_PAGE
+		elif key == KEY_P and "PREV" in _features_menu():
+			_feat_sel = (_feat_sel / FEATURES_PER_PAGE - 1) * FEATURES_PER_PAGE
 		_draw()
 		return
 	if _stage == "feature":
@@ -410,6 +414,7 @@ static func setting_value(id: String) -> int:
 		"tactics": return int(SmartQuick.on())
 		"monsters": return int(SmartQuick.monsters_on())
 		"fullscreen": return int(DisplayMode.load_on())
+		"sound": return int(Speaker.on())
 	return 0
 
 
@@ -425,6 +430,7 @@ static func change_setting(id: String) -> void:
 		"tactics": SmartQuick.save(not SmartQuick.on())
 		"monsters": SmartQuick.save_monsters(not SmartQuick.monsters_on())
 		"fullscreen": DisplayMode.toggle(Engine.get_main_loop() as SceneTree)
+		"sound": Speaker.save_on(not Speaker.on())
 
 
 func _about_index(item: String) -> int:
@@ -455,7 +461,7 @@ func _frame(g: GameScreen) -> void:
 ## SETTINGS: one line an item (hot letter white, name green, value cyan; the highlighted line
 ## all white, as the original's menus), the highlighted item's help in the box, CHANGE EXIT.
 func _draw_settings(g: GameScreen) -> void:
-	g.text(2, 5, FeatureText.text("settings_title"), GameScreen.WHITE)
+	g.text(2, 4, FeatureText.text("settings_title"), GameScreen.WHITE)
 	var sets := FeatureText.settings()
 	_set_sel = clampi(_set_sel, 0, maxi(sets.size() - 1, 0))
 	for i in sets.size():
@@ -464,9 +470,9 @@ func _draw_settings(g: GameScreen) -> void:
 		var vals: Array = f.get("values", [])
 		var v := setting_value(String(f.setting))
 		var on := i == _set_sel
-		g.text(4, 7 + i, label.substr(0, 1), GameScreen.WHITE)
-		g.text(5, 7 + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
-		g.text(24, 7 + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
+		g.text(4, 6 + i, label.substr(0, 1), GameScreen.WHITE)
+		g.text(5, 6 + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
+		g.text(24, 6 + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
 	if not sets.is_empty():
 		_box(g, FeatureText.box_lines(sets[_set_sel], true))
 	g.menu_line(24, FeatureText.menu("settings"))
@@ -478,18 +484,36 @@ func _box(g: GameScreen, lines: Array) -> void:
 			g.text(1, 17 + i, lines[i][0], lines[i][1])
 
 
-## FEATURES: every addition, the highlighted one's help in the box, VIEW EXIT.
+## FEATURES: every addition, the highlighted one's help in the box, VIEW EXIT. P66: twelve to a
+## page (rows 4-15, above the box's rope), NEXT and PREV on the menu only when they'd move, as
+## the original's lists (VIEW NEXT PREV EXIT).
+const FEATURES_PER_PAGE := 12
+
+
+func _features_menu() -> Array:
+	var n := FeatureText.features().size()
+	var page := _feat_sel / FEATURES_PER_PAGE
+	var items: Array = FeatureText.menu("features").duplicate()
+	var at := maxi(items.find("EXIT"), 0)
+	if page > 0:
+		items.insert(at, "PREV")
+	if (page + 1) * FEATURES_PER_PAGE < n:
+		items.insert(at, "NEXT")
+	return items
+
+
 func _draw_features(g: GameScreen) -> void:
 	_frame(g)
 	_divider(g)
 	g.text(2, 2, FeatureText.text("features_title"), GameScreen.WHITE)
 	var fs := FeatureText.features()
 	_feat_sel = clampi(_feat_sel, 0, maxi(fs.size() - 1, 0))
-	for i in fs.size():
-		g.text(4, 4 + i, String(fs[i].name), GameScreen.WHITE if i == _feat_sel else GameScreen.GREEN)
+	var first := _feat_sel / FEATURES_PER_PAGE * FEATURES_PER_PAGE
+	for i in range(first, mini(first + FEATURES_PER_PAGE, fs.size())):
+		g.text(4, 4 + i - first, String(fs[i].name), GameScreen.WHITE if i == _feat_sel else GameScreen.GREEN)
 	if not fs.is_empty():
 		_box(g, FeatureText.box_lines(fs[_feat_sel], false))
-	g.menu_line(24, FeatureText.menu("features"))
+	g.menu_line(24, _features_menu())
 	g.update()
 
 
