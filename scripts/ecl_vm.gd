@@ -558,6 +558,9 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 	match off:
 		0xB8:
 			m.npc = v
+			# The same byte of the record (the original's saves carry it; chat 31).
+			if m.raw.size() > 0xB8:
+				m.raw[0xB8] = v
 			return true
 		0x10C:
 			m.script_team = v

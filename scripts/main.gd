@@ -212,9 +212,18 @@ func _ready() -> void:
 	var battle_only := false
 	for arg in OS.get_cmdline_user_args():
 		battle_only = battle_only or arg.begins_with("--battle=")
-		# --seed=<n>: the same dice every run (for the lab's step-by-step comparisons).
+		# --seed=<n>: the same dice every run (for the lab's step-by-step comparisons and the push gate's
+		# differential checks). Chat 31: every generator that rolls, as the bot's _seed_all does (the script's
+		# dice, the screens', the doors, Godot's global); it used to seed only the global one, so the script's
+		# dice stayed on the clock (check 4's bugbear: the toll or "THEY ARE IMPOSTERS!" at random).
 		if arg.begins_with("--seed="):
-			seed(int(arg.get_slice("=", 1)))
+			var from := RandomNumberGenerator.new()
+			from.seed = int(arg.get_slice("=", 1))
+			_vm._rng.seed = from.randi()
+			dev_rng = RandomNumberGenerator.new()
+			dev_rng.seed = from.randi()
+			_door_rng.seed = from.randi()
+			seed(from.randi())
 		# --fast: the lab's long tours run every pause and fight step 25 times faster.
 		if arg == "--fast":
 			Engine.time_scale = 25.0
