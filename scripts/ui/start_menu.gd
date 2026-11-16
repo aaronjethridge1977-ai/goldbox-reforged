@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, FIX in camp, quick bandages, DONE's MAGIC, quick tactics, monster tactics),
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, FIX in camp, quick bandages, DONE's MAGIC, quick tactics, monster tactics, beeps, mouse, full screen),
 ##                   one line each; Up/Down highlights one and the box below explains it (P21)
 ##   ABOUT           a menu (P21): FEATURES (each addition: a list, then a page each) and CREDITS
 ##                   (Gold Box Reforged's credits and the Godot license)
@@ -415,6 +415,7 @@ static func setting_value(id: String) -> int:
 		"monsters": return int(SmartQuick.monsters_on())
 		"fullscreen": return int(DisplayMode.load_on())
 		"sound": return int(Speaker.on())
+		"mouse": return int(MouseInput.on())
 	return 0
 
 
@@ -431,6 +432,7 @@ static func change_setting(id: String) -> void:
 		"monsters": SmartQuick.save_monsters(not SmartQuick.monsters_on())
 		"fullscreen": DisplayMode.toggle(Engine.get_main_loop() as SceneTree)
 		"sound": Speaker.save_on(not Speaker.on())
+		"mouse": MouseInput.save_on(not MouseInput.on())
 
 
 func _about_index(item: String) -> int:
@@ -461,8 +463,11 @@ func _frame(g: GameScreen) -> void:
 ## SETTINGS: one line an item (hot letter white, name green, value cyan; the highlighted line
 ## all white, as the original's menus), the highlighted item's help in the box, CHANGE EXIT.
 func _draw_settings(g: GameScreen) -> void:
-	g.text(2, 4, FeatureText.text("settings_title"), GameScreen.WHITE)
 	var sets := FeatureText.settings()
+	# Ten items from row 6 under the title on row 4; more start higher so the last stays above
+	# the box's rope on row 16 (Combat Chat 12: USE MOUSE made eleven).
+	var top := mini(6, 16 - sets.size())
+	g.text(2, top - 2, FeatureText.text("settings_title"), GameScreen.WHITE)
 	_set_sel = clampi(_set_sel, 0, maxi(sets.size() - 1, 0))
 	for i in sets.size():
 		var f: Dictionary = sets[i]
@@ -470,9 +475,9 @@ func _draw_settings(g: GameScreen) -> void:
 		var vals: Array = f.get("values", [])
 		var v := setting_value(String(f.setting))
 		var on := i == _set_sel
-		g.text(4, 6 + i, label.substr(0, 1), GameScreen.WHITE)
-		g.text(5, 6 + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
-		g.text(24, 6 + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
+		g.text(4, top + i, label.substr(0, 1), GameScreen.WHITE)
+		g.text(5, top + i, label.substr(1), GameScreen.WHITE if on else GameScreen.GREEN)
+		g.text(24, top + i, String(vals[v]) if v < vals.size() else str(v), GameScreen.WHITE if on else GameScreen.CYAN)
 	if not sets.is_empty():
 		_box(g, FeatureText.box_lines(sets[_set_sel], true))
 	g.menu_line(24, FeatureText.menu("settings"))

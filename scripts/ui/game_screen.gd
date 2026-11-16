@@ -29,6 +29,10 @@ static var _font := PackedByteArray()
 static var _tiles: Array[Image] = []
 
 var img: Image
+## Mouse (MouseInput): each menu word drawn since the last clear(): [row, first col, last col, text, hot letter].
+var _menu_hits: Array = []
+var _hover := Vector2i(-1, -1)   # the text cell under the pointer
+var _unlit: Image                 # the picture as drawn, before a hovered word was lit
 
 
 static func load_art(game_path: String) -> void:
@@ -49,6 +53,7 @@ static func load_art(game_path: String) -> void:
 
 
 func _init() -> void:
+	mouse_filter = Control.MOUSE_FILTER_PASS
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -67,6 +72,7 @@ static func glyph(c: int) -> int:
 
 func clear() -> void:
 	img.fill(EGA[0])
+	_menu_hits.clear()
 
 
 func text(col: int, row: int, s: String, color: int = WHITE) -> void:
@@ -119,12 +125,14 @@ func tile(col: int, row: int, index: int) -> void:
 func menu_line(row: int, items: Array, col: int = 0, selected: int = -1) -> void:
 	var c := col
 	var i := 0
+	_menu_hits = _menu_hits.filter(func(h: Array) -> bool: return h[0] != row)
 	for it in items:
 		var s := String(it)
 		if s == "":
 			continue
 		text(c, row, s.substr(0, 1), WHITE)
 		text(c + 1, row, s.substr(1), WHITE if i == selected else GREEN)
+		_menu_hits.append([row, c, c + s.length() - 1, s, s.substr(0, 1)])
 		c += s.length() + 1
 		i += 1
 
@@ -234,4 +242,66 @@ func text_box(lines: PackedStringArray, color: int = GREEN, white_line: int = -1
 
 
 func update() -> void:
-	texture = ImageTexture.create_from_image(img)
+	_unlit = img.duplicate()
+	_show()
+
+
+## The picture with the menu word under the pointer lit (all white, as the highlighted item).
+func _show() -> void:
+	var shown := img
+	var hit := _hit_at(_hover)
+	if not hit.is_empty() and MouseInput.on():
+		shown = _unlit.duplicate()
+		var keep := img
+		img = shown
+		text(hit[1], hit[0], hit[3], WHITE)
+		img = keep
+	elif _unlit != null:
+		shown = _unlit
+	texture = ImageTexture.create_from_image(shown)
+
+
+func _hit_at(cell: Vector2i) -> Array:
+	for h in _menu_hits:
+		if cell.y == h[0] and cell.x >= h[1] and cell.x <= h[2]:
+			return h
+	return []
+
+
+## The text cell (8x8, 40x25) under a point in this control's own coordinates.
+func _cell_at(pos: Vector2) -> Vector2i:
+	if size.x <= 0.0 or size.y <= 0.0:
+		return Vector2i(-1, -1)
+	var k := minf(size.x / W, size.y / H)
+	var p := (pos - (size - Vector2(W, H) * k) / 2.0) / k
+	if p.x < 0.0 or p.y < 0.0 or p.x >= W or p.y >= H:
+		return Vector2i(-1, -1)
+	return Vector2i(int(p.x) / 8, int(p.y) / 8)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if not MouseInput.on():
+		return
+	if event is InputEventMouseMotion:
+		var cell := _cell_at((event as InputEventMouseMotion).position)
+		if _hit_at(cell) != _hit_at(_hover):
+			_hover = cell
+			_show()
+		_hover = cell
+	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		var b := event as InputEventMouseButton
+		match b.button_index:
+			MOUSE_BUTTON_LEFT:
+				var hit := _hit_at(_cell_at(b.position))
+				if not hit.is_empty():
+					accept_event()
+					MouseInput.press_letter(hit[4])
+			MOUSE_BUTTON_RIGHT:
+				accept_event()
+				MouseInput.press(KEY_ESCAPE)
+			MOUSE_BUTTON_WHEEL_UP:
+				accept_event()
+				MouseInput.press(KEY_UP)
+			MOUSE_BUTTON_WHEEL_DOWN:
+				accept_event()
+				MouseInput.press(KEY_DOWN)
