@@ -95,8 +95,23 @@ var _area_view := false            # AREA: the overhead map in the view window
 var _automap: Automap               # QoL: mini-map (M) and full map (F) of visited squares
 
 
+var _quest_log: QuestLog
+
+
+## The quest tracker's view of the game now (QuestLog.evaluate with the offers shown), for its
+## screen (Combat's lane, after Q7's order).
+func quest_view() -> Array[Dictionary]:
+	if _quest_log == null:
+		return []
+	return _quest_log.evaluate(Callable(_vm, "read_byte"), _vm.shown_texts)
+
+
 func _ready() -> void:
 	DisplayMode.apply(get_tree())          # full screen if chosen (side lane, scripts/ui/display_mode.gd)
+	# The quest tracker's offers that set no flag: the VM records them when shown (Q11, chat 39).
+	_quest_log = QuestLog.load_file()
+	for k in _quest_log.shown_keys():
+		_vm.watch_texts[k] = true
 	# The build's version in the window title (application/config/version), so a tester can tell builds apart.
 	var version := str(ProjectSettings.get_setting("application/config/version", ""))
 	if version != "":
@@ -387,6 +402,7 @@ func _new_game() -> void:
 	# A fresh start: no flags or places from an earlier game.
 	_vm.mem.fill(0)
 	_vm.hi.clear()
+	_vm.shown_texts.clear()
 	_wall_slots_reset()
 	_vm.on_overland = false
 	_vm.overland_band = 0
@@ -1296,6 +1312,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "memory_hi", _vm.hi)
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
+	cfg.set_value("qol", "offers", PackedStringArray(_vm.shown_texts.keys()))
 	var members := []
 	for m in _party:
 		var items := []
@@ -1470,7 +1487,8 @@ func _save_original(letter: String) -> bool:
 		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party, true, hi,
 		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
 		_vm.read_byte(EclVM.SQUARE_INFO))
-	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save()}):
+	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save(),
+			"offers": PackedStringArray(_vm.shown_texts.keys())}):
 		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
 	_party_menu.save_failed = not ok
@@ -1531,6 +1549,7 @@ func load_original_save(letter: String) -> bool:
 	# empty map.
 	var extra := CompanionSave.read(_game_path, letter)
 	_automap.from_save(extra.get("visited", {}))
+	_shown_from_save(extra.get("offers", []))
 	if not started:
 		_party.assign(loaded)
 		_vm.party = _party
@@ -1599,6 +1618,15 @@ func load_original_save(letter: String) -> bool:
 	return true
 
 
+## The offer texts a save says were shown (CompanionSave / the quick save's [qol] offers); none for
+## an original's save without a companion (the tracker then knows those offers by their first step).
+func _shown_from_save(keys) -> void:
+	_vm.shown_texts.clear()
+	if keys is Array or keys is PackedStringArray:
+		for k in keys:
+			_vm.shown_texts[String(k)] = true
+
+
 func _quick_load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(_save_path()) != OK:
@@ -1631,6 +1659,7 @@ func _quick_load() -> void:
 	_walls_for = -1
 	_pos = Vector2i(cfg.get_value("place", "x", 8), cfg.get_value("place", "y", 8))
 	_automap.from_save(cfg.get_value("qol", "visited", {}))
+	_shown_from_save(cfg.get_value("qol", "offers", []))
 	_facing = int(cfg.get_value("place", "facing", 0)) as DungeonView.Dir
 	_vm_file = cfg.get_value("script", "file", 0)
 	_vm_block = cfg.get_value("script", "block", -1)

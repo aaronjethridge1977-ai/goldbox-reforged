@@ -39,9 +39,12 @@ static func load_file(path: String = DEFAULT_PATH) -> QuestLog:
 
 ## Every quest's state. `read_byte` is a Callable(addr: int) -> int over ECL memory
 ## (EclVM.read_byte); `shown` holds the "A:B ADDR" keys of offer texts the engine has shown
-## (offers that set no flag; empty until the engine records them).
+## (offers that set no flag: EclVM.shown_texts, recorded since chat 39).
 ## Returns one Dictionary per quest: id, title, giver, where, offer, state, steps
-## ([{text, done}]), report (the clerk's words once reported, else "").
+## ([{text, done}]), report (the clerk's words once reported, else ""), offered (the party has
+## heard the offer: one of its "shown" texts, or, for a quest with none, the quest is known).
+## Jeremy's spoiler rules (Q11, 2026-11-16) for a screen: a step is shown only once done; WHERE
+## only when offered.
 func evaluate(read_byte: Callable, shown: Dictionary = {}) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for q in quests:
@@ -54,6 +57,15 @@ func evaluate(read_byte: Callable, shown: Dictionary = {}) -> Array[Dictionary]:
 			state = DONE
 		elif _any(q.get("start", []), read_byte, shown):
 			state = OPEN
+		var offered := state != HIDDEN
+		var offer_ways := []
+		for way in q.get("start", []):
+			for c in way:
+				if str(c).begins_with("shown "):
+					offer_ways.append(way)
+					break
+		if not offer_ways.is_empty():
+			offered = _any(offer_ways, read_byte, shown)
 		var steps: Array[Dictionary] = []
 		for s in q.get("steps", []):
 			steps.append({"text": str(s.get("text", "")), "done": _all(s.get("when", []), read_byte, shown)})
@@ -66,6 +78,7 @@ func evaluate(read_byte: Callable, shown: Dictionary = {}) -> Array[Dictionary]:
 			"state": state,
 			"steps": steps,
 			"report": str(q.get("report", "")) if state == REPORTED else "",
+			"offered": offered,
 		})
 	return out
 

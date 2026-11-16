@@ -64,6 +64,12 @@ var compare := 0
 # Output since the last clear_output()
 var text := ""                   # accumulated message text
 var text_changed := false        # set by PRINT/PRINT_CLEAR (including clearing to "")
+## Texts to record when shown ("A:B ADDR": the area's block_key and the PRINT's address; main sets
+## them from QuestLog.shown_keys(): City Hall's offers that set no flag; Q11, chat 39), and those
+## shown so far ("A:B ADDR" -> true). Ours' addition, kept in the companion / quick save; the
+## original keeps no such record. Nothing in the game reads it.
+var watch_texts := {}
+var shown_texts := {}
 var picture := -1                # last PICTURE id (255 = cleared), -1 = untouched
 var picture_head := 255
 ## A figure approaching in the 3D view: sprite id (-1 none), distance 2 far .. 0 close,
@@ -175,6 +181,8 @@ func fork(cov: ScriptCoverage) -> EclVM:
 func copy_from(src: EclVM) -> void:
 	mem = src.mem.duplicate()
 	hi = src.hi.duplicate()
+	watch_texts = src.watch_texts
+	shown_texts = src.shown_texts.duplicate()
 	ecl = src.ecl
 	state = src.state
 	pc = src.pc
@@ -975,9 +983,11 @@ func _exec(ins: Dictionary) -> void:
 		"PRINT":
 			text += _string(a[0])
 			text_changed = true
+			_note_shown()
 		"PRINT_CLEAR":
 			text = _string(a[0])
 			text_changed = true
+			_note_shown()
 		"PRINT_RETURN":
 			text += "\n"
 			text_changed = true
@@ -1291,6 +1301,15 @@ func _encounter_choice(choice: int) -> bool:
 	_write(_enc.dest, outcome)
 	_enc = {}
 	return true
+
+
+## Records the PRINT running now if main watches its text (watch_texts).
+func _note_shown() -> void:
+	if watch_texts.is_empty():
+		return
+	var key := "%s %04X" % [block_key, _at + EclScript.BASE]
+	if watch_texts.has(key):
+		shown_texts[key] = true
 
 
 func _say(line: String) -> void:

@@ -13,7 +13,10 @@ extends RefCounted
 ##   ok          false when the file is there but can't be read (then "error" says why)
 ##   started     false for a game saved from the party menu before the adventure (no area)
 ##   set, block  the area's ECL data set and block ("2:20"); block -1 when not found
-##   area        the area's name (GeoMap.AREA_NAMES), or "AREA 2:20" where the table has none
+##   area        the area's name in capitals (AreaNames: content/poolrad/areas.json), or "AREA 2:20"
+##               where the table has none
+##   area_confirmed  whether Jeremy has confirmed that name (the table ships before he has: a
+##               screen may mark the unconfirmed ones); absent for "PARTY MENU" / "AREA n:?"
 ##   x, y, facing  the party's square and facing (0..3 = N E S W); facing_text "N"
 ##   clock       {"year", "month", "day", "hour", "minute"}: the game's clock (GameClock's counters)
 ##   day         the adventure's day, from 1 (a new game starts on day 0 of month 0 of year 0, 10:50)
@@ -40,6 +43,25 @@ static func list(game_path: String, quick_path: String = "") -> Array[Dictionary
 	if quick_path != "":
 		out.append(read_quick(quick_path))
 	return out
+
+
+## Names a slot's save (the menu's NAME; "" clears it): A-J in its companion file
+## (CompanionSave.set_label), "QUICK" in the quick save itself ([qol] label). Saving a game
+## writes a new companion without a name, so a screen names the slot after the save is written.
+## False when the slot is empty or the file can't be written.
+static func set_label(game_path: String, slot: String, label: String, quick_path: String = "") -> bool:
+	if slot.to_upper() != "QUICK":
+		return CompanionSave.set_label(game_path, slot, label)
+	var cfg := ConfigFile.new()
+	if quick_path == "" or cfg.load(quick_path) != OK:
+		return false
+	label = CompanionSave.clean_label(label)
+	if label == "":
+		if cfg.has_section_key("qol", "label"):
+			cfg.erase_section_key("qol", "label")
+	else:
+		cfg.set_value("qol", "label", label)
+	return cfg.save(quick_path) == OK
 
 
 ## One of the original's saved games.
@@ -181,4 +203,6 @@ static func _place(e: Dictionary) -> void:
 	elif e.block < 0:
 		e.area = "AREA %d:?" % e.set
 	else:
-		e.area = String(GeoMap.AREA_NAMES.get(e.block, "AREA %d:%d" % [e.set, e.block]))
+		var a := AreaNames.lookup(e.set, e.block)
+		e.area = String(a.name).to_upper() if a.size() > 0 else "AREA %d:%d" % [e.set, e.block]
+		e.area_confirmed = bool(a.get("confirmed", false))

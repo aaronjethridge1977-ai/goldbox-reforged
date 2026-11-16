@@ -10,6 +10,7 @@ extends RefCounted
 ##                         companion. One that doesn't match (the slot saved over by the
 ##                         original, or by a build without companions) is stale: ignored.
 ##   [qol]  visited        the automap's squares (Automap.to_save()).
+##          label          the player's own name for the save (set_label; the save/load menu).
 ## Later additions (the quest tracker...) go in [qol] beside it.
 ## No companion, or a stale one: the game loads with an empty map, which maps from there.
 
@@ -32,6 +33,30 @@ static func write(game_path: String, letter: String, qol: Dictionary) -> bool:
 	for k in qol:
 		cfg.set_value("qol", k, qol[k])
 	return cfg.save(path(game_path, letter)) == OK
+
+
+## Sets (or with "" clears) the player's own name for the slot's save ([qol] label; Q10, chat 39),
+## keeping the companion's other values. A missing or stale companion gives one holding the label
+## alone (a stale one's map belongs to another save). False when the slot has no save.
+static func set_label(game_path: String, letter: String, label: String) -> bool:
+	if not FileAccess.file_exists(_savgam(game_path, letter)):
+		return false
+	var qol := read(game_path, letter, true)
+	label = clean_label(label)
+	if label == "":
+		qol.erase("label")
+	else:
+		qol["label"] = label
+	return write(game_path, letter, qol)
+
+
+## A label as kept: spaces at the ends dropped, capitals (the original's font has no small
+## letters), at most LABEL_MAX characters.
+static func clean_label(label: String) -> String:
+	return label.strip_edges().to_upper().left(LABEL_MAX).strip_edges()
+
+
+const LABEL_MAX := 24
 
 
 ## "none" (no companion), "ok" (it belongs to the slot's save) or "stale" (another save's), quietly
