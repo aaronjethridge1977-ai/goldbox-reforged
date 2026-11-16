@@ -12,11 +12,11 @@ cd "$(dirname "$0")"
 WHAT=ours; [ "$1" = record ] && WHAT=both
 run() { # name magic script args...
   local n=$1 m=$2; shift 2
-  [ $WHAT = ours ] && cp traces/$n.txt /tmp/cmp_orig.txt
+  [ $WHAT = ours ] && cp traces/$n.txt /home/aaron/gbr/combat_lab/tmp/cmp_orig.txt
   if [ "$m" = 1 ]; then export MAGIC=1; else unset MAGIC; fi
-  timeout 900 "$@" > /tmp/reg_$n.txt 2>&1
-  [ $WHAT = both ] && cp /tmp/cmp_orig.txt traces/$n.txt
-  echo "$n: $(grep '^original:' /tmp/reg_$n.txt) $(grep '^VERDICT' /tmp/reg_$n.txt)"
+  timeout 900 "$@" > /home/aaron/gbr/combat_lab/tmp/reg_$n.txt 2>&1
+  [ $WHAT = both ] && cp /home/aaron/gbr/combat_lab/tmp/cmp_orig.txt traces/$n.txt
+  echo "$n: $(grep '^original:' /home/aaron/gbr/combat_lab/tmp/reg_$n.txt) $(grep '^VERDICT' /home/aaron/gbr/combat_lab/tmp/reg_$n.txt)"
 }
 run orig_F_magic 1 ./cmpfight2.sh F 10000012 "" up,c $WHAT
 run orig_F_plain 0 ./cmpfight2.sh F 10000012 "" up,c $WHAT
@@ -47,9 +47,9 @@ run orig_D_ogrechief 1 env KW=4 ./cmpfight2.sh D 11111111 up up,enter,enter $WHA
 run orig_B_guards 1 env KW=4 ./cmpfight2.sh B 11111111 up up,enter,enter,c $WHAT   # check 5
 run orig_G_yarash_win 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT   # check 10
 if [ -d combat2/saveG_held ]; then
-  mkdir -p /tmp/saveG_win && cp game/SAVGAMG.DAT game/CHRDATG* /tmp/saveG_win/ && cp combat2/saveG_held/* game/
+  mkdir -p /home/aaron/gbr/combat_lab/tmp/saveG_win && cp game/SAVGAMG.DAT game/CHRDATG* /home/aaron/gbr/combat_lab/tmp/saveG_win/ && cp combat2/saveG_held/* game/
   run orig_G_yarash_held 1 env KW=4 ./cmpfight2.sh G 11111111 up up,enter,c $WHAT
-  cp /tmp/saveG_win/* game/
+  cp /home/aaron/gbr/combat_lab/tmp/saveG_win/* game/
 else
   echo "orig_G_yarash_held: skipped (no combat2/saveG_held in the lab)"
 fi
@@ -61,5 +61,9 @@ fi
 run orig_A_spectre 1 bash -c "./savein.sh spectre && KW=4 ./cmpfight2.sh A 11111111 '' up $WHAT"   # Combat Chat 5: 4:10's brass doors, two spectres (drain, turning, a turned spectre running), 3195 draws; the start save is lab-only (combat5/saves/spectre: the J party at levels 4-6, 200 HP, +1 weapons, saved by the original at 4:10's gate and moved to 10,1 W)
 run orig_A_mu 1 bash -c "./savein.sh mu && KW=4 ./cmpfight2.sh A 11111111 '' up,wait=4,enter,wait=3,enter,wait=3,s $WHAT"   # Combat Chat 6: 4:10's LEVEL 6 MU ("THEN DIE YOU SCUM", 8,9; start combat6/saves/mu: the spectre's party, 0x4A42 = 3), 952 draws; he casts Magic Missile (his Fireball plan fails beside the party)
 run orig_A_troll 1 bash -c "./savein.sh troll && KW=4 OURS_SEED=1 ./cmpfight2.sh A 11111111 up 'up,wait=6,enter' $WHAT"   # Combat Chat 7: 2:20 0,14's two ogres and four trolls (start combat5/saves/troll, 2:20 0,15 N, lab only; the event's random treasure first: main's chat 28), 2561 draws; OURS_SEED=1: ours' own generator seeded for the step before the dice (a random encounter there came and went run to run)
-run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 ./cmpfight2.sh A 11111111 up 'up,wait=4,enter,wait=3,c' $WHAT"   # Combat Chat 7: 2:9 event 13 at 7,6, two LEVEL 6 MUs, two aides, six ettins (start combat6/saves/mu29, lab only), 6973 draws; recorded again with OSECS=1700 (the fight is long)
+run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wait,c ./cmpfight2.sh A 11111111 up 'up,wait=4,enter,wait=3,c' $WHAT"   # Combat Chat 7: 2:9 event 13 at 7,6, two LEVEL 6 MUs, two aides, six ettins (start combat6/saves/mu29, lab only), 6973 draws; recorded again with OSECS=1700 (the fight is long)
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
+# Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
+[ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678
+[ $WHAT = ours ] && run orig_B_tyr2 1 ./regtyr.sh 2468ace1
+[ $WHAT = ours ] && run orig_C_patrol 1 ./regpatrol.sh   # Combat Chat 8: Player 5's 5:4 patrol (LIRA's hands, the hill giants' DEX 0, Cause Blindness's touch), 2460 draws

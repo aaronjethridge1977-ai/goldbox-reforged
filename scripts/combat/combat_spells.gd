@@ -674,6 +674,12 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictio
 		var no_save := table.field(id, 8) == 0
 		var was_saved: bool = saved.get(j, false) if saved.has(j) else \
 				(not no_save and table.field(id, 8) == 1 and save(t, table.field(id, 9), 0, m))
+		# A touch spell (range 255: Cause Blindness, Cause Disease, Bestow Curse here) then rolls the
+		# caster's to-hit against the target's AC, saved or not (GAME.OVR 0x279AD: the save first, then
+		# 0x2BBA1); a miss and it does nothing (Combat Chat 8: LIRA's ring of Cause Blindness at 5:4's
+		# patrol, draw 1416).
+		if table.field(id, 2) == 255 and not _touch_roll(i, j):
+			was_saved = true
 		# The add-effect routine's resistances run saved or not (GAME.OVR 0x2C540).
 		var blocked := effect > 0 and resists(t, effect)
 		if was_saved or blocked:
@@ -683,6 +689,17 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictio
 			SpellCaster.add_affect(t, effect, id, dur, lvl)
 		if SpellCaster.WORDS.has(id):
 			c.message.emit("%s %s" % [t.name, SpellCaster.WORDS[id]])
+
+
+## The touch roll of an effect spell (0x2BBA1 from 0x279EF: drawn whatever the target's state; the
+## target's to-hit handlers, Tyranthraxus's free miss among them, run on it).
+func _touch_roll(i: int, j: int) -> bool:
+	var a: PartyMember = c.combatants[i].who
+	var t: PartyMember = c.combatants[j].who
+	var need: int = a.thac0 - armour(t, t.ac) - hit_bonus(a, t)
+	var d := c.roll(1, 20, "%s touches %s (needs %d)" % [a.name, t.name, need])
+	var free_miss: bool = c._free_miss(c.combatants[j], d)
+	return d != 1 and (d == 20 or d >= need) and not free_miss
 
 
 func _touch_hits(i: int, j: int) -> bool:

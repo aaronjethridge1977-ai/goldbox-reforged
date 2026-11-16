@@ -108,6 +108,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["revive_in"] = 0    # rounds until a downed troll gets up (0x64)
 		c["dies_in"] = 0      # rounds until a wild boar falls dead (0x63)
 		c["first_miss"] = false   # Tyranthraxus's one free miss used (0x59)
+	_setup_free_miss()
 
 
 func roll(count: int, size: int, why: String) -> int:
@@ -218,10 +219,12 @@ func start_round() -> void:
 func next_turn() -> int:
 	while outcome() == 0:
 		if order.is_empty():
-			# The original's end of round: with no enemy left to fight (every one still
-			# standing on the run, or all of them down), it asks "CONTINUE BATTLE:"
-			# (answered by continue_battle()). YES plays another round.
-			if round_no > 0 and asked_round != round_no and (enemies_all_running() or standing(1) == 0):
+			# The original's end of round (GAME.OVR 0xA163): with no enemy left in the fight
+			# (START.EXE 0xBA:0x23DB counts record +0x10D, which falling and getting away clear,
+			# running doesn't), it asks "CONTINUE BATTLE:" (answered by continue_battle()). YES
+			# plays another round. (Combat Chat 8: ours also asked when every enemy standing was
+			# on the run; Tyranthraxus, his morale failed, breathed and fought on.)
+			if round_no > 0 and asked_round != round_no and standing(1) == 0:
 				asked_round = round_no
 				return ASK_CONTINUE
 			start_round()
@@ -655,7 +658,7 @@ func shoot(i: int, j: int) -> void:
 		need -= SpecialAffects.hit_bonus(am, tm)
 		need -= script_hit_mod(am)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var free_miss := _free_miss(t)     # runs on every attack, hit or not (to-hit category 16)
+		var free_miss := _free_miss(t, d20)     # to-hit category 16, on every roll above 1
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
@@ -687,16 +690,18 @@ func shoot(i: int, j: int) -> void:
 # Pilgrim's reconstruction; read in GAME.OVR by Combat Chat 7: 0xBF8A, the rating 0xBE4D):
 # every weapon the combatant may use (its class bits, record 0xB0) is rated: dice count x
 # size, + 8 per plus, + 2 per point of damage bonus, + (ITEMS byte 5 - 1) x 2 for a
-# launcher, + 3 if one-handed; cursed ones count 0. (Not built, rare: item type 85's
-# rating 8 against some targets, 0 for an item whose bytes 61/62 mark it, or when the
-# hands in use would pass 3.) The best
+# launcher, + 3 if one-handed; cursed ones count 0, and so does one the hands held by other
+# readied items would leave no room for (past 3). (Not built, rare: item type 85's
+# rating 8 against some targets, 0 for an item whose bytes 61/62 mark it.) The best
 # missile weapon (thrown or launcher) is readied if it rates over half the best melee
 # weapon (or bare hands), has its ammunition, and either no enemy is adjacent or it can
-# also be used in melee; otherwise the best melee weapon (none: bare hands). A two-handed
-# weapon puts the shield away; a one-handed one takes it up again. (The lab saw this:
+# also be used in melee; otherwise the best melee weapon (none: bare hands). Readying it
+# follows the game's hands rule (see choose_weapon's end): a two-handed weapon puts the
+# shield away, a one-handed one takes the best shield up again, and with a hand held by
+# something else (a mirror) a two-handed weapon can't be held at all. (The lab saw this:
 # Phineas on Quick switches between his dagger and his darts; a kobold readies its sword.)
 
-func _rate(m: PartyMember, it: GameItem) -> int:
+func _rate(m: PartyMember, it: GameItem, hands_left: int = 0) -> int:
 	if it.cursed:
 		return 0
 	var dmg := types.damage(it.type, false)
@@ -712,6 +717,10 @@ func _rate(m: PartyMember, it: GameItem) -> int:
 		r += (types.half_attacks(it.type) - 1) * 2
 	if types.hands(it.type) <= 1:
 		r += 3
+	# 0xBF22: 0 when the hands held by other readied items (record 0x100 less the readied weapon's and
+	# shield's) and the weapon's own would pass 3.
+	if hands_left + types.hands(it.type) > 3:
+		return 0
 	return r & 0xFF                 # the original keeps the rating in a byte
 
 
@@ -720,20 +729,25 @@ func choose_weapon(i: int) -> void:
 		return
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
-	if m.weapon != null and m.weapon.cursed:
-		return
+	# A cursed weapon stays (no change below), but the shield rule still runs (0xC3E1).
 	var bare: int = m.base_damage[0] * m.base_damage[1] + maxi(int(m.base_damage[2]), 0) * 2
 	var best_melee: GameItem = null
 	var melee_rate := bare
 	var best_missile: GameItem = null
 	var missile_rate := 1
+	# Hands held by readied items other than the weapon and the shield (record 0x100, less theirs: 0xBF8A).
+	var other_hands := hands_used(m)
+	if m.weapon != null:
+		other_hands -= types.hands(m.weapon.type)
+	if m.shield != null:
+		other_hands -= types.hands(m.shield.type)
 	for it in m.items:
 		if not types.has(it.type) or types.slot(it.type) != ItemTypes.SLOT_WEAPON:
 			continue
 		if (types.class_flags(it.type) & m.class_flags) == 0:
 			continue
 		var f := types.flags(it.type)
-		var r := _rate(m, it)
+		var r := _rate(m, it, other_hands)
 		if f & (ItemTypes.FLAG_LAUNCHER | ItemTypes.FLAG_THROWN):
 			if r > missile_rate:
 				best_missile = it
@@ -759,24 +773,82 @@ func choose_weapon(i: int) -> void:
 		print("   @%d choose_weapon %s attacks %d moves %d melee %s=%d missile %s=%d pick %s (had %s)" % [TpDice.calls, m.name, c.attacks, c.moves,
 			best_melee.type if best_melee else -1, melee_rate, best_missile.type if best_missile else -1,
 			missile_rate, pick.type if pick else -1, m.weapon.type if m.weapon else -1])
-	if pick == m.weapon:
-		return
-	if m.weapon != null:
-		m.weapon.readied = false
-	var shield: GameItem = null
+	# Readying (0xC2EC on; Combat Chat 8): unless the readied weapon is the pick or cursed, it is put away
+	# and the pick readied through the game's ready routine (0x2250A), which refuses it when the hands in
+	# use (the shield's not counted) and its own would pass 2 ("Your hands are full!"). Then, with more than
+	# 2 hands in use, the readied shield goes away (one not cursed), else the pick itself; with fewer than 2
+	# and the readied shield the best one (or none readied), the best shield is taken up. Player 5/6: LIRA
+	# with a Brass Mirror readied (1 hand) puts her sword away for her bow and can't hold the bow: she
+	# fights bare-handed (one step, one blow), where ours shot twice.
+	var weapon_before: GameItem = m.weapon
+	var readied_before := m.items.map(func(it): return it.readied)
+	var shield: GameItem = m.shield
+	var best_shield: GameItem = null
+	var shield_rate := 0
 	for it in m.items:
-		if types.has(it.type) and types.slot(it.type) == ItemTypes.SLOT_SHIELD:
-			if shield == null or it.readied:
-				shield = it
-	if pick != null:
-		pick.readied = true
+		if types.has(it.type) and types.slot(it.type) == ItemTypes.SLOT_SHIELD \
+				and (types.class_flags(it.type) & m.class_flags) != 0:
+			var sr := it.plus + 1 if it.plus >= 0 else 0
+			if sr > shield_rate:
+				best_shield = it
+				shield_rate = sr
+	if m.weapon == null or (m.weapon != pick and not m.weapon.cursed):
+		if m.weapon != null:
+			m.weapon.readied = false
+		var hands := hands_used(m)
+		if shield != null and not shield.cursed:
+			hands -= types.hands(shield.type)
+		if pick != null:
+			_toggle_ready(i, pick, hands)
+	var held := hands_used(m)
+	var keep_shield := shield == null or (shield == best_shield and not shield.cursed)
+	if held > 2:
+		if shield != null and not shield.cursed:
+			shield.readied = false
+		elif pick != null:
+			_toggle_ready(i, pick, hands_used(m))
+	elif held < 2 and keep_shield:
 		if shield != null:
-			shield.readied = types.hands(pick.type) <= 1 and (types.class_flags(shield.type) & m.class_flags) != 0
+			shield.readied = false
+		if best_shield != null:
+			_toggle_ready(i, best_shield, hands_used(m))
+	if m.items.map(func(it): return it.readied) == readied_before:
+		return                     # nothing changed (ours' recalculate would rebuild a monster's AC)
 	m.recalculate(types)
-	if c.attacks > 0:
+	if m.weapon != weapon_before and c.attacks > 0:
 		c.attacks = attacks_for(m)
 		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 0 else 0)) / 2
 		c.attacks += c.second
+
+
+## Hands held by `m`'s readied items (record 0x100: ITEMS byte 1 of each, START.EXE 0xBA:0xBB8).
+func hands_used(m: PartyMember) -> int:
+	var n := 0
+	for it in m.items:
+		if it.readied and types.has(it.type):
+			n += types.hands(it.type)
+	return n
+
+
+## The game's ready/put-away routine (GAME.OVR 0x2250A) as the computer's choice uses it: a readied item
+## is put away (not a cursed one); another is readied unless the hands in use (`hands`) and its own pass
+## 2 ("Your hands are full!"), its slot is taken, or its class doesn't match.
+func _toggle_ready(i: int, it: GameItem, hands: int) -> void:
+	var m: PartyMember = combatants[i].who
+	if it.readied:
+		if not it.cursed:
+			it.readied = false
+		return
+	if hands + types.hands(it.type) > 2:
+		message.emit("YOUR HANDS ARE FULL!")
+		return
+	var slot := types.slot(it.type)
+	for o in m.items:
+		if o != it and o.readied and types.has(o.type) and types.slot(o.type) == slot and slot <= 9:
+			return
+	if (types.class_flags(it.type) & m.class_flags) == 0:
+		return
+	it.readied = true
 
 
 ## Applies damage the way the original does (see "Going down" above).
@@ -1125,7 +1197,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			a.second -= 1
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
-		var free_miss := _free_miss(t)     # runs on every attack, hit or not (to-hit category 16)
+		var free_miss := _free_miss(t, d20)     # to-hit category 16, on every roll above 1
 		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
 		if not hit:
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
@@ -1903,6 +1975,7 @@ func ai_act() -> bool:
 	if c.down:
 		return false
 	if not c.get("ai", false):
+		c.powers_done = false
 		_ai_begin(active)
 		_turn_start_powers(active)
 		if c.down:
@@ -1961,6 +2034,14 @@ func ai_act() -> bool:
 		if not find_target(active):
 			guard(active)
 			return false
+		# The action (GAME.OVR 0xB6FC) runs the powers category (0x0E: breath, spit) before a
+		# runner's steps too (Combat Chat 8: Tyranthraxus failed his morale and breathed, seed
+		# 12345678 draw 1216; ours ran).
+		if c.get("fleeing", false) and c.moves > 0:
+			c.powers_done = true
+			_act_powers(active)
+			if c.down or (c.moves <= 0 and c.attacks <= 0):
+				return false
 	if c.get("fleeing", false):
 		var fr := _flee_step(active)
 		if fr == "moved" or fr == "retry":
@@ -1989,7 +2070,11 @@ func ai_act() -> bool:
 			guard(active)
 			return false
 		ran_out = false
-		if c.moves > 0 and _enemy_of(c, c.get("target", -1)):
+		# Once an action (GAME.OVR 0xB6FC dispatches category 0x0E before its own loop of steps
+		# and blows): at the turn's first step or blow and again after a kill (Combat Chat 8:
+		# ours checked Tyranthraxus's breath before every step; seed 2468ace1 draw 910).
+		if c.moves > 0 and _enemy_of(c, c.get("target", -1)) and not c.get("powers_done", false):
+			c.powers_done = true
 			_act_powers(active)
 			if c.down:
 				return false
@@ -2054,6 +2139,7 @@ func ai_act() -> bool:
 			if not _enemy_of(c, c.get("target", -1)):
 				find_target(active)
 			return false
+		var moves_left: int = c.moves
 		if shooting:
 			shoot(active, t)
 		else:
@@ -2062,6 +2148,13 @@ func ai_act() -> bool:
 		if c.attacks <= 0 or not combatants[t].down:
 			c.attacks = 0
 			return false
+		# The target fell with attacks to spare: the original's attack loop (GAME.OVR 0x13C01)
+		# ends the turn (0xBA:0x2637, which clears the movement) only when no attacks are left, so
+		# the turn loop goes on with the movement it had: a new target, the powers (a breath
+		# check), a step and the next blow (Combat Chat 8: Tyranthraxus after BRAM fell, seed
+		# 2468ace1 draw 907).
+		c.moves = moves_left
+		c.powers_done = false
 		return true
 	return false
 
@@ -2075,19 +2168,26 @@ func _dice(count: int, size: int) -> int:
 	return roll(count, size, "power")
 
 
-## Tyranthraxus (0x59; handler GAME.OVR 0x110EB, Combat Chat 4): while the round counter
-## DS:0x6DE3 is 0 (round 1; ours' round_no is the counter + 1) and no other to-hit change is
-## under way (DS:0x6822), each attack on it clears bit 0x10 of the effect's power; otherwise
-## an attack with the bit clear misses and sets it. So the first attack after round 1 misses
-## (power 0x1F starts with the bit set: no miss before round 1 has cleared it). Check 5's
-## Thrender hit it in round 1 where ours had missed (draw 828).
-func _free_miss(t: Dictionary) -> bool:
+## Tyranthraxus (0x59; handler GAME.OVR 0x110EB, Combat Chat 4; read again in Combat Chat 8). The
+## handler looks at DS:0x6822, which is the attack's d20 (0x2BBBF; 20 counts 100), as the attacker's
+## and the target's earlier to-hit handlers left it (0x19 and 0x47 take 4), and the round counter
+## DS:0x6DE3: with the counter 0 (ours' round 1) and that value 0 it clears bit 0x10 of the effect's
+## power; otherwise, with the bit clear, the attack misses and the bit is set. A natural 1 runs no
+## handlers. The fight's setup (0xE461 sets 0x6822 = 0, then category 8 runs 0x59 for each figure,
+## 0xE536) clears the bit, so the first attack on him that rolls above 1 misses. Player 6's seed
+## 2468ace1, draw 860: BRAM's 11 missed in the original (Combat Chat 4 had read 0x6822 as "another
+## to-hit change" and cleared the bit through round 1).
+func _free_miss(t: Dictionary, d20: int) -> bool:
+	if d20 <= 1:
+		return false
 	var tm: PartyMember = t.who
 	for a in tm.affects:
 		if int(a.effect) != 0x59:
 			continue
-		var other := tm.has_affect(0x19) or tm.has_affect(0x47)    # their -4 (0x6822)
-		if round_no <= 1 and not other:
+		var v := 100 if d20 == 20 else d20
+		if tm.has_affect(0x19) or tm.has_affect(0x47):
+			v -= 4
+		if round_no <= 1 and v == 0:
 			a.value = int(a.value) & 0x0F
 			return false
 		if (int(a.value) & 0x10) == 0:
@@ -2095,6 +2195,15 @@ func _free_miss(t: Dictionary) -> bool:
 			return true
 		return false
 	return false
+
+
+## The fight's setup (GAME.OVR 0xE400): DS:0x6822 = 0, then category 8 for every figure; for 0x59
+## that clears its bit (see _free_miss).
+func _setup_free_miss() -> void:
+	for c in combatants:
+		for a in (c.who as PartyMember).affects:
+			if int(a.effect) == 0x59:
+				a.value = int(a.value) & 0x0F
 
 
 ## Adds a condition the way the original's add-effect routine (GAME.OVR 0x2C540) does:
@@ -2400,6 +2509,16 @@ func _bolt_hit(p: Vector2i, dmg: int) -> bool:
 		var t: Dictionary = combatants[k]
 		var hit := dmg / 2 if _save(t.who, 3, 0) else dmg
 		hit = SpecialAffects.element_damage(t.who, SpecialAffects.ELECTRIC, hit)
+		# The hit's damage type is electricity and magic (DS:0x6819 = 0x0C), so the damage
+		# routine (0x2C22E) runs magic resistance (0x11570) after the save: Tyranthraxus's own
+		# breath bouncing back on him draws a d100 and he takes nothing (Player 6, seed
+		# 12345678, draws 786 and 788).
+		if hit > 0 and SpecialAffects.magic_resists(t.who, 0,
+				func(): return roll(1, 100, "%s resists" % t.who.name)):
+			hit = 0
+		if hit <= 0:
+			message.emit("%s IS UNAFFECTED" % t.who.name)
+			return field != null and field.tile(p.x, p.y) > 0 and not field.walkable(p.x, p.y)
 		message.emit(SpecialAffects.damage_words(t.who.name, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC))
 		hurt(k, hit, SpecialAffects.ELECTRIC | SpecialAffects.MAGIC)
 	return field != null and field.tile(p.x, p.y) > 0 and not field.walkable(p.x, p.y)

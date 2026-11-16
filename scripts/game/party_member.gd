@@ -706,9 +706,13 @@ func load_allowance() -> int:
 	return (g - 28) * 3000 + 9000
 
 
-## DEX defensive adjustment, as AC points gained (positive = better AC).
+## DEX defensive adjustment, as AC points gained (positive = better AC). The game's table (START.EXE
+## 0xBA:0x10E6) has nothing outside 1-25: a DEX of 0 (monsters such as the hill giants, Combat Chat 8: AC 4
+## in the original's record, 8 in ours) or above 25 gives 0.
 func dex_ac_bonus() -> int:
 	var x := stats[3]
+	if x <= 0 or x > 25:
+		return 0
 	if x <= 3:
 		return -4
 	if x <= 6:

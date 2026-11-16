@@ -166,6 +166,11 @@ def holddump(r, base):
             fx.append("%02x:%d/%d" % (node[0], struct.unpack_from("<H", node, 1)[0], node[3]))
             lo, ls = struct.unpack_from("<HH", node, 5)
         print("HOLD %2d effects %s" % (i, " ".join(fx) or "-"), flush=True)
+        if os.environ.get("HOLDREC"):
+            # HOLDREC=<hex offset>,<count> (Combat Chat 8): raw record bytes, e.g. c8,58 for the item
+            # pointers (+0xC8 items, +0xCC weapon, +0xD0 shield, +0xF8 arrows, +0xFC quarrels) and +0x100 hands.
+            ro, rn = (int(v, 16) for v in os.environ["HOLDREC"].split(","))
+            print("HOLD %2d rec+%x %s" % (i, ro, rd(rec + ro, rn).hex(" ")), flush=True)
         if os.environ.get("HOLDITEMS"):
             # HOLDITEMS=1 (Combat Chat 7): its items, the list at record +0xC8 (far pointer), 0x3F-byte
             # records: name, +0x2E type, +0x32 plus, +0x34 readied, +0x39 count, +0x3A price, next +0x2A.
