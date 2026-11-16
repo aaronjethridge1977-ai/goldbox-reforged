@@ -67,3 +67,9 @@ run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wa
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678
 [ $WHAT = ours ] && run orig_B_tyr2 1 ./regtyr.sh 2468ace1
 [ $WHAT = ours ] && run orig_C_patrol 1 ./regpatrol.sh   # Combat Chat 8: Player 5's 5:4 patrol (LIRA's hands, the hill giants' DEX 0, Cause Blindness's touch), 2460 draws
+# Combat Chat 9: c32a's saves (Player 7; combat6/g61 slots G and H, combat9/inst.sh): DIRTEN (0x84 = 0xFF, with the party)
+# surrenders on his first turn (the morale routine 0x0BC97 on either side). 4:10 9,1's spectres and Tyranthraxus, two seeds each.
+[ $WHAT = ours ] && run orig_G_zh1 1 ./combat9/zh.sh 12345678 tmp/cmp_orig.txt
+[ $WHAT = ours ] && run orig_G_zh2 1 ./combat9/zh.sh 2468ace1 tmp/cmp_orig.txt
+[ $WHAT = ours ] && run orig_H_tyr1 1 ./combat9/dr.sh 12345678 tmp/cmp_orig.txt
+[ $WHAT = ours ] && run orig_H_tyr2 1 ./combat9/dr.sh 2468ace1 tmp/cmp_orig.txt   # the party falls in both games

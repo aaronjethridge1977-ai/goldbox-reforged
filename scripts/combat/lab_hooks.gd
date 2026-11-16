@@ -33,7 +33,8 @@ static func handle(main: Node, n: String) -> bool:
 	elif n == "fightend":               # waits until the fight is over or asks CONTINUE BATTLE
 		var waited := 0
 		var foes := []
-		while combat.visible and not combat._asking_continue and waited < 2400:
+		# A lost fight waits for a key on "THE PARTY HAS FALLEN." (_result 2): over too.
+		while combat.visible and not combat._asking_continue and combat._result != 2 and waited < 2400:
 			if combat._combat != null:
 				foes = combat._combat.combatants.filter(func(c): return c.team == 1).map(func(c): return c.who)
 			await main.get_tree().create_timer(0.5).timeout

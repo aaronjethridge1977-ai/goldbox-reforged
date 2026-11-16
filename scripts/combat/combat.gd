@@ -1783,7 +1783,7 @@ func _turn_pick(i: int) -> int:
 # --- Morale, fleeing and surrender -------------------------------------------------------
 # As the original does it (rules as documented by Pilgrim's reconstruction; names of the
 # script variables from ssi-engine; "KOBOLD SURRENDERS" seen in the lab):
-# - Each computer-run monster checks its morale at the start of its turn. Its morale is
+# - Each computer-run figure (a monster, or an NPC/QUICK member with morale over 127) checks its morale at the start of its turn. Its morale is
 #   the low 7 bits of record byte 0x84 doubled (over 102 counts as 0). If that is below
 #   the share of its own HP it has lost (or 0), the side's morale is tried: the monsters'
 #   remaining HP percentage against 100 - the encounter's morale (0x6DC6; the scripts use
@@ -1812,7 +1812,11 @@ func _morale_check(i: int) -> String:
 		# "Normally not to the death": in the lab the arena's double ran (CONTINUE BATTLE)
 		# in both duels once it had been hurt. The original's exact trigger isn't traced.
 		return "flee" if m.hp < m.hp_max else ""
-	if c.team != 1 or m.morale < 0x80 or m.hp_max <= 0:
+	# GAME.OVR 0x0BC97 runs for every computer-run figure with morale over 127, on either side
+	# (Combat Chat 9: DIRTEN, an NPC with the party, 0x84 = 0xFF, surrenders on his first turn
+	# at 4:10 9,1 and Tyranthraxus). The side's morale (0xBDA5) can hold only a monster-side
+	# figure (record 0x10E != 0); the enemies' speed is the other side's (0x15103).
+	if m.morale < 0x80 or m.hp_max <= 0:
 		return ""
 	var own := (m.morale & 0x7F) * 2
 	if own > 102:
@@ -1820,9 +1824,9 @@ func _morale_check(i: int) -> String:
 	var lost := 100 - (m.hp * 100) / m.hp_max
 	if not (own < lost or own == 0):
 		return ""
-	if not (enemy_health < 100 - morale_base or enemy_health == 0):
+	if c.team == 1 and not (enemy_health < 100 - morale_base or enemy_health == 0):
 		return ""
-	if _fastest(0) <= m.movement:
+	if _fastest(1 - c.team) <= m.movement:
 		return "flee"
 	if m.stats.size() > 1 and m.stats[1] > 5:
 		return "surrender"
