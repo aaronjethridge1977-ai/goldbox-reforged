@@ -3019,6 +3019,9 @@ func _show() -> void:
 		# third of a coverage run's time. Only what the game needs from here is done.
 		if not _vm.on_overland:
 			_ensure_area_script()
+			# The automap's visited squares still count (chat 37): the bot's checkpoints are quick
+			# saves, and a checkpoint loaded for play or a recording should carry the map.
+			_automap.place(e.map, "%s:%d" % [e.file, e.id], _pos, int(_facing), area.to_upper())
 		return
 	if _vm.on_overland and _vm.overland != null:
 		_view_img = _event_image if _event_image != null else _overland_view()

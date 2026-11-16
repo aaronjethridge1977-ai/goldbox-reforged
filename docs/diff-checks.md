@@ -172,6 +172,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 37: Main item 7 (an init that stops for the player), no new check
+
+- **Fixed in `main.gd`:** after a step or NEW_ECL into an area, the original (GAME.OVR 0x3EFA) runs the init, the
+  on-move script and the square's event in turn, however long the init runs. Ours did so only for an init that ran
+  through at once; one that stopped for the player (Rolf's tour, 3:0's init when 0x4AC5 is 0) ended with nothing
+  after it. Now `_after_vm` runs the arrival (`_arrival_event`) when such an init ends. Rolf's tour from
+  `mksave.py J G 3 0 15 1 W 4AC5=0`, Up, Enter x9: ours ends at 0,4 W 10:56 with the gateway text (0xAAD8) and the
+  AREA menu, as chat 36's DOSBox screens (lab `data/c36/rolf_orig_dumps.txt`). 4:10's init doesn't stop (it places
+  the party at 0,4 E and exits), so it already took the immediate path.
+- **No differential check for it:** with this save the gateway event writes nothing (Cadorna's treasure isn't
+  carried), so the end states match with and without the fix; statediff compares memory and the party, not the
+  text. A check would need an arrival whose square's event changes state after a stopping init; none found yet.
+- DIFFCHECKS 18/18 on every push of this chat (29-34 s).
+
 ## Chat 36: check 18 (2:9 the wagon: an ADD past 200), DIFFCHECKS 18/18; the break test's gap closed
 
 The Lead's item: a check whose path adds past 200 (chat 35's break test: ADD off by one over 200 was not caught).

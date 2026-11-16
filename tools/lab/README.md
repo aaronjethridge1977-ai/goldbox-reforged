@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 37:** `oursvid36.sh` records with no pointer (Xvfb `-nocursor` and ffmpeg `-draw_mouse 0`: Godot sets its
+own pointer, which x11grab draws unless told not to). `fullrun37.sh <out.mkv>`: showcase item 7, c34d's 37 checkpoints
+in the plan's order, 4 s each, with the automap off through a scratch `HOME` whose user settings say `automap=false`
+(the same trick switches any user setting for one recording without touching the lab's). `tools/quest_report.gd
+<save.cfg | SAVGAMx.DAT> ...` prints the quest tracker's view of a save (absolute paths: Godot resolves relative ones
+inside the project). The Windows build: Godot 4.7.2's export templates are in `~/.local/share/godot/export_templates/
+4.7.2.stable/` (Windows and Linux x86_64 only); export from a clean copy of the tracked files (`git ls-files` minus
+tools/ and docs/) with `--headless --import` then `--export-release "Windows Desktop" <exe>`; the file list is the
+export log's "Storing File:" lines; a smoke test runs the same pack (`--export-pack`) beside a copy of
+`linux_release.x86_64` named like it (`smoke_runner` + `smoke_runner.pck`: release templates refuse `--main-pack`).
+
 **Chat 36:** `mksave.py` takes `gp<n>=<gold>` (character file n's gold; `pp<n>=` the platinum). Check 18 (2:9 the
 wagon, `data/c35/chk2-9w/`) was made with `mkcheck35.sh 2-9w 2-9 "<keys>" "<ours' keys>"` (the first argument only
 names the lab folder). Showcase captures: `oursvid36.sh <out.mkv> <secs> "<keys>"` (oursvid.sh on its own display
