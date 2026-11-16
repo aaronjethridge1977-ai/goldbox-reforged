@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 36: check 18 (2:9 the wagon: an ADD past 200), DIFFCHECKS 18/18; the break test's gap closed
+
+The Lead's item: a check whose path adds past 200 (chat 35's break test: ADD off by one over 200 was not caught).
+
+- **4:10's ADD 5 to 249 can't be reached in play.** The shadowy form's fight (event 15 at 0,15) needs 0x4A05 (the
+  skeletons still to come, set at the area's init as PARTY_STRENGTH / 2 - 0x4A39) or 0x4A08 (0x4A39 = PARTY_STRENGTH /
+  2 exactly). PARTY_STRENGTH is at most 255 (ours caps it there), so 0x4A39 stays at most 127 and the event's
+  `ADD 5` gives at most 132; the cap at 249 never acts. A fight check there would not add past 200.
+- **2:9's payment routine does, with no fight.** The wagon (event 9 at 4,14, before 14:00, 0x4A77 bit 64 clear):
+  PARLAY, YES, 250 gold = 50 platinum. The routine (`GOSUB 0x9956`) pays platinum first; with none in the party
+  it converts what is left to gold by repeated ADD (`0x9A82`: 50 + 50 + 50 + 50 + 50, the last sum 250), and pays
+  that from the members' gold. So an ADD over 200 that is off changes what is paid. The coin sums at `0x9978` ff.
+  (gold + the smaller coins) also pass 200 when a member holds 300 gold, but they only feed a comparison.
+- **Check 18:** start `mksave.py J G 2 9 4 15 N 4A77=0 4A64=0 4A78=0 4AB9=0 pp1=0 ... pp6=0 gp1=300` (the lab's
+  mksave takes `gp<n>=` since this chat); both games: Up (the jump), Up, Enter, P (PARLAY: the seller's offer), Y,
+  Enter x3. Ours `load=G,wait,Up,wait,Up,wait,Enter,wait,P,wait,wait,Y,wait,wait,Enter,wait,Enter,wait,Enter,wait,wait,F2`.
+  No dice on the path (2:9's patrol roll is for rows 0-6). **MATCH**, 0 differences: THRENDER GRONE's gold 300 -> 50
+  in both, 0x4A77 = 64. Lab `data/c35/chk2-9w/` (made with `mkcheck35.sh 2-9w 2-9 ...`); installed and sealed as
+  `~/gbr/checks/data/18`; `diffcheck.sh` runs eighteen: **DIFFCHECKS 18/18, ~28 s**.
+- **Deliberate-break test repeated** (scratch worktree in /tmp, removed, never pushed): ADD off by one when the sum
+  is over 200: **caught**, check 18 DIFFERS (THRENDER GRONE coins 3: 50 vs 49: ours paid 251), `DIFFCHECKS 17/18`,
+  exit 1. SUBTRACT off by one: **caught**, checks 4 and 18 (`16/18`).
+- Not a fight check with the original's dice as the Lead's note had it: that note followed chat 35's two candidates,
+  both after fights; the payment path reaches the case without one, so the check needs no seed.
+- `diffcheck.sh` fix: a result with exactly one difference ("1 difference") was shown as "no comparison"; it now
+  shows the count and the difference.
+
 ## Chat 35: checks 11-17 (the next seven: 1:24, 4:10, 7:17, 8:13, 6:28, 2:15, 2:20), DIFFCHECKS 17/17
 
 Approved by Jeremy (Q6). One event per area, each with no fight and a fixed answer, story flags first (found with

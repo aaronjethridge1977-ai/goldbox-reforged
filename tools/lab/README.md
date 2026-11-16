@@ -173,6 +173,11 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 36:** `mksave.py` takes `gp<n>=<gold>` (character file n's gold; `pp<n>=` the platinum). Check 18 (2:9 the
+wagon, `data/c35/chk2-9w/`) was made with `mkcheck35.sh 2-9w 2-9 "<keys>" "<ours' keys>"` (the first argument only
+names the lab folder). Area events: `evmap.py <ecl file> <block>`; every block's listing in a scratch folder:
+`for s in 1..8: ecl.py list game/ECL$s.DAX`, then `ecl.py dis` per block (the repo's `tools/ecl.py`).
+
 **Chat 35:** new differential checks: `mkcheck35.sh <n> <area> "<pl.py do steps for the original>" "<ours' keys>"`
 plays a check in both games from `game/SAVGAMG.DAT` (+ CHRDATG*), saves the original's end in F (ENCAMP SAVE F, N at
 the quit prompt), writes `data/c35/chk<n>/` and prints `statediff`; `SEED=<hex>` sets the original's dice after boot

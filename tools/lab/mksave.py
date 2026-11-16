@@ -1,6 +1,6 @@
 """Make a lab save for the original that jumps to another area on the first step.
 
-  python3 mksave.py <base letter> <new letter (B-I)> <ecl file> <block> <x> <y> <facing N|E|S|W> [addr=val ...] [xp<n>=<experience>] [pp<n>=<platinum>] [item<n>=<DAX>:<block>:<index>] [wplus<n>=<plus>] [strong]
+  python3 mksave.py <base letter> <new letter (B-I)> <ecl file> <block> <x> <y> <facing N|E|S|W> [addr=val ...] [xp<n>=<experience>] [pp<n>=<platinum>] [gp<n>=<gold>] [item<n>=<DAX>:<block>:<index>] [wplus<n>=<plus>] [strong]
 
 The original's save holds the current area's script image from byte 0x1401 (base 0x9900).
 This patches the script's "on move" entry (its first GOTO's target) to do what the game's
@@ -28,6 +28,7 @@ s[o:o + len(patch)] = patch
 strong = "strong" in sys.argv[8:]
 xp = {}
 pp = {}
+gp = {}
 give = []
 wplus = {}
 for a in sys.argv[8:]:
@@ -44,6 +45,10 @@ for a in sys.argv[8:]:
     if a.startswith("item"):        # item<n>=<DAX>:<block>:<index> for character file n
         k, v = a[4:].split("=")
         give.append((int(k), v.split(":")))
+        continue
+    if a.startswith("gp"):          # gp<n>=<gold pieces> for character file n (chat 36)
+        k, v = a[2:].split("=")
+        gp[int(k)] = int(v)
         continue
     if a.startswith("pp"):          # pp<n>=<platinum pieces> for character file n
         k, v = a[2:].split("=")
@@ -73,6 +78,11 @@ for n_, v in pp.items():
     p_ = os.path.join(G, "CHRDAT%s%d.SAV" % (N, n_))
     d_ = bytearray(open(p_, "rb").read())
     struct.pack_into("<H", d_, 0x88 + 4 * 2, v)
+    open(p_, "wb").write(d_)
+for n_, v in gp.items():
+    p_ = os.path.join(G, "CHRDAT%s%d.SAV" % (N, n_))
+    d_ = bytearray(open(p_, "rb").read())
+    struct.pack_into("<H", d_, 0x88 + 3 * 2, v)
     open(p_, "wb").write(d_)
 for n_, (f_, b_, i_) in give:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
