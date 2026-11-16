@@ -99,8 +99,8 @@ func _ready() -> void:
 	DisplayMode.apply(get_tree())          # full screen if chosen (side lane, scripts/ui/display_mode.gd)
 	# The build's version in the window title (application/config/version), so a tester can tell builds apart.
 	var version := str(ProjectSettings.get_setting("application/config/version", ""))
-	if version != "" and DisplayServer.get_name() != "headless":
-		DisplayServer.window_set_title("%s %s" % [ProjectSettings.get_setting("application/config/name"), version])
+	if version != "":
+		get_window().title = "%s %s" % [ProjectSettings.get_setting("application/config/name"), version]
 	_goto = LineEdit.new()
 	_goto.placeholder_text = "x y facing (e.g. 12 6 S), Enter to go, Esc to cancel"
 	_goto.visible = false
