@@ -172,6 +172,43 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 33: Tyranthraxus was a shared record (the bot's branch explorer), the acceptance run's third try
+
+- **Tyranthraxus (c32a, c33a: every bot fight lost): a bug in ours, now fixed.** `PartyMember.clone()` passed the
+  record's bytes to `from_bytes`, which keeps them (`m.raw = d`), and a Packed array assigned in Godot 4 is the same
+  array (checked: a write through the copy shows in the original). The bot's branch explorer (`ShadowExplorer`) forks
+  the script VM with cloned members and tries every choice of each menu three deep; at the finale's vote its tries
+  of JOIN TYRANTHRAXUS (5:7 0xA771, `WRITE_MEM 129, [6C0C]`) set record byte 0x10E (the side) in the **real**
+  ARN, BRAM and CEDRIC, so in every bot fight they fought for Tyranthraxus (logs: "ARN ATTACKS ELWEN", the party
+  "fallen" while ARN and CEDRIC stood). Found by logging every side write: at ARN's vote, seven writes from 0xE71
+  (0xA771 - 0x9900), the explorer's tree. Fix: `clone()` duplicates the record. Only the vote wrote a side that
+  matters (1:18, 3:0, 7:17 write 128 for monsters); the arena's ROLF (`copy.raw[0x84] = 0xB2`) also wrote the
+  duelist's morale byte (now its own). Since Combat Chat 6 made 0x10E the side. DIFFCHECKS 10/10 with the fix.
+  From c33a's `valjevo6` on the fixed code the party fights together; Tyranthraxus still beats this party in most
+  tries (its breath does 80, the party has 30-70 HP, levels 5-7; 1 win in 5 tries, `data/c33/e1-e4.log`, and 0 of
+  ~12 in `f1-f4`), as the original beat c32a's party in 2 of 3 (Player 7).
+- **The bot's spell planner is not the cause:** with the party's own casting off (`party_casts = false`, plain
+  QUICK as Player 7's runs) the party lost 6 of 6 tries from c33a's `valjevo6`, with it 4 of 5 (both before the
+  fix, `data/c33/tA*`, `tB*`).
+- **The finale won with a member dead ends the run** (bot only): Methods 4's reload on a death is for fights the run
+  goes on from; after Tyranthraxus falls (0x4ABA = 254, written at 5:7 0xA815) nothing depends on that member. The
+  plan's new `won 4ABA 254` line names the flag (data, not engine); a death once it's set is logged ("the run's end,
+  no reload"). c33b: BRAM died in the winning fight.
+- **c33a's teleport 6:28 -> 3:0 (bot):** a thri-kreen fight on the last walk into Zhentil Outpost, after the band's
+  heal, left ARN hurt; inside, the rest rule sent the party to the inn and the quarters have no way out. The plan
+  now says `rest 6:28 none` (no rest there, the cleric's memorized cures only); 4 of 4 resumes from c33a's
+  `buccaneers` reached `zhentil` with no teleport.
+- **The drained party (c33a):** 4:10's wights and spectres drained BRAM 2, ARN 1, DORN 2 levels; with no temple
+  Restoration in Pool and no scrolls, the party went into 2:9 at levels 4-5 and into 5:7 a level under the plan's
+  7 (`ISSUE ... is behind`). 9 of c33a's 24 member deaths came after fights the party won (4:10's spectres drain a
+  member to "DEAD FOREVER"). Methods 4 (no resurrection) and "level drain earned back in play" are design's.
+- **Acceptance run, third try, c33b** (fresh from creation, seed 2c2220da, on the fixed code; refcheck on the same
+  code below): plan line `stop` reached, **Tyranthraxus beaten in play** (the first time in a full run), **11 shortcut
+  wins in 7 fights**: 2:20 0,14 [8 x2, 31 x4] (day 44), 4:2 3,11 [28 x1, 7 x3, 6 x12] (day 50), 8:13 4,3 the throne room's waves x5 (one a stalemate, round 53), 4:10 9,1 [17 x2] (spectres: BRAM drained
+  to "DEAD FOREVER" in a won fight, then ARN), 2:9 7,6 the two magic-users, 5:4 9,1 [56 x4], 5:7 3,8 the guards [85 x12]. No teleport.
+  Of these, the original loses too from c32a's saves: the throne room (Player 2-3), 2:9 7,6 and the guards (Player 7,
+  both seeds). Still to the Player: 2:20 0,14, 4:2 3,11, 5:4 9,1 and 4:10 9,1 from c33b's checkpoints.
+
 ## Chat 32: c31a's stop and shortcuts explained (the bot), the acceptance run's second try
 
 - **5:4's chain of patrols (c31a's stop; c29b had the same chain and was luckier): the bot, not our rules.** Every

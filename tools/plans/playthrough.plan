@@ -31,6 +31,9 @@ rest 5:3 inn-while 4A64 1
 rest 5:4 inn-while 4A64 1
 rest 5:5 inn-while 4A64 1
 rest 5:6 inn-while 4A64 1
+# Chat 33: the game is won when Tyranthraxus falls (5:7 0xA815 writes 254 to 0x4ABA): a member who
+# died in that fight ends the run as won (Methods 4's reload on a death is for fights the run goes on from).
+won 4ABA 254
 # The level the game expects of a party in each area (research/pool-of-radiance-strategy.md,
 # section 4: Claude's estimates from the guides, the low end of each range). M6: a member more
 # than one level below it trains, or gets the level by shortcut (logged).
@@ -438,7 +441,9 @@ log 15. The Zhentil Keep outpost (6:28): escape fast
 # ATTACK at 4,0 (0x4A0E) plays the commandant's fights instead; the Clue Book says don't.
 # The sweep's exits at 4,0 (ATTACK, then SURRENDER: stripped and thrown out) are left out of
 # the lab's exits.txt. No camping inside: a rest before the night goes straight to dinner, after it to the guards.
-rest 6:28 inn
+# Chat 33 (c33a's teleport, day 484): a thri-kreen fight on the last walk in, after the band's heal, left
+# ARN hurt; the inn trip found no way out of the quarters. No rest at all inside, cures only.
+rest 6:28 none
 answer 6:28 WALK AROUND OR WILL YOU JUST RELAX|RELAX
 answer 6:28 WHAT WILL YOU TALK ABOUT|CITY
 answer 6:28 NEW OR OLD PHLAN|OLD

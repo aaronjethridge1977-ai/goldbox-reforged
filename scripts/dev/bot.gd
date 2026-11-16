@@ -58,6 +58,8 @@ var _shortcuts: Array = []
 var _skipped_fights: Array = []
 var _win_at: Array = []    # the plan's "shortcut win <n> at ...": [{n, at, ev, area}]
 var _expected_level := {}
+var _won_at := []               # chat 33: [address, value] of the game's "won" flag (plan: won)
+var _won_logged := false
 var _event_now := ""            # the event explore is walking to ("area map:event")
 ## Chat 28: events explore left for later, by area: {"map": map index, "events": [...], "later": the plan's list}.
 var _left_later := {}
@@ -126,7 +128,7 @@ func run(plan_path: String) -> void:
 			# The plan's standing rules above the checkpoint still hold.
 			for i in at:
 				var rule := lines[i].strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level", "won"]:
 					await _do(rule)
 			_pc = at
 			_checkpoint = name
@@ -145,6 +147,15 @@ func run(plan_path: String) -> void:
 			break
 		await _do(line)
 		var died := _died()
+		if died != "" and not _wiped() and _game_won():
+			# Chat 33: the game's last fight won (the plan's "won" line: Pool of Radiance's
+			# 0x4ABA = 254, written as Tyranthraxus falls): nothing after depends on the
+			# member, so a death there ends the run as won, logged; no reload.
+			if not _won_logged:
+				_won_logged = true
+				_count("deaths after the win")
+				_issue("%s died in the fight that won the game (plan line %d): the run's end, no reload" % [died, _pc])
+			died = ""
 		if _wiped() or died != "":
 			# Methods 4 (Jeremy): a playthrough never depends on resurrection; in a full run a
 			# member's death is a loss like a wipe: back to the last checkpoint.
@@ -381,6 +392,10 @@ func _do(line: String) -> void:
 			await _explore(w.slice(1))
 		"mopup":
 			await _mopup()
+		"won":
+			# won <hex address> <value>: the game is won once script memory there is at the
+			# value or above (chat 33; Pool of Radiance: 0x4ABA = 254, Tyranthraxus beaten).
+			_won_at = [w[1].hex_to_int(), int(w[2])]
 		"expect_level":
 			# expect_level <set:block> <n>: the level the game expects of a party there (M6: the
 			# party is kept near it, since some encounters scale with the party).
@@ -407,7 +422,8 @@ func _do(line: String) -> void:
 			# rest <set:block> inn|camp [<hex address> <value>]: where a player rests in that
 			# area (the Clue Book's table). "inn" with an address: the inn until script
 			# memory there reaches the value (the area's condition for safe rests), then camp;
-			# "inn-while" with an address: the inn while memory there is at the value or above.
+			# "inn-while" with an address: the inn while memory there is at the value or above;
+			# "none": no rest there, only memorized cures (chat 33).
 			_rest_rules[w[1]] = {"rule": w[2], "addr": w[3].hex_to_int() if w.size() > 4 else -1,
 				"value": int(w[4]) if w.size() > 4 else 0}
 		"status":
@@ -542,7 +558,7 @@ func _do(line: String) -> void:
 			var text := FileAccess.get_file_as_string("res://tools/plans/" + w[1])
 			for rule in text.split("\n"):
 				rule = rule.strip_edges()
-				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level"]:
+				if rule.get_slice(" ", 0) in ["rest", "parley", "fight", "hire", "answer", "gate", "exit", "warp", "expect_level", "won"]:
 					await _do(rule)
 		"start":
 			# start <checkpoint name>: load bot_<name>.cfg from the folder given by
@@ -2237,6 +2253,8 @@ func _prepare() -> void:
 	_pick_spells()
 	if not _learning() and not _needs_rest():
 		return
+	if _no_rest():
+		return
 	# Where the area isn't safe to camp in (the plan's rest lines, from the Clue Book), a
 	# player rests at the inn rather than in monster country.
 	if _rest_rule() == "inn":
@@ -2527,7 +2545,7 @@ func _town() -> void:
 
 
 func _heal_if_low() -> void:
-	if _wiped():
+	if _wiped() or _no_rest():
 		return
 	if _rest_rule() == "inn" and not _at_inn:
 		_cure_in_camp()
@@ -2651,6 +2669,8 @@ func _open_camp() -> bool:
 ## Rests in camp a day at a time until everyone is healed; an interruption is fought out
 ## and the rest begun again.
 func _heal() -> void:
+	if _no_rest():
+		return
 	if _needs_rest() and _rest_rule() == "inn" and not _at_inn:
 		# Chat 32: the memorized cures before the walk (no rest, so nothing interrupts): c32v's
 		# trip out of Valjevo met a patrol at half strength.
@@ -2756,7 +2776,7 @@ const PICKS := [[[3, 3, 1], [23], [42]], [[21, 15], [31, 34, 32], [47, 48, 51]]]
 
 func _memorize() -> void:
 	_pick_spells()
-	if not _learning():
+	if not _learning() or _no_rest():
 		return
 	if _rest_rule() == "inn" and not _at_inn and await _rest_safe():
 		return
@@ -3236,6 +3256,20 @@ func _rest_rule() -> String:
 	if r.rule == "inn-while":
 		return "inn" if int(r.addr) >= 0 and main._vm.read_byte(int(r.addr)) >= int(r.value) else "camp"
 	return String(r.rule)
+
+
+func _game_won() -> bool:
+	return _won_at.size() == 2 and main._vm.read_byte(int(_won_at[0])) >= int(_won_at[1])
+
+
+## Chat 33: "none": no rest at all there, only the cleric's memorized cures (Zhentil Outpost's
+## quarters, 6:28: the escort forbids leaving them and a camp rest brings dinner or the guards;
+## c33a, hurt by a fight on the way in, went for the inn and found no way: a teleport).
+func _no_rest() -> bool:
+	if _rest_rule() != "none":
+		return false
+	_cure_in_camp()
+	return true
 
 
 ## To the inn and back, for an area where camping isn't safe. True if the party rested there.

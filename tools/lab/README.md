@@ -173,6 +173,13 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 33:** c33a's and c33b's checkpoints are in `data/c33/cp_c33a`, `data/c33/cp_c33b` (copy them out of the
+user folder `~/.local/share/godot/app_userdata/Gold Box Reforged bot <id>/` after a run: `BOT_CHECKPOINTS` isn't
+where the quick saves go). Two `refcheck.sh` at once share `data/ref/` and spoil each other's figures: one at a
+time. A scratch copy with `print`s (`data/c33/srcD`) found the shared record; `awk -f data/c33/tyr.awk <log>` lists each
+Tyranthraxus try's result after the guards. Godot 4: a Packed array assigned to another variable is the same
+array; `duplicate()` it for a copy.
+
 **Chat 32:** a run can be resumed from another run's checkpoint: copy its user folder's `bot_*.cfg/.json` (e.g.
 `data/c32/cp_c31a/`) and pass `--resume=<file>:<checkpoint name>` to `bot.sh` (plan lines after that checkpoint).
 For a short test plan, copy the repo to `data/c32/src` (scripts, scenes, tools, project.godot, icon.svg), cut

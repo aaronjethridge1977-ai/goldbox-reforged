@@ -256,8 +256,13 @@ func readied_weapon(types: ItemTypes) -> GameItem:
 
 
 ## An independent copy (for several monsters of one kind).
+## Chat 33: the record is duplicated: a Packed array assigned in Godot 4 is the same array
+## (from_bytes keeps it), so a copy's record writes went into the original's. The bot's
+## branch explorer forks the script VM with cloned members; its tries of JOIN TYRANTHRAXUS
+## (5:7 0xA771, side byte 0x10C -> record 0x10E) turned the real ARN, BRAM and CEDRIC against
+## the party in every full run's Tyranthraxus fight; the arena's ROLF set the duelist's 0x84.
 func clone() -> PartyMember:
-	var m := from_bytes(raw, PackedByteArray())
+	var m := from_bytes(raw.duplicate(), PackedByteArray())
 	m.is_monster = is_monster
 	m.hp = hp
 	m.status = status
