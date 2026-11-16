@@ -96,6 +96,7 @@ var _automap: Automap               # QoL: mini-map (M) and full map (F) of visi
 
 
 var _quest_log: QuestLog
+var _quest_screen: QuestScreen       # combat lane: the quest log's screen (C11-4), made at the first Q
 
 
 ## The quest tracker's view of the game now (QuestLog.evaluate with the offers shown), for its
@@ -1041,6 +1042,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_automap.queue_redraw()
 			get_viewport().set_input_as_handled()
 			return
+		elif key == KEY_Q and QuestScreen.on() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+			# The quest log (combat lane, C11-4): Q is no key on the original's adventure menu.
+			if _quest_screen == null:
+				_quest_screen = QuestScreen.new()
+				add_child(_quest_screen)
+			_quest_screen.open(quest_view())
+			get_viewport().set_input_as_handled()
+			return
 		elif key == KEY_F and _automap.enabled and not _vm.on_overland:
 			_automap.full_open = not _automap.full_open
 			_automap.queue_redraw()
@@ -1317,6 +1326,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
 	cfg.set_value("qol", "offers", PackedStringArray(_vm.shown_texts.keys()))
+	cfg.set_value("qol", "rememorize", Rememorize.to_save(_party))   # combat lane (C11-2)
 	var members := []
 	for m in _party:
 		var items := []
@@ -1492,7 +1502,7 @@ func _save_original(letter: String) -> bool:
 		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
 		_vm.read_byte(EclVM.SQUARE_INFO))
 	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save(),
-			"offers": PackedStringArray(_vm.shown_texts.keys())}):
+			"offers": PackedStringArray(_vm.shown_texts.keys()), "rememorize": Rememorize.to_save(_party)}):
 		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
 	_party_menu.save_failed = not ok
@@ -1567,6 +1577,7 @@ func load_original_save(letter: String) -> bool:
 		return false
 	_party.assign(loaded)
 	_vm.party = _party
+	Rememorize.from_save(_party, extra.get("rememorize", {}))   # combat lane (C11-2)
 	_timer.stop()
 	_busy = false
 	_walk_path.clear()
@@ -1718,6 +1729,7 @@ func _quick_load() -> void:
 			SpecialAffects.add(_party[i], SpecialAffects.RACIAL.get(_party[i].race_id, []))
 		_party[i].items = _items_from(saved.get("items", []))
 		_party[i].recalculate(_types)
+	Rememorize.from_save(_party, cfg.get_value("qol", "rememorize", {}))   # combat lane (C11-2)
 	_status.text = "Loaded."
 	_note_24("GAME LOADED.")
 	_show()

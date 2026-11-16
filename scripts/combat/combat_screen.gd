@@ -1226,9 +1226,40 @@ func _start_aim(purpose: String = "attack") -> void:
 	_aim_index = 0
 	if purpose == "spell" and _aim_list.size() > 1 and _use_item == null:
 		_aim_index = 1      # a spell aims at the nearest other figure first
+	if skip_party_on():
+		# TARGETING SKIPS THE PARTY (QoL, C11-3): an attack or a harmful spell's NEXT / PREV
+		# step through the enemies only, nearest first, starting on the nearest; a helpful
+		# spell's through the party first (nearest first), then the enemies. MANUAL still
+		# reaches any square. OFF: the original's cycle through every figure.
+		var mine: int = _combatants[me].team
+		var foes := others.filter(func(j): return _combatants[j].team != mine)
+		var friends := others.filter(func(j): return _combatants[j].team == mine)
+		if offensive and not foes.is_empty():
+			_aim_list.assign(foes)
+			_aim_index = 0
+		elif not offensive:
+			_aim_list.assign([me] + friends + foes)
 	# (A spell from an item starts on the user, with no SPELL: line: lab, Combat Chat 5, a
 	# Restoration scroll used in the Slums' orc fight.)
 	_show_aim()
+
+
+const SKIP_PARTY_KEY := "aim_skips_party"
+
+
+## SETTINGS: TARGETING SKIPS PARTY, ON (an addition, on unless turned off) or OFF (the original).
+static func skip_party_on() -> bool:
+	var cf := ConfigFile.new()
+	if cf.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(cf.get_value("qol", SKIP_PARTY_KEY, true))
+
+
+static func save_skip_party(on: bool) -> void:
+	var cf := ConfigFile.new()
+	cf.load(GameData.SETTINGS_PATH)
+	cf.set_value("qol", SKIP_PARTY_KEY, on)
+	cf.save(GameData.SETTINGS_PATH)
 
 
 func _show_aim() -> void:

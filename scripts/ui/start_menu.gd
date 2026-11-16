@@ -204,6 +204,14 @@ func _draw() -> void:
 	if _stage == "feature":
 		_draw_feature_page(g)
 		return
+	if _stage == "settings":
+		# Its own title on row 2, as FEATURES: the start menu's two header lines stay off
+		# (main's chat 40: "SETTINGS" was written over "GOLD BOX REFORGED").
+		_frame(g)
+		_divider(g)
+		_draw_settings(g)
+		g.update()
+		return
 	g.clear()
 	for c in 40:
 		g.tile(c, 0, 22)
@@ -213,8 +221,6 @@ func _draw() -> void:
 		g.tile(39, r, 21)
 	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
 		g.tile(p.x, p.y, 20)
-	if _stage == "settings":
-		_divider(g)
 	g.text(10, 2, "POOL OF RADIANCE", GameScreen.YELLOW)
 	g.text(9, 3, "GOLD BOX REFORGED", GameScreen.CYAN)
 	if _stage == "menu":
@@ -226,8 +232,6 @@ func _draw() -> void:
 		g.list_chosen(_sel)
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
 		g.text(2, 21, "PLAYS HERE.", GameScreen.CYAN)
-	elif _stage == "settings":
-		_draw_settings(g)
 	elif _stage == "about":
 		g.text(9, 5, FeatureText.text("about_title", "ABOUT"), GameScreen.WHITE)
 		var items := FeatureText.menu("about")
@@ -277,14 +281,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key == KEY_E or key == KEY_ESCAPE:
 			_show_menu()
 			return
+		var first := _set_sel / SETTINGS_PER_PAGE * SETTINGS_PER_PAGE
 		if event.is_action("ui_up"):
 			_set_sel = (_set_sel + sets.size() - 1) % sets.size()
 		elif event.is_action("ui_down"):
 			_set_sel = (_set_sel + 1) % sets.size()
 		elif event.is_action("ui_accept") or key == KEY_C or key == KEY_SPACE:
 			change_setting(String(sets[_set_sel].setting))
+		elif key == KEY_N and "NEXT" in _settings_menu():
+			_set_sel = first + SETTINGS_PER_PAGE
+		elif key == KEY_P and "PREV" in _settings_menu():
+			_set_sel = first - SETTINGS_PER_PAGE
 		else:
-			for i in sets.size():
+			# A hot letter picks among the page shown (N and P page when the menu has them).
+			for i in range(first, mini(first + SETTINGS_PER_PAGE, sets.size())):
 				if letter != "" and String(sets[i].label).begins_with(letter):
 					_set_sel = i
 					change_setting(String(sets[i].setting))
@@ -420,6 +430,9 @@ static func setting_value(id: String) -> int:
 		"fullscreen": return int(DisplayMode.load_on())
 		"sound": return int(Speaker.on())
 		"mouse": return int(MouseInput.on())
+		"rememorize": return int(Rememorize.on())
+		"aimskip": return int(CombatScreen.skip_party_on())
+		"quests": return int(QuestScreen.on())
 	return 0
 
 
@@ -437,6 +450,9 @@ static func change_setting(id: String) -> void:
 		"fullscreen": DisplayMode.toggle(Engine.get_main_loop() as SceneTree)
 		"sound": Speaker.save_on(not Speaker.on())
 		"mouse": MouseInput.save_on(not MouseInput.on())
+		"rememorize": Rememorize.save_on(not Rememorize.on())
+		"aimskip": CombatScreen.save_skip_party(not CombatScreen.skip_party_on())
+		"quests": QuestScreen.save_on(not QuestScreen.on())
 
 
 func _about_index(item: String) -> int:
@@ -466,14 +482,30 @@ func _frame(g: GameScreen) -> void:
 
 ## SETTINGS: one line an item (hot letter white, name green, value cyan; the highlighted line
 ## all white, as the original's menus), the highlighted item's help in the box, CHANGE EXIT.
+## Twelve to a page (rows 4-15, above the box's rope), as FEATURES; NEXT and PREV on the menu
+## only when they'd move (Combat Chat 14: the release's switches made more than twelve).
+const SETTINGS_PER_PAGE := 12
+
+
+func _settings_menu() -> Array:
+	var n := FeatureText.settings().size()
+	var page := _set_sel / SETTINGS_PER_PAGE
+	var items: Array = FeatureText.menu("settings").duplicate()
+	var at := maxi(items.find("EXIT"), 0)
+	if page > 0:
+		items.insert(at, "PREV")
+	if (page + 1) * SETTINGS_PER_PAGE < n:
+		items.insert(at, "NEXT")
+	return items
+
+
 func _draw_settings(g: GameScreen) -> void:
 	var sets := FeatureText.settings()
-	# Ten items from row 6 under the title on row 4; more start higher so the last stays above
-	# the box's rope on row 16 (Combat Chat 12: USE MOUSE made eleven).
-	var top := mini(6, 16 - sets.size())
-	g.text(2, top - 2, FeatureText.text("settings_title"), GameScreen.WHITE)
+	g.text(2, 2, FeatureText.text("settings_title"), GameScreen.WHITE)
 	_set_sel = clampi(_set_sel, 0, maxi(sets.size() - 1, 0))
-	for i in sets.size():
+	var first := _set_sel / SETTINGS_PER_PAGE * SETTINGS_PER_PAGE
+	var top := 4 - first
+	for i in range(first, mini(first + SETTINGS_PER_PAGE, sets.size())):
 		var f: Dictionary = sets[i]
 		var label := String(f.label)
 		var vals: Array = f.get("values", [])
@@ -486,7 +518,7 @@ func _draw_settings(g: GameScreen) -> void:
 	g.list_chosen(_set_sel)
 	if not sets.is_empty():
 		_box(g, FeatureText.box_lines(sets[_set_sel], true))
-	g.menu_line(24, FeatureText.menu("settings"))
+	g.menu_line(24, _settings_menu())
 
 
 func _box(g: GameScreen, lines: Array) -> void:

@@ -171,6 +171,7 @@ func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_walk = false
 	_plain_rope = false
 	_pick = 3                    # carried over from ENCAMP (lab: REST lit)
+	Rememorize.note_camp(party)
 	_say_lines([["", GameScreen.GREEN], ["THE PARTY MAKES CAMP...", GameScreen.GREEN]])
 	visible = true
 	_anim.start(_fire_delay(0))
@@ -1010,6 +1011,7 @@ func _choose() -> void:
 	if _list_kind == "memorize":
 		if m.slots_left(spells, spells.spell_class(id), spells.level(id)) > 0:
 			m.memorized.append(id + PartyMember.LEARNING)
+			Rememorize.note_pick(m, spells)
 		_refresh()
 	elif _list_kind == "scribe":
 		# Marks the scroll spell to be scribed while resting ("*"), or says why not on row 24
@@ -1251,7 +1253,9 @@ func _act(choice: String) -> void:
 				"MAGIC":
 					if spells != null:
 						_magic_menu()
-				"REST": _rest_menu()
+				"REST":
+					Rememorize.refill(_party, spells)
+					_rest_menu()
 				"ALTER": _alter_menu()
 				"FIX": _fix()
 				"EXIT":
@@ -1291,7 +1295,9 @@ func _act(choice: String) -> void:
 				"DISPLAY":
 					_mode = "display"
 					_refresh()
-				"REST": _rest_menu("magic")
+				"REST":
+					Rememorize.refill(_party, spells)
+					_rest_menu("magic")
 				"EXIT":
 					_pick = 2
 					_show_menu()
