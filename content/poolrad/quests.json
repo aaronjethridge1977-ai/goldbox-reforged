@@ -1,0 +1,302 @@
+{
+	"game": "Pool of Radiance (DOS)",
+	"about": "The quest tracker's data (QoL 3, main lane, chat 37). Read from the game's own ECL scripts: City Hall's commission list and report loop (ECL3 block 8: offers 0xA845-0xAF4B, reports 0x9D0E-0x9F76) and every field event that writes a report flag (the lab's writers index). A quest is a set of conditions on ECL memory; scripts/game/quest_log.gd evaluates them. Nothing here is shown by the original: the tracker is an addition (QoL).",
+	"conditions": "Each condition is a string. 'ADDR OP VALUE' compares the byte at ECL address ADDR (hex); OP is one of == != >= <= > <. 'ADDR & MASK' holds when all of MASK's bits are set. 'shown A:B ADDR' holds when the engine has shown the text at ECL area A:B address ADDR (the tracker records it: offers that set no flag). A list of conditions holds when all hold.",
+	"report_values": {
+		"254": "done in the field: the City Council's clerk pays the reward at the next City Hall visit",
+		"255": "reported: the clerk has paid (0x9F5A)"
+	},
+	"tally": {
+		"addr": "4AC1",
+		"meaning": "the council's count of major successes (one per reported Norris, Sokal Keep, Podol Plaza, the graveyard, Kovel Mansion, the river, the lizardmen, the kobolds, the nomads, the slums); at 4 or more the graveyard commission is offered (0xA592)"
+	},
+	"quests": [
+		{
+			"id": "slums",
+			"title": "Clear the Slums",
+			"giver": "City Council (City Hall, 3:8)",
+			"where": "2:20 the Slums",
+			"offer": "THE SLUMS IMMEDIATELY TO OUR WEST NEED TO BE CLEARED OF MONSTERS.",
+			"start": [["shown 3:8 A8B6"], ["4ABB >= 1"]],
+			"steps": [
+				{"text": "Fights won in the Slums (the script counts them)", "when": ["4ABB >= 1"]}
+			],
+			"done": ["4ABB >= 254"],
+			"reported": ["4ABB == 255"],
+			"report": "YOUR CLEARING OF THE SLUM AREAS PERMITS US TO EXPAND."
+		},
+		{
+			"id": "sokal_keep",
+			"title": "Clear Sokal Keep",
+			"giver": "City Council",
+			"where": "4:21 Sokal Keep, on Thorn Island (by boat from the harbor master)",
+			"offer": "SOKAL KEEP ON THORN ISLAND MUST BE CLEARED.",
+			"start": [["shown 3:8 A8F7"], ["4AA7 >= 254"]],
+			"steps": [],
+			"done": ["4AA7 >= 254"],
+			"done_text": "Ferran's ghosts are freed ('NOW WE ARE FREED, OUR DUTY DONE!', 4:21 0xADAA)",
+			"reported": ["4AA7 == 255"],
+			"report": "WITH SOKAL KEEP IN OUR HANDS, WE CAN USE BOATS TO BYPASS THE BARREN RIVER.",
+			"note": "Reported, it opens three more commissions: the Bishop's summons, Kovel Mansion and the Bivant heir."
+		},
+		{
+			"id": "books",
+			"title": "Books and records of old Phlan",
+			"giver": "City Council",
+			"where": "2:15 Mendor's library (and wherever such papers are found)",
+			"offer": "THE COUNCIL IS OFFERING A REWARD FOR BOOKS, MAPS, TOMES, ETC. WHICH PROVIDE USEFUL INFORMATION ABOUT PHLAN BEFORE THE FALL.",
+			"start": [["shown 3:8 A927"], ["4AAA >= 254"], ["4AAB >= 254"], ["4AAC >= 254"], ["4AAD >= 254"], ["4AAE >= 254"], ["4AAF >= 254"]],
+			"steps": [
+				{"text": "The discourses", "when": ["4AAA >= 254"], "report": "WE FIND THESE DISCOURSES VALUABLE."},
+				{"text": "The descriptions", "when": ["4AAB >= 254"], "report": "THE COUNCIL WILL BE AMUSED BY THE DESCRIPTIONS."},
+				{"text": "The maps", "when": ["4AAC >= 254"], "report": "THESE MAPS SHOULD HELP US TO LOCATE SEVERAL LEGENDARY BUILDINGS."},
+				{"text": "The histories", "when": ["4AAD >= 254"], "report": "THESE HISTORIES CONTAIN MUCH USEFUL INFORMATION."},
+				{"text": "The records", "when": ["4AAE >= 254"], "report": "THE RECORDS PROVIDE INSIGHTS INTO MUCH THAT WAS PUZZLING."},
+				{"text": "A minor work", "when": ["4AAF >= 254"], "report": "THIS MATERIAL IS OF SMALL VALUE."}
+			],
+			"done": ["4AAA >= 254", "4AAB >= 254", "4AAC >= 254", "4AAD >= 254", "4AAE >= 254", "4AAF >= 254"],
+			"reported": ["4AAA == 255", "4AAB == 255", "4AAC == 255", "4AAD == 255", "4AAE == 255", "4AAF == 255"],
+			"note": "Six documents, each its own report flag (0x4AAA-0x4AAF, written in 2:15). The council stops offering it once the library is cleared and paid for (4AC2 = 255, next quest); documents found later are still paid."
+		},
+		{
+			"id": "library",
+			"title": "Clear the library",
+			"giver": "City Council (a reward, no commission)",
+			"where": "2:15 Mendor's library",
+			"start": [["4A31 & 32"], ["4A31 & 64"]],
+			"steps": [
+				{"text": "The spectre that guards the books is destroyed", "when": ["4A31 & 32"]},
+				{"text": "The reptilian monster is killed", "when": ["4A31 & 64"]}
+			],
+			"done": ["4A31 & 96"],
+			"reported": ["4AC2 == 255"],
+			"report": "'THERE IS A REWARD FOR CLEARING THE LIBRARY.'"
+		},
+		{
+			"id": "auction",
+			"title": "The auction at Podol Plaza",
+			"giver": "City Council",
+			"where": "1:18 Podol Plaza",
+			"offer": "A WEAPON OF GREAT POWER IS TO BE AUCTIONED TO OUR ENEMIES. THIS AUCTION IS TO BE HELD IN PODAL PLAZA.  FIND OUT WHAT THE WEAPON IS AND RETURN.",
+			"start": [["4AB0 >= 1"]],
+			"steps": [],
+			"done": ["4AB0 >= 254"],
+			"done_text": "the auction is over or cancelled (1:18 0xA82B, 0xA86B)",
+			"reported": ["4AB0 == 255"],
+			"report": "YOUR SUCCESS AT PODAL PLAZA IS NOTED."
+		},
+		{
+			"id": "podol_plaza",
+			"title": "Clear Podol Plaza",
+			"giver": "City Council (a reward, no commission)",
+			"where": "1:18 Podol Plaza",
+			"start": [["4AE7 >= 254"]],
+			"steps": [],
+			"done": ["4AE7 >= 254"],
+			"reported": ["4AE7 == 255"],
+			"report": "'THERE IS A REWARD FOR CLEARING THE PODAL PLAZA.'"
+		},
+		{
+			"id": "cadorna_treasure",
+			"title": "Cadorna's family treasure",
+			"giver": "Junior Councilman Cadorna (City Hall, the east door)",
+			"where": "4:2 the Cadorna textile house, south of Podol Plaza",
+			"offer": "JUNIOR COUNCILMAN CADORNA HAS A SPECIAL COMMISSION FOR YOU.  HIS CHAMBERS ARE THROUGH THE EAST DOOR.",
+			"start": [["4A97 >= 254"]],
+			"steps": [
+				{"text": "Cadorna tells of the treasure hidden in the textile house's western building", "when": ["4A97 == 255"]},
+				{"text": "The city watch takes the treasure at New Phlan's gateway", "when": ["4AB8 >= 254"]}
+			],
+			"done": ["4AB8 >= 254"],
+			"reported": ["4AB8 == 255"],
+			"report": "COUNCILMAN CADORNA LEFT THIS PAYMENT FOR SOME SERVICE YOU HAD RENDERED.",
+			"note": "Clearing the textile house pays separately ('THE CADORNA TEXTILE HOUSE', 4AE6: 254 cleared, 255 paid); it is not needed for the treasure (c34d took the treasure with 4AE6 = 0)."
+		},
+		{
+			"id": "temple_of_bane",
+			"title": "Cleanse the temple of Bane",
+			"giver": "Bishop Braccio of Tyr (Tyr's temple, New Phlan), after Sokal Keep is reported",
+			"where": "1:24 the Temple of Bane quarter",
+			"offer": "YOU ARE SUMMONED BY THE BISHOP OF BRACCIO OF TYR. REPORT TO HIM AT TYR'S TEMPLE.",
+			"start": [["4A9B >= 254"]],
+			"steps": [
+				{"text": "Dirten, priest of Ilmater, goes with the party", "when": ["4A9C == 255"]},
+				{"text": "The orcs in the building next to the temple are dealt with (a reward of its own)", "when": ["4AA8 >= 254"]},
+				{"text": "The temple's treasure is found and its defenders beaten", "when": ["4ABD >= 254"]}
+			],
+			"done": ["4ABD >= 254"],
+			"reported": ["4ABD == 255"],
+			"report": "CONGRATULATIONS, YOU MAY KEEP ALL YOU FOUND IN THE TEMPLE OF BANE AS A REWARD.",
+			"note": "The area next to the temple reports on its own: 'YOU HAVE CLEARED THE AREA NEXT TO THE EVIL TEMPLE.' (4AA8)."
+		},
+		{
+			"id": "kovel_mansion",
+			"title": "The thieves of Kovel Mansion",
+			"giver": "City Council, after Sokal Keep is reported",
+			"where": "3:14 Kovel Mansion",
+			"offer": "A LARGE GROUP OF THIEVES OPERATES OUT OF THE OLD KOVEL MANSION. THE COUNCIL WILL PAY TO HAVE THEM CLEANED OUT.",
+			"start": [["shown 3:8 AB26"], ["4AB2 >= 254"]],
+			"steps": [],
+			"done": ["4AB2 >= 254"],
+			"reported": ["4AB2 == 255"],
+			"report": "THE COUNCIL WAS PLEASED BY THE ELIMINATION OF THE THIEVES IN KOVEL MANSION."
+		},
+		{
+			"id": "nomads",
+			"title": "The nomads",
+			"giver": "City Council",
+			"where": "7:17 the nomads' camp (the wilderness)",
+			"offer": "FIND THE NOMADS AND STOP THEM FROM JOINING FORCES WITH OUR ENEMIES.",
+			"start": [["shown 3:8 AB89"], ["4AB7 >= 254"]],
+			"steps": [],
+			"done": ["4AB7 >= 254"],
+			"reported": ["4AB7 == 255"],
+			"report": "WE WERE MUCH RELIEVED BY THE NEWS YOU BRING FROM THE NOMAD CAMP."
+		},
+		{
+			"id": "kobolds",
+			"title": "The kobold tribe",
+			"giver": "City Council",
+			"where": "8:13 the kobold caves",
+			"offer": "A LARGE TRIBE OF KOBOLDS IS BEING RECRUITED BY THE ENEMY.  MAKE SURE THEY DON'T JOIN THE ENEMY FORCES.",
+			"start": [["shown 3:8 ABCB"], ["4AB6 >= 254"]],
+			"steps": [],
+			"done": ["4AB6 >= 254"],
+			"done_text": "the kobold king dies in his own spiked pit (8:13 0xA502; differential check 14)",
+			"reported": ["4AB6 == 255"],
+			"report": "THIS LOSS OF THE KOBOLD FORCES WILL BE A MAJOR BLOW TO THE ENEMY."
+		},
+		{
+			"id": "river",
+			"title": "The river's pollution",
+			"giver": "City Council",
+			"where": "7:23 Yarash's pyramid",
+			"offer": "FIND THE SOURCE OF THE RIVER'S POLLUTION AND END IT.",
+			"start": [["shown 3:8 AC2C"], ["4AB3 >= 254"]],
+			"steps": [],
+			"done": ["4AB3 >= 254"],
+			"done_text": "the mage Yarash is beaten (7:23 0xAC53)",
+			"reported": ["4AB3 == 255"],
+			"report": "WITH THE CLEARING OF THE STOJONOW RIVER, WE CAN OPEN UP THE HINTERLANDS FOR TRADE."
+		},
+		{
+			"id": "lizardmen",
+			"title": "The lizardmen",
+			"giver": "City Council",
+			"where": "8:16 the ruined castle",
+			"offer": "A TRIBE OF LIZARDMEN IS PREPARING TO JOIN THE ENEMY.  PREVENT THIS.",
+			"start": [["shown 3:8 AC63"], ["4AB5 >= 254"]],
+			"steps": [],
+			"done": ["4AB5 >= 254"],
+			"done_text": "the old lizard man's cause is won (8:16 0xA362) or the castle is taken (0x9CCF)",
+			"reported": ["4AB5 == 255"],
+			"report": "YOUR ELIMINATION OF THE LIZARDMEN MENACE HAS GREATLY IMPROVED OUR STRATEGIC POSITION."
+		},
+		{
+			"id": "bivant",
+			"title": "Rescue the Bivant heir",
+			"giver": "City Council, after Sokal Keep is reported",
+			"where": "6:1 the buccaneers' base",
+			"offer": "THE HEIR TO THE HOUSE OF BIVANT MUST BE RESCUED.  WE WILL PAY GENEROUSLY FOR HIS SAFE RETURN.",
+			"start": [["4A8C == 255"]],
+			"steps": [
+				{"text": "The boy is rescued (the fort taken, the slave pen opened, or bought and taken out)", "when": ["4AA9 >= 254"]}
+			],
+			"done": ["4AA9 >= 254"],
+			"failed": ["4AA9 == 128"],
+			"failed_text": "the party ran from the last wave and the boy was left behind (6:1 0xA862); the clerk notes the bungling and the commission closes",
+			"reported": ["4AA9 == 255"],
+			"report": "BIVANT WAS DELIGHTED WITH THE CHILD'S RESCUE.  THEY LEFT SOME TRINKETS FOR YOU.",
+			"note": "4AA9 = 1 while the bought boy is with the party (6:1 0xAF3B), 254 once he is out. 4AA9 = 255 also follows a failure ('YOUR BUNGLING THE BIVANT RESCUE HAS COST US.', 0x9E88): a screen tells them apart only if it saw 128 first."
+		},
+		{
+			"id": "zhentil_message",
+			"title": "Cadorna's message to the Zhentil outpost",
+			"giver": "Lord Cadorna (City Hall, the south door), once his treasure commission is given",
+			"where": "6:28 the Zhentil outpost (west, across the wilderness band 6:25)",
+			"offer": "LORD CADORNA HAS A DELICATE DIPLOMATIC MISSION THAT REQUIRES YOUR PARTICULAR SKILLS.  YOU ARE SUMMONED TO HIS CHAMBERS. GO THROUGH THE SOUTH DOOR.",
+			"start": [["4A98 >= 254"]],
+			"steps": [
+				{"text": "Cadorna hands over the sealed packet ('DO NOT BREAK THE SEALS')", "when": ["4A98 == 255"]},
+				{"text": "Out of the outpost", "when": ["4AB4 >= 253"]},
+				{"text": "Back on the wilderness band, the mission done", "when": ["4AB4 >= 254"]}
+			],
+			"done": ["4AB4 >= 254"],
+			"reported": ["4AB4 == 255"],
+			"report": "WE WERE PLEASANTLY SURPRISED THAT YOU COMPLETED YOUR MISSION SO SWIFTLY.  CADORNA WAS WAGERING YOUR RETURN WOULD BE MUCH DELAYED.",
+			"note": "Inside the outpost 4AB4 = 1 after the commandant is killed (6:28 0xA2F4); leaving sets 253. Reporting the mission sets 4ABE = 254: Cadorna's treachery is known (next quest). If Cadorna is already exposed, the council gives its own version of the message instead (0xADA6: 4A98 = 255 at once)."
+		},
+		{
+			"id": "cadorna_traitor",
+			"title": "The traitor Cadorna",
+			"giver": "City Council",
+			"where": "Valjevo Castle (5:4 the north side, 5:3 the outer castle)",
+			"start": [["4ABE >= 254"]],
+			"steps": [
+				{"text": "Proof of Cadorna's treachery (the swift mission's report, the reports found in Valjevo, 5:4 0xADA6, or the commission list running out of offers, 3:8 0xAF45)", "when": ["4ABE >= 254"]},
+				{"text": "The council declares Cadorna a traitor: 'IF YOU FIND HIM, KILL HIM.'", "when": ["4ABE == 255"]},
+				{"text": "Cadorna is killed (5:3 0xB19A)", "when": ["4ABF >= 254"]}
+			],
+			"done": ["4ABF >= 254"],
+			"reported": ["4ABF == 255"],
+			"report": "THE COUNCIL HAS NOTED THE PASSING OF THE TRAITOR CADORNA."
+		},
+		{
+			"id": "graveyard",
+			"title": "End the graveyard menace",
+			"giver": "City Council (offered after four major successes, to a strong enough party)",
+			"where": "4:10 Valhingen graveyard",
+			"offer": "'I HAVE BEEN AUTHORIZED TO GIVE YOU AN ENCHANTED WEAPON IF YOU ACCEPT THE COMMISSION TO END THE GRAVEYARD MENACE.  DO YOU ACCEPT?'",
+			"start": [["4A96 == 255"], ["4AB1 >= 254"]],
+			"steps": [
+				{"text": "Commission accepted: the enchanted weapon given", "when": ["4A96 == 255"]},
+				{"text": "The vampire is destroyed", "when": ["4AB1 >= 254"]}
+			],
+			"done": ["4AB1 >= 254"],
+			"reported": ["4AB1 == 255"],
+			"report": "THE COUNCIL HAS VOTED A SPECIAL PRIZE FOR ENDING THE GRAVEYARD MENACE.",
+			"note": "Offered (0xA592) when the tally 4AC1 >= 4, PARTY_STRENGTH >= 19 and the menace is not ended. Undead killed in the graveyard before that are paid at each visit (0x9C58: 0x4A39-0x4A3F against 0x4A8F-0x4A95, the clerk's 'ELIMINATED SOME UNDEAD')."
+		},
+		{
+			"id": "norris",
+			"title": "Norris the Gray",
+			"giver": "City Council (a bonus, no commission)",
+			"where": "8:29 Kuto's Well",
+			"start": [["4AA6 >= 254"]],
+			"steps": [],
+			"done": ["4AA6 >= 254"],
+			"reported": ["4AA6 == 255"],
+			"report": "THE COUNCIL HAS AWARDED A BONUS FOR YOUR ELIMINATING NORRIS THE GRAY."
+		},
+		{
+			"id": "stojanow_gate",
+			"title": "Take Stojanow Gate",
+			"giver": "Lord Urslingen (City Hall, the south door of Cadorna's old quarters), once Cadorna is exposed",
+			"where": "2:9 Stojanow Gate",
+			"offer": "LORD URSLINGEN WISHES URGENTLY TO SPEAK WITH YOU.  GO THROUGH THE SOUTH DOOR OF THE TRAITOR CADORNA'S OLD QUARTERS.",
+			"start": [["4A99 >= 254"], ["4AB9 >= 254"]],
+			"steps": [
+				{"text": "Urslingen: 'A SMALL BAND MUST SLIP INSIDE AND HOLD UNTIL RELIEVED.'", "when": ["4A99 == 255"]},
+				{"text": "The gate is taken (2:9 0xA702)", "when": ["4AB9 >= 254"]}
+			],
+			"done": ["4AB9 >= 254"],
+			"reported": ["4AB9 == 255"],
+			"report": "YOUR TAKING THE GATE WILL ENABLE OUR FORCES TO ASSAULT THE ENEMY STRONGHOLD. RETURN THERE TO LEAD THE ATTACK."
+		},
+		{
+			"id": "valjevo",
+			"title": "Lead the attack on Valjevo Castle",
+			"giver": "The City Council in its chambers (a special meeting), once the gate is reported",
+			"where": "Valjevo Castle (5:3 to 5:7)",
+			"offer": "YOU ARE SUMMONED TO A SPECIAL COUNCIL MEETING.  YOU ARE TO BE AWARDED A VALUABLE COMMISSION. THE CITY GUARDS WILL SHOW YOU THE WAY.",
+			"start": [["4AB9 == 255"], ["4ABA >= 254"]],
+			"steps": [
+				{"text": "Tyranthraxus is defeated (5:7 0xA815)", "when": ["4ABA >= 254"]}
+			],
+			"done": ["4ABA >= 254"],
+			"reported": ["4ABA == 255"],
+			"report": "CONGRATULATIONS! YOUR QUEST IS OVER! TYRANTHRAXUS IS DEFEATED! PHLAN IS FREE!",
+			"note": "Known from the gate's report ('RETURN THERE TO LEAD THE ATTACK'), not from 4A9A: the special meeting's flag 4A9A is also written by 7:26 after Yarash's pyramid (0xAF2B 1, 0xAF3B 255, with 4AA2 = 255), so after the pyramid it reads 255 long before any meeting (c34d: from its pyramid checkpoint on) and City Hall skips the meeting's offer (0xAEA5). The original's scripts, not ours."
+		}
+	]
+}
