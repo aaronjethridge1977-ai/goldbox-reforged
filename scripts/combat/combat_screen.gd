@@ -84,6 +84,7 @@ var _messages := PackedStringArray()
 ## --play, --keys and --fast runs (the lab's --anim turns it on there), so the bot, the coverage
 ## runs and the lab's replays are unchanged.
 const MESSAGE_GAP := 0.2
+const TURN_START := 0.05
 var _panel_msgs := PackedStringArray()      # paced: the messages now on the right
 var _pending_msgs := PackedStringArray()    # paced: still to be shown
 var _row24_msg := ""
@@ -96,9 +97,9 @@ var _muted := false
 ## keeps the new cell in the 7x7 view (margin 3; GAME.OVR 0x12F0D: if it was off the view, the
 ## walker's own cell comes within 2 first), a step the player makes keeps it within 1; a
 ## hand-to-hand blow brings its target within 2 (0xB9F5: the cell beside the attacker toward it). Steps come
-## about 0.15 s apart; a monster's first ~0.17 s after its turn starts, a QUICK member's after its
-## menu has shown 0.4 s. "MOVE/ATTACK, MOVE LEFT = n" is on row 24 while a computer turn walks;
-## the actor's grey box goes once it acts.
+## about 0.15 s apart; a monster's or QUICK member's first TURN_START after its turn starts (Combat
+## Chat 12: the original's first step is in the frame after the panel's). "MOVE/ATTACK, MOVE
+## LEFT = n" is on row 24 while a computer turn walks; the actor's grey box goes once it acts.
 ## P16 step 4: blows and missiles (lab, filmed): the attacker shows its attack pose (icon block
 ## + 128) from the blow until its messages are done. A missile flies from the attacker's square to
 ## the target's in 8-pixel steps (a dart ~720 px/s, Magic Missile ~240), once a volley, before
@@ -122,8 +123,9 @@ var _sparkle := -1                 # the figure showing a spell's sparkles
 var _lingering: Array[int] = []
 var _skulls: Array[int] = []    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
-var _quick_menu := false
 var _move_label := ""
+var _turn_weapon_of := -1   # paced: the figure whose turn began, and its weapon line then
+var _turn_weapon := ""
 var _shown_by := {}      # paced: attackers whose blows were shown in this run of messages
 signal messages_shown
 static var _paced := -1
@@ -513,22 +515,18 @@ func _draw_original(field: Image) -> void:
 		g.text(23, 3, "HITPOINTS", GameScreen.GREEN)
 		g.text(33, 3, str(m.hp), GameScreen.YELLOW if m.hp < m.hp_max else GameScreen.GREEN)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
-		if m.weapon:
-			# The original builds the name from the item's words and its count (8 DARTS, then 5),
-			# not the record's cached name, and wraps it onto row 8 at a space (TWO-HANDED /
-			# SWORD) (main's cold-open capture, chat 38).
-			var wn := m.weapon.name
-			if CharacterSheet.game_path != "":
-				var names := ItemNames.shared(CharacterSheet.game_path)
-				if names.is_loaded():
-					wn = names.name_of(m.weapon)
-			wn = wn.to_upper()
-			var cut := wn.rfind(" ", 16) if wn.length() > 15 else -1
-			if cut > 0:
-				g.text(23, 7, wn.left(cut), GameScreen.GREEN)
-				g.text(23, 8, wn.substr(cut + 1).left(16), GameScreen.GREEN)
-			else:
-				g.text(23, 7, wn.left(16), GameScreen.GREEN)
+		var wn := _weapon_text(m)
+		if paced() and _turn_weapon_of == _selected and e.get("quick", false):
+			# A computer-run turn's panel is drawn once as the turn starts: the original keeps
+			# "5 DARTS" under a volley's lines and "2 DARTS" while the last two fly (main's
+			# cold-open capture, rounds 2 and 3).
+			wn = _turn_weapon
+		var cut := wn.left(16).rfind(" ") if wn.length() > 15 else -1
+		if cut > 0:
+			g.text(23, 7, wn.left(cut), GameScreen.GREEN)
+			g.text(23, 8, wn.substr(cut + 1).left(16), GameScreen.GREEN)
+		elif wn != "":
+			g.text(23, 7, wn.left(16), GameScreen.GREEN)
 	# The last action, as the original prints it from row 10: each name on its own line
 	# (party light cyan, monsters yellow), the rest green, 16 to a line.
 	var names := {}
@@ -542,6 +540,11 @@ func _draw_original(field: Image) -> void:
 		shown = [_messages[-1]]
 	for m_text in shown:
 		var rest := _message_pieces(String(m_text).to_upper())
+		# A fall under a blow's lines: a blank line before it and the falling figure's name in
+		# light red (main's cold-open capture of the original: "ORC" red over "GOES DOWN").
+		var falls := not lines.is_empty() and _falls_line(rest)
+		if falls:
+			lines.append(["", GameScreen.GREEN])
 		while rest != "":
 			var hit := ""
 			var at := rest.length()
@@ -557,7 +560,7 @@ func _draw_original(field: Image) -> void:
 							lines.append([w, GameScreen.GREEN])
 			if hit == "":
 				break
-			lines.append([hit.left(16), names[hit]])
+			lines.append([hit.left(16), GameScreen.RED if falls and at == 0 and lines[-1][0] == "" else names[hit]])
 			rest = rest.substr(at + hit.length()).strip_edges()
 	if _casting != "choose":
 		for i in mini(lines.size(), 12):
@@ -576,9 +579,10 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, "ABORT SPELL?", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_continue:
-		g.text(0, 24, "CONTINUE BATTLE:", GameScreen.WHITE)
-		g.menu_line(24, ["YES", "NO"], 17)
-	elif _combat != null and _result != 0:
+		# Magenta, YES straight after the colon (main's cold-open capture of the original).
+		g.text(0, 24, "CONTINUE BATTLE:", MAGENTA)
+		g.menu_line(24, ["YES", "NO"], 16)
+	elif _combat != null and _result != 0 and not (paced() and _event_fight and _result == 1):
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
 		# A spell's aim shows the spell on row 23, an attack's the range (lab, Combat Chat 4:
@@ -594,10 +598,7 @@ func _draw_original(field: Image) -> void:
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
 	elif paced() and _combat != null and _combat.active >= 0 and _combatants[_combat.active].get("quick", false):
-		if _quick_menu:
-			var items := _bottom_menu()
-			g.menu_line(24, items, 0, _lit(items))
-		elif _move_label != "":
+		if _move_label != "":
 			g.text(0, 24, _move_label, GameScreen.GREEN)
 	elif _combat != null and _cmode == "speed":
 		var prompt := "GAMESPEED (%d) :" % CampScreen.speed
@@ -912,8 +913,11 @@ func _effect_line(msg: String) -> bool:
 
 ## A message that goes under the last one instead of replacing it.
 func _continues(msg: String) -> bool:
-	if _panel_msgs.is_empty():
-		return false
+	return not _panel_msgs.is_empty() and _falls_line(msg)
+
+
+## A figure's fall (GOES DOWN, IS KILLED...).
+func _falls_line(msg: String) -> bool:
 	for w in ["GOES DOWN", "IS KILLED", "IS DYING", "FALLS DEAD", "IS DEAD FOREVER"]:
 		if msg.contains(w):
 			return true
@@ -1045,6 +1049,20 @@ func _on_message(text: String) -> void:
 	print(text)
 
 
+## The panel's weapon line: the original builds the name from the item's words and its count
+## (8 DARTS, then 5), not the record's cached name, and wraps it onto row 8 at a space
+## (TWO-HANDED / SWORD) (main's cold-open capture, chat 38).
+func _weapon_text(m: PartyMember) -> String:
+	if not m.weapon:
+		return ""
+	var wn := m.weapon.name
+	if CharacterSheet.game_path != "":
+		var names := ItemNames.shared(CharacterSheet.game_path)
+		if names.is_loaded():
+			wn = names.name_of(m.weapon)
+	return wn.to_upper()
+
+
 ## Moves on to whoever acts next; computer-controlled turns play out on a timer.
 func _advance() -> void:
 	if _dev_win_now:
@@ -1069,19 +1087,22 @@ func _advance() -> void:
 		_on_message(["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result])
 		_refresh()
 		if _event_fight and _result == 1:
-			# Straight on to the results (the original's "Continue Battle?" is skipped).
-			await get_tree().create_timer(1.0).timeout
+			# Straight on to the results (the original's "Continue Battle?" is skipped). Paced,
+			# as the original: no line on row 24, the results ~0.1 s after the last line or the
+			# NO (Combat Chat 12, main's cold-open capture).
+			await get_tree().create_timer(0.1 if paced() else 1.0).timeout
 			if visible and _event_fight and _result == 1:
 				_leave()
 		return
 	_selected = i
 	_cmode = "menu"
 	_aiming = false
+	_turn_weapon_of = i
+	_turn_weapon = _weapon_text(_combatants[i].who)
 	if paced():
 		_ensure_view(_combatants[i].cell, 2)
 		_box_off = false
 		_move_label = ""
-		_quick_menu = _combatants[i].get("quick", false) and _combatants[i].team == 0
 	else:
 		_centre_on_selected()
 	_refresh()
@@ -1098,15 +1119,12 @@ func _advance() -> void:
 	if _combatants[i].get("quick", false):
 		if not paced():
 			_ai_timer.start(0.35)
-		elif _quick_menu:
-			# The original shows a QUICK member's menu a moment before it acts.
-			await get_tree().create_timer(0.4).timeout
-			_quick_menu = false
-			if _combat != null and _combat.active == i:
-				_refresh()
-				_ai_timer.start(0.2)
 		else:
-			_ai_timer.start(0.17)
+			# A QUICK member acts as a monster does: no menu, its panel then at once its first
+			# step or blow (Combat Chat 12, main's cold-open capture, rounds 2-3: the panel ~0.03 s
+			# after the last line clears, the blow's line 0.2 s later; the round-1 menus there were
+			# the recorder's Q key, sent every 0.5 s).
+			_ai_timer.start(TURN_START)
 
 
 func _ai_step() -> void:
@@ -1145,7 +1163,8 @@ func _ai_step() -> void:
 	if more:
 		_ai_timer.start(0.15 if paced() else 0.3)
 	else:
-		await get_tree().create_timer(0.2).timeout
+		# The next figure's panel follows the last line's clearing at once (~0.03 s, a frame).
+		await get_tree().process_frame
 		if _combat != null:
 			_advance()
 
@@ -1868,8 +1887,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if _asking_continue:
-		if key == KEY_Y or key == KEY_N:
-			_asking_continue = false
+		if key == KEY_Y or key == KEY_N or key == KEY_ENTER or key == KEY_KP_ENTER:
+			_asking_continue = false   # Enter takes the lit NO
 			_combat.continue_battle(key == KEY_Y)
 			_advance()
 		get_viewport().set_input_as_handled()
