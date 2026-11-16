@@ -1,0 +1,9 @@
+# Player 8 (Lead's gate item: c33b's three new shortcut wins): 2:20 0,14, c33b's party. Start: c33b's bot (main lab
+# botproj_c33b) resumed from its kuto checkpoint in the Player lab (p8/p8bot.sh, a quick save at every walking key),
+# the one at 0,15 N before the step, in the original's format (p2/mkorig.sh): p2start/c33b_2-20_0-14. QUICK in the records.
+area 2:20
+rules ../../plans/playthrough.plan
+
+checkpoint entry           # 0,15 N
+step N                     # 0,14: the fight
+checkpoint after

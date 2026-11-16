@@ -1,0 +1,10 @@
+# Player 8 (Lead's gate item: c33b's three new shortcut wins): 5:4 9,1, c33b's party. Start: c33b's bot (main lab
+# botproj_c33b) resumed from its valjevo3 checkpoint in the Player lab (p8/p8bot.sh, a quick save at every walking key),
+# the one at 9,2 N before the step, in the original's format (p2/mkorig.sh): p2start/c33b_5-4_9-1. QUICK in the records.
+area 5:4
+rules ../../plans/playthrough.plan
+answer THE GIANTS LOOK UP AT YOU|FLEE   # as c33b's bot chose (ours: the fight follows)
+
+checkpoint entry           # 9,2 N
+step N                     # 9,1: the fight
+checkpoint after
