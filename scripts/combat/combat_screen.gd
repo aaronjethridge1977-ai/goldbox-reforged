@@ -514,7 +514,21 @@ func _draw_original(field: Image) -> void:
 		g.text(33, 3, str(m.hp), GameScreen.YELLOW if m.hp < m.hp_max else GameScreen.GREEN)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
 		if m.weapon:
-			g.text(23, 7, m.weapon.name.to_upper().left(16), GameScreen.GREEN)
+			# The original builds the name from the item's words and its count (8 DARTS, then 5),
+			# not the record's cached name, and wraps it onto row 8 at a space (TWO-HANDED /
+			# SWORD) (main's cold-open capture, chat 38).
+			var wn := m.weapon.name
+			if CharacterSheet.game_path != "":
+				var names := ItemNames.shared(CharacterSheet.game_path)
+				if names.is_loaded():
+					wn = names.name_of(m.weapon)
+			wn = wn.to_upper()
+			var cut := wn.rfind(" ", 16) if wn.length() > 15 else -1
+			if cut > 0:
+				g.text(23, 7, wn.left(cut), GameScreen.GREEN)
+				g.text(23, 8, wn.substr(cut + 1).left(16), GameScreen.GREEN)
+			else:
+				g.text(23, 7, wn.left(16), GameScreen.GREEN)
 	# The last action, as the original prints it from row 10: each name on its own line
 	# (party light cyan, monsters yellow), the rest green, 16 to a line.
 	var names := {}

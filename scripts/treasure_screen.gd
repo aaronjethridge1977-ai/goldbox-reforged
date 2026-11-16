@@ -120,10 +120,12 @@ func _draw_mode() -> void:
 	match _mode:
 		"results":
 			_page_frame()
-			_scr.text(1, 3, _won_text, GameScreen.WHITE)
-			_scr.text(1, 5, "EACH CHARACTER RECEIVES %d" % _share_xp, GameScreen.WHITE)
-			_scr.text(1, 6, "EXPERIENCE POINTS.", GameScreen.WHITE)
-			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.GREEN)
+			# The original (main's cold-open capture, chat 38): green, a blank row between the
+			# lines; PRESS <ENTER> white.
+			_scr.text(1, 3, _won_text, GameScreen.GREEN)
+			_scr.text(1, 5, "EACH CHARACTER RECEIVES %d" % _share_xp, GameScreen.GREEN)
+			_scr.text(1, 7, "EXPERIENCE POINTS.", GameScreen.GREEN)
+			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.WHITE)
 			_scr.update()
 		"menu":
 			_walk(_menu(), PackedStringArray())
