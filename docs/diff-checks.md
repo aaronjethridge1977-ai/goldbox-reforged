@@ -174,7 +174,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 40: check 21 (3:11 the dueling room), DIFFCHECKS 21/21
 
-The standing list (Q6, item 1). Areas no check visits now: 5:3, 5:4, 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27.
+The standing list (Q6, item 1). Areas no check visits now: 5:3, 5:4, 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27 (6:25, 7:26 and 8:27 are wilderness: their events sit on the overland's coordinate tables, e.g. 6:25 0xADD6 / 0xADDE; 6:25's outpost approach writes 0x4AB4 253 -> 254 with no menu when 0x4A98 = 255).
 
 - **Check 21, 3:11 (the Training Schools; the school shares New Phlan's map, its squares 5-9 by 0-2, with its own
   script):** the dueling room (event 14 at 7,2): "THE ROOM IS FILLED WITH DUELING PAIRS." (0x4A05 = 1), Enter, the
@@ -189,6 +189,13 @@ The standing list (Q6, item 1). Areas no check visits now: 5:3, 5:4, 5:5, 5:6, 6
 - **Deliberate-break test repeated** (the check list changed; a scratch copy in /tmp, removed): SUBTRACT off by one
   **caught** (checks 4, 18, 20 and now 21, `17/21`, exit 1); ADD off by one over 200 **caught** (check 18, `20/21`,
   exit 1).
+- **Tried and set aside: 5:3 (Valjevo's outer castle), the loose stone** (event 5 at 0,2, entered from 1,2 W with
+  SEARCH on: "UNDER A LOOSE STONE YOU FIND SOME TREASURE. DO YOU TAKE IT?" YES: 0x4A65 bit 8, a treasure find of
+  200 gold, no monsters; event 5 found through the table at 0x9B99 (event -> index) and the ON_GOTO at 0x9B5D).
+  Ours plays it from `mksave.py J G 5 3 1 2 W` (keys `load=G,wait,tpseed=11111111,Up,wait,S,wait,Up,wait,Y,wait,
+  wait,Enter,wait,wait,E,wait,N,wait,wait,F2`), but **the original drops to DOS on the jump's first step** (the
+  same as chat 35's jump into 1:24's map 31). A start needs the original's own save in 5:3 (walked in, or a jump to
+  a square of 5:3's that loads, then ENCAMP SAVE there). Lab `data/c35/chk22/` (not installed).
 - The same session's display fix (Rule changes, chat 40: a script's SPRITE_ADVANCE to distance 0 shows the
   encounter's picture; cleared after a fight) changed no check: 20/20 before check 21 was added.
 
