@@ -1,0 +1,29 @@
+# Player 12: c34d segment 2, shopped -> slums (main's playthrough.plan: travel 2:20, explore 9 12 16), first pass:
+# the bot's event order from c34d's log (data/full_c34d.log), walks crossing every event but the bot's deferred
+# ones (9 12 13 15 16 20); fights QUICK, TAKE by main's bot's rule, locks PICK then BASH, LEAVE rather than ATTACK.
+area 3:0
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer ATTACK|LEAVE
+answer ATTACK|TALK
+answer SLY|NICE
+walk 0,4 through 25
+step W
+area 2:20
+walk 9,0 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 5,3 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 5,2 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 3,5 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 1,7 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 1,5 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 6,10 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 6,11 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 1,0 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 3,1 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 0,2 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 7,0 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 11,0 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21
+walk 11,9 through 1,2,3,4,5,6,7,8,10,11,14,17,18,19,21

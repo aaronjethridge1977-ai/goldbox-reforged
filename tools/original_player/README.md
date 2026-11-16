@@ -595,3 +595,52 @@ script dice after it; then:
   keys: a TAKE check item for item waits for that.
 
 Lab: `p11/` (film.sh, moncap.py, logtty.py with an offset, termvid.py, takecmp.py, ac.plan, oshot/), logs `p11*`.
+
+## Player 12 (2026-11-16): Pool's full run, shape (c)/(a): segment 1 matches; segment 2 blocked by the heal gap
+
+The Lead (design office) chose **(c), starting with (a)**: segments between c34d's checkpoints, the original playing
+main's plan from each checkpoint (written in the original's format, `p2/mkorig.sh`) to the next, end states compared.
+
+**New plan lines** (plans.py; all three are main's bot's own actions turned into keys):
+- `buy <m> <item> | ...` (main's `shop` list without the door; one line per visit): the shop's list is the loot
+  pointer DS:0x6810 (arms and armour: 57 items), the buyer DS:0x5D92 (End / Home on BUY VIEW POOL); on the list
+  End / Home move the light, NEXT / PREV page. **POOL before every purchase** (ours' bot does); at the end the pool's
+  coins are TAKEn back by the last buyer (SELECT TYPE OF COIN, the amount typed), as ours' POOL leaves them.
+- `readyall` (main's bot's `_ready_all` after a shop): each member VIEW, ITEMS, READY every item showing NO, one try.
+- `memorize <NAME> <spell>, ... | ...` (main's bot's `_pick_spells` at the inn): at the next camp, MAGIC, MEMORIZE,
+  each spell lit and M, EXIT, YES; then REST for the time the original offers, EXIT.
+
+**Segment 1, start -> shopped** (`plans/p12_c34d_01_shopped.plan`, run p12a6; lab `p12/cpdiff.sh` = main's
+statediff.gd between ours' checkpoint and the original's): **one difference: the clock, 06:04 against ours' 06:00**
+(the Player's own route reaches the inn at 01:04; both rest the 5:00 the memorizing needs). Items, readied flags
+(LIRA's Short Bow stays NO in both), coins (DORN 3 gp 8 pp in both), HP and every script flag agree.
+
+Found on the way:
+- **ours' save writer leaves a 0-byte `CHRDAT<x><n>.ITM` (and .SPC) for a member with none; the original loads a
+  0-byte .ITM as one garbage readied item** ("YES 254 PASSS"; the sheet then shows THAC0 148, ENCUMBRANCE 60420, DAMAGE
+  0D0-128, and purchases are refused: overloaded). The original's own saves leave such files out (shipped save A).
+  Lab workaround: `mkorig.sh` deletes 0-byte CHRDAT files. To main (Requests).
+- **The shop's POOL differs**: ours hands every member's coins to the buyer; the original keeps them in the shop's
+  pool (the menu then reads BUY VIEW TAKE POOL SHARE APPRAISE EXIT; leaving with coins in it asks "YOU HAVE LEFT SOME
+  MONEY HERE. DO YOU WANT TO GO BACK AND GET YOUR MONEY"). To Combat (screens).
+- The original lists memorized spells sorted (BLESS, CURE LIGHT WOUNDS, CURE LIGHT WOUNDS); ours keeps the bot's
+  order ([3, 3, 1]). Not compared by statediff; noted only.
+- New Phlan's inn (event 9) does nothing while ECL 0x4A07 = 1 (set by paying, cleared by a plain square's event):
+  a second inn visit needs a step off and back.
+
+**Segment 2, shopped -> slums** (`plans/p12_c34d_02_slums_a.plan`, run p12b1, traced): main's `explore` is the bot's
+own code (event order by odds, rests and Cure Light Wounds in camp, inn trips, trades), not keys, and ours' bot draws
+Godot's dice, not the original's, so the two runs part at the first fight; an end state can only agree on flags.
+**Lane decision:** the original follows the bot's event order taken from c34d's log (lab `p12/botorder.py <from> <to>`),
+with the Player's own fight (QUICK), TAKE and heal rules; ours then replays the original's keys from the same checkpoint
+and seed (segment.py, draw for draw and statediff), and the flags are checked against ours' next checkpoint.
+First pass: 3 fights won (event 2's goblins at 10,1, 8,2, 3,4), then **stopped: no route 1,7 -> 1,5** (event 14 is
+reached only across a square of an event the walk excludes); the party was down to ARN 8/14, BRAM 9/14, CEDRIC 4/10,
+ELWEN 5/9, LIRA 2/9, DORN 7/10. **Gaps before segment 2 can run:** (1) a heal step (camp MAGIC CAST Cure Light Wounds on
+the lowest, then REST to memorize again, as the bot's `_heal`; the inn when spells are out); (2) the walks' crossing
+rules as the bot's tour (which events it may cross); (3) segment.py keeping camp keys (MAGIC/MEMORIZE/REST/CAST change
+state) so ours replays them. Segment 1 can't be replayed in ours for the same reason (3).
+
+Lab: `p12/` (seg01.plan, seg02a.plan, cpdiff.sh, cfgparty.py: ours' checkpoint's members, botorder.py, lit.py,
+find.py, scr.py: probes), saves `p2start/c34d_start`, `c34d_start_noitm`, `c34d_shopped`, runs `p12a6` (segment 1),
+`p12b1` (segment 2's first pass), logs `p12*`.

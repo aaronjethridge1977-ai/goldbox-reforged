@@ -18,7 +18,17 @@
                                  New Phlan's training halls)
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
                                  <words> gets <choice> (an item's name, or a member's name)
+  memorize <NAME> <spell>, <spell> | <NAME> ...
+                                 (Player 12) the next camp's (the inn's) MAGIC MEMORIZE per member, then REST for the
+                                 time the original offers, then EXIT the camp (main's bot at the inn)
+  readyall                       (Player 12) main's bot's readying after a shop: every member's items READY (VIEW, ITEMS)
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
+  buy <m> <item> | <m> <item> ...
+                                 (Player 12) the next shop visit's purchases, main's `shop` list without the door:
+                                 member <m> (0 = the first) buys the item whose name on the list starts so (End /
+                                 Home on BUY VIEW POOL select the buyer, DS:0x5D92; on the list they move the light,
+                                 NEXT / PREV page); POOL before each purchase (main's bot does); EXIT when the visit's
+                                 list is done. Each `buy` line is one visit.
 """
 import os, re, sys
 import orig
@@ -133,6 +143,32 @@ class Keys:
         return False, k, "keys %s: key 1" % self.name
 
 
+class ReadyAll:
+    """Player 12: `readyall` on the walking screen: main's bot's _ready_all after a shop: each member in turn (End /
+    Home select, DS:0x5D92), VIEW, ITEMS, READY every item showing NO (one try each; the original's refusals stay
+    NO), EXIT twice. The item screens are answered in Plan.answer (p.readying)."""
+    def __init__(self):
+        self.j = 0
+
+    def __repr__(self):
+        return "readyall"
+
+    def next(self, p):
+        P = loot.party(p.g.mem)
+        if getattr(p, "readying", None) is not None:
+            if not p.ready_over:
+                raise_stop(p, "readyall: back on the walking screen with member %d not done" % (self.j + 1))
+            p.readying = None
+            self.j += 1
+        if self.j >= len(P):
+            return True, None, ""
+        sel = loot.selected(p.g.mem)
+        if sel != self.j:
+            return False, ("end" if sel is None or self.j > sel else "home"), "readyall: select %s" % P[self.j][1]
+        p.readying, p.ready_tried, p.ready_over = self.j, set(), False
+        return False, "v", "readyall: VIEW %s" % P[self.j][1]
+
+
 class Exit:
     def __init__(self, area):
         self.area = area
@@ -183,6 +219,8 @@ class Plan:
         self.goals = []
         self.answers = []        # (words, choice, source)
         self.aliases = set()     # Player 3: `alias` areas
+        self.buys = []           # Player 12: one list of (member, name) per shop visit
+        self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
         self.defaults = {"enter": "enter", "combat": "q", "encounter": "c", "continue": "n",
                          "treasure": "e"}
 
@@ -219,8 +257,58 @@ class Plan:
             k, why = self._seq(scr, st, p)
             if k:
                 return k, why
+        if getattr(p, "saving", None) is None and self.memos and getattr(p, "memo_visit", 0) < len(self.memos):
+            k = self._memorize(scr, st, p)
+            if k:
+                return k
         if kind == "camp" or kind == "saveslot":
             return p.save_step(scr)
+        if getattr(p, "readying", None) is not None:
+            bw = scr["bottom"].split()
+            if bw[:1] == ["VIEW:ITEMS"] or (bw[:1] and bw[0].startswith("VIEW:")):
+                if p.ready_over or "VIEW:ITEMS" not in bw:
+                    p.ready_over = True
+                    return "e", "readyall: EXIT the sheet"
+                return "i", "readyall: ITEMS"
+            if bw[:1] == ["READY"] and "EXIT" in bw and "VIEW:ITEMS" not in bw:
+                rows = {}
+                for r in range(5, 23):
+                    m = re.match(r"(YES|NO)\s+(.*)", st["rows"][r].strip("?\\ "))
+                    if m:
+                        rows[r] = (m.group(1), m.group(2).strip())
+                lit = [r for r in rows if screens._rowcol(st["im"], r) == screens.WHITE]
+                todo = [r for r, (y, n) in rows.items() if y == "NO" and r not in p.ready_tried]
+                if not todo:
+                    p.ready_over = True
+                    for r, (y, n) in sorted(rows.items()):
+                        p.note("ready", "%s: %s %s" % (loot.party(p.g.mem)[p.readying][1], y, n))
+                    return "e", "readyall: done, EXIT the list"
+                if len(lit) != 1:
+                    raise_stop(p, "readyall: no single lit item (rows %s)" % lit)
+                if lit[0] == todo[0]:
+                    p.ready_tried.add(todo[0])
+                    return "r", "readyall: READY %s" % rows[todo[0]][1]
+                return ("end" if todo[0] > lit[0] else "home"), "readyall: light to %s" % rows[todo[0]][1]
+        if self.buys and getattr(p, "buy_visit", 0) < len(self.buys):
+            bw = scr["bottom"].split()
+            if kind == "yesno" and "SHOW YOU OUR WARES" in scr.get("text", ""):
+                return "y", "shop: YES (purchases planned)"
+            if kind == "hmenu" and (bw[:2] == ["BUY", "VIEW"] or bw[:2] == ["ITEMS:", "BUY"]):
+                return self._buy(scr, st, p)
+            # The pool's coins back to the last buyer (ours' POOL gives every coin to the buyer): TAKE, each coin
+            # type in turn, its whole amount typed.
+            if " ".join(bw[:4]) == "SELECT TYPE OF COIN":
+                m = re.match(r"\s*([A-Z]+)\s+(\d+)", st["rows"][2].strip("?\\ "))
+                if not m:
+                    return "e", "shop: pool empty"
+                p.coin_amt = m.group(2)
+                return "enter", "shop: TAKE %s %s" % (m.group(2), m.group(1))
+            if bw[:2] == ["HOW", "MUCH"]:
+                typed = st["bottom"].split("?", 1)[1].strip() if "?" in st["bottom"] else ""
+                amt = getattr(p, "coin_amt", "")
+                if typed == amt:
+                    return "enter", "shop: amount typed"
+                return amt[len(typed)], "shop: amount %s" % amt
         taking = self.defaults.get("treasure") == "take"
         if taking and kind == "hmenu" and scr["bottom"].split()[0] in ("TAKE:", "ITEMS:"):
             return self._take(scr, st, p)
@@ -330,6 +418,139 @@ class Plan:
             return "t", "take: %s (%d gp, weight %d) for member %d" % (it["name"], it["price"], it["weight"], j + 1)
         return ("end" if i > hl else "home"), "take: light to %s (row %d)" % (it["name"], i + 4)
 
+    # -- Player 12: BUY (`buy` lines; the shop's list is the loot pointer DS:0x6810, the buyer DS:0x5D92) ----
+    def _buy(self, scr, st, p):
+        mem = p.g.mem
+        if not hasattr(p, "buy_visit"):
+            p.buy_visit, p.buy_pending, p.buy_pages, p.buy_dir = 0, None, 0, "n"
+        left = self.buys[p.buy_visit]
+        menu = scr["bottom"].split()[0]
+        P = loot.party(mem)
+        if p.buy_pending:
+            j, n, name = p.buy_pending
+            p.buy_pending = None
+            if P[j][2] > n:
+                left.pop(0)
+                p.buy_pages, p.buy_dir = 0, "n"
+                p.note("buy", "%s bought %s" % (P[j][1], name))
+            else:
+                raise_stop(p, "buy: %s not bought by %s (no gold, or a full or overloaded pack)" % (name, P[j][1]))
+        if not left:
+            if menu == "ITEMS:":
+                return "e", "buy: the visit's list done, back to the menu"
+            if "TAKE" in scr["bottom"].split():
+                sel = loot.selected(mem)
+                return "t", "buy: TAKE the pool's coins (%s)" % (P[sel][1] if sel is not None else "?")
+            p.buy_visit += 1
+            return "e", "buy: visit %d done, EXIT the shop" % p.buy_visit
+        j, name = left[0]
+        sel = loot.selected(mem)
+        if menu == "BUY":
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "buy: select %s for %s" % (P[j][1], name)
+            if not getattr(p, "buy_pooled", False):
+                p.buy_pooled = True      # main's bot: shop._pool() before every purchase
+                return "p", "buy: POOL (main's bot pools before each purchase)"
+            p.buy_pooled = False
+            return "b", "buy: BUY (%s for %s)" % (name, P[j][1])
+        if sel != j:
+            return "e", "buy: back to select %s" % P[j][1]
+        want = name.upper()
+        rows = {r: st["rows"][r].strip("?\\ ") for r in range(4, 23)}
+        hit = [r for r, t in rows.items() if t.startswith(want)]
+        lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
+        if hit:
+            if len(lit) != 1:
+                raise_stop(p, "buy: no single lit item on the shop's list (rows %s)" % lit)
+            if lit[0] == hit[0]:
+                p.buy_pending = (j, P[j][2], name)
+                return "b", "buy: %s for %s" % (rows[hit[0]], P[j][1])
+            return ("end" if hit[0] > lit[0] else "home"), "buy: light to %s (row %d)" % (name, hit[0])
+        bw = scr["bottom"].split()
+        p.buy_pages = getattr(p, "buy_pages", 0) + 1
+        if p.buy_pages > 12:
+            raise_stop(p, "buy: %s not on the shop's list" % name)
+        d = getattr(p, "buy_dir", "n")
+        if d == "n" and "NEXT" not in bw:
+            d = "p"
+        elif d == "p" and "PREV" not in bw:
+            d = "n"
+        p.buy_dir = d
+        return d, "buy: page for %s" % name
+
+    # -- Player 12: MEMORIZE and REST in camp (`memorize` lines: main's bot's _pick_spells at the inn) ------------
+    def _memorize(self, scr, st, p):
+        if not hasattr(p, "memo_visit"):
+            p.memo_visit, p.memo_done_cur, p.memo_rested, p.memo_pages, p.memo_dir = 0, False, False, 0, "n"
+        left = self.memos[p.memo_visit]
+        bw = scr["bottom"].split()
+        P = loot.party(p.g.mem)
+        sel = loot.selected(p.g.mem)
+        names = [m[1] for m in P]
+        for i, (who, sp) in enumerate(left):
+            if isinstance(who, str):
+                if who not in names:
+                    raise_stop(p, "memorize: no member %s" % who)
+                left[i] = (names.index(who), sp)
+        if bw[:1] == ["CAMP:"]:
+            if left:
+                j = left[0][0]
+                if sel != j:
+                    return ("end" if sel is None or j > sel else "home"), "memorize: select %s" % P[j][1]
+                return "m", "memorize: MAGIC (%s)" % P[j][1]
+            if not p.memo_rested:
+                p.memo_rested = True
+                return "r", "memorize: REST"
+            p.memo_visit += 1
+            p.memo_rested = False
+            return "e", "memorize: done, leave camp"
+        if bw[:2] == ["CAST", "MEMORIZE"]:
+            if p.memo_done_cur or not left:
+                p.memo_done_cur = False
+                return "e", "memorize: EXIT MAGIC"
+            return "m", "memorize: MEMORIZE (%s)" % P[left[0][0]][1]
+        if bw == ["EXIT"] and "TO BE MEMORIZED" in st["rows"][1]:
+            return "e", "memorize: the list to be memorized shown, EXIT"
+        if scr["kind"] == "yesno" and "MEMORIZE THESE SPELLS" in scr["bottom"]:
+            left.pop(0)
+            p.memo_done_cur = True
+            return "y", "memorize: YES"
+        if bw[:2] == ["CHOOSE", "SPELL:"]:
+            spells = left[0][1] if left else []
+            if not spells:
+                return "e", "memorize: the member's list done, EXIT"
+            want = spells[0].upper()
+            rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+            hit = [r for r, t in rows.items() if t == want]
+            lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+            if hit:
+                if len(lit) != 1:
+                    raise_stop(p, "memorize: no single lit spell (rows %s)" % lit)
+                if lit[0] == hit[0]:
+                    spells.pop(0)
+                    p.memo_pages, p.memo_dir = 0, "n"
+                    p.note("memorize", "%s: %s" % (P[left[0][0]][1], want))
+                    return "m", "memorize: %s" % want
+                return ("end" if hit[0] > lit[0] else "home"), "memorize: light to %s" % want
+            p.memo_pages += 1
+            if p.memo_pages > 8:
+                raise_stop(p, "memorize: %s not in %s's book" % (want, P[left[0][0]][1]))
+            d = p.memo_dir
+            if d == "n" and "NEXT" not in bw:
+                d = "p"
+            elif d == "p" and "PREV" not in bw:
+                d = "n"
+            p.memo_dir = d
+            return d, "memorize: page for %s" % want
+        if bw[:1] == ["REST"] and "DAYS" in bw:
+            if not getattr(p, "memo_rest_sent", False):
+                p.memo_rest_sent = True
+                p.note("rest", "rest at the inn: %s" % st["rows"][17].strip("?\\ "))
+                return "r", "memorize: REST for the time offered"
+            p.memo_rest_sent = False
+            return "e", "memorize: rest over, EXIT"
+        return None
+
     def choose(self, scr, choice):
         kind = scr["kind"]
         if kind == "vmenu":
@@ -379,11 +600,21 @@ def load(path):
         elif cmd == "keys":
             name, ks = rest.split(None, 1)
             pl.goals.append(Keys(name, ks.replace(" ", "").split(",")))
+        elif cmd == "memorize":
+            pl.memos.append([])
+            for b in rest.split("|"):
+                if b.strip():
+                    who, sp = b.strip().split(None, 1)
+                    pl.memos[-1].append((who, [x.strip() for x in sp.split(",") if x.strip()]))
+        elif cmd == "readyall":
+            pl.goals.append(ReadyAll())
         elif cmd == "exit":
             pl.goals.append(Exit(area_of(rest)))
         elif cmd == "answer":
             words, choice = rest.rsplit("|", 1)
             pl.answers.append((words.strip(), choice.strip(), os.path.basename(path)))
+        elif cmd == "buy":
+            pl.buys.append([(int(b.split(None, 1)[0]), b.split(None, 1)[1].strip()) for b in rest.split("|") if b.strip()])
         elif cmd == "default":
             k, key = rest.split()
             pl.defaults[k] = key
