@@ -173,6 +173,13 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 32:** a run can be resumed from another run's checkpoint: copy its user folder's `bot_*.cfg/.json` (e.g.
+`data/c32/cp_c31a/`) and pass `--resume=<file>:<checkpoint name>` to `bot.sh` (plan lines after that checkpoint).
+For a short test plan, copy the repo to `data/c32/src` (scripts, scenes, tools, project.godot, icon.svg), cut
+`playthrough.plan` after the checkpoint and add lines, and run with `BOT_SRC=$PWD/data/c32/src`. Never reuse a
+running job's `BOT_ID` (bot.sh deletes its project). A wait loop with `pgrep -f <pattern>` matches its own shell:
+wait on a pid with `kill -0`.
+
 **Chat 31:** `--seed=<n>` seeds every generator of ours (the script's dice too), and the gate's `diffcheck.sh` runs
 ours with `--seed=1` (check 4's 1-in-5 failure was an unseeded script draw). `data/c31/one4.sh <src> <out>` plays check
 4 alone keeping its log (`EXTRA=--seed=<n>`); `data/c31/ten.sh <src>` runs ten full diffchecks two at a time. In the

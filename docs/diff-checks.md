@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 32: c31a's stop and shortcuts explained (the bot), the acceptance run's second try
+
+- **5:4's chain of patrols (c31a's stop; c29b had the same chain and was luckier): the bot, not our rules.** Every
+  Valjevo area (5:3-5:6 on rest, e.g. 5:4 0x9B32) gives a rest interruption check **every 5-minute step at 17%**
+  while the alarm cell **0x4A64** is set (else none). The alarm is set by the scribes' officers at 5:4 14,12
+  (0xABCB, at their menu, so on the first visit), a fled fight (0x9B83), and others; **only a step** clears it
+  (0x995D: once the clock passes the alarm's hour and minute, 0x4A64/0x4A63; resting never clears it). The
+  interruption is a giant patrol (0x9BD1: [75 x1, 55 x5]). The bot healed by camping in 5:4 after every fight,
+  so patrol followed patrol until a wipe. The original runs the same script with the same dice (Player 5: ours
+  interrupts at the original's minute), so a player camping there would meet the same. Fix (bot only): the plan's
+  new `rest <area> inn-while 4A64 1` for 5:3-5:6 (the inn while the alarm is up, else camp), and memorized cures
+  are cast before an inn trip. From c31a's `valjevo3` checkpoint (`data/c32/v1.log`): **5:4 with no shortcut**
+  (two member deaths reloaded), 5:5, 5:6 through; 5:7's guards [85 x12] and Tyranthraxus [66 x1] still by
+  shortcut, as in c29b (the gate's "Tyranthraxus alone" item, the Player's rerun).
+- **The teleport 3:0 -> 2:9 and "summoned to City Hall but not inside": the bot, not a commit.** The training trip
+  started inside 2:9's `explore 3 4 5 6 7 8 9 12 13`, and `main.avoid_events` (explore's events walked round, global
+  since the pyramid, eff2a26) blocked those event numbers **in every area**: New Phlan's dock at 3:0 15,1 (where the
+  boat lands) is closed in by squares with events 2, 3 and 6, so "no route from (15, 1)", no clerk, no inn, and the
+  trip back teleported. c29b never trained during such an explore. Reproduced from c31a's `stojanow` checkpoint
+  (`data/c32/t3.log`; also 2:9 -> 1:18 bounced through 5:6 and teleported), fixed in `t5.log`: avoided events hold
+  only in their own area (`main.avoid_area`), and on a trip (`_travel`) the walk goes through them when there's no
+  way round.
+- **6:1 7,0's stalemate (round 54): the dice on this party, not systematic.** From c31a's `heir` checkpoint (the
+  same party, just before the gate fight), 7 runs on other dice all win the fight [100 x4, 99 x30] in 3-18 rounds
+  (`data/c32/b2-b8.log`). c31a's stalemate left two buccaneers, one fleeing every round without getting away, one
+  guarding, while the QUICK party guarded for 50 rounds. Whether the original's QUICK party also guards there is
+  Combat's question (board request); the bot's stalemate now prints every standing figure's square.
+- **2:15 5,4 [26 x1] and 8:13 4,3** (c31a): earlier in the run, not looked at in this chat; see the second try.
+
 ## Chat 31: check 4's flake, the finale's vote, the poison cure
 
 - **Check 4 failed about 1 run in 5** (THRENDER GRONE coins 4: original 0, ours 2): not load or timing. 2:9 7,11 rolls
