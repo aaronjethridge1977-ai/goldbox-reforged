@@ -172,6 +172,26 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 40: check 21 (3:11 the dueling room), DIFFCHECKS 21/21
+
+The standing list (Q6, item 1). Areas no check visits now: 5:3, 5:4, 5:5, 5:6, 6:1, 6:25, 7:22, 7:26, 8:27.
+
+- **Check 21, 3:11 (the Training Schools; the school shares New Phlan's map, its squares 5-9 by 0-2, with its own
+  script):** the dueling room (event 14 at 7,2): "THE ROOM IS FILLED WITH DUELING PAIRS." (0x4A05 = 1), Enter, the
+  arena master's figure walks up (three DELAYs and SPRITE_ADVANCEs), DUEL? NO (0x4A01 = 1), "DO YOU SEEK A PARTNER
+  FOR YOUR ADVENTURING?" NO (0x4A08 = 1). On the way the notices at 6,2 (event 10, 0x4A00 + 1). No fight, no dice on
+  the path (the seed set anyway, as 20). Start `mksave.py J G 3 11 5 2 E` (one real step before the notices). Keys,
+  both games: Up (the jump), Up, Up, Enter, N, N; ours
+  `load=G,wait,tpseed=11111111,Up,wait,Up,wait,Up,wait,Enter,wait,N,wait,N,wait,wait,F2`. **MATCH**, 0 differences.
+  `~/gbr/checks/data/21` (lab `data/c35/chk21/`, made with `SEED=11111111 mkcheck35.sh 21 3-11 ...`). The original
+  took the first Up only after a 2 s wait from the boot (the first take ended at 6,2: one Up lost, not a game
+  difference); its keys now start `wait=2`. `diffcheck.sh` runs 21: **DIFFCHECKS 21/21, ~34 s**.
+- **Deliberate-break test repeated** (the check list changed; a scratch copy in /tmp, removed): SUBTRACT off by one
+  **caught** (checks 4, 18, 20 and now 21, `17/21`, exit 1); ADD off by one over 200 **caught** (check 18, `20/21`,
+  exit 1).
+- The same session's display fix (Rule changes, chat 40: a script's SPRITE_ADVANCE to distance 0 shows the
+  encounter's picture; cleared after a fight) changed no check: 20/20 before check 21 was added.
+
 ## Chat 39: checks 19 and 20 (8:29 the nailed door and the woman; 3:0 the harbour master), DIFFCHECKS 20/20
 
 The standing list (Q6, item 1): the next checks go to the areas none of the eighteen visits (3:0, 3:11, 5:3-5:6, 6:1,

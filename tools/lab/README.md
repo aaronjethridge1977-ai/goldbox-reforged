@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 40:** showcase item 5 (main's lab only, in `lab40.tar.gz`): `shot40.sh <out.mkv> <secs> "<keys>" <log>`
+(coldours39.sh without the draw log; each take gets a scratch copy of `qs.cfg`: an F2 in a take used to write the
+lab's own) and `ui40.sh <out.mkv> <secs> <log> <steps...>` (ours from the title, no `--keys`, or `KEYS="..."` for a
+replay start padded with `wait`s since the replay quits when its keys run out; `PRE="..."` steps run before filming,
+e.g. past the original's title screens; a scratch HOME, `SETTINGS="[qol]\n..."` seeds its settings) driven by
+`c40/uisteps.py` (XTest: key names, `wait=`, `move=x,y`, `glide=x,y`, `click`, `rclick`, `wheelup/down`, `grab=`)
+and filmed by `moncap40.py` (moncap.py plus `MONCAP_POINTER=1`: draws an arrow where X has the pointer; ImageGrab
+grabs none). `c40/townwalk.py` / `c40/walkfit.sh` route a walk round New Phlan avoiding event squares (`route.py`
+with 3:0's tables) and run it headless to see where it stops. `coldorig40.sh <save> <seed> <out> <secs> <log>
+"<keys before the seed>" "<keys after>"` films any fight in the original (KW= the wait after each key). Check 21:
+`SEED=11111111 mkcheck35.sh 21 3-11 "wait=2 up wait=3 ..."` (the original takes the first Up only after ~2 s).
+3:11 has no GEO block of its own: it is New Phlan's map (`area=3:11,find=<event>` lists its squares).
+
 **Chat 39:** the cold-open pair re-shot on the monotonic clock: `coldorig39.sh` / `coldours39.sh` (same arguments as
 the chat 38 scripts) film with `moncap.py`, a copy of Player 11's `p11/moncap.py` (frame k grabbed at start + k/30 s
 on CLOCK_MONOTONIC, a late grab repeats the frame for the missed slot; its count of frames and repeats goes to
