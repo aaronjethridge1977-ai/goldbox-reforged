@@ -1533,19 +1533,8 @@ func load_original_save(letter: String) -> bool:
 		_open_starting_party_menu()
 		_status.text = "Loaded saved game %s." % letter.to_upper()
 		return true
-	# The area is the block whose script the saved image matches best (the image holds the
-	# script's tables as they stood, so a few bytes differ).
-	var block_id := -1
-	var best := 0
-	for id in ecl.ids():
-		var code := EclScript.decode(ecl.blocks[id]).code
-		var same := 0
-		for i in mini(code.size(), 512):
-			if s[0x1401 + i] == code[i]:
-				same += 1
-		if code.size() > 64 and same > best and same * 4 > mini(code.size(), 512) * 3:
-			best = same
-			block_id = id
+	# The area is the block whose script the saved image matches best (SaveSlots.area_block).
+	var block_id := SaveSlots.area_block(_game_path, s)
 	if block_id < 0:
 		_status.text = "Saved game %s: its area wasn't found." % letter.to_upper()
 		return false

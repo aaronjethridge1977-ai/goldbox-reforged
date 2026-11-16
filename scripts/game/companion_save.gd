@@ -34,8 +34,22 @@ static func write(game_path: String, letter: String, qol: Dictionary) -> bool:
 	return cfg.save(path(game_path, letter)) == OK
 
 
+## "none" (no companion), "ok" (it belongs to the slot's save) or "stale" (another save's), quietly
+## (the save list, SaveSlots).
+static func state(game_path: String, letter: String) -> String:
+	var p := path(game_path, letter)
+	if not FileAccess.file_exists(p):
+		return "none"
+	var cfg := ConfigFile.new()
+	if cfg.load(p) != OK:
+		return "stale"
+	var ok := String(cfg.get_value("save", "savgam_sha256", "")) == FileAccess.get_sha256(_savgam(game_path, letter))
+	return "ok" if ok else "stale"
+
+
 ## The slot's [qol] values, or {} when there is no companion or it belongs to another save.
-static func read(game_path: String, letter: String) -> Dictionary:
+## `quiet`: no line about a stale companion (the save list reads every slot).
+static func read(game_path: String, letter: String, quiet: bool = false) -> Dictionary:
 	var p := path(game_path, letter)
 	if not FileAccess.file_exists(p):
 		return {}
@@ -43,7 +57,8 @@ static func read(game_path: String, letter: String) -> Dictionary:
 	if cfg.load(p) != OK:
 		return {}
 	if String(cfg.get_value("save", "savgam_sha256", "")) != FileAccess.get_sha256(_savgam(game_path, letter)):
-		print("   (the automap of saved game %s belongs to an older save: not loaded)" % letter.to_upper())
+		if not quiet:
+			print("   (the automap of saved game %s belongs to an older save: not loaded)" % letter.to_upper())
 		return {}
 	var out := {}
 	if cfg.has_section("qol"):
