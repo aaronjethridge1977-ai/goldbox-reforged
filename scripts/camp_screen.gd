@@ -117,7 +117,7 @@ var _pick := 0                     # the lit menu item
 var _list_kind := ""               # memorize, cast, scribe
 var _list: Array = []              # rows: [text, spell id or 0 for a heading]
 var _cursor := 0
-var _page := 0
+var _top := 0                      # the list's first row on the screen (a page, or the last page's overlap)
 var _cast_id := 0
 var _caster: PartyMember = null    # while choosing whom a spell is cast on
 var _rng2 := RandomNumberGenerator.new()
@@ -595,9 +595,9 @@ func _draw_list() -> void:
 	_scr.text(1, 1, who, GameScreen.CYAN)
 	_scr.text(2 + who.length(), 1, title, GameScreen.GREEN)
 	var rows := _page_rows()
-	for i in range(_page * rows, mini((_page + 1) * rows, _list.size())):
+	for i in range(_top, mini(_top + rows, _list.size())):
 		var row: Array = _list[i]
-		var r := LIST_TOP + i - _page * rows
+		var r := LIST_TOP + i - _top
 		if row[1] == 0:
 			_scr.text(1, r, row[0], MAGENTA)
 		else:
@@ -641,9 +641,9 @@ func _draw_list() -> void:
 
 func _list_menu() -> Array:
 	var items: Array = [{"memorize": "MEMORIZE", "cast": "CAST", "scribe": "SCRIBE"}[_list_kind]]
-	if (_page + 1) * _page_rows() < _list.size():
+	if _top + _page_rows() < _list.size():
 		items.append("NEXT")
-	if _page > 0:
+	if _top > 0:
 		items.append("PREV")
 	items.append("EXIT")
 	return items
@@ -935,7 +935,7 @@ func _build_list(ids: Array, mark: String = "") -> void:
 		for id in by_level[l]:
 			_list.append([mark + spells.name_of(id), id])
 	# The original starts on the last spell of the first page.
-	_page = 0
+	_top = 0
 	_cursor = -1
 	for i in mini(_list.size(), _page_rows()):
 		if _list[i][1] != 0:
@@ -996,6 +996,26 @@ func _open_pending() -> void:
 	_refresh()
 
 
+## NEXT / PREV as the shop's list (Combat Chat 15) and the original's (Combat Chat 16, Player 15's p13a1 at the
+## inn: ELWEN with BLESS lit on row 1, NEXT, nine Ends light SLEEP): the last page shows the list's last rows
+## (overlapping the one before) and the light keeps its screen row; on a level's heading it goes to the next spell.
+func _turn_page(step: int) -> void:
+	var rows := _page_rows()
+	var row := _cursor - _top
+	if step > 0:
+		_top = mini(_top + rows, maxi(_list.size() - rows, 0))
+	else:
+		_top = maxi(_top - rows, 0)
+	_cursor = clampi(_top + row, 0, maxi(_list.size() - 1, 0))
+	if not _list.is_empty() and _list[_cursor][1] == 0:
+		var i := _cursor
+		while i < mini(_top + rows, _list.size()) and _list[i][1] == 0:
+			i += 1
+		if i < _list.size() and _list[i][1] != 0:
+			_cursor = i
+	_refresh()
+
+
 func _move_cursor(d: int) -> void:
 	if _list.is_empty():
 		return
@@ -1005,7 +1025,8 @@ func _move_cursor(d: int) -> void:
 		if _list[i][1] != 0:
 			_cursor = i
 			break
-	_page = _cursor / _page_rows()
+	if _cursor < _top or _cursor >= _top + _page_rows():
+		_top = clampi(_cursor, 0, maxi(_list.size() - _page_rows(), 0))
 	_refresh()
 
 
@@ -1310,15 +1331,8 @@ func _act(choice: String) -> void:
 			_refresh()
 		"list":
 			match choice:
-				"NEXT":
-					_page += 1
-					_cursor = _page * _page_rows()
-					_move_cursor(1)
-					_move_cursor(-1)
-				"PREV":
-					_page -= 1
-					_cursor = _page * _page_rows()
-					_move_cursor(1)
+				"NEXT", "PREV":
+					_turn_page(1 if choice == "NEXT" else -1)
 				"EXIT": _leave_list()
 				_: _choose()
 		"pending":

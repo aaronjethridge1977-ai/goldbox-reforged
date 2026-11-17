@@ -302,10 +302,11 @@ func _pick_next() -> int:
 	return chosen
 
 
-## The members standing aside in a duel (CALL 0x8000 / 0x8001): [party position, name] each. The
-## original keeps them in its figure list, so they roll the d100 above in their party places, but they
-## get no initiative (0x1289F rolls for the two duellists only), no square and are never picked as
-## targets (Player 1's segment check, 1:18's tavern duel: seven d100s, two d6s, the target picks d1).
+## The members standing aside in a duel (CALL 0x8000 / 0x8001), and (Combat Chat 16) anyone down, dying or
+## dead as the fight starts: [party position, name] each. The original keeps them in its figure list, so
+## they roll the d100 above in their party places, but they get no initiative (0x1289F rolls for figures in
+## the fight only), no square and are never picked as targets (Player 1's segment check, 1:18's tavern duel:
+## seven d100s, two d6s, the target picks d1; Player 15's p15f6: DORN at 0 HP, 17 d6s and 18 d100s).
 var aside: Array = []
 
 
@@ -319,7 +320,8 @@ func _figure_order() -> Array:
 	var party: Array = []
 	var rest: Array = []
 	for i in combatants.size():
-		if combatants[i].team == 0 and combatants[i].who is PartyMember and not combatants[i].who.is_monster:
+		# (a party member fighting on the monsters' side keeps his party place: the party list, 0x5D96)
+		if combatants[i].who is PartyMember and not combatants[i].who.is_monster:
 			party.append(i)
 		else:
 			rest.append(i)

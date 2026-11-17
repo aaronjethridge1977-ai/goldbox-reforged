@@ -749,6 +749,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 			copies.append(c)
 		_party = copies
 	# Characters who are down don't take part.
+	var everyone: Array[PartyMember] = _party.duplicate()
 	var standing: Array[PartyMember] = []
 	for m in _party:
 		if m.can_fight():
@@ -773,18 +774,19 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 				row.append("%02d" % _field.tile(x, y))
 			TpDice.log.append("field %02d %s" % [y, " ".join(row)])
 	_combat = Combat.new(_field, _combatants, seed_value)
-	# A duel: the members standing aside keep their places in the original's figure list.
-	var k := 0
-	for m in duel_party:
-		if not m.can_fight():
-			continue
+	# The members who don't fight (a duel's onlookers, anyone down, dying or dead) keep their places in the
+	# original's figure list: GAME.OVR 0x9938 rolls "who acts next" for every figure in the party list, any
+	# status (Combat Chat 16, Player 15's p15f6: DORN at 0 HP since the last fight, no initiative, a d100).
+	if not duel_party.is_empty():
+		everyone = duel_party
+	for k in everyone.size():
+		var m: PartyMember = everyone[k]
 		var fights := false
 		for p in _party:
 			if p == m or p.name == m.name:
 				fights = true
 		if not fights:
 			_combat.aside.append([k, m.name])
-		k += 1
 	duel_party = []
 	_combat.quick_bandages = Combat.quick_bandages_on() and DisplayServer.get_name() != "headless" and not TpDice.on
 	_combat.smart_quick = SmartQuick.on() and DisplayServer.get_name() != "headless" and not TpDice.on
