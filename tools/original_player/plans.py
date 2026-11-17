@@ -21,6 +21,10 @@
                                  New Phlan's training halls)
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
                                  <words> gets <choice> (an item's name, or a member's name)
+  answerfrom <words>|<choice>    (Player 16) a step of the plan: from here on this answer comes before the others
+                                 (Kuto's Well: CLIMB DOWN is NO while events are left, then YES)
+  map 7:26                       (Player 16) the following walks' map when it isn't the area's own GEO block (`map`
+                                 alone: back to the area's)
   memorize <NAME> <spell>, <spell> | <NAME> ...
                                  (Player 12) the next camp's (the inn's) MAGIC MEMORIZE per member, then REST for the
                                  time the original offers, then EXIT the camp (main's bot at the inn)
@@ -34,6 +38,13 @@
   prepare                        (Player 15) main's bot's `_prepare` before each event (explore): the bot's picks in
                                  every free slot (spells cast since), a REST to memorize them, and the heal of anyone
                                  hurt (as `heal` after a fight); nothing when no slot is free and no one is hurt
+  cure                           (Player 16) main's bot's `_prepare` where the plan's rest rule is the inn (Kuto's
+                                 Well before Norris): camp, the memorized cures on the most hurt, no MEMORIZE or REST
+  norest [off]                   (Player 16) the following walks' stop after a fight that leaves the party hurt is
+                                 that `cure`, not a `prepare`
+  bumps <n> [look]               (Player 16) the following walks try a step that leaves the party where it stands n
+                                 times before refusing it (3 unless said); `look`: with a LOOK before each new try
+                                 (a secret door: the square's script finds it for a searching party)
   innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
                                  New Phlan locks its shops, City Hall and halls from hour 14)
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
@@ -82,16 +93,40 @@ class Walk:
             raise_stop(p, "walk: in area %d:%d, not %d:%d" % (a + self.area))
         if p.on_band():
             return self.band_step(p, x, y)
-        R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
+        # Player 16: `map 7:26`: the walk's map when it isn't the area's own (Kuto's catacombs: ECL 8:29 on GEO7's 26)
+        geo = getattr(self, "geo", None) or self.area
+        R.NE, R.SW, R.INFO, R.DOORS = R.load(*geo)
         # Player 14: main's bot's two rules for a walk interrupted on the way (main.gd _tour, bot.gd _auto_handle):
         # a fight that leaves the party hurt (bot.gd _hurt) stops the walk for a heal (_prepare: camp areas heal);
         # a step the square's script turns back (the party on the same square, facing elsewhere: p13b6's event 3
         # door at 13,10 after the commission) is refused for the rest of the run and walked round (_refused).
-        refused = REFUSED.setdefault(tuple(self.area), set())
+        refused = REFUSED.setdefault(tuple(geo), set())
         t, self._tried = getattr(self, "_tried", None), None
         if t is not None and t[:2] == (x, y) and f != t[2] and (x, y, t[2]) not in refused:
             refused.add((x, y, t[2]))
             p.note("walk", "the step %s from %d,%d was turned back: refused, walked round" % (t[2], x, y))
+        elif t is not None and t[:2] == (x, y) and (x, y, t[2]) not in refused:
+            # Player 16: a square that puts the party back on the square it came from, still facing it (the temple
+            # of Tyr's 11,3 after DO YOU SEEK HEALING NO: p15h3 stepped on it again and again). The third time
+            # running (one lost key is no refusal) the step is refused like a turn-back. `bumps <n>`: n times
+            # (Kuto's catacombs: a secret door's square rolls to find it at every bump; p16c1 gave up after two).
+            again, n = getattr(self, "_back", None) or (None, 0)
+            n = n + 1 if again == t else 1
+            self._back = (t, n)
+            if n >= getattr(self, "bumps", 3):
+                refused.add(t)
+                self._back = None
+                p.note("walk", "the step %s from %d,%d put the party back %d times: refused, walked round" % (
+                    t[2], x, y, n))
+            elif getattr(self, "look", False):
+                # `bumps <n> look`: LOOK searches the square (its script runs as for a SEARCHing party: main.gd
+                # _search_again does it by SEARCH and a step off and on), then the step is tried again
+                return False, "l", "walk: LOOK at %d,%d %s (a secret door? try %d)" % (x, y, t[2], n)
+        elif t is not None:
+            b = getattr(self, "_back", None)
+            if b and (x, y) != b[0][:2]:
+                p.note("walk", "the step %s from %d,%d went through at try %d" % (b[0][2], b[0][0], b[0][1], b[1] + 1))
+            self._back = None
         f0 = getattr(self, "_fights0", None)
         if f0 is None:
             self._fights0 = p.fights
@@ -100,7 +135,8 @@ class Walk:
             if hurt(members(p.g.mem)):
                 p.note("walk", "fight %d left the party hurt (%s): prepare before going on (bot.gd _hurt, _prepare)" % (
                     p.fights, party_hp(p.g.mem)))
-                p.plan.goals.insert(p.goal, Heal(force=True, prep=True))
+                p.plan.goals.insert(p.goal, Heal(force=True, cure=True) if getattr(self, "norest", False)
+                                    else Heal(force=True, prep=True))
                 p.goal_key = p.g.nkeys      # the stall guard counts from the heal's start (p14b1: TAKE + heal > 300)
                 return False, None, ""
         if self.avoid is not None:      # Player 13: the bot's tour (main.gd _find_path): only these are walked round
@@ -267,14 +303,16 @@ class Heal:
     cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
     An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
     The camp screens are answered in Plan._heal (p.heal holds the state)."""
-    def __init__(self, force=False, inn=False, prep=False, wait=False):
+    def __init__(self, force=False, inn=False, prep=False, wait=False, cure=False):
+        self.cure = cure        # Player 16: `cure` (bot.gd _prepare where the plan's rest rule is the inn: Kuto's
+                                # Well before Norris): camp, the memorized cures on the most hurt, no MEMORIZE, no REST
         self.wait = wait        # Player 15: `innwait` (bot.gd _wait_for_day): from hour 14 rest till the doors open
         self.force = force      # Player 14: after a fight on a walk (bot.gd _prepare): heal anyone hurt
         self.inn = inn          # Player 14: `innheal` in an `inntrip` block: the heal in the inn's camp
         self.prep = prep        # Player 15: `prepare` (bot.gd _prepare): also memorize into free slots
 
     def __repr__(self):
-        return ("prepare" if self.prep else "heal") + (" at the inn" if self.inn else
+        return ("cure" if self.cure else "prepare" if self.prep else "heal") + (" at the inn" if self.inn else
                                                        " (after a fight)" if self.force and not self.prep else "")
 
     def next(self, p):
@@ -308,6 +346,8 @@ class Heal:
         M = members(p.g.mem)
         if any(m["status"] == 6 or m["status"] > 6 for m in M):
             raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
+        if self.cure and next_cure(M) is None:
+            return True, None, ""
         spent = self.prep and any(picks(m) for m in M)
         # Player 15: at the inn the camp is already open (TO REST HERE): always go through the heal, which memorizes
         # (bot.gd _rest_at_inn rests there) and leaves the camp
@@ -317,6 +357,7 @@ class Heal:
         new_heal(p)
         p.heal["prep"] = self.prep
         p.heal["wait"] = self.wait
+        p.heal["cure"] = self.cure
         return False, "e", "heal: ENCAMP"
 
 
@@ -406,6 +447,20 @@ class Exit:
         if p.area() == self.area:
             return True, None, ""
         raise_stop(p, "exit: still in %d:%d at the walking screen" % p.area())
+
+
+class AnswerFrom:
+    """Player 16: `answerfrom <words>|<choice>`: from this point of the plan on, this answer comes before the
+    others (Kuto's Well: DO YOU WANT TO CLIMB DOWN is NO while events are left, as main's bot, then YES)."""
+    def __init__(self, words, choice, src):
+        self.a = (words, choice, src)
+
+    def __repr__(self):
+        return "answerfrom %s|%s" % self.a[:2]
+
+    def next(self, p):
+        p.plan.answers.insert(0, self.a)
+        return True, None, ""
 
 
 class Checkpoint:
@@ -906,6 +961,12 @@ class Plan:
                     h["phase"] = "days"
             elif op[1] is not None:
                 h["days"] += 1
+        if h.get("cure"):
+            c = next_cure(M)
+            if c:
+                h["cured"] += 1
+                return ("cast", c[0]["i"], c[1]["i"])
+            return ("leave",)
         if h.get("wait") and not h.get("waited") and not needs_rest(M):
             # Player 15: bot.gd _wait_for_day: New Phlan locks its shop, City Hall and halls from hour 14
             # (0x49C9); the bot rests (24 - hour) hours in the inn's camp (to midnight, when they open)
@@ -1112,6 +1173,8 @@ def load(path):
             pl.area = area_of(rest)
         elif cmd == "alias":
             pl.aliases.add(area_of(rest))
+        elif cmd == "map":
+            pl.geo = area_of(rest) if ":" in rest else None
         elif cmd == "rules":
             main_rules.append(os.path.normpath(os.path.join(base, rest)))
         elif cmd == "walk":
@@ -1121,6 +1184,10 @@ def load(path):
             avoid = [int(v) for v in w[2].split(",") if v] if len(w) > 2 and w[1] == "avoid" else None
             pl.goals.append(Walk(x, y, pl.area, through, avoid))
             pl.goals[-1].aliases = pl.aliases
+            pl.goals[-1].geo = getattr(pl, "geo", None)
+            pl.goals[-1].norest = getattr(pl, "norest", False)
+            pl.goals[-1].bumps = getattr(pl, "bumps", 3)
+            pl.goals[-1].look = getattr(pl, "look", False)
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":
@@ -1147,6 +1214,12 @@ def load(path):
                     pl.memos[-1].append((who, [x.strip() for x in sp.split(",") if x.strip()]))
         elif cmd == "heal":
             pl.goals.append(Heal())
+        elif cmd == "cure":
+            pl.goals.append(Heal(force=True, cure=True))
+        elif cmd == "bumps":
+            pl.bumps, pl.look = int(rest.split()[0]), "look" in rest.split()
+        elif cmd == "norest":
+            pl.norest = rest.strip() != "off"
         elif cmd == "prepare":
             pl.goals.append(Heal(force=True, prep=True))
         elif cmd == "readyall":
@@ -1156,6 +1229,9 @@ def load(path):
         elif cmd == "answer":
             words, choice = rest.rsplit("|", 1)
             pl.answers.append((words.strip(), choice.strip(), os.path.basename(path)))
+        elif cmd == "answerfrom":
+            words, choice = rest.rsplit("|", 1)
+            pl.goals.append(AnswerFrom(words.strip(), choice.strip(), os.path.basename(path)))
         elif cmd == "sell":
             # Player 15: `sell gems`: the next shop visit appraises and sells every gem and piece of jewellery
             pl.sells.append(rest.strip())

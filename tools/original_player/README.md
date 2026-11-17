@@ -902,3 +902,79 @@ left, NAILED SHUT YES, SURRENDER/FIGHT FIGHT, the catacombs), is for Player 16.
 tool bug (an interrupted rest's MEMORIZE seen as a repeat: fixed, `memo_last` cleared on an interruption); p15i2
 (the same seed: other dice) and p15i3 won it with members dead, as did p15i4, p15i5 and p15i6 (lab `p15/tries3.sh`): **at level 3, 6 tries: 1 win with
 nobody dead, 5 with deaths** (at level 2: 8 wipes, 2 wins with a death in 10). No `sokal` checkpoint yet.
+
+## Player 16 (2026-11-17): `sokal`; segment 6b, Kuto's Well and Norris (`s6k`); segment 7 (`slums3`); the secret door
+
+**Queue items 1 and 2.** Main's PICK still rolls `_door_rng` (origin/main a19aed7): segments 2 and 3 in ours wait.
+Combat's answers rerun on origin/main: **segment 1 in ours, 0 differences** (`segment.py p13a1 begin shopped
+--start=c34d_start13`); **p15f6 matches to 5646** of 9841 (the formation with members down: Combat's open item).
+
+**Segment 5's deferred events: `sokal` reached** (plan `plans/p15_c34d_05r_sokal_rest.plan`, lab `p16/seg05r.plan`).
+p16a1 (seed 40404041) lost a member in event 9; **p16a2 (40404042) won event 9 with nobody dead** (fight 6, 56
+figures: CEDRIC and ELWEN down, healed) and went on to 7,10, where it typed the plan's old `OHLO` at the pale form's
+WHAT DO YOU SAY (a leftover answer from the Slums); **p16b2** from p16a2's `s5r9` (after event 9) with `LUX` (main's
+bot's word), then HAS THE CITY BEEN FREED: TELL (the truth): checkpoint `sokal` (4:21 7,10; save
+`p2start/p16b2_sokal`). Event 9 at level 3 in all: 8 tries, 2 wins with nobody dead. Against c34d's `bot_sokal.cfg`
+(`p12/cpdiff.sh`): the deferred events' flags now agree (4A05, 4A26, 4AA7, 4AD7); left: the clock, the counters 4A80
+(15/16) and 4ABB (23/24), the arrival fights' 4A06-4A10 (the bot fought at the gate, the Player's walks met none
+there), 49F0/49F1/4A18, 4AFA-4AFF; XP, HP, coins and items (the bot's party is ahead: its own fights).
+- An hmenu's answer is one of its words (`answer HAS THE CITY BEEN FREED|TELL`, not `TELL THE TRUTH?`).
+
+**Segment 6 part b, Kuto's Well: reached `s6k`** (plan `plans/p16_c34d_06b_kuto.plan`, lab `p16/seg06b.plan`, from
+`p2start/p16b2_sokal`): the boat back, the town trip as part a's (nobody had the experience to train: checkpoint
+`s6t2`), the Slums' 0,4 W, the well's events 5 1 17 16 2 3 18 4 19 21 22 with CLIMB DOWN NO and NAILED SHUT YES
+(`s6well`, 4 fights, nobody down), down the rungs (the catacombs are GEO8 block 32; the area stays 8:29), events 9
+6 7 14 8 15 10 11 (`s6pre12`), Norris the Gray (event 12; its squares 1,5 5,5 10,3: FIGHT), the hideout's rest, up
+the rungs: `s6k` (8:29 7,7 N, everyone whole: ARN 37, BRAM 34, CEDRIC 25, ELWEN 9, LIRA 9, DORN 15; save
+`p2start/p16d1_s6k`). Runs: p16c1 (seed 60606061) to `s6well`, then gave up the secret door after two bumps, walked
+round and met Norris early (LIRA dead); p16c2 (20 bumps, traced: below); p16c3 (LOOK) to `s6pre12`, then Norris
+killed three; **p16d1 (70707071, from `s6pre12`) beat Norris with nobody dead**, 1 try. Against c34d's
+`bot_kuto.cfg` (taken after the bot's next town trip): the well's and Norris's flags agree (4A21-4A24, 4AA6/4AA7);
+left: 4A0F, 4A12-4A14, 4A1F (Sokal Keep's, the bot's 0), 4A22, 4AB0, 4AC1, 4ADB, the counters.
+
+New in plans.py (README of the format at its top):
+- **The walker's gap closed:** a step that leaves the party on its square still facing the same way (the temple of
+  Tyr's NO; a wall that looks open) is refused the third time running and walked round (`bumps <n>`: the n-th).
+- `bumps <n> look`: a LOOK before each new try of such a step (a secret door: one LOOK found the catacombs' 5,8 N).
+- `map 8:32`: the following walks' map when it isn't the area's own block (the catacombs).
+- `answerfrom <words>|<choice>`: an answer that holds from that step of the plan on (CLIMB DOWN: NO, then YES).
+- `cure` and `norest`: main's bot's `_prepare` where the plan's rest rule is the inn (Kuto's Well before Norris):
+  the memorized cures in camp, no MEMORIZE or REST; `norest` makes the walks' stop after a fight that `cure`.
+
+**In ours (segment.py, draws by cmpdraws.py):**
+- **The catacombs' secret door (8:29, map 8:32, event 6 at 5,8), to main.** p16c3 (from `p2start/p16c1_s6well`,
+  seed 60606063): draws 1-22 agree (the well's d11/d21, the arrow volley at 7,8, four d6 on reaching 5,8). The
+  original rolls **eight** d6 there (OVR:03cc4; draws 19-26: 1 1 2 0 0 2 0 3) and the door stays shut; **ours
+  stops at the fourth (the 0), prints YOU FIND A SECRET DOOR IN THE NORTH WALL and lets the party through.** The
+  original then rolls eight more at the bump N (draws 27-34: **a blocked step runs the square's script again**;
+  p16c2: 20 bumps, 160 d6, never found, zeros among them; ours draws none at a bump) and finds the door at the
+  LOOK (five d6, 35-39). So without SEARCH or LOOK the original never finds it on a 0; ours does.
+- **Norris's fight matches draw for draw** (p16d1 from `p2start/p16c3_s6pre12`, seed 70707071: 3110 draws, every
+  figure's cells). After it, to Combat: **the LOOT list.** The original's ITEMS list pages (`ITEMS: TAKE NEXT EXIT`,
+  then `TAKE PREV EXIT`; Chain Mail is its item 21, taken at row 24 after NEXT and 17 Ends); ours shows `ITEMS:
+  TAKE EXIT` and scrolls, so the same keys took Studded Leather Armor (ours' screens `p16/t_15.png`, `t_32.png`,
+  `t_55.png`). **And the lit member:** the original keeps the member lit on the treasure screen (4, ELWEN) into the
+  walk and the camp (Home there lights CEDRIC); ours is back on ARN after the treasure (`p16/n_61.png`), so Home
+  wraps to DORN (`n_77.png`) and MAGIC MEMORIZE does nothing: the replay parts there.
+
+**Segment 7 (kuto -> slums3): reached `slums3`** (plan `plans/p16_c34d_07_slums3.plan`, lab `p16/seg07.plan`, from
+`p2start/p16d1_s6k`): out of the well by 15,4 E, the Slums, the town trip (inn, sale, the halls: nobody had the
+experience; `s7t`), back by 0,4 W, the bot's tour 2 4 5 8 9 7 13 14 15 16 17 18 with `prepare` / `heal` round each
+and the walks going round event 20's squares (`avoid 20`), `s7pre20`, then **the trolls and ogres at 0,14 (event
+20): won with nobody dead** (CEDRIC down, healed), checkpoint `slums3` (2:20 0,14 N; save `p2start/p16e2_slums3`).
+p16e1 (seed 80808081) lost LIRA in event 15's fight at 3,11; **p16e2 (80808082) went through**, 3 fights. The party
+is still ARN, BRAM, CEDRIC 3, ELWEN 1/1/1, LIRA 1/1, DORN 1/2 (c34d's bot there: CEDRIC 4, ELWEN 2/2/1, LIRA 2/2,
+DORN 2/3: it had fought more). Against `bot_slums3.cfg`: 4ABB 254 against the bot's 255, 4A80 (15/18), 4A00,
+4A0A/4A0B, 4A14, 4A17 (the Player's 255, the bot's 0), 4A97, 4A9B/4A9C (the bot's), 4AB0, 4AC1, the counters.
+The plan now also checkpoints `s7a` (after 1,5) and `s7b` (after 6,10) for a reload.
+- **The troll fight in ours: draw for draw, all 2445** (`segment.py p16e2 s7pre20 slums3 --tplog`; the trace cut at
+  the checkpoint by `slicetrace.py logs/p16e2.trace.txt <segment txt> logs/p16e2.trace_s7pre20.txt`, new: cmpdraws.py
+  lines up from draw 1, and a from-checkpoint segment starts mid-trace). One thing after the last draw: **the
+  original's records show figure 9 moving twice more (23,9, then 24,10), ours ends the fight at the last draw**
+  (the last draws are a round's "who acts next" for two ogres and four trolls; no draw follows in either): to
+  Combat with the Lead's standing item (a fight ours ends while the original plays on). The replay then parts in the
+  camp (the lit member after the treasure, as after Norris).
+
+Lab: `p16/` (the plans, tries*.sh, slice.py, screens), saves `p2start/p16a2_s5r9`, `p16b2_sokal`, `p16c1_s6well`,
+`p16c3_s6pre12`, `p16d1_s6norris`, `p16d1_s6k`, `p16e1_s7t`, `p16e2_s7pre20`, `p16e2_slums3`; runs p16a1-a2,
+p16b1-b2, p16c1-c3, p16d1, p16e1-e2.

@@ -1,0 +1,129 @@
+# Player 16: c34d segment 6, part b: Kuto's Well (8:29) and the catacombs, from s6t (the inn, trained).
+# The bot's order (p12/botorder.py sokal kuto): the Slums' 0,4 W, the well's events 5 1 17 16 2 3 18 4 19 21 22 with
+# CLIMB DOWN NO while events are left (NAILED SHUT: YES), then down (the catacombs: GEO8 block 32): 9 6 7 14 8 15
+# 10 11 12 (Norris: FIGHT), up again. No rest in the well before Norris (main's plan: rest 8:29 inn 4A24 255): the
+# stops are `cure` (the bot's _cure_in_camp), not `prepare`.
+# From sokal (p16b2): the boat back, the town trip as segment 6a's (inn, sale, halls), then Kuto's Well.
+area 4:21
+rules ../../plans/playthrough.plan
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+walk 7,15 avoid 99
+step S
+area 3:0
+walk 4,12 through 1,2,3,4,5,6,9,19,20,21,22,23,24,25
+innwait
+# the clerk (City Hall twice, as segment 1)
+alias 3:8
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+sell gems share
+walk 13,9 through 19,20,21,22,23,24,25,26
+step N
+alias 3:11
+walk 8,1 through 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+step N
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step E
+walk 10,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint s6t2
+walk 0,4 through 25
+step W
+area 2:20
+walk 0,4 avoid 13,15,16,20
+step W
+area 8:29
+alias 8:32
+norest
+walk 7,6 avoid 99
+cure
+walk 7,7 avoid 99
+cure
+walk 6,7 avoid 99
+cure
+walk 8,7 avoid 99
+cure
+walk 7,8 avoid 99
+cure
+walk 6,4 avoid 99
+cure
+walk 5,5 avoid 99
+cure
+walk 5,4 avoid 99
+cure
+walk 0,1 avoid 99
+cure
+walk 7,13 avoid 99
+cure
+walk 7,14 avoid 99
+cure
+checkpoint s6well
+answerfrom DO YOU WANT TO CLIMB DOWN|YES
+walk 7,7 avoid 99
+map 8:32
+bumps 8 look
+cure
+walk 7,8 avoid 12
+cure
+walk 5,8 avoid 12
+cure
+walk 5,7 avoid 12
+cure
+walk 5,11 avoid 12
+cure
+walk 5,12 avoid 12
+cure
+walk 5,13 avoid 12
+cure
+walk 4,13 avoid 12
+cure
+walk 1,10 avoid 12
+cure
+checkpoint s6pre12
+walk 10,3 avoid 99
+norest off
+heal
+prepare
+checkpoint s6norris
+answerfrom CLIMB UP THE RUNGS|YES
+walk 7,7 avoid 12
+map
+checkpoint s6k
