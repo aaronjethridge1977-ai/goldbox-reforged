@@ -11,7 +11,8 @@ extends Control
 ##   MONEY: a framed page listing the coins on the pile ("SILVER 732", from row 2, column 2;
 ##     copper first), the chosen one white; "SELECT TYPE OF COIN" then EXIT; Enter picks the
 ##     coin, then "HOW MUCH SILVER WILL YOU TAKE? " and the number typed in white;
-##   ITEMS: the LOOT page (title at column 17, items from row 4), "ITEMS:" then TAKE EXIT;
+##   ITEMS: the LOOT page (title at column 17, items from row 4, 19 a page), "ITEMS:" then TAKE NEXT PREV
+##     EXIT (NEXT and PREV only when they'd move the page; the last page shows the pile's last 19);
 ##   EXIT with treasure left: "THERE IS STILL TREASURE LEFT." (light green) "DO YOU WANT TO
 ##     GO BACK AND CLAIM YOUR TREASURE?" (white), YES NO.
 ## Menus as everywhere: the hot letter, or Left/Right and Enter; the chosen item stays lit
@@ -26,7 +27,7 @@ signal closed
 const MONEY_LABELS := ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS", "JEWELRY"]
 const MENU := ["VIEW", "TAKE", "POOL", "SHARE", "EXIT"]
 const TAKE_MENU := ["MONEY", "ITEMS", "EXIT"]
-const LIST_MENU := ["TAKE", "EXIT"]
+const PAGE := 19
 const ASK_MENU := ["YES", "NO"]
 
 ## The chest picture main sets before opening (88 x 88).
@@ -38,6 +39,7 @@ var _who := 0
 var _mode := "results"   # results, menu, take, coins, amount, items, ask_exit
 var _pick := 0
 var _cursor := 0         # the chosen coin or item
+var _top := 0            # the LOOT page's first item
 var _amount_coin := -1
 var _typed := ""
 var _won_text := ""
@@ -167,9 +169,8 @@ func _draw_mode() -> void:
 		"items":
 			_page_frame()
 			_scr.text(17, 1, "LOOT", GameScreen.WHITE)
-			var top := clampi(_cursor - 18, 0, maxi(_spoils.items.size() - 19, 0))
-			for i in 19:
-				var k := top + i
+			for i in PAGE:
+				var k := _top + i
 				if k >= _spoils.items.size():
 					break
 				var it := _spoils.items[k]
@@ -178,8 +179,39 @@ func _draw_mode() -> void:
 				_scr.list_line(4 + i, k)
 			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "ITEMS:", 13)
-			_scr.menu_line(24, LIST_MENU, 7, _pick)
+			_scr.menu_line(24, _list_menu(), 7, mini(_pick, _list_menu().size() - 1))
 			_scr.update()
+
+
+## The LOOT list pages as the shop's list (Player 16's p16d1 after Norris: a 22-item pile shows
+## "ITEMS: TAKE NEXT EXIT"; NEXT shows its last 19 with "TAKE PREV EXIT" and the light kept on its screen
+## row: 17 Ends from the top row light item 21). Ours scrolled and had no NEXT.
+func _list_menu() -> Array:
+	var m: Array = ["TAKE"]
+	if _top + PAGE < _spoils.items.size():
+		m.append("NEXT")
+	if _top > 0:
+		m.append("PREV")
+	m.append("EXIT")
+	return m
+
+
+func _turn_page(step: int) -> void:
+	var n := _spoils.items.size()
+	var row := _cursor - _top
+	if step > 0:
+		_top = mini(_top + PAGE, maxi(n - PAGE, 0))
+	else:
+		_top = maxi(_top - PAGE, 0)
+	_cursor = clampi(_top + row, 0, maxi(n - 1, 0))
+
+
+## Opens the LOOT list at its first item.
+func _open_items() -> void:
+	_mode = "items"
+	_cursor = 0
+	_top = 0
+	_pick = 0
 
 
 func _walk(menu: Array, lines: PackedStringArray, label: String = "") -> void:
@@ -255,6 +287,7 @@ func _take_item(i: int) -> bool:
 	m.items.append(it)
 	_note.text = "%s TAKES THE %s." % [m.name, it.name.to_upper()]
 	_cursor = clampi(_cursor, 0, maxi(_spoils.items.size() - 1, 0))
+	_top = clampi(_top, 0, maxi(_spoils.items.size() - PAGE, 0))
 	_refresh()
 	return true
 
@@ -351,7 +384,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var items: Array = _menu()
 	match _mode:
 		"take": items = TAKE_MENU
-		"items": items = LIST_MENU
+		"items": items = _list_menu()
 		"coins": items = ["EXIT"]
 		"ask_exit": items = ASK_MENU
 	var choice := ""
@@ -372,6 +405,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_cursor = clampi(_cursor + step, 0, maxi(_coin_kinds().size() - 1, 0))
 		elif _mode == "items":
 			_cursor = clampi(_cursor + step, 0, maxi(_spoils.items.size() - 1, 0))
+			if _cursor < _top or _cursor >= _top + PAGE:
+				_top = clampi(_cursor, 0, maxi(_spoils.items.size() - PAGE, 0))
 		_refresh()
 		return
 	elif key == KEY_ESCAPE:
@@ -393,8 +428,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					# EXIT comes back here (DOSBox, the Player's p11t1 after SHARE: VIEW TAKE POOL EXIT,
 					# T, then "ITEMS: TAKE EXIT"; E, VIEW TAKE POOL EXIT again; Combat Chat 16).
 					if _items_only():
-						_mode = "items"
-						_cursor = 0
+						_open_items()
 					else:
 						_mode = "take"
 					_refresh()
@@ -410,8 +444,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						_refresh()
 				"ITEMS":
 					if not _spoils.items.is_empty():
-						_mode = "items"
-						_cursor = 0
+						_open_items()
 						_refresh()
 				"EXIT":
 					_mode = "menu"
@@ -432,9 +465,17 @@ func _unhandled_input(event: InputEvent) -> void:
 					_take_item(_cursor)
 					if _spoils.items.is_empty():
 						_mode = "take" if _spoils.has_money() else "menu"
+						_pick = 0
 						_refresh()
+				"NEXT", "PREV":
+					_turn_page(1 if choice == "NEXT" else -1)
+					var now := _list_menu()      # the menu may have lost the item just used
+					_pick = now.find(choice) if choice in now else mini(_pick, now.size() - 1)
+					_refresh()
 				"EXIT":
+					# EXIT leaves ITEMS lit (TAKE when the list came straight from the menu).
 					_mode = "menu" if _items_only() else "take"
+					_pick = maxi((_menu() if _mode == "menu" else TAKE_MENU).find("TAKE" if _mode == "menu" else "ITEMS"), 0)
 					_refresh()
 		"ask_exit":
 			if choice == "YES":

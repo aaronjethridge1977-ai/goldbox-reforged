@@ -84,6 +84,7 @@ static func refill(party: Array, table: SpellTable) -> int:
 				continue
 			if m.slots_left(table, table.spell_class(id), table.level(id)) > 0:
 				m.memorized.append(id + PartyMember.LEARNING)
+				m.sort_memorized()     # as a MEMORIZE pick (GAME.OVR 0x1827E)
 				n += 1
 	return n
 

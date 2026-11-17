@@ -208,6 +208,23 @@ func _show_menu() -> void:
 	_refresh()
 
 
+## QoL 5 (Q10): SAVE CURRENT GAME opens the saved games' list in place of the letter prompt.
+var _save_list: SaveListScreen
+
+
+func _open_save_list() -> void:
+	if _save_list == null:
+		_save_list = SaveListScreen.new()
+		add_child(_save_list)
+		_save_list.picked.connect(func(slot: String) -> void:
+			save_failed = false
+			save_requested.emit(slot)
+			_note.text = "COULDN'T SAVE THE GAME." if save_failed else "GAME SAVED."
+			_show_menu())
+		_save_list.cancelled.connect(_show_menu)
+	_save_list.open("save", game_path)
+
+
 ## P57: why training refused, on row 24 for a moment (as the camp's refusals), then the menu.
 func _say_24(text: String) -> void:
 	_row24 = text
@@ -405,8 +422,11 @@ func _function(item: String) -> void:
 				_sel = mini(_sel, party.size() - 1)
 				_show_menu()
 		"SAVE CURRENT GAME":
-			_mode = "save"
-			_refresh()
+			if SaveListScreen.on() and game_path != "":
+				_open_save_list()
+			else:
+				_mode = "save"
+				_refresh()
 		"BEGIN ADVENTURING":
 			if not party.is_empty():
 				visible = false

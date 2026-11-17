@@ -514,6 +514,30 @@ func learn_study_hours(table: SpellTable) -> int:
 	return 6 if top > 2 else 4
 
 
+## After each MEMORIZE pick the original sorts the record's spell bytes 0x17..0x2B by spell id (GAME.OVR
+## 0x18055, called from 0x1827E: a selection sort, ascending, the being-memorized bit ignored; empties go to
+## 0x17's end). `memorized` runs from 0x2B down, so the list then reads highest id first (Combat Chat 19,
+## c18c7: CEDRIC's two new Cure Light Wounds listed above his Bless; ours had appended them below it).
+func sort_memorized() -> void:
+	var b: Array[int] = []
+	b.resize(21)
+	b.fill(0)
+	for k in memorized.size():
+		if k < 21:
+			b[20 - k] = memorized[k]
+	for i in 20:
+		for j in range(i, 21):
+			if b[i] % LEARNING > b[j] % LEARNING:
+				var t := b[i]
+				b[i] = b[j]
+				b[j] = t
+	var out: Array[int] = []
+	for k in range(20, -1, -1):
+		if b[k] != 0:
+			out.append(b[k])
+	memorized = out
+
+
 ## Removes one memorized copy of `id` (after casting it, or losing it).
 func forget(id: int) -> void:
 	# The copy lowest in the record goes (Combat Chat 18, DOSBox: ELWEN's Bless cast with the list's last
@@ -775,7 +799,9 @@ func recalculate(types: ItemTypes) -> void:
 		if not it.readied or not types.has(it.type):
 			continue
 		var slot := types.slot(it.type)
-		if slot == ItemTypes.SLOT_WEAPON and weapon == null:
+		# START.EXE 0x1847: each readied item's slot pointer (record +0xCC + slot x 4) is set in list order, so
+		# with two weapons readied (a monster's) the last is "the readied weapon" (Combat Chat 19, c18c7's orc leader).
+		if slot == ItemTypes.SLOT_WEAPON:
 			weapon = it
 		var a := types.armor_byte(it.type)
 		if (a & 0x80) == 0:

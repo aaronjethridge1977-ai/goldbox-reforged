@@ -694,6 +694,21 @@ func _show_menu() -> void:
 	_to_menu("camp", _camp_menu())
 
 
+## QoL 5 (Q10): SAVE opens the saved games' list in place of the letter prompt; a letter still saves at once.
+var _save_list: SaveListScreen
+
+
+func _open_save_list() -> void:
+	if _save_list == null:
+		_save_list = SaveListScreen.new()
+		add_child(_save_list)
+		_save_list.picked.connect(func(slot: String) -> void:
+			_mode = "save"
+			_act(slot))
+		_save_list.cancelled.connect(_show_menu)
+	_save_list.open("save", GameData.find_game_path())
+
+
 func _magic_menu() -> void:
 	_to_menu("magic", MAGIC_MENU)
 
@@ -1065,6 +1080,7 @@ func _choose() -> void:
 	if _list_kind == "memorize":
 		if m.slots_left(spells, spells.spell_class(id), spells.level(id)) > 0:
 			m.memorized.append(id + PartyMember.LEARNING)
+			m.sort_memorized()     # GAME.OVR 0x1827E
 			Rememorize.note_pick(m, spells)
 		_refresh()
 	elif _list_kind == "scribe":
@@ -1298,7 +1314,11 @@ func _act(choice: String) -> void:
 	match _mode:
 		"camp":
 			match choice:
-				"SAVE": _to_menu("save", SAVE_LETTERS)
+				"SAVE":
+					if SaveListScreen.on():
+						_open_save_list()
+					else:
+						_to_menu("save", SAVE_LETTERS)
 				"VIEW":
 					_sheet.open(_party, "PARTY", _sel, false, 1)
 					_sheet.camp_look = not _walk

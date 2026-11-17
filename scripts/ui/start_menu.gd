@@ -7,7 +7,7 @@ extends Control
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
-##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, FIX in camp, quick bandages, DONE's MAGIC, quick tactics, monster tactics, beeps, mouse, full screen),
+##   SETTINGS        the additions that can be turned on or off (automap, portraits, start memorized, FIX in camp, quick bandages, DONE's MAGIC, quick tactics, monster tactics, beeps, mouse, quest log, list of saves, full screen),
 ##                   one line each; Up/Down highlights one and the box below explains it (P21)
 ##   ABOUT           a menu (P21): FEATURES (each addition: a list, then a page each) and CREDITS
 ##                   (Gold Box Reforged's credits and the Godot license)
@@ -397,6 +397,9 @@ func _pick(item: String) -> void:
 			visible = false
 			chosen.emit("continue", "")
 		"LOAD SAVED GAME":
+			if SaveListScreen.on():
+				_open_load_list()
+				return
 			_stage = "load"
 			_draw()
 		"NEW GAME":
@@ -446,6 +449,7 @@ static func setting_value(id: String) -> int:
 		"rememorize": return int(Rememorize.on())
 		"aimskip": return int(CombatScreen.skip_party_on())
 		"quests": return int(QuestScreen.on())
+		"savelist": return int(SaveListScreen.on())
 	return 0
 
 
@@ -466,6 +470,25 @@ static func change_setting(id: String) -> void:
 		"rememorize": Rememorize.save_on(not Rememorize.on())
 		"aimskip": CombatScreen.save_skip_party(not CombatScreen.skip_party_on())
 		"quests": QuestScreen.save_on(not QuestScreen.on())
+		"savelist": SaveListScreen.save_on(not SaveListScreen.on())
+
+
+## QoL 5 (Q10): LOAD SAVED GAME opens the saved games' list (with the quick save) in place of the letter prompt.
+var _load_list: SaveListScreen
+
+
+func _open_load_list() -> void:
+	if _load_list == null:
+		_load_list = SaveListScreen.new()
+		add_child(_load_list)
+		_load_list.picked.connect(func(slot: String) -> void:
+			visible = false
+			if slot == "QUICK":
+				chosen.emit("continue", "")
+			else:
+				chosen.emit("load", slot))
+		_load_list.cancelled.connect(_show_menu)
+	_load_list.open("load", game_path)
 
 
 func _about_index(item: String) -> int:

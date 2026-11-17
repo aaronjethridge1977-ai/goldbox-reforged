@@ -334,6 +334,7 @@ func _ready() -> void:
 	_start_menu = StartMenu.new()
 	add_child(_start_menu)
 	_start_menu.chosen.connect(_on_start_chosen)
+	SaveListScreen.quick_path = _save_path()     # the save/load list (Combat lane, QoL 5)
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 
 
@@ -395,6 +396,7 @@ func _back_to_start() -> void:
 		add_child(_start_menu)
 		_start_menu.chosen.connect(_on_start_chosen)
 	_start_menu.visible = true
+	SaveListScreen.quick_path = _save_path()     # the save/load list (Combat lane, QoL 5)
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 var _who_open := false   # a WHO menu's highlight has been put on the selected member
 var _menu_sel := 0   # the event menus' highlight, kept from one menu to the next
@@ -466,6 +468,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 			for o in [_combat, _combat._sheet, _party_menu, _camp, _temple, _treasure, _shop, _party_menu._sheet, _camp._sheet, _treasure._sheet, _sheet]:
 				if o != null and o.visible and o.get("_scr") != null:
 					scr = o._scr
+			for sl in [_camp.get("_save_list"), _party_menu.get("_save_list")]:
+				if sl != null and sl.visible:
+					scr = sl._scr                # the save list over camp / party menu (QoL 5)
 			if _ending != null and _ending.visible:
 				scr = _ending._screen   # the closing pictures (PROGRAM 8)
 			if scr != null and scr.img != null:
@@ -2391,6 +2396,9 @@ func _run_program() -> void:
 			_party_menu.types = _types
 			_party_menu.game_path = _game_path
 			_sync_shell()
+			# The hall opens on the selected member and leaves its own pick selected (Combat Chat 19, c18c7:
+			# the original's training opened on BRAM, lit after the treasure, and DORN, trained last, paid at the inn).
+			_party_menu._sel = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 			_party_menu.open(_party, _vm.read_byte(EclVM.TRAINING_MASK))
 			_dev_reseed([_party_menu._rng])
 		9:
@@ -2433,6 +2441,11 @@ func _on_party_menu_closed() -> void:
 		return
 	_vm.write_byte(EclVM.TRAINING_MASK, 0)
 	_message.text = ""
+	# The member lit in the hall stays the selected one (Combat Chat 19, c18c7 s3a -> slums2: DORN, trained
+	# last, paid at the inn in the original; ours went back to ARN).
+	if not _party.is_empty():
+		_vm.selected = clampi(_party_menu._sel, 0, _party.size() - 1)
+		_vm.walk_selected = _vm.selected
 	_vm.close_program()
 	_after_vm()
 	_show()
@@ -2737,6 +2750,10 @@ func _on_treasure_closed() -> void:
 		m.recalculate(_types)
 	_fight_treasure = []
 	_message.text = ""
+	# The member lit on the treasure screen stays the selected one (Player 16's p16d1: ELWEN lit at its EXIT,
+	# the next camp's Home lights CEDRIC; ours went back to the first).
+	if _treasure._who >= 0 and _treasure._who < _party.size():
+		_vm.selected = _treasure._who
 	_vm.end_combat(0)
 	_after_vm()
 	_show()
