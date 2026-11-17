@@ -215,9 +215,10 @@ func _ready() -> void:
 		ask.ready_to_start.connect(func(_p: String) -> void: get_tree().reload_current_scene())
 		add_child(ask)
 		return
-	# The copy this game reads, in the log for reports (GameCopy; ABOUT shows it too).
+	# The copy this game reads, in the log for reports (GameCopy; ABOUT shows it too): hashed on
+	# a thread of its own, the line logged when it's done (Lead, 2026-11-17: not on the start's path).
 	print("Game folder: ", _game_path)
-	print("Copy this into your report: ", GameCopy.describe(_game_path).line)
+	GameCopy.start(_game_path)
 	_types = ItemTypes.load_file(_game_path)
 	GameScreen.load_art(_game_path)
 	CharacterSheet.types = _types
@@ -3349,6 +3350,7 @@ func _area_picture() -> Image:
 
 
 func _exit_tree() -> void:
+	GameCopy.finish()
 	if _vm != null and _vm.coverage != null:
 		_vm.coverage.save()
 	if _shadow != null:

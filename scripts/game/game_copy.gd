@@ -15,13 +15,53 @@ const KNOWN := {
 }
 
 static var _cache := {}
+## The hashing started at launch on its own thread (start), and the folder it reads.
+static var _thread: Thread = null
+static var _thread_path := ""
+
+
+## Starts reading the copy in `path` on a thread of its own, so the start isn't held up (the
+## hashes take seconds on a slow disk: Lead, 2026-11-17). When it ends, the report line goes to
+## the log ("Copy this into your report: ..."). describe() on the same folder waits for it.
+static func start(path: String) -> void:
+	if _cache.has(path) or _thread != null:
+		return
+	_thread = Thread.new()
+	_thread_path = path
+	_thread.start(_read.bind(path), Thread.PRIORITY_LOW)
+
+
+## Waits for the thread start() began, if any (on quitting, so it doesn't outlive the game).
+static func finish() -> void:
+	if _thread == null:
+		return
+	var info: Dictionary = _thread.wait_to_finish()
+	_cache[_thread_path] = info
+	info.line = report_line(info)
+	_thread = null
+	print("Copy this into your report: ", info.line)
 
 
 ## The copy in `path` (the folder with GEO1.DAX): source, version, hashes and the report line.
-## Read once per folder.
+## Read once per folder; waits for start()'s thread when it reads the same folder.
 static func describe(path: String) -> Dictionary:
+	if _thread != null and _thread_path == path:
+		finish()
 	if _cache.has(path):
 		return _cache[path]
+	var info := _read(path)
+	info.line = report_line(info)
+	_cache[path] = info
+	return info
+
+
+## Called on the main thread when start()'s thread is done: writes the log line.
+static func _done() -> void:
+	finish()
+
+
+## Reads the folder (any thread): everything but the report line.
+static func _read(path: String) -> Dictionary:
 	var info := {}
 	info.source = source_of(path)
 	info.version = version_of(path)
@@ -34,8 +74,8 @@ static func describe(path: String) -> Dictionary:
 	info.dax_count = dax.size()
 	info.dax = all.md5_text()
 	info.known = String(KNOWN.get("%s %s" % [info.exe, info.ovr], ""))
-	info.line = report_line(info)
-	_cache[path] = info
+	if OS.get_thread_caller_id() != OS.get_main_thread_id():
+		_done.call_deferred()
 	return info
 
 
