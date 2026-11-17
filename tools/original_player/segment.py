@@ -55,7 +55,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             # Player 15: the original's run pressed Alt-M in this fight (OP_MAGIC=1): ours' `magic` in the open fight
             out += ["magic"] + (["tplog"] if tplog else [])
             continue
-        if re.search(r"NOTE fight fight \d+ ended", line):
+        if re.search(r"NOTE fight fight \d+ ended|NOTE loss the party was destroyed", line):
             # Player 15: a fight the original played with no combat menu (all on QUICK) took no key, so nothing made
             # ours wait for its end: the CONTINUE BATTLE NO and the Enter after it reached ours mid-fight and were lost
             # (p15f6: ours then took a later Y as CONTINUE BATTLE YES). Ours' `fightend` waits for that question.
@@ -156,7 +156,8 @@ def main():
     tmp = os.path.join(orig.LAB, "run_seg")
     shutil.rmtree(tmp, ignore_errors=True)
     shutil.copytree(proj, tmp)
-    r = subprocess.run(["timeout", "600", G, "--headless", "--path", tmp, "--", "--game-path=" + orig.GAME,
+    # Player 15: OP_SEG_TIMEOUT (seconds, default 600): Sokal Keep's 56-figure fight plays longer in ours
+    r = subprocess.run(["timeout", os.environ.get("OP_SEG_TIMEOUT", "600"), G, "--headless", "--path", tmp, "--", "--game-path=" + orig.GAME,
                         "--save=" + cfg, "--keys=" + ",".join(ks)], capture_output=True, text=True)
     shutil.rmtree(tmp, ignore_errors=True)
     ours_log = r.stdout + r.stderr

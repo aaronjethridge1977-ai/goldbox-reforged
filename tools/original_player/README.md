@@ -850,3 +850,13 @@ odds are the original's in ours too (p15f6 replayed: the same dice and interrupt
 - **Fights compared in ours:** p15c7 (segment 3's kobolds) matches to 876 (ARN's long sword: the original 2d4,
   ours d8 against a kobold; zombies 2d4 in both); p15f6 (Sokal's rest fights) to 2935 (a member at 0 HP: one more
   "who acts next" d100 in the original). Both to Combat (board).
+- **A start save names its own character files.** SAVGAMx.DAT holds the party's file names (`CHRDATH1`-`6` at
+  offset 12810 for a checkpoint written to slot H). The lab's `p2/useslot.sh` renames a start to slot I, but the
+  original then reads `CHRDATH*` from the game folder: the characters of the last checkpoint written (p15f12 and
+  p15f13 loaded `s5c13` with p15f11's dead DORN). The lab's `p14/q.sh` now also copies the start under its own names.
+  Earlier runs that loaded another checkpoint's characters: p15d1-p15d8 (from `s3a`, slot H then held p15c6's
+  `slums2`: the same party, no fight or training between, so likely no difference); the p15e and p15f runs read their
+  own. Player 14's reloads should be checked the same way (p14b4-p14b6 from `s2b`).
+- **Resting in Sokal Keep:** every camp so far (15,1 five times, 13,0 once) was interrupted four times; four of the
+  15,1 camps ended with a death. The bot's c34d rested 11 times there with one interruption. Not a rule difference:
+  p15f6 replayed in ours draws the same rest checks and the same interruptions. The plan drops the camp on 15,1.
