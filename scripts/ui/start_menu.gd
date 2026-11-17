@@ -42,6 +42,7 @@ var _pages: Array = []
 var _page := 0
 var _set_sel := 0        # SETTINGS: the highlighted item
 var _about_sel := 0      # ABOUT: the highlighted item
+var _copied := false    # ABOUT: the copy's line was put on the clipboard (Ctrl+C)
 var _feat_sel := 0       # FEATURES: the highlighted feature (and the page shown)
 static var _intro_done := false
 var _logo_pic: Image
@@ -241,6 +242,12 @@ func _draw() -> void:
 			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _about_sel else GameScreen.GREEN)
 			g.list_line(7 + i * 2, i)
 		g.list_chosen(_about_sel)
+		# The copy the game reads, for reports (main's GameCopy, chat 48); Ctrl+C copies its line.
+		var lines := GameCopy.about_lines(GameCopy.describe(game_path))
+		for i in lines.size():
+			g.text(2, 15 + i, lines[i], GameScreen.CYAN)
+		g.text(2, 20, "COPIED: PASTE IT INTO YOUR REPORT" if _copied else "CTRL+C COPIES THIS FOR A REPORT",
+				GameScreen.YELLOW if _copied else GameScreen.WHITE)
 	else:
 		g.text(4, 7, "LOAD WHICH GAME?", GameScreen.WHITE)
 		g.menu_line(24, _saves + ["EXIT"])
@@ -304,6 +311,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _stage == "about":
 		var items := FeatureText.menu("about")
 		var pick := ""
+		if key == KEY_C and (event as InputEventKey).ctrl_pressed:
+			DisplayServer.clipboard_set(GameCopy.describe(game_path).line)
+			_copied = true
+			_draw()
+			return
+		_copied = false
 		if key == KEY_ESCAPE:
 			pick = "EXIT"
 		elif event.is_action("ui_up"):

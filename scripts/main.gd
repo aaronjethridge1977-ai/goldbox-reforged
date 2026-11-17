@@ -215,6 +215,9 @@ func _ready() -> void:
 		ask.ready_to_start.connect(func(_p: String) -> void: get_tree().reload_current_scene())
 		add_child(ask)
 		return
+	# The copy this game reads, in the log for reports (GameCopy; ABOUT shows it too).
+	print("Game folder: ", _game_path)
+	print("Copy this into your report: ", GameCopy.describe(_game_path).line)
 	_types = ItemTypes.load_file(_game_path)
 	GameScreen.load_art(_game_path)
 	CharacterSheet.types = _types

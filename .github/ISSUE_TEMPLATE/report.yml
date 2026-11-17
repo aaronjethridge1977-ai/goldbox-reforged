@@ -18,10 +18,13 @@ body:
     validations:
       required: true
   - type: input
-    id: copy-version
+    id: copy-line
     attributes:
-      label: Its version, if you know it
-      placeholder: "e.g. GOG Forgotten Realms: The Archives - Collection Two, or v1.3 on the disks"
+      label: Your copy's line from ABOUT
+      description: |
+        In the start menu choose ABOUT, press Ctrl+C and paste here: one line naming your copy (where it came from, its version, short codes of its files) and our build. The game also writes it to its log at start ("Copy this into your report: ...").
+        Build 0.1.0 doesn't have it yet: there, give your copy's version if you know it.
+      placeholder: "e.g. GBR 0.1.1 | POOLRAD GOG 1.3 | START.EXE 4c28d37e GAME.OVR 2ac38b4b DAX(113) d02344fd | SAME AS GOG 1.3"
     validations:
       required: false
   - type: input
