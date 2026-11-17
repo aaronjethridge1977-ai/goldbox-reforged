@@ -27,7 +27,7 @@ prepare
 walk 15,1 avoid 99
 heal
 checkpoint s5c13
-prepare
+# (no camp on 15,1: five tries, four interruptions each time, deaths in four; the bot camped at the gate)
 walk 13,0 avoid 99
 heal
 prepare
@@ -40,6 +40,7 @@ prepare
 walk 7,2 avoid 99
 heal
 prepare
+checkpoint s5pre9
 walk 7,4 avoid 99
 heal
 checkpoint s5c9

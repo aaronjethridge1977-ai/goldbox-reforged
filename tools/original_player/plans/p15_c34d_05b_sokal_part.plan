@@ -1,0 +1,80 @@
+# Player 15: c34d segment 5 (b: event 9 deferred), sokal0 -> sokal (main's playthrough.plan: explore, Sokal Keep 4:21).
+# The bot's event order (p12/botorder.py sokal0 sokal): 13 14 17 10 20 9 11 3 7 16 12 6 15 4 2 1 8 5; `prepare` before each, `heal`
+# after; walks cross every event (explore has no left-out ones: `avoid 99`, an event no square has). Menus by main's plan's 4:21 answers.
+area 4:21
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer GIVE ME THE POTION|GIVE
+answer A PALE FORM RISES|PARLAY
+answer DO YOU TAKE IT|YES
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+prepare
+walk 15,1 avoid 99
+heal
+checkpoint s5c13
+# (no camp on 15,1: five tries, four interruptions each time, deaths in four; the bot camped at the gate)
+walk 13,0 avoid 99
+heal
+prepare
+walk 12,0 avoid 99
+heal
+prepare
+walk 12,2 avoid 99
+heal
+prepare
+walk 7,2 avoid 99
+heal
+prepare
+checkpoint s5pre9
+# Player 15: event 9 (7,4, 56 orcs and hobgoblins) deferred: the original won it once in many tries, with a death,
+# and ours on QUICK fares the same (README "Player 15"); the walks after s5pre9 avoid its squares (7,4 7,5 8,4 8,5).
+# Events 11 (7,6) and 12 (7,10, the pale form) are behind them: deferred too. Ends at s5b, not `sokal`.
+prepare
+walk 4,5 avoid 9
+heal
+prepare
+walk 4,2 avoid 9
+heal
+prepare
+walk 4,4 avoid 9
+heal
+checkpoint s5c16
+prepare
+walk 13,6 avoid 9
+heal
+prepare
+walk 15,6 avoid 9
+heal
+prepare
+walk 13,10 avoid 9
+heal
+checkpoint s5c4
+prepare
+walk 7,13 avoid 9
+heal
+prepare
+walk 6,13 avoid 9
+heal
+prepare
+walk 2,11 avoid 9
+heal
+prepare
+walk 2,8 avoid 9
+heal
+checkpoint s5b

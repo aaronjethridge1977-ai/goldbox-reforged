@@ -860,3 +860,28 @@ odds are the original's in ours too (p15f6 replayed: the same dice and interrupt
 - **Resting in Sokal Keep:** every camp so far (15,1 five times, 13,0 once) was interrupted four times; four of the
   15,1 camps ended with a death. The bot's c34d rested 11 times there with one interruption. Not a rule difference:
   p15f6 replayed in ours draws the same rest checks and the same interruptions. The plan drops the camp on 15,1.
+- **Event 9 (7,4), the orcs and hobgoblins (56 figures), five losses:** p15f4 and p15f7 (no magic), p15f9 (Alt-M at
+  EXE:08abd, before the fight's own reset: now only at OVR sites), p15f14 (from the camp-free plan, the checkpoint
+  `s5pre9` at full HP and spells just before it, MAGIC ON), p15f15 (from `s5pre9`, traced). c34d's bot won it in ours
+  with its own tactics (`smartquick`) and CEDRIC 3. Ours replaying p15f15 (`OP_SEG_TIMEOUT=600`) matches to draw
+  1031 and then logs no more draws although its fight goes on to round 16 (the tplog lines stop after the last
+  `tplog` key: inconclusive; rerun with a longer `OP_SEG_TIMEOUT` and a `tplog` after `fightend`). Lab script
+  `p15/oursfight.py` (ours from a Player save, all on QUICK + magic, several seeds; ~12 minutes a seed): **ours from
+  `s5pre9`: seed 11111111 won after 22 rounds with BRAM alone standing (LIRA, CEDRIC, DORN, ELWEN dying, ARN down:
+  a loss under the death rule), seed 22222222 the whole party down in 7 rounds.** The original at event 9 in all, 10 tries:
+  8 wipes, 2 wins each with a member dead (p15f17, p15f20). So ours' QUICK fares as the original's: no rule difference
+  seen; c34d's bot won with its own tactics (`smartquick`, which the original doesn't have). **Decision (lane):** the
+  Player's run defers event 9 until the party is stronger (as the plan defers the Slums' trolls to level 3), and logs
+  the departure from c34d's order. Events 11 (7,6) and 12 (7,10, the pale form: Ferran Martinez and the library's
+  word) are reached only across event 9's squares, so they wait too. Plan `p15/seg05b.plan` (repo
+  `plans/p15_c34d_05b_sokal_part.plan`): from `s5pre9` the other events, ending at checkpoint `s5b`.
+  **p15g1/p15g2 reached `s5b`** (4:21 2,8 E, nobody lost; p15g2 from p15g1's `s5c4` with event 1's TALK and NICE as
+  the bot: the plan's ATTACK|LEAVE had taken LEAVE on that menu). Against the bot's `bot_sokal.cfg`: the counters,
+  and the deferred events' flags 4A05 (0/1), 4A26 (0/255), 4AA7 (0/254), 4AD7 (0/255). Save `p2start/p15g2_s5b`.
+  segment.py now also puts `fightend` after a wipe (it had only "fight N ended").
+- **Queue item 3 (the fallen NPC), rechecked** on origin/main 00e56ab (Combat Chat 16): `segment.py p11t1 entry end
+  --tplog`: draws identical to the original's, all 5974 (`logs/p11t1.cmpdraws15b.txt`; was 3613 at 747cb9e).
+
+Lab (Player 15): `p15/` (seg03.plan, seg03t.plan, seg04.plan, seg05.plan, oursfight.py, tries.sh, screens), the lab's
+`p14/q.sh` (copies a start under its own names too), saves `p2start/p14b6_slums`, `p15c5_s3a`, `p15c5_s3t`,
+`p15d8_slums2`, `p15e3_sokal0`, `p15f4_s5c13`, `p15f14_s5pre9`; runs p15c1-c7, p15d1-d8, p15e1-e3, p15f1-f17.
