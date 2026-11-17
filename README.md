@@ -1,5 +1,17 @@
 # Gold Box Reforged
 
+## Download (Windows)
+
+**[Download Gold Box Reforged 0.1.0 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.0/goldbox-reforged-0.1.0-windows.zip)** · [all releases](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/latest)
+
+1. Unzip it (right-click, Extract All).
+2. Run `GoldBoxReforged.exe` (the build is unsigned, so Windows may warn: More info, Run anyway).
+3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`). **Bring your own copy:** GOG, Steam or the original disks.
+
+Found a problem? [Report it](https://github.com/aaronjethridge1977-ai/goldbox-reforged/issues/new/choose) and say where your copy came from (see [Reporting a problem](#reporting-a-problem)).
+
+## About
+
 A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. Bring your own game files.
 
 **First target:** the DOS version of *Pool of Radiance*, fully playable, with quality-of-life additions — automap, quest tracker, quick save and mouse support — and everything else left as the original had it.
@@ -36,6 +48,12 @@ A modern, open engine for classic SSI Gold Box CRPGs, built with AI in Godot 4. 
    - **V** shows the party's character sheets (AC, THAC0, damage, movement, items) next to the values the original saved; **Shift+M** browses every monster record. ←/→ to page, Esc to close.
    - **B** starts a test battle where you stand: the battlefield is built from the map around you, the party and a group of monsters from the area are placed, and the 7×7 combat window can be moved around (arrows, Tab to jump between combatants, PgUp/PgDn to change monster, +/− for distance, Esc to leave). **F** starts the fight: arrows and Home/PgUp/End/PgDn (or the keypad) step or attack, Space ends a turn, Q lets the computer fight for that character; monsters move and attack on their own, and the battle ends as soon as the last enemy falls. Test fights use a copy of the party.
    - Shops open from their events with the game's starting party (Thrender Grone, Bakshi, Rhiannon, Brother Sean, Darkstar, Phineas): ↑/↓ or mouse to pick, Enter/BUY, POOL to gather the party's money, ◀ ▶ to change buyer, Esc/EXIT.
+
+## Reporting a problem
+
+Open an issue: [New issue](https://github.com/aaronjethridge1977-ai/goldbox-reforged/issues/new/choose) and fill in the form. It asks where your copy of the game came from (GOG, Steam, the original disks or other) and its version if you know it, our build (the window title, e.g. "Gold Box Reforged 0.1.0"), your Windows version, what happened and the steps to get there, and what the original game does there if you know.
+
+A save helps most: zip the save file `SAVGAMx.DAT` (x is the slot letter) together with the `SAVGAMx.GBR` beside it in your game folder, and attach the zip. **Never attach the game's own files** (.DAX, .OVR, .EXE or anything else from the game folder).
 
 ## Layout
 
