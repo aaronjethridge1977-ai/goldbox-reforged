@@ -144,6 +144,7 @@ class Player:
             self.note("fight", "fight %d ended at %d,%d %s, all on QUICK (no menu seen)" % ((self.fights,) + self.where()))
         if scr["kind"] in ("walking", "treasure", "continue"):   # Player 2: waves fought back to back
             self.in_fight = False
+            self.g.magic_sent = False      # Player 15: OP_MAGIC: the next fight gets its Alt-M
             if not self.g.party_size and scr["kind"] == "walking":
                 self.g.party_size = len(self.g.party())
                 self.start_names = [m[0] for m in self.g.party()]   # Player 11: members lost show in the summary

@@ -829,3 +829,24 @@ encounter on arrival (the bot fought five there: undead, zombies). Against `bot_
 the bot's 3). Save `p2start/p15e3_sokal0`. (p15e1/p15e2: Ohlo's GIVE; the walk onto the boat.)
 - `walk x,y avoid 99` for a walk that crosses every event (an `explore` with nothing left out): `avoid 0` avoids
   every plain square (event 0).
+
+**Segment 5 (sokal0 -> sokal, Sokal Keep), open.** Plan `plans/p15_c34d_05_sokal.plan` (lab `p15/seg05.plan`): the
+bot's event order 13 14 17 10 20 9 11 3 7 16 12 6 15 4 2 1 8 5, `prepare` / `heal` round each, checkpoints
+`s5c13` (after 15,1), `s5c9`, `s5a`, `s5c16`, `s5c4`; answers A PALE FORM RISES -> PARLAY (main's `parley` line),
+DO YOU TAKE IT -> YES (event 17's armour stands, the bot's choice). So far: p15f1-f3 (plan fixes: `avoid 99`, the
+armour's answer), **p15f4 and p15f7 destroyed in event 9 at 7,4** ("A LARGE FORCE OF ORCS AND HOBGOBLINS": 56
+figures; c34d's bot won it with CEDRIC at level 3 and casting), **p15f5, p15f6, p15f8 lost in the rest fights at
+15,1** (the `prepare` after the two fights on the way there: four interruptions in five rests, undead). The rest
+odds are the original's in ours too (p15f6 replayed: the same dice and interruptions, to draw 2935).
+- **MAGIC (Player 15):** the original's QUICK members cast only after Alt-M (MAGIC ON, off at every fight's start,
+  GAME.OVR 0xE457); the Player's fights so far all ran with MAGIC OFF (no Sleep), while main's bot casts. New:
+  `OP_MAGIC=1` (game.py) presses Alt-M once a fight, at its first computer turn (the original polling the keyboard
+  at a site that is no input screen, with monsters in the figure list), logged `MAGIC alt+m`; segment.py turns that
+  line into ours' `magic` key. From p15f8 on, Sokal runs use it.
+- **segment.py, fights with no combat menu:** the original's all-QUICK fights take no key, so nothing made ours wait
+  for their end; the CONTINUE BATTLE `n` and the Enter after it reached ours mid-fight and were lost (p15f6: ours
+  then took a later `y` as CONTINUE BATTLE YES). Now each "fight N ended" note inserts `fightend` (ours waits for the
+  fight's end or its CONTINUE BATTLE). p15f6's replay went from draw 2179 to 2935.
+- **Fights compared in ours:** p15c7 (segment 3's kobolds) matches to 876 (ARN's long sword: the original 2d4,
+  ours d8 against a kobold; zombies 2d4 in both); p15f6 (Sokal's rest fights) to 2935 (a member at 0 HP: one more
+  "who acts next" d100 in the original). Both to Combat (board).

@@ -49,6 +49,11 @@ class Game:
         self.nkeys = 0
         self.last = None
         self.unknown_sites = set()
+        # Player 15: OP_MAGIC=1: Alt-M once a fight, at its first computer turn (QUICK members cast only with MAGIC
+        # ON, off at every fight's start: GAME.OVR 0xE457, Combat's combat_screen.gd toggle_magic); player.py clears
+        # magic_sent when the fight is over
+        self.auto_magic = os.environ.get("OP_MAGIC") == "1"
+        self.magic_sent = False
         self.party_size = 0
         self.beat = time.monotonic()
         self.stale = None         # (the figures' hit points, since when) while dice are drawn
@@ -105,6 +110,12 @@ class Game:
             out.append((r[1:1 + min(r[0], 15)].decode("latin1"), r[0x11B], r[0x10C]))
             o, s = struct.unpack_from("<HH", r, 0x104)
         return out
+
+    def _nfigures(self):
+        try:
+            return len(self.figures())
+        except Exception:
+            return 0
 
     def fight_beat(self):
         """The heartbeat's look at the fight: a log line (figures, standing, hit points) and the stalemate
@@ -171,6 +182,12 @@ class Game:
                 prev = (rows, site)
                 time.sleep(0.05)
                 continue
+            if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.auto_magic \
+                    and not self.magic_sent \
+                    and len(self.party()) < self._nfigures():
+                self.magic_sent = True
+                _keys.key("alt+m")
+                self.log("MAGIC alt+m (MAGIC ON for the party's QUICK members) at %s" % site)
             if kind == "poll" and site not in self.unknown_sites:
                 self.unknown_sites.add(site)
                 self.log("SITE polled (not an input wait):", site)

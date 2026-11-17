@@ -1,0 +1,85 @@
+# Player 15: c34d segment 5, sokal0 -> sokal (main's playthrough.plan: explore, Sokal Keep 4:21).
+# The bot's event order (p12/botorder.py sokal0 sokal): 13 14 17 10 20 9 11 3 7 16 12 6 15 4 2 1 8 5; `prepare` before each, `heal`
+# after; walks cross every event (explore has no left-out ones: `avoid 99`, an event no square has). Menus by main's plan's 4:21 answers.
+area 4:21
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer GIVE ME THE POTION|GIVE
+answer A PALE FORM RISES|PARLAY
+answer DO YOU TAKE IT|YES
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+prepare
+walk 15,1 avoid 99
+heal
+checkpoint s5c13
+prepare
+walk 13,0 avoid 99
+heal
+prepare
+walk 12,0 avoid 99
+heal
+prepare
+walk 12,2 avoid 99
+heal
+prepare
+walk 7,2 avoid 99
+heal
+prepare
+walk 7,4 avoid 99
+heal
+checkpoint s5c9
+prepare
+walk 7,6 avoid 99
+heal
+checkpoint s5a
+prepare
+walk 4,5 avoid 99
+heal
+prepare
+walk 4,2 avoid 99
+heal
+prepare
+walk 4,4 avoid 99
+heal
+checkpoint s5c16
+prepare
+walk 7,10 avoid 99
+heal
+prepare
+walk 13,6 avoid 99
+heal
+prepare
+walk 15,6 avoid 99
+heal
+prepare
+walk 13,10 avoid 99
+heal
+checkpoint s5c4
+prepare
+walk 7,13 avoid 99
+heal
+prepare
+walk 6,13 avoid 99
+heal
+prepare
+walk 2,11 avoid 99
+heal
+prepare
+walk 2,8 avoid 99
+heal
+checkpoint sokal

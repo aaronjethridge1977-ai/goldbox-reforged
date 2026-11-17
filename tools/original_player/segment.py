@@ -51,6 +51,10 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         r = re.search(r"NOTE (?:heal )?rest .*?(\d+):(\d+):(\d+)", line)
         if r:     # Player 13: the rest's length, for ours' waits after the REST key (a day is ~1.2 s in ours)
             rest_min = int(r.group(1)) * 1440 + int(r.group(2)) * 60 + int(r.group(3))
+        if " MAGIC alt+m " in line:
+            # Player 15: the original's run pressed Alt-M in this fight (OP_MAGIC=1): ours' `magic` in the open fight
+            out += ["magic"] + (["tplog"] if tplog else [])
+            continue
         if re.search(r"NOTE fight fight \d+ ended", line):
             # Player 15: a fight the original played with no combat menu (all on QUICK) took no key, so nothing made
             # ours wait for its end: the CONTINUE BATTLE NO and the Enter after it reached ours mid-fight and were lost
