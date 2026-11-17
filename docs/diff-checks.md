@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 43: DAMAGE's pages and PRESS <ENTER>, checks 25 (5:6 the altar), 26-27 (New Phlan's shops), DIFFCHECKS 27/27
+## Chat 43: DAMAGE's pages and PRESS <ENTER>, checks 25-29 (5:6 the altar, New Phlan's shops, 5:5 the giants, 7:22 the rocks room), DIFFCHECKS 29/29
 
 - **The pause after scripted damage (the Lead's item 1, chat 42's finding):** the original's DAMAGE handler ends,
   whatever the form and whoever was hit, by drawing "press <enter>/<return> to continue" (GAME.OVR 0x37CD-0x37DF,
@@ -209,9 +209,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   **MATCH**, 0 differences each; no engine change. Pool's only shops are New Phlan's four (a scan of every ECL
   block for a COMBAT with 0x6EF6 = 1: 3:0 only). Lab `data/c35/chk26/`, `chk27/`. DIFFCHECKS 27/27; break test
   repeated (SUBTRACT 23/27, ADD over 200 26/27).
+- **Check 28, 5:5 (Valjevo, the tower giants, LEAVE)** (10,11, square type 2 → 0xA485): from c34d's
+  `bot_valjevo3.cfg` (11,7 W, 12:43) by ours' ENCAMP SAVE; nine steps over outdoor squares (patrol rolls: none at
+  seed 11111111) to "THIS TOWER IS OCCUPIED BY FOUR GIANTS...", PRESS BUTTON, "'FROGS AND TOADS NOT SAME THING...'"
+  YES / NO / ATTACK / LEAVE: LEAVE ("AS YOU QUICKLY LEAVE THE ROOM...", 0x9D0C) puts the party back on its previous
+  square (0x49F0/1: 9,11) turned round (W). No flag; it checks the previous-square fix of chat 42 in a third place.
+  Keys: the original `wait=2 left wait=1 up wait=1 right wait=1 up wait=1 up wait=1 up wait=1 left wait=1 up wait=1
+  left wait=1 up wait=1 right wait=1 up wait=1 up wait=1 left wait=1 up wait=3 enter wait=3 l wait=3`; ours the same
+  turns and steps from `load=G,wait,tpseed=11111111,`, then `Enter,wait,wait,L,wait,wait,wait,F2`. **MATCH**. Seen,
+  not changed: the original's status line still shows the old facing (E) after LEAVE until its next redraw (the
+  CAMPING line shows W); ours shows W at once.
+- **Check 29, 7:22 (Yarash's pyramid, outside): the rocks room with SEARCH on** (14,7, square type 14): from c34d's
+  `bot_pyramid2b.cfg` (15,12 S, 20:17); S (SEARCH), right, right, up x5, left, up: "YOU SEE ROCKS SCATTERED ABOUT THE
+  SMOOTH FLAGSTONES.", PRESS BUTTON, GO BACK / MOVE ON / THROW A ROCK: THROW A ROCK ("SUDDENLY IT DISAPPEARS WITH A
+  FLASH!", 0x4A4D bit 0), PRESS BUTTON, GO BACK. Seed 11111111. **MATCH**. (Without SEARCH the party is flashed away
+  to 7:23: coverage-areas.md, 7:22.)
+- `diffcheck.sh` runs 29 (**DIFFCHECKS 29/29**, ~45 s). Break test repeated at 29: SUBTRACT off by one caught (4,
+  18, 20, 21: 25/29); ADD over 200 caught (18: 28/29).
+- Not done: 6:1 (the slave pen's GET HIM, 0x4AA9 = 254, is behind a gate needing earlier state: `bot_heir` is after
+  it), the wilderness bands 6:25, 7:26, 8:27 (events by the overland position 0x49C3/0x49C4 through byte tables, an
+  encounter roll each step; 8:27's ruined castle, ENTER / LEAVE, sets 0x4AA0 bit 1 at overland 8,11).
 - 5:6's other no-fight events with a flag: the smokehouse (0,6: 0x4A69 bit 64) and the coal storeroom (9,5 / 1,13:
-  bit 16), both outside squares away (patrol rolls on the way). Areas no check visits now: 5:5, 6:1, 6:25, 7:22,
-  7:26, 8:27.
+  bit 16), both outside squares away (patrol rolls on the way). Areas no check visits now: 6:1, 6:25, 7:26, 8:27.
 
 ## Chat 42: check 24 (5:3 the portcullis), two engine fixes, DIFFCHECKS 24/24
 

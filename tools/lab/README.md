@@ -173,6 +173,18 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 43:** new checks 25-29 (5:6 the altar, New Phlan's two shops, 5:5 the giants, 7:22 the rocks room), each from
+a c34d checkpoint saved by ours' ENCAMP SAVE into an emptied slot G (`data/c43/slotG_backup/` holds the lab's own G:
+put it back after) and `mkcheck35.sh <n> <area> "<orig keys>" "<ours keys>"` (SEED=11111111 for the seeded ones);
+built in `data/c35/chk<n>/`, copied to `~/gbr/checks/data/<n>` and sealed **only once the engine change a check needs
+is on origin/main** (check 25 went in early and failed the other lanes' gates for ~15 minutes). Finding a no-fight
+event: `tools/dis.gd` for the block's script, `route.py` (`R.load(f, b)`, `R.route(start, goals, avoid)`,
+`R.keys(path, facing)`) for the keys; an ECL block's data tables sit at address - 0x9900 + 2 in the DAX block. For a
+route over outdoor squares with patrol rolls, try seeds in ours first (tpseed shares the original's dice).
+`shot43.sh` (main's lab only): ours windowed on :98 from a check's start (`CHK=<n>`, `K=<keys with shot=<png>>`).
+The wilderness bands (6:25, 7:26, 8:27) key their events to the overland position and roll encounters each step; 6:1's
+slave pen is behind a gate that needs earlier state: none of the four has a check yet.
+
 **Chat 42:** showcase item 5's new parts (main's lab only): `ui42.sh` = `ui40.sh` plus `SAVE=<cfg>` (start the
 `KEYS` replay from any save or checkpoint, copied); `uisteps.py` takes `esc`, not `Escape`; the recorder starts
 `LEAD` s after launch (`LEAD=6` keeps Godot's boot splash out of a take with `KEYS`). The takes' step lists are in
