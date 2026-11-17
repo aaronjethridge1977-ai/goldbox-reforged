@@ -357,6 +357,11 @@ func close_shop() -> State:
 	if state != State.SHOP:
 		return state
 	write_byte(SHOP_FLAG, 0)
+	# P72 (combat lane, Combat Chat 15): the shop's TREASURE list ends with the shop, as a fight's
+	# does at end_combat(); kept, a later fight whose event sets no TREASURE (the Slums orcs) took
+	# the shop's whole stock as its pile.
+	treasure = []
+	treasure_items = []
 	state = State.RUNNING
 	return run()
 

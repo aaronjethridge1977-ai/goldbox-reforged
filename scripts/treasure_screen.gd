@@ -113,7 +113,11 @@ func _refresh() -> void:
 		return
 	_draw_mode()
 	if _flash != "":
-		_scr.text(0, 24, _flash.rpad(40), GameScreen.GREEN)
+		# P71: the refusal takes row 24 for its moment (text() draws only a letter's pixels, so the
+		# menu's words stayed under it); the menu comes back after.
+		_scr.img.fill_rect(Rect2i(0, 24 * 8, GameScreen.W, 8), GameScreen.EGA[0])
+		_scr.forget_menu(24)
+		_scr.text(0, 24, _flash, GameScreen.GREEN)
 		_scr.update()
 
 
