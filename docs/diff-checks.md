@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 48: check 30 (8:29 Kuto's well and the catacombs, the secret door), DIFFCHECKS 30/30
+## Chat 48: checks 30 (8:29 Kuto's well and the catacombs, the secret door) and 31 (8:27, the first wilderness band), DIFFCHECKS 31/31
 
 - **Two engine fixes first** (7ce7091, d15afe3; Player 16's request): a script's [6B72] reads a plain cell, not the race
   (GAME.OVR 0x7C8F, the character window's read, has no case for 0x72; DOSBox at 8:29 5,8: the cell 0, 0x980D 0 after
@@ -188,6 +188,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   **DIFFCHECKS 30/30, ~40 s.** Break test (`data/c44/brk.py` on the clone `data/c44/brk` at d15afe3): SUBTRACT off by one
   caught (26/30), ADD over 200 caught (29/30). Also replayed (main's `data/c48/seglab/`, `OP_LAB` set): p16c2 (20 bumps
   north) 186 of 186 draws identical; p13b5 (Player 14's PICK) identical to draw 2350, then the kobold fight (Combat).
+
+- **Check 31, 8:27 (the east wilderness band): the ruined castle, LEAVE.** The first check in a band. Start: c34d's
+  `bot_band3.cfg` (overland 3,20 in band 2, shown as 29,20, 12:50) saved by ours' ENCAMP SAVE as slot G (as check 24's
+  start); the original loads it. Keys: twelve steps north and eight east (the band's arrows move by compass; each step
+  is 12 hours and an encounter roll; with tpseed 11111111 no encounter on this route), arriving at overland 11,8 (the
+  band's position tables at 0xABA6 / 0xABB4 / 0xABAB / 0xABB9: y 8, x 11 is the castle; the docs' earlier "8,11" was
+  y,x): "YOU FIND A RUINED CASTLE SURROUNDED BY QUICKSAND..." (0x4AA0 bit 0 set on arrival), ENTER / LEAVE: LEAVE. The
+  original: `boot j`, `seed.py set 11111111`, `up` x12 and `right` x8 with waits, `l`, then ENCAMP SAVE J (renamed F).
+  Ours: `load=G,wait,tpseed=11111111,` the same arrows, `wait,L,wait,wait,F2`. **MATCH**; one step short DIFFERS (a
+  scratch copy, removed). Lab `data/c48/chk31/` (the start from `data/c48/g27/`), sealed as `~/gbr/checks/data/31`.
+- `diffcheck.sh` runs 31 (**DIFFCHECKS 31/31, ~40 s**). Break test repeated at 31: SUBTRACT 27/31, ADD over 200 30/31.
+- Areas no check visits now: 6:1, 6:25, 7:26. A band check is cheap this way (a c34d checkpoint in the band, ENCAMP
+  SAVE, a seed with no encounter on the route): 7:26 next (`bot_band1.cfg` is 6:25), then 6:1 (needs earlier state).
 
 ## Chat 44: the replay waits for the engine, not for frames
 
