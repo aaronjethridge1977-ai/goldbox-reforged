@@ -907,7 +907,7 @@ nobody dead, 5 with deaths** (at level 2: 8 wipes, 2 wins with a death in 10). N
 
 **Queue items 1 and 2.** Main's PICK still rolls `_door_rng` (origin/main a19aed7): segments 2 and 3 in ours wait.
 Combat's answers rerun on origin/main: **segment 1 in ours, 0 differences** (`segment.py p13a1 begin shopped
---start=c34d_start13`); **p15f6 matches to 5646** of 9841 (the formation with members down: Combat's open item).
+--start=c34d_start13`); **p15f6 matched to 5646** of 9841 on a19aed7 and, on Combat Chat 17's 9b677c8 (members down get squares too), **draws identical, all 9841**.
 
 **Segment 5's deferred events: `sokal` reached** (plan `plans/p15_c34d_05r_sokal_rest.plan`, lab `p16/seg05r.plan`).
 p16a1 (seed 40404041) lost a member in event 9; **p16a2 (40404042) won event 9 with nobody dead** (fight 6, 56
