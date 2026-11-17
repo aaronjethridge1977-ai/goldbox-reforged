@@ -193,6 +193,7 @@ func copy_from(src: EclVM) -> void:
 	menu_vertical = src.menu_vertical
 	menu_question = src.menu_question
 	_menu_kind = src._menu_kind
+	_press_queue = src._press_queue.duplicate(true)
 	_enc = src._enc.duplicate(true)
 	_menu_dest = src._menu_dest.duplicate()
 	_parlay_values = src._parlay_values.duplicate()
@@ -299,6 +300,12 @@ func choose(index: int) -> State:
 		state = State.RUNNING
 		return run()
 	if _menu_kind == "press":
+		if not _press_queue.is_empty():
+			var page: Array = _press_queue.pop_front()
+			text = page[0]
+			text_changed = true
+			menu = [page[1]]
+			return state
 		_menu_kind = ""
 		menu = []
 		state = State.RUNNING
@@ -612,17 +619,61 @@ func _load_char(v: int) -> void:
 		selected_creature = k
 
 
+## The text box as the original's printer fills it during a DAMAGE (chat 43, DOSBox at 5:6's
+## altar): rows 17-22 (0..5 here), 38 columns. Each hit line starts on a new row (GAME.OVR 0x9691
+## sets the column to 38 first); a line that fills the row leaves the cursor on the next one; a
+## new row past the box shows "PRESS ANY KEY TO CONTINUE" (the printer) and starts a clear box,
+## and a cursor already past it before a line gives "PRESS <ENTER>/<RETURN> TO CONTINUE" (0x9661).
+## Pages waiting for their key: [text, row 24's prompt] each; the last one is the box itself.
+const PRESS_ANY_KEY := "PRESS ANY KEY TO CONTINUE"
+var _box_rows := PackedStringArray()
+var _box_row := 0
+var _box_pages: Array = []
+## The pages still to show after the one on screen (a "press" menu's next texts).
+var _press_queue: Array = []
+
+
+func _box_start() -> void:
+	_box_rows = GameScreen.wrap(text, 38) if text != "" else PackedStringArray([""])
+	_box_row = _box_rows.size() - 1
+	if _box_rows[_box_row].length() >= 38:
+		_box_row += 1
+	_box_pages = []
+
+
+func _box_page(prompt: String) -> void:
+	_box_pages.append(["\n".join(_box_rows), prompt])
+	_box_rows = PackedStringArray([""])
+	_box_row = 0
+
+
+func _box_line(line: String) -> void:
+	var fresh := false
+	if _box_row > 5:
+		_box_page(PRESS_TO_CONTINUE)
+		fresh = true      # the box starts clear at its top row
+	var parts := GameScreen.wrap(line, 38)
+	for i in parts.size():
+		# A new line always moves to the next row; its own wrapped rest only when the part
+		# before didn't fill its row (that already moved the cursor).
+		if (i == 0 and not fresh) or (i > 0 and parts[i - 1].length() < 38):
+			_box_row += 1
+		if _box_row > 5:
+			_box_page(PRESS_ANY_KEY)
+		while _box_rows.size() <= _box_row:
+			_box_rows.append("")
+		_box_rows[_box_row] = parts[i]
+		if parts[i].length() >= 38:
+			_box_row += 1
+
+
 ## Damage from a script (traps, green slime, falling...), as the original applies it:
 ## "<NAME> IS HIT FOR n POINTS OF DAMAGE." or "<NAME> DIES." when it is more than 10 past
-## the hit points left.
+## the hit points left, each on its own row (_box_line).
 func _hurt(m: PartyMember, damage: int) -> void:
 	if m.status == PartyMember.STATUS_DEAD:
 		return
-	if m.hp + 10 < damage:
-		text += "  %s DIES. " % m.name
-	else:
-		text += "  %s IS HIT FOR %d POINTS OF DAMAGE. " % [m.name, damage]
-	text_changed = true
+	_box_line("%s DIES." % m.name if m.hp + 10 < damage else "%s IS HIT FOR %d POINTS OF DAMAGE." % [m.name, damage])
 	m.hp -= damage
 	if m.hp > 0:
 		return
@@ -654,6 +705,7 @@ func _damage(a: Array) -> void:
 			t += _ri(1, maxi(size, 1))
 		return t
 	var damage: int = roll.call()
+	_box_start()
 	# The original picks a random member right after the damage roll whenever 0x40 (the whole
 	# party) is off, whatever the form: one Random(party size) the volley form and the selected
 	# member's form never use (GAME.OVR 0x354C-0x355E; trace of 5:3's gate, chat 42).
@@ -686,6 +738,8 @@ func _damage(a: Array) -> void:
 	for m in party:
 		if m.status == PartyMember.STATUS_OKAY:
 			standing = true
+	text = "\n".join(_box_rows)
+	text_changed = true
 	if not standing and not party.is_empty():
 		text += "\nTHE ENTIRE PARTY IS KILLED!"
 		program = 3
@@ -693,8 +747,13 @@ func _damage(a: Array) -> void:
 		return
 	# The original always ends DAMAGE with "PRESS <ENTER>/<RETURN> TO CONTINUE" on row 24 and
 	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
-	# 0x709:0xBF5; chat 43, 5:3's boulders).
-	_pause_for_menu({}, [PRESS_TO_CONTINUE])
+	# 0x709:0xBF5; chat 43, 5:3's boulders); full boxes before it wait the same way.
+	_press_queue = _box_pages
+	_press_queue.append([text, PRESS_TO_CONTINUE])
+	_box_pages = []
+	var page: Array = _press_queue.pop_front()
+	text = page[0]
+	_pause_for_menu({}, [page[1]])
 	_menu_kind = "press"
 
 

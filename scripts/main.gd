@@ -3201,7 +3201,8 @@ func _draw_screen() -> void:
 		menu.erase("AREA")
 	if _searching:
 		place += " SEARCH"
-	var lines := GameScreen.wrap(body.strip_edges(), 38)
+	# A DAMAGE page keeps its leading blank row (the original's cursor starts the first hit a row down).
+	var lines := GameScreen.wrap(body.strip_edges(not press24, true), 38)
 	var white := -1
 	if not vertical.is_empty():
 		white = lines.size() + selected
@@ -3227,7 +3228,7 @@ func _draw_screen() -> void:
 		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
 		_screen.update()
 	elif press24:
-		_screen.text(0, 24, EclVM.PRESS_TO_CONTINUE, GameScreen.WHITE)   # GAME.OVR 0x37CD, colour 15
+		_screen.text(0, 24, String(_vm.menu[0]) if not _vm.menu.is_empty() else EclVM.PRESS_TO_CONTINUE, GameScreen.WHITE)   # GAME.OVR 0x37CD, colour 15
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU

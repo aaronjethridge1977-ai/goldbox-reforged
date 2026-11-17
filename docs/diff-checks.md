@@ -172,18 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 43: DAMAGE's PRESS <ENTER> (check 24's keys), DIFFCHECKS 24/24
+## Chat 43: DAMAGE's pages and PRESS <ENTER>, check 25 (5:6 the altar), DIFFCHECKS 25/25
 
 - **The pause after scripted damage (the Lead's item 1, chat 42's finding):** the original's DAMAGE handler ends,
   whatever the form and whoever was hit, by drawing "press <enter>/<return> to continue" (GAME.OVR 0x37CD-0x37DF,
   colour 15) through START.EXE 0x709:0xBF5: row 24 cleared, the text at column 0, then GetKey (0x899:0x59), so any
-  key goes on. Ours now does the same (`ecl_vm.gd _damage`: a one-item "press" menu after the lines; `main.gd` draws
-  it on row 24 in white and takes any key, the damage lines left in the box). Not after THE ENTIRE PARTY IS KILLED
-  (ours opens the end program there, as before).
+  key goes on. Not after THE ENTIRE PARTY IS KILLED (ours opens the end program there, as before).
+- **The hit lines (GAME.OVR 0x959F, seen in DOSBox at check 25):** "  NAME is hit FOR n points of Damage." / "  NAME
+  dies. ", printed with the column set to 38 first (0x9691), so each starts on a new row; a line that fills its row
+  leaves the cursor on the next one (a blank row follows it: CEDRIC's and DIRTEN's 38-character lines); a new row
+  past row 22 makes the printer show "PRESS ANY KEY TO CONTINUE" and start a cleared box at row 17; a cursor already
+  past row 22 before a line gives a "PRESS <ENTER>/<RETURN>" page instead (0x9661, not seen). Each member's HP drops
+  as their line prints. Ours (`ecl_vm.gd _box_line`): the same rows and pages as a queue of "press" menus
+  (`_press_queue`); `main.gd` draws the page's prompt on row 24 in white, takes any key, and keeps a page's leading
+  blank row. **Left:** ours' party list shows every member's new HP from the first page (the original lowers them
+  page by page; the list is drawn by `game_screen.gd`, Combat's). Ours' pages at the altar: lab
+  `data/c43/shot/press.png`; the original's in the run's dumps (`data/c35/chk25/orig.log` has only the end).
 - **Check 24's ours keys** gain the key the original's already had (`...End,wait,Enter,wait,wait,wait,Enter,wait,E,
-  ...`), resealed (`seal.sh 24`). With the old keys ours now fails check 24 (0x49C0: the E went to the prompt, the
-  door's EXIT never chosen), so the check covers the pause. Screenshot of the prompt: lab `data/c43/shot/press.png`
-  (`shot43.sh`).
+  ...`), resealed (`seal.sh 24`). With the old keys ours now fails check 24 (0x49C0: the E went to the prompt).
+- **Check 25, 5:6 (Valjevo, temple side): the altar** (1,0, square type 8 → 0xA758, inside: bit 64, no patrol
+  roll). Start: c34d's `bot_valjevo6.cfg` (0,0 W, 07:39) saved by ours' ENCAMP SAVE into an empty slot G (the
+  original loads it). "YOU ARE BEFORE THE ALTER. NEAR IT IS THE OFFERING BOX..." YES: 0x4A6A bit 1, the treasure
+  (THE PARTY HAS FOUND TREASURE!, EXIT, NO to going back), "THERE IS A FEELING OF SOMETHING IMMENSE AND EVIL..."
+  (PRESS BUTTON), DAMAGE 224, 2, 10, 2, 0 (the whole party, no save: one roll, 12 each at seed 11111111), two pages
+  (four lines, then three), the swords: NO. Keys: the original `wait=2 right wait=1 right wait=1 up wait=3 y wait=3
+  enter wait=2 e wait=2 n wait=4 enter wait=4 space wait=3 enter wait=3 n wait=2` (SEED=11111111); ours
+  `load=G,wait,tpseed=11111111,Right,wait,Right,wait,Up,wait,wait,Y,wait,wait,Enter,wait,E,wait,N,wait,wait,Enter,
+  wait,wait,Space,wait,Enter,wait,N,wait,wait,F2`. **MATCH**, 0 differences. Lab `data/c35/chk25/`
+  (`mkcheck35.sh 25`), sealed as `~/gbr/checks/data/25`; `diffcheck.sh` runs 25 (~38 s). Break test repeated (a lab
+  copy, removed): SUBTRACT off by one caught (4, 18, 20, 21: 21/25); ADD over 200 caught (18: 24/25).
+- 5:6's other no-fight events with a flag: the smokehouse (0,6: 0x4A69 bit 64) and the coal storeroom (9,5 / 1,13:
+  bit 16), both outside squares away (patrol rolls on the way). Areas no check visits now: 5:5, 6:1, 6:25, 7:22,
+  7:26, 8:27.
 
 ## Chat 42: check 24 (5:3 the portcullis), two engine fixes, DIFFCHECKS 24/24
 
