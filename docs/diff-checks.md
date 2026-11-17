@@ -172,6 +172,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 48: check 30 (8:29 Kuto's well and the catacombs, the secret door), DIFFCHECKS 30/30
+
+- **Two engine fixes first** (7ce7091, d15afe3; Player 16's request): a script's [6B72] reads a plain cell, not the race
+  (GAME.OVR 0x7C8F, the character window's read, has no case for 0x72; DOSBox at 8:29 5,8: the cell 0, 0x980D 0 after
+  the search loop), so the secret-door searches' elf / half-elf +1 never applies; and every step attempt runs the
+  square's event (ECL entry [0x49E5]) afterwards, a wall bump, a step the on-move script refuses and a locked door's
+  refused try too (GAME.OVR 0x41A1-0x422D), unless the on-move script loaded a new script.
+- **Check 30** is a Player run, not a lab save: Player 16's p16c3 in the original (start `p2start/p16c1_s6well`, the
+  original's dice from tpseed 60606063), its keys as `segment.py` gives them (without `tplog`), slot H renamed G (start)
+  and F (the original's checkpoint `s6pre12` at 8:29 1,10), the character file names in the saves renamed with them.
+  It walks into Kuto's well, the arrow volley at 7,8, the secret door at 5,8 (eight d6 on arrival, nothing found; eight
+  more at the bump north; LOOK finds it), the arrows at 4,13 and 2,10. Files in main's lab `data/c48/chk30/`.
+- **Results:** MATCH on d15afe3; DIFFERS on f37a477 (before the fixes: ours found the door on arrival). All thirty:
+  **DIFFCHECKS 30/30, ~40 s.** Break test (`data/c44/brk.py` on the clone `data/c44/brk` at d15afe3): SUBTRACT off by one
+  caught (26/30), ADD over 200 caught (29/30). Also replayed (main's `data/c48/seglab/`, `OP_LAB` set): p16c2 (20 bumps
+  north) 186 of 186 draws identical; p13b5 (Player 14's PICK) identical to draw 2350, then the kobold fight (Combat).
+
 ## Chat 44: the replay waits for the engine, not for frames
 
 No new checks (the Lead's note: the release's map first). Combat Chat 15 found checks 21 (3:11) and 24 (5:3) passing only
