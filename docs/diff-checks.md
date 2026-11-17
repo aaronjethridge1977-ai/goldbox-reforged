@@ -172,6 +172,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 49: check 34 (8:27, the boat to New Phlan), DIFFCHECKS 34/34
+
+- **Check 34, 8:27 again: a second event in a checked band, the cheap way.** 8:27's band table (y at 0xABA6
+  [8, 14, 15, 16, 29], counts 0xABB4 [1, 2, 3, 2, 1], x 0xABAB [11, 6, 7, 5, 6, 7, 6, 7, 9], kinds 0xABB9 [0, 1, 1,
+  1, 2, 1, 1, 1, 3]): 0 the ruined castle (check 31), 1 the kobold horde (a fight), 2 the two caves (6,15: every
+  neighbour is a kobold square), 3 the boat at 9,29. Start: check 31's (c34d's `bot_band3`, overland 3,20, shown 29,20
+  E 12:50); six steps east and nine south (tpseed 11111111; no encounter on this route): "THERE IS A BOAT DOCKED HERE
+  THAT WILL RETURN YOU TO THE CIVILIZED SECTION OF PHLAN. WILL YOU TAKE IT?", TAKE BOAT / STAY: STAY (`S`; 0xAAA2
+  redraws the band's marks, writes nothing). The original: `boot j`, `seed.py set 11111111`, `right` x6, `down` x9,
+  `s`, ENCAMP SAVE J (renamed F, the character-file names patched). Ours: `load=G,wait,tpseed=11111111,` the same
+  arrows, `wait,S,wait,wait,F2`. **MATCH** on c6f6d30; one step short DIFFERS (0x49C4 28 / 29, the clock). Lab
+  `data/c49/chk34/`, sealed as `~/gbr/checks/data/34`. Break test at 34: SUBTRACT 30/34, ADD over 200 33/34.
+- Seen, not a difference: the band scripts' eight-way tables (0x033D) are the heading times two; the original takes no
+  diagonal step either (Home, PgUp, keypad 7 and 9 do nothing in the band).
+- Areas no check visits: 6:1 only, as before.
+
 ## Chat 48: checks 30-33 (8:29 the catacombs' secret door; the three wilderness bands 8:27, 6:25, 7:26), DIFFCHECKS 33/33
 
 - **Two engine fixes first** (7ce7091, d15afe3; Player 16's request): a script's [6B72] reads a plain cell, not the race

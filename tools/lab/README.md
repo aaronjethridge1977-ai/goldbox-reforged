@@ -173,6 +173,15 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 49:** P74 seen in DOSBox from check 26's start in slot J (3:0 13,9; `pl.py do walk=3:0:4,12`, `y`, `s` for ARN
+with no coins): the inn's not-enough path leaves the party at 4,12 S, and a rest there brings the watch, as ours. Ours
+from the same save: `KEYS=... data/c44/onecheck.sh <repo> 26 <out>` (a check's start with other keys; the log shows each
+key's screen). Check 34 (8:27's boat, STAY) in `data/c49/chk34/`. Start time measured with two `git archive` copies in
+/tmp (old and new main.gd with `Time.get_ticks_msec()` prints at the folder line and the first `process_frame`). The
+Windows build runs from WSL headless: `GoldBoxReforged.exe --headless --quit-after 400 --log-file 'D:\...\x.log' --
+'--game-path=D:\...\POOLRAD'` (no window; the log gets the report line). The "1 ObjectDB instance was leaked at exit"
+line in `--keys` replays is old (932a8a8 has it too). Slot J put back from `data/c48/slotJ_backup/`.
+
 **Chat 48:** the original's character-window cells and script bytes: `c48/cell.py <hex addr> [n]` reads the 16-bit
 cells of 0x6B00-0x6EFF (DS:0x49D6 + 2*addr + 0x2A00) and 0x9700-0x98FF (DS:0x49DA + 2*addr - 0x2E00); `c48/scr.py
 <hex addr> [n]` the script image 0x9900-0xB6FF (DS:0x49DE + addr + 0x6700). **A DAX ECL block has a 2-byte header:**
