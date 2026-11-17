@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 43: DAMAGE's pages and PRESS <ENTER>, check 25 (5:6 the altar), DIFFCHECKS 25/25
+## Chat 43: DAMAGE's pages and PRESS <ENTER>, checks 25 (5:6 the altar), 26-27 (New Phlan's shops), DIFFCHECKS 27/27
 
 - **The pause after scripted damage (the Lead's item 1, chat 42's finding):** the original's DAMAGE handler ends,
   whatever the form and whoever was hit, by drawing "press <enter>/<return> to continue" (GAME.OVR 0x37CD-0x37DF,
@@ -201,6 +201,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   wait,wait,Space,wait,Enter,wait,N,wait,wait,F2`. **MATCH**, 0 differences. Lab `data/c35/chk25/`
   (`mkcheck35.sh 25`), sealed as `~/gbr/checks/data/25`; `diffcheck.sh` runs 25 (~38 s). Break test repeated (a lab
   copy, removed): SUBTRACT off by one caught (4, 18, 20, 21: 21/25); ADD over 200 caught (18: 24/25).
+- **Checks 26 and 27, 3:0 (New Phlan): EXIT from a shop with no purchase** (the Lead's question for Jeremy: where
+  does the party stand after a shop?). Starts: c34d's `bot_shopped.cfg` with its place set beside a shop door (13,9
+  N for the arms and armour shop at 13,8; 11,9 S for the silver shop at 11,10), saved by ours' ENCAMP SAVE into slot
+  G. Keys: the original `wait=2 up wait=3 y wait=3 e wait=3`; ours `load=G,wait,Up,wait,wait,Y,wait,wait,E,wait,
+  wait,F2`. Both games leave the party on the shop's square, facing as it came in (13,8 N / 11,10 S, 06:01).
+  **MATCH**, 0 differences each; no engine change. Pool's only shops are New Phlan's four (a scan of every ECL
+  block for a COMBAT with 0x6EF6 = 1: 3:0 only). Lab `data/c35/chk26/`, `chk27/`. DIFFCHECKS 27/27; break test
+  repeated (SUBTRACT 23/27, ADD over 200 26/27).
 - 5:6's other no-fight events with a flag: the smokehouse (0,6: 0x4A69 bit 64) and the coal storeroom (9,5 / 1,13:
   bit 16), both outside squares away (patrol rolls on the way). Areas no check visits now: 5:5, 6:1, 6:25, 7:22,
   7:26, 8:27.
