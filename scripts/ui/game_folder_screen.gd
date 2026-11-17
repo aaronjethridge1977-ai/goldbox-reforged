@@ -65,6 +65,7 @@ var _dialog: FileDialog
 var _js_callback = null        # keeps the JavaScript callback alive
 var _expected := 0
 var _received := 0
+var _working := false           # the chosen folder is being checked, then the game loads
 
 
 func _ready() -> void:
@@ -247,7 +248,7 @@ func _shield(img: Image, r: Rect2i) -> void:
 # --- Keys and the mouse -----------------------------------------------------------------------
 
 func _busy() -> bool:
-	return _dialog != null and _dialog.visible
+	return _working or (_dialog != null and _dialog.visible)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -345,12 +346,30 @@ static func fit(path: String, n: int) -> String:
 	return path if path.length() <= n else "..." + path.right(n - 3)
 
 
+## Each step's line is drawn before its work starts (the check, then the game's load, which holds
+## the screen a second or so: Jeremy's test of build 2), so the screen never looks hung.
 func _on_dir(path: String) -> void:
+	_working = true
 	_folder = fit(path, 28)
+	await _show("CHECKING THE FOLDER...")
 	var found := resolve(path)
 	if found == "":
+		_working = false
 		_say("NO GEO1.DAX IN THAT FOLDER: CHOOSE THE ONE THAT HOLDS THE GAME'S FILES.", RED)
 		return
+	await _start(found)
+
+
+## Says the line and waits until a frame holding it has been drawn (the dialog's own close too).
+func _show(text: String) -> void:
+	_say(text)
+	for i in 2:
+		await RenderingServer.frame_post_draw
+
+
+func _start(found: String) -> void:
+	_working = true
+	await _show("LOADING THE GAME...")
 	GameData.save_game_path(found)
 	ready_to_start.emit(found)
 
@@ -403,7 +422,6 @@ func _on_web_file(args: Array) -> void:
 			_say("COPYING THE GAME'S FILES: %d OF %d" % [_received, _expected])
 		"done":
 			if GameData.is_valid_game_path(WEB_FOLDER):
-				GameData.save_game_path(WEB_FOLDER)
-				ready_to_start.emit(WEB_FOLDER)
+				await _start(WEB_FOLDER)
 			else:
 				_say("NO GEO1.DAX IN THAT FOLDER: CHOOSE THE ONE THAT HOLDS THE GAME'S FILES.", RED)
