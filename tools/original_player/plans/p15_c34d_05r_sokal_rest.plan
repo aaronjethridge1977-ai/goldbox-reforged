@@ -1,0 +1,51 @@
+# Player 15: segment 5's deferred events (9, 11, 12) after segment 6a's training (s6t): back to Sokal Keep by boat
+# (the harbor's pier 15,1), event 9 (7,4), 11 (7,6), 12 (7,10, the pale form: PARLAY, NICE), checkpoint sokal.
+area 3:0
+rules ../../plans/playthrough.plan
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer A PALE FORM RISES|PARLAY
+answer DO YOU TAKE IT|YES
+walk 14,1 through 1,2,3,4,5,6,9,19,20,21,22,23,24,25
+step E
+area 4:21
+prepare
+walk 7,2 avoid 99
+heal
+prepare
+checkpoint s5r9
+walk 7,4 avoid 99
+heal
+prepare
+walk 7,6 avoid 99
+heal
+prepare
+walk 7,10 avoid 99
+heal
+checkpoint sokal

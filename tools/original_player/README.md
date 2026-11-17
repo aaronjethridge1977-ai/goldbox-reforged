@@ -895,3 +895,10 @@ the inn till midnight, the clerk, the sale with pool and share (each ~255 platin
 CEDRIC 3** (c34d's bot at `kuto`: ARN 3, BRAM 3, CEDRIC 4, ELWEN 2/2/1, LIRA 2/2, DORN 2/3). Save `p2start/p15h6_s6t`
 (3:0 4,12, the inn). Part b, Kuto's Well (travel 8:29 by the Slums' 0,4 W, explore: CLIMB DOWN NO until no event is
 left, NAILED SHUT YES, SURRENDER/FIGHT FIGHT, the catacombs), is for Player 16.
+
+**Segment 5's deferred events at level 3** (plan `plans/p15_c34d_05r_sokal_rest.plan`, lab `p15/seg05r.plan`, from
+`p2start/p15h6_s6t`: the pier, the boat, a walk to 7,2 that crosses event 9's squares, then 7,6 and 7,10, checkpoint
+`sokal`): p15i1 (seed 30303030) **won event 9 with nobody dead** (ELWEN and LIRA unconscious) and then stopped on a
+tool bug (an interrupted rest's MEMORIZE seen as a repeat: fixed, `memo_last` cleared on an interruption); p15i2
+(the same seed: other dice) and p15i3 won it with members dead, as did p15i4, p15i5 and p15i6 (lab `p15/tries3.sh`): **at level 3, 6 tries: 1 win with
+nobody dead, 5 with deaths** (at level 2: 8 wipes, 2 wins with a death in 10). No `sokal` checkpoint yet.
