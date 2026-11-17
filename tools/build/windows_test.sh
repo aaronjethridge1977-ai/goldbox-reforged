@@ -34,6 +34,9 @@ START=${SMOKE_START:-$HOME/gbr/checks/data/22/start}
 CFG=${SMOKE_CFG:-$HOME/gbr/checks/data/22/ours.cfg}
 SD=${SMOKE_DISPLAY:-:95}
 NAME=$(basename "$OUT"); ZIP=goldbox-reforged-$NAME   # test 1: goldbox-reforged-<folder>.zip
+# A release version (no suffix, e.g. 0.1.0; chat 45): README-windows-release.txt (no clean-machine test), the zip
+# goldbox-reforged-<version>-windows.zip.
+RELEASE=""; case "$V" in *-*) ;; *) RELEASE=1; ZIP=goldbox-reforged-$V-windows;; esac
 fail() { echo "BUILD FAILED: $*"; exit 1; }
 [ -e "$OUT" ] && fail "$OUT exists (a build is never overwritten)"
 [ -x "$GODOT" ] || fail "no Godot at $GODOT"
@@ -118,10 +121,11 @@ echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (c) title \"$titl
 
 # 5. README, licence, zip, info.
 DATE=$(date +%F)
-HEAD_LINE="GOLD BOX REFORGED $V (Windows test build, $DATE)"
+HEAD_LINE="GOLD BOX REFORGED $V (Windows test build, $DATE)"; RM=README-windows.txt
+[ -n "$RELEASE" ] && HEAD_LINE="GOLD BOX REFORGED $V (Windows, $DATE)" && RM=README-windows-release.txt
 RULE=$(printf '=%.0s' $(seq 1 ${#HEAD_LINE}))
 sed -e "s/@VERSION@/$V/g" -e "s/@DATE@/$DATE/g" -e "s/@ZIP@/$ZIP.zip/g" -e "s/@COMMIT@/$COMMIT/g" -e "s/@RULE@/$RULE/" \
-	"$HERE/README-windows.txt" | sed 's/$/\r/' > "$T/out/README.txt"
+	"$HERE/$RM" | sed 's/$/\r/' > "$T/out/README.txt"
 grep -q '@' "$T/out/README.txt" && grep -n '@[A-Z]*@' "$T/out/README.txt" && fail "README placeholders left"
 sed 's/$/\r/' "$T/src/LICENSE" > "$T/out/LICENSE.txt"
 python3 - "$T/out" "$ZIP" <<'E'

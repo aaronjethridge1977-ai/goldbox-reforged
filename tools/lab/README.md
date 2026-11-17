@@ -173,6 +173,14 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 45:** test build 2 and 0.1.0 from cbfa5e7 (`tools/build/windows_test.sh`; a version with no suffix is a
+release build: `README-windows-release.txt`, the zip `goldbox-reforged-<version>-windows.zip`). Delivered:
+`builds/windows-test-2026-11-17/` (0.1.0-test2) and `builds/release-0.1.0/` (+ `release-notes.md` for `gh release
+create`). `ui45.sh` (main's lab only) = `ui42.sh` plus `GAMEP=<game folder>`, for takes from a scratch game copy (the
+lab's slot F is now a 7:22 save; chat 42's slot F is check 23's original end, `data/c35/chk23/orig`, copied into
+`data/c45/gF`). Since chat 44's replay fix a `wait` passes in a few frames: pad `KEYS` with ~400 waits, or the
+replay runs out and the game quits mid-take (a black end). Step lists of the re-shot clips: `data/c45/shots/`.
+
 **Chat 44:** the `--keys` replay (main.gd `_replay_keys`) waits after each key until the engine is idle (no script DELAY
 or walk playing), at least 4 frames, ceiling 300 frames and 5 s whichever later (was 300 frames: with fast frames a
 chain of DELAYs outlasted them and checks 21 / 24 failed with Combat Chat 15's automap). `data/c44/onecheck.sh <src> <n>
