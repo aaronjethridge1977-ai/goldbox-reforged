@@ -885,3 +885,13 @@ odds are the original's in ours too (p15f6 replayed: the same dice and interrupt
 Lab (Player 15): `p15/` (seg03.plan, seg03t.plan, seg04.plan, seg05.plan, oursfight.py, tries.sh, screens), the lab's
 `p14/q.sh` (copies a start under its own names too), saves `p2start/p14b6_slums`, `p15c5_s3a`, `p15c5_s3t`,
 `p15d8_slums2`, `p15e3_sokal0`, `p15f4_s5c13`, `p15f14_s5pre9`; runs p15c1-c7, p15d1-d8, p15e1-e3, p15f1-f17.
+
+**Segment 6, part a (s5b -> s6t): reached** (p15h6, seed 20202020, from `p2start/p15g2_s5b`; plan
+`plans/p15_c34d_06a_town.plan`): the boat back (a walk onto Sokal's 7,15, then a step S: TAKE A BOAT BACK TO PHLAN
+YES), the walk from the pier crosses the temple of Tyr (3:0 event 6 at 11,3; no route round it): DO YOU SEEK
+HEALING YES, then the temple's HEAL VIEW POOL APPRAISE EXIT: EXIT (the bot's "leaving temple"; NO puts the party
+back on 11,2 and the walker, whose refusal rule only sees a turn on the same square, tried again: a gap to close),
+the inn till midnight, the clerk, the sale with pool and share (each ~255 platinum), the four halls: **ARN 3, BRAM 3,
+CEDRIC 3** (c34d's bot at `kuto`: ARN 3, BRAM 3, CEDRIC 4, ELWEN 2/2/1, LIRA 2/2, DORN 2/3). Save `p2start/p15h6_s6t`
+(3:0 4,12, the inn). Part b, Kuto's Well (travel 8:29 by the Slums' 0,4 W, explore: CLIMB DOWN NO until no event is
+left, NAILED SHUT YES, SURRENDER/FIGHT FIGHT, the catacombs), is for Player 16.

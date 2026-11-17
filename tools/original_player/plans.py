@@ -287,7 +287,7 @@ class Heal:
                 return True, None, ""
             if h.get("op") and h["op"][0] == "rest" and p.fights > h["fights0"]:
                 h["interrupts"] += 1
-                h["op"] = None
+                h["op"], h["memo_last"] = None, None     # Player 15: the rest's spells may be lost: MEMORIZE again
                 p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
                                " again)" % p.fights)
                 if p.plan.inntrip and not getattr(p, "on_trip", False) and not self.inn:
