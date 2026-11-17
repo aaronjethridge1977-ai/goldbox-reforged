@@ -125,7 +125,7 @@ var program := -1
 ## The character window: ECL addresses 0x6B00 + offset read and write fields of the selected
 ## party member (LOAD_CHAR, WHO), at the offsets the Gold Box engine uses:
 ##   0x00 name   0x18 constitution   0x21.. memorized spells (from 1, as SPELL counts)
-##   0x72 race   0x73 class   0x9B save vs petrification   0xA5..0xAC thief skills
+##   0x73 class (0x72 race is not read: a plain cell, as GAME.OVR 0x7C8F)   0x9B save vs petrification   0xA5..0xAC thief skills
 ##   0xB8 control (0 a player character, 128+ an NPC)   0xBB copper 0xBD electrum
 ##   0xBF silver 0xC1 gold 0xC3 platinum (16-bit)   0xD8 alignment
 ##   0x100 condition (1 able, 0x80 not, 0 no one selected; writing 0 dismisses an NPC,
@@ -532,7 +532,10 @@ func _char_get(off: int, whole := false) -> int:
 		return m.thief_skill(tables, off - 0xA5) if tables != null else 0
 	match off:
 		0x18: return m.stats[4]
-		0x72: return m.race_id
+		# Not 0x72 (race): the original's window read (GAME.OVR 0x7C8F) has no case for it, so
+		# [6B72] is a plain cell no script writes, 0 (chat 48, DOSBox at 8:29 5,8: cell 0 and 980D 0
+		# after the search loop). The secret-door searches' elf / half-elf bonus (1:24, 5:7, 7:22,
+		# 7:23, 8:13, 8:29's table at 0xAFE5) never applies there, and 1:18 counts everyone non-human.
 		0x73: return m.class_id
 		0x9B: return m.saves[1] if m.saves.size() > 1 else 20
 		0xB8: return m.npc

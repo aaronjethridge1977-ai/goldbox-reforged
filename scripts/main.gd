@@ -1968,7 +1968,11 @@ func _finish_move(direction: int) -> void:
 			if _held_message != "":
 				_message.text = _held_message
 				_held_message = ""
-		if _vm.ecl != null and _step_from.x >= 0 and _pos != _step_from and not _vm.on_overland:
+		# Chat 48: whether the script moved the party or not, the square it stands on then runs
+		# its event: the original runs ECL entry [0x49E5] after every step attempt that loaded no
+		# new script (GAME.OVR 0x41A1-0x422D); 8:29 5,8's on-move blocks the step north until the
+		# door is found, and each such bump rolls the search's eight d6 again (DOSBox, Player 16).
+		if _vm.ecl != null and _step_from.x >= 0 and not _vm.on_overland:
 			_step_from = Vector2i(-1, -1)
 			_sync_position_to_vm(_facing)
 			var keep := _vm.text
@@ -1984,6 +1988,13 @@ func _finish_move(direction: int) -> void:
 	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
 		Speaker.play(Speaker.HIT)    # a step into a wall: GAME.OVR 0x176FE, heard in DOSBox (Combat's sound)
+		# The original runs the square's event after every step attempt, a refused one too
+		# (GAME.OVR 0x41D3-0x422D: the move 0x17438, then ECL entry [0x49E5]); chat 48, DOSBox at
+		# 8:29 5,8: each bump into the secret door's wall rolls its eight d6 again (Player 16).
+		if _vm.ecl != null:
+			_vm.clear_output()
+			_vm.start(1)
+			_after_vm()
 		return
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) >= 2:
 		_locked_door(direction)
