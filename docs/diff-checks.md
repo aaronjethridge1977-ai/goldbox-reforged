@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 48: checks 30 (8:29 Kuto's well and the catacombs, the secret door) and 31 (8:27, the first wilderness band), DIFFCHECKS 31/31
+## Chat 48: checks 30-33 (8:29 the catacombs' secret door; the three wilderness bands 8:27, 6:25, 7:26), DIFFCHECKS 33/33
 
 - **Two engine fixes first** (7ce7091, d15afe3; Player 16's request): a script's [6B72] reads a plain cell, not the race
   (GAME.OVR 0x7C8F, the character window's read, has no case for 0x72; DOSBox at 8:29 5,8: the cell 0, 0x980D 0 after
@@ -198,9 +198,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   original: `boot j`, `seed.py set 11111111`, `up` x12 and `right` x8 with waits, `l`, then ENCAMP SAVE J (renamed F).
   Ours: `load=G,wait,tpseed=11111111,` the same arrows, `wait,L,wait,wait,F2`. **MATCH**; one step short DIFFERS (a
   scratch copy, removed). Lab `data/c48/chk31/` (the start from `data/c48/g27/`), sealed as `~/gbr/checks/data/31`.
-- `diffcheck.sh` runs 31 (**DIFFCHECKS 31/31, ~40 s**). Break test repeated at 31: SUBTRACT 27/31, ADD over 200 30/31.
-- Areas no check visits now: 6:1, 6:25, 7:26. A band check is cheap this way (a c34d checkpoint in the band, ENCAMP
-  SAVE, a seed with no encounter on the route): 7:26 next (`bot_band1.cfg` is 6:25), then 6:1 (needs earlier state).
+- **Check 32, 6:25 (the west band): the dragon.** Start: c34d's `bot_band1.cfg` (overland 14,20, 06:33) as G the same
+  way. Eleven steps north and four west (tpseed 11111111): at 11,9 "OFF IN THE DISTANCE YOU SEE A LARGE DRAGON..."
+  (0x4AA1 = 1), at 10,9 "...LANDS IN FRONT OF A CAVE" (0x4AA1 = 255), ENTER CAVE / IGNORE CAVE: IGNORE (`I`). The
+  band's tables: y at 0xADD6, counts 0xADF5, x 0xADDE, kinds 0xADFD. **MATCH**; one step short DIFFERS (0x49C3).
+- **Check 33, 7:26 (the middle band), entered from 6:25:** the same start, nine steps north and eleven east: at 15,11
+  the next step east crosses the band edge (6:25's on-move: 0x49C3 = 3, NEW_ECL 26; no time passes on that step, in
+  both), then east to overland 12,11: "YOU HAVE STUMBLED UPON A LARGE NOMAD CAMP..." (0x4A9F = 1), ENTER / LEAVE:
+  LEAVE. **MATCH.** Seen, not changed: right after the crossing the original's place line shows 15,11 (ours' log
+  16,11); one step on, both show the same numbers (25,11 at the camp).
+- `diffcheck.sh` runs 33 (**DIFFCHECKS 33/33, ~40 s**). Break test repeated at 33: SUBTRACT 29/33, ADD over 200
+  32/33 (at 31: 27/31, 30/31).
+- **Areas no check visits now: 6:1 only** (the slave pen's GET HIM is behind a gate needing earlier state). A band
+  check is cheap (a c34d checkpoint in or next to the band, ours' ENCAMP SAVE, a seed with no encounter on the route,
+  the original from DOSBox: `pl.py boot`, `seed.py set`, arrows, ENCAMP SAVE); lab `data/c48/chk31..33/`, starts in
+  `data/c48/g25/`, `g27/`.
 
 ## Chat 44: the replay waits for the engine, not for frames
 
