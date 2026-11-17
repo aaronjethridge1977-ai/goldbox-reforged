@@ -1833,6 +1833,7 @@ func _locked_door(direction: int) -> void:
 		options += "K"
 	if options == "":
 		map.set_door(_pos.x, _pos.y, direction, 0)
+		_event_after_refused_step()
 		return
 	_door_options = options + "E"
 	_door_side = direction
@@ -1932,6 +1933,7 @@ func _door_choice(c: String) -> void:
 	if not opened:
 		Speaker.play(Speaker.HIT)    # a door option that fails: GAME.OVR 0x17702 (Combat's sound)
 		_show()
+		_event_after_refused_step()
 		return
 	map.set_door(_pos.x, _pos.y, direction, 1)
 	var next := _pos + DungeonView.DELTA[direction]
@@ -1988,13 +1990,7 @@ func _finish_move(direction: int) -> void:
 	# A wall blocks unless it carries a door.
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) == 0:
 		Speaker.play(Speaker.HIT)    # a step into a wall: GAME.OVR 0x176FE, heard in DOSBox (Combat's sound)
-		# The original runs the square's event after every step attempt, a refused one too
-		# (GAME.OVR 0x41D3-0x422D: the move 0x17438, then ECL entry [0x49E5]); chat 48, DOSBox at
-		# 8:29 5,8: each bump into the secret door's wall rolls its eight d6 again (Player 16).
-		if _vm.ecl != null:
-			_vm.clear_output()
-			_vm.start(1)
-			_after_vm()
+		_event_after_refused_step()
 		return
 	if map.wall(_pos.x, _pos.y, direction) > 0 and map.door(_pos.x, _pos.y, direction) >= 2:
 		_locked_door(direction)
@@ -2005,6 +2001,18 @@ func _finish_move(direction: int) -> void:
 	var next := _pos + DungeonView.DELTA[direction]
 	next = Vector2i(posmod(next.x, GeoMap.SIZE), posmod(next.y, GeoMap.SIZE))
 	_step_into(next)
+
+
+## The original runs the square's event after every step attempt, a refused one too (GAME.OVR
+## 0x41D3-0x422D: the move routine 0x17438, a locked door's menu and its choice included, then ECL
+## entry [0x49E5]); chat 48, DOSBox at 8:29 5,8: each bump into the secret door's wall rolls its
+## eight d6 again (Player 16). The door menu's case is from the code, not yet seen in DOSBox.
+func _event_after_refused_step() -> void:
+	if _vm.ecl == null or _vm.on_overland:
+		return
+	_vm.clear_output()
+	_vm.start(1)
+	_after_vm()
 
 
 ## The step itself, once nothing stops it: time passes and the new square's event runs.
