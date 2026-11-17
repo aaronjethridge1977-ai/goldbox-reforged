@@ -666,6 +666,10 @@ func _load_monsters() -> void:
 
 # --- Placement --------------------------------------------------------------------------
 
+## The whole party in order while a fight starts (its members who are down are placed too).
+var _place_order: Array = []
+
+
 ## Both sides placed by the original's rule (see Placement): the party around its own
 ## square, the monsters around the square `_distance` squares ahead, facing the party.
 func _place() -> void:
@@ -689,14 +693,18 @@ func _place() -> void:
 	# original and was in LIRA's target list). The figure order stays the party's.
 	var home: Array = []
 	var turned: Array = []
-	for m in _party:
+	var down: Array = []        # places in `home` of members who are down (placed, but not fighting)
+	for m in (_place_order if not _place_order.is_empty() else _party):
 		if _turned(m):
-			turned.append(m)
+			if m in _party:
+				turned.append(m)
 		else:
+			if not m in _party:
+				down.append(home.size())
 			home.append(m)
 	var side_list: Array = home + allies
 	var party_sizes := side_list.map(func(m): return Combat.foot_size(m))
-	var party_cells := placer.place_team(side_list.size(), _facing, Vector2i.ZERO, true, party_sizes)
+	var party_cells := placer.place_team(side_list.size(), _facing, Vector2i.ZERO, true, party_sizes, down)
 	var party_dir: int = Placement.FACING_TO_DIR[_facing]
 	var ahead: Vector2i = Placement.SQUARE_STEP[_facing] * _distance
 	var mon_list: Array = turned + foes
@@ -709,6 +717,9 @@ func _place() -> void:
 			continue
 		_combatants.append({"who": m, "team": 1 if t >= 0 else 0, "cell": cell,
 			"icon": _art.character_icon(m), "dir": (party_dir + 4) % 8 if t >= 0 else party_dir, "pic": -1})
+	if TpDice.on:
+		for i in down:
+			TpDice.log.append("downcell %s %d,%d" % [home[i].name, party_cells[i].x, party_cells[i].y])
 	for i in range(home.size(), side_list.size()):
 		if party_cells[i].x < 0:
 			continue
@@ -764,7 +775,10 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 		clutter_rng.randomize()
 	_field.scatter(func(n: int) -> int:
 		return TpDice.random(n, "clutter") + 1 if TpDice.on else clutter_rng.randi_range(1, n), area_block == 10)
+	# The members who are down get places too (Placement.place_team's `down`), in party order.
+	_place_order = everyone if duel_party.is_empty() else []
 	_place()
+	_place_order = []
 	if TpDice.on:
 		for c in _combatants:
 			TpDice.log.append("cell %s %d,%d" % [c.who.name, c.cell.x, c.cell.y])

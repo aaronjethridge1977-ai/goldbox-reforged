@@ -84,8 +84,13 @@ static func encounter_distance(field: Battlefield, px: int, py: int, facing: int
 ## `anchor` squares from the party. Returns their cells (Vector2i(-1, -1) if one finds no
 ## room). Call for the party first, then the monsters, on the same Placement. `sizes`
 ## gives each member's footprint (Combat.foot_size); missing entries count as 1.
+## `down` (the party): members who are down get places too, in team order, but the first line
+## holds half of the others (rounded up), and their cells stay free for other figures (the
+## original keeps them off its occupancy grid). Combat Chat 17, Player 15's p15f6 in DOSBox: 6 of 6
+## standing 27,13 / 28,13 / 26,13 then 28,14 / 29,14 / 27,14; 4 standing (CEDRIC, DORN down) 27,13 /
+## 28,13 then 28,14 / 29,14 / 27,14 / 30,14; 2 standing 27,13 then 28,14 / 29,14 / 27,14 / 30,14 / 26,14.
 func place_team(count: int, facing: int, anchor: Vector2i, is_party: bool,
-		sizes: Array = []) -> Array[Vector2i]:
+		sizes: Array = [], down: Array = []) -> Array[Vector2i]:
 	var free := []
 	for t in 4:
 		var span: Array = SLOT_SPAN[4 if t == 1 else facing]
@@ -94,16 +99,16 @@ func place_team(count: int, facing: int, anchor: Vector2i, is_party: bool,
 			for col in range(span[row][0], span[row][1] + 1):
 				slots[Vector2i(col, row)] = true
 		free.append(slots)
-	var half := (count + 1) / 2
+	var half := (count - down.size() + 1) / 2
 	var out: Array[Vector2i] = []
 	for i in count:
 		out.append(_place_one(facing, anchor, is_party, half, free,
-			int(sizes[i]) if i < sizes.size() else 1))
+			int(sizes[i]) if i < sizes.size() else 1, not i in down))
 	return out
 
 
 func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: Array,
-		fp: int = 1) -> Vector2i:
+		fp: int = 1, holds: bool = true) -> Vector2i:
 	var state := 0           # 0 = start a line, 1 = next to the right, 2 = next to the left
 	var line := 0
 	var reach := 0
@@ -171,7 +176,8 @@ func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: 
 			if ok:
 				free[tries].erase(cur)
 				for p in foot:
-					_used[p] = true
+					if holds:
+						_used[p] = true
 				return cell
 	return Vector2i(-1, -1)
 
