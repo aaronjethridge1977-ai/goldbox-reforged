@@ -954,6 +954,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			# A menu is open: only its choices count (digits, or an item's first letter
 			# as in the original when that letter is unique).
 			var choice := -1
+			if _vm._menu_kind == "press":
+				# PRESS <ENTER>/<RETURN> TO CONTINUE after DAMAGE: any key (GetKey), the text kept.
+				if (key != KEY_NONE and key not in [KEY_SHIFT, KEY_CTRL, KEY_ALT, KEY_META]) \
+						or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT):
+					_vm.choose(0)
+					_after_vm()
+				get_viewport().set_input_as_handled()
+				_show()
+				return
 			if key >= KEY_1 and key <= KEY_9:
 				choice = key - KEY_1
 			elif _vm._menu_kind == "who":
@@ -2237,6 +2246,8 @@ func _after_vm() -> void:
 				_timer.start(_script_delay())
 			return
 		EclVM.State.MENU:
+			if _vm._menu_kind == "press":
+				return   # drawn on row 24 by _show
 			if _vm.menu_vertical:
 				# The original clears the text area for a vertical menu and shows its question.
 				_menu_sel = 0
@@ -3146,6 +3157,7 @@ func _draw_screen() -> void:
 	var selected := 0
 	var vertical: Array = []
 	var who_label := ""
+	var press24 := false
 	if _vm._menu_kind != "who" or _vm.state != EclVM.State.MENU:
 		_who_open = false
 	if _door_options != "":
@@ -3164,6 +3176,9 @@ func _draw_screen() -> void:
 		body = ""
 		menu = []
 		who_label = _vm.text.strip_edges()
+	elif _vm.state == EclVM.State.MENU and _vm._menu_kind == "press":
+		menu = []
+		press24 = true
 	elif _vm.state == EclVM.State.MENU and not _vm.menu.is_empty():
 		var cut := body.rfind("\n\n")
 		if cut >= 0:
@@ -3210,6 +3225,9 @@ func _draw_screen() -> void:
 		_screen.update()
 	elif note24:
 		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
+		_screen.update()
+	elif press24:
+		_screen.text(0, 24, EclVM.PRESS_TO_CONTINUE, GameScreen.WHITE)   # GAME.OVR 0x37CD, colour 15
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU

@@ -97,7 +97,8 @@ var menu_question := ""
 ## menu) and a Callable giving how many open squares lie ahead (0..2).
 var party: Array = []
 var open_ahead: Callable
-var _menu_kind := ""             # "", "encounter" or "parlay": how a choice is stored
+var _menu_kind := ""             # "", "encounter", "parlay", "who" or "press" (a key to go on)
+const PRESS_TO_CONTINUE := "PRESS <ENTER>/<RETURN> TO CONTINUE"
 var _enc := {}                   # the ENCOUNTER_MENU's operands while it is open
 var _parlay_values: Array = []
 var encounter_distance := 0      # squares between party and monsters, as the menu sees it
@@ -295,6 +296,11 @@ func choose(index: int) -> State:
 		_menu_kind = ""
 		if not _encounter_choice(index):
 			return state      # the menu is shown again (both sides wait, or they close in)
+		state = State.RUNNING
+		return run()
+	if _menu_kind == "press":
+		_menu_kind = ""
+		menu = []
 		state = State.RUNNING
 		return run()
 	if _menu_kind == "who":
@@ -684,6 +690,12 @@ func _damage(a: Array) -> void:
 		text += "\nTHE ENTIRE PARTY IS KILLED!"
 		program = 3
 		state = State.PROGRAM
+		return
+	# The original always ends DAMAGE with "PRESS <ENTER>/<RETURN> TO CONTINUE" on row 24 and
+	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
+	# 0x709:0xBF5; chat 43, 5:3's boulders).
+	_pause_for_menu({}, [PRESS_TO_CONTINUE])
+	_menu_kind = "press"
 
 
 ## ROB everyone (or the selected member): coins scaled down by the percentage taken, and

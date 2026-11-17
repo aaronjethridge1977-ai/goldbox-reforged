@@ -172,6 +172,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 43: DAMAGE's PRESS <ENTER> (check 24's keys), DIFFCHECKS 24/24
+
+- **The pause after scripted damage (the Lead's item 1, chat 42's finding):** the original's DAMAGE handler ends,
+  whatever the form and whoever was hit, by drawing "press <enter>/<return> to continue" (GAME.OVR 0x37CD-0x37DF,
+  colour 15) through START.EXE 0x709:0xBF5: row 24 cleared, the text at column 0, then GetKey (0x899:0x59), so any
+  key goes on. Ours now does the same (`ecl_vm.gd _damage`: a one-item "press" menu after the lines; `main.gd` draws
+  it on row 24 in white and takes any key, the damage lines left in the box). Not after THE ENTIRE PARTY IS KILLED
+  (ours opens the end program there, as before).
+- **Check 24's ours keys** gain the key the original's already had (`...End,wait,Enter,wait,wait,wait,Enter,wait,E,
+  ...`), resealed (`seal.sh 24`). With the old keys ours now fails check 24 (0x49C0: the E went to the prompt, the
+  door's EXIT never chosen), so the check covers the pause. Screenshot of the prompt: lab `data/c43/shot/press.png`
+  (`shot43.sh`).
+
 ## Chat 42: check 24 (5:3 the portcullis), two engine fixes, DIFFCHECKS 24/24
 
 The standing list (Q6, item 1), after the Lead's items (showcase item 5, test build 2's dry run).
