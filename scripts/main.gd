@@ -580,10 +580,17 @@ func _replay_keys(names: PackedStringArray) -> void:
 			var up := ev.duplicate()
 			up.pressed = false
 			Input.parse_input_event(up)
-		for i in 300:
+		# Chat 44: until the engine is idle (a script DELAY or a walk is over), at least 4 frames; the ceiling is
+		# 300 frames and 5 s, whichever is later. 300 frames alone made a check hang on frame time: with fast
+		# frames a chain of DELAYs outlasted them and the next key landed mid-text (checks 21 and 24 with
+		# Combat Chat 15's automap).
+		var t_end := Time.get_ticks_msec() + 5000
+		var i := 0
+		while i < 300 or Time.get_ticks_msec() < t_end:
 			await get_tree().process_frame
 			if i > 3 and not _busy:
 				break
+			i += 1
 		print(n.rpad(6), " ", _state_line())
 	get_tree().quit()
 
