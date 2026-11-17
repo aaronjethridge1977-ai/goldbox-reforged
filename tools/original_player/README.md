@@ -742,3 +742,59 @@ the board request to Combat.
 
 Lab: `p14/` (q.sh: a queue run with player.py args such as `--after`; seg02c.plan), saves `p2start/p13b6_s2a`,
 `p2start/p14b3_s2b`, runs p14b1-p14b6, ours' replays `logs/p14_*.out`, screens `p14/*.png`.
+
+## Player 15 (2026-11-16): segment 1 checked on Combat's BUY fix; the inn's rest time; `prepare`; segment 3 to `slums2`
+
+**Queue item 1 (segment 2 in ours) still waits:** main's `_door_choice` "P" still rolls `_door_rng` (origin/main
+a0ea85d), so the replay parts at segment 2's first PICK as before.
+
+**Queue item 2, segment 1 in ours:** Combat's BUY fix (867d3b1, "BUY opens the item list at its top") is on the
+`combat-lane` branch, **not on origin/main yet**. On origin/main alone segment 1 still parts at key 64 (BRAM's BUY:
+the list on its last page, Shield lit), ours' pool holds GOLD 4 PLATINUM 58 and the shop's last EXIT (key 230)
+leaves the party in the shop. With 867d3b1 applied to the lab's copy only, **all 416 keys follow the original and
+statediff shows only the clock** (3 differences: ours 05:49, the original 06:04). **The clock is the inn's REST
+TIME:** after the same MEMORIZE (CEDRIC Cure Light Wounds x2, Bless; ELWEN Cure Light Wounds x2, Bless, Sleep;
+LIRA Sleep) the original offers 00:05:00 (p13a1.log key #415), ours 00:04:45 (ours' screen at key 414:
+`p13/oursat.py <seg txt> 414`). Both games arrive at 01:04. The original's offers fit "4 hours plus 15 minutes a
+spell being memorized, the member with the most": ELWEN's four = 5:00 (ours counts three: her magic-user spell left
+out?); p15c7's CEDRIC with two cures = 4:30. Request to Combat (board).
+
+**New in the tools (plans.py):**
+- `prepare`: main's bot's `_prepare` before each event of an `explore` (bot.gd: `_pick_spells` fills the free slots,
+  `_memorize` rests for them, then `_heal`): camp, MEMORIZE the bot's picks in every free slot, REST for the time
+  offered, and the heal of anyone hurt; nothing when no slot is free and nobody is hurt. Without it the party walked
+  into event 9's 30-figure fight with its Sleep spells spent (p15c1, p15c2: lost at 3,3).
+- The heal inserted after a fight on a walk that leaves the party hurt is now that `prepare` (the bot's stop on the
+  way calls `_prepare`, which memorizes too).
+- `innheal` always runs through the camp (memorize, then leave), whether or not anyone is hurt (the inn's camp is
+  already open after TO REST HERE).
+- Known gap: right after a cure in the inn's camp the cure's slot isn't seen free until the next camp, so the
+  memorizing waits for the next `prepare` (one camp rest more than the bot).
+
+**Queue item 5, segment 3 (slums -> slums2): reached** (p15c5 to `s3t`, p15c6 from `s3t`; plan
+`plans/p15_c34d_03_slums2.plan`, lab `p15/seg03.plan`). The bot's order (`p12/botorder.py slums slums2`): a town
+trip (out by 15,4: the only way from 15,12 is through event 18's southern streets, so the next walks start in the
+north), explore 16 touring events 2 4 5 8 9 7 14 17 18 21 12 with `prepare` before each, `heal` after; the training
+trip to the clerics' hall (3:11 6,0 W, Player 3's keys), the inn, back to 15,12 (event 19). **Walks avoid only
+explore's left-out event (16)**: main.gd `_find_path` doesn't avoid the deferred ones (13 15 20; with them avoided
+1,7 -> 1,5 had no route, p15c4). Left out: the clerk, temple and shop of the town trips (no gem-sale tool), the
+second town trip (an inn rest) and the re-tour of 1 6 11 10 3. Losses: p15c1 (seed 12345678) and p15c2 (2468ace1)
+at 3,3 (event 9, no `prepare` yet); p15c3 (87654321) a death in a 25-figure fight on the southern streets (before the
+town trip was put back); p15c4 (13572468) stopped on 1,7 -> 1,5 (fixed); **p15c5 (13572468)**: 3 fights won, nobody
+down, `s3a` (2:20 0,0 W) and `s3t` (3:11 5,0 W; nobody had the experience to train: the bot had one more fight and
+trained CEDRIC); **p15c6** (24681357, `--after=s3t`, the halls' walk out needs `through 9,10,11,25`) to `slums2`
+(2:20 15,12 E). Against c34d's bot's `bot_slums2.cfg` (`p12/cpdiff.sh`): the flags the same but the counters 4A80
+(15/16) and 4ABB (22/24), **4A81 (250/255: the bot fought the goblin guards' group, the original's walks never met
+it)** and 4AFA-4AFF; the party still level 1 (the bot's ARN 26 HP), coins (no gem sale, no pooling) and loot.
+
+**Segment 3 in ours:** it has PICKs too (p15c5's first at key 55), so it waits for main's fix like segment 2; its
+first fights come before the first PICK (p15c7, a traced rerun: below).
+
+**Lead's item 4 (a fight ours ends on its last kill while the original plays the round out):** Tyranthraxus alone
+(Combat Chat 8, regress.sh `orig_B_tyr1/2`): the original's traces `logs/p5_dragon1T.trace.txt` /
+`p5_dragon2T.trace.txt` go on after his fall (draws 1274-1305 / 1043-1062: the round's rest), ours ends the fight
+at once. Named to main on the board (Findings).
+
+Lab: `p15/` (seg03.plan, screens `c_*.png`, `d_*.png`, `r_414.png`/`r_415.png` (ours' REST TIME), segment 1's
+replay on 867d3b1 `p13a1.seg_combat867.txt`), saves `p2start/p14b6_slums`, `p2start/p15c5_s3a`, `p2start/p15c5_s3t`,
+runs p15c1-p15c7.

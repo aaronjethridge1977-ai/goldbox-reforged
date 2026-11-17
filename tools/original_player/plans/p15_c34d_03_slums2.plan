@@ -1,0 +1,100 @@
+# Player 15: c34d segment 3, slums -> slums2 (main's playthrough.plan: town, travel 2:20, explore 16).
+# The bot's order (p12/botorder.py slums slums2): a town trip (the inn, the clerk: no reward yet, the temple LEAVE,
+# the shop: nothing sold, the halls: nobody trained), then explore 16 with 13 15 20 deferred by its odds: the goblin
+# guards, event 9's fight (2,3), the other events toured again, 12 (0,0); a town trip; 1 6 11 10 3 again; a town
+# trip with the training (CEDRIC in the clerics' hall; gems sold first, 10532 gold); 19 (15,12).
+# Left out here (no tool, or nothing changed by them): in town the clerk, the temple, the shop (the gem sale), the
+# halls on the first trip; the second town trip (an inn rest).
+# Before each event's walk `prepare` (bot.gd _prepare: memorize into free slots, heal); after it `heal`.
+# Walks cross every event but explore's left-out one (16): main.gd _find_path avoids only those, not the deferred.
+area 2:20
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:train:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|snap:greet:y
+inntrip
+walk 15,4 avoid 16
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+inntrip end
+# the bot's first town trip (out by 15,4: the next walks start in the north, not event 18's southern streets)
+walk 15,4 avoid 16
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+# explore 16 as the bot toured it (events 2 4 5 8 9 7 14 17 18 21 12), `prepare` before each
+prepare
+walk 9,0 avoid 16
+heal
+prepare
+walk 5,3 avoid 16
+heal
+prepare
+walk 5,2 avoid 16
+heal
+prepare
+walk 3,5 avoid 16
+heal
+prepare
+walk 2,3 avoid 16
+heal
+prepare
+walk 1,7 avoid 16
+heal
+prepare
+walk 1,5 avoid 16
+heal
+prepare
+walk 6,10 avoid 16
+heal
+prepare
+walk 6,11 avoid 16
+heal
+prepare
+walk 1,0 avoid 16
+heal
+prepare
+walk 0,0 avoid 16
+heal
+checkpoint s3a
+# the training trip: the clerics' hall (3:11 6,0 W, Player 3's train_clerics), the inn, back
+walk 15,4 avoid 16
+step E
+area 3:0
+alias 3:11
+walk 6,0 through 10,11
+step W
+checkpoint s3t
+walk 4,12 through 9,10,11,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+prepare
+walk 15,12 avoid 16
+heal
+checkpoint slums2

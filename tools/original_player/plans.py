@@ -31,6 +31,9 @@
   inntrip ... inntrip end         (Player 14) goals kept aside (walk, step, area, innheal lines) for main's bot's trip to
                                  the inn when a heal's rest is interrupted (bot.gd _rest_at_inn); inserted after the
                                  heal once per interruption, not while on the trip
+  prepare                        (Player 15) main's bot's `_prepare` before each event (explore): the bot's picks in
+                                 every free slot (spells cast since), a REST to memorize them, and the heal of anyone
+                                 hurt (as `heal` after a fight); nothing when no slot is free and no one is hurt
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
                                  then the camp opens before the walk sees the inn's square)
   answer <words>|@platinum       (Player 14) on a member list: the member with most platinum (main's bot pays the inn so)
@@ -90,9 +93,9 @@ class Walk:
         elif p.fights > f0:
             self._fights0 = p.fights
             if hurt(members(p.g.mem)):
-                p.note("walk", "fight %d left the party hurt (%s): heal before going on (bot.gd _hurt, _prepare)" % (
+                p.note("walk", "fight %d left the party hurt (%s): prepare before going on (bot.gd _hurt, _prepare)" % (
                     p.fights, party_hp(p.g.mem)))
-                p.plan.goals.insert(p.goal, Heal(force=True))
+                p.plan.goals.insert(p.goal, Heal(force=True, prep=True))
                 p.goal_key = p.g.nkeys      # the stall guard counts from the heal's start (p14b1: TAKE + heal > 300)
                 return False, None, ""
         if self.avoid is not None:      # Player 13: the bot's tour (main.gd _find_path): only these are walked round
@@ -259,12 +262,14 @@ class Heal:
     cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
     An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
     The camp screens are answered in Plan._heal (p.heal holds the state)."""
-    def __init__(self, force=False, inn=False):
+    def __init__(self, force=False, inn=False, prep=False):
         self.force = force      # Player 14: after a fight on a walk (bot.gd _prepare): heal anyone hurt
         self.inn = inn          # Player 14: `innheal` in an `inntrip` block: the heal in the inn's camp
+        self.prep = prep        # Player 15: `prepare` (bot.gd _prepare): also memorize into free slots
 
     def __repr__(self):
-        return "heal" + (" at the inn" if self.inn else " (after a fight)" if self.force else "")
+        return ("prepare" if self.prep else "heal") + (" at the inn" if self.inn else
+                                                       " (after a fight)" if self.force and not self.prep else "")
 
     def next(self, p):
         h = getattr(p, "heal", None)
@@ -297,9 +302,14 @@ class Heal:
         M = members(p.g.mem)
         if any(m["status"] == 6 or m["status"] > 6 for m in M):
             raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
-        if not (needs_rest(M) if self.force else any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M)):
+        spent = self.prep and any(picks(m) for m in M)
+        # Player 15: at the inn the camp is already open (TO REST HERE): always go through the heal, which memorizes
+        # (bot.gd _rest_at_inn rests there) and leaves the camp
+        if not self.inn and not spent and not (needs_rest(M) if self.force else
+                              any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M)):
             return True, None, ""
         new_heal(p)
+        p.heal["prep"] = self.prep
         return False, "e", "heal: ENCAMP"
 
 
@@ -828,6 +838,15 @@ class Plan:
             elif op[1] is not None:
                 h["days"] += 1
         if not needs_rest(M):
+            if h.get("prep") and not h.get("prep_done"):
+                # Player 15: bot.gd _prepare: _pick_spells fills the free slots, _memorize rests for them
+                for m in M:
+                    pk = picks(m)
+                    if pk:
+                        return self._memo_op(p, h, m, pk)
+                h["prep_done"] = True
+                if h["memo_any"]:
+                    return ("rest", None)
             return ("leave",)
         if h["phase"] == "rounds":
             c = next_cure(M)
@@ -1037,7 +1056,7 @@ def load(path):
             else:
                 trip_outer, trip_area, pl.goals = pl.goals, pl.area, []
         elif cmd == "innheal":
-            pl.goals.append(Heal(force=True, inn=True))
+            pl.goals.append(Heal(force=True, inn=True, prep=True))
         elif cmd == "keys":
             name, ks = rest.split(None, 1)
             pl.goals.append(Keys(name, ks.replace(" ", "").split(",")))
@@ -1049,6 +1068,8 @@ def load(path):
                     pl.memos[-1].append((who, [x.strip() for x in sp.split(",") if x.strip()]))
         elif cmd == "heal":
             pl.goals.append(Heal())
+        elif cmd == "prepare":
+            pl.goals.append(Heal(force=True, prep=True))
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
