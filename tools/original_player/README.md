@@ -787,6 +787,26 @@ trained CEDRIC); **p15c6** (24681357, `--after=s3t`, the halls' walk out needs `
 (15/16) and 4ABB (22/24), **4A81 (250/255: the bot fought the goblin guards' group, the original's walks never met
 it)** and 4AFA-4AFF; the party still level 1 (the bot's ARN 26 HP), coins (no gem sale, no pooling) and loot.
 
+**Segment 3's town trip again, as the bot's (the party reached `slums2` at level 1 above; c34d's bot had sold its
+gems for 19511 gold and trained ARN, BRAM 2, CEDRIC 3, DORN 1/2):** new in plans.py:
+- `sell gems [share]`: at the next shop visit every member's gems and jewellery (record 0x92 / 0x94) APPRAISEd and
+  SOLD (the original: APPRAISE: GEMS JEWELRY EXIT, a word dropped when none is left; "THE GEM IS VALUED AT 500 GP."
+  over "YOU CAN : SELL", no KEEP); `share`: then everyone's coins POOLed and SHAREd, the Player's way to fund each
+  trainee (main's bot moves the coins itself, bot.gd `_fund`, which the original has no key for).
+- `innwait`: `innheal`, then from hour 14 (0x49C9) a rest in the inn's camp till midnight (bot.gd `_wait_for_day`:
+  New Phlan locks its shop, City Hall and halls from hour 14; p15d1 met "THE DOOR IS LOCKED. DO YOU WANT TO BREAK
+  IN?" at the arms shop at 16:00).
+- The inn's camp, opened before the walk sees the inn's square, now carries the `prepare` / `innwait` flags (it was
+  a plain heal: the "cure slot not seen free" gap above).
+- The halls are on New Phlan's map (GEO3 block 0 events): 10 (6,1 6,2), 11 (6,0), 12 clerics (5,0), 13 magic-users
+  (7,0), 14 corridor, 15 (8,1), 16 fighters (8,0), 17, 18; walks between halls need them in `through`. One
+  `answer CHOOSE A FUNCTION|seq:<name>:...` per hall visit (a hall may ask twice: keep spares).
+Plan `p15/seg03t.plan` (from `s3a`): the inn till midnight, the arms shop (sell, pool, share: each member ~331
+platinum), the fighters', clerics', magic-users' and thieves' halls, the inn, back to 15,12.
+**p15d8 (seed 11223344, `--after=s3a` from p15c5's `s3a`) reached `slums2` trained:** ARN 2 (25 HP), BRAM 2 (24),
+CEDRIC 2 (18), DORN 1/2 (15); c34d's bot: the same but CEDRIC 3. Save `p2start/p15d8_slums2`; plan
+`plans/p15_c34d_03_slums2_train.plan`. (p15d1-p15d7: the locked shop, the halls' routes, the sale screens, the answers.)
+
 **Segment 3 in ours:** it has PICKs too (p15c5's first at key 55), so it waits for main's fix like segment 2; its
 first fights come before the first PICK (p15c7, a traced rerun: below).
 

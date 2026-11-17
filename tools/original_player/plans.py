@@ -34,6 +34,8 @@
   prepare                        (Player 15) main's bot's `_prepare` before each event (explore): the bot's picks in
                                  every free slot (spells cast since), a REST to memorize them, and the heal of anyone
                                  hurt (as `heal` after a fight); nothing when no slot is free and no one is hurt
+  innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
+                                 New Phlan locks its shops, City Hall and halls from hour 14)
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
                                  then the camp opens before the walk sees the inn's square)
   answer <words>|@platinum       (Player 14) on a member list: the member with most platinum (main's bot pays the inn so)
@@ -41,6 +43,9 @@
   (a walk to an event that turned the party back is done); a fight on a walk that leaves the party hurt (bot.gd
   _hurt) is followed by a heal of anyone hurt before the walk goes on.
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
+  sell gems [share]              (Player 15) the next shop visit: every member's gems and jewellery APPRAISEd and
+                                 SOLD (main's bot sells them before training), then EXIT (or the visit's `buy`);
+                                 `share`: then everyone's coins POOLed and SHAREd (to fund every trainee)
   buy <m> <item> | <m> <item> ...
                                  (Player 12) the next shop visit's purchases, main's `shop` list without the door:
                                  member <m> (0 = the first) buys the item whose name on the list starts so (End /
@@ -48,7 +53,7 @@
                                  NEXT / PREV page); POOL before each purchase (main's bot does); EXIT when the visit's
                                  list is done. Each `buy` line is one visit.
 """
-import copy, os, re, sys
+import copy, os, re, struct, sys
 import orig
 import loot, screens
 
@@ -262,7 +267,8 @@ class Heal:
     cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
     An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
     The camp screens are answered in Plan._heal (p.heal holds the state)."""
-    def __init__(self, force=False, inn=False, prep=False):
+    def __init__(self, force=False, inn=False, prep=False, wait=False):
+        self.wait = wait        # Player 15: `innwait` (bot.gd _wait_for_day): from hour 14 rest till the doors open
         self.force = force      # Player 14: after a fight on a walk (bot.gd _prepare): heal anyone hurt
         self.inn = inn          # Player 14: `innheal` in an `inntrip` block: the heal in the inn's camp
         self.prep = prep        # Player 15: `prepare` (bot.gd _prepare): also memorize into free slots
@@ -310,6 +316,7 @@ class Heal:
             return True, None, ""
         new_heal(p)
         p.heal["prep"] = self.prep
+        p.heal["wait"] = self.wait
         return False, "e", "heal: ENCAMP"
 
 
@@ -439,6 +446,7 @@ class Plan:
         self.answers = []        # (words, choice, source)
         self.aliases = set()     # Player 3: `alias` areas
         self.buys = []           # Player 12: one list of (member, name) per shop visit
+        self.sells = []          # Player 15: `sell gems`: one per shop visit
         self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
         self.inntrip = []        # Player 14: the `inntrip` block's goals (an interrupted rest's trip to the inn)
         self.mem = None          # Player 14: the game's memory, for `@platinum` answers
@@ -488,6 +496,7 @@ class Plan:
             p.goal += 1
             p.goal_key = p.g.nkeys
             new_heal(p)
+            p.heal["prep"], p.heal["wait"] = gs[p.goal].prep, gs[p.goal].wait     # Player 15
             h = p.heal
         if h is not None and not h["done"]:
             k = self._heal(scr, st, p, h)
@@ -525,6 +534,10 @@ class Plan:
                     p.ready_tried.add(todo[0])
                     return "r", "readyall: READY %s" % rows[todo[0]][1]
                 return ("end" if todo[0] > lit[0] else "home"), "readyall: light to %s" % rows[todo[0]][1]
+        if self.sells and getattr(p, "sell_visit", 0) < len(self.sells):
+            r = self._sell(scr, st, p)
+            if r:
+                return r
         if self.buys and getattr(p, "buy_visit", 0) < len(self.buys):
             bw = scr["bottom"].split()
             if kind == "yesno" and "SHOW YOU OUR WARES" in scr.get("text", ""):
@@ -689,6 +702,62 @@ class Plan:
         names = [re.sub(r"^\d+ ", "", it["name"].upper()) for it in items]
         return len(rows) == len(names) and all(r.startswith(nm[:len(r)]) or nm.startswith(r) for r, nm in zip(rows, names))
 
+    # -- Player 15: `sell gems`: main's bot's shop visit (bot.gd: "appraised and sold gems and jewellery"): every
+    # member with gems or jewellery (record 0x92 / 0x94, money[5] / money[6]) in party order: APPRAISE, GEMS or
+    # JEWELRY, SELL each, until none is left; then the shop's EXIT (or the visit's `buy` line goes on) -----------
+    def _sell(self, scr, st, p):
+        mem = p.g.mem
+        bw = scr["bottom"].split()
+        P = loot.party(mem)
+
+        def held(j):
+            r = mem.far(P[j][0][0], P[j][0][1], 0x120)
+            return struct.unpack_from("<H", r, 0x92)[0], struct.unpack_from("<H", r, 0x94)[0]
+        if scr["kind"] == "yesno" and "SHOW YOU OUR WARES" in scr.get("text", ""):
+            return "y", "sell: YES (gems to sell)"
+        val = [str(r) for r in (st["rows"].values() if isinstance(st["rows"], dict) else st["rows"]) if "VALUED AT" in str(r)]
+        if bw[:2] == ["SELL", "KEEP"] or val and ("SELL" in bw or "SELL" in str(st["rows"][24])):
+            # the original: "THE GEM IS VALUED AT 500 GP." and row 24 "YOU CAN : SELL" (ours: SELL KEEP)
+            return "s", "sell: SELL (%s)" % (val[0].strip("?\\ ") if val else "")
+        sel = loot.selected(mem)
+        if bw[:1] == ["APPRAISE"] or "GEMS" in bw and "JEWELRY" in bw:     # the original drops a word when none left
+            g, jw = held(sel) if sel is not None else (0, 0)
+            if g:
+                return "g", "sell: GEMS (%s has %d)" % (P[sel][1], g)
+            if jw:
+                return "j", "sell: JEWELRY (%s has %d)" % (P[sel][1], jw)
+            return "e", "sell: %s's gems and jewellery sold" % P[sel][1]
+        if scr["kind"] == "hmenu" and bw[:2] == ["BUY", "VIEW"]:
+            todo = [j for j in range(len(P)) if sum(held(j))]
+            if not todo and "share" in self.sells[getattr(p, "sell_visit", 0)] and not getattr(p, "sell_shared", False):
+                # `sell gems share`: everyone's coins to the pile (POOL with each member selected), then SHARE: the
+                # Player's way to fund every trainee (main's bot moves coins to the trainee itself, bot.gd _fund)
+                pooled = getattr(p, "sell_pooled", set())
+                p.sell_pooled = pooled
+                left = [j for j in range(len(P)) if j not in pooled]
+                if left:
+                    j = left[0]
+                    if sel != j:
+                        return ("end" if sel is None or j > sel else "home"), "sell: select %s to POOL" % P[j][1]
+                    pooled.add(j)
+                    return "p", "sell: POOL (%s)" % P[j][1]
+                p.sell_shared = True
+                return "s", "sell: SHARE the pile"
+            if not todo:
+                p.note("sell", "gems and jewellery sold: %s" % " ".join(
+                    "%s %d" % (P[j][1], struct.unpack_from("<H", mem.far(P[j][0][0], P[j][0][1], 0x120), 0x88 + 8)[0])
+                    for j in range(len(P))))
+                p.sell_visit = getattr(p, "sell_visit", 0) + 1
+                p.sell_shared, p.sell_pooled = False, set()
+                if self.buys and getattr(p, "buy_visit", 0) < len(self.buys):
+                    return None
+                return "e", "sell: done, EXIT the shop"
+            j = todo[0]
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "sell: select %s" % P[j][1]
+            return "a", "sell: APPRAISE (%s: %d gems, %d jewellery)" % ((P[j][1],) + held(j))
+        return None
+
     # -- Player 12: BUY (`buy` lines; the shop's list is the loot pointer DS:0x6810, the buyer DS:0x5D92) ----
     def _buy(self, scr, st, p):
         mem = p.g.mem
@@ -837,6 +906,14 @@ class Plan:
                     h["phase"] = "days"
             elif op[1] is not None:
                 h["days"] += 1
+        if h.get("wait") and not h.get("waited") and not needs_rest(M):
+            # Player 15: bot.gd _wait_for_day: New Phlan locks its shop, City Hall and halls from hour 14
+            # (0x49C9); the bot rests (24 - hour) hours in the inn's camp (to midnight, when they open)
+            hour = p.g.mem.ecl(0x49C9)[0]
+            h["waited"] = True
+            if hour >= 14:
+                p.note("heal", "waiting in the inn's camp for the doors to open: %02d:00" % hour)
+                return ("rest", (24 - hour) * 60)
         if not needs_rest(M):
             if h.get("prep") and not h.get("prep_done"):
                 # Player 15: bot.gd _prepare: _pick_spells fills the free slots, _memorize rests for them
@@ -1055,6 +1132,8 @@ def load(path):
                 pl.area = trip_area
             else:
                 trip_outer, trip_area, pl.goals = pl.goals, pl.area, []
+        elif cmd == "innwait":
+            pl.goals.append(Heal(force=True, inn=True, prep=True, wait=True))
         elif cmd == "innheal":
             pl.goals.append(Heal(force=True, inn=True, prep=True))
         elif cmd == "keys":
@@ -1077,6 +1156,9 @@ def load(path):
         elif cmd == "answer":
             words, choice = rest.rsplit("|", 1)
             pl.answers.append((words.strip(), choice.strip(), os.path.basename(path)))
+        elif cmd == "sell":
+            # Player 15: `sell gems`: the next shop visit appraises and sells every gem and piece of jewellery
+            pl.sells.append(rest.strip())
         elif cmd == "buy":
             pl.buys.append([(int(b.split(None, 1)[0]), b.split(None, 1)[1].strip()) for b in rest.split("|") if b.strip()])
         elif cmd == "default":
