@@ -1,0 +1,67 @@
+name: Report a problem
+description: Something doesn't work, differs from the original Pool of Radiance, or the game won't start.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing Gold Box Reforged. One problem per report, please.
+        **Never attach the game's own files** (.DAX, .OVR, .EXE or anything else from your game folder): only a save, as described below.
+  - type: dropdown
+    id: copy
+    attributes:
+      label: Where your copy of Pool of Radiance came from
+      options:
+        - GOG
+        - Steam
+        - Original disks
+        - Other (say which below)
+    validations:
+      required: true
+  - type: input
+    id: copy-version
+    attributes:
+      label: Its version, if you know it
+      placeholder: "e.g. GOG Forgotten Realms: The Archives - Collection Two, or v1.3 on the disks"
+    validations:
+      required: false
+  - type: input
+    id: build
+    attributes:
+      label: Our build (the window title)
+      placeholder: "e.g. Gold Box Reforged 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "e.g. Windows 11 23H2"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and the steps to get there
+      description: Where you were (area and position, if shown), what you did, and what you saw. Screenshots help.
+      placeholder: |
+        1. Loaded save B in the Slums
+        2. Walked north into ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: original
+    attributes:
+      label: What the original game does there, if you know
+      description: For example from playing it in DOSBox. Leave empty if you don't know.
+    validations:
+      required: false
+  - type: textarea
+    id: save
+    attributes:
+      label: A save, if you have one
+      description: |
+        Zip the save file SAVGAMx.DAT (x is the slot letter) together with the SAVGAMx.GBR beside it, both from your game folder, and drag the zip here.
+        Only those two files: **never the game's own files.**
+    validations:
+      required: false
