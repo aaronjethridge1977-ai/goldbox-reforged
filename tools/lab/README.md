@@ -176,7 +176,7 @@ another slot (the Player's are slot I). Checks driver with its own output folder
 **Chat 49:** P74 seen in DOSBox from check 26's start in slot J (3:0 13,9; `pl.py do walk=3:0:4,12`, `y`, `s` for ARN
 with no coins): the inn's not-enough path leaves the party at 4,12 S, and a rest there brings the watch, as ours. Ours
 from the same save: `KEYS=... data/c44/onecheck.sh <repo> 26 <out>` (a check's start with other keys; the log shows each
-key's screen). Check 34 (8:27's boat, STAY) in `data/c49/chk34/`. Start time measured with two `git archive` copies in
+key's screen). Checks 34 (8:27's boat, STAY) and 35 (6:25's slavers and the Buccaneer base) in `data/c49/chk34/`, `chk35/`. Start time measured with two `git archive` copies in
 /tmp (old and new main.gd with `Time.get_ticks_msec()` prints at the folder line and the first `process_frame`). The
 Windows build runs from WSL headless: `GoldBoxReforged.exe --headless --quit-after 400 --log-file 'D:\...\x.log' --
 '--game-path=D:\...\POOLRAD'` (no window; the log gets the report line). The "1 ObjectDB instance was leaked at exit"

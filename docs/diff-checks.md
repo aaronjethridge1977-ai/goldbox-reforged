@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 49: check 34 (8:27, the boat to New Phlan), DIFFCHECKS 34/34
+## Chat 49: checks 34 (8:27, the boat to New Phlan) and 35 (6:25, the slavers and the Buccaneer base), DIFFCHECKS 35/35
 
 - **Check 34, 8:27 again: a second event in a checked band, the cheap way.** 8:27's band table (y at 0xABA6
   [8, 14, 15, 16, 29], counts 0xABB4 [1, 2, 3, 2, 1], x 0xABAB [11, 6, 7, 5, 6, 7, 6, 7, 9], kinds 0xABB9 [0, 1, 1,
@@ -184,6 +184,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   `s`, ENCAMP SAVE J (renamed F, the character-file names patched). Ours: `load=G,wait,tpseed=11111111,` the same
   arrows, `wait,S,wait,wait,F2`. **MATCH** on c6f6d30; one step short DIFFERS (0x49C4 28 / 29, the clock). Lab
   `data/c49/chk34/`, sealed as `~/gbr/checks/data/34`. Break test at 34: SUBTRACT 30/34, ADD over 200 33/34.
+- **Check 35, 6:25 again.** 6:25's table (y 0xADD6 [8, 9, 10, 24, 30, 31, 32, 33], counts 0xADF5 [3, 3, 2, 1, 2, 5,
+  5, 2], x 0xADDE, kinds 0xADFD; kinds 0-2 the dragon, 3 the anhkhegs (a fight), 4 the slavers ride by (0x9D2E: when
+  0x4A8C = 255 and 0x4AA9, 0x4A10 are 0, the text and 0x4A10 = 1), 5 the Buccaneer base (ENTER / LEAVE), 6 the guards
+  ride by (0x4A11 = 1), 7 the outpost (YES / NO)): slavers at 12,30 13,30 11,31 13,31 12,32 13,32 around the base at
+  12,31; guards at 2-4,31-33 around the outpost at 3,32. Start: check 32's (`bot_band1`, overland 14,20 W 06:33);
+  ten steps south (the tenth, to 14,30, refused by the map: no time passes, no roll, in both), west, south to 13,30:
+  "A SMALL CARAVAN OF SLAVERS RIDE BY YOU TOWARD THE BUCCANEER BASE." (0x4A10 = 1), south refused, west to 12,30
+  (nothing: 0x4A10 set), south to 12,31: "YOU HAVE REACHED THE BUCCANEER BASE...", ENTER / LEAVE: LEAVE; tpseed
+  11111111, no encounter. **MATCH** on c6f6d30. Lab `data/c49/chk35/`, sealed as `~/gbr/checks/data/35`. Break test at
+  35: SUBTRACT 31/35, ADD over 200 34/35 (35 uses neither).
 - Seen, not a difference: the band scripts' eight-way tables (0x033D) are the heading times two; the original takes no
   diagonal step either (Home, PgUp, keypad 7 and 9 do nothing in the band).
 - Areas no check visits: 6:1 only, as before.
