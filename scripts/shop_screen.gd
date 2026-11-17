@@ -322,12 +322,15 @@ func _list_menu() -> Array:
 	return m
 
 
+## NEXT / PREV keep the light on its screen row, as the original (Player 13's p13a1 at 13,8: Long Sword lit on
+## row 19, NEXT, one End lights Banded Mail on row 20; ours used to put it on the page's top row).
 func _page(step: int) -> void:
+	var row := _cursor - _top
 	if step > 0:
 		_top = mini(_top + PAGE, maxi(_items.size() - PAGE, 0))
 	else:
 		_top = maxi(_top - PAGE, 0)
-	_cursor = _top
+	_cursor = clampi(_top + row, 0, maxi(_items.size() - 1, 0))
 	_refresh()
 
 
