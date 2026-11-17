@@ -393,6 +393,12 @@ func _fix() -> void:
 			can += 27
 	if can > lost:
 		most /= can / lost
+	# P75 (Jeremy: after FIX he had to REST): with REST REMEMORIZES on, FIX's rest is a rest as the
+	# sequels' is: the plan's spells cast since go back in, and the rest lasts as long as they take.
+	if spells != null and Rememorize.refill(_party, spells) > 0:
+		for m in _party:
+			if m.status == PartyMember.STATUS_OKAY:
+				most = maxi(most, m.learn_minutes(spells))
 	if most < 5:
 		_fix_heal()
 		return
