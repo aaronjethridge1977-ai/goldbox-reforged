@@ -758,8 +758,10 @@ func recalculate(types: ItemTypes) -> void:
 	weapon = null
 	armor = null
 	shield = null
+	# The load counts all seven kinds of coins, gems and jewellery too, as a word (START.EXE 0x1924: record
+	# +0x102; Combat Chat 16, p11t1: ARN's 1290 jewellery put him at his ceiling and moved him 3).
 	weight = 0
-	for i in 5:
+	for i in 7:
 		weight += money[i]
 	var ring_plus := 0           # best ring/protection plus (slot 9); doesn't stack
 	var other_plus := 0          # helms, cloaks, bracers... (plus only)
@@ -840,6 +842,7 @@ func recalculate(types: ItemTypes) -> void:
 		# the movement is 9 or less here (START.EXE 0xDF4-0xE19, body armour only, slot 2).
 		if armor.plus != 0 and movement <= 9 and types.slot(armor.type) == ItemTypes.SLOT_ARMOR:
 			movement += 3
+	weight &= 0xFFFF
 	var over := weight - load_allowance()
 	var by_load := movement
 	if over > 0x400:
@@ -981,7 +984,7 @@ func encumbrance() -> int:
 		total += money[i]     # gems and jewelry weigh 1 each too (lab chat 11: save I)
 	for it in items:
 		total += it.total_weight()
-	return total
+	return total & 0xFFFF     # a word, as the original keeps it (record +0x102): a count wrapped below 0 cancels out
 
 
 func money_text() -> String:

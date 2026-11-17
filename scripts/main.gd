@@ -2575,6 +2575,10 @@ func _start_event_fight() -> void:
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams)
+	# The original clears the surprise flag after every round's initiative (GAME.OVR 0x98F4: game
+	# state +0x596 = 0), so it counts for this fight's first round only and a later fight without
+	# its own SURPRISE starts even (Combat Chat 16, Player 11's p11t1 draw 3613; combat lane).
+	_vm.write_byte(EclVM.AMBUSH, 0)
 
 
 var _duelist: PartyMember = null

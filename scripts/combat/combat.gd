@@ -1827,12 +1827,21 @@ func _turn_pick(i: int) -> int:
 #   member, or on an even roll if as fast; otherwise "ESCAPE IS BLOCKED" and it stops
 #   running. Out of movement, it fights whatever is next to it.
 
+## The fastest figure of a side still in the fight, in whole squares (GAME.OVR 0x15103: the round's
+## movement, 0x1291E, halved; Combat Chat 16, p11t1 draw 5430: a goblin guard leaving the field drew the
+## d2 at 0x134C6 where ours, comparing whole movements, let it go).
 func _fastest(team: int) -> int:
 	var best := 0
 	for c in combatants:
 		if c.team == team and not c.down:
-			best = maxi(best, (c.who as PartyMember).movement)
+			best = maxi(best, _round_movement(c.who as PartyMember) >> 1)
 	return best
+
+
+## A figure's own speed for the same comparisons (morale 0xBDC4, the getaway 0x1348E): the round's
+## movement halved.
+func _speed(m: PartyMember) -> int:
+	return _round_movement(m) >> 1
 
 
 ## The morale check (see above). Returns "", "flee" or "surrender".
@@ -1857,7 +1866,7 @@ func _morale_check(i: int) -> String:
 		return ""
 	if c.team == 1 and not (enemy_health < 100 - morale_base or enemy_health == 0):
 		return ""
-	if _fastest(1 - c.team) <= m.movement:
+	if _fastest(1 - c.team) <= _speed(m):
 		return "flee"
 	if m.stats.size() > 1 and m.stats[1] > 5:
 		return "surrender"
@@ -1922,8 +1931,8 @@ func _gets_away(i: int) -> bool:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
 	var foes := _fastest(1 - c.team)
-	var away := standing(1 - c.team) == 0 or foes < m.movement
-	if not away and foes == m.movement:
+	var away := standing(1 - c.team) == 0 or foes < _speed(m)
+	if not away and foes == _speed(m):
 		away = roll(1, 2, "%s gets away?" % m.name) == 1
 	if away:
 		# Still counted in the fight (DS:0x6814, START.EXE 0xBA:0x23DB) until the next recount: the

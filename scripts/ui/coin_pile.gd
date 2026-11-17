@@ -7,8 +7,8 @@ class_name CoinPile
 ##     (control byte 128 and over) keeps his, unless his control is 0xB3.
 ##   SHARE (0x252C3): each kind is split by the number of player characters (control 0 or 0xB3);
 ##     each player character in party order (an NPC, 0x80 and over, gets nothing) takes his part
-##     from jewellery down to copper, then one more coin of the remainder while any is left; a
-##     part that doesn't fit under his load (0x24CDD) is partly taken and the rest stays on the pile.
+##     from jewellery down to copper, then the remainder as share() says (Combat Chat 16: the
+##     overloaded member's word arithmetic and the second pass over the remainder).
 ##   A pile's or a purse's worth in gold (0x24D31, 0x238F8): its five coin kinds in copper, + 100,
 ##     / 200 (rounded, a word); setting a worth (0x24E0E, 0x24DB9) empties the five coin kinds and
 ##     leaves worth / 5 platinum and worth % 5 gold (gems and jewellery untouched).
@@ -40,7 +40,17 @@ static func pool(party: Array[PartyMember], pile: PackedInt32Array) -> PackedInt
 	return out
 
 
-## SHARE: returns what stays on the pile.
+## SHARE: returns what stays on the pile. As GAME.OVR 0x252C3 does it, word for word (Combat Chat 16,
+## Player 11's p11t1: the original's save after the fight has LIRA's jewellery at 63644, ARN's at 1290,
+## BRAM's at 602, and ARN's load at its ceiling, 4500):
+##   each player character in party order (an NPC, control 0x80 and over, skipped) takes his part of each
+##   kind, jewellery down to copper. One whose load (a word: items + all seven coin kinds) would pass his
+##   ceiling (0x24CDD) takes the ceiling less his load instead, as a word: nothing at the ceiling, and from
+##   an overloaded one the excess is taken away (his count wraps below 0); what he didn't take goes to the
+##   remainder. One whose part fit takes one more coin of the remainder if the whole remainder would fit.
+##   Then (0x25517) each kind's remainder goes, in party order and to anyone (NPCs too), as far as each
+##   one's room (the ceiling less his load, a word: an overloaded one's room is huge) holds it; what is
+##   left after everyone stays on the pile.
 static func share(party: Array[PartyMember], pile: PackedInt32Array) -> PackedInt32Array:
 	var n := 0
 	for m in party:
@@ -51,20 +61,32 @@ static func share(party: Array[PartyMember], pile: PackedInt32Array) -> PackedIn
 	var each := []
 	var rest := []
 	for c in 7:
-		each.append(pile[c] / n)
-		rest.append(pile[c] % n)
+		each.append((pile[c] / n) & 0xFFFF)
+		rest.append((pile[c] % n) & 0xFFFF)
 	for m in party:
 		if m.npc >= 0x80:
 			continue
 		for c in range(6, -1, -1):
-			var fit := mini(int(each[c]), m.coins_room())
-			m.money[c] += fit
-			if fit == each[c]:
-				if rest[c] > 0 and m.coins_room() >= 1:
-					m.money[c] += 1
-					rest[c] -= 1
+			var top := m.max_load() & 0xFFFF
+			if ((m.encumbrance() + int(each[c])) & 0xFFFF) > top:
+				var fit := (top - m.encumbrance()) & 0xFFFF
+				m.money[c] = (m.money[c] + fit) & 0xFFFF
+				rest[c] = (int(rest[c]) + int(each[c]) - fit) & 0xFFFF
 			else:
-				rest[c] += each[c] - fit
+				m.money[c] = (m.money[c] + int(each[c])) & 0xFFFF
+				if rest[c] > 0 and ((m.encumbrance() + int(rest[c])) & 0xFFFF) <= top:
+					m.money[c] = (m.money[c] + 1) & 0xFFFF
+					rest[c] -= 1
+	for c in range(6, -1, -1):
+		if rest[c] == 0:
+			continue
+		for m in party:
+			var room := ((m.max_load() & 0xFFFF) - m.encumbrance()) & 0xFFFF
+			if room == 0:
+				continue
+			var give := mini(int(rest[c]), room)
+			m.money[c] = (m.money[c] + give) & 0xFFFF
+			rest[c] -= give
 	var out := PackedInt32Array()
 	for c in 7:
 		out.append(rest[c])

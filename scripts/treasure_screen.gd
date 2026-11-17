@@ -100,6 +100,11 @@ func _menu() -> Array:
 	return items
 
 
+## TAKE goes straight to the items (no MONEY ITEMS EXIT step) when the pile has items and no money.
+func _items_only() -> bool:
+	return _spoils != null and not _spoils.has_money() and not _spoils.items.is_empty()
+
+
 func _show_treasure() -> void:
 	_mode = "menu"
 	_pick = 0
@@ -384,7 +389,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			match choice:
 				"VIEW": _view()
 				"TAKE":
-					_mode = "take"
+					# With no money on the pile the original's TAKE opens the item list at once, and its
+					# EXIT comes back here (DOSBox, the Player's p11t1 after SHARE: VIEW TAKE POOL EXIT,
+					# T, then "ITEMS: TAKE EXIT"; E, VIEW TAKE POOL EXIT again; Combat Chat 16).
+					if _items_only():
+						_mode = "items"
+						_cursor = 0
+					else:
+						_mode = "take"
 					_refresh()
 				"POOL": _pool()
 				"SHARE": _share()
@@ -419,10 +431,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				"TAKE":
 					_take_item(_cursor)
 					if _spoils.items.is_empty():
-						_mode = "take"
+						_mode = "take" if _spoils.has_money() else "menu"
 						_refresh()
 				"EXIT":
-					_mode = "take"
+					_mode = "menu" if _items_only() else "take"
 					_refresh()
 		"ask_exit":
 			if choice == "YES":

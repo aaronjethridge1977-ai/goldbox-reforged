@@ -41,6 +41,10 @@ static func gather(defeated: Array, script_money: Array, script_items: Array[Gam
 		s.items.append(c)
 	var worth := 0
 	var kept := 0
+	# GAME.OVR 0x571E: the fight's end puts each defeated figure's items on the pile (DS:0x6810) at its
+	# head, one by one, so they come first and in reverse order, the last figure's last item at the top
+	# (Combat Chat 16; DOSBox, the Player's p11t1: DIRTEN's items listed last to first after the fight).
+	var theirs: Array[GameItem] = []
 	for m in defeated:
 		var pm: PartyMember = m
 		s.fought = true
@@ -57,7 +61,9 @@ static func gather(defeated: Array, script_money: Array, script_items: Array[Gam
 			kept += 1
 			var c := it.copy()
 			c.name = it.name
-			s.items.append(c)
+			theirs.push_front(c)
+	theirs.append_array(s.items)
+	s.items = theirs
 	worth += s.money_worth()
 	for it in s.items:
 		if it.plus > 0:
