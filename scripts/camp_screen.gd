@@ -576,8 +576,10 @@ func _page_frame(ropes: Array) -> void:
 		_scr.tile(39, r, 20)
 
 
+## Rows of the list on a page. CAST's list fills rows 5-22 (Combat Chat 18, DOSBox: ELWEN's 21 rows, NEXT
+## shows the last 18).
 func _page_rows() -> int:
-	return 11 if _list_kind == "memorize" else 17
+	return 11 if _list_kind == "memorize" else (18 if _list_kind == "cast" else 17)
 
 
 func _draw_list() -> void:
@@ -598,6 +600,11 @@ func _draw_list() -> void:
 	for i in range(_top, mini(_top + rows, _list.size())):
 		var row: Array = _list[i]
 		var r := LIST_TOP + i - _top
+		if r >= 16 and not _lines.is_empty():
+			# A message's box (the rope at row 16, rows 17-22) hides the list's rows there (Combat Chat 18,
+			# DOSBox: ELWEN's 18 rows, HOLD PERSON / IS A COMBAT-ONLY SPELL..., ELWEN CASTS / BLESS; ours drew
+			# both: main chat 45's "message box drawn over the camp's spell list").
+			break
 		if row[1] == 0:
 			_scr.text(1, r, row[0], MAGENTA)
 		else:
@@ -924,6 +931,26 @@ func _who() -> PartyMember:
 ## Builds a spell list by level: rows [text, id] with headings as [text, 0].
 func _build_list(ids: Array, mark: String = "") -> void:
 	_list = []
+	if _list_kind == "cast" and mark == "":
+		# SPELLS IN MEMORY: in the record's own order, a level heading wherever the level changes (Combat
+		# Chat 18, DOSBox: ELWEN's record CLW CLW BLESS SLEEP / KNOCK STINKING CLOUD / SLEEP MAGIC MISSILE /
+		# HOLD PERSON x3 / BLESS BLESS / HOLD PERSON listed so, six headings; ours sorted them by level).
+		# The record's bytes 0x17-0x2B upwards: ours' `memorized` holds them from 0x2B down, so backwards.
+		var last := -1
+		var up := ids.duplicate()
+		up.reverse()
+		for id in up:
+			var l := spells.level(id)
+			if l != last:
+				_list.append([LEVEL_WORDS[clampi(l - 1, 0, 4)], 0])
+				last = l
+			_list.append([spells.name_of(id), id])
+		_top = 0
+		_cursor = -1
+		for i in mini(_list.size(), _page_rows()):
+			if _list[i][1] != 0:
+				_cursor = i
+		return
 	var by_level := {}
 	for id in ids:
 		by_level.get_or_add(spells.level(id), []).append(id)
@@ -1112,11 +1139,9 @@ func _back_to_list() -> void:
 		else:
 			_magic_menu()
 	else:
-		var keep := _cursor
+		# The list is built again: the first page, its last spell lit (Combat Chat 18, DOSBox: after a cure
+		# cast from the second row, after Bless, after LOSE IT? NO; ours kept the light where it was).
 		_build_list(_caster.ready_spells())
-		_cursor = mini(keep, _list.size() - 1)
-		while _cursor > 0 and _list[_cursor][1] == 0:
-			_cursor -= 1
 		_mode = "list"
 		_pick = 0
 		_refresh()

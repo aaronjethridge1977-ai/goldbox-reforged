@@ -516,7 +516,9 @@ func learn_study_hours(table: SpellTable) -> int:
 
 ## Removes one memorized copy of `id` (after casting it, or losing it).
 func forget(id: int) -> void:
-	var i := memorized.find(id)
+	# The copy lowest in the record goes (Combat Chat 18, DOSBox: ELWEN's Bless cast with the list's last
+	# Bless lit took the first one listed); `memorized` runs from the record's top down, so the last here.
+	var i := memorized.rfind(id)
 	if i >= 0:
 		memorized.remove_at(i)
 

@@ -203,6 +203,8 @@ func copy_from(src: EclVM) -> void:
 	monsters = src.monsters.duplicate(true)
 	monster_teams.assign(src.monster_teams)
 	selected = src.selected
+	walk_selected = src.walk_selected
+	_script_pick = src._script_pick
 	selected_creature = src.selected_creature
 	_input_dest = src._input_dest.duplicate()
 	input_max = src.input_max
@@ -603,9 +605,30 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 	return false
 
 
+## The player's own selection and the script's (Combat Chat 18, GAME.OVR; seen in DOSBox: the inn's WHO WILL
+## PAY? answered with the sixth member, its script's LOAD_CHAR, then the camp opens with the first member lit,
+## the one selected on the walking screen). The main loop keeps the selected member each time the walking
+## menu returns (0x40E3 -> 0x4436); every LOAD_CHAR flags the selection as the script's (0x102C: 0x4430 = 1);
+## EXIT (0xDAC) and PROGRAM (0x3B5C) put the kept member back when the flag is set and clear it. WHO's pick
+## sets no flag: it stays unless a LOAD_CHAR follows. Not modelled: LOAD_CHAR with the high bit clears the flag
+## when it lands on the kept member while the party's redraw flags (0x84D2, 0x84D3) are set (0x10AE).
+var walk_selected := -1
+var _script_pick := false
+
+
+func _restore_pick() -> void:
+	if not _script_pick:
+		return
+	_script_pick = false
+	if party != null and walk_selected >= 0 and walk_selected < party.size():
+		selected = walk_selected
+		selected_creature = -1
+
+
 ## LOAD_CHAR n: selects party member n & 0x7F. With the high bit the original redraws the
 ## party, and a member dismissed through the window (0x6C00 = 0) leaves now.
 func _load_char(v: int) -> void:
+	_script_pick = true
 	if v & 0x80 and _dismiss and selected_member() != null:
 		party.remove_at(selected)
 		party_changed = true
@@ -885,10 +908,12 @@ func _exec(ins: Dictionary) -> void:
 		return
 	match op:
 		"EXIT":
+			_restore_pick()
 			state = State.DONE
 		"GOTO":
 			_jump(a[0])
 		"PROGRAM":
+			_restore_pick()
 			program = _value(a[0])
 			state = State.PROGRAM
 		"LOAD_CHAR":

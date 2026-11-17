@@ -76,7 +76,7 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 	match id:
 		CURE_LIGHT:
 			var t: PartyMember = targets[0]
-			if _heal(t, rng.randi_range(1, 8)):
+			if _heal(t, _roll(rng, 1, 8)):     # GAME.OVR 0x28083: one d8
 				out.append("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 			return out
 		CURE_DISEASE:
@@ -173,10 +173,12 @@ const MANUAL_READING := 4
 const MANUAL_TRAINING := 7
 
 
+## Dice of a spell cast outside a fight: from the original's dice when a replay runs on them (tpseed), so a
+## segment's draws stay in step past a camp's cure (Combat Chat 18: Player 15's p15c7, the d8 at 0x280A2).
 static func _roll(rng: RandomNumberGenerator, n: int, d: int) -> int:
 	var t := 0
 	for i in n:
-		t += rng.randi_range(1, d)
+		t += TpDice.between(1, d, "spell outside a fight") if TpDice.on else rng.randi_range(1, d)
 	return t
 
 

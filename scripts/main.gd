@@ -1011,9 +1011,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show()
 			return
+		# A key on the walking menu: the member selected now is the player's own (GAME.OVR 0x40E3 keeps it
+		# in 0x4436; a script's LOAD_CHAR is undone from it at EXIT or PROGRAM: ecl_vm.gd, Combat Chat 18).
+		_vm.walk_selected = _vm.selected
 		if (key == KEY_HOME or key == KEY_END) and not _party.is_empty():
 			# Home/End move the selected character up and down the party (lab, chat 11).
 			_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) + (1 if key == KEY_END else -1), _party.size())
+			_vm.walk_selected = _vm.selected
 			get_viewport().set_input_as_handled()
 			_show()
 			return
@@ -1847,6 +1851,17 @@ func _knock_caster() -> PartyMember:
 	return null
 
 
+## A door roll (BASH 0x1695F, PICK 0x16BAA): from the original's dice when a replay runs on them
+## (tpseed), so a segment's draws stay in step past a locked door (Combat Chat 18: Player 15's
+## p15c7, six d100 for PICK at 2:20 5,7); else the door's own generator, as before.
+func _door_die(n: int) -> int:
+	return TpDice.between(1, n, "door") if TpDice.on else _door_rng.randi_range(1, n)
+
+
+func _door_d6(drawn: int) -> int:
+	return TpDice.between(1, 6, "door") if TpDice.on else drawn
+
+
 func _door_choice(c: String) -> void:
 	if not _door_options.contains(c):
 		return
@@ -1859,41 +1874,43 @@ func _door_choice(c: String) -> void:
 	match c:
 		"B":
 			# Every member in turn tries (strength, as the open-doors roll), until one does it.
+			# With the original's dice (tpseed) each roll is drawn where GAME.OVR 0x1695F draws it: a
+			# member whose strength has no chance draws nothing (Combat Chat 18).
 			for m in _party:
 				var pm := m as PartyMember
 				var st := pm.stats[0]
 				var ex := pm.strength_exceptional
-				var r6 := _door_rng.randi_range(1, 6)
+				var r6 := 0 if TpDice.on else _door_rng.randi_range(1, 6)
 				if kind == 3:
 					if st == 18 and ex >= 91 and ex <= 99:
-						opened = r6 == 1
+						opened = _door_d6(r6) == 1
 					elif st == 18 and ex == 100:
-						opened = r6 <= 2
+						opened = _door_d6(r6) <= 2
 					elif st == 19 or st == 20:
-						opened = r6 <= 3
+						opened = _door_d6(r6) <= 3
 					elif st == 21 or st == 22:
-						opened = r6 <= 4
+						opened = _door_d6(r6) <= 4
 					elif st == 23:
-						opened = r6 <= 5
+						opened = _door_d6(r6) <= 5
 					elif st == 24:
-						opened = _door_rng.randi_range(1, 8) <= 7
+						opened = _door_die(8) <= 7
 					elif st >= 25:
 						opened = true
 					else:
 						_vm.write_byte(DOOR_TRY_BASH, 0)
 				else:
 					if st >= 3 and st <= 7:
-						opened = r6 == 1
+						opened = _door_d6(r6) == 1
 					elif st >= 8 and st <= 15:
-						opened = r6 <= 2
+						opened = _door_d6(r6) <= 2
 					elif st >= 16 and st <= 17:
-						opened = r6 <= 3
+						opened = _door_d6(r6) <= 3
 					elif st == 18 and ex <= 50:
-						opened = r6 <= 3
+						opened = _door_d6(r6) <= 3
 					elif st == 18 and ex <= 99:
-						opened = r6 <= 4
+						opened = _door_d6(r6) <= 4
 					elif st == 18:
-						opened = r6 <= 5
+						opened = _door_d6(r6) <= 5
 				if opened:
 					break
 		"P":
@@ -1901,7 +1918,7 @@ func _door_choice(c: String) -> void:
 			if kind == 2:
 				for m in _party:
 					var pm := m as PartyMember
-					if _door_rng.randi_range(1, 100) <= pm.thief_skill(ClassTables.shared(_game_path), 1) and pm.status == 0:
+					if _door_die(100) <= pm.thief_skill(ClassTables.shared(_game_path), 1) and pm.status == 0:
 						opened = true
 						break
 		"K":
