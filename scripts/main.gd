@@ -2646,7 +2646,16 @@ func _on_event_fight_finished(result: int) -> void:
 		_duelist.experience += 100 * top
 		_after_fight([], "YOU HAVE WON THE DUEL.\n\nTHE DUELIST RECEIVES %d\n\nEXPERIENCE POINTS." % (100 * top))
 		return
-	_after_fight(_combat.defeated(), "THE PARTY HAS WON.", _combat.dropped_items())
+	var beaten := _combat.defeated()
+	# Combat Chat 15 (Player 11's fallen NPC; DOSBox, p11t1): a party member who fought on the monsters'
+	# side (record 0x10E = 1: DIRTEN, saved so) is a monster figure at the fight's end: his money and
+	# items go to the pile with the monsters' (0x557E, already in defeated()) and he leaves the party
+	# (0x672A removes every figure on side 1). Seen: the original's list after the fight has six members.
+	for m in _combat.turned_members():
+		_party.erase(m)
+		_vm.party_changed = true
+	_vm.selected = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
+	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items())
 
 
 ## Experience and treasure: from the defeated monsters and the event's TREASURE, then the

@@ -277,6 +277,15 @@ func rounds() -> int:
 	return _combat.round_no if _combat != null else _last_rounds
 
 
+## Party members who fought on the monsters' side (turned: record 0x10E = 1 or a script's 0x81).
+func turned_members() -> Array:
+	var out := []
+	for c in _combatants:
+		if c.team == 1 and c.who in _party:
+			out.append(c.who)
+	return out
+
+
 func defeated() -> Array:
 	var out := []
 	for c in _combatants:
