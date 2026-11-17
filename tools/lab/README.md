@@ -173,6 +173,14 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 44:** the `--keys` replay (main.gd `_replay_keys`) waits after each key until the engine is idle (no script DELAY
+or walk playing), at least 4 frames, ceiling 300 frames and 5 s whichever later (was 300 frames: with fast frames a
+chain of DELAYs outlasted them and checks 21 / 24 failed with Combat Chat 15's automap). `data/c44/onecheck.sh <src> <n>
+<out>` plays one check's ours side as diffcheck.sh does and keeps the log (`KEYS=` / `EXTRA=` override); `data/c44/wt`
+was origin/main + c15-automap merged (the proof: 29/29), `data/c44/ink` the old map at INK_SECONDS 0.0001 (21, 23-25
+MATCH), `data/c44/brk` + `brk.py` the break test's copy. Showcase re-shoots: the key lists of chat 40's takes rebuilt
+from their `.out` logs into `data/c44/townwalk_keys.txt` / `quicksave_keys.txt` (one key a line), filmed with `shot40.sh`.
+
 **Chat 43:** new checks 25-29 (5:6 the altar, New Phlan's two shops, 5:5 the giants, 7:22 the rocks room), each from
 a c34d checkpoint saved by ours' ENCAMP SAVE into an emptied slot G (`data/c43/slotG_backup/` holds the lab's own G:
 put it back after) and `mkcheck35.sh <n> <area> "<orig keys>" "<ours keys>"` (SEED=11111111 for the seeded ones);

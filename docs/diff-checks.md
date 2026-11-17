@@ -172,6 +172,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 44: the replay waits for the engine, not for frames
+
+No new checks (the Lead's note: the release's map first). Combat Chat 15 found checks 21 (3:11) and 24 (5:3) passing only
+because the old automap's parchment made frames slow: ours' replay waited at most 300 frames after a key, and with the new
+map's fast frames a chain of script DELAYs (24: AN ALARM..., A VOLLEY...) outlasted them, so Enter, E and F2 landed mid-text
+and F2 never wrote. `_replay_keys` now waits until nothing is busy (ceiling 300 frames and 5 s, whichever later). Proof:
+DIFFCHECKS 29/29 on origin/main, on origin/main + the new map (8b86606), and 21 / 23 / 24 / 25 with the old map's ink time
+cut to 0.0001 s (Combat's failing case); break test repeated (SUBTRACT and ADD both caught). No key list or seal changed.
+
 ## Chat 43: DAMAGE's pages and PRESS <ENTER>, checks 25-29 (5:6 the altar, New Phlan's shops, 5:5 the giants, 7:22 the rocks room), DIFFCHECKS 29/29
 
 - **The pause after scripted damage (the Lead's item 1, chat 42's finding):** the original's DAMAGE handler ends,
