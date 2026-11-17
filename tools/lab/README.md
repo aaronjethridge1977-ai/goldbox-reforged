@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 48:** the original's character-window cells and script bytes: `c48/cell.py <hex addr> [n]` reads the 16-bit
+cells of 0x6B00-0x6EFF (DS:0x49D6 + 2*addr + 0x2A00) and 0x9700-0x98FF (DS:0x49DA + 2*addr - 0x2E00); `c48/scr.py
+<hex addr> [n]` the script image 0x9900-0xB6FF (DS:0x49DE + addr + 0x6700). **A DAX ECL block has a 2-byte header:**
+script address A is the block's byte A - 0x9900 + 2 (`tools/ecl.py` handles it; a hand read without the +2 is two bytes
+off). **The Player's segment replays run in any lab:** `OP_LAB=<lab> OP_SAVES=~/gbr/player_lab/.lab/player/saves
+segment.py <run> begin <cp> --start=<p2start save> --tplog` with `<lab>/logs/<run>.log,.queue.txt,.trace.txt`, `qs.cfg`,
+`godot`, `proj` and `root/POOLRAD` (main's: `data/c48/seglab/`, never the Player's lab). **The original from a Player
+save in slot J:** copy the save with H renamed J and the character-file names inside `SAVGAMJ.DAT` patched (`CHRDATH` ->
+`CHRDATJ`): the save names its character files, so a renamed save without the patch loads another slot's party. The lab's
+slot J was put back from `data/c48/slotJ_backup/`. **Band checks** (31-33): ours' ENCAMP SAVE of a c34d checkpoint into a
+scratch game copy (`data/c48/g25`, `g27`), the original from it in slot J (`pl.py boot j`, `seed.py set 11111111`,
+arrows, `e s j n`), the check's files in `data/c48/chk30..33/`.
+
 **Chat 45:** test build 2 and 0.1.0 from cbfa5e7 (`tools/build/windows_test.sh`; a version with no suffix is a
 release build: `README-windows-release.txt`, the zip `goldbox-reforged-<version>-windows.zip`). Delivered:
 `builds/windows-test-2026-11-17/` (0.1.0-test2) and `builds/release-0.1.0/` (+ `release-notes.md` for `gh release
