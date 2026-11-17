@@ -175,6 +175,11 @@ func menu_line(row: int, items: Array, col: int = 0, selected: int = -1) -> void
 		i += 1
 
 
+## Forgets row `row`'s menu words (a screen drawing a prompt where a menu was, without clear()).
+func forget_menu(row: int) -> void:
+	_menu_hits = _menu_hits.filter(func(h: Array) -> bool: return h[0] != row)
+
+
 ## Word-wraps `s` to `width` characters a line.
 static func wrap(s: String, width: int) -> PackedStringArray:
 	var out := PackedStringArray()

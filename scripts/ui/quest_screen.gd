@@ -189,7 +189,8 @@ func _box_lines() -> Array:
 		return out
 	var q: Dictionary = _quests[i]
 	if String(q.get("giver", "")) != "":
-		out.append(["FROM: " + String(q.giver).to_upper(), GameScreen.GREEN])
+		for l in GameScreen.wrap("FROM: " + String(q.giver).to_upper(), 38):    # main's chat 42: a long giver ran past the frame
+			out.append([l, GameScreen.GREEN])
 	if bool(q.get("offered", false)) and where_of(q) != "":
 		for l in GameScreen.wrap("WHERE: " + where_of(q), 38):
 			out.append([l, GameScreen.GREEN])

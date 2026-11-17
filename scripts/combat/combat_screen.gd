@@ -599,6 +599,7 @@ func _draw_original(field: Image) -> void:
 		var items := _bottom_menu()
 		g.menu_line(24, items, prompt.length() + (0 if _cmode == "aim" else 1), _lit(items))
 	elif paced() and _combat != null and _combat.active >= 0 and _combatants[_combat.active].get("quick", false):
+		g.forget_menu(24)
 		if _move_label != "":
 			g.text(0, 24, _move_label, GameScreen.GREEN)
 	elif _combat != null and _cmode == "speed":
@@ -608,6 +609,7 @@ func _draw_original(field: Image) -> void:
 		g.menu_line(24, items, prompt.length() + 1, _lit(items))
 	elif _combat != null and _combat.active >= 0 and not _combatants[_combat.active].get("quick", false):
 		if _cmode == "move":
+			g.forget_menu(24)      # main's chat 42: the menu's words stayed live, the hover drew AIM over the prompt
 			g.text(0, 24, "MOVE/ATTACK, MOVE LEFT = %d" % (_combatants[_combat.active].moves / 2), GameScreen.GREEN)
 		else:
 			var items := _bottom_menu()
