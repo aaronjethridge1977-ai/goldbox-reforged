@@ -818,3 +818,14 @@ at once. Named to main on the board (Findings).
 Lab: `p15/` (seg03.plan, screens `c_*.png`, `d_*.png`, `r_414.png`/`r_415.png` (ours' REST TIME), segment 1's
 replay on 867d3b1 `p13a1.seg_combat867.txt`), saves `p2start/p14b6_slums`, `p2start/p15c5_s3a`, `p2start/p15c5_s3t`,
 runs p15c1-p15c7.
+
+**Segment 4 (slums2 -> sokal0): reached** (p15e3, seed 55667788, from `p2start/p15d8_slums2`; plan
+`plans/p15_c34d_04_sokal0.plan`). The bot's order: the tours 14,11 and 11,9 (Ohlo at 13,10: "GIVE ME THE POTION
+AND YOU WILL BE REWARDED": GIVE, main's plan's Ohlo's errand; the bot's run met only the locked door there), the
+inn (`innwait`: before hour 14, no wait), the harbor master (11,1), then 14,1 and a step E onto the pier's end (a
+walk onto 15,1 ends in 4:21 and the walk stops: "in area 4:21, not 3:0"). Sokal Keep's gate 4:21 8,14 N, no
+encounter on arrival (the bot fought five there: undead, zombies). Against `bot_sokal0.cfg`: the counters 4A80
+(15/16), 4ABB (23/24), the arrival fights' 4A03-4A0E (the bot's 4A0E 255), 49F0/49F1, XP and HP (CEDRIC 2 against
+the bot's 3). Save `p2start/p15e3_sokal0`. (p15e1/p15e2: Ohlo's GIVE; the walk onto the boat.)
+- `walk x,y avoid 99` for a walk that crosses every event (an `explore` with nothing left out): `avoid 0` avoids
+  every plain square (event 0).

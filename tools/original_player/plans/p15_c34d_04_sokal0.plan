@@ -1,0 +1,54 @@
+# Player 15: c34d segment 4, slums2 -> sokal0 (main's playthrough.plan: tour 14,11 / 15,12 / 11,9, town, answers 1,
+# tour 11,1 (the harbor master), tour 15,1 (the pier's end: the boat to Sokal Keep), expect 4:21).
+# The bot's order (p12/botorder.py slums2 sokal0): the three tours (nothing more of Ohlo's errand happened), a town
+# trip (the inn, the clerk, the temple, the halls: nobody trained, the inn again), the harbor master, the boat;
+# at the keep's gate five fights (undead, zombies). Left out: the town trip's clerk, temple and halls (no change).
+area 2:20
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer GIVE ME THE POTION|GIVE
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+inntrip
+walk 15,4 avoid 16
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+inntrip end
+prepare
+walk 14,11 avoid 16
+heal
+prepare
+walk 11,9 avoid 16
+heal
+# town: the inn
+walk 15,4 avoid 16
+step E
+area 3:0
+walk 4,12 through 9,25
+innwait
+# the harbor master (event 2), then the pier's end (event 1): the boat to Sokal Keep
+walk 11,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+walk 14,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+step E
+area 4:21
+heal
+checkpoint sokal0
