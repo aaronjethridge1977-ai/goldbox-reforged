@@ -537,6 +537,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		"menu":
 			match choice:
 				"BUY":
+					# The original opens the list at its top every time (Player 14, p13a1 key 64: ours
+					# reopened it where the last purchase left it, and the same keys bought other items).
+					_cursor = mini(1, maxi(_items.size() - 1, 0))
+					_top = _cursor
 					_mode = "list"
 					_refresh()
 				"VIEW": _view()
