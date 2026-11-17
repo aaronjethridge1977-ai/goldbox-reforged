@@ -687,3 +687,58 @@ Request to Combat (board).
 Lab: `p13/` (seg02b.plan, heal_test.plan, idle.plan, sethp.py: probe HP in memory, align.py: a segment's ours lines
 next to the original's keys, oursat.py: ours' screens after chosen keys), saves `p2start/c34d_start13`,
 `c34d_shopped13`, runs `p13a1` (segment 1), `p13h1` (heal probe), `p13b1`-`p13b6` (segment 2).
+
+## Player 14 (2026-11-16): p13b6's loss explained (the route); the inn trip; segment 1 in ours matches with two shop fixes
+
+**Why p13b6's party died at 14,10 (queue item 1): the route, not the dice.** The walk to event 3's square 11,9 went
+through 13,10, event 3's door: PICK, the commission (TALK, SLY, ACCEPT), and then the event puts the party back on
+14,10 facing E. The walker turned round and tried the same step ~30 times; each try rolled the Slums' encounters, and
+the party, at 3 of 6 standing after fight 16, fought on until it was destroyed. Main's bot's tour refuses such a step
+(main.gd `_tour`, `_refused`: "the square ahead turned the party back"), finds no other way to 11,9 and counts the
+event visited; it also stops a tour after a fight that leaves the party hurt (bot.gd `_hurt`, then `_prepare`), and
+walks to the inn when a camp's rest is interrupted (`_heal` → `_rest_at_inn`).
+
+**New in the tools (plans.py, segment.py):**
+- Walks: a step the square's script turns back (the party on the same square, facing elsewhere) is refused for the
+  rest of the run and walked round; a walk to an event whose square turned the party back, with no way on, is done.
+  A fight on a walk that leaves the party hurt (bot.gd `_hurt`: someone unconscious or dying, or the standing members
+  under 60% of their HP) inserts a heal of anyone hurt (`heal (after a fight)`) before the walk goes on.
+- `inntrip` ... `inntrip end` and `innheal`: an interrupted rest inserts the plan's trip to the inn (2:20: walk to
+  15,4, step E; 3:0: walk to the inn at 4,12, TO REST HERE YES, the payer `@platinum` as the bot, the heal in the
+  inn's camp; walk to 0,4, step W). The bot's tour back to the square it left is left out (the plan's next walk
+  routes from where the party comes back in). `plans/p14_c34d_02_slums_c.plan` (lab `p14/seg02c.plan`).
+- The stall guard (no goal in 300 keys) counts from an inserted heal or trip.
+- segment.py: ours' waits after a REST also cover each spell being memorized (ours holds each HAS MEMORIZED line for
+  the game speed x 225 ms with the rest's clock paused; p13a1's inn REST was still running at F2).
+
+**Seeds:** a run resumed from a checkpoint with the same seed and keys can replay the original's dice exactly (p14b4
+from p14b3's `s2b`: the same seed at every step, the same fight at 6,14), though not always (p14b1 and p14b2, both
+from `s2a` with one seed, parted in their first fight). A "reload" after a loss therefore takes another seed (the
+bot's reload meets new dice because the clock has moved on).
+
+**Queue item 1, segment 2 to `slums`:** from `s2a` with the new rules: p14b1 stopped on the stall guard (fixed), p14b2
+on 5 interrupted rests at 14,10 (before the inn trip existed). **p14b3** made the inn trip (New Phlan's inn, healed to
+full, back by 0,4 W) and saved `s2b` (2:20 15,4 W), then was destroyed at 6,14 S (a 20-figure encounter in event 18's
+southern streets, the only route to event 19); p14b4 (same seed) met the same fight; p14b5 (seed 2468ace1) lost ELWEN
+there (death rule); **p14b6 (seed 12345678) reached `slums`** (2:20 15,12 E, two fights, a heal). At level 1 that
+stretch is the dice: c34d's bot crossed it without a fight. Its flags against c34d's bot's `bot_slums.cfg`
+(`p12/cpdiff.sh`): the same but counters 4A80 (13/15) and 4ABB (19/21), 4A16 (35/0), the 4AFA-4AFF words, the day,
+and the party's XP, coins and loot (other fights).
+
+**Segment 2 in ours (p13b5 replayed, `--tplog`): parts at draw 27 of 44733, the locked door's PICK** at 2:20 10,2 N
+(→ 10,1, event 2): the original rolls a d100 for each of the six members (OVR:16be3), the lock opens and event 2's
+fight begins; ours draws nothing from the game's dice (main.gd `_door_choice` "P" rolls `_door_rng`, its own
+generator, and stops at the first success) and the party stays on 10,2. Request to main (board). The p14b6 replay
+(`segment.py p14b6 begin slums --start=p14b3_s2b --tplog`) waits for that fix.
+
+**Queue item 2, segment 1 in ours: matches but for the clock** with two lab-only patches of `shop_screen.gd`: NEXT /
+PREV keep the light's row (Player 13's request), and **BUY opens the item list at its top again** (ours reopened it
+where the last purchase left it: the last page, Shield lit, no NEXT; the original's NEXT + End keys then reach other
+items, and ours' pool held GOLD 4 PLATINUM 58 against the original's 3 gold 9 platinum). With both, all 416 keys
+follow the original square for square and statediff shows only the clock (ours 05:49, the original 06:04). Added to
+the board request to Combat.
+
+**Lead's item 3:** no fight compared to its end this chat (the segment 2 replay parted before its first fight).
+
+Lab: `p14/` (q.sh: a queue run with player.py args such as `--after`; seg02c.plan), saves `p2start/p13b6_s2a`,
+`p2start/p14b3_s2b`, runs p14b1-p14b6, ours' replays `logs/p14_*.out`, screens `p14/*.png`.

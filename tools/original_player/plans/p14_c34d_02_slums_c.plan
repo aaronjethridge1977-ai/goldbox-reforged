@@ -1,0 +1,66 @@
+# Player 14: seg02b + the inn trip on an interrupted rest (bot.gd _rest_at_inn), the inn's answers.
+# Player 13: c34d segment 2, shopped -> slums: the bot's event order (p12/botorder.py shopped slums), walks as the
+# bot's tour (cross every event but explore's 9 12 16), heal (bot.gd _heal) after each event, fights QUICK,
+# TAKE by main's bot's rule, locks PICK then BASH, LEAVE rather than ATTACK; 13 15 20 left for later as the bot.
+area 3:0
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+walk 0,4 through 25
+step W
+area 2:20
+inntrip
+walk 15,4 avoid 9,12,16
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+inntrip end
+walk 9,0 avoid 9,12,16
+heal
+walk 5,3 avoid 9,12,16
+heal
+walk 5,2 avoid 9,12,16
+heal
+walk 3,5 avoid 9,12,16
+heal
+walk 1,7 avoid 9,12,16
+heal
+walk 1,5 avoid 9,12,16
+heal
+walk 6,10 avoid 9,12,16
+heal
+walk 6,11 avoid 9,12,16
+heal
+walk 1,0 avoid 9,12,16
+heal
+walk 3,1 avoid 9,12,16
+heal
+walk 0,2 avoid 9,12,16
+heal
+walk 7,0 avoid 9,12,16
+heal
+walk 11,0 avoid 9,12,16
+heal
+checkpoint s2a
+walk 11,9 avoid 9,12,16
+heal
+checkpoint s2b
+walk 15,12 avoid 9,12,16
+heal
+checkpoint slums

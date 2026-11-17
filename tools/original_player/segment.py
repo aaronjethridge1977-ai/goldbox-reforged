@@ -40,7 +40,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
     """The original's keys after checkpoint a's save until checkpoint b's ENCAMP, as ours' --keys.
     extra (Player 5): {n: [keys]} ours-only keys sent after the segment's n-th original key (1-based), for a screen
     only ours shows (a known difference already on the board), so the replay can go on to the next difference."""
-    out, on, camp, fight, rest_min = [], False, False, False, 0
+    out, on, camp, fight, rest_min, spells = [], False, False, False, 0, 0
     extra, n = extra or {}, 0
     for line in open(os.path.join(LOGS, "%s.log" % run)):
         if "GOAL done: checkpoint %s" % a in line or (a == "begin" and line.split()[1:2] == ["RUN"]):
@@ -70,6 +70,8 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         if fight:            # the won screen and the treasure take a few frames in ours (chat 24)
             out += ["wait", "wait", "wait"]
             fight = False
+        if k == "m" and re.match(r"(memorize|heal): (MEMORIZE )?[A-Z][A-Z ]+$", why):
+            spells += 1      # Player 14: a spell to be memorized at the next REST
         out.append(GKEY.get(k, k))
         if tplog:
             out.append("tplog")
@@ -77,7 +79,10 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             out += ["wait", "wait"]      # ours' menus and treasure take a few frames (chat 24)
         if rest_min and k == "r" and "REST" in why:
             out += ["wait"] * (rest_min // 5 // 12 // 10 + 4)     # 12 steps a 0.05 s tick: 0.5 s a wait
-            rest_min = 0
+            # Player 14: ours holds each "HAS MEMORIZED" line for the game speed x 225 ms (camp_screen.gd, as
+            # START.EXE 0x709:0xDBE) with the rest's clock paused: p13a1's inn REST was still running at the end.
+            out += ["wait"] * (5 * spells)
+            rest_min, spells = 0, 0
         n += 1
         for e in extra.get(n, []):
             out += [e] + (["tplog"] if tplog else []) + ["wait", "wait"]

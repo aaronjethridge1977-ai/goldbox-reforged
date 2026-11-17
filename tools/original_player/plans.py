@@ -28,6 +28,15 @@
   heal                           (Player 13) main's bot's heal in a camp area (bot.gd _heal_if_low / _heal): if a
                                  member is below half HP or not OKAY: camp, Cure Light Wounds on the most hurt,
                                  MEMORIZE the bot's picks, REST, in rounds; then day rests until no one is hurt
+  inntrip ... inntrip end         (Player 14) goals kept aside (walk, step, area, innheal lines) for main's bot's trip to
+                                 the inn when a heal's rest is interrupted (bot.gd _rest_at_inn); inserted after the
+                                 heal once per interruption, not while on the trip
+  innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
+                                 then the camp opens before the walk sees the inn's square)
+  answer <words>|@platinum       (Player 14) on a member list: the member with most platinum (main's bot pays the inn so)
+  Walks also (Player 14, main.gd _tour and bot.gd): a step the square's script turns back is refused and walked round
+  (a walk to an event that turned the party back is done); a fight on a walk that leaves the party hurt (bot.gd
+  _hurt) is followed by a heal of anyone hurt before the walk goes on.
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
   buy <m> <item> | <m> <item> ...
                                  (Player 12) the next shop visit's purchases, main's `shop` list without the door:
@@ -36,7 +45,7 @@
                                  NEXT / PREV page); POOL before each purchase (main's bot does); EXIT when the visit's
                                  list is done. Each `buy` line is one visit.
 """
-import os, re, sys
+import copy, os, re, sys
 import orig
 import loot, screens
 
@@ -66,16 +75,79 @@ class Walk:
         if p.on_band():
             return self.band_step(p, x, y)
         R.NE, R.SW, R.INFO, R.DOORS = R.load(*self.area)
+        # Player 14: main's bot's two rules for a walk interrupted on the way (main.gd _tour, bot.gd _auto_handle):
+        # a fight that leaves the party hurt (bot.gd _hurt) stops the walk for a heal (_prepare: camp areas heal);
+        # a step the square's script turns back (the party on the same square, facing elsewhere: p13b6's event 3
+        # door at 13,10 after the commission) is refused for the rest of the run and walked round (_refused).
+        refused = REFUSED.setdefault(tuple(self.area), set())
+        t, self._tried = getattr(self, "_tried", None), None
+        if t is not None and t[:2] == (x, y) and f != t[2] and (x, y, t[2]) not in refused:
+            refused.add((x, y, t[2]))
+            p.note("walk", "the step %s from %d,%d was turned back: refused, walked round" % (t[2], x, y))
+        f0 = getattr(self, "_fights0", None)
+        if f0 is None:
+            self._fights0 = p.fights
+        elif p.fights > f0:
+            self._fights0 = p.fights
+            if hurt(members(p.g.mem)):
+                p.note("walk", "fight %d left the party hurt (%s): heal before going on (bot.gd _hurt, _prepare)" % (
+                    p.fights, party_hp(p.g.mem)))
+                p.plan.goals.insert(p.goal, Heal(force=True))
+                p.goal_key = p.g.nkeys      # the stall guard counts from the heal's start (p14b1: TAKE + heal > 300)
+                return False, None, ""
         if self.avoid is not None:      # Player 13: the bot's tour (main.gd _find_path): only these are walked round
             avoid = set(self.avoid) - {R.event(x, y), R.event(self.x, self.y)}
         else:
             avoid = set(range(1, 128)) - {R.event(x, y), R.event(self.x, self.y)} - self.through
-        path = R.route((x, y), {(self.x, self.y)}, avoid)
+        path = route_refusing((x, y), (self.x, self.y), avoid, refused)
+        ev = R.event(self.x, self.y)
+        if path is None and ev and any(R.event(rx + DX[d][0], ry + DX[d][1]) == ev for rx, ry, d in refused):
+            # main.gd _tour: "no route" ends the tour; the bot's explore counts the event as visited (p13b6: event
+            # 3's 13,10 runs the commission, then turns the party back; its 11,9 is behind it).
+            p.note("walk", "no way on to %d,%d: event %d turned the party back, done as main's bot's tour" % (
+                self.x, self.y, ev))
+            return True, None, ""
         if path is None:
             raise_stop(p, "walk: no route from %d,%d to %d,%d" % (x, y, self.x, self.y))
         nx, ny = path[1]
         want = {(0, -1): "N", (1, 0): "E", (0, 1): "S", (-1, 0): "W"}[(nx - x, ny - y)]
-        return False, turn(f, want), "walk to %d,%d via %d,%d" % (self.x, self.y, nx, ny)
+        k = turn(f, want)
+        if k == "up":
+            self._tried = (x, y, want)
+        return False, k, "walk to %d,%d via %d,%d" % (self.x, self.y, nx, ny)
+
+
+REFUSED = {}    # Player 14: area -> {(x, y, dir)} steps a square's script turned back (main.gd _tour's _refused)
+
+
+def route_refusing(start, goal, avoid, refused):
+    """The lab's route.py BFS, with the refused steps left out."""
+    from collections import deque
+    q, prev = deque([start]), {start: None}
+    while q:
+        c = q.popleft()
+        if c == goal:
+            path = []
+            while c:
+                path.append(c)
+                c = prev[c]
+            return path[::-1]
+        for s in range(4):
+            if R.passable(c[0], c[1], s) and (c[0], c[1], "NESW"[s]) not in refused:
+                n = (c[0] + R.DX[s], c[1] + R.DY[s])
+                if n in prev or (n != goal and R.event(*n) in avoid):
+                    continue
+                prev[n] = c
+                q.append(n)
+    return None
+
+
+def hurt(M):
+    """bot.gd _hurt: a member unconscious or dying, or the standing members under 60% of their HP."""
+    if any(m["status"] in (4, 5) for m in M):
+        return True
+    ok = [m for m in M if m["status"] == 0]
+    return sum(m["hp"] for m in ok) * 5 < sum(m["max"] for m in ok) * 3
 
 
     def band_step(self, p, x, y):
@@ -187,8 +259,12 @@ class Heal:
     cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
     An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
     The camp screens are answered in Plan._heal (p.heal holds the state)."""
+    def __init__(self, force=False, inn=False):
+        self.force = force      # Player 14: after a fight on a walk (bot.gd _prepare): heal anyone hurt
+        self.inn = inn          # Player 14: `innheal` in an `inntrip` block: the heal in the inn's camp
+
     def __repr__(self):
-        return "heal"
+        return "heal" + (" at the inn" if self.inn else " (after a fight)" if self.force else "")
 
     def next(self, p):
         h = getattr(p, "heal", None)
@@ -203,6 +279,16 @@ class Heal:
                 h["op"] = None
                 p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
                                " again)" % p.fights)
+                if p.plan.inntrip and not getattr(p, "on_trip", False) and not self.inn:
+                    # Player 14: bot.gd _heal: "an interrupted rest: a player gives up camping among the monsters
+                    # and walks to the inn" (_rest_at_inn: travel to town, the inn, travel back). The plan's
+                    # `inntrip` block is that trip for this area; the bot's tour back to the square is left out
+                    # (the plan's next walk routes from where the trip comes back in).
+                    p.heal, p.on_trip = None, True
+                    p.note("heal", "rest interrupted by fight %d: the inn trip (bot.gd _rest_at_inn)" % p.fights)
+                    p.plan.goals[p.goal + 1:p.goal + 1] = copy.deepcopy(p.plan.inntrip)
+                    p.goal_key = p.g.nkeys
+                    return True, None, ""
                 if h["interrupts"] > 4:
                     raise_stop(p, "heal: rest interrupted %d times" % h["interrupts"])
                 if h["phase"] == "rounds":
@@ -211,13 +297,28 @@ class Heal:
         M = members(p.g.mem)
         if any(m["status"] == 6 or m["status"] > 6 for m in M):
             raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
-        if not any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M):
+        if not (needs_rest(M) if self.force else any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M)):
             return True, None, ""
-        p.heal = {"done": False, "phase": "rounds", "round": 0, "cured": 0, "memo_any": False, "op": None,
-                  "cures": 0, "rests": 0, "days": 0, "interrupts": 0, "fights0": p.fights, "days_memo": False,
-                  "field": None}
-        p.note("heal", "low: %s" % party_hp(p.g.mem))
+        new_heal(p)
         return False, "e", "heal: ENCAMP"
+
+
+def new_heal(p):
+    p.heal = {"done": False, "phase": "rounds", "round": 0, "cured": 0, "memo_any": False, "op": None,
+              "cures": 0, "rests": 0, "days": 0, "interrupts": 0, "fights0": p.fights, "days_memo": False,
+              "field": None}
+    p.note("heal", "low: %s" % party_hp(p.g.mem))
+
+
+class TripEnd:
+    """Player 14: the end of an inserted `inntrip` block."""
+    def __repr__(self):
+        return "inn trip over"
+
+    def next(self, p):
+        p.on_trip = False
+        p.goal_key = p.g.nkeys
+        return True, None, ""
 
 
 # Player 13: spell ids (the record's memorized bytes 0x17-0x2B, + 0x80 while being memorized) by class and level
@@ -329,6 +430,8 @@ class Plan:
         self.aliases = set()     # Player 3: `alias` areas
         self.buys = []           # Player 12: one list of (member, name) per shop visit
         self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
+        self.inntrip = []        # Player 14: the `inntrip` block's goals (an interrupted rest's trip to the inn)
+        self.mem = None          # Player 14: the game's memory, for `@platinum` answers
         self.defaults = {"enter": "enter", "combat": "q", "encounter": "c", "continue": "n",
                          "treasure": "e"}
 
@@ -361,11 +464,21 @@ class Plan:
 
     def answer(self, scr, st, p):
         kind = scr["kind"]
+        self.mem = p.g.mem
         if getattr(p, "seq", None):
             k, why = self._seq(scr, st, p)
             if k:
                 return k, why
         h = getattr(p, "heal", None)
+        gs = self.goals
+        if h is None and scr["bottom"].split()[:1] == ["CAMP:"] and p.goal + 1 < len(gs) \
+                and isinstance(gs[p.goal], Walk) and isinstance(gs[p.goal + 1], Heal) and gs[p.goal + 1].inn:
+            # Player 14: the inn (TO REST HERE, WHO WILL PAY) opens its camp before the walk sees its square.
+            p.log("GOAL done: %s (the inn's camp)" % gs[p.goal])
+            p.goal += 1
+            p.goal_key = p.g.nkeys
+            new_heal(p)
+            h = p.heal
         if h is not None and not h["done"]:
             k = self._heal(scr, st, p, h)
             if k:
@@ -872,6 +985,11 @@ class Plan:
             d = scr["items"].index(choice) - scr["highlight"]
             # the original's vertical menus: End = next item, Home = previous (lab; the arrows do nothing)
             return "enter" if d == 0 else ("end" if d > 0 else "home")
+        if kind == "member" and choice == "@platinum" and self.mem is not None:
+            # Player 14: main's bot pays the inn with the member who has most platinum (record 0x90)
+            M = members(self.mem)
+            best = max(M, key=lambda m: m["rec"][0x90] | m["rec"][0x91] << 8)
+            choice = best["name"]
         if kind == "member":
             if choice not in scr["names"] or scr["highlight"] is None:
                 return None
@@ -911,6 +1029,15 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":
             pl.goals.append(Checkpoint(rest.strip()))
+        elif cmd == "inntrip":
+            # Player 14: `inntrip` ... `inntrip end`: goals kept aside for an interrupted rest (bot.gd _rest_at_inn)
+            if rest.strip() == "end":
+                pl.goals, pl.inntrip = trip_outer, pl.goals + [TripEnd()]
+                pl.area = trip_area
+            else:
+                trip_outer, trip_area, pl.goals = pl.goals, pl.area, []
+        elif cmd == "innheal":
+            pl.goals.append(Heal(force=True, inn=True))
         elif cmd == "keys":
             name, ks = rest.split(None, 1)
             pl.goals.append(Keys(name, ks.replace(" ", "").split(",")))
