@@ -175,8 +175,9 @@ another slot (the Player's are slot I). Checks driver with its own output folder
 
 **Chat 52:** use `data/c52/dc_new.sh` (not c51's) for a new check: `DC_DATA=$PWD/data/c52/cd DIFFCHECK_ONLY=<n> bash
 data/c52/dc_new.sh ~/gbr/goldbox-reforged`; it copies the linked game folder with `cp -rL` (c51's `cp -r` copied the
-symlink, so every check played in the shared `~/gbr/checks/data/game` and two at once raced). Checks 41-45 in
-`data/c52/chk41..45/`. A NO check from a jump save: `mksave.py J G <ecl> <block> <x> <y> <dir>`, copy `game/SAVGAMG.DAT`
+symlink, so every check played in the shared `~/gbr/checks/data/game` and two at once raced). Checks 41-46 in
+`data/c52/chk41..46/`. A jump save starts with the original's 0xC04E/0xC04F stale (the old area's) until a turn
+or step: start facing away from a door the on-move tests, then turn (check 46). A NO check from a jump save: `mksave.py J G <ecl> <block> <x> <y> <dir>`, copy `game/SAVGAMG.DAT`
 and `game/CHRDATG*` to `chk<n>/start/`, ours.cfg from any jump-save check (`~/gbr/checks/data/8/ours.cfg`); keys
 `load=G,wait,tpseed=11111111,Up,...` (the first Up jumps); on the walking screen N is a test key (the clock), so send
 N only while the menu shows. Lab slot G was backed up to `data/c52/gbak/` before the jump saves.
