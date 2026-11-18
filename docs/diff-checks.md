@@ -172,12 +172,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 54: check 49 (8:27, a bump into the water at the boat), DIFFCHECKS 49/49; the band's refused step, the wilderness box, the nomads' kobolds
+## Chat 54: checks 49 (8:27, a bump into the water at the boat) and 50 (8:16, the moat), DIFFCHECKS 50/50; the band's refused step, the wilderness box, the nomads' kobolds
 
 - **Check 49, 8:27 the boat again:** check 34's keys to the boat at overland 9,29 (shown 35,29; tpseed 11111111),
   STAY, Right into the water east: the original asks WILL YOU TAKE IT? again, facing E, no minute passing (DOSBox);
   TAKE BOAT: New Phlan 15,1 facing E. **DIFFERS on 586f0cf** (8 differences: ours stayed on the band, the clock
   18 minutes on), **MATCH on f5818d1**. Break test at 49: SUBTRACT 45/49, ADD 48/49.
+- **Check 50, 8:16 the ruined castle's moat** (8:16's second check; check 7's start): the arrival at 8,14 N, PRESS,
+  east to 11,14, south onto 11,15 (event 14: its on-move entry wants facing S and prints nothing on arrival), south
+  again: AHEAD OF YOU IS A MOAT ... YOU CANNOT PROCEED (0x9C4D, 0x6DC9 = 255), the party stays at 11,15 S 11:00 in both
+  (DOSBox, seed 11111111). **MATCH** on df5f23f. Break test at 50: SUBTRACT 46/50, ADD 49/50.
 - **Fixed: a refused step on the band runs the square's event** (Player 20's (b), 7:26 11,28): GAME.OVR's band move
   (0x16EE3) refuses water and the poisoned river with no time passing, and the step routine then runs ECL entry
   [0x49E5] whether the party moved or not (0x4228), as in 3D (chat 48). p19c2 `begin s10d`: draws agree to 5003 of
