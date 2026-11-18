@@ -173,6 +173,16 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 50:** `data/c50/slot.py <src dir> <letter> <dst dir> <letter>` copies a save renamed (SAVGAM + CHRDAT files, the
+character-file names inside SAVGAM patched; the destination slot's old files removed first): a check's start into the
+original's slot J (`slot.py ~/gbr/checks/data/<n>/start G game J`), the original's ENCAMP SAVE J out as F
+(`slot.py game J data/c50/chk<n>/orig F`), slot J back (`slot.py data/c48/slotJ_backup J game J`). Checks 36 and 37 in
+`data/c50/chk36/`, `chk37/`. The break-test clone `data/c44/brk` now sits at 5a0764c (it was at d15afe3, where check 36
+fails anyway): `git -C data/c44/brk fetch origin && git -C data/c44/brk checkout --detach origin/main` before a break
+test; run `brk.py restore` between `sub` and `add` (each applies on top of the other). A quick ours-side try needs no
+check: copy `~/gbr/checks/data/game` and a check's `start/` into /tmp, then `godot --headless --path ~/gbr/lab/proj --
+--game-path=<copy> --save=<cfg> "--keys=..."` (each key's line shows place, clock, screen and the box's text).
+
 **Chat 49:** P74 seen in DOSBox from check 26's start in slot J (3:0 13,9; `pl.py do walk=3:0:4,12`, `y`, `s` for ARN
 with no coins): the inn's not-enough path leaves the party at 4,12 S, and a rest there brings the watch, as ours. Ours
 from the same save: `KEYS=... data/c44/onecheck.sh <repo> 26 <out>` (a check's start with other keys; the log shows each

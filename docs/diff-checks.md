@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 50: check 36 (8:29, climbing out of Kuto's well), DIFFCHECKS 36/36
+## Chat 50: checks 36 (8:29, climbing out of Kuto's well) and 37 (7:26, the rowboat and the pyramid), DIFFCHECKS 37/37
 
 - **The fix first** (663cf93, Player 17's request): 8:29's climb up (0xA245: "YOU MAKE THE LONG, ARDUOUS CLIMB UP THE
   WELL.", LOAD_AREA_MAP 29, CALL 0x2C90, GOTO the search entry 0x9A23) reads the square's event from the map just
@@ -188,8 +188,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   NO's `n` reached the walking screen's N key, which set the clock: 0x49C7). Lab `data/c50/chk36/`, sealed as
   `~/gbr/checks/data/36`. Break test at 36 (the clone `data/c44/brk` moved to 5a0764c): SUBTRACT 32/36, ADD over 200
   35/36.
-- Seen, not checked (display only): after NO the original keeps the question's text in the box (and the walking menu on
-  row 24); ours clears the box at any menu choice (`main.gd`, `_message.text = ""`). Open for main (board).
+- **Check 37, 7:26 again: a second event in the middle band, the cheap way.** 7:26's table (y 0xB04A [10, 11, 12, 26,
+  27, 28, 14, 16, 29], counts 0xB061 [2, 3, 2, 2, 1, 1, 1, 1, 1], x 0xB053, kinds 0xB06A): 0 the abandoned camp
+  (around the nomad camp; 0x4A0E), 1 the nomad camp at 12,11 (check 33), 2 the city's north edge (12,26 13,26: CITY /
+  GRAVEYARD / LEAVE), 3 its east edge (13,27: NORTH / SOUTH / BOAT / LEAVE), 4 its west edge (11,28), 5 the rowboat
+  (6,14), 6 the pyramid (6,16), 7 the boat home (7,29). Band-local x is the shown x minus 13. Start: check 33's
+  (`bot_band1`, overland 14,20 W 06:33 in 6:25); nine north, five east (across the band edge at shown 15,11), three
+  south to shown 19,14: "YOU HAVE FOUND A ROWBOAT HIDDEN AMOUNGST THE REEDS. WILL YOU TAKE IT TO THE PYRAMID?", YES
+  (0x49C3 6, 0x49C4 16: "YOU ARE IN FRONT OF A MAGNIFICENT PYRAMID...", ENTER / GO BACK), GO BACK (0x49C4 14); tpseed
+  11111111, no encounter. **MATCH** on 5a0764c. Honest limit: YES + GO BACK ends in the same state as NO (the party back
+  at 6,14), so the check holds the route, the rolls and the clock, not the choice. Lab `data/c50/chk37/`, sealed as
+  `~/gbr/checks/data/37`. Break test at 37: SUBTRACT 33/37, ADD over 200 36/37.
+- **Seen, open for main (display only):** after NO at the well (0xAF71: MENU, then EXIT) the original keeps the question
+  in the box (row 24 back to the walking menu); ours clears the box at any menu choice (`main.gd`, `_message.text =
+  ""`). Not general: the rowboat's NO (0xAD47) clears the box in the original too. So the original's menu doesn't clear;
+  the script's next ops do. Not changed yet: what ours does at 0xAD47-like paths must be checked first.
 - Areas no check visits: 6:1 only, as before.
 
 ## Chat 49: checks 34 (8:27, the boat to New Phlan) and 35 (6:25, the slavers and the Buccaneer base), DIFFCHECKS 35/35
