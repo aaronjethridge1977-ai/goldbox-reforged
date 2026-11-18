@@ -1152,6 +1152,19 @@ New in the tools:
   (main's bot's "asked too often").
 - plans.py: `OP_REST_INTERRUPTS` (default 5): a heal's interruptions before the stop.
 
+**Segment 11 (textile -> nomads), open** (plan `plans/p19_c34d_11_nomads.plan`, lab `p19/seg11.plan`). Part A, the
+town trip: **`s11t`** (p19e1, from `p2start/p19d1_textile`). Part B (to the nomads, 7:17, by Podol's 0,4 W, which lands on
+the band's 11,28, and the band's 12,11): p19e2 (the band's SMALL WOODED GROVE: `WILL YOU ENTER|LEAVE` after the camp's
+ENTER), p19e3 (the band's rests interrupted 5 times: `cure` there instead), p19e4 (the camp asks on arriving at 12,11:
+`walk 12,12`, `step N`), p19e5 (the tool's hmenu answers are one word: STAY, DESTROY, ADVANCE, FOLLOW), p19e6 (the feast
+at the ring's 3,12, the script's lodging at 9,12; then a `prepare` at 9,11 whose rests the kobolds interrupted three
+times, and the walk on stopped: "in area 7:26, not 7:17" with the party still at 9,11, so the area bytes read 7:26 in
+the nomads' camp then). **Next:** find what the area bytes hold there (p19e6's log, keys #400-#408), then the bot's
+order: the lodging rest, 9,12, 0,0, `campday 3` (STAY), the step that sets off event 1 (DESTROY), the shaman's reward;
+then its two town trips and 9,11 / 9,12 for `nomads`.
+- plans.py: `campday <n>` (main's bot's): n day rests in camp whatever comes, an interrupted day counted, cures first
+  (untested in the original: p19e6 stopped before it).
+
 Lab: `p19/` (seg10b.plan, segment_qol.py, money_probe.py, src_<commit> builds, the pre-rerun replay outputs
 `*.pre51.txt`), saves `p2start/p19a3_s10t2`, `p19a10_s10b`, `p19b1_s10t3`, `p19b2_s10c`, `p19c2_s10d` (and
-`.lab/player/saves/p19*`; `textile` is `.lab/player/saves/p19d1/textile`); runs p19a1-a10, p19b1-b2, p19c1-c2, p19d1.
+`.lab/player/saves/p19*`; `textile` is `.lab/player/saves/p19d1/textile`); runs p19a1-a10, p19b1-b2, p19c1-c2, p19d1, p19e1-e6; `p19/archive.sh`.

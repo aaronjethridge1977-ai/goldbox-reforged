@@ -48,6 +48,8 @@
   bumps <n> [look]               (Player 16) the following walks try a step that leaves the party where it stands n
                                  times before refusing it (3 unless said); `look`: with a LOOK before each new try
                                  (a secret door: the square's script finds it for a searching party)
+  campday <n>                    (Player 19) main's bot's: n day rests in camp whatever comes (the nomads' kobolds come
+                                 while the party rests), an interrupted day counted, the cures on anyone hurt first
   innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
                                  New Phlan locks its shops, City Hall and halls from hour 14)
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
@@ -332,6 +334,12 @@ class Heal:
             if h.get("op") and h["op"][0] == "rest" and p.fights > h["fights0"]:
                 h["interrupts"] += 1
                 h["op"], h["memo_last"] = None, None     # Player 15: the rest's spells may be lost: MEMORIZE again
+                if h.get("campday"):
+                    # Player 19: `campday`: the interruption is what the camp waits for (the nomads' kobolds); the
+                    # bot's loop counts the day whatever came (bot.gd "campday")
+                    h["days"] += 1
+                    p.note("heal", "campday: day %d of %d interrupted by fight %d" % (h["days"], h["campday"], p.fights))
+                    return False, "e", "campday: ENCAMP"
                 p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
                                " again)" % p.fights)
                 if p.plan.inntrip and not getattr(p, "on_trip", False) and not self.inn:
@@ -367,6 +375,24 @@ class Heal:
         p.heal["wait"] = self.wait
         p.heal["cure"] = self.cure
         return False, "e", "heal: ENCAMP"
+
+
+class CampDay(Heal):
+    """Player 19: `campday <n>` (main's bot's: camp here n days whatever comes, fighting each interruption: the
+    nomads' camp, where the kobolds attack while the party rests). Each day a 1-day REST; an interrupted one counts."""
+    def __init__(self, n):
+        super().__init__(force=True)
+        self.n = n
+
+    def __repr__(self):
+        return "campday %d" % self.n
+
+    def next(self, p):
+        if getattr(p, "heal", None) is None:
+            new_heal(p)
+            p.heal.update(campday=self.n, phase="days", days_memo=True)
+            return False, "e", "campday: ENCAMP"
+        return Heal.next(self, p)
 
 
 def new_heal(p):
@@ -999,6 +1025,15 @@ class Plan:
                     h["phase"] = "days"
             elif op[1] is not None:
                 h["days"] += 1
+        if h.get("campday"):
+            # Player 19: `campday <n>` (bot.gd): n day rests in camp whatever comes, the cures on anyone hurt first
+            if h["days"] >= h["campday"]:
+                return ("leave",)
+            c = next_cure(M) if needs_rest(M) else None
+            if c:
+                h["cured"] += 1
+                return ("cast", c[0]["i"], c[1]["i"])
+            return ("rest", 24 * 60)
         if h.get("cure"):
             c = next_cure(M)
             if c:
@@ -1268,6 +1303,8 @@ def load(path):
             pl.norest = rest.strip() != "off"
         elif cmd == "prepare":
             pl.goals.append(Heal(force=True, prep=True))
+        elif cmd == "campday":
+            pl.goals.append(CampDay(int(rest.strip())))
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
