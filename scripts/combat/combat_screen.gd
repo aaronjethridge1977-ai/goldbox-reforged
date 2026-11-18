@@ -143,6 +143,7 @@ var _prompt: Label
 func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, script: EclScript, load_now: bool = true) -> void:
 	_game_path = game_path
+	_show_area = show_area_on()
 	_field = Battlefield.build(map, px, py)
 	_px = px
 	_py = py
@@ -1772,13 +1773,51 @@ func _centre_on_selected() -> void:
 	_view = c - Vector2i(3, 3)
 
 
-var _tint: Image = null
+## SHOW SPELL AREA (QoL 4, Jeremy's Q23, 2026-11-17: the 50% dither in the spell's colour): while an
+## area spell is aimed, every other game pixel of a caught square's grey floor takes the spell's colour;
+## figures, walls and the aim box are drawn as before. The original shows the aim box only. The colours
+## are to be judged on testers' feedback: this table is all there is to change (EGA colours; a spell
+## not named here takes AREA_OTHER).
+const AREA_COLOURS := {
+	"FIREBALL": Color8(255, 85, 85), "BURNING HANDS": Color8(255, 85, 85),
+	"SLEEP": Color8(0, 0, 170), "HOLD PERSON": Color8(0, 0, 170),
+	"STINKING CLOUD": Color8(0, 170, 0),
+}
+const AREA_OTHER := Color8(170, 0, 170)
+const AREA_FLOOR := Color8(85, 85, 85)
+const SHOW_AREA_KEY := "show_spell_area"
+
+
+static func show_area_on() -> bool:
+	var cf := ConfigFile.new()
+	if cf.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(cf.get_value("qol", SHOW_AREA_KEY, true))
+
+
+static func save_show_area(on: bool) -> void:
+	var cf := ConfigFile.new()
+	cf.load(GameData.SETTINGS_PATH)
+	cf.set_value("qol", SHOW_AREA_KEY, on)
+	cf.save(GameData.SETTINGS_PATH)
+
+
+static func area_colour(spell_name: String) -> Color:
+	return AREA_COLOURS.get(spell_name.strip_edges().to_upper(), AREA_OTHER)
+
+
+## The caught square's floor dithered: game pixels on a checkerboard, the grey ones only.
+static func dither_floor(img: Image, at: Vector2i, colour: Color) -> void:
+	for y in CELL:
+		for x in CELL:
+			if (x + y) & 1 == 0 and img.get_pixel(at.x + x, at.y + y) == AREA_FLOOR:
+				img.set_pixel(at.x + x, at.y + y, colour)
+
+
+var _show_area := true
 
 
 func _refresh() -> void:
-	if _tint == null:
-		_tint = Image.create_empty(CELL, CELL, false, Image.FORMAT_RGBA8)
-		_tint.fill(Color(1.0, 0.45, 0.1, 0.45))
 	var size := VIEW_CELLS * CELL
 	var img := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
 	img.fill(Color8(85, 85, 85))
@@ -1805,12 +1844,13 @@ func _refresh() -> void:
 	# Casting: the aim cursor and (QoL) the cells the spell will cover.
 	if _casting == "aim":
 		var cells: Array[Vector2i] = []
-		if _combat.magic.aim_kind(_spell_id) == "area":
+		if _show_area and _combat.magic.aim_kind(_spell_id) == "area":
 			cells = _combat.magic.area_cells(_combat.active, _spell_id, _spell_cell)
+		var colour := area_colour(_combat.magic.table.name_of(_spell_id))
 		for p in cells:
 			var at := (p - _view) * CELL
 			if at.x >= 0 and at.y >= 0 and at.x < size and at.y < size:
-				img.blend_rect(_tint, Rect2i(0, 0, CELL, CELL), at)
+				dither_floor(img, at, colour)
 		var cur := (_spell_cell - _view) * CELL
 		if cur.x >= 0 and cur.y >= 0 and cur.x < size and cur.y < size:
 			for k in CELL:

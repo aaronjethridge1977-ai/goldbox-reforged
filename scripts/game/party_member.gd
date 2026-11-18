@@ -389,9 +389,22 @@ func ready_spells() -> Array[int]:
 const READ_MAGIC := 18
 
 
+## A scroll: its type's slot is 11-13 (GAME.OVR 0x2A255). Every SCRIBE path asks it first (REST's time
+## 0x17831, the rest's copying 0x247EE, SCRIBE's list 0x184BE): other items' bytes 60-62 hold other
+## things (Player 18: LIRA's Cloak, byte 62 = 0x85, made ours offer 4:15 at the inn; the original 0:00).
+static func is_scroll(it: GameItem) -> bool:
+	var t: ItemTypes = CharacterSheet.types
+	if t == null:
+		return true
+	var s := t.slot(it.type)
+	return s >= 11 and s <= 13
+
+
 func scribe_pending() -> Array[int]:
 	var out: Array[int] = []
 	for it in items:
+		if not is_scroll(it):
+			continue
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] > 0x80:
 				out.append(it.raw[k] & 0x7F)
@@ -402,6 +415,8 @@ func scribe_pending() -> Array[int]:
 ## empty scroll is gone. Returns the spell id (0 if none was marked).
 func scribe_next() -> int:
 	for it in items:
+		if not is_scroll(it):
+			continue
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] > 0x80:
 				var id: int = it.raw[k] & 0x7F
@@ -427,7 +442,7 @@ func scribable(table: SpellTable) -> Array:
 		return out
 	var reading := table.effect(READ_MAGIC) > 0 and has_affect(table.effect(READ_MAGIC))
 	for it in items:
-		if it.raw.size() < 63 or (it.raw[53] != 0 and not reading):
+		if it.raw.size() < 63 or not is_scroll(it) or (it.raw[53] != 0 and not reading):
 			continue
 		for k in [60, 61, 62]:
 			var id: int = it.raw[k] & 0x7F
@@ -453,6 +468,8 @@ func scribe_refusal(table: SpellTable, it: GameItem, k: int) -> String:
 ## Unmarks every scroll spell marked for SCRIBE (NO at "SCRIBE THESE SPELLS?").
 func cancel_scribing() -> void:
 	for it in items:
+		if not is_scroll(it):
+			continue
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] > 0x80:
 				it.raw[k] &= 0x7F

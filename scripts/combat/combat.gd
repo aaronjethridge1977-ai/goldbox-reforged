@@ -1119,6 +1119,8 @@ func guard_attacks(i: int) -> void:
 			return
 		if e.down or e.team == c.team or not e.guarding or not touching(e, c):
 			continue
+		if CombatSpells.held(e.who):
+			continue       # asleep or held: no strike (GAME.OVR 0x13263, see free_attacks)
 		e.guarding = false
 		if int(e.get("guard_attacks", 0)) <= 0:
 			continue
@@ -1144,6 +1146,11 @@ func free_attacks(i: int, to: Vector2i) -> void:
 		if c.down:
 			return
 		if e.down or e.team == c.team or not touching(e, c) or touching(c, e, to):
+			continue
+		# A figure asleep, held, charmed by a snake or helpless strikes nobody: GAME.OVR 0x13263 skips any
+		# attacker with one of the four effects of DS:0x286C (START.EXE 0xBA:0xB73) before the free and the
+		# guard attacks (Player 18, p18a5 draw 11293: a goblin guard asleep struck BRAM in ours; Jeremy's P79).
+		if CombatSpells.held(e.who):
 			continue
 		var off := (dir_between(e, c) - int(e.dir) + 8) % 8
 		var seen := off <= 2 or off >= 6    # not one of the three cells at its back
@@ -1933,7 +1940,17 @@ func _gets_away(i: int) -> bool:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
 	var foes := _fastest(1 - c.team)
-	var away := standing(1 - c.team) == 0 or foes < _speed(m)
+	# GAME.OVR 0x1346F: first the list of the other side's figures in sight (START.EXE 0xBA:0x2433 with
+	# range 0xFF: 0x3045B's gather, each pair of cells through 0x3FF74's clear line); with none, away at
+	# once, no speeds, no dice (Player 18, p18a5 draw 10129: a goblin guard leaving Podol's field out of
+	# everyone's sight; ours compared speeds and drew the d2).
+	var seen := false
+	for j in combatants.size():
+		var o: Dictionary = combatants[j]
+		if o.team != c.team and not o.down and clear_line(c, o).y == 1:
+			seen = true
+			break
+	var away := not seen or foes < _speed(m)
 	if not away and foes == _speed(m):
 		away = roll(1, 2, "%s gets away?" % m.name) == 1
 	if away:

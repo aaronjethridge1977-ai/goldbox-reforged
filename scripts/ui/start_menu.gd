@@ -448,6 +448,7 @@ static func setting_value(id: String) -> int:
 		"mouse": return int(MouseInput.on())
 		"rememorize": return int(Rememorize.on())
 		"aimskip": return int(CombatScreen.skip_party_on())
+		"spellarea": return int(CombatScreen.show_area_on())
 		"quests": return int(QuestScreen.on())
 		"savelist": return int(SaveListScreen.on())
 	return 0
@@ -469,6 +470,7 @@ static func change_setting(id: String) -> void:
 		"mouse": MouseInput.save_on(not MouseInput.on())
 		"rememorize": Rememorize.save_on(not Rememorize.on())
 		"aimskip": CombatScreen.save_skip_party(not CombatScreen.skip_party_on())
+		"spellarea": CombatScreen.save_show_area(not CombatScreen.show_area_on())
 		"quests": QuestScreen.save_on(not QuestScreen.on())
 		"savelist": SaveListScreen.save_on(not SaveListScreen.on())
 

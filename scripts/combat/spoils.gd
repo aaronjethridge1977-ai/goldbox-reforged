@@ -96,11 +96,16 @@ func has_money() -> bool:
 
 
 ## Gives each standing member their share. Returns the share (before class adjustments).
-func award(standing: Array) -> int:
+## `only`: a duel's fighter (CALL 0x8000 / 0x8001): the share is still the whole party's (the experience
+## over every standing member), but only he gets it. GAME.OVR 0x58A0 divides by the party's count less
+## the downed, 0x58D3 adds the share to each record that was in the fight (+0x10D); a duel's onlookers
+## weren't (Player 18, p18a3, Podol's buccaneer: 981 over six, ARN +179 with his bonus, ours gave him 1079).
+func award(standing: Array, only: PartyMember = null) -> int:
 	if standing.is_empty():
 		share = 0
 		return 0
 	share = experience / standing.size()
 	for m in standing:
-		(m as PartyMember).gain_experience(share)
+		if only == null or m == only:
+			(m as PartyMember).gain_experience(share)
 	return share

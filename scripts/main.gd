@@ -1368,6 +1368,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "file", _vm_file)
 	cfg.set_value("script", "block", _vm_block)
 	cfg.set_value("script", "memory", _vm.mem)
+	cfg.set_value("qol", "speed", CampScreen.speed)
 	cfg.set_value("script", "memory_hi", _vm.hi)
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
@@ -1481,6 +1482,12 @@ func _battle_check(spec: String) -> void:
 
 ## Saves the game in the original's own format as SAVGAM<letter>.DAT with its CHRDAT files in
 ## the game folder (OriginalSave), as the original's SAVE does: it loads in the original too.
+## The game speed (ALTER's SPEED, DS:0x49E2) is part of a save: SAVE copies it into this cell
+## (GAME.OVR 0x1FECE, the first array's +0x1F8) and LOAD puts it back (0x1F8F6); a new game starts
+## at 1 (0xE999). Ours started every game at 4 and never saved it (Combat Chat 22).
+const SPEED_CELL := 0x49FC
+
+
 func _save_original(letter: String) -> bool:
 	if _vm.ecl == null and _starting_party:
 		# Before the adventure starts (lab, 2026-11-13): the original saves data set 3, an
@@ -1490,7 +1497,7 @@ func _save_original(letter: String) -> bool:
 		blank.resize(_vm.mem.size())
 		# The engine bytes the original has set at that point; without them it won't load
 		# the save (lab: these three and the 0 at 0x3207 are enough).
-		blank[0x49FC] = 1
+		blank[SPEED_CELL] = CampScreen.speed
 		blank[0x49FF] = 3
 		blank[EclVM.FILE_SET] = 3
 		var ok0 := OriginalSave.write(_game_path, letter, 3, blank, 15, 1, 3, _party, false)
@@ -1516,6 +1523,8 @@ func _save_original(letter: String) -> bool:
 	for a in [DOOR_TRY_BASH, DOOR_TRY_PICK, DOOR_TRY_KNOCK]:
 		mem[a] = 0
 	var hi := _vm.hi.duplicate()
+	mem[SPEED_CELL] = CampScreen.speed
+	hi.erase(SPEED_CELL)
 	# In the wilderness the original keeps its slots as they stand (lab, chat 25: after a NEW_ECL into
 	# 7:26 from the Slums its save still had the Slums' 2, 4, 1; after loading a game there, wall set
 	# 0 in slot 1 and nothing in 2-3, 0 / 0xFFFF, the state a new game starts with): the cells hold
@@ -1650,6 +1659,7 @@ func load_original_save(letter: String) -> bool:
 			_vm.hi[a] = s[2 + 2 * k]
 	# GAME.OVR 0x1F8F6: the load zeroes the party-size cell (ours counts the party).
 	_vm.mem[EclVM.PARTY_SIZE] = 0
+	CampScreen.speed = clampi(_vm.mem[SPEED_CELL], 0, 9)
 	# The map the save names (GAME.OVR 0x1FBB3, in LOAD before the init): in a 3D area (view
 	# byte 0x49FA below 2) the original loads GEO<data set> block [0x49C5], the map last loaded,
 	# then the wall sets of 0x4AFA-0x4AFF. Inits that see 0x49F2 already naming their block skip
@@ -1740,6 +1750,8 @@ func _quick_load() -> void:
 	if memory.size() == _vm.mem.size():
 		_vm.mem = memory
 		_vm.hi = cfg.get_value("script", "memory_hi", {})
+	if cfg.has_section_key("qol", "speed"):
+		CampScreen.speed = clampi(int(cfg.get_value("qol", "speed")), 0, 9)
 	var wild: Array = cfg.get_value("script", "overland", [false, 0])
 	_vm.on_overland = wild[0]
 	_vm.overland_band = wild[1]
@@ -2779,10 +2791,10 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 		won_text += "\n" + hidden
 	var standing: Array = []
 	for m in _party:
-		if m.can_fight() and (_duelist == null or m == _duelist):
+		if m.can_fight():
 			standing.append(m)
+	var share := spoils.award(standing, _duelist)
 	_duelist = null
-	var share := spoils.award(standing)
 	for m in _party:
 		m.recalculate(_types)
 	_treasure.picture = _event_picture(255, 1)     # the chest (lab: PIC block 1)

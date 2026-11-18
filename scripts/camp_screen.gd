@@ -128,8 +128,9 @@ var _ordering := -1                # ORDER: the member being moved, or -1
 ## comes back when the whole screen is drawn again (lab: ORDER, DROP, SPEED, a cast's result;
 ## not "THE PARTY MAKES CAMP..." or "RUDELY INTERRUPTED").
 var _plain_rope := false
-## ALTER's SPEED: 0 fastest .. 9 slowest (4 at the start); scales the pause after each message.
-static var speed := 4
+## ALTER's SPEED: 0 fastest .. 9 slowest; scales the pause after each message. 1 when the program
+## starts (GAME.OVR 0xE999); a loaded game brings its own (main.gd SPEED_CELL).
+static var speed := 1
 ## ALTER's PICS.
 static var show_monsters := true
 static var show_portraits := true
