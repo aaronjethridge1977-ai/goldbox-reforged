@@ -173,6 +173,21 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 55:** checks 51-61 in `data/c55/chk51..61/` (`data/c55/cd/` links `game` and each; run one before joining with
+`DC_DATA=$PWD/data/c55/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`). **`mksave.py J G ...` reads lab slot J:
+put the pristine J back first** (`data/c50/slot.py data/c48/slotJ_backup J game J`); after `slot.py <start> G game J`
+for a DOSBox run J holds that start, and the next `mksave.py` builds on it (52-54's starts carry 51's 0x4AB0 = 1).
+Rest in a check: ours' keys `E,wait,R,wait,H,wait,I,wait,I,wait,R,wait,...,E` (camp, REST, HOURS, INC twice, REST,
+EXIT); the original `e r h i i r`, then `e` to leave camp (checks 56, 57). WHO WILL ...? in the original: `enter`
+takes the first member (check 58). When a jump save misbehaves in the original (5:4's runes press dropped to DOS),
+start from an existing check's real save instead (`slot.py ~/gbr/checks/data/<n>/start G game J`; route with
+`route.py`: `R.NE,R.SW,R.INFO,R.DOORS = R.load(<geo>,<block>)`, `R.route(start, set(R.squares(<event>)), [])`).
+`origfight.py <secs> <out> noenter` plays an open fight on QUICK in the original and logs the screens (a rest
+interrupted in 1:18 after 2:20 h, orcs: ours won in round 2, the original asked CONTINUE BATTLE; not compared draw for
+draw, left out). Cells 0xC04B-0xC04F aren't in `eclread.py`'s array (junk there): the original keeps them as DS
+variables (0x6AAD/0x6AAE for x, y). A private OP_LAB for a Player segment: `/tmp/oplab55` (README Chat 54's recipe);
+Player 20's `p20a3 s11c s11k` replay takes over 590 s here: run it detached (`setsid nohup timeout 1500 ...`) and poll.
+
 **Chat 54:** checks 49 and 50 in `data/c54/chk49/`, `chk50/` (`data/c54/cd/` links `game` and 49; run before joining with
 `DC_DATA=$PWD/data/c54/cd DIFFCHECK_ONLY=49 bash data/c52/dc_new.sh <repo>`). A pre-fix run: `git worktree add --detach
 /tmp/<dir> <commit>` and pass that path (remove the worktree after). A segment replay without touching the Player lab:

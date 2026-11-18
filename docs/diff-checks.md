@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 55: checks 51-55 (1:18, 7:23, 1:24, 2:15, 6:28), DIFFCHECKS 55/55; an arrival's square event after its on-move, the previous square after a step that leaves the area
+## Chat 55: checks 51-61 (1:18, 7:23, 1:24, 2:15, 6:28, 1:18's rest, 3:8, 5:7, 4:2, 5:4, 5:5), DIFFCHECKS 61/61; an arrival's square event after its on-move, the previous square after a step that leaves the area
 
 - **Check 51, 1:18 Podol Plaza** (`mksave.py J G 1 18 12 8 E 4AB0=1`): PLAZA AHEAD: DISGUISE (0x4A35 = 1), then the
   square's event: 12,8's d25 (YOU SPOT A GROUP OF GOBLINS ... LAUGH TO THEMSELVES AND WALK ON), the shrine at 13,8, the
@@ -192,7 +192,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **Fixed: a step's previous square is written after its on-move, and not when the on-move leaves the area**
   (GAME.OVR 0x4199 on-move; 0x41A1: 0x442F set, the arrival, then 0x423B; else 0x41B9-0x41CE write 0x6AAD/0x6AAE to
   ECL cells 0x49F0/0x49F1). Ours wrote it before the on-move.
-- Break test at 51: SUBTRACT 47/51, ADD 50/51 (see the end of this section for 55).
+- **Check 56, the first rest** (1:18 12,8 E, a jump save: the plaza's rest odds 2, encounter 16): ENCAMP REST two
+  hours: twelve interruption rolls in ours, none hit; 12:56 in both. MATCH. (Eight hours: interrupted at 13:16 by
+  orcs in both; the fight not compared draw for draw, so not a check.)
+- **Check 57, 3:8 City Hall** (jump to 4,5 S): the council guard at 4,6, DO YOU LEAVE? YES (4,5 N); ENCAMP REST two
+  hours: interrupted at 11:02 in both (City Hall's rest entry: 0x6DD2 = 1, 0x6DD3 = 101, the guard again), YES. MATCH.
+- **Check 58, 5:7 the trap door** (jump onto 8,5 N): OPEN IT? YES, WHO WILL OPEN IT? THRENDER GRONE, the d20 + 1
+  against his record: he looks away; JUMP THROUGH? NO. MATCH.
+- **Check 59, 4:2 the chained man** (jump onto 2,15 N): FREE: UNLOCK (no key), PICK LOCK, BREAK CHAINS; PARLAY NICE;
+  LEAVE. MATCH.
+- **Check 60, 5:4 the kitchen** (check 23's start: the only way in is from 15,8): TALK TO THE OVERSEER twice (the
+  boiling oil: DAMAGE, four d6/d7 and a d20), KILL THE OVERSEER (no fight): the paper's runes, the hedge maze's
+  password, 0x4A66 bit 128. MATCH. From a jump save the original quit to DOS at the runes' press: a jump-save artifact.
+- **Check 61, 5:5 the tower giants** (check 28's start and walk): NO at the argument, the laughter, STAY / LEAVE:
+  LEAVE (9,11 W). MATCH.
+- Break test at 51: SUBTRACT 47/51, ADD 50/51; at 61: SUBTRACT 55/61, ADD 60/61.
 - Jump saves: `mksave.py J G ...` reads lab slot J: put the pristine J back first (`data/c50/slot.py
   data/c48/slotJ_backup J game J`); 52-54's starts were made from 51's (0x4AB0 = 1 in both games' start, no effect).
   A jump save's patched 0x49F2 survives the original's load (6:28's init then skips its placement), ours writes the
