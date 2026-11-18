@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 52: check 41 (6:1, the captain's door), four NO checks (42-45), the previous square after a stopped edge step, DIFFCHECKS 45/45
+## Chat 52: check 41 (6:1, the captain's door), five NO checks (42-46), the previous square after a stopped edge step, DIFFCHECKS 46/46
 
 - **Check 41, 6:1's captain's door:** check 39's keys, then Right, Up (7,10), Left, Up to 7,11 (event 4, 0xAA17;
   0x4A09 and 0x4A0E are 0 from check 39's start): the two guards, SHOW PASS / LEAVE / BRIBE / ATTACK; B (refused:
@@ -199,7 +199,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   so each check ran in the one shared `~/gbr/checks/data/game` (two checks at once raced: check 41 once played 42's
   start). `data/c52/dc_new.sh` copies with `cp -rL`. `diffcheck.sh` itself was never affected (its `data/game` is a
   folder); the shared copy's F and G slots were overwritten, which no check reads (each removes them first).
-- **The gate is DIFFCHECKS 45/45.** Break test at 44: SUBTRACT 40/44, ADD over 200 43/44 (the same checks as at 40).
+- **Check 46, 3:0 at night (the locked shop door):** `mksave.py J G 3 0 14 8 N 49C9=20` (the on-move's 0x99AF asks
+  only from 20:00 on, 0x49C9 >= 14 giving 0x6E7D = 8, at a square with no event facing wall 9: 14,8 E), Up (jump),
+  Right, Up: THE DOOR IS LOCKED. DO YOU WANT TO BREAK IN?, NO (0x99E4: the stop): the box cleared, no minute, in
+  both. **MATCH**. Lab `data/c52/chk46/`.
+- **Seen, not changed (a jump-save artifact, maybe more):** started facing E, ours asked the door's question at the
+  jump's arrival (the arrival's on-move with 0xC04E computed for 14,8 E); the original asked nothing and its next Up
+  walked through the door into the shop (15,8, 20:57): after a script's jump its 0xC04E/0xC04F keep the old area's
+  values until a turn or step (after a turn it asks, 14,8 E 20:58). Real arrivals (an edge step, a boat) may show
+  the same in a rare case (arriving at night facing such a door); not checked.
+- **The gate is DIFFCHECKS 46/46.** Break test at 46: SUBTRACT 42/46, ADD over 200 45/46 (the same checks as at 40).
 
 ## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), checks 39 and 40 (6:1), the place compared, DIFFCHECKS 40/40
 
