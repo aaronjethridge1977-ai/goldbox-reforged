@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 52: check 41 (6:1, the captain's door), four NO checks (42-45), the previous square after a stopped edge step, DIFFCHECKS 45/45
+
+- **Check 41, 6:1's captain's door:** check 39's keys, then Right, Up (7,10), Left, Up to 7,11 (event 4, 0xAA17;
+  0x4A09 and 0x4A0E are 0 from check 39's start): the two guards, SHOW PASS / LEAVE / BRIBE / ATTACK; B (refused:
+  "GET OTTA' HERE YA SCUM'", ATTACK / LEAVE), L: 0xB5A5 puts the party back on its previous square, 7,10 S 18:35,
+  no fight, the refusal's text kept in both games. **MATCH** on 246a7c8. Lab `data/c52/chk41/`.
+- **Answering NO where the script prints nothing** (chat 51's box rule; statediff compares the state, the text was
+  compared on the screens by hand), each from a `mksave.py J G` jump save, tpseed 11111111, in areas with no NO check:
+  - **42, 8:13:** 10,14 S, Up to 10,15 (event 28, 0x99C1): DO YOU WANT TO LEAVE?, NO (EXIT), Left: the question
+    stays through the turn in both. **MATCH**.
+  - **43, 3:14 Kovel Mansion:** 7,5 W, Up to 6,5 (event 15, 0xAC2E): the two thieves, WILL YOU CHASE THEM?, NO
+    (0xB343: SPRITE_OFF, PICTURE 255, EXIT; 0x4A16 = 255 from before the menu), Left: the text stays. **MATCH**.
+  - **44, 2:20 the stable:** SEARCH on, 4,2 E, Up to 5,2 (event 5, 0xA3F6; 11:06): the original prints the stable's
+    text and at once the leather bag's question (ours shows only the second: display only, the same box after);
+    NO (0xB250: PICTURE 255, EXIT), Left: the question stays. **MATCH**.
+  - **45, 4:21 Sokal Keep's south edge:** 7,15 S jump (the keep's init: 8,14 N, THE BOAT DISEMBARKS YOU), Enter,
+    Right, Right, Up (8,15), Up through the edge door: DO YOU WANT TO TAKE A BOAT BACK TO PHLAN?, NO (0x9992: the
+    stop 0x6DC9 = 255): the stopped step clears the box in both, no minute (10:57). **DIFFERED** on 246a7c8:
+    0x49F1 original 15, ours 14.
+- **The fix (`main.gd`):** a step off the map that the on-move script stops writes the current square to
+  0x49F0/0x49F1, as any refused step (chat 42); one that leaves the area keeps the square before (check 7, 8:16's
+  south edge into the wilderness). Still inferred from cases (the original reaches 0x49F0 through a base register:
+  no literal address in GAME.OVR). Check 45 MATCH after it; the other 44 unchanged.
+- **A lab trap found:** `data/c51/dc_new.sh` copies `$DC_DATA/game` with `cp -r`; the lab's `cd/game` is a symlink,
+  so each check ran in the one shared `~/gbr/checks/data/game` (two checks at once raced: check 41 once played 42's
+  start). `data/c52/dc_new.sh` copies with `cp -rL`. `diffcheck.sh` itself was never affected (its `data/game` is a
+  folder); the shared copy's F and G slots were overwritten, which no check reads (each removes them first).
+- **The gate is DIFFCHECKS 45/45.** Break test at 44: SUBTRACT 40/44, ADD over 200 43/44 (the same checks as at 40).
+
 ## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), checks 39 and 40 (6:1), the place compared, DIFFCHECKS 40/40
 
 - **The fix** (Player 18's request): ours carried a step through a map edge (the leaving script's CALL 0xC01E) on into

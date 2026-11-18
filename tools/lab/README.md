@@ -173,6 +173,15 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 52:** use `data/c52/dc_new.sh` (not c51's) for a new check: `DC_DATA=$PWD/data/c52/cd DIFFCHECK_ONLY=<n> bash
+data/c52/dc_new.sh ~/gbr/goldbox-reforged`; it copies the linked game folder with `cp -rL` (c51's `cp -r` copied the
+symlink, so every check played in the shared `~/gbr/checks/data/game` and two at once raced). Checks 41-45 in
+`data/c52/chk41..45/`. A NO check from a jump save: `mksave.py J G <ecl> <block> <x> <y> <dir>`, copy `game/SAVGAMG.DAT`
+and `game/CHRDATG*` to `chk<n>/start/`, ours.cfg from any jump-save check (`~/gbr/checks/data/8/ours.cfg`); keys
+`load=G,wait,tpseed=11111111,Up,...` (the first Up jumps); on the walking screen N is a test key (the clock), so send
+N only while the menu shows. Lab slot G was backed up to `data/c52/gbak/` before the jump saves.
+`/tmp/ecl52/<file>-<block>.txt`-style listings: `tools/ecl.py dis game/ECL<n>.DAX <block>`.
+
 **Chat 51:** a new check before it joins `~/gbr/checks`: `data/c51/dc.sh` is diffcheck.sh reading its checks from
 `$DC_DATA` (`DC_DATA=$PWD/data/c51/cd DIFFCHECK_ONLY=38 bash data/c51/dc.sh ~/gbr/goldbox-reforged`; `data/c51/cd/`
 links `game` to the checks' game copy and `<n>` to `data/c51/chk<n>`; `dc_new.sh` is the same from the 39-check script).

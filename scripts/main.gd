@@ -1837,7 +1837,10 @@ func _try_move(direction: int) -> void:
 		_vm.write_byte(EclVM.LEAVING_MAP, 1 if off and open else 0)
 		# The original writes the square it stands on to 0x49F0/0x49F1 at the attempt, before
 		# the on-move script: a refused step leaves it the current square (5:3's gate, check 24).
-		# Not for a step off the map (8:16's south edge keeps the square before: check 7).
+		# A step off the map that leaves the area keeps the square before (8:16's south edge
+		# into the wilderness: check 7); one the on-move script stops gets the current square
+		# too, in _finish_move (4:21's boat, NO: check 45).
+		_step_off_map = off
 		if not off:
 			_vm.write_byte(EclVM.PREVIOUS_X, _pos.x)
 			_vm.write_byte(EclVM.PREVIOUS_Y, _pos.y)
@@ -1988,6 +1991,7 @@ func _door_choice(c: String) -> void:
 
 ## Completes a move once the on-move script has finished without refusing it.
 var _step_from := Vector2i(-1, -1)   # where the party stood when the step's on-move script began
+var _step_off_map := false           # ... and that step would leave the map
 var _arrival_on_move := false        # an arrival's on-move script is paused (a menu) or running
 var _arrival_pending := false        # an arrival's init stopped for the player: its square's event follows
 var _arrival_after_init := false     # ... and the arrival was a step or NEW_ECL (the on-move script first)
@@ -1996,6 +2000,12 @@ var _arrival_after_init := false     # ... and the arrival was a step or NEW_ECL
 func _finish_move(direction: int) -> void:
 	_pending_move = -1
 	if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
+		# A stopped step off the map leaves the party in the area: the square it stands on is
+		# the previous square, as for any refused step (DOSBox, 4:21 8,15 S, the boat's NO: 15).
+		if _step_off_map and _step_from.x >= 0 and not _vm.on_overland:
+			_vm.write_byte(EclVM.PREVIOUS_X, _step_from.x)
+			_vm.write_byte(EclVM.PREVIOUS_Y, _step_from.y)
+		_step_off_map = false
 		# The on-move script stopped the step. If it moved the party itself (Valjevo's tower
 		# stairs: 3,6 south down to 3,8), the square it put them on runs its event, as in
 		# the original (lab, chat 13: the audience hall's text comes at once).
@@ -2399,6 +2409,7 @@ func _after_vm() -> void:
 			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
 			var set_no := _vm.read_byte(EclVM.FILE_SET)
 			_by_new_ecl = true
+			_step_off_map = false
 			_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true)
 			return
 		EclVM.State.ERROR:
