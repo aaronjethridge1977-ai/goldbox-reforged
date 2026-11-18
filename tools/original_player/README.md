@@ -1081,10 +1081,28 @@ clerk's rewards (0x4ABB, 0x4AA7 stayed 254: cleared, not paid) nor her commissio
 - p18a5 (`s9c` -> `podol`): draws identical to 10128; at 10129 **a fleeing GOBLIN GUARD**: after its run step (d2)
   from 33,24 ours draws "gets away?" d2, the original none (the next round's "who acts next"). To Combat.
 
+**Segment 10 (podol -> textile), trip 1 of the bot's six: `s10a`** (plan `plans/p18_c34d_10_textile.plan`, lab
+`p18/seg10.plan`, from `p2start/p18a5_podol`): `cure`, out by Podol's 0,11 W onto the band (7:26 11,28: WHICH
+ENTRANCE, LEAVE), the band east to 12,27 and `step E` onto 13,27 (WHICH ROUTE at once: BOAT; the bot's "by 13,27 N" was
+its facing), the boat to New Phlan's pier (3:0 15,1), west past the harbor master (he speaks only to a step north onto
+11,1) and the temple of Tyr (11,2: HEALING YES, EXIT), the inn (`innwait`), the clerk twice (the Podol reward; **the
+Valhingen Graveyard commission, YES: a Two-Handed Sword +1, +3 vs. Undead, BRAM**, as the bot), the halls, the inn
+(`s10t1`), back by the three 0,4 W exits and Podol's 11,15 S into 4:2, events 23, 24, 1 with `heal` / `prepare`: **`s10a`
+(4:2 4,10; p18b7, from `p2start/p18b6_s10t1`), nobody dead.** Runs: p18b1 (the band walk: the tool's AttributeError,
+below), p18b2-b4 (the boat square, the pier's route: plan fixes), p18b5 (the stuck limit at the inn), p18b6 (to
+`s10t1`, then 5 interrupted rests at the last heal), p18b7. Trips 2-6 to write: 2: events 2 4 22 5; 3: 12 13 16 14 15
+20 21 (the box: TAKE IT UNOPENED); 4: 7; 5: 3 6 8 19 17 (the chained man: the bot answers FREE / UNLOCK three times,
+then LEAVE "asked too often": the tool has no such count yet). Each trip leaves 4:2 by 0,11 W onto the band.
+
 New in the tools:
 - plans.py: a vmenu answer may be one word of a single item (the plan's DISGUISE for DISGUISE PARTY AS MONSTERS.).
 - segment.py: ours with the original's rules (above).
+- plans.py: `Walk.band_step` was a function nested in `hurt()` (Player 14's `route_refusing` and `hurt` had landed
+  between Walk's methods), so every band walk failed (p18b1); back in Walk.
+- player.py: the stuck limit is 4 x 300 keys for a heal goal (a hurt party's inn heal took more: p18a2, p18b5);
+  `OP_STUCK_KEYS` sets the base.
 - Lab: `p18/memflags.py <addr,...> <cfg>...` prints script bytes from ours' or the bot's .cfg (memory is the whole 64K).
 
-Lab: `p18/` (seg09.plan, memflags.py, old_src: 5b50367 for the crossing test), saves `p2start/p18a1_s9t`,
-`p18a3_s9b`, `p18a4_s9c` (and `.lab/player/saves/p18*`); runs p18a1-a5.
+Lab: `p18/` (seg09.plan, seg10.plan, memflags.py, archive.sh, old_src: 5b50367 for the crossing test), saves
+`p2start/p18a1_s9t`, `p18a3_s9b`, `p18a4_s9c`, `p18a5_podol`, `p18b6_s10t1` (and `.lab/player/saves/p18*`; `s10a` is
+`.lab/player/saves/p18b7/s10a`); runs p18a1-a5, p18b1-b7.

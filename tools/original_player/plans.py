@@ -162,6 +162,27 @@ class Walk:
         return False, k, "walk to %d,%d via %d,%d" % (self.x, self.y, nx, ny)
 
 
+    def band_step(self, p, x, y):
+        """Player 10: on a wilderness band each arrow moves the party that way (no turning), and the original
+        refuses squares it can't enter (water, a ridge) by leaving the party where it stands. No map of the band
+        in the tools yet: the longer axis first, the other when a step was refused; stop when both are."""
+        if getattr(self, "_last", None) == (x, y):
+            self._refused.add(self._dir)
+        else:
+            self._refused = set()
+        dx, dy = self.x - x, self.y - y
+        order = [("E" if dx > 0 else "W", abs(dx)), ("S" if dy > 0 else "N", abs(dy))]
+        order.sort(key=lambda t: -t[1])
+        for d, n in order:
+            if n and d not in self._refused:
+                self._last, self._dir = (x, y), d
+                return False, band_key(d), "band walk to %d,%d: %s from %d,%d" % (self.x, self.y, d, x, y)
+        raise_stop(p, "band walk: stuck at %d,%d on the way to %d,%d (refused %s)" % (
+            x, y, self.x, self.y, "".join(sorted(self._refused))))
+    # (Player 18: back in Walk; Player 14's route_refusing and hurt had landed above it, so band_step was
+    # a function nested in hurt and the band's walks failed: p18b1)
+
+
 REFUSED = {}    # Player 14: area -> {(x, y, dir)} steps a square's script turned back (main.gd _tour's _refused)
 
 
@@ -193,25 +214,6 @@ def hurt(M):
         return True
     ok = [m for m in M if m["status"] == 0]
     return sum(m["hp"] for m in ok) * 5 < sum(m["max"] for m in ok) * 3
-
-
-    def band_step(self, p, x, y):
-        """Player 10: on a wilderness band each arrow moves the party that way (no turning), and the original
-        refuses squares it can't enter (water, a ridge) by leaving the party where it stands. No map of the band
-        in the tools yet: the longer axis first, the other when a step was refused; stop when both are."""
-        if getattr(self, "_last", None) == (x, y):
-            self._refused.add(self._dir)
-        else:
-            self._refused = set()
-        dx, dy = self.x - x, self.y - y
-        order = [("E" if dx > 0 else "W", abs(dx)), ("S" if dy > 0 else "N", abs(dy))]
-        order.sort(key=lambda t: -t[1])
-        for d, n in order:
-            if n and d not in self._refused:
-                self._last, self._dir = (x, y), d
-                return False, band_key(d), "band walk to %d,%d: %s from %d,%d" % (self.x, self.y, d, x, y)
-        raise_stop(p, "band walk: stuck at %d,%d on the way to %d,%d (refused %s)" % (
-            x, y, self.x, self.y, "".join(sorted(self._refused))))
 
 
 def band_key(want):

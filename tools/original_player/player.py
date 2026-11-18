@@ -114,8 +114,14 @@ class Player:
         sig = (k, tuple(st["rows"].values()))
         self.same = self.same + 1 if sig == self.last_sig else 0
         self.last_sig = sig
-        if self.g.nkeys - self.goal_key > 300:
-            raise Stop("stuck: no goal done in 300 keys (goal: %s)" % self.plan.goals[min(self.goal, len(self.plan.goals) - 1)])
+        # Player 18: a heal goal (heal, prepare, innwait, innheal, cure) of a badly hurt party takes rounds of casts,
+        # memorizing and rests: 300 keys stopped two that were going well (p18a2, p18b5); OP_STUCK_KEYS for others.
+        goal = self.plan.goals[min(self.goal, len(self.plan.goals) - 1)]
+        limit = int(os.environ.get("OP_STUCK_KEYS", "300"))
+        if type(goal).__name__ == "Heal":
+            limit *= 4
+        if self.g.nkeys - self.goal_key > limit:
+            raise Stop("stuck: no goal done in %d keys (goal: %s)" % (limit, goal))
         if self.same >= 20:
             raise Stop("loop: %r sent 20 times on an unchanged screen (%s)" % (k, st["bottom"] or why))
         x, y, f = self.where()
