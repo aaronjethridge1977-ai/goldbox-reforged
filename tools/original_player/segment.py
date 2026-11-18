@@ -94,6 +94,9 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             # Player 14: ours holds each "HAS MEMORIZED" line for the game speed x 225 ms (camp_screen.gd, as
             # START.EXE 0x709:0xDBE) with the rest's clock paused: p13a1's inn REST was still running at the end.
             out += ["wait"] * (5 * spells)
+            # Player 17: a rest of a day or more ends later in ours than the count above (p16d1's last day rest was
+            # still running at F2: the clock 6 hours short): a wait more for every 2 hours of it
+            out += ["wait"] * (rest_min // 120 if rest_min >= 1440 else 0)
             rest_min, spells = 0, 0
         n += 1
         for e in extra.get(n, []):
@@ -157,7 +160,7 @@ def main():
     shutil.rmtree(tmp, ignore_errors=True)
     shutil.copytree(proj, tmp)
     # Player 15: OP_SEG_TIMEOUT (seconds, default 600): Sokal Keep's 56-figure fight plays longer in ours
-    r = subprocess.run(["timeout", os.environ.get("OP_SEG_TIMEOUT", "600"), G, "--headless", "--path", tmp, "--", "--game-path=" + orig.GAME,
+    r = subprocess.run(["timeout", os.environ.get("OP_SEG_TIMEOUT", "900"), G, "--headless", "--path", tmp, "--", "--game-path=" + orig.GAME,
                         "--save=" + cfg, "--keys=" + ",".join(ks)], capture_output=True, text=True)
     shutil.rmtree(tmp, ignore_errors=True)
     ours_log = r.stdout + r.stderr

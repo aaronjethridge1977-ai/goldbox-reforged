@@ -216,6 +216,9 @@ def run(plan_path, save, seed, run_id, boot=True, after=None):
             raise SystemExit("no checkpoint %r in the plan" % after)
         while not (isinstance(plan.goals[p.goal], plans.Checkpoint) and plan.goals[p.goal].name == after):
             p.goal += 1
+        # Player 17: the `sell` and `buy` visits before the checkpoint are done too (p17a3 sold again at the next shop)
+        p.sell_visit, p.buy_visit = getattr(plan.goals[p.goal], "shops", (0, 0))
+        p.buy_pending, p.buy_pages, p.buy_dir = None, 0, "n"
         p.goal += 1
     p.log("VERSIONS", GAME_VERSION, "|", DOSBOX_VERSION)
     speed = int(os.environ.get("OP_SPEED", "0"))

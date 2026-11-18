@@ -62,7 +62,8 @@
                                  member <m> (0 = the first) buys the item whose name on the list starts so (End /
                                  Home on BUY VIEW POOL select the buyer, DS:0x5D92; on the list they move the light,
                                  NEXT / PREV page); POOL before each purchase (main's bot does); EXIT when the visit's
-                                 list is done. Each `buy` line is one visit.
+                                 list is done. Each `buy` line is one visit (Player 17: a `sell gems` visit takes one
+                                 too: an empty `buy` line for it; a purchase refused is noted and skipped).
 """
 import copy, os, re, struct, sys
 import orig
@@ -605,7 +606,14 @@ class Plan:
                 m = re.match(r"\s*([A-Z]+)\s+(\d+)", st["rows"][2].strip("?\\ "))
                 if not m:
                     return "e", "shop: pool empty"
-                p.coin_amt = m.group(2)
+                # Player 17: the amount field takes three digits (p17a4: 1036 platinum typed as 103, then stuck):
+                # 999 at most a round, the next round takes the rest
+                p.coin_amt = str(min(int(m.group(2)), 999))
+                if getattr(p, "coin_last", None) == m.group(2):
+                    # Player 17: the TAKE left the pool as it was (more than the member can carry): EXIT, then SHARE
+                    p.take_refused, p.coin_last = True, None
+                    return "e", "shop: the TAKE was refused (%s %s left), EXIT" % (m.group(2), m.group(1))
+                p.coin_last = m.group(2)
                 return "enter", "shop: TAKE %s %s" % (m.group(2), m.group(1))
             if bw[:2] == ["HOW", "MUCH"]:
                 typed = st["bottom"].split("?", 1)[1].strip() if "?" in st["bottom"] else ""
@@ -805,6 +813,10 @@ class Plan:
                 p.sell_visit = getattr(p, "sell_visit", 0) + 1
                 p.sell_shared, p.sell_pooled = False, set()
                 if self.buys and getattr(p, "buy_visit", 0) < len(self.buys):
+                    if not self.buys[p.buy_visit if hasattr(p, "buy_visit") else 0]:
+                        # Player 17: an empty `buy` line is this visit's (the sale's): nothing bought, EXIT
+                        p.buy_visit = getattr(p, "buy_visit", 0) + 1
+                        return "e", "sell: done, the visit's `buy` is empty, EXIT the shop"
                     return None
                 return "e", "sell: done, EXIT the shop"
             j = todo[0]
@@ -829,13 +841,22 @@ class Plan:
                 p.buy_pages, p.buy_dir = 0, "n"
                 p.note("buy", "%s bought %s" % (P[j][1], name))
             else:
-                raise_stop(p, "buy: %s not bought by %s (no gold, or a full or overloaded pack)" % (name, P[j][1]))
+                # Player 17: main's bot logs the refusal (c34d: "buy Brass Mirror for ARN: OVERLOADED.") and goes on
+                left.pop(0)
+                p.buy_pages, p.buy_dir = 0, "n"
+                p.note("buy", "%s not bought by %s (no gold, or a full or overloaded pack): skipped, as main's bot"
+                       % (name, P[j][1]))
         if not left:
             if menu == "ITEMS:":
                 return "e", "buy: the visit's list done, back to the menu"
-            if "TAKE" in scr["bottom"].split():
+            if "TAKE" in scr["bottom"].split() and not getattr(p, "take_refused", False):
                 sel = loot.selected(mem)
                 return "t", "buy: TAKE the pool's coins (%s)" % (P[sel][1] if sel is not None else "?")
+            if "SHARE" in scr["bottom"].split() and "TAKE" in scr["bottom"].split() and not getattr(p, "buy_shared", 0):
+                # Player 17: the buyer can't carry the pool (p17a5: LIRA, 1036 platinum): SHARE it instead, once
+                p.buy_shared = 1
+                return "s", "buy: the TAKE refused, SHARE the pool's coins"
+            p.take_refused, p.buy_shared, p.coin_last = False, 0, None
             p.buy_visit += 1
             return "e", "buy: visit %d done, EXIT the shop" % p.buy_visit
         j, name = left[0]
@@ -1192,6 +1213,8 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "checkpoint":
             pl.goals.append(Checkpoint(rest.strip()))
+            # Player 17: the shop visits planned before it, for a run resumed after it (player.py --after)
+            pl.goals[-1].shops = (len(pl.sells), len(pl.buys))
         elif cmd == "inntrip":
             # Player 14: `inntrip` ... `inntrip end`: goals kept aside for an interrupted rest (bot.gd _rest_at_inn)
             if rest.strip() == "end":

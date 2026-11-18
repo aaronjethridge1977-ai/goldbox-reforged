@@ -978,3 +978,62 @@ The plan now also checkpoints `s7a` (after 1,5) and `s7b` (after 6,10) for a rel
 Lab: `p16/` (the plans, tries*.sh, slice.py, screens), saves `p2start/p16a2_s5r9`, `p16b2_sokal`, `p16c1_s6well`,
 `p16c3_s6pre12`, `p16d1_s6norris`, `p16d1_s6k`, `p16e1_s7t`, `p16e2_s7pre20`, `p16e2_slums3`; runs p16a1-a2,
 p16b1-b2, p16c1-c3, p16d1, p16e1-e2.
+
+## Player 17 (2026-11-17): segment 2 in ours whole; segment 8 (`library`, the mirrors) and segment 9 (`podol`)
+
+**Queue items 1 and 2 (reruns on main chat 48's and Combat Chat 18/19's fixes).**
+- **Segment 2 in ours: 0 differences** (`segment.py p14b6 begin slums --start=p14b3_s2b --tplog`, statediff against
+  the original's `slums`, on Combat Chat 19's 932a8a8). On Combat Chat 18's push the replay parted in the last camp:
+  CEDRIC's CAST list read CURE LIGHT WOUNDS, CURE LIGHT WOUNDS, BLESS (the record's order since Combat Chat 18, the
+  last spell lit), so `c c` cast BLESS where the original cured. The original's saves show its slot rule: a cast
+  spell's byte is cleared in place and MEMORIZE fills the free ones (ELWEN's start record 0x28-0x2B: BLESS, 0, CLW,
+  CLW 21; at `slums` the gap holds the new CLW); Combat Chat 19's MEMORIZE sorted by id gives the original's list here.
+  p14b6 has no trace, so statediff is the comparison. (p13b5 is main's chat 48 request to Combat: draw 2351.)
+- **The catacombs' secret door** (main chat 48): `segment.py p16c3 begin s6pre12 --start=p16c1_s6well --tplog`: draws
+  1-46 identical to the checkpoint (the trace's later draws are past it); statediff: the counters 4AFA/4AFB only.
+- **The loot list and the lit member** (Combat Chat 19): p16d1 **draws identical, all 3122** (every figure's cells);
+  statediff 5: the original asks DO YOU WANT TO CLIMB DOWN right after CLIMB UP THE RUNGS (8:29 7,7), ours doesn't, and
+  the replay's `n` reached ours' walking screen, where **N sets the clock to 20:00 (a lab key left live in the
+  release: to main, flagged to the Lead)**; the rest are the counters 4AFA/4AFB.
+- **The troll fight's end** (Combat Chat 19: not a difference): p16e2 **draws identical, all 2460**, statediff 0; cmpdraws still
+  lists figure 9's two extra positions in the original's records (no draw follows them).
+
+**Segment 8 (slums3 -> library): reached `library`** (plan `plans/p17_c34d_08_library.plan`, lab `p17/seg08.plan`,
+from `p2start/p16e2_slums3`): the town trip as segment 7's (the sale, the halls: ELWEN, LIRA and DORN trained:
+`s8t`), **the shops: Brass Mirrors at 15,8** (CEDRIC, ELWEN, LIRA, DORN bought one; ARN and BRAM were refused, no gold
+or a full pack: the tool notes it and goes on, as main's bot, whose six all said OVERLOADED in c34d), two 10 Arrow for
+LIRA at 13,8, `readyall` after each (`s8shop`), out by 3:0 0,4 W, 2:20 0,4 W, the well's 11,15 S, then the bot's 20
+events 73 9 7 6 10 15 14 18 11 12 13 16 74 8 1 5 3 17 4 2 with `heal` / `prepare` round each: **`library` (2:15
+12,6 W; save `p2start/p17a7_library`), 4 fights won, nobody dead** (the mad man and the basilisk: COMBAT, the bot's
+two `menu >> 1`). Runs: p17a1-a6 tool stops (below), **p17a7** (seed 90909097, from `p2start/p17a6_s8shop`).
+- **The mirrors in the original:** only a **readied** mirror turns a stoning gaze back on the gazer (GAME.OVR
+  0x10908, Combat's `_act_powers`), and a mirror takes a hand. The original's READY refused it for CEDRIC, ELWEN and
+  DORN (hands full) and took it for LIRA: so LIRA holds a mirror (her bow then can't be held: Player 5/6's note). The
+  basilisk died in the fight before it gazed at anyone.
+- The library's door at 8,2 N: after a failed PICK and BASH only KNOCK is left at every new bump (the original keeps
+  the door's tries); on the way out the walker went round by 11,14 to 11,0 (`bumps 12` first).
+
+**Segment 9 (library -> podol): reached `podol`** (plan `plans/p17_c34d_09_podol.plan`, lab `p17/seg09.plan`, from
+`p2start/p17a7_library`): out by 11,0 N, the well's 15,11 E, the Slums' 15,4 E, the town trip (`s9t`), back by the
+three 0,4 W exits (a fight in Kuto's Well), Podol (`cure` / `norest`: its rest rule is the inn; `s9in`), events 8 7 1
+3 2 11 9 5 6 10 4: **`podol` (1:18 1,15 S; save `p2start/p17b2_podol`), 5 fights, nobody dead** (p17b2, seed
+91919192). **Not the bot's way through:** no PLAZA AHEAD IS CROWDED question came (the bot answered DISGUISE), yet
+0x4A35 (written only by that menu's answer, 1:18 0x9AAC) is 255, STRIDE BOLDLY FORWARD's, at `s9in`; the arrival took
+0.6 s with no input wait. So no auction at 7,6, a fight at the tavern (4,8: CEDRIC took a Long Sword +1) and at the
+robed orc (14,8). Against c34d's `bot_podol.cfg`: 4A34 2 (bot 64), 4A35 255 (254), 4A36 0 (1), 4A38 2 (0), 4A01 2
+(22). Open for Player 18: rerun from `p2start/p17b2_s9t` with a trace and screens on arrival, find where 4A35 is set.
+
+New in the tools:
+- plans.py: an empty `buy` line is a visit that buys nothing (a `sell gems` visit takes one: p17a1 bought mirrors at
+  the sale); a purchase refused is noted and skipped (was a stop); the pool's TAKE types at most 999 a round (the
+  field takes three digits) and, when the TAKE leaves the pool as it was (more than the member can carry: p17a5,
+  LIRA and 1036 platinum), EXIT and SHARE it instead.
+- player.py `--after=<checkpoint>`: the `sell` / `buy` visits before the checkpoint are done too (p17a3 sold again).
+- Plan answers learnt: the general store's `CAN I SHOW YOU SOMETHING` (YES), `BASH PICK KNOCK EXIT` (PICK), `LOCKED.
+  BASH KNOCK EXIT` (BASH), `KNOCK EXIT` (EXIT: nobody has Knock; main's bot gives up so).
+- segment.py: a rest of a day or more gets a wait more for every 2 hours of it (p16d1's last day rest was still
+  running at F2: ours' clock 6 hours short); Godot's timeout is 900 s (`OP_SEG_TIMEOUT`). A wait an hour of every
+  rest was tried first: p16d1's replay then passed 600 s and ours' save came out empty.
+
+Lab: `p17/` (seg08.plan, seg09.plan, reruns*.sh, screens), saves `p2start/p17a2_s8t`, `p17a6_s8shop`,
+`p17a7_library`, `p17b2_podol` (and `.lab/player/saves/p17*`); runs p17a1-a7, p17b1-b2.

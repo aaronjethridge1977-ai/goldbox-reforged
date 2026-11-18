@@ -1,0 +1,177 @@
+# Player 17: c34d segment 8: slums3 -> library (main's plan: the town, six Brass Mirrors at 15,8, arrows at 13,8,
+# then Mendor's library and the garden, 2:15). From slums3 (2:20 0,14 N). The bot's order (p12/botorder.py slums3
+# library): the town trip (inn, the clerk, the sale, the halls, the inn), the shops, 3:0 0,4 W, 2:20 0,4 W, the well's
+# 11,15 S, then events 73 9 7 6 10 15 14 18 11 12 13 16 74 8 1 5 3 17 4 2 (the bot's two menus: COMBAT at the mad
+# man, event 11, and at the basilisk). After each shop `readyall` (bot.gd _ready_all after a shop): a mirror is
+# readied where the original's READY lets it (a readied mirror turns the basilisk's gaze back; it takes a hand).
+area 2:20
+rules ../../plans/playthrough.plan
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer BASH PICK KNOCK EXIT|PICK
+answer LOCKED. BASH KNOCK EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+answer CAN I SHOW YOU SOMETHING|YES
+answer MERCY! MERCY|COMBAT
+answer DULL BROWN REPTILIAN|COMBAT
+walk 15,4 avoid 13,15,16,20
+step E
+area 3:0
+walk 4,12 through 9,25
+innwait
+alias 3:8
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+sell gems share
+buy
+walk 13,9 through 19,20,21,22,23,24,25,26
+step N
+alias 3:11
+walk 8,1 through 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+step N
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step E
+walk 10,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint s8t
+buy 0 Brass Mirror | 1 Brass Mirror | 2 Brass Mirror | 3 Brass Mirror | 4 Brass Mirror | 5 Brass Mirror
+walk 14,8 through 9,20,21,22,23,24,25
+step E
+readyall
+buy 4 10 Arrow | 4 10 Arrow
+walk 13,9 through 9,19,20,21,23,24,25
+step N
+readyall
+checkpoint s8shop
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 11,15 avoid 99
+step S
+area 2:15
+prepare
+# event 73
+walk 8,2 avoid 99
+heal
+prepare
+# event 9
+walk 8,4 avoid 99
+heal
+prepare
+# event 7
+walk 7,7 avoid 99
+heal
+prepare
+# event 6
+walk 9,7 avoid 99
+heal
+checkpoint s8a
+prepare
+# event 10
+walk 9,10 avoid 99
+heal
+prepare
+# event 15
+walk 8,10 avoid 99
+heal
+checkpoint s8b
+prepare
+# event 14
+walk 10,9 avoid 99
+heal
+prepare
+# event 18
+walk 12,10 avoid 99
+heal
+prepare
+# event 11
+walk 11,12 avoid 99
+heal
+checkpoint s8c
+prepare
+# event 12
+walk 12,12 avoid 99
+heal
+prepare
+# event 13
+walk 13,13 avoid 99
+heal
+prepare
+# event 16
+walk 10,13 avoid 99
+heal
+prepare
+# event 74
+walk 9,13 avoid 99
+heal
+checkpoint s8d
+prepare
+# event 8
+walk 8,11 avoid 99
+heal
+checkpoint s8pre1
+prepare
+# event 1
+walk 2,9 avoid 99
+heal
+prepare
+# event 5
+walk 4,2 avoid 99
+heal
+checkpoint s8e
+prepare
+# event 3
+walk 2,6 avoid 99
+heal
+prepare
+# event 17
+walk 3,2 avoid 99
+heal
+prepare
+# event 4
+walk 10,2 avoid 99
+heal
+prepare
+# event 2
+walk 12,6 avoid 99
+heal
+checkpoint library
