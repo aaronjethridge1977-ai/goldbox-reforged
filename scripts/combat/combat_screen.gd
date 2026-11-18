@@ -1135,6 +1135,14 @@ func _advance() -> void:
 	else:
 		_centre_on_selected()
 	_refresh()
+	var going_off: Dictionary = _combat.magic.take_pending_aim(i) if _combat.magic else {}
+	if not going_off.is_empty():
+		# P80 (Combat Chat 22, DOSBox): at the turn a begun spell goes off the original shows no combat
+		# menu: "CASTS A SPELL" with row 24 empty, then the aim. Ours aims it here, then casts it.
+		_spell_resolving = true
+		_cmode = "aim"
+		_begin_spell(int(going_off.id), null)
+		return
 	if not _combatants[i].get("quick", false) and _combat.magic and _combat.magic.resolve_pending(i):
 		# A player's spell begun last turn goes off at this turn, which it uses up.
 		_refresh()
@@ -1694,7 +1702,18 @@ func _on_item_used(it: GameItem) -> void:
 		_begin_spell(id, it)
 
 
+var _spell_resolving := false        # aiming a begun spell at the turn it goes off (P80)
+
+
 func _begin_spell(id: int, item: GameItem) -> void:
+	if item == null and not _spell_resolving and _combat.magic.begin_cast(_combat.active, id):
+		# A casting time: BEGINS CASTING, no aim yet; the turn ends.
+		_casting = ""
+		_aiming = false
+		_cmode = "menu"
+		_refresh()
+		_advance()
+		return
 	_spell_id = id
 	_use_item = item
 	_spell_picks = []
@@ -1742,6 +1761,7 @@ func _abort_spell() -> void:
 	if _use_item == null:
 		(_combatants[me].who as PartyMember).forget(_spell_id)
 	_use_item = null
+	_spell_resolving = false
 	_spell_picks.clear()
 	_on_message("SPELL ABORTED")
 	_combat.done()
@@ -1755,7 +1775,11 @@ func _finish_cast() -> void:
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
+	if _spell_resolving:
+		_combatants[me].resolving = true
 	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item)
+	_combatants[me].resolving = false
+	_spell_resolving = false
 	_use_item = null
 	_refresh()
 	_advance()

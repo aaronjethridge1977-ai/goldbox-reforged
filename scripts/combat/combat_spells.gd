@@ -807,9 +807,39 @@ func _sleep_cost(t: PartyMember) -> int:
 # --- The computer's spells ------------------------------------------------------------------
 
 ## Tries to cast a spell for computer-run combatant i. Returns true if it did.
+## A player begins a spell with a casting time (GAME.OVR 0x14C0F: CAST, the spell picked, its delay / 3
+## above 0): "BEGINS CASTING" and the turn ends, with no aim yet: the aim comes at the turn it goes off
+## (the original's 0x96:0x39, "CASTS A SPELL" then AIM; Combat Chat 22, DOSBox, save E's Brother Sean:
+## CURE LIGHT WOUNDS: BEGINS CASTING, at once his next turn: CASTS A SPELL, row 24 empty, then AIM).
+## True if begun (false: no casting time, cast it now).
+func begin_cast(i: int, id: int) -> bool:
+	var d := table.field(id, 12) / 3
+	if d <= 0:
+		return false
+	var me: Dictionary = c.combatants[i]
+	me.pending = {"id": id, "cell": me.cell, "picked": [] as Array[int], "aim_later": true}
+	me.kept_attacks = me.attacks
+	me.moves = 0
+	me.attacks = 0
+	c.message.emit("%s BEGINS CASTING" % (me.who as PartyMember).name)
+	c.delay_cast(i, d)
+	return true
+
+
+## The player's spell to aim now (begin_cast's), taken off the caster; {} if none. A member gone QUICK
+## since leaves it to resolve_pending (the computer aims it).
+func take_pending_aim(i: int) -> Dictionary:
+	var me: Dictionary = c.combatants[i]
+	var p: Dictionary = me.get("pending", {})
+	if p.is_empty() or not p.get("aim_later", false) or me.get("quick", false) or me.team == 1:
+		return {}
+	me.pending = {}
+	return p
+
+
 ## The spell combatant i began casting goes off (its turn then ends). The computer aims it
-## now (the original's 0x96:0x39 at that turn, GAME.OVR 0xACEE); a player's keeps the aim
-## chosen when it was begun (assumed: not yet checked in the lab). False if none.
+## now (the original's 0x96:0x39 at that turn, GAME.OVR 0xACEE); a player's is aimed then by the player
+## (take_pending_aim, CombatScreen). False if none.
 func resolve_pending(i: int) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var p: Dictionary = me.get("pending", {})
