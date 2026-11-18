@@ -30,14 +30,16 @@ def classify(st):
     out = {"bottom": b, "text": text}
     if site == "OVR:0010f":
         out["kind"] = "title"
-    elif (site == "EXE:07cc6" and "PRESS <ENTER>" not in b) or "HAS BEEN DESTROYED" in " ".join(rows[r] for r in range(1, 10)):
+    elif (site == "EXE:07cc6" and "PRESS <ENTER>" not in b and not b.startswith("PRESS ANY KEY")) \
+            or "HAS BEEN DESTROYED" in " ".join(rows[r] for r in range(1, 10)):
         # Player 7: 2:9's damage text before a fight ("PRESS <ENTER>/<RETURN> TO CONTINUE") also waits at EXE:07cc6
+        # Player 22: so does a trap's text (Kovel's cabinet, 3:14 3,13: "PRESS ANY KEY TO CONTINUE"): an enter screen
         out["kind"] = "wiped"
     elif b.startswith("INPUT THE CODE WORD"):
         out["kind"] = "wheel"
     elif "ENCAMP" in b and b.endswith("LOOK"):     # AREA CAST VIEW ENCAMP SEARCH LOOK; CAST ... LOOK in the wilderness
         out["kind"] = "walking"
-    elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b or b.startswith("PRESS BUTTON OR"):   # 5:7 (Player 2); 2:9's "PRESS BUTTON OR <RETURN>" (Player 3)
+    elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b or b.startswith("PRESS BUTTON OR") or b.startswith("PRESS ANY KEY"):   # 5:7 (Player 2); 2:9's "PRESS BUTTON OR <RETURN>" (Player 3)
         out["kind"] = "enter"
     elif b.startswith("MOVE VIEW AIM") or ("QUICK" in b and "DONE" in b):
         out["kind"] = "combat"

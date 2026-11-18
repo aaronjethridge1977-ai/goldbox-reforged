@@ -1279,15 +1279,23 @@ class Plan:
                 hit = [r for r, t in rows.items() if t == want]
                 lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
                 if not hit:
-                    if "NEXT" in bw and h.get("mpages", 0) < 8:
+                    # Player 22: NEXT, and PREV from the last page (p22a4: ELWEN's MAGIC MISSILE is on the page
+                    # before SLEEP's), as the `memorize` goal pages
+                    d = h.get("mdir", "n")
+                    if d == "n" and "NEXT" not in bw:
+                        d = "p"
+                    elif d == "p" and "PREV" not in bw:
+                        d = "n"
+                    h["mdir"] = d
+                    if ("NEXT" in bw or "PREV" in bw) and h.get("mpages", 0) < 8:
                         h["mpages"] = h.get("mpages", 0) + 1
-                        return "n", "heal: page for %s" % want
+                        return d, "heal: page for %s" % want
                     raise_stop(p, "heal: %s not in %s's book" % (want, P[op[1]][1]))
                 if len(lit) != 1:
                     raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
                 if lit[0] == hit[0]:
                     spells.pop(0)
-                    h["mpages"] = 0
+                    h["mpages"], h["mdir"] = 0, "n"
                     p.note("heal", "%s memorizes %s" % (P[op[1]][1], want))
                     return "m", "heal: MEMORIZE %s" % want
                 return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % want

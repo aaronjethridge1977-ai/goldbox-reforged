@@ -1,0 +1,152 @@
+# Player 22: c34d segment 15 (kovel -> band3): main's plan "town", then "log 10. The eastern wilderness band (8:27)":
+# travel 8:27, explore, checkpoint band3. From kovel (3:14 14,14 S). The bot's order (p12/botorder.py kovel band3;
+# full_c34d.log 15073-15329): out by 11,0 N (the north edge LEAVE), 13,27 BOAT, the temple of Tyr, the inn; the clerk
+# twice, the arms shop, the halls, the inn; 3:0 0,4 W, 2:20, 8:29, 1:18, the band's western edge LEAVE, 15,20 E into
+# 8:27 (the trolls), explore (nothing more), checkpoint band3 at the arrival (wild 29,20 E).
+# Answers: seg14.plan's
+area 3:14
+rules ../../plans/playthrough.plan
+answer HE TRIES TO ATTACK THE PARTY BUT YOU STOP HIM|ATTACK
+answer PILE OF WEAPONS AND SHIELDS|TAKE
+answer WILL YOU CHASE THEM|YES
+answer WHICH PATH WILL YOU TAKE|SOUTH
+# (the bot: a question with a LEAVE in it, asked more than three times, gets the LEAVE)
+answer A WOODEN CABINET|EXAMINE*3
+answer A WOODEN CABINET|LEAVE
+answer FOUR SMALL CASKETS|SEARCH*1
+answer FOUR SMALL CASKETS|LEAVE
+answer WHICH CASKET WILL YOU SEARCH|A
+answer THREE CABINETS|A*2
+answer THREE CABINETS|LEAVE
+answer HOW WILL YOU OPEN THE LOCK|BREAK
+answer WHO WILL TRY TO PICK THE LOCK|DORN
+# Player 22: event 8 (4,3): the original's party finds the trap (the bot's did not: no menu); the bot's default, the first item
+answer WHAT DO YOU WANT TO DO|AVOID
+answer WHAT DO YOU DO WITH THE MAN|FREE*3
+answer WHAT DO YOU DO WITH THE MAN|LEAVE
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer BASH PICK KNOCK EXIT|PICK
+answer LOCKED. BASH KNOCK EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+answer CAN I SHOW YOU SOMETHING|YES
+answer MERCY! MERCY|COMBAT
+answer DULL BROWN REPTILIAN|COMBAT
+answer PLAZA AHEAD IS CROWDED|DISGUISE
+answer SURPRISED A PARTY OF KOBOLDS|COMBAT
+answer BEING AVOIDED BY SOME LIZARDMEN|COMBAT
+answer STAND AND LISTEN|STAND
+answer MAKE A BID|MAKE
+answer FOLLOW THE OGRE|FOLLOW
+answer WHO WILL IT BE|CHALLENGE
+answer WHO WILL CHALLENGE|ARN
+answer ROBED ORC|LEAVE
+answer IN NEED OF HEALING|YES
+answer KNOCK EXIT|EXIT
+answer YOUR PRESENCE IS NOT AUTHORIZED|YES
+answer WHICH ENTRANCE WILL YOU TAKE|LEAVE
+answer WHICH ROUTE WILL YOU TAKE|BOAT
+answer ENCHANTED WEAPON IF YOU ACCEPT|YES
+answer THIEVES ONLY|LEAVE
+answer WHAT DO YOU DO WITH THE BODY|SEARCH*2
+answer WHAT DO YOU DO WITH THE BODY|LEAVE
+answer OPENING THE BOX WILL DAMAGE THE SEAL|TAKE
+# Player 19: event 17's chained man: main's bot answers FREE / UNLOCK three times, then LEAVE (asked too often)
+answer WILL YOU ENTER|LEAVE
+answer NORTH EDGE OF THE CITY|LEAVE
+answer YOU SPOT A GROUP OF MERCHANTS|PARLAY
+answer DISPLACER BEAST|FLEE
+answer QUITE MAD|NO
+answer DO YOU INSIST HE COME|NO
+answer DO YOU TAKE IT|YES
+# Player 21: after SELL and SHARE some coins stay in the pile (the members' loads?); leave them
+answer GO BACK AND GET YOUR MONEY|NO
+norest
+walk 11,0 avoid 99
+step N
+area 7:26
+norest off
+cure
+answerfrom WHICH ROUTE WILL YOU TAKE|BOAT
+walk 12,27
+step E
+area 3:0
+walk 4,12 through 2,3,9,25
+innheal
+checkpoint s15a
+alias 3:8
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step E
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step E
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+sell gems share
+buy
+walk 13,9 through 19,20,21,22,23,24,25,26
+step N
+alias 3:11
+walk 8,1 through 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+step N
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step E
+walk 10,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint s15t
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+prepare
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+cure
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+walk 15,20
+step E
+area 8:27
+checkpoint band3
+# (p22b1 walked to 14,20 and stopped on 15,20, the band's edge: fixed above to walk 15,20 and step E; p22b2 made that step)
