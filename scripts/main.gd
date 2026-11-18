@@ -2115,7 +2115,14 @@ func _overland_step(direction: int) -> void:
 	# Water stops the party; so does the poisoned river until 0x4AA2 is set. The original
 	# has a line for the river ("The river's stench drives you back.") but the lab shows
 	# no text on screen, so none here either.
+	# Chat 54 (Player 20's p19c2, 7:26 11,28): a refused step still runs the square's event, with
+	# no time passing: GAME.OVR's band move (0x16EE3) leaves the party where it is, and the step
+	# routine then runs ECL entry [0x49E5] whether it moved or not (0x4228), as in a 3D area.
 	if OverlandMap.water(v) or (OverlandMap.river(v) and _vm.read_byte(0x4AA2) == 0):
+		if _vm.ecl != null:
+			_vm.clear_output()
+			_vm.start(1)
+			_after_vm()
 		return
 	_vm.write_byte(EclVM.OVERLAND_X, x)
 	_vm.write_byte(EclVM.OVERLAND_Y, y)
