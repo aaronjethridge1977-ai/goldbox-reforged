@@ -1020,7 +1020,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
 			if choice >= 0 and choice < _vm.menu.size():
 				_menu_sel = choice   # the original keeps the highlight where the last choice was
-				_message.text = ""
+				# A script's horizontal menu (YES / NO) leaves the box as it is: the script's next ops
+				# decide (chat 51, DOSBox: NO at Kuto's Well, 8:29 0xAF71, then EXIT, keeps the question;
+				# the rowboat's NO clears it with its own PRINT_CLEAR " ", 7:26 0xAD47). Only the menu's
+				# options line goes. The other menus clear the box, as before.
+				if _vm._menu_kind == "" and not _vm.menu_vertical:
+					_message.text = _vm.text
+				else:
+					_message.text = ""
 				if dev_choice_hook.is_valid():
 					dev_choice_hook.call(choice)
 				_vm.choose(choice)

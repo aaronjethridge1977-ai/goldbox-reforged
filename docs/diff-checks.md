@@ -186,6 +186,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Left, Right; ENCAMP SAVE (slot J, copied as F). Ours: the same keys, `wait,wait` after them, then F2. **DIFFERS** on
   bdf2ea6 (ours at 14,4 07:21: 0x49C7 the clock, 0x49F0 the previous square); **MATCH** with the fix. Lab
   `data/c51/chk38/` (keys in `data/c51/k38.txt`), sealed as `~/gbr/checks/data/38`.
+- **The box after a declined question (display only, chat 50's open item):** the original's MENU_HORIZONTAL leaves the
+  text box as it is; what follows decides. DOSBox: NO at Kuto's Well (8:29 0xAF71: MENU, EXIT; both after a plain step
+  onto 7,7 and after the climb up) keeps the question, through a turn, until a step to a square with its own text or
+  none; the rowboat's NO (7:26 0xAD47) and the altar's two NOs (5:6, subroutine 0x9AD7) clear it with their own
+  PRINT_CLEAR " "; the nailed door's NO (8:29 0xAA96, an on-move script that sets the stop 0x6DC9 = 255 first) clears
+  it with the stopped step that follows. Ours cleared the box at any menu choice; now a script's horizontal menu
+  leaves the script's text (`main.gd`, the menu branch of `_unhandled_input`; vertical, encounter, WHO, PARLAY and
+  DAMAGE's pages as before). Ours from the same starts and keys shows what the original shows in all four cases.
 - Lesson: `pl.py do` keys at 0.6 s apart were fine here, but a save made into the check's own start slot (J) loads the
   end state on the next `boot j`: put J back (`data/c50/slot.py`) after every ENCAMP SAVE J.
 
