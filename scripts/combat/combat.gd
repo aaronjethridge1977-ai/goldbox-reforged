@@ -1110,10 +1110,19 @@ func step(dir: int) -> String:
 	return "moved"
 
 
-## Enemies guarding next to combatant `i`'s new cell attack it (each once).
+## Enemies guarding next to combatant `i`'s new cell attack it (each once), in the order of the
+## mover's reach-1 list, nearest first (GAME.OVR 0x12E22: 0xBA:0x2433 from the mover, as the free
+## attacks), not by figure number (Combat Chat 24, Player 20's p19e6 draw 1347: a gnoll fleeing to
+## 23,13 between ARN at 24,12 and CEDRIC at 24,14; CEDRIC's mace struck first, d6+2, then ARN's sword;
+## the original's HOLD dump: the gnoll 10 HP, 4 after CEDRIC's blow).
 func guard_attacks(i: int) -> void:
 	var c: Dictionary = combatants[i]
+	var near: Array[int] = []
 	for j in combatants.size():
+		if not combatants[j].down and combatants[j].team != c.team and touching(combatants[j], c):
+			near.append(j)
+	_by_distance(c, near)
+	for j in near:
 		var e: Dictionary = combatants[j]
 		if c.down:
 			return
