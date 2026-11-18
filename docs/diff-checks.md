@@ -172,6 +172,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 54: check 49 (8:27, a bump into the water at the boat), DIFFCHECKS 49/49; the band's refused step, the wilderness box, the nomads' kobolds
+
+- **Check 49, 8:27 the boat again:** check 34's keys to the boat at overland 9,29 (shown 35,29; tpseed 11111111),
+  STAY, Right into the water east: the original asks WILL YOU TAKE IT? again, facing E, no minute passing (DOSBox);
+  TAKE BOAT: New Phlan 15,1 facing E. **DIFFERS on 586f0cf** (8 differences: ours stayed on the band, the clock
+  18 minutes on), **MATCH on f5818d1**. Break test at 49: SUBTRACT 45/49, ADD 48/49.
+- **Fixed: a refused step on the band runs the square's event** (Player 20's (b), 7:26 11,28): GAME.OVR's band move
+  (0x16EE3) refuses water and the poisoned river with no time passing, and the step routine then runs ECL entry
+  [0x49E5] whether the party moved or not (0x4228), as in 3D (chat 48). p19c2 `begin s10d`: draws agree to 5003 of
+  5410 (were 1568); the next difference is a fleeing goblin guard (Combat's).
+- **Fixed (display): the wilderness box after leaving a non-wilderness block** (chat 53's (b)): the walking input
+  (0x17054) ends with 0x49F9 = 0x49FA (0x173E7); an arrival sets 0x49F9 to the mode left (0x3F2B); the modes come
+  from the block number (0x3F4C: 25-27 the wilderness, everything else 1, 6:19's cave too); on the wilderness branch
+  (0x17285) a 0x49F9 under 2 redraws the whole screen (START.EXE 0xBA:0x2B5E: the ICONs, the view, the party list), so
+  the box is empty at the first walking menu. Start-up sets 0x49F9 = 1 (0xE9BE). The redraw at the end of the arrival
+  (0xBA:0x767) is the party list only. A 3D arrival (8:27's boat into New Phlan): an empty box in both (no text there).
+- **Not PARTY_STRENGTH: the nomads' kobolds** (Player 20's (a)): ours' formula is the original's (0x200C, ECL opcode
+  0x1D; the original adds into a byte, ours caps at 255). 7:17 0x9B20 asks for max(PARTY_STRENGTH, 56 - [4A00]) / 2
+  per LOAD_MON; at the first wave [4A00] is 0, so 28 + 28 kobolds in both; the original's LOAD_MON (0x1196) stops only
+  at 63. The original seats 36, ours 48: to Combat (placement). The ECL dispatch: a cmp chain at GAME.OVR 0x3C79-0x3EAD
+  (`3C op 75 07 0E E8 rel`), e.g. 0x0B LOAD_MON 0x1196, 0x1C CLEAR_MON 0x1FA3, 0x1D PARTY_STRENGTH 0x200C.
+
 ## Chat 53: checks 47 (6:19, the silver dragon's cave) and 48 (7:22, the rocks), DIFFCHECKS 48/48; two input and display differences seen
 
 - **Check 47, 6:19 (the dragon's cave, the CHALLENGE path):** `mksave.py J G 6 25 10 10 N 4A87=0 49C3=10 49C4=10

@@ -173,6 +173,15 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 54:** check 49 in `data/c54/chk49/` (`data/c54/cd/` links `game` and 49; run before joining with
+`DC_DATA=$PWD/data/c54/cd DIFFCHECK_ONLY=49 bash data/c52/dc_new.sh <repo>`). A pre-fix run: `git worktree add --detach
+/tmp/<dir> <commit>` and pass that path (remove the worktree after). A segment replay without touching the Player lab:
+a private `OP_LAB` in /tmp (`godot` linked, `qs.cfg`, `root/POOLRAD` a copy of the checks' game, `logs/` with the run's
+`.log` and `.trace.txt`, `proj/` copied from the repo and imported) with `OP_SAVES=~/gbr/player_lab/.lab/player/saves`;
+`cmpdraws.py` reads from the Player lab. The band's water: `OverlandMap.load_from(...)`, `band_x(band)`, `water(value(x, y))`
+in a small `--script` (band 2's water at the boat: east and south). The ECL dispatch is a cmp chain at GAME.OVR 0x3C79
+(`3C op 75 07 0E E8 rel16`). START.EXE routines: unpack with `ovr.image()`, cut with `dd`, `./ndisasm -b16 -o <offset>`.
+
 **Chat 53:** checks 47 and 48 in `data/c53/chk47/`, `chk48/` (run before joining with `DC_DATA=$PWD/data/c53/cd
 DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh ~/gbr/goldbox-reforged`; `data/c53/cd/` links `game` and each check).
 Driving the original with `pl.py do`: keys are lowercase names (`enter`, `up`, `end`); **a script's horizontal menu of
