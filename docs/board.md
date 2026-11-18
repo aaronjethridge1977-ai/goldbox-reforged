@@ -122,6 +122,7 @@ Later: Pool's full run of the original; then luck scoring, regression from Playe
 
 ## Requests to another lane
 
+- 2026-11-17 · desk → combat · **P80, Jeremy playing: his cleric cast, then got to act again (two turns in a row?).** Could be last in one round and first in the next. First check: the turn order around a cast (the caster marked done? a new round between?); one action a round, as the original. · open
 - 2026-11-17 · desk → combat · **P79, Jeremy playing: a goblin asleep (Sleep) seemed to take a free attack as a member moved past** (it attacked and missed, he thinks). First check: in DOSBox whether a sleeping or held monster gets the free attack on a figure leaving its reach; match (likely: none). Faithfulness. · open
 - 2026-11-17 · desk → combat, main · **P78, Jeremy playing: with the mini-map on, SEARCH on the place line is hidden beneath the mini-map.** Move it where it can be seen (e.g. the place line's left part, or the message area) whenever the mini-map is on. Our screen. · open
 - 2026-11-17 · desk → main · **P77, Jeremy playing: B on the walking screen started a battle; he wants it out.** His title bar reads "0.1.0-test1 (DEBUG)", so his copy answers the lab keys (LAB_KEYS: debug builds or --lab only). First check: that the public 0.1.0 download is a release export and answers none of N O B F4 F9 F12 G; that no player's copy (test builds included) can be a debug one. Before the next build. Jeremy 21:06: he plays a copy pulled from the repo (a debug build), so B answering there is expected; only the download check remains. · open
