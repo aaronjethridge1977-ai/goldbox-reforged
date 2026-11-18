@@ -1158,6 +1158,12 @@ class Plan:
     def choose(self, scr, choice):
         kind = scr["kind"]
         if kind == "vmenu":
+            if choice not in scr["items"]:
+                # Player 18: one word of a single item will do, as an hmenu's (Podol's PLAZA AHEAD IS CROWDED: the
+                # plan's DISGUISE, the item DISGUISE PARTY AS MONSTERS.)
+                hits = [i for i in scr["items"] if choice in re.findall(r"[A-Z0-9']+", i)]
+                if len(hits) == 1:
+                    choice = hits[0]
             if choice not in scr["items"] or scr["highlight"] is None:
                 return None
             d = scr["items"].index(choice) - scr["highlight"]

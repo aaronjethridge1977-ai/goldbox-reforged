@@ -125,6 +125,23 @@ def install(cp):
     open(p, "wb").write(s)
 
 
+# Player 18: ours replays the original's keys with the original's rules: its own Godot user folder (as diffcheck.sh)
+# holding a settings.cfg with every QoL switch that changes play turned off. With none, they are on (the release's
+# defaults): p18a1's inn REST put CEDRIC's cast CURE LIGHT WOUNDS back (REST REMEMORIZES), so the original's MEMORIZE
+# keys found no free slot and the replay left the camp early.
+QOL_OFF = {"rememorize": False, "fix": False, "magic_menu": False, "aim_skips_party": False, "start_memorized": False,
+           "quick_bandages": False, "smart_quick": False, "smart_monsters": False}
+
+
+def original_rules_env():
+    xdg = os.path.join(orig.LAB, "seg_xdg")
+    d = os.path.join(xdg, "godot", "app_userdata", "Gold Box Reforged")
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, "settings.cfg"), "w") as f:
+        f.write("[qol]\n\n" + "".join("%s=%s\n" % (k, str(v).lower()) for k, v in QOL_OFF.items()))
+    return dict(os.environ, XDG_DATA_HOME=xdg)
+
+
 def main():
     run, a, b = sys.argv[1:4]
     magic = "--magic" in sys.argv
@@ -161,7 +178,7 @@ def main():
     shutil.copytree(proj, tmp)
     # Player 15: OP_SEG_TIMEOUT (seconds, default 600): Sokal Keep's 56-figure fight plays longer in ours
     r = subprocess.run(["timeout", os.environ.get("OP_SEG_TIMEOUT", "900"), G, "--headless", "--path", tmp, "--", "--game-path=" + orig.GAME,
-                        "--save=" + cfg, "--keys=" + ",".join(ks)], capture_output=True, text=True)
+                        "--save=" + cfg, "--keys=" + ",".join(ks)], capture_output=True, text=True, env=original_rules_env())
     shutil.rmtree(tmp, ignore_errors=True)
     ours_log = r.stdout + r.stderr
     if cb is None:

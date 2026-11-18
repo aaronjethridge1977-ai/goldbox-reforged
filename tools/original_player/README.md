@@ -1037,3 +1037,54 @@ New in the tools:
 
 Lab: `p17/` (seg08.plan, seg09.plan, reruns*.sh, screens), saves `p2start/p17a2_s8t`, `p17a6_s8shop`,
 `p17a7_library`, `p17b2_podol` (and `.lab/player/saves/p17*`); runs p17a1-a7, p17b1-b2.
+
+## Player 18 (2026-11-17): Podol's question (the clerk); segment 9 redone the bot's way; replays with the original's rules
+
+**p16d1 on main chat 50's CLIMB DOWN fix (663cf93):** draws identical (3122), statediff the counters 4AFA/4AFB only.
+
+**Podol's DISGUISE question (queue item 1): the tool's plans never met the clerk.** Podol's on-init (1:18 0x998D) asks
+THE PLAZA AHEAD IS CROWDED only when 0x4AB0 is 1 (the clerk's auction commission, 3:8 0xAA2A); otherwise it writes
+0x4A34 = 0 and **0x4A35 = 255 itself** (so "written only by the menu" was wrong). City Hall's clerk is event 29 at 3:0's
+5,5 (events 26-34 on New Phlan's map: 27 the hall, 28 outside her door at 4,5, 30 Cadorna at 6,5, 34 the guard).
+Main's bot (`bot.gd _clerk`) walks to 4,5, turns to its facing 1 (**east**: ours' `"NESW"[_facing]`) and steps in; every
+plan since Player 12's segment 1 said `step N` there, back to 4,4. So the original's run (segments 1-9) never had the
+clerk's rewards (0x4ABB, 0x4AA7 stayed 254: cleared, not paid) nor her commissions; the bot's had them from segment 1.
+- Decision (Player lane): the run goes on from segment 9 with the clerk, not redone from segment 1 (rewards are paid
+  whenever the party next comes; the earlier segments stay a valid run of the original, a later-paid one). Board, to
+  design, for information. Segments 1-8's plans keep `step N` as they ran.
+- **Segment 9 redone** (plan `plans/p18_c34d_09_podol.plan`, lab `p18/seg09.plan`): the town trip's City Hall is the
+  bot's round: in, the clerk (three reward pages, each a treasure screen, SHAREd as the bot), out; back in for the
+  summons (the clerk again, then east to Cadorna, 6,5: the Textile House commission, 0x4A97 255); in once more. At
+  `s9t` 0x4ABB 255, 0x4AA7 255, 0x4AB0 1, 0x4A97 255, as the bot's `library`; the rewards trained ARN, BRAM, CEDRIC
+  to 4 and ELWEN, LIRA, DORN one level more (2/2/1, 3/1, 3/2). Podol then asked; DISGUISE; the auction (STAND, MAKE,
+  FOLLOW), the buccaneer (CHALLENGE, ARN), LEAVE at the tavern and the robed orc. Runs: p18a1 (from `p17a7_library`,
+  to the question: the tool's vmenu answer, below), p18a2 (from `s9t`: the tool's stuck limit in a long heal after
+  the well's fight), p18a3 (to `s9b`, then a death), p18a4 (`s9b` -> `s9c`, a death), **p18a5 (`s9c` -> `podol`)**.
+  Against the bot's `podol`: 0x4A34 64 and 0x4AB0 254 as the bot; 0x4A35 255 (bot 254: the cover blown, a 1-in-5
+  RANDOM at 0xA882 or the tavern's 0xAC95), 0x4A38 2 (the robed orc's fight), 0x4A36 0 (overheard talk): the dice.
+  Party at `podol`: ARN, BRAM, CEDRIC 4, ELWEN 2/2/1, LIRA 3/1, DORN 3/2.
+
+**Segment 9 in ours** (on 4f4d19c):
+- p18a1 (`library` -> `s9t`): **the well's east exit**: the original lands on 2:20 0,11, ours on 1,11 (ours carries
+  the step on after the leaving script's CALL 0xC01E, main.gd `_arrival_event`; the same on 5b50367, so not 663cf93).
+  In the Player's logs the original lands on the edge square in all 54 crossings (2:20/3:0 15,4, 2:20/8:29 0,4, 8:29
+  15,4 E and 15,11 E, 2:15/8:29). To main. With `--ours-key=44:Down`: **the clerk's rewards, Cadorna, the halls: every
+  flag and member equal; 8 differences: the clock (ours 4 hours later) and the counters.** The clock: the inn's REST
+  offered 4:15 in ours (LIRA's DETECT MAGIC scroll to scribe: `learn_minutes` counts `scribe_pending`), 0:00 in the
+  original, so the plan's 9 hours became 13:15. To Combat.
+- **Ours ran the replays with the release's QoL switches on** (no settings.cfg in the shared user folder: REST
+  REMEMORIZES put CEDRIC's cast CURE LIGHT WOUNDS back at the inn, the original's MEMORIZE keys found no free slot and
+  the replay left the camp early). segment.py now runs ours in its own user folder (`<lab>/seg_xdg`, as diffcheck.sh)
+  with a settings.cfg turning off every switch that changes play (`QOL_OFF`).
+- p18a3 (`s9t` -> `s9b`: the question, DISGUISE, the auction, the duel): draws identical to the checkpoint (8214);
+  statediff 6: the counters and **ARN's experience, ours 900 more** (the buccaneer duel, CHALLENGE with ARN). To Combat.
+- p18a5 (`s9c` -> `podol`): draws identical to 10128; at 10129 **a fleeing GOBLIN GUARD**: after its run step (d2)
+  from 33,24 ours draws "gets away?" d2, the original none (the next round's "who acts next"). To Combat.
+
+New in the tools:
+- plans.py: a vmenu answer may be one word of a single item (the plan's DISGUISE for DISGUISE PARTY AS MONSTERS.).
+- segment.py: ours with the original's rules (above).
+- Lab: `p18/memflags.py <addr,...> <cfg>...` prints script bytes from ours' or the bot's .cfg (memory is the whole 64K).
+
+Lab: `p18/` (seg09.plan, memflags.py, old_src: 5b50367 for the crossing test), saves `p2start/p18a1_s9t`,
+`p18a3_s9b`, `p18a4_s9c` (and `.lab/player/saves/p18*`); runs p18a1-a5.
