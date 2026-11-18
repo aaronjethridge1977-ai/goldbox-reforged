@@ -88,6 +88,17 @@ const TURN_START := 0.05
 var _panel_msgs := PackedStringArray()      # paced: the messages now on the right
 var _pending_msgs := PackedStringArray()    # paced: still to be shown
 var _row24_msg := ""
+# A player's aimed spell (Combat Chat 23, DOSBox, save E's Bakshi, Sleep; GAME.OVR 0x27D60): "<NAME> CASTS A SPELL"
+# first, rows 23-24 empty, for a message's time (_announcing), then the aim; after TARGET no second line: the
+# spell's lines show under the aim's rows 23-24, left as they were (_aim_rows_kept) until the last one.
+var _announcing := false
+var _announced := false
+var _aim_rows_kept := false
+var _kept_prompt := ""
+var _kept_items := []
+var _kept_lit := 0
+var _cast_announced := false
+const CAST_MARK := "\u0001CAST"
 var _draining := false
 var _muted := false
 ## P16 step 3: computer turns step by step (lab: the view's corner read from the battlefield
@@ -577,7 +588,14 @@ func _draw_original(field: Image) -> void:
 		for i in mini(lines.size(), 12):
 			g.text(23, 10 + i, lines[i][0], lines[i][1])
 	# Bottom lines.
-	if _row24_msg != "":
+	if _aim_rows_kept and _row24_msg == "":
+		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+		g.text(0, 24, _kept_prompt, MAGENTA)
+		g.menu_line(24, _kept_items, _kept_prompt.length() + (0 if _kept_prompt == "AIM:" else 1), _kept_lit)
+		g.forget_menu(24)
+	elif _announcing:
+		g.forget_menu(24)
+	elif _row24_msg != "":
 		g.text(0, 24, _row24_msg, GameScreen.GREEN)
 	elif _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
@@ -989,6 +1007,22 @@ func _show_messages() -> void:
 		if who != "":
 			_shown_by[who] = true
 		var dying := msg == "YOUR TEAMMATE IS DYING"
+		if msg == CAST_MARK:
+			# An announced cast (CASTS A SPELL shown before the aim): its sound (GAME.OVR 0x27E18, after the
+			# aim) and its flight, the panel kept; the sound cut as at a CASTS A SPELL line's end (0x27E56;
+			# 0.31 s in DOSBox when nothing flies).
+			if _cast_sound > 0:
+				Speaker.play(_cast_sound, true)
+				_cast_sound = 0
+			if not _spell_flight.is_empty():
+				var sf := _spell_flight
+				_spell_flight = {}
+				_fly(sf.from, sf.to, [5, 133], 240.0)
+				await flight_done
+			else:
+				await get_tree().create_timer(0.31).timeout
+			Speaker.play(0xFF)
+			continue
 		if msg.begins_with("SPELL: "):
 			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
 			_row24_msg = "SPELL:" + msg.substr(7)
@@ -1058,6 +1092,7 @@ func _show_messages() -> void:
 			_skulls.clear()
 		_refresh()
 	_draining = false
+	_aim_rows_kept = false
 	_spell_hits.clear()
 	_skulls.clear()
 	_lingering.clear()
@@ -1126,6 +1161,8 @@ func _advance() -> void:
 	_selected = i
 	_cmode = "menu"
 	_aiming = false
+	_aim_rows_kept = false
+	_announcing = false
 	_turn_weapon_of = i
 	_turn_weapon = _weapon_text(_combatants[i].who)
 	if paced():
@@ -1575,6 +1612,12 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 		to = _combatants[targets[0]].cell
 	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell:
 		_spell_flight = {"from": _combatants[i].cell, "to": to}
+	if _cast_announced and not _muted:
+		# No line after the aim: the cast's sound and its flight go first, before the spell's lines.
+		_pending_msgs.append(CAST_MARK)
+		if not _draining:
+			_draining = true
+			_show_messages.call_deferred()
 	_spell_hits = []
 	for t in targets:
 		_spell_hits.append(int(t))
@@ -1721,6 +1764,24 @@ func _begin_spell(id: int, item: GameItem) -> void:
 		_spell_cell = _combatants[_combat.active].cell
 		_finish_cast()
 		return
+	if item == null:
+		# CASTS A SPELL before the aim (GAME.OVR 0x27D60 prints it, then 0x2A332 aims; DOSBox, Combat Chat 23:
+		# Bakshi's Sleep: the line with rows 23-24 empty for ~0.8 s, then SPELL:SLEEP and AIM:). An item's
+		# USES line is not checked: it stays after the aim.
+		var me: int = _combat.active
+		_announced = true
+		_announcing = true
+		_casting = "announce"
+		_cmode = "announce"
+		_combat.message.emit("%s CASTS A SPELL" % (_combatants[me].who as PartyMember).name)
+		_refresh()
+		if paced():
+			await get_tree().process_frame
+			if _draining:
+				await messages_shown
+		_announcing = false
+		if _combat == null or _combat.active != me:
+			return
 	_casting = "aim"
 	_start_aim("spell")
 
@@ -1762,6 +1823,7 @@ func _abort_spell() -> void:
 		(_combatants[me].who as PartyMember).forget(_spell_id)
 	_use_item = null
 	_spell_resolving = false
+	_announced = false
 	_spell_picks.clear()
 	_on_message("SPELL ABORTED")
 	_combat.done()
@@ -1771,13 +1833,22 @@ func _abort_spell() -> void:
 
 func _finish_cast() -> void:
 	var me: int = _combat.active
+	var announced := _announced
+	_announced = false
+	_aim_rows_kept = announced and paced() and (_cmode == "aim" or _cmode == "manual")
+	if _aim_rows_kept:
+		_kept_prompt = "AIM:" if _cmode == "aim" else "(USE CURSOR KEYS)"
+		_kept_items = _bottom_menu()
+		_kept_lit = _lit(_kept_items)
 	_casting = ""
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
 	if _spell_resolving:
 		_combatants[me].resolving = true
-	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item)
+	_cast_announced = announced
+	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item, announced)
+	_cast_announced = false
 	_combatants[me].resolving = false
 	_spell_resolving = false
 	_use_item = null
@@ -1995,6 +2066,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			ally_attacked.emit()
 			_asking_ally = false
 			_attack_aimed(_ally_target)
+		return
+	if _announcing:
+		get_viewport().set_input_as_handled()
 		return
 	if _asking_abort:
 		get_viewport().set_input_as_handled()

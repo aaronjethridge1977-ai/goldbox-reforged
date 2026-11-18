@@ -392,7 +392,9 @@ func _people_in(cells: Array[Vector2i]) -> Array[int]:
 signal spell_cast(i: int, id: int, cell: Vector2i, targets: Array)
 
 
-func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = null) -> void:
+## `announced`: the caster's "CASTS A SPELL" already shown before the aim (a player's aimed spell, CombatScreen:
+## GAME.OVR 0x27D60 prints it once, then aims), so no line here.
+func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = null, announced := false) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
 	var d := 0 if item != null else table.field(id, 12) / 3
@@ -421,8 +423,9 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 	if m.has_affect(EFFECT_SILENCED) and item == null:
 		c.message.emit("%s IS SILENCED" % m.name)
 		return
-	c.message.emit(("%s USES %s" % [m.name, item.name.to_upper()]) if item != null else "%s CASTS A SPELL" % m.name)
-	c.message.emit("SPELL: %s" % table.name_of(id))
+	if not announced:
+		c.message.emit(("%s USES %s" % [m.name, item.name.to_upper()]) if item != null else "%s CASTS A SPELL" % m.name)
+		c.message.emit("SPELL: %s" % table.name_of(id))
 	var targets: Array[int] = []
 	match aim_kind(id):
 		"self":
