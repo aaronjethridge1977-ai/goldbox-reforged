@@ -123,6 +123,7 @@ Later: Pool's full run of the original; then luck scoring, regression from Playe
 
 ## Requests to another lane
 
+- 2026-11-17 · desk → combat · **P82, Jeremy playing: after FIX, full HP but names still red** (Axey 14/14, Miss Poof 6/6). party_list reds status >= UNCONSCIOUS: FIX raises HP but leaves the status. First check: what a cure does to an unconscious member's status in the original; FIX does the same (with P75's spells). · open
 - 2026-11-17 · desk → design · **P81, Jeremy playing: the rope booth's potion (OHLO) doesn't show in the quest log; he thinks it should.** The log holds the 20 commissions and main quests only. Question for Jeremy with options: a "side finds" section (passwords, rewards, rumours; shown once done), or fold it into P58's message log, or leave the log to quests. · open
 - 2026-11-17 · desk → combat · **P80, Jeremy playing: his cleric cast, then got to act again (two turns in a row?).** Could be last in one round and first in the next. First check: the turn order around a cast (the caster marked done? a new round between?); one action a round, as the original. · open
 - 2026-11-17 · desk → combat · **P79, Jeremy playing: a goblin asleep (Sleep) seemed to take a free attack as a member moved past** (it attacked and missed, he thinks). First check: in DOSBox whether a sleeping or held monster gets the free attack on a figure leaving its reach; match (likely: none). Faithfulness. · open
