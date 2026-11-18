@@ -1297,9 +1297,11 @@ func _start_aim(purpose: String = "attack") -> void:
 	_aim_list.append_array(others)
 	_aiming = true
 	_cmode = "aim"
+	# Every aim starts on the first of the list, the caster or attacker himself (GAME.OVR 0x15D53: 0x15B84 takes
+	# entry 0 and moves on only when 0x13880 refuses it; DOSBox, Combat Chat 23, lab save E: Bakshi's Sleep and
+	# Magic Missile and Brother Sean's Magic Missile and Fireball opened on the caster, his panel up; ours started
+	# a spell on the nearest other figure).
 	_aim_index = 0
-	if purpose == "spell" and _aim_list.size() > 1 and _use_item == null:
-		_aim_index = 1      # a spell aims at the nearest other figure first
 	if skip_party_on():
 		# TARGETING SKIPS THE PARTY (QoL, C11-3): an attack or a harmful spell's NEXT / PREV
 		# step through the enemies only, nearest first, starting on the nearest; a helpful
