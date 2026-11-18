@@ -2389,7 +2389,7 @@ func _after_vm() -> void:
 	elif _arrival_pending and _vm.state == EclVM.State.DONE:
 		# The arrival's init has ended after stopping for the player (see _enter_script).
 		_arrival_pending = false
-		if not _arrival_event(_arrival_after_init, -1):
+		if not _arrival_event(_arrival_after_init):
 			_after_vm()
 	elif _arrival_on_move and _vm.state == EclVM.State.DONE:
 		# The arrival's on-move script is done (see _enter_script): a stop with the party moved
@@ -2867,10 +2867,11 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_step_from = Vector2i(-1, -1)
 	_arrival_on_move = false
 	_arrival_pending = false
-	# Only a step through the map's edge (the leaving script's CALL 0xC01E) carries on; a
-	# jump straight to a square (boats, gates, the lab's saves) lands on it (lab, chat 8: a
-	# save jumping to New Phlan 13,9 N lands there in the original, no minute passing).
-	var carry := _pending_move if arrive and _vm.stepped_through else -1
+	# A step through the map's edge (the leaving script's CALL 0xC01E) ends on the new area's
+	# edge square, as a jump straight to a square does (boats, gates; lab, chat 8): the step
+	# doesn't carry on into the new area (chat 51, DOSBox and differential check 38: 8:29 15,11 E
+	# arrives in the Slums at 0,11 and 2:20 0,4 W in Kuto's Well at 15,4, no minute passing;
+	# Player 18's 54 crossings agree).
 	# After a NEW_ECL the original (GAME.OVR 0x3EFA) runs the new block's init, then its on-move
 	# (0x3FFF) and, unless that moves on again, the square's event (0x400E), whatever started it:
 	# a step, a square's event (the closing scene into New Phlan: its on-move sets the sky,
@@ -2878,7 +2879,6 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	# loop (0x403E) instead: the init, then the adventure menu.
 	var from_step := arrive and (_pending_move >= 0 or _by_new_ecl)
 	_by_new_ecl = false
-	_vm.stepped_through = false
 	if arrive:
 		# The leaving script may have moved the party (CALL 0xC01E steps through the edge).
 		_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
@@ -2940,7 +2940,7 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	for a in [DOOR_TRY_BASH, DOOR_TRY_PICK, DOOR_TRY_KNOCK]:
 		_vm.write_byte(a, 1)
 	if arrive and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE]:
-		if _arrival_event(from_step, carry):
+		if _arrival_event(from_step):
 			return
 	elif arrive and _vm.state != EclVM.State.NEW_ECL:
 		# The init stopped for the player (a menu, a text to read: Rolf's tour, 3:0's init when
@@ -2954,23 +2954,20 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 
 
 ## The arrival on a new area's square after its init (see _enter_script): the on-move script
-## when a step or NEW_ECL brought the party, then the square's event, then the step carried on.
-## True when it has handed over (shown something or moved on): the caller returns.
-func _arrival_event(from_step: bool, carry: int) -> bool:
+## when a step or NEW_ECL brought the party, then the square's event. True when it has handed
+## over (shown something or moved on): the caller returns.
+func _arrival_event(from_step: bool) -> bool:
 	# As in the original, the square arrived on runs its event (New Phlan's gateway
 	# text when coming in from the Slums).
 	_sync_position_to_vm(_facing)
 	if from_step:
 		# The step goes on in the new area, starting again with its on-move script (lab,
 		# chat 13: a step that enters Podol Plaza shows its "HOW WILL YOU PROCEDE?" menu
-		# at once, before the square's own event). What it shows ends the step there;
-		# a stop it sets keeps the party on the arrival square.
+		# at once, before the square's own event). What it shows ends the step there.
 		var before := _vm.text
 		_step_from = _pos
 		_arrival_on_move = true
 		_vm.start(0)
-		if _vm.read_byte(EclVM.MOVEMENT_BLOCK) != 0:
-			carry = -1
 		var shown := _vm.text.strip_edges() != "" and _vm.text != before
 		if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
 			_after_vm()
@@ -2982,16 +2979,6 @@ func _arrival_event(from_step: bool, carry: int) -> bool:
 	_vm.start(1)
 	if _vm.text == "" and not _vm.text_changed:
 		_vm.text = keep
-	# The step that crossed the edge carries on into the new area when nothing there
-	# stops it: the original lands one square further in, a minute later (lab, chat 6:
-	# Slums 0,4 west arrives in Kuto's Well at 14,4, not 15,4), but stays on the edge
-	# square when the arrival shows something (the Slums' greeting).
-	if carry >= 0 and _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] \
-			and _vm.text.strip_edges() == "" and not _vm.on_overland:
-		var was := _pos
-		_finish_move(carry)
-		if _pos != was:
-			return true
 	return false
 
 

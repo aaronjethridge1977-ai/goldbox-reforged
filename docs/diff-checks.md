@@ -172,6 +172,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), DIFFCHECKS 38/38
+
+- **The fix** (Player 18's request): ours carried a step through a map edge (the leaving script's CALL 0xC01E) on into
+  the new area when the arrival showed nothing: one square further in, a minute later (`main.gd` `_arrival_event`,
+  from a chat 6 note "Slums 0,4 W arrives in Kuto's Well at 14,4"). DOSBox shows no such carry: 2:20 0,4 W arrives at
+  8:29 **15,4 W, 07:20** (the minute of the step only), and 8:29 15,11 E at 2:20 **0,11** (with the Slums' greeting,
+  where ours already stopped). Player 18's logs (p12-p18) agree in all 54 crossings. The carry and the VM's
+  `stepped_through` flag are gone; a step through the edge now ends on the edge square, as a jump does.
+- **Check 38:** check 36's start (8:29 7,14 S 06:52), tpseed **33333333** (60606063 and 11111111 and 44444444 roll an
+  encounter on the way), the route 7,14 -> 7,8 -> 12,8 -> 12,9 -> 13,9 -> 13,10 -> 15,10 -> 15,11, east into the Slums
+  (0,11 E 07:09, the greeting), 0,11 -> 0,8 -> 1,8 -> 1,7 -> 2,7 -> 2,4 -> 0,4, west into Kuto's Well (15,4 W 07:20),
+  Left, Right; ENCAMP SAVE (slot J, copied as F). Ours: the same keys, `wait,wait` after them, then F2. **DIFFERS** on
+  bdf2ea6 (ours at 14,4 07:21: 0x49C7 the clock, 0x49F0 the previous square); **MATCH** with the fix. Lab
+  `data/c51/chk38/` (keys in `data/c51/k38.txt`), sealed as `~/gbr/checks/data/38`.
+- Lesson: `pl.py do` keys at 0.6 s apart were fine here, but a save made into the check's own start slot (J) loads the
+  end state on the next `boot j`: put J back (`data/c50/slot.py`) after every ENCAMP SAVE J.
+
 ## Chat 50: checks 36 (8:29, climbing out of Kuto's well) and 37 (7:26, the rowboat and the pyramid), DIFFCHECKS 37/37
 
 - **The fix first** (663cf93, Player 17's request): 8:29's climb up (0xA245: "YOU MAKE THE LONG, ARDUOUS CLIMB UP THE

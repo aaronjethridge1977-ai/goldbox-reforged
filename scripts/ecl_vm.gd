@@ -55,7 +55,6 @@ var hi := {}
 var ecl: EclScript
 var state := State.IDLE
 var pc := 0                      # offset into script.code
-var stepped_through := false     # CALL 0xC01E ran: the party stepped through a map edge
 ## The current map's info byte for a square (set by main), for CALL 0x2C90.
 var square_info: Callable
 var stack: Array[int] = []
@@ -215,7 +214,6 @@ func copy_from(src: EclVM) -> void:
 	block_key = src.block_key
 	_at = src._at
 	_menu_at = src._menu_at
-	stepped_through = src.stepped_through
 	new_ecl = src.new_ecl
 	area_map = src.area_map.duplicate()
 	area_deco = src.area_deco.duplicate()
@@ -982,7 +980,6 @@ func _exec(ins: Dictionary) -> void:
 					# The party moves one square ahead (wrapping at the map edge, as the
 					# original masks the coordinates).
 					var d := read_byte(PARTY_DIR) & 3
-					stepped_through = true
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
 				0xC01B, 0xC018:
