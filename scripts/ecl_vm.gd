@@ -27,6 +27,13 @@ const COMBAT_RESULT := 0x6DC7
 const DEFEATED := 0x6DC8        # monsters the last fight put down (main._on_event_fight_finished)
 const MORALE_BASE := 0x6DC6     # the encounter's morale (scripts write it before COMBAT; 99 = steady)
 const AMBUSH := 0x6DCB          # surprise: 1 the party is surprised, 2 the monsters (SURPRISE)
+## The approach's maximum and distance: the original's game state [0x49D6] +0x580 / +0x582, which are
+## these ECL cells (one word a cell from 0x6B00). SPRITE_START and ENCOUNTER_MENU write both (GAME.OVR
+## 0x111F-0x116C, 0x2C89-0x2D6C), SPRITE_ADVANCE takes 1 off the distance (0x1564), COMBAT caps it by
+## the open squares ahead (0x2549-0x2568) and places the monsters there (0xE015). Scripts read them as
+## an ENCOUNTER_MENU's maximum (7:17's kobold waves: SPRITE_START 0,2,0 then ENCOUNTER_MENU 0, [6DC0]).
+const APPROACH_MAX := 0x6DC0
+const APPROACH_DISTANCE := 0x6DC1
 const SHOP_FLAG := 0x6E6C       # 1 = the next COMBAT opens the treasure list as a shop
 const ALLY_ATTACKED := 0x6E33   # 1 = a player answered YES at ATTACK ALLY in this fight (chat 17)
 const TEMPLE_FLAG := 0x6DE2     # 1 = the next COMBAT opens a temple (New Phlan's temples)
@@ -1102,11 +1109,15 @@ func _exec(ins: Dictionary) -> void:
 			sprite_distance = clampi(_value(a[1]), 0, 2)
 			encounter_max = _value(a[1])
 			encounter_advances = 0
+			write_byte(APPROACH_MAX, encounter_max)
+			write_byte(APPROACH_DISTANCE, mini(int(open_ahead.call()) if open_ahead.is_valid() else 2, encounter_max))
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
 		"SPRITE_ADVANCE":
 			sprite_distance = maxi(0, sprite_distance - 1)
 			encounter_advances += 1
+			if read_byte(APPROACH_DISTANCE) > 0:
+				write_byte(APPROACH_DISTANCE, read_byte(APPROACH_DISTANCE) - 1)
 			# Reaching the party it becomes their picture at once (chat 40, DOSBox: the Slums'
 			# orcs, 2:20 0x9E22 START at 1, ADVANCE, PRINT: the orc's picture with the text and
 			# under A BATTLE BEGINS...; ours drew the nearest figure frame, then the corridor).
@@ -1220,6 +1231,8 @@ func _exec(ins: Dictionary) -> void:
 			# Chat 20, p13b5: 2:20's kobolds after the goblins' SPRITE_ADVANCE stood 1 square too near).
 			encounter_advances = 0
 			encounter_distance = mini(ahead, encounter_max)
+			write_byte(APPROACH_MAX, encounter_max)
+			write_byte(APPROACH_DISTANCE, encounter_distance)
 			# The monsters' figure stands at that distance (it becomes their picture
 			# when they reach the party).
 			sprite_id = _value(a[0])
@@ -1341,6 +1354,7 @@ func _close_in() -> bool:
 	if encounter_distance > 0:
 		encounter_distance -= 1
 		encounter_advances += 1
+		write_byte(APPROACH_DISTANCE, encounter_distance)
 		sprite_distance = encounter_distance
 		_arrived()
 		return true

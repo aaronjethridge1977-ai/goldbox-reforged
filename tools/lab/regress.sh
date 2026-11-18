@@ -9,6 +9,7 @@
 # Differential checks' fights (Combat Chat 1, docs/diff-checks.md): save D = `python3 mksave.py J D 4 2 11 14 E 4A97=255 strong`
 # then `python3 fixthac0.py J D` (the original ignores a file's THAC0; ours doesn't).
 cd "$(dirname "$0")"
+F5="BAKSHI,RHIANNON,BROTHER SEAN,DARKSTAR,PHINEAS"   # Combat Chat 15: save F (lab_prev's) has five members, no Thrender
 WHAT=ours; [ "$1" = record ] && WHAT=both
 run() { # name magic script args...
   local n=$1 m=$2; shift 2
@@ -18,8 +19,8 @@ run() { # name magic script args...
   [ $WHAT = both ] && cp /home/aaron/gbr/combat_lab/tmp/cmp_orig.txt traces/$n.txt
   echo "$n: $(grep '^original:' /home/aaron/gbr/combat_lab/tmp/reg_$n.txt) $(grep '^VERDICT' /home/aaron/gbr/combat_lab/tmp/reg_$n.txt)"
 }
-run orig_F_magic 1 ./cmpfight2.sh F 10000012 "" up,c $WHAT
-run orig_F_plain 0 ./cmpfight2.sh F 10000012 "" up,c $WHAT
+run orig_F_magic 1 env NAMES="$F5" ./cmpfight2.sh F 10000012 "" up,c $WHAT
+run orig_F_plain 0 env NAMES="$F5" ./cmpfight2.sh F 10000012 "" up,c $WHAT
 run orig_E_magic 1 ./cmpfight2.sh E 12345678 up,up enter $WHAT
 run orig_E_22 1 ./cmpfight2.sh E 22222222 up,up enter $WHAT
 run orig_E_bad 0 ./cmpfight2.sh E 0badf00d up,up enter $WHAT
@@ -28,7 +29,7 @@ run orig_E_0000beef 0 ./cmpfight2.sh E 0000beef up,up enter $WHAT
 run orig_E_5eed5eed 1 ./cmpfight2.sh E 5eed5eed up,up enter $WHAT
 for s in 00000002 00000003 00000004 deadbeef cafef00d 12121212; do
   m=1; [ $s = 00000003 ] || [ $s = deadbeef ] && m=0
-  run orig_F3_$s $m ./cmpfight3.sh F 10000012 "" up,c $WHAT $s ""
+  run orig_F3_$s $m env NAMES="$F5" ./cmpfight3.sh F 10000012 "" up,c $WHAT $s ""
 done
 for s in 11111111 22222222 33333333 55555555 deadbeef 0badf00d; do   # QUICK Bakshi with two Magic Missiles
   run orig_H_$s 1 ./cmpfight2.sh H $s up,up enter $WHAT
@@ -84,3 +85,21 @@ run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wa
 [ $WHAT = ours ] && run orig_K_ogres2 1 ./combat10/pf.sh K 2468ace1 tmp/cmp_orig.txt reg_K2
 [ $WHAT = ours ] && run orig_L_scorp1 1 ./combat10/pf.sh L 13579bdf tmp/cmp_orig.txt reg_L1
 [ $WHAT = ours ] && run orig_L_scorp2 1 ./combat10/pf.sh L 0badf00d tmp/cmp_orig.txt reg_L2
+# Combat Chat 24: the nomads' kobold waves (Player 20's p20a3, 7:17 from s11c to s11k: walk to the camp at 0,0 W, rest,
+# three waves; the original's trace cut at s11c). The approach cells 0x6DC0 / 0x6DC1 (SPRITE_START 0,2,0, then
+# ENCOUNTER_MENU 0, [6DC0]): 36 of the 56 kobolds seated two squares ahead (ours seated 48 at distance 0).
+# A segment replay (~4 min; needs the lab's p20a3 setup: logs/p20a3.*, .lab/player/saves/p20a3, its index lines).
+if [ $WHAT = ours ]; then
+  chmod u+w /home/aaron/gbr/combat_lab/logs/p20a3.segment_* 2>/dev/null
+  OP_SEG_TIMEOUT=600 combat18/seg.sh p20a3 s11c s11k
+  python3 cmpdraws.py traces/seg_p20a3_nomads.txt logs/p20a3.segment_s11c-s11k.txt > /home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt 2>&1
+  combat16/restore_saves.sh > /dev/null 2>&1
+  # Ours' replay sometimes stalls in the third wave (HASSAD's side, draw 27583, waiting at low CPU: open, Combat Chat 24);
+  # draws identical to ours' end past the second wave (26916) count as a match.
+  r=/home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt
+  n=$(grep '^original:' $r | sed 's/.*ours: //'); fd=$(grep -o 'first difference at draw [0-9]*' $r | grep -o '[0-9]*$')
+  if grep -q "^draws: identical" $r; then v=MATCH
+  elif [ -n "$fd" ] && [ "$fd" = "$((n + 1))" ] && [ "$n" -gt 26916 ]; then v="MATCH (identical to ours' end, $n: the third wave's stall)"
+  else v="DIFFERS: $(grep VERDICT $r)"; fi
+  echo "seg_p20a3_nomads: $(grep '^original:' /home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt) VERDICT: $v"
+fi
