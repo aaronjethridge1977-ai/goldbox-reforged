@@ -173,6 +173,16 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 53:** checks 47 and 48 in `data/c53/chk47/`, `chk48/` (run before joining with `DC_DATA=$PWD/data/c53/cd
+DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh ~/gbr/goldbox-reforged`; `data/c53/cd/` links `game` and each check).
+Driving the original with `pl.py do`: keys are lowercase names (`enter`, `up`, `end`); **a script's horizontal menu of
+two or more choices takes only its letters** (Enter, End and Right do nothing there); its vertical menus move with
+`end` (not `down` or `kp2`) and take `enter`. ENCAMP SAVE J is `e s j`, then `n` at QUIT TO DOS. Event tables in a
+script block: `dax.read_dax(...)[block]` puts address A at index A - 0x9900 + 2 (the block's two leading bytes);
+`evmap.py <geo> <block>` gives the squares' events. Lab slot G was backed up to `data/c53/gbak/` (put back at the end).
+0.1.2's smoke extra: the Windows exe run natively (`--headless --log-file 'D:\...\smoke-0.1.2-win.log' --quit-after 300
+-- '--game-path=D:\...\POOLRAD'`) logs the report line.
+
 **Chat 52:** use `data/c52/dc_new.sh` (not c51's) for a new check: `DC_DATA=$PWD/data/c52/cd DIFFCHECK_ONLY=<n> bash
 data/c52/dc_new.sh ~/gbr/goldbox-reforged`; it copies the linked game folder with `cp -rL` (c51's `cp -r` copied the
 symlink, so every check played in the shared `~/gbr/checks/data/game` and two at once raced). Checks 41-46 in

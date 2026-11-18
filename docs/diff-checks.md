@@ -172,6 +172,34 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 53: checks 47 (6:19, the silver dragon's cave) and 48 (7:22, the rocks), DIFFCHECKS 48/48; two input and display differences seen
+
+- **Check 47, 6:19 (the dragon's cave, the CHALLENGE path):** `mksave.py J G 6 25 10 10 N 4A87=0 49C3=10 49C4=10
+  strong`, tpseed 11111111. Up (the jump: "OFF IN THE DISTANCE..."), Up (10,9, 22:56: the dragon lands by a cave),
+  E (ENTER CAVE: 6:19's magic mouth), S (STATE NAME AND INTENT), Enter, End, Enter (the vertical menu's CHALLENGE),
+  Enter, S (SLAY DRAGON), Enter, F (FOLLOW), A (ATTACK: 0xA0DF `DAMAGE 192, 11, 6, 0, 4`: BAKSHI, RHIANNON and
+  PHINEAS hit for 36 each in both), Enter, Enter (NEW_ECL 25: the cave menu again), E (the magic mouth again: 6:19's
+  0x9918 tests 0x4A87's bit 128 with `COMPARE [6E7A], 1`, so the bit never stops it, in both), L (LEAVE), I (IGNORE
+  CAVE). **MATCH** on 93d286e and 8c87c86. Lab `data/c53/chk47/`.
+- **Check 48, 7:22 (outside Yarash's pyramid, the rocks):** `mksave.py J G 7 22 15 0 S`, tpseed 11111111. Up (the
+  jump; the init puts the party on 15,0 S; the arrival's event: the secret-door roll, "A SECRET DOOR IS FOUND
+  BEHIND YOU." in both), Enter, S (SEARCH on), Up x7 (15,7, ten minutes a step), Right (W), Up (14,7, 12:16: "YOU
+  SEE ROCKS SCATTERED ABOUT..."), Enter (searching: the tingle, GO BACK / MOVE ON / THROW A ROCK), T, Enter (the
+  menu again, 0x4A4D bit 2), G (GO BACK: 0x992D's table index 8 puts the party on 15,7 E), Left. **MATCH**. Lab
+  `data/c53/chk48/`. (7:22's event tables: kind 0x9B91 + event, kind 5 the rocks at events 15-17, as ours reads them.)
+- **The gate is DIFFCHECKS 48/48** (~60 s). Break test at 48: SUBTRACT 44/48, ADD over 200 47/48 (the same checks
+  as at 46).
+- **Seen, not changed (input): a script's horizontal menu with two or more choices ignores Enter in the original**
+  (6:25's ENTER CAVE / IGNORE CAVE, 6:19's STATE NAME AND INTENT / LEAVE: Return and keypad Enter do nothing, End
+  and Right don't move the lit choice; only the letters choose). One-choice menus (PRESS <RETURN>) and vertical menus
+  take Enter. Ours takes Enter for the lit choice (the first). To design (board), like Q13's arrows.
+- **Seen, not changed (display): after a NEW_ECL arrival the original redraws the whole screen once the scripts
+  end, and the box goes blank:** the jump's NEW_ECL 25 prints "OFF IN THE DISTANCE..." (seen printing, the position
+  line still the old area's) and then the box is empty, the overland drawn; after 6:19's LEAVE (NEW_ECL 25), IGNORE
+  CAVE leaves an empty box, where the same IGNORE after a step (no NEW_ECL) keeps the question. Ours keeps the text
+  in all three. Only seen in the wilderness (6:25); 3D areas and the rule's place in GAME.OVR (the arrival,
+  0x3EFA-0x403E) not read. Next main chat.
+
 ## Chat 52: check 41 (6:1, the captain's door), five NO checks (42-46), the previous square after a stopped edge step, DIFFCHECKS 46/46
 
 - **Check 41, 6:1's captain's door:** check 39's keys, then Right, Up (7,10), Left, Up to 7,11 (event 4, 0xAA17;
