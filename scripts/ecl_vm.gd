@@ -1218,7 +1218,11 @@ func _exec(ins: Dictionary) -> void:
 			if open_ahead.is_valid():
 				ahead = int(open_ahead.call())
 			encounter_max = _value(a[1])
-			encounter_distance = maxi(mini(ahead, encounter_max) - encounter_advances, 0)
+			# A new approach (GAME.OVR 0x2C80-0x2D6C: +0x580 = argument 2, +0x582 = the open
+			# squares ahead capped by it): an earlier SPRITE_START's advances don't count (Combat
+			# Chat 20, p13b5: 2:20's kobolds after the goblins' SPRITE_ADVANCE stood 1 square too near).
+			encounter_advances = 0
+			encounter_distance = mini(ahead, encounter_max)
 			# The monsters' figure stands at that distance (it becomes their picture
 			# when they reach the party).
 			sprite_id = _value(a[0])
