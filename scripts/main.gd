@@ -2447,6 +2447,12 @@ func _after_vm() -> void:
 		_arrival_on_move = false
 		if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
 			_finish_move(int(_facing))
+		else:
+			# Otherwise the square's event follows, as after an on-move that doesn't stop
+			# (GAME.OVR 0x400E: the arrival runs [0x49E5] whatever the on-move showed; chat 55,
+			# DOSBox: 1:18's PLAZA AHEAD menu, DISGUISE, then 12,8's d25 and the goblins).
+			_arrival_square_event()
+			_after_vm()
 
 
 ## NPC_ADD: the monster record joins the party as an NPC (the computer runs them in
@@ -3022,23 +3028,30 @@ func _arrival_event(from_step: bool) -> bool:
 	if from_step:
 		# The step goes on in the new area, starting again with its on-move script (lab,
 		# chat 13: a step that enters Podol Plaza shows its "HOW WILL YOU PROCEDE?" menu
-		# at once, before the square's own event). What it shows ends the step there.
+		# at once, before the square's own event, which follows it: chat 55).
 		var before := _vm.text
 		_step_from = _pos
 		_arrival_on_move = true
 		_vm.start(0)
 		var shown := _vm.text.strip_edges() != "" and _vm.text != before
-		if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE] or shown:
-			_after_vm()
+		if not _vm.state in [EclVM.State.DONE, EclVM.State.IDLE]:
+			_after_vm()     # the event follows when the on-move is done (_after_vm)
 			return true
 		_arrival_on_move = false
-		_vm.text = before
-		_sync_position_to_vm(_facing)
+		if not shown:
+			_vm.text = before
+	_arrival_square_event()
+	return false
+
+
+## The arrival's last part: the square's event (GAME.OVR 0x400E), keeping the box's text when
+## the event prints nothing.
+func _arrival_square_event() -> void:
+	_sync_position_to_vm(_facing)
 	var keep := _vm.text
 	_vm.start(1)
 	if _vm.text == "" and not _vm.text_changed:
 		_vm.text = keep
-	return false
 
 
 ## Frames of sprite `id` (SPRIT files, preferring the current script's file number).
