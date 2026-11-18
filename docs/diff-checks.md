@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), DIFFCHECKS 38/38
+## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), check 39 (6:1), the place compared, DIFFCHECKS 39/39
 
 - **The fix** (Player 18's request): ours carried a step through a map edge (the leaving script's CALL 0xC01E) on into
   the new area when the arrival showed nothing: one square further in, a minute later (`main.gd` `_arrival_event`,
@@ -194,6 +194,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   it with the stopped step that follows. Ours cleared the box at any menu choice; now a script's horizontal menu
   leaves the script's text (`main.gd`, the menu branch of `_unhandled_input`; vertical, encounter, WHO, PARLAY and
   DAMAGE's pages as before). Ours from the same starts and keys shows what the original shows in all four cases.
+- **Check 39, 6:1 at last (the Buccaneer base):** check 35's start and route (6:25, tpseed 11111111) to 12,31, ENTER
+  instead of LEAVE: the party is taken in to 6:1's merchants' camp, 8,10 S ("YOU ARE IN THE MERCHANTS' CAMP AREA.", no
+  minute passing; the gate text at 0x9BCF never shows in the original, nor in ours). **MATCH** on 317e966. Lab
+  `data/c51/chk39/`, sealed as `~/gbr/checks/data/39`. **Every area now has a check.** The slave pen (0x9D96: the boy,
+  the vertical menus) and the captain's door (0xAA4B: SHOW PASS / LEAVE / BRIBE / ATTACK) are the next 6:1 checks from
+  this start (walks inside 6:1, guards' rolls on the way).
+- **statediff.gd compares the party's square and facing** in a 3D area (the original's save 0x3201 x, y, facing x 2
+  when the view byte 0x3206 is 1; ours' `[place]`): memory alone caught check 38's carried step only through 0x49F0
+  and the clock. All 39 match with it; on bdf2ea6 check 38 now also shows `place: original 15,4 W, ours 14,4 W`.
 - Lesson: `pl.py do` keys at 0.6 s apart were fine here, but a save made into the check's own start slot (J) loads the
   end state on the next `boot j`: put J back (`data/c50/slot.py`) after every ENCAMP SAVE J.
 

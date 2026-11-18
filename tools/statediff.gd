@@ -51,6 +51,15 @@ func _init() -> void:
 		if o != u:
 			diffs += 1
 			print("memory %04X%s: original %d, ours %d" % [a, " (%s)" % NAMES[a] if NAMES.has(a) else "", o, u])
+	# The party's square and facing in a 3D area (chat 51: memory alone missed a step carried one
+	# square on, check 38). The original's save: 0x3201 x, y, facing x 2; 0x3206 the view (1 = 3D).
+	if orig.size() > 0x3206 and orig[0x3206] == 1 and cfg.has_section_key("place", "x"):
+		var o_place := "%d,%d %s" % [orig[0x3201], orig[0x3202], "NESW"[(orig[0x3203] >> 1) & 3]]
+		var u_place := "%d,%d %s" % [int(cfg.get_value("place", "x")), int(cfg.get_value("place", "y")),
+			"NESW"[int(cfg.get_value("place", "facing", 0)) & 3]]
+		if o_place != u_place:
+			diffs += 1
+			print("place: original %s, ours %s" % [o_place, u_place])
 	# The party: the original's character files beside its save (CHRDAT<letter><n>).
 	var letter := orig_path.get_file().get_basename().right(1)
 	var folder := orig_path.get_base_dir()
