@@ -16,7 +16,8 @@
 # pack (--export-pack) run by the Linux release template (release templates refuse --main-pack, so the pack sits
 # beside a copy named like it): (a) no game folder: starts with no script error; (b) a copy of the checks' game
 # (SMOKE_GAME, default ~/gbr/checks/data/game, with check 22's start save G) loads save G, ENCAMP SAVE F and F2 quick
-# save, as check 22's keys, the files written; (c) on Xvfb (SMOKE_DISPLAY, default :95: never :96-:99, the lanes'
+# save, as check 22's keys, the files written; (d) the test keys (N, O, B, F12, Tab, F4) change nothing after load G
+# (lab_keys in main.gd: off in a release build); (c) on Xvfb (SMOKE_DISPLAY, default :95: never :96-:99, the lanes'
 # displays) the window title reads "Gold Box Reforged <version>".
 #
 # GODOT (default the lab's 4.7.2) runs the import and export; the export templates are in
@@ -102,6 +103,14 @@ grep -q '(saved game F)' "$T/b.log" || fail "smoke (b): ENCAMP SAVE F not seen (
 grep -q '^F2 ' "$T/b.log" || fail "smoke (b): F2 not seen"
 [ "$T/qs.cfg" -nt "$T/game/SAVGAMG.DAT" ] || fail "smoke (b): the quick save was not written"
 [ -s "$T/game/SAVGAMF.DAT" ] && [ -s "$T/game/CHRDATF1.SAV" ] || fail "smoke (b): save F's files missing"
+# (d) the test keys do nothing in a release build (chat 50, Player 17's request): after load G, N (the clock), O, B (a
+# test fight), F12, Tab and F4 leave the place, the clock, the screen and the party as they were.
+XDG_DATA_HOME=$T/xd HOME=$T/hd timeout 180 "$R" --headless -- --game-path="$T/game" --save="$T/qs.cfg" \
+	"--keys=load=G,wait,N,O,B,esc,F12,TAB,F4,wait" > "$T/d.log" 2>&1 || true
+e=$(errs "$T/d.log"); [ -z "$e" ] || fail "smoke (d) test keys: $e"
+k=$(grep -E '^(wait|N|O|B|esc|F12|TAB|F4) ' "$T/d.log" | cut -c8- | sort -u | wc -l)
+[ "$(grep -cE '^(wait|N|O|B|esc|F12|TAB|F4) ' "$T/d.log")" = 9 ] && [ "$k" = 1 ] \
+	|| fail "smoke (d): a test key changed the game ($(grep -E '^(N|B) ' "$T/d.log" | cut -c1-40 | tr '\n' ' '))"
 # (c) the window title on Xvfb
 Xvfb "$SD" -screen 0 1280x800x24 -nolisten tcp > "$T/xvfb.log" 2>&1 & XPID=$!
 sleep 2
@@ -117,7 +126,7 @@ kill "$GPID" 2>/dev/null || true; wait "$GPID" 2>/dev/null || true; GPID=""
 kill "$XPID" 2>/dev/null || true; wait "$XPID" 2>/dev/null || true; XPID=""
 [ "$title" = "Gold Box Reforged $V" ] || fail "smoke (c): window title \"$title\""
 e=$(errs "$T/c.log"); [ -z "$e" ] || fail "smoke (c) window: $e"
-echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (c) title \"$title\""
+echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\""
 
 # 5. README, licence, zip, info.
 DATE=$(date +%F)
@@ -142,7 +151,7 @@ cp "$T/pck-list.txt" "$OUT.pck-list.txt"
 	echo "built from goldbox-reforged $COMMIT ($REF) as $V (file version $FV), $(date '+%F %T'); Godot $(cat "$TPL/version.txt") official templates"
 	(cd "$OUT" && sha256sum GoldBoxReforged.exe "$ZIP.zip")
 	echo "copy: no game data; pck: $n files, only ours"
-	echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (c) title \"$title\""
+	echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\""
 } > "$OUT.build-info.txt"
 cat "$OUT.build-info.txt"
 echo "BUILD OK: $OUT"

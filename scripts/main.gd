@@ -90,6 +90,14 @@ var _types: ItemTypes
 # The original's adventure screen (F12 switches to the developer view and back).
 var _screen: GameScreen
 var _dev_view := false
+## The walking screen's test keys (Player 17's request, chat 50): N the clock, O the wall slots, B a test fight,
+## Shift+M the monsters' sheet, F4 the script dump, F9 a capture, F12 the developer view, G go to (and "ending"),
+## Tab the picture and map viewer. None is the original's; they answer only in a debug build (the editor: the lab,
+## the checks) or with --lab, never in a release build. --player-keys turns them off in a debug build too (the
+## lab's key sweep).
+static var lab_keys := "--lab" in OS.get_cmdline_user_args() \
+		or (OS.is_debug_build() and not "--player-keys" in OS.get_cmdline_user_args())
+const LAB_KEYS := [KEY_N, KEY_O, KEY_B, KEY_F4, KEY_F9, KEY_F12, KEY_G]
 var _view_img: Image
 var _area_view := false            # AREA: the overhead map in the view window
 var _automap: Automap               # QoL: mini-map (M) and full map (F) of visited squares
@@ -165,7 +173,7 @@ func _ready() -> void:
 	_sheet.visible = false
 	add_child(_sheet)
 	_shop.sheet = _sheet
-	_vm.square_info = func(x: int, y: int) -> int: return _maps[_map_index].map.flag(x, y) if not _maps.is_empty() else 0
+	_vm.square_info = _script_square_info
 	_treasure = TreasureScreen.new()
 	_treasure.visible = false
 	_treasure.closed.connect(_on_treasure_closed)
@@ -952,7 +960,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
 		_quick_load()
-	elif event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
+	elif lab_keys and event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
@@ -1030,6 +1038,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show()
 			return
+		if not lab_keys and key in LAB_KEYS:
+			return    # a test key: nothing in a release build (lab_keys)
 		if key == KEY_F2:
 			_quick_save()
 			get_viewport().set_input_as_handled()
@@ -1054,7 +1064,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_combat.open_test(_game_path, map, _pos.x, _pos.y, int(_facing), _party, maxi(_vm_file, 1), script)
 			get_viewport().set_input_as_handled()
 			return
-		elif key == KEY_M and (event as InputEventKey).shift_pressed:
+		elif key == KEY_M and (event as InputEventKey).shift_pressed and lab_keys:
 			_sheet.open(_all_monsters(), "MONSTERS")    # developer aid
 			get_viewport().set_input_as_handled()
 			return
@@ -2138,6 +2148,24 @@ func _follow_area_map() -> void:
 
 
 var _area_map_seen := []
+
+
+## The square's info byte for the VM's redraw (CALL 0x2C90). A LOAD_AREA_MAP takes effect at once in the original:
+## Kuto's Well's climb up (8:29 0xA26A: LOAD_AREA_MAP 29, then 0x2C90, then the search entry on the square's event)
+## reads the well's square on the street map and asks DO YOU WANT TO CLIMB DOWN (Player 17, p16d1). Ours follows the
+## map only when the script stops, so it read the catacombs' square under it (event 16: "YOU ARE JUST EAST OF KUTO'S
+## WELL." and no question).
+func _script_square_info(x: int, y: int) -> int:
+	if _maps.is_empty():
+		return 0
+	var i := _map_index
+	if not _vm.on_overland and not _vm.area_map.is_empty() and int(_vm.area_map[0]) < 127 \
+			and _vm.area_map != _area_map_seen:
+		for k in _maps.size():
+			if _maps[k].id == int(_vm.area_map[0]):
+				i = k
+				break
+	return _maps[i].map.flag(x, y)
 
 
 func _adopt_position_from_vm() -> void:
