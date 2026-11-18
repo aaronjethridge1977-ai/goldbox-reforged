@@ -816,20 +816,27 @@ func _rob(a: Array) -> void:
 		m.items = kept
 
 
-## PARTY_CHECK field, effect, a, b, c, d: for a thief skill (or movement), the party's
-## average, best and worst into b, c, d (a = 0); for 0x6C00 + 0x... the original checks an
-## effect on anyone instead.
+## PARTY_CHECK field, effect, a, b, c, d (GAME.OVR 0x217B, its writer 0x211D): for a field
+## the party's worst, best and average into a, b, c and 0 into d; for field 0 whether anyone
+## is under the effect, into d (a and b 0). The original knows two fields only: [6BA7]
+## (record +0x79, find / remove traps) and [6C1B] (record +0x11C, movement); any other
+## writes nothing.
 func _party_check(a: Array) -> void:
 	if int(a[0].type) == 0x00:
 		# PARTY_CHECK 0, <effect>, ..., dest: is anyone under that spell effect (19, the
 		# traps scripts test it before their thief-skill rolls)? 1 or 0 in the last operand.
+		# The original writes 0, 0, then c from an unset stack byte (left as it is here), then d.
 		var found := 0
 		for m in party:
 			if (m as PartyMember).has_affect(_value(a[1])):
 				found = 1
+		_write(a[2], 0)
+		_write(a[3], 0)
 		_write(a[5], found)
 		return
 	var addr := int(a[0].value)
+	if addr != 0x6BA7 and addr != 0x6C1B:
+		return
 	var off := addr - CHAR_WINDOW
 	var keep := selected
 	var lo := 255
@@ -837,15 +844,15 @@ func _party_check(a: Array) -> void:
 	var total := 0
 	for i in party.size():
 		selected = i
-		var v := _char_get(off)
+		var v := _char_get(off) & 0xFF
 		lo = mini(lo, v)
 		hi = maxi(hi, v)
 		total += v
 	selected = keep
-	_write(a[2], 0)
-	_write(a[3], total / maxi(party.size(), 1))
-	_write(a[4], hi)
-	_write(a[5], lo if not party.is_empty() else 255)
+	_write(a[2], lo)
+	_write(a[3], hi)
+	_write(a[4], total / maxi(party.size(), 1))
+	_write(a[5], 0)
 
 
 func _value(a: Dictionary) -> int:
