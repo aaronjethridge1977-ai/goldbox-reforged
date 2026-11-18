@@ -172,6 +172,26 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 50: check 36 (8:29, climbing out of Kuto's well), DIFFCHECKS 36/36
+
+- **The fix first** (663cf93, Player 17's request): 8:29's climb up (0xA245: "YOU MAKE THE LONG, ARDUOUS CLIMB UP THE
+  WELL.", LOAD_AREA_MAP 29, CALL 0x2C90, GOTO the search entry 0x9A23) reads the square's event from the map just
+  loaded: on the street the well square (event table 0xAFCE -> 0xA2D1) asks "RUNGS ARE SET IN THE SIDES OF THE WELL
+  WALL. DO YOU WANT TO CLIMB DOWN?". Ours followed a script's LOAD_AREA_MAP only when the script stopped, so 0x2C90 read
+  the catacombs' square at 7,7 (event 16: "YOU ARE JUST EAST OF KUTO'S WELL.", no question). Now the VM's square read
+  (`main.gd` `_script_square_info`) takes the map the script loaded.
+- **Check 36:** check 30's start (8:29 7,14 S 06:52), Right, Right, seven steps north to the well at 7,7 (CLIMB DOWN?),
+  YES (the catacombs: CLIMB UP THE RUNGS?), YES (the street: CLIMB DOWN?), NO; tpseed 60606063. The original: slot J
+  (`data/c50/slot.py` copies a save renamed, the character-file names patched), `pl.py boot j`, `seed.py set 60606063`,
+  the same keys, ENCAMP SAVE J (renamed F). Ours: `load=G,tpseed=60606063,Right,Right,Up x7,y,wait,wait,y,wait,wait,n,
+  wait,wait,F2`. **MATCH** on 5a0764c; **DIFFERS** on 0a28128 (before the fix: ours asked nothing after the climb and the
+  NO's `n` reached the walking screen's N key, which set the clock: 0x49C7). Lab `data/c50/chk36/`, sealed as
+  `~/gbr/checks/data/36`. Break test at 36 (the clone `data/c44/brk` moved to 5a0764c): SUBTRACT 32/36, ADD over 200
+  35/36.
+- Seen, not checked (display only): after NO the original keeps the question's text in the box (and the walking menu on
+  row 24); ours clears the box at any menu choice (`main.gd`, `_message.text = ""`). Open for main (board).
+- Areas no check visits: 6:1 only, as before.
+
 ## Chat 49: checks 34 (8:27, the boat to New Phlan) and 35 (6:25, the slavers and the Buccaneer base), DIFFCHECKS 35/35
 
 - **Check 34, 8:27 again: a second event in a checked band, the cheap way.** 8:27's band table (y at 0xABA6
