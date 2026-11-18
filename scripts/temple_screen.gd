@@ -60,6 +60,11 @@ func cure_index(name: String) -> int:
 	return -1
 
 
+## The member selected when the temple closes: it stays selected, as the shop's last buyer (Combat Chat 23).
+func who() -> int:
+	return _who
+
+
 ## `who`: the member selected on the walking screen (the original's temple opens on it: Player 3's
 ## sweep, Tyr's greeting runs the mad-man check, LOAD_CHAR 0..7, which leaves the last member
 ## selected, and the HEAL page reads "DORN, HOW CAN WE HELP YOU?"; Combat Chat 7).

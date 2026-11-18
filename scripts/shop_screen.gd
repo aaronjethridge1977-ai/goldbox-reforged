@@ -74,10 +74,14 @@ func _init() -> void:
 	add_child(_note)
 
 
-func open(items: Array[GameItem], party: Array[PartyMember], _title: String = "SHOP") -> void:
+## `who`: the member selected on the walking screen. The shop's menu (GAME.OVR 0x7212, its menu 0x2CC8C as the
+## walking screen's) moves the one selected member: the shop opens on it and leaves the last buyer selected
+## (Combat Chat 23, Player 19's p13a1: the original left New Phlan's arms shop with DORN lit, its last buyer, and
+## paid at the inn with him; ours opened on ARN and went back to the member lit before).
+func open(items: Array[GameItem], party: Array[PartyMember], _title: String = "SHOP", who: int = 0) -> void:
 	_items = items
 	_party = party
-	_buyer = 0
+	_buyer = clampi(who, 0, maxi(party.size() - 1, 0))
 	_mode = "menu"
 	_pick = 0
 	_note.text = ""
@@ -222,6 +226,11 @@ func _draw_list() -> void:
 		_scr.text(0, 24, "ITEMS:", 13)
 		_scr.menu_line(24, _list_menu(), 7, mini(_pick, _list_menu().size() - 1))
 	_scr.update()
+
+
+## The member selected when the shop closes (the last buyer).
+func buyer() -> int:
+	return _buyer
 
 
 func _selected_index() -> int:

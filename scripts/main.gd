@@ -2537,7 +2537,7 @@ func _open_shop() -> void:
 		if it.price == 0:
 			it.price = 1
 	_sync_shell()
-	_shop.open(stock, _party)
+	_shop.open(stock, _party, "SHOP", _vm.selected)
 	_dev_reseed([_shop._rng])
 
 
@@ -2593,6 +2593,9 @@ func _make_camp() -> void:
 
 func _on_temple_closed() -> void:
 	_message.text = ""
+	if not _party.is_empty():
+		_vm.selected = clampi(_temple.who(), 0, _party.size() - 1)
+		_vm.selected_creature = -1
 	_vm.close_temple()
 	_after_vm()
 	_show()
@@ -2847,6 +2850,10 @@ func _all_monsters() -> Array[PartyMember]:
 func _on_shop_closed() -> void:
 	for m in _party:
 		m.recalculate(_types)
+	# The last buyer stays selected (Combat Chat 23: the shop moves the one selected member; Player 19's p13a1).
+	if not _party.is_empty():
+		_vm.selected = clampi(_shop.buyer(), 0, _party.size() - 1)
+		_vm.selected_creature = -1
 	_message.text = ""
 	_vm.close_shop()
 	_after_vm()
