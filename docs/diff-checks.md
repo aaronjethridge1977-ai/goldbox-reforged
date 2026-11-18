@@ -172,6 +172,42 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 57: PARTY_CHECK's cells (Player 22's (d)), checks 65-67 (3:14 a door trap, 5:3 Cadorna's cell, 1:18 a rest interrupted by a fight: the first fight check), DIFFCHECKS 67/67; two fights compared draw for draw
+
+- **ECL PARTY_CHECK** (opcode 0x1E, GAME.OVR 0x217B; its writer 0x211D): operands 3, 4, 5, 6 get the party's worst,
+  best and average and 0 (a field), or 0, 0, an unset stack byte (left alone in ours) and the effect flag (field 0).
+  Two fields only: [6BA7] (record +0x79, find / remove traps) and [6C1B] (record +0x11C, movement); any other writes
+  nothing. Ours wrote 0, the average, the best, the worst. The scripts: 3:14's B3A2 (every Kovel trap: d100 under
+  [6E7A], now the best, finds it; the disarm uses it too), 2:20's RUN at PAY / SURRENDER / RUN / FIGHT (0xB488:
+  COMPARE [9805] (the monsters' movement) with [6E79], 0 in the original: RUN goes on to 0xB157, never away), 3:14's
+  and 8:13's Find Traps tests (field 0). `ecl_vm.gd` `_party_check`.
+- **Check 65, 3:14 a door trap** (`mksave.py J G 3 14 11 9 S`, tpseed 2222224b): south onto 11,10 (event 3 ->
+  0x99D6 -> B3A2): d100 = 21 under the best find-traps (28-32 with this party; the average far lower): YOUR PARTY
+  DETECTS A TRAP, AVOID TRAP (0x4A13 = 1). **MATCH on 6b2428f; 3 differences on the code before** (the blade fell:
+  0x4A00 = 1, RHIANNON's HP).
+- **Check 66, 5:3 Porphyrys Cadorna's cell:** 5:3's init picks its map by 0xC04D ([3,5,5,3] at 0x9C24, DAX block data
+  2 bytes in), so the cell is map 5's 14,10 (value 178, & 31 = 18 -> table 0x9B99 -> 14 -> 0xAFD5). It needs 0x4A66
+  bit 2 clear and 0x4A6B bit 8 set (16, 32 clear). Start: `mksave.py J G 5 3 14 11 E 4a6b=8`, ours took the jump and
+  ENCAMP SAVEd (H, renamed G). tpseed 11111111, Left, Up through the door; PRESS RETURN; KILL ('WAIT!...' 0x6E7C bit 1),
+  LEAVE ('...I'LL RAISE THE ALARM' bit 2), RELEASE, TAKE ME WITH YOU? YES: 0x4A6B = 24, 0x4A66 = 2, the party back on
+  14,11 turned round (0x9C4B). **MATCH.**
+- **Check 67, 1:18 a rest interrupted by a fight (the first fight check):** check 56's start, ENCAMP REST eight hours,
+  the plaza's rest entry at 13:16 (0x9960: 0x9F86's d8 picks orcs, COMBAT), everyone on QUICK, CONTINUE BATTLE NO, PRESS
+  RETURN, the treasure's EXIT, NO: 12,8 E 13:18. **Draws compared first** (`cmpfight2.sh G 11111111 ""
+  "up,e,r,h,i,i,i,i,i,i,i,i,r"`, OSECS=240): **1290 draws identical, every figure's cells, the same end.** Chat 55's
+  "ours won in round 2" was the harness: `quickall,fightend` reached ours while the party still rested; ours' keys wait
+  eight times first. **MATCH**, three repeat runs too.
+- **5:3's awake giants** (check 63's start, tpseed 22222222, SEARCH on, west: the bucket, PRESS RETURN, THE GIANTS ...
+  CHARGE!, COMBAT, PRESS RETURN): **1041 draws identical, the party destroyed in both.** No end save (the game ends):
+  not a check.
+- **5:6's priest** (check 25's start with 0x4A69 bit 128 cleared: c34d's party had cleared the temple; tpseed 11111111,
+  Left, Up, Up, Left, Up onto 1,2, PRESS RETURN, KILL THEM): the party wins in both, the same end (CONTINUE BATTLE, HP,
+  DIRTEN at 0), but **the draws part at 940 of 966**: at DORN's turn the original draws a d8 at GAME.OVR 0x0AC3A and a d4
+  at 0x0AC63, ours the d4 the others drew at 0x0AC2B (BRAM, LIRA move further in the original after it). To Combat
+  (board). Not a check until it matches. The original's trace: lab `data/c57/priest_orig.txt` (the presser never saw QUICK
+  on row 24 here, so CONTINUE BATTLE was answered by hand; `partyrec.py ARN ... DIRTEN` for the end).
+- **The gate is DIFFCHECKS 67/67** (~80 s).
+
 ## Chat 56: Q24 (a script's menus of two or more choices: the letters only), checks 62-64 (6:19 / 6:25 Q24, 5:3 the sleeping giants, 4:10 the marble chest), DIFFCHECKS 64/64; diffcheck.sh's no-save guard
 
 - **Q24 (Jeremy, 2026-11-18): the original's keys only.** GAME.OVR's menu routine 0x8B57 (shared by MENU_HORIZONTAL

@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 57:** checks 65-67 in `data/c57/chk65..67/` (`data/c57/cd/` links `game` and each; run one with
+`DC_DATA=$PWD/data/c57/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`). `data/c57/oursrun.sh <game dir> <cfg>
+"<keys>"` runs ours on a kept game folder (for ours' ENCAMP SAVE after a 5:3 jump: run.sh keeps nothing). **A fight
+check:** record the original with `cmpfight2.sh <slot> <seed> "" "<keys>" orig` (OSECS=240-360; give the texts
+`wait=<s>` tokens and an `enter` where the original waits: 5:3's giants want one after COMBAT), then ours by hand
+(`ours.sh --save=$PWD/qs.cfg --fast "--keys=load=<slot>,tpseed=...,<keys with waits>,quickall,fightend,n,wait x6,tplog,partyhp"`)
+and `cmpdraws.py <orig> /tmp/cmp_ours.txt`; a fight that comes after a rest needs ours' waits before `quickall`
+(else ours' fightend lands in camp and the fight is never played). With a party whose QUICK prompt the presser never
+sees (c34d's, 5:6) answer CONTINUE BATTLE by hand and run `partyrec.py <the names>`. Traces: `data/c57/rest118_orig.txt`
+(1290, MATCH), `giants_orig.txt` (1041, MATCH, party destroyed), `priest_orig.txt` (966, parts at 940). Cells in a
+DAX block: data 2 bytes in (`dax.read_dax(...)[b][addr - 0x9900 + 2]`). Lab slot G was backed up to `data/c57/gbak/`
+and put back; J put back from `data/c48/slotJ_backup`.
+
 **Chat 56:** checks 62-64 in `data/c56/chk62..64/` (`data/c56/cd/` links `game` and each; run one before joining with
 `DC_DATA=$PWD/data/c56/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`; **`cd/game` must be linked first**, or
 the driver hangs on a missing game copy until its timeout). Ours' keys at a script's menu of two or more choices are
