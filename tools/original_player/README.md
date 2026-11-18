@@ -1168,3 +1168,50 @@ then its two town trips and 9,11 / 9,12 for `nomads`.
 Lab: `p19/` (seg10b.plan, segment_qol.py, money_probe.py, src_<commit> builds, the pre-rerun replay outputs
 `*.pre51.txt`), saves `p2start/p19a3_s10t2`, `p19a10_s10b`, `p19b1_s10t3`, `p19b2_s10c`, `p19c2_s10d` (and
 `.lab/player/saves/p19*`; `textile` is `.lab/player/saves/p19d1/textile`); runs p19a1-a10, p19b1-b2, p19c1-c2, p19d1, p19e1-e6; `p19/archive.sh`.
+
+## Player 20 (2026-11-18): segment 1's inn fixed; segment 11 to `nomads`; segment 10's trips 2-5 in ours
+
+**Combat Chat 23's inn fix (8c87c86):** `segment.py p13a1 begin shopped --start=c34d_start13 --tplog`: **0 differences**
+(was 18 since eae6114).
+
+**Why p19e6 saw 7:26 in the nomads' camp:** its `prepare` at 9,11 rested before the bot's lodging, 9,12 and 0,0. The
+first rest after the feast brought the headman's STAY, then one kobold wave a rest (ECL 7:17 0xB483 on 0x4A7E). The third
+wave (0xB52A) is DESTROY THE KOBOLDS (0xB075 / 0xB30F), then the shaman's reward (0xB3D4), then `GOTO 0xA1C2`, whose
+`NEW_ECL 26` (0xA1FC) puts the party on the band. The original then shows the walking screen with the camp's 3D view at
+the same square (area bytes 7:26, 0x49FA not the band's mode) and asks nothing. The heal took that for a broken rest
+and camped on in 7:26.
+
+**Segment 11 part B to `nomads`** (plan `plans/p20_c34d_11_nomads.plan`, lab `p20/seg11.plan`; reloads: p20a1 lost on
+the band at 11,27, p20a2 a stalemate in 8:29 at 12,4 with all on QUICK (stopped by pid), p20a3 from `s11t` to `s11k`,
+p20a4 from `p2start/p20a3_s11k`). The bot's order: the feast (9,11), `cure` in the script's lodging, **`s11c`**, 9,12,
+0,0, `campday 4` (STAY on day 1, waves on days 2 and 3, DESTROY on day 4, the shaman's reward, NEW_ECL 26), **`s11k`**.
+Then trip 1 (the bot's "to the inn to rest": the boat, the temple, the inn), **`s11t1`**. Back by the band's 12,11
+(ENTER), 0,0, out by 0,0 N, LEAVE at the camp. Trip 2 (the halls, the inn: nobody had the experience to train),
+**`s11t2`**. Back, 9,11, 9,12: **`nomads`** (p20a4, 7:17 9,12 S, the bot's square).
+- A save made right after NEW_ECL 26 (`s11k`) loads in 7:17 at 0,0. The step N then gets the camp's ENTER question at
+  0,15, so the plan goes out by 0,14 W (THIS DIRECTION ... YES) and LEAVEs the camp, as the bot did.
+- **`nomads` against the bot's** (`p12/cpdiff.sh`): the quest's flags agree (4A7C 9, 4A7E 3; 4AB8 now equal). New
+  since `textile`: **4A22 (ours 10, the bot's 9): ECL 8:29's fight counter** (six references there; ours had 4 fights
+  in 8:29 this segment, the bot 3: the dice), and **4A74 (1, the bot's 2)**: no script on the route mentions it (open).
+- **In ours** (`segment.py p20a3 s11c s11k --tplog`; the original's trace cut at `s11c` by matching ours' first 12
+  draws, `p20/p20a3_from_s11c.trace.txt`): STAY, then the walking screen, then wave 1 on the next rest, as in the
+  original. But **wave 1 has 48 kobolds in ours and 36 in the original** (42 figures there, 54 in ours; 7:17 0xAF84 /
+  0xAF8C load 0x6E81 each, from PARTY_STRENGTH at 0x9B24): draws identical to 628, then ours rolls more initiatives.
+  To main (`ecl_vm.gd` `party_strength()`).
+- plans.py: `campday` ends when a fight's script moves the party to another area.
+
+**Segment 10's trips 2-5 in ours** (on 8c87c86): p19a10 (trip 2) 5 differences (the counters), draws identical (7986);
+p19b2 (trip 3) the counters, draws identical to 9378. **p19c2 (trip 4) and p19d1 (trip 5) part on the band at 11,28:** the
+plan's `right` there is a blocked move east. The original runs the square's event again (WHICH ENTRANCE WILL YOU TAKE,
+answered `l`), ours only turns the party, so the `l` is a LOOK in ours (10 minutes, the question again) and the keys
+fall out of step. Trips 2 and 3 never made that move. To main (the band's moves).
+
+**The Lead's standing item (a fight ours ends while the original plays on):** p19e6's fight 1 (8:29 15,4, the
+surprised gnolls; `segment.py p19e6 begin end --start=p19e1_s11t --tplog`): draws identical to 1348. In round 12 a gnoll
+fleeing in panic ends at 23,13, next to ARN (24,12) and CEDRIC (24,14). The original draws two attacks (d20 17, d6 3,
+then d20 13, d6 2) and plays on; ours draws ARN's only, then round 13's initiatives, and asks CONTINUE BATTLE. To
+Combat. Also p20a3's first fight (8:29, the gnolls): LIRA's Sleep picks a target among 3 in the original (d3 at
+0x160DB), among 2 in ours (draw 1434).
+
+Lab: `p20/` (seg11.plan, the replay outputs `*.seg.out`, `*.cmpdraws.txt`, `nomads.cpdiff.txt`), saves
+`p2start/p20a3_s11c`, `p20a3_s11k` (and `.lab/player/saves/p20a*`); runs p20a1-a4; `p20/archive.sh`.

@@ -49,7 +49,9 @@
                                  times before refusing it (3 unless said); `look`: with a LOOK before each new try
                                  (a secret door: the square's script finds it for a searching party)
   campday <n>                    (Player 19) main's bot's: n day rests in camp whatever comes (the nomads' kobolds come
-                                 while the party rests), an interrupted day counted, the cures on anyone hurt first
+                                 while the party rests), an interrupted day counted, the cures on anyone hurt first;
+                                 (Player 20) over when a fight's script moves the party to another area (the
+                                 nomads' reward, then NEW_ECL 26 onto the band)
   innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
                                  New Phlan locks its shops, City Hall and halls from hour 14)
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
@@ -339,6 +341,12 @@ class Heal:
                     # bot's loop counts the day whatever came (bot.gd "campday")
                     h["days"] += 1
                     p.note("heal", "campday: day %d of %d interrupted by fight %d" % (h["days"], h["campday"], p.fights))
+                    if h.get("area0") and p.area() != h["area0"]:
+                        # Player 20: the camp's script moved the party on (the nomads: the shaman's reward, then
+                        # NEW_ECL 26 onto the band, ECL 7:17 0xA1FC): the camp days are over
+                        p.note("heal", "campday: the script moved the party to %d:%d" % p.area())
+                        p.heal = None
+                        return True, None, ""
                     return False, "e", "campday: ENCAMP"
                 p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
                                " again)" % p.fights)
@@ -390,7 +398,7 @@ class CampDay(Heal):
     def next(self, p):
         if getattr(p, "heal", None) is None:
             new_heal(p)
-            p.heal.update(campday=self.n, phase="days", days_memo=True)
+            p.heal.update(campday=self.n, phase="days", days_memo=True, area0=p.area())
             return False, "e", "campday: ENCAMP"
         return Heal.next(self, p)
 
