@@ -1366,6 +1366,9 @@ func _quick_save() -> void:
 	cfg.set_value("qol", "visited", _automap.to_save())
 	cfg.set_value("qol", "offers", PackedStringArray(_vm.shown_texts.keys()))
 	cfg.set_value("qol", "rememorize", Rememorize.to_save(_party))   # combat lane (C11-2)
+	var before := ConfigFile.new()       # the quick save's name stays too (Q22 (c), the combat lane)
+	if before.load(_save_path()) == OK and String(before.get_value("qol", "label", "")) != "":
+		cfg.set_value("qol", "label", before.get_value("qol", "label"))
 	var members := []
 	for m in _party:
 		var items := []
@@ -1536,12 +1539,18 @@ func _save_original(letter: String) -> bool:
 			mem[0x4AFD + i] = i + 1
 			hi.erase(0x4AFA + i)
 			hi.erase(0x4AFD + i)
+	# Saving over a named slot keeps its name (Jeremy, Q22 (c), 2026-11-17; the combat lane): read before
+	# the save is written, while the slot's companion still belongs to it.
+	var label := String(CompanionSave.read(_game_path, letter, true).get("label", ""))
 	var ok := OriginalSave.write(_game_path, letter, _vm_file, mem, _vm.read_byte(EclVM.PARTY_X),
 		_vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR), _party, true, hi,
 		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
 		_vm.read_byte(EclVM.SQUARE_INFO))
-	if ok and not CompanionSave.write(_game_path, letter, {"visited": _automap.to_save(),
-			"offers": PackedStringArray(_vm.shown_texts.keys()), "rememorize": Rememorize.to_save(_party)}):
+	var qol := {"visited": _automap.to_save(), "offers": PackedStringArray(_vm.shown_texts.keys()),
+		"rememorize": Rememorize.to_save(_party)}
+	if label != "":
+		qol["label"] = label
+	if ok and not CompanionSave.write(_game_path, letter, qol):
 		print("   (saved game %s: the automap's companion file couldn't be written)" % letter.to_upper())
 	_status.text = ("Saved game %s." if ok else "Couldn't write saved game %s.") % letter.to_upper()
 	_party_menu.save_failed = not ok

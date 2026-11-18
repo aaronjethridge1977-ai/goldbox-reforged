@@ -46,8 +46,8 @@ static func list(game_path: String, quick_path: String = "") -> Array[Dictionary
 
 
 ## Names a slot's save (the menu's NAME; "" clears it): A-J in its companion file
-## (CompanionSave.set_label), "QUICK" in the quick save itself ([qol] label). Saving a game
-## writes a new companion without a name, so a screen names the slot after the save is written.
+## (CompanionSave.set_label), "QUICK" in the quick save itself ([qol] label). Saving over a named slot
+## keeps its name (main.gd carries it into the new companion; Q22 (c), 2026-11-17).
 ## False when the slot is empty or the file can't be written.
 static func set_label(game_path: String, slot: String, label: String, quick_path: String = "") -> bool:
 	if slot.to_upper() != "QUICK":

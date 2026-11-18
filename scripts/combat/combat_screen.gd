@@ -2225,11 +2225,14 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 func quick_all() -> void:
 	if _combat == null:
 		return
+	# Combat Chat 21: a member already on QUICK has its own chain of steps running (between steps the timer
+	# is stopped while a line shows); a second chain made it act twice and skipped the next figure's turn.
+	var was_quick: bool = _combat.active >= 0 and _combatants[_combat.active].get("quick", false)
 	for c in _combatants:
 		if c.team == 0:
 			c.quick = true
 			Combat.set_record_quick(c.who, true)
-	if _combat.active >= 0 and _ai_timer.is_stopped():
+	if _combat.active >= 0 and not was_quick and _ai_timer.is_stopped():
 		_ai_timer.start(0.2)
 
 
