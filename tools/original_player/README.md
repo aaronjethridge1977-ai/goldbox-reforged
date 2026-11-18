@@ -1268,3 +1268,59 @@ the fight's first poll, OVR:0bb90) from `p2start/p17a6_s8shop`, seed 90909097, `
 Lab: `p21/` (seg12.plan, seg13.plan, the replay outputs `*.seg.out`, `*.cmpdraws.txt`, `bane.cpdiff.txt`,
 `library2.cpdiff.txt`), saves `p2start/p20a4_nomads`, `p21a2_s12a`, `p21a3_bane`, `p21b5_s13d` (and
 `.lab/player/saves/p21*`); runs p21a1-a3, p21b1-b6; `p21/archive.sh`.
+
+## Player 22 (2026-11-18): segments 14 to `kovel`, 15 to `band3`, 16 to `kobold_caves`; segments 13 and 14 in ours
+
+**Segment 14 (`library2` -> `kovel`)** (plan `plans/p22_c34d_14_kovel.plan`, lab `p22/seg14.plan`): out of the library
+by 11,0 N (the spectre: ARN drained to level 2, as the bot's), 8:29 15,11 E, 2:20 15,4 E; the clerk twice, the arms
+shop (`sell gems share`), the halls, the inn (**`s14t`**); then Kovel Mansion (3:14, from the band's 13,27 NORTH, 15,4 W)
+in the bot's four trips with the inn between (out by 11,0 N, the north edge LEAVE, 13,27 BOAT): events 2 1 8 14
+(**`s14a`-`s14c`**) | 15 (the two thieves: chase, SOUTH; **`s14d`, `s14e`**) | 16 17 19 6 12 20 7 13 18 (**`s14f`-`s14h`**)
+| 3 9 4 10 5 11: **`kovel`** (3:14 14,14 S). Runs: p22a1 (to `s14a`), p22a2 (stopped at 3,13 by a tool fault, below),
+p22a3 (stopped by hand: a lock answer that couldn't match), p22a4 (to `s14g`, stopped in the inn's heal, below), p22a5
+(to `kovel`). Nobody lost.
+- **The original's party finds Kovel's traps; the bot's never did** (ECL 3:14 0xB3A2: `PARTY_CHECK [6BA7], 0, ...`, then
+  RANDOM 99 against the second cell): event 8 (4,3), the cabinet (event 12, 3,13) and casket A (event 13). The menu
+  AVOID TRAP / DISARM TRAP has no rule in main's bot (its party never saw it): the plan takes the bot's default, the
+  first item (AVOID), and the bot's three-asks rule on the cabinet (EXAMINE*3, then LEAVE). So the scrolls (4A47 bit 3)
+  and the casket's gems (4A46 bit 0) stay. AVOID then EXAMINE again rolls again; once (p22a2) the trap went off.
+- Locks (cabinets, caskets): the bot PICKs once with the best at locks (DORN), then BREAKs: in the plan a counted
+  `answerfrom <words>|PICK*1` per lock with its own words (a count is per words and choice), BREAK the standing answer.
+  Words that end in `?` never match (the screen reader strips it).
+- **`kovel` against the bot's:** 84 differences; new only 4A46 / 4A47 (the two untaken trap rooms) and the clock.
+
+**Segment 15 (`kovel` -> `band3`)** (plan `plans/p22_c34d_15_band3.plan`): out to the inn (**`s15a`**), the clerk, the
+shop, the halls (ARN trained to 3), the inn (**`s15t`**); 3:0 0,4 W, 2:20, 8:29, 1:18, the band's western edge LEAVE,
+15,20 and the step E off it into 8:27 (3,20 E; the bot's "by 15,20 E" is the square stepped *from*: p22b1 stopped on
+it, p22b2 made the step): **`band3`**. No trolls this time (a random encounter). 73 differences; new 4A00 / 4A02 (0 in
+the original, set in the bot's).
+
+**Segment 16 (`band3` -> `kobold_caves`)** (plan `plans/p22_c34d_16_kobold_caves.plan`): the boat at 8:27 9,29 (walk to
+9,28, step S: a walk onto a square whose script moves the party ends in the wrong area), the temple of Tyr, the town
+round (**`s16a`, `s16t`**); into the caves by 8:27 6,15 (from 6,16 step N: LARGE, then NO to DO YOU WANT TO LEAVE; the
+bot's YES/LARGE loop left out); out by 8:13 10,15 (from 10,14 step S: YES), `cure`, and straight to the boat as the bot
+("to the inn to rest"; a `prepare` at the cave mouth met fight after fight: p22c3). Trips: 17 (**`s16b`-`s16d`**; p22c2
+lost ARN there, reloaded) | 16 6 5 4 (**`s16e`, `s16f`**) | 5 4 6 16 17 26 18 19 8 (**`s16g`-`s16i`**) | 19 4 5 6 16 17 26 18 21 8 25 (**`s16j`-`s16l`**) | 17 26 18 16 6 5 4 19 8 21 22 7 2 1 28 (**`s16m`**): **`kobold_caves`** (8:13 6,15 S). Nobody lost in the end (p22c2 ARN and p22c6 LIRA died: reloads). **Event 9 (4,3, the throne room) walked round
+(`avoid 9`)**: the bot wiped there seven times and went on by logged shortcut restores; main's plan wins it by
+shortcut in log 11b. Events 24 (4,2), 10 (5,1) and 20 (7,0) lie behind it (p22c7: no route round 4,3): deferred with it. On the band `cure`, not `prepare` (p22c5: the rest at 8:27 3,20 was interrupted five times). Against the bot's `kobold_caves`: 91 differences; new 4A8D 0 / 5 (the throne room's story, event 9 left), 4A01-4A18 (1 in the original), the place.
+
+**In ours (Player 22, on 981bd33 / 44811de):**
+- Segment 13: p21b6 (`s13d` -> `library2`) **0 differences, draws identical**. p21b5 (`bane` -> `s13d`) parts at draw 58:
+  the arms shop's APPRAISE draws from its own generator in ours (`shop_screen.gd` `_rng`), the original's from the
+  game's (GAME.OVR 0x26900 per gem, 0x26B8D and START.EXE 0x8D1D per piece of jewellery); then nobody trains in ours.
+- Segment 14: p22a1 identical to 943 (the QUICK caster's spell pick, Player 21's (b)); p22a2 to 1962 (**ours kills
+  Kovel's thief, the original's goes down dying and the fight plays on**: one point of HP or damage); p22a4 to 5473 (the
+  cabinet's trap-find roll: ours' PARTY_CHECK cell is the party's average); p22a5 **0 differences, draws identical**.
+- Segment 15: p22b1 parts at 77 (APPRAISE again).
+- Segment 16: p22c3 (`s16b` -> `s16e`) identical to 1183 of 57219: at the fight after the walk out of the caves the
+  original draws a d8 at GAME.OVR 0x280A2 (when DS:0x6C94 is set) before the monster colours; ours doesn't.
+- p17a7 (Combat 23's note): identical to 3232; the original's BRAM readies his flail and shield during the kobolds
+  (`s8b` -> `s8c`), ours keeps shooting. All to Combat and main (board, Requests "player (Player 22)").
+
+Tools: `screens.py`: a "PRESS ANY KEY TO CONTINUE" at EXE:07cc6 (a trap's text) is an enter screen, not the wipe;
+`plans.py`: the heal's MEMORIZE pages back with PREV from the last page (ELWEN's MAGIC MISSILE before SLEEP).
+
+Lab: `p22/` (seg14.plan, seg15.plan, seg15b.plan, seg16.plan, `*.seg.out`, `*.cmpdraws.txt`, `kovel.cpdiff.txt`,
+`band3.cpdiff.txt`, `kobold_caves.cpdiff.txt`, `readme_section.md`), saves `p2start/p21b6_library2`, `p22a1_s14a`, `p22a2_s14e`, `p22a4_s14g`, `p22a5_kovel`,
+`p22b1_band3`, `p22b2_band3`, `p22c2_s16b`, `p22c3_s16e`, `p22c4_s16f`, `p22c5_s16i`, `p22c7_s16j` (and `.lab/player/saves/p22*`); runs
+p22a1-a5, p22b1-b2, p22c1-c8; `p22/archive.sh`.
