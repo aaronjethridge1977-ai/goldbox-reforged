@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), check 39 (6:1), the place compared, DIFFCHECKS 39/39
+## Chat 51: check 38 (8:29 -> 2:20 -> 8:29: across the map edge both ways, no step carried on), checks 39 and 40 (6:1), the place compared, DIFFCHECKS 40/40
 
 - **The fix** (Player 18's request): ours carried a step through a map edge (the leaving script's CALL 0xC01E) on into
   the new area when the arrival showed nothing: one square further in, a minute later (`main.gd` `_arrival_event`,
@@ -200,6 +200,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   `data/c51/chk39/`, sealed as `~/gbr/checks/data/39`. **Every area now has a check.** The slave pen (0x9D96: the boy,
   the vertical menus) and the captain's door (0xAA4B: SHOW PASS / LEAVE / BRIBE / ATTACK) are the next 6:1 checks from
   this start (walks inside 6:1, guards' rolls on the way).
+- **Check 40, 6:1's slave pen:** check 39's keys, then Right, Up (7,10: the camp text again), Right, Up to 7,9 facing the
+  pen (0x9D96 wants the wall ahead, 0xC04E, to be 8): the three pages (the pen, the boy, the merchant), the vertical
+  menu WHAT WILL YOU DO?, End, End, Enter: SAY NOTHING (0xB59A: PICTURE 255, EXIT; 0x4A01 = 1, the box cleared in
+  both games, as a vertical menu's choice clears it). **MATCH** on 635dfbc, ours' log on the same squares and pages.
+  Lab `data/c51/chk40/`, sealed as `~/gbr/checks/data/40`.
+- **The gate is DIFFCHECKS 40/40** (~50 s). Break test (the clone `data/c44/brk` on origin/main): at 38 SUBTRACT 34/38,
+  ADD over 200 37/38; at 39 (with the place compared) 35/39, 38/39; at 40 36/40, 39/40.
 - **statediff.gd compares the party's square and facing** in a 3D area (the original's save 0x3201 x, y, facing x 2
   when the view byte 0x3206 is 1; ours' `[place]`): memory alone caught check 38's carried step only through 0x49F0
   and the clock. All 39 match with it; on bdf2ea6 check 38 now also shows `place: original 15,4 W, ours 14,4 W`.

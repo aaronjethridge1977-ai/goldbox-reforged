@@ -173,6 +173,16 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 51:** a new check before it joins `~/gbr/checks`: `data/c51/dc.sh` is diffcheck.sh reading its checks from
+`$DC_DATA` (`DC_DATA=$PWD/data/c51/cd DIFFCHECK_ONLY=38 bash data/c51/dc.sh ~/gbr/goldbox-reforged`; `data/c51/cd/`
+links `game` to the checks' game copy and `<n>` to `data/c51/chk<n>`; `dc_new.sh` is the same from the 39-check script).
+`data/c51/run.sh <check dir> "<keys>"` plays ours from a check's start and prints the key log (place, clock, the box's
+text), all in /tmp (deletions in python, as the guard wants). **Never ENCAMP SAVE into the start slot J and then
+`boot j` again**: J then holds the end; put J back with `slot.py` after each save (chat 51 lost two tries this way).
+`pl.py do` keys 0.6-1 s apart; `seed.py set` right after `boot`; 60606063, 11111111 and 44444444 roll an encounter on
+check 38's walk in 8:29, 33333333 doesn't. Checks 38-40 in `data/c51/chk38..40/` (keys of 38 also in `k38.txt`).
+`ovr.py dis` needs the lab's `ndisasm` stand-in on the PATH (`PATH=$PWD:$PATH`).
+
 **Chat 50:** `data/c50/slot.py <src dir> <letter> <dst dir> <letter>` copies a save renamed (SAVGAM + CHRDAT files, the
 character-file names inside SAVGAM patched; the destination slot's old files removed first): a check's start into the
 original's slot J (`slot.py ~/gbr/checks/data/<n>/start G game J`), the original's ENCAMP SAVE J out as F
