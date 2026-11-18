@@ -1106,3 +1106,52 @@ New in the tools:
 Lab: `p18/` (seg09.plan, seg10.plan, memflags.py, archive.sh, old_src: 5b50367 for the crossing test), saves
 `p2start/p18a1_s9t`, `p18a3_s9b`, `p18a4_s9c`, `p18a5_podol`, `p18b6_s10t1` (and `.lab/player/saves/p18*`; `s10a` is
 `.lab/player/saves/p18b7/s10a`); runs p18a1-a5, p18b1-b7.
+
+## Player 19 (2026-11-18): edge reruns; segment 1's inn since eae6114; segment 10 to `textile`; Combat's answers
+
+**Main chat 51's edge crossing (302704b), the replays that cross an edge rerun** on 474e030: p18a1 (`library` -> `s9t`)
+without `--ours-key=44:Down` the same 8 differences as before with it (main's fix confirmed; the clock was REST's
+offer, Combat); p14b6 (segment 2) 0; p16d1 (6b) 2 (the counters); p18a3 6 and p18a5 its first difference at 10129 as
+before. **p13a1 (segment 1) now 18 differences** (was 0): ours stops at New Phlan's inn on YOU DON'T HAVE ENOUGH
+PLATINUM, the original's `s` paid with DORN (lit at WHO WILL PAY?). Ours' DORN holds the 9 platinum just before the inn
+(the lab's `p19/money_probe.py`: ours saved at 4,11). Bisected on lab builds of each commit (`p19/src_<commit>`):
+a19aed7 0, 9b677c8 0, **eae6114 18** (Combat Chat 18: `walk_selected`, LOAD_CHAR undone at EXIT / PROGRAM), f37a477,
+7ce7091, d15afe3, 5b50367 and 1e7ef5c 18. Not segment.py's QoL settings (the release's defaults: 18 too) nor `--tplog`.
+To Combat.
+
+**Combat's answers to Player 18 (e8fc4e5) rerun on 1e7ef5c:** p18a1 5 differences (the counters: the clock now equal),
+p18a3 5 (the counters: ARN's experience equal), **p18a5 0 differences, draws identical (11643)**.
+
+**Segment 10, trips 2-5 to `textile`** (plan `plans/p19_c34d_10b_textile.plan`, lab `p19/seg10b.plan`, from
+`p2start/p18b7_s10a`). Each trip: 4:2 0,11 W onto the band (LEAVE), 12,27, `step E` (BOAT), the town round of trip 1
+(the clerk twice: no summons, 0x4A97 255 and 0x4A98-0x4A9A 0 every trip), back by the three 0,4 W exits and Podol's
+11,15 S; then the bot's events. Checkpoints `s10t2`, **`s10b`** (p19a10), `s10t3`, **`s10c`** (p19b2), `s10t4`,
+**`s10d`** (p19c2), `s10t5`, **`textile`** (p19d1, 4:2 2,15), nobody dead at any.
+- **4:2's rest rule is the inn.** Main's bot never rested there (its tally: "4:2 rests 0"); every trip back to town in
+  its log is "== to the inn to rest" after a fight left it hurt, and between events it cast its memorized cures. The
+  first plan rested (`prepare` / `heal`) as trip 1: p19a3 (a death on the way back), p19a4 (destroyed in 4:2's
+  interrupted rests), p19a5 and p19a7 (5 interruptions at 11,0), p19a6 (a death at event 2), p19a8 (5 at 5,9), p19a9
+  (destroyed at 3,3). Then `norest` and `cure` in 4:2 (the bot's): trips 2-5 went through at the first try each.
+- Event 22 is the whole floor of the house (every square but the rooms' events): the walk out avoids only the events
+  still to come; event 7's room (6,14) opens only onto event 3's squares (the bot crossed one: its text printed).
+- Event 13's body: the bot SEARCHes twice, then LEAVEs (its "asked too often"): `SEARCH*2`, then `LEAVE`.
+- **Event 17's chained man: p19d1 LEFT at once** (FREE ATTACK PARLAY LEAVE matched the plan's older generic
+  `ATTACK|LEAVE` before the new `FREE*3`); the bot tried FREE / UNLOCK three times, then LEAVE. No flag differs for it;
+  the plan's answers are reordered for a rerun.
+- **`textile` against the bot's** (`p12/cpdiff.sh`, `p18/memflags.py`): besides the clock, counters and members
+  (levels, coins, items: our run's own), 4A32, 4A36, 4A38, 4A80, 4A9C differ already at `podol` (segment 9's dice);
+  segment 10 adds **4AB8 (ours 255, bot 254) and 4AE4 (1, bot 2)**, both set at trip 4's event 7 (the ghouls; the bot's
+  fight turned one and two got away): the dice.
+
+**Segment 10's trip 1 in ours** (`segment.py p18b7 begin s10a --start=p18b6_s10t1 --tplog`, on 474e030 and 1e7ef5c): draws
+identical to 989; **at 990 (the kobolds at 8:29 12,4, MAGIC ON) CEDRIC weighs a spell (d7 = 0), then the original
+picks a target (d10 at 0x160DB) and moves 28,14 -> 27,13, ours picks a spell (d5) three times and a target**. To Combat.
+
+New in the tools:
+- plans.py: `answer <words>|<choice>*<n>`: a counted answer, given n times, then the next answer for the words applies
+  (main's bot's "asked too often").
+- plans.py: `OP_REST_INTERRUPTS` (default 5): a heal's interruptions before the stop.
+
+Lab: `p19/` (seg10b.plan, segment_qol.py, money_probe.py, src_<commit> builds, the pre-rerun replay outputs
+`*.pre51.txt`), saves `p2start/p19a3_s10t2`, `p19a10_s10b`, `p19b1_s10t3`, `p19b2_s10c`, `p19c2_s10d` (and
+`.lab/player/saves/p19*`; `textile` is `.lab/player/saves/p19d1/textile`); runs p19a1-a10, p19b1-b2, p19c1-c2, p19d1.

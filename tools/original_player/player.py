@@ -43,6 +43,7 @@ class Player:
         self.seen_kinds = set()
         self.saving = None        # the Checkpoint being saved
         self.snapped = set()      # snap answers done (plans.py)
+        self.answer_counts = {}   # Player 19: counted answers given (plans.py `<choice>*<n>`)
         self.start_names = []     # the party's names at the first walking screen
         self.slot = os.environ.get("OP_SLOT", "H")   # the original's save slot for checkpoints (lab slots only)
 

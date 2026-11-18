@@ -21,6 +21,9 @@
                                  New Phlan's training halls)
   answer <words>|<choice>        this plan's own answers (before main's): the first screen whose text holds
                                  <words> gets <choice> (an item's name, or a member's name)
+  answer <words>|<choice>*<n>    (Player 19) given at most n times, then the next answer for <words> applies (main's
+                                 bot answers a question with a LEAVE in it three times, then LEAVEs: "asked too often",
+                                 4:2's chained man: FREE*3, then LEAVE)
   answerfrom <words>|<choice>    (Player 16) a step of the plan: from here on this answer comes before the others
                                  (Kuto's Well: CLIMB DOWN is NO while events are left, then YES)
   map 7:26                       (Player 16) the following walks' map when it isn't the area's own GEO block (`map`
@@ -341,7 +344,9 @@ class Heal:
                     p.plan.goals[p.goal + 1:p.goal + 1] = copy.deepcopy(p.plan.inntrip)
                     p.goal_key = p.g.nkeys
                     return True, None, ""
-                if h["interrupts"] > 4:
+                # Player 19: OP_REST_INTERRUPTS (default 5) interruptions before the stop (4:2 after event 2: every
+                # rest interrupted, each fight won: p19a8)
+                if h["interrupts"] >= int(os.environ.get("OP_REST_INTERRUPTS", "5")):
                     raise_stop(p, "heal: rest interrupted %d times" % h["interrupts"])
                 if h["phase"] == "rounds":
                     h["phase"], h["memo_any"], h["days_memo"] = "days", False, False
@@ -681,8 +686,18 @@ class Plan:
                 p.note("snap", "%s: %s.png/.txt" % (name, base))
                 return key, "%s: %s|%s" % (src, words, choice)
             if words in text:
+                limit = None
+                m = re.match(r"(.*)\*(\d+)$", choice)
+                if m:
+                    # Player 19: a counted answer (`<choice>*<n>`): skipped once given n times
+                    choice, limit = m.group(1), int(m.group(2))
+                    if p.answer_counts.get((words, choice), 0) >= limit:
+                        continue
                 k = self.choose(scr, choice)
                 if k:
+                    if limit is not None and k not in ("end", "home"):     # the key that answers, not a move
+                        p.answer_counts[(words, choice)] = p.answer_counts.get((words, choice), 0) + 1
+                        return k, "%s: %s|%s (%d of %d)" % (src, words, choice, p.answer_counts[(words, choice)], limit)
                     return k, "%s: %s|%s" % (src, words, choice)
         if kind in self.defaults:
             return self.defaults[kind], "default for %s" % kind
