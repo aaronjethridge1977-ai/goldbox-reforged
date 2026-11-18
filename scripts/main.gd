@@ -53,6 +53,16 @@ var _busy := false                  # a delay or walk is playing; input waits
 var _walk_path: Array[Vector2i] = []
 var _walk_final_dir := 0
 var _held_message := ""
+## The original's 0x49F9 (chat 54): whether the last walking menu was the wilderness's. Its walking
+## input (GAME.OVR 0x17054) ends with 0x49F9 = 0x49FA (0x173E7); on the wilderness branch (0x17285) a
+## previous mode under 2 (a 3D area; 1 at start-up, 0xE9BE) loads the ICONs and redraws the whole
+## screen (START.EXE 0xBA:0x2B5E), so the first wilderness menu after leaving a 3D area or loading
+## shows an empty box: the jump's arrival text in 6:25, IGNORE CAVE after 6:19's LEAVE (chat 53).
+var _menu_was_wild := false
+## The script blocks the original runs in its wilderness modes (0x49FA 2-4: GAME.OVR 0x3F4C, from the
+## block number 0x84DC); every other block, 6:19's cave among them, is mode 1 (3D) though ours shows
+## some of them over the band.
+const WILD_MODE_BLOCKS := [25, 26, 27]
 var _sprite_cache := {}             # "file:id" -> frames
 var _jump_next := false             # the next script move is a placement, not a walk
 
@@ -421,6 +431,7 @@ func _new_game() -> void:
 	_wall_slots_reset()
 	_vm.on_overland = false
 	_vm.overland_band = 0
+	_menu_was_wild = false
 	GameClock.set_time(_vm, 0, 0)
 	_vm.write_byte(EclVM.PARTY_X, NEW_GAME_PLACE.x)
 	_vm.write_byte(EclVM.PARTY_Y, NEW_GAME_PLACE.y)
@@ -1595,6 +1606,7 @@ func _wall_slots_reset() -> void:
 func load_original_save(letter: String) -> bool:
 	var path := _game_path.path_join("SAVGAM%s.DAT" % letter.to_upper())
 	var s := FileAccess.get_file_as_bytes(path)
+	_menu_was_wild = false
 	if s.size() < 0x3300:
 		_status.text = "No saved game %s." % letter.to_upper()
 		return false
@@ -1755,6 +1767,7 @@ func _quick_load() -> void:
 	var wild: Array = cfg.get_value("script", "overland", [false, 0])
 	_vm.on_overland = wild[0]
 	_vm.overland_band = wild[1]
+	_menu_was_wild = false
 	_vm.state = EclVM.State.DONE
 	_vm.clear_output()
 	_vm.sprite_id = -1
@@ -2906,6 +2919,8 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		_message.text += "\n[script %d not found]" % block_id
 		_vm.ecl = null
 		return
+	if arrive and not loading:
+		_menu_was_wild = _vm_block in WILD_MODE_BLOCKS   # 0x49F9 = 0x49FA, the area left (GAME.OVR 0x3F2B)
 	_vm_file = file_no
 	_vm_block = block_id
 	_step_from = Vector2i(-1, -1)
@@ -3337,6 +3352,13 @@ func _draw_screen() -> void:
 		menu = []
 	elif _busy:
 		menu = []
+	elif _vm.state in [EclVM.State.IDLE, EclVM.State.DONE]:
+		# The walking menu (see _menu_was_wild).
+		var wild_mode: bool = _vm_block in WILD_MODE_BLOCKS
+		if wild_mode and _vm.on_overland and not _menu_was_wild:
+			body = ""
+			_message.text = ""
+		_menu_was_wild = wild_mode
 	var view := _view_img
 	if _area_view and not _vm.on_overland:
 		view = _area_picture()
