@@ -52,6 +52,10 @@
                                  while the party rests), an interrupted day counted, the cures on anyone hurt first;
                                  (Player 20) over when a fight's script moves the party to another area (the
                                  nomads' reward, then NEW_ECL 26 onto the band)
+  search on|off                  (Player 21) main's bot's: SEARCH mode toggled on the walking screen (S), the plan
+                                 keeping the state (the library's stacks give their books only to a searching party)
+  revisit <event> <n>            (Player 21) main's bot's: n times onto the event's nearest square (off it first),
+                                 crossing every event (the library's stacks: a book a visit)
   innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
                                  New Phlan locks its shops, City Hall and halls from hour 14)
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
@@ -258,6 +262,89 @@ class Step:
         if k == "up" or p.on_band():
             self.sent = p.g.nkeys + 1
         return False, k, "step %s from %d,%d" % (self.d, x, y)
+
+
+# Player 21: main's bot's order of want for a magic-user's new spell at training (bot.gd LEARN_ORDER, by name)
+LEARN_ORDER = ["KNOCK", "MAGIC MISSILE", "SLEEP", "STINKING CLOUD", "INVISIBILITY", "MIRROR IMAGE", "FIREBALL", "HASTE",
+               "LIGHTNING BOLT", "HOLD PERSON", "DISPEL MAGIC", "SLOW"]
+
+
+class Search:
+    """Player 21: `search on|off`, main's bot's (bot.gd "search"): SEARCH mode (steps take 10 minutes; the library's
+    stacks give their books only to a searching party). The walking screen's SEARCH key toggles it; the plan keeps
+    the state (`p.searching`), so a line that asks for the mode already on sends nothing."""
+    def __init__(self, on):
+        self.on, self.sent = on, False
+
+    def __repr__(self):
+        return "search %s" % ("on" if self.on else "off")
+
+    def next(self, p):
+        if self.sent or bool(getattr(p, "searching", False)) == self.on:
+            return True, None, ""
+        self.sent = True
+        p.searching = self.on
+        return False, "s", "search %s: SEARCH" % ("on" if self.on else "off")
+
+
+class Revisit:
+    """Player 21: `revisit <event> <n>`, main's bot's (bot.gd "revisit"): n times, onto the event's nearest square
+    again (off it first when the party stands on it), playing whatever it gives (the library's stacks: a book a
+    visit). The walk on crosses every event (main.gd _tour with no left-out events)."""
+    def __init__(self, ev, n, area):
+        self.ev, self.left, self.area = ev, n, area
+        self.walk = self.step = self.target = None
+
+    def __repr__(self):
+        return "revisit %d (%d left)" % (self.ev, self.left)
+
+    def next(self, p):
+        if self.step is not None:
+            done, k, why = self.step.next(p)
+            if not done:
+                return False, k, "revisit %d: %s" % (self.ev, why)
+            self.step = None
+        if self.walk is not None:
+            done, k, why = self.walk.next(p)
+            if not done:
+                return False, k, why
+            self.walk = None
+            self.left -= 1
+            p.note("walk", "revisit %d: visit done, %d left" % (self.ev, self.left))
+        if self.left <= 0:
+            return True, None, ""
+        x, y, f = p.where()
+        geo = getattr(self, "geo", None) or self.area
+        R.NE, R.SW, R.INFO, R.DOORS = R.load(*geo)
+        if self.target is None:
+            # the nearest square from where the party stands (bot.gd: chosen before the step off)
+            squares = R.squares(self.ev)
+            if not squares:
+                raise_stop(p, "revisit: no square of event %d on map %d:%d" % ((self.ev,) + tuple(geo)))
+            best = None
+            for sq in squares:
+                path = R.route((x, y), {sq}, set())
+                if path and (best is None or len(path) < len(best)):
+                    best = path
+            if best is None:
+                raise_stop(p, "revisit: no way to event %d from %d,%d" % (self.ev, x, y))
+            self.target = best[-1]
+            if self.target == (x, y):
+                # bot.gd _step_off: the first neighbour one step away (N, E, S, W), whatever its event
+                for s_, d in enumerate("NESW"):
+                    if R.passable(x, y, s_):
+                        self.step = Step(d)
+                        p.note("walk", "revisit %d: off %d,%d %s first" % (self.ev, x, y, d))
+                        return self.next(p)
+                raise_stop(p, "revisit: no way off %d,%d" % (x, y))
+        tx, ty = self.target
+        self.target = None
+        self.walk = Walk(tx, ty, self.area, (), [])
+        for a in ("aliases", "geo", "norest", "bumps", "look"):
+            setattr(self.walk, a, getattr(self, a, None) if a != "aliases" else getattr(self, a, set()))
+        self.walk.bumps = getattr(self, "bumps", None) or 3
+        p.note("walk", "revisit %d: to %d,%d" % (self.ev, tx, ty))
+        return self.next(p)
 
 
 class Keys:
@@ -559,6 +646,25 @@ class Plan:
     def _seq(self, scr, st, p):
         """Player 3: the next key of a running seq: answer (or None when it is over)."""
         name, keys = p.seq
+        rows = st["rows"]
+        if scr.get("bottom", "").startswith("CHOOSE SPELL:") and "LEARN" in scr.get("bottom", ""):
+            # Player 21: a magic-user's training asks for the new spell (<NAME>'S SPELLS TO CHOOSE FROM, ELWEN at p21b3,
+            # LIRA at p21b4; the title's font isn't the reader's, so the bottom line tells): main's bot's choice,
+            # bot.gd LEARN_ORDER (the first of its list on offer, else the first offered); End / Home move the
+            # light (the original's vertical lists), LEARN takes it. The seq goes on after.
+            items = [(r, rows[r].strip("? ").strip()) for r in range(1, 23)]
+            items = [(r, t) for r, t in items if t and not re.match(r"\d+(ST|ND|RD|TH) LEVEL", t)]
+            if not items:
+                raise_stop(p, "seq %s: a spell list with no spells" % name)
+            names = [t for _, t in items]
+            want = next((s for s in LEARN_ORDER if s in names), names[0])
+            lit = [i for i, (r, _) in enumerate(items) if screens._rowcol(st["im"], r) == screens.WHITE]
+            if not lit:
+                raise_stop(p, "seq %s: no spell lit on the spell list" % name)
+            d = names.index(want) - lit[0]
+            if d == 0:
+                return "l", "seq %s: LEARN %s (main's bot's LEARN_ORDER)" % (name, want)
+            return ("end" if d > 0 else "home"), "seq %s: to %s" % (name, want)
         while keys:
             k = keys[0]
             if k.startswith("@"):
@@ -1313,6 +1419,13 @@ def load(path):
             pl.goals.append(Heal(force=True, prep=True))
         elif cmd == "campday":
             pl.goals.append(CampDay(int(rest.strip())))
+        elif cmd == "search":
+            pl.goals.append(Search(rest.strip() == "on"))
+        elif cmd == "revisit":
+            ev, n = (int(v) for v in rest.split())
+            pl.goals.append(Revisit(ev, n, pl.area))
+            for a in ("aliases", "geo", "norest", "bumps", "look"):
+                setattr(pl.goals[-1], a, getattr(pl, a, None) if a != "aliases" else pl.aliases)
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":

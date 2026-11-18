@@ -1,0 +1,222 @@
+# Player 21: c34d segment 13 (bane -> library2): main's plan "town", then "log 8b. The library again, once a
+# magic-user knows Knock": travel 2:15, explore, search on, revisit 2 4, revisit 3 4, revisit 4 4, revisit 5 4, search
+# off, checkpoint library2. From bane (1:24 15,4 W). The bot's order (p12/botorder.py bane library2; full_c34d.log
+# 13589-13820): out by 15,4 E (LEAVE), BOAT, the temple, the inn, the clerk twice (the reward for 1:24), the arms
+# shop (gems sold), the halls (nobody trains), the inn; 3:0 0,4 W, 2:20, 8:29's 11,15 S into 2:15 (11,1 S); events
+# 73 9 7 6 10 15 14 18 11 12 13 16 74 8 1 5 3 17 4 2 (as segment 8); then SEARCH and the stacks (2 3 4 5) four times
+# each. In the original nobody knows Knock here (LIRA and ELWEN are magic-users of level 1: the party has trailed the
+# bot's in experience since slums3), so the locked doors get PICK / BASH only.
+# Answers: Player 20's seg11.plan and Player 17's seg08.plan
+# (above the generic ATTACK|LEAVE: p19d1's man got that LEAVE at once)
+area 1:24
+rules ../../plans/playthrough.plan
+answer WHAT DO YOU DO WITH THE MAN|FREE*3
+answer WHAT DO YOU DO WITH THE MAN|LEAVE
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer BASH PICK KNOCK EXIT|PICK
+answer LOCKED. BASH KNOCK EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+answer CAN I SHOW YOU SOMETHING|YES
+answer MERCY! MERCY|COMBAT
+answer DULL BROWN REPTILIAN|COMBAT
+answer PLAZA AHEAD IS CROWDED|DISGUISE
+answer SURPRISED A PARTY OF KOBOLDS|COMBAT
+answer BEING AVOIDED BY SOME LIZARDMEN|COMBAT
+answer STAND AND LISTEN|STAND
+answer MAKE A BID|MAKE
+answer FOLLOW THE OGRE|FOLLOW
+answer WHO WILL IT BE|CHALLENGE
+answer WHO WILL CHALLENGE|ARN
+answer ROBED ORC|LEAVE
+answer IN NEED OF HEALING|YES
+answer KNOCK EXIT|EXIT
+answer YOUR PRESENCE IS NOT AUTHORIZED|YES
+answer WHICH ENTRANCE WILL YOU TAKE|LEAVE
+answer WHICH ROUTE WILL YOU TAKE|BOAT
+answer ENCHANTED WEAPON IF YOU ACCEPT|YES
+answer THIEVES ONLY|LEAVE
+answer WHAT DO YOU DO WITH THE BODY|SEARCH*2
+answer WHAT DO YOU DO WITH THE BODY|LEAVE
+answer OPENING THE BOX WILL DAMAGE THE SEAL|TAKE
+# Player 19: event 17's chained man: main's bot answers FREE / UNLOCK three times, then LEAVE (asked too often)
+answer WILL YOU ENTER|LEAVE
+answer NORTH EDGE OF THE CITY|LEAVE
+answer YOU SPOT A GROUP OF MERCHANTS|PARLAY
+answer DISPLACER BEAST|FLEE
+answer QUITE MAD|NO
+answer DO YOU INSIST HE COME|NO
+answer DO YOU TAKE IT|YES
+# Player 21: after SELL and SHARE some coins stay in the pile (the members' loads?); leave them
+answer GO BACK AND GET YOUR MONEY|NO
+area 1:24
+map 1:31
+answerfrom WHICH ROUTE WILL YOU TAKE|LEAVE
+walk 15,4 avoid 99
+step E
+area 7:26
+map
+answerfrom WHICH ROUTE WILL YOU TAKE|BOAT
+walk 12,27
+step E
+area 3:0
+walk 4,12 through 2,3,9,25
+innwait
+alias 3:8
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step E
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step E
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+# the arms shop (13,8 N): main's bot sells the gems and jewellery (Player 17's seg08: the shop at 13,9 N)
+sell gems share
+buy
+walk 13,9 through 19,20,21,22,23,24,25,26
+step N
+alias 3:11
+walk 8,1 through 10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+step N
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step E
+walk 10,0 through 10,11,12,13,14,15,16,17,18
+step W
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint s13t
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 11,15 avoid 99
+step S
+area 2:15
+prepare
+# event 73
+walk 8,2 avoid 99
+heal
+prepare
+# event 9
+walk 8,4 avoid 99
+heal
+prepare
+# event 7
+walk 7,7 avoid 99
+heal
+prepare
+# event 6
+walk 9,7 avoid 99
+heal
+checkpoint s13a
+prepare
+# event 10
+walk 9,10 avoid 99
+heal
+prepare
+# event 15
+walk 8,10 avoid 99
+heal
+prepare
+# event 14
+walk 10,9 avoid 99
+heal
+prepare
+# event 18
+walk 12,10 avoid 99
+heal
+prepare
+# event 11
+walk 11,12 avoid 99
+heal
+checkpoint s13b
+prepare
+# event 12
+walk 12,12 avoid 99
+heal
+prepare
+# event 13
+walk 13,13 avoid 99
+heal
+prepare
+# event 16
+walk 10,13 avoid 99
+heal
+prepare
+# event 74
+walk 9,13 avoid 99
+heal
+prepare
+# event 8
+walk 8,11 avoid 99
+heal
+checkpoint s13c
+prepare
+# event 1
+walk 2,9 avoid 99
+heal
+prepare
+# event 5
+walk 4,2 avoid 99
+heal
+prepare
+# event 3
+walk 2,6 avoid 99
+heal
+prepare
+# event 17
+walk 3,2 avoid 99
+heal
+prepare
+# event 4
+walk 10,2 avoid 99
+heal
+prepare
+# event 2
+walk 12,6 avoid 99
+heal
+checkpoint s13d
+# main's bot: SEARCH, then the stacks again (a book a visit to a searching party)
+search on
+revisit 2 4
+revisit 3 4
+revisit 4 4
+revisit 5 4
+search off
+checkpoint library2

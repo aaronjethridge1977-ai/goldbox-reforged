@@ -1215,3 +1215,56 @@ Combat. Also p20a3's first fight (8:29, the gnolls): LIRA's Sleep picks a target
 
 Lab: `p20/` (seg11.plan, the replay outputs `*.seg.out`, `*.cmpdraws.txt`, `nomads.cpdiff.txt`), saves
 `p2start/p20a3_s11c`, `p20a3_s11k` (and `.lab/player/saves/p20a*`); runs p20a1-a4; `p20/archive.sh`.
+
+## Player 21 (2026-11-18): segment 12 to `bane`; segment 13 to `library2`; `search`, `revisit`, a trainee's new spell
+
+**Segment 12 (`nomads` -> `bane`)** (plan `plans/p21_c34d_12_bane.plan`, lab `p21/seg12.plan`): main's "town" (out by
+7:17 8,15 S, the band, BOAT, the inn, City Hall, the halls, the inn: **`s12t`**), then 3:0 0,4 W, 2:20, 8:29, 1:18, the
+band's 11,28 (LEAVE) and 13,27 SOUTH into 1:24 at 15,4 W (**`s12a`**). Trip 1: events 4 7 3 2 1 6 (the goblin slaves
+KILL; **`s12b`**), out by 15,4 E (LEAVE), BOAT, the inn (**`s12c`**); trip 2: 5 8 9 11 12 10 (the hay beds SEARCH;
+**`s12d`**), out by 15,11 E, the inn (**`s12e`**); back to 1:24 15,4 W: **`bane`**. Runs: p21a1 lost CEDRIC and LIRA to a
+band fight before `s12t` (death rule: reload), p21a2 to `s12a`, p21a3 from `s12a` to `bane` (nobody lost).
+- **1:24 walks on GEO1 block 31** (`map 1:31`; the bot's line says `map 31`), not block 24.
+- **Event 5's trap door (10,9) is a find roll** (ECL 1:24 0x9DC2 -> 0xACE0: per member RANDOM 5 against SEARCH
+  [0x6DCA] plus race bonuses): the original's party failed it, the bot's found it (scroll, potion, ring).
+- **`bane` against the bot's:** 80 differences (79 at `nomads`); new only 4A2E 48 / 52 (bit 4: the trap door).
+- **In ours** (on f5818d1): the town trip (`segment.py p21a2 begin s12a --start=p20a4_nomads --tplog`) parts at
+  draw 119 of 4731, in the band's lizard men's fight setup: the original's wilderness clutter (GAME.OVR 0xD397-0xD459:
+  for each ground-0x16 cell random(100), and if it is <= [bp-2], 0 here, a d10 for the kind, above 8 4 + d2, else
+  (v + 1) / 2, then a d3 when 0xCE75 & 0x40), 16 of 16 times in the trace; ours only has the dungeon clutter
+  (0x0C5D2). To Combat. 1:24 (`p21a3 begin bane --start=p21a2_s12a`): parts at 2967 of 13277 in the orcs' fight
+  (event 4): LIRA (QUICK) weighs a spell d7 = 2, then ours draws "picks a spell" d1 twelve times before a target, the
+  original a target d7 (0x160DB) at once. To Combat, with Player 19's (b).
+
+**Segment 13 (`bane` -> `library2`)** (plan `plans/p21_c34d_13_library2.plan`, lab `p21/seg13.plan`): out by 15,4 E,
+BOAT, the inn, the clerk twice, the arms shop (`sell gems share`), the halls, the inn (**`s13t`**); 3:0 0,4 W, 2:20,
+8:29's 11,15 S into 2:15; segment 8's events 73 9 7 6 10 15 14 18 11 12 13 16 74 8 1 5 3 17 4 2 (**`s13a`-`s13d`**);
+`search on`, `revisit 2 4`, `revisit 3 4`, `revisit 4 4`, `revisit 5 4`, `search off`: **`library2`** (p21b5 to `s13d`,
+p21b6 from it; nobody lost). p21b1-b4 stopped on the new screens below.
+- **Nobody knows Knock in the original here**: the party has trailed the bot's in experience since `slums3` (ELWEN
+  15 max HP against 30 at `nomads`), LIRA and ELWEN were magic-users of level 1 at `bane`. Played in the bot's order
+  anyway: PICK, then BASH where the bot KNOCKs.
+- **This trip the party trained** (the clerics', magic-users' and thieves' halls, after the gems' sale and SHARE):
+  ELWEN, LIRA and DORN went up, each left at exactly 5000 experience (the original's cap, "the level after next less
+  1", which ours has: `party_member.gd` training_plan). Possibly the earlier halls' "TRAINING COSTS 1000 GP." (a member
+  without 1000 gold of their own) is why the party fell behind: open.
+- **`library2` against the bot's:** 72 differences; new: 4A2F 4 / 14 (the stacks: the original gave one book in 16
+  visits, the bot three: the dice), 4AAB and 4AAD (0 / 254).
+- plans.py: **`search on|off`** (the walking screen's SEARCH; the plan keeps the state) and **`revisit <event> <n>`**
+  (main's bot's: the nearest square chosen first; on it, off to the first neighbour one step away, N E S W, whatever
+  its event, then back); a running training seq answers **<NAME>'S SPELLS TO CHOOSE FROM** (bottom row CHOOSE SPELL:
+  LEARN) with main's bot's LEARN_ORDER (Knock, Magic Missile, Sleep, ...; else the first offered). After SELL and SHARE
+  some coins stay on the counter: the plan answers GO BACK AND GET YOUR MONEY with NO.
+
+**Reruns on main's chat 54 (f9ad14d, the band's refused step):** p19d1 (trip 5, `segment.py p19d1 begin textile
+--start=p19c2_s10d --tplog`): 10 differences at `textile`, draws agree to **984** of 2704 (were 19): ELWEN (QUICK) weighs
+a spell d7 = 0, then the original picks a spell (d5 three times at 0x0B1CD), ours a target. To Combat (the same family).
+p19c2 was rerun by main (5003 of 5410).
+
+**Combat Chat 23's note on p17a7 (its re-run of the original parts at 990):** p17a7 ran with `OP_MAGIC=1` (Alt-M at
+the fight's first poll, OVR:0bb90) from `p2start/p17a6_s8shop`, seed 90909097, `--after=s8shop`, plan `p17/seg08.plan`
+(unchanged since); a re-run without `OP_MAGIC=1` leaves the original's QUICK casters without spells.
+
+Lab: `p21/` (seg12.plan, seg13.plan, the replay outputs `*.seg.out`, `*.cmpdraws.txt`, `bane.cpdiff.txt`,
+`library2.cpdiff.txt`), saves `p2start/p20a4_nomads`, `p21a2_s12a`, `p21a3_bane`, `p21b5_s13d` (and
+`.lab/player/saves/p21*`); runs p21a1-a3, p21b1-b6; `p21/archive.sh`.
