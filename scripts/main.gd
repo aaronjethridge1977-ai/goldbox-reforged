@@ -1024,11 +1024,14 @@ func _unhandled_input(event: InputEvent) -> void:
 						hits.append(i)
 				if hits.size() == 1:
 					choice = hits[0]
-			elif event.is_action("ui_left") or event.is_action("ui_right"):
-				# The highlight moves along the menu (the original's way to choose).
-				_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if event.is_action("ui_right") else -1), _vm.menu.size())
-			elif event.is_action("ui_accept"):
-				choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
+			elif _vm.menu.size() == 1 and event.is_action("ui_accept"):
+				# A script's horizontal menu (MENU_HORIZONTAL, PARLAY, ENCOUNTER_MENU) takes Enter only
+				# when it has one choice (PRESS <RETURN>), as the original (Jeremy, Q24, 2026-11-18):
+				# GAME.OVR's menu routine 0x8B57 takes 0x0D only when its argument [bp+8] is set,
+				# MENU_HORIZONTAL (0x1E5A) sets it for one choice, PARLAY (0x3311) and ENCOUNTER_MENU
+				# (0x2F18) never. With two or more choices only the letters (and the mouse) choose;
+				# Enter and the arrows do nothing.
+				choice = 0
 			if choice >= 0 and choice < _vm.menu.size():
 				_menu_sel = choice   # the original keeps the highlight where the last choice was
 				# A script's horizontal menu (YES / NO) leaves the box as it is: the script's next ops
