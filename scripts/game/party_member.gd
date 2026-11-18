@@ -888,7 +888,12 @@ func recalculate(types: ItemTypes) -> void:
 		if armor.plus != 0 and movement <= 9 and types.slot(armor.type) == ItemTypes.SLOT_ARMOR:
 			movement += 3
 	weight &= 0xFFFF
-	var over := weight - load_allowance()
+	# START.EXE 0xF40: the load over the allowance is a 16-bit word tested signed, a negative one taken
+	# as 0 (no limit): above 32767 over it, the original lets a member walk unburdened (Combat Chat 25:
+	# main's 5:6 priest check, DORN at 47338 with an allowance of 2000 walked his splint mail's 6).
+	var over := (weight - load_allowance()) & 0xFFFF
+	if over >= 0x8000:
+		over = 0
 	var by_load := movement
 	if over > 0x400:
 		by_load = 3
