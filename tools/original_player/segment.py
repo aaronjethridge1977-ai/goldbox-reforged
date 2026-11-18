@@ -14,8 +14,9 @@ Ours (the lab's Godot copy, `proj` built by check_godot.sh) loads the original's
 F), takes `tpseed=` the seed in its index line (the original's dice from there), then the keys the original was
 sent between the two checkpoints (a checkpoint's camp and save keys left out: they change nothing; Player 13: the
 heal's and memorize's camp keys kept, with waits for each REST's length); a fight's QUICK keys become
-ours' `quickall` (+ `magic` with --magic) and `fightend`. Ours saves (F2) and statediff.gd compares its state with
-the original's <to> save. Prints statediff's lines and writes `logs/<run>.segment_<from>-<to>.txt`.
+ours' `quickall` (+ `magic` with --magic) and `fightend`; an Alt-M of the original's run becomes ours' `magic`, or
+`magicat=<draw>` from OP_MAGICAT=<draw>,... or the trace's MAGIC lines (Player 23; Combat Chat 25). Ours saves
+(F2) and statediff.gd compares its state with the original's <to> save. Prints statediff's lines and writes `logs/<run>.segment_<from>-<to>.txt`.
 """
 import os, re, shutil, subprocess, sys
 import orig
@@ -36,12 +37,32 @@ def index(run, name):
     raise SystemExit("no checkpoint %s in run %s" % (name, run))
 
 
+def magic_draws(run, a):
+    """Player 23: the draw from which the original's MAGIC was on, one per Alt-M in turn, for ours' magicat=.
+    OP_MAGICAT=<draw>,<draw>,... (Combat Chat 25's lab key; "-" for a plain `magic`) wins; else, for a replay from the
+    run's start (`begin`: the trace's draws and ours' count alike), the trace's `MAGIC 1 between draws <a> and <b>`
+    lines (trace.py since Combat Chat 25) give <a> + 1. A trace from before that has no such lines: plain `magic`."""
+    env = os.environ.get("OP_MAGICAT")
+    if env is not None:
+        return [int(x) if x.strip() not in ("", "-") else None for x in env.split(",")]
+    tr = os.path.join(LOGS, "%s.trace.txt" % run)
+    if a != "begin" or not os.path.exists(tr):
+        return []
+    out = []
+    for line in open(tr, errors="replace"):
+        m = re.match(r"MAGIC 1 between draws (\d+) and (\d+)", line)
+        if m:
+            out.append(int(m.group(1)) + 1)
+    return out
+
+
 def keys_between(run, a, b, magic, tplog=False, extra=None):
     """The original's keys after checkpoint a's save until checkpoint b's ENCAMP, as ours' --keys.
     extra (Player 5): {n: [keys]} ours-only keys sent after the segment's n-th original key (1-based), for a screen
     only ours shows (a known difference already on the board), so the replay can go on to the next difference."""
     out, on, camp, fight, rest_min, spells = [], False, False, False, 0, 0
     extra, n = extra or {}, 0
+    magicat = magic_draws(run, a)
     for line in open(os.path.join(LOGS, "%s.log" % run)):
         if "GOAL done: checkpoint %s" % a in line or (a == "begin" and line.split()[1:2] == ["RUN"]):
             on = True
@@ -52,8 +73,13 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         if r:     # Player 13: the rest's length, for ours' waits after the REST key (a day is ~1.2 s in ours)
             rest_min = int(r.group(1)) * 1440 + int(r.group(2)) * 60 + int(r.group(3))
         if " MAGIC alt+m " in line:
-            # Player 15: the original's run pressed Alt-M in this fight (OP_MAGIC=1): ours' `magic` in the open fight
-            out += ["magic"] + (["tplog"] if tplog else [])
+            # Player 15: the original's run pressed Alt-M in this fight (OP_MAGIC=1): ours' `magic` in the open fight.
+            # Player 23 (Combat Chat 25's request): the original reads the Alt-M some computer turns late, so the
+            # n-th Alt-M becomes ours' `magicat=<draw>` (MAGIC ON from the first computer turn at or after that draw)
+            # when its draw is known (magic_draws(): OP_MAGICAT, or the trace's MAGIC lines); else plain `magic`.
+            n_alt = sum(1 for x in out if x == "magic" or x.startswith("magicat="))
+            at = magicat[n_alt] if n_alt < len(magicat) else None
+            out += [("magicat=%d" % at) if at else "magic"] + (["tplog"] if tplog else [])
             continue
         if re.search(r"NOTE fight fight \d+ ended|NOTE loss the party was destroyed", line):
             # Player 15: a fight the original played with no combat menu (all on QUICK) took no key, so nothing made

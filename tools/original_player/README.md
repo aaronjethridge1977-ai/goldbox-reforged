@@ -1269,6 +1269,52 @@ Lab: `p21/` (seg12.plan, seg13.plan, the replay outputs `*.seg.out`, `*.cmpdraws
 `library2.cpdiff.txt`), saves `p2start/p20a4_nomads`, `p21a2_s12a`, `p21a3_bane`, `p21b5_s13d` (and
 `.lab/player/saves/p21*`); runs p21a1-a3, p21b1-b6; `p21/archive.sh`.
 
+## Player 23 (2026-11-18): segment 17 (the kobold king) lost five of five and deferred; segment 18 to `band1`; segments 14 and 16 in ours
+
+**Segment 17 (`kobold_caves` -> `kobold_king`)** (plan `plans/p23_c34d_17_kobold_king.plan`, lab `p23/seg17.plan`): out
+by 10,15 (the truce kobold of event 3 asks again on the way: LET IT GO, the bot's answer), the boat, the inn (**`s17a`**;
+then `innwait`: the rest had taken the party past hour 14 and City Hall was locked, 3:0's ECL 0x9920), the town (ELWEN
+trained to MU 4), the trip in, `cure`, the throne room's door 8:13 4,4 (**`s17door`**: ARN 32/32, BRAM 52/54, CEDRIC
+30/33, ELWEN 28/28, LIRA 22/22, DORN 29/32). The bot gives no order here: it reached `kobold_caves` with 0x4A8D = 5
+already (the throne room and the king's quarters by shortcut restores in its segment 16).
+- 8:13's ECL (`p23/ecl8_13.txt`): event 9 (4-6,3) is three fights in a row with no camp between: the horde (LOAD_MON 31 x4,
+  0 x35, 1 x11: 50 figures), then the ballista (DAMAGE, then 120 x5, 0 x45, 1 x8), then the envoys; 0x4A8D 0 -> 1 -> 2 ->
+  3 -> 4 ("THE KING HAS ESCAPED"). Event 20 (7,0 / 7,2, 0xA45B) is the king's guards (4 -> 5), event 11 (10,1, 0xA4C1)
+  the pit (5 -> 6, 0x4AB6 = 254), event 10 (5,1) a secret-door search, events 24 and 25 nothing.
+- **Five tries from `s17door` (p23a3-p23a7, seeds 23230003-07): the party destroyed every time in the first fight**,
+  the horde (56 figures; at the wipe 16-23 still standing). **Deferred** (lane decision, as Sokal's event 9): events 9,
+  20 and 11. Consequence: 0x4A8C (the Bivant commission that opens the Buccaneers' base, 6:25 12,31) stays 0 (board,
+  to design).
+- **The same fight in ours** (`segment.py p23a4 begin end --start=p23a3_s17door --tplog`, `p23/p23a4.cmpdraws.txt`):
+  **draws identical to 16203 of 26521**, and ours loses too (THE PARTY HAS FALLEN). At 16204 a KOBOLD LEADER shoots BRAM
+  "from behind": d20 = 15 hits in ours (needs 15), misses in the original (it shoots again: 19, then d6). To Combat.
+
+**Segment 18 (`kobold_king` -> `band1`)** (plan `plans/p23_c34d_18_band1.plan`, run p23b1 from `p2start/p23a3_s17door`):
+`kobold_king` taken at the door (the deferred state), out by 10,15, the town (**`s18a`, `s18t`**), 2:20, 8:29, 1:18,
+7:26 2,20 and the step W onto 6:25 14,20 W, `cure`: **`band1`**. Nobody lost, everyone at full HP. Against the bot's
+`band1`: 81 differences; new 4A8C 0 / 255, 4A8D 0 / 6, 4AB6 0 / 255 (the kobold king), 4AC1 6 / 7.
+
+**In ours (on 122d6fb, main chat 57):**
+- p22a4 (segment 14, the cabinet's trap roll; main's (d) fix): **draws identical through all of ours' 7942** (was 5473),
+  86 differences down to 5 (4AFA-4AFF: the tail seen in every segment). Main's PARTY_CHECK fix confirmed.
+- Segment 16: p22c4 identical to **1744** of 16466: a fleeing KOBOLD LEADER, after its eight run moves (d2s at 0xB492),
+  shoots DORN twice in ours (d6 target, d20 d20), the original goes on to the next round's initiatives; ours then ends
+  the fight where the original plays on (to Combat). p22c5 parts at 1163 (a QUICK caster's spell pick: the Alt-M timing
+  below), p22c7 at 162 and p22c8 at 49 (the wilderness clutter, Player 21's (a)).
+
+**Tools:** `segment.py` sends ours `magicat=<draw>` for a fight's Alt-M (Combat Chat 25's request: the original reads
+the harness's Alt-M some computer turns late): from `OP_MAGICAT=<draw>,<draw>,...` (one per Alt-M of the run in turn,
+`-` for a plain `magic`), or for a `begin` replay from the trace's `MAGIC 1 between draws <a> and <b>` lines (the lab's
+`trace.py` is now the repo's, which prints them). Checked only to the point that ours takes the key: p21a3 with
+`OP_MAGICAT=2987` put 2987 on the first Alt-M, which belongs to fight 1 (the original's MAGIC on by 949 there), so it
+parted at 950. The per-fight values from the old trace (the last spell weighing with no list before the first with
+one): fight 1 (from draw 2) 928, fight 2 (from 1985: 1:24's orcs) 2987; the rest not worked out. Stopped there (the
+Lead's stop).
+
+Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdiff.txt`, `ecl8_13.txt`, `ecl3_0.txt`,
+`trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
+`.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
+
 ## Player 22 (2026-11-18): segments 14 to `kovel`, 15 to `band3`, 16 to `kobold_caves`; segments 13 and 14 in ours
 
 **Segment 14 (`library2` -> `kovel`)** (plan `plans/p22_c34d_14_kovel.plan`, lab `p22/seg14.plan`): out of the library
