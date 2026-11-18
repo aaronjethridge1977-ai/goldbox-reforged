@@ -590,8 +590,9 @@ func _draw_original(field: Image) -> void:
 	# Bottom lines.
 	if _aim_rows_kept and _row24_msg == "":
 		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
-		g.text(0, 24, _kept_prompt, MAGENTA)
-		g.menu_line(24, _kept_items, _kept_prompt.length() + (0 if _kept_prompt == "AIM:" else 1), _kept_lit)
+		if _kept_prompt != "":
+			g.text(0, 24, _kept_prompt, MAGENTA)
+			g.menu_line(24, _kept_items, _kept_prompt.length() + (0 if _kept_prompt == "AIM:" else 1), _kept_lit)
 		g.forget_menu(24)
 	elif _announcing:
 		g.forget_menu(24)
@@ -1011,17 +1012,20 @@ func _show_messages() -> void:
 			# An announced cast (CASTS A SPELL shown before the aim): its sound (GAME.OVR 0x27E18, after the
 			# aim) and its flight, the panel kept; the sound cut as at a CASTS A SPELL line's end (0x27E56;
 			# 0.31 s in DOSBox when nothing flies).
-			if _cast_sound > 0:
-				Speaker.play(_cast_sound, true)
-				_cast_sound = 0
+			var snd := _cast_sound
+			_cast_sound = 0
 			if not _spell_flight.is_empty():
+				if snd > 0:
+					Speaker.play(snd, true)
 				var sf := _spell_flight
 				_spell_flight = {}
 				_fly(sf.from, sf.to, [5, 133], 240.0)
 				await flight_done
-			else:
-				await get_tree().create_timer(0.31).timeout
-			Speaker.play(0xFF)
+				Speaker.play(0xFF)
+			elif snd > 0:
+				# Nothing flies: the spell's first line follows at once (DOSBox: Sleep's ~0.2 s after TARGET,
+				# Mirror Image's 0.06 s after its SPELL line), the sound cut on its own.
+				Speaker.play(snd, true, 0.31)
 			continue
 		if msg.begins_with("SPELL: "):
 			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
@@ -1762,7 +1766,8 @@ func _begin_spell(id: int, item: GameItem) -> void:
 	_spell_id = id
 	_use_item = item
 	_spell_picks = []
-	if _combat.magic.aim_kind(_spell_id) == "self":
+	var self_spell := _combat.magic.aim_kind(_spell_id) == "self"
+	if self_spell and item != null:
 		_spell_cell = _combatants[_combat.active].cell
 		_finish_cast()
 		return
@@ -1783,6 +1788,12 @@ func _begin_spell(id: int, item: GameItem) -> void:
 				await messages_shown
 		_announcing = false
 		if _combat == null or _combat.active != me:
+			return
+		if self_spell:
+			# A spell on the caster: no aim; SPELL:<NAME> on row 23 under its lines (DOSBox, Combat Chat 23: Brother
+			# Sean's Mirror Image, CASTS A SPELL, then SPELL:MIRROR IMAGE with IS DUPLICATED, row 24 empty).
+			_spell_cell = _combatants[me].cell
+			_finish_cast()
 			return
 	_casting = "aim"
 	_start_aim("spell")
@@ -1837,11 +1848,11 @@ func _finish_cast() -> void:
 	var me: int = _combat.active
 	var announced := _announced
 	_announced = false
-	_aim_rows_kept = announced and paced() and (_cmode == "aim" or _cmode == "manual")
+	_aim_rows_kept = announced and paced() and _cmode in ["aim", "manual", "announce"]
 	if _aim_rows_kept:
-		_kept_prompt = "AIM:" if _cmode == "aim" else "(USE CURSOR KEYS)"
-		_kept_items = _bottom_menu()
-		_kept_lit = _lit(_kept_items)
+		_kept_prompt = {"aim": "AIM:", "manual": "(USE CURSOR KEYS)"}.get(_cmode, "")
+		_kept_items = _bottom_menu() if _kept_prompt != "" else []
+		_kept_lit = _lit(_kept_items) if _kept_prompt != "" else 0
 	_casting = ""
 	_aiming = false
 	_cmode = "menu"
