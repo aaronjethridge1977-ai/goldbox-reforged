@@ -1848,15 +1848,13 @@ func _try_move(direction: int) -> void:
 		var open := map.wall(_pos.x, _pos.y, direction) == 0 or map.door(_pos.x, _pos.y, direction) != 0
 		var off := next.x < 0 or next.y < 0 or next.x >= GeoMap.SIZE or next.y >= GeoMap.SIZE
 		_vm.write_byte(EclVM.LEAVING_MAP, 1 if off and open else 0)
-		# The original writes the square it stands on to 0x49F0/0x49F1 at the attempt, before
-		# the on-move script: a refused step leaves it the current square (5:3's gate, check 24).
-		# A step off the map that leaves the area keeps the square before (8:16's south edge
-		# into the wilderness: check 7); one the on-move script stops gets the current square
-		# too, in _finish_move (4:21's boat, NO: check 45).
+		# The original writes the square it stands on to 0x49F0/0x49F1 after the on-move script,
+		# unless that left the area (GAME.OVR 0x4199 on-move, 0x41A1 NEW_ECL: the arrival; else
+		# 0x41B9-0x41CE): a refused step leaves it the current square (5:3's gate, check 24;
+		# 4:21's boat, NO: check 45); a step whose on-move leaves the area keeps the square
+		# before (8:16's south edge into the wilderness: check 7; a jump save's step: check 54).
+		# Written in _after_vm before _finish_move.
 		_step_off_map = off
-		if not off:
-			_vm.write_byte(EclVM.PREVIOUS_X, _pos.x)
-			_vm.write_byte(EclVM.PREVIOUS_Y, _pos.y)
 		_vm.clear_output()
 		_step_from = _pos
 		_vm.start(0)
@@ -2014,10 +2012,8 @@ func _finish_move(direction: int) -> void:
 	_pending_move = -1
 	if _vm.read_byte(EclVM.MOVEMENT_BLOCK) == 255:
 		# A stopped step off the map leaves the party in the area: the square it stands on is
-		# the previous square, as for any refused step (DOSBox, 4:21 8,15 S, the boat's NO: 15).
-		if _step_off_map and _step_from.x >= 0 and not _vm.on_overland:
-			_vm.write_byte(EclVM.PREVIOUS_X, _step_from.x)
-			_vm.write_byte(EclVM.PREVIOUS_Y, _step_from.y)
+		# the previous square, as for any refused step (DOSBox, 4:21 8,15 S, the boat's NO: 15;
+		# written in _after_vm).
 		_step_off_map = false
 		# The on-move script stopped the step. If it moved the party itself (Valjevo's tower
 		# stairs: 3,6 south down to 3,8), the square it put them on runs its event, as in
@@ -2435,6 +2431,11 @@ func _after_vm() -> void:
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
+		# The step's on-move is done without leaving the area: the square of the attempt is
+		# the previous square (GAME.OVR 0x41B9; see _try_move's note).
+		if _step_from.x >= 0 and not (_step_off_map and _vm.on_overland):
+			_vm.write_byte(EclVM.PREVIOUS_X, _step_from.x)
+			_vm.write_byte(EclVM.PREVIOUS_Y, _step_from.y)
 		_finish_move(_pending_move)
 	elif _arrival_pending and _vm.state == EclVM.State.DONE:
 		# The arrival's init has ended after stopping for the player (see _enter_script).
