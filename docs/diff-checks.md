@@ -172,6 +172,34 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 55: checks 51-55 (1:18, 7:23, 1:24, 2:15, 6:28), DIFFCHECKS 55/55; an arrival's square event after its on-move, the previous square after a step that leaves the area
+
+- **Check 51, 1:18 Podol Plaza** (`mksave.py J G 1 18 12 8 E 4AB0=1`): PLAZA AHEAD: DISGUISE (0x4A35 = 1), then the
+  square's event: 12,8's d25 (YOU SPOT A GROUP OF GOBLINS ... LAUGH TO THEMSELVES AND WALK ON), the shrine at 13,8, the
+  robed orc at 14,8: GREET, NO (escorted out to 13,8: 0x4A38 = 1, 0x4A19 = hour + 2), back onto 14,8 (nothing).
+  **DIFFERS on ab4d271** (4 differences: ours ran no event after the arrival's menu), **MATCH on 70cfcd3**.
+- **Check 52, 7:23 Yarash's pyramid** (jump to 5,1 N): the dial at 5,0, CHANGE THE SETTING? YES, COPPER (0x4A50 = 1);
+  back to 5,1, SEARCH on, Yarash's desk at 6,1: five journal entries (0x4A52 bits 64, 128). MATCH.
+- **Check 53, 1:24 on map 31** (jump onto the hay beds 10,14 W, 0x4A44 = 2): SEARCH THE BEDS (nothing), 9,14 and a bump
+  west (a d60 each), 9,15 (the beds again: 0x4A0A = 1, nothing). MATCH.
+- **Check 54, 2:15 Mendor's library** (jump onto 11,12 W): the mad fighter, PARLAY, NICE (a d4 scream), invite YES,
+  insist YES: MAD MAN joins (NPC_ADD 25). **DIFFERS on 70cfcd3** (0x49F1: ours wrote the jump step's square 14,5, the
+  original keeps the save's 14,4), **MATCH on d1279ef**.
+- **Check 55, 6:28 Zhentil Outpost** (jump to 6,0 W): the init puts the party on 7,0 S at hour 0, the escort and the
+  guard's tour (nine texts), the quarters at 5,0, east and back: WALK AROUND. MATCH.
+- **Fixed: an arrival's on-move that stops (a menu) or prints is followed by the square's event** (GAME.OVR 0x3FFF
+  on-move, 0x400E [0x49E5] unless 0x442F, a NEW_ECL): ours ended the arrival with the on-move's menu.
+- **Fixed: a step's previous square is written after its on-move, and not when the on-move leaves the area**
+  (GAME.OVR 0x4199 on-move; 0x41A1: 0x442F set, the arrival, then 0x423B; else 0x41B9-0x41CE write 0x6AAD/0x6AAE to
+  ECL cells 0x49F0/0x49F1). Ours wrote it before the on-move.
+- Break test at 51: SUBTRACT 47/51, ADD 50/51 (see the end of this section for 55).
+- Jump saves: `mksave.py J G ...` reads lab slot J: put the pristine J back first (`data/c50/slot.py
+  data/c48/slotJ_backup J game J`); 52-54's starts were made from 51's (0x4AB0 = 1 in both games' start, no effect).
+  A jump save's patched 0x49F2 survives the original's load (6:28's init then skips its placement), ours writes the
+  block on load: only a jump save can tell the two apart (a real save holds its own block there).
+- Driving the original: a key pressed while the original walks the party (6:28's tour) can be dropped; ours' replay
+  waits for idle, so the key list counts one Enter per text.
+
 ## Chat 54: checks 49 (8:27, a bump into the water at the boat) and 50 (8:16, the moat), DIFFCHECKS 50/50; the band's refused step, the wilderness box, the nomads' kobolds
 
 - **Check 49, 8:27 the boat again:** check 34's keys to the boat at overland 9,29 (shown 35,29; tpseed 11111111),
