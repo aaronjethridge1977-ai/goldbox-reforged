@@ -172,6 +172,41 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 56: Q24 (a script's menus of two or more choices: the letters only), checks 62-64 (6:19 / 6:25 Q24, 5:3 the sleeping giants, 4:10 the marble chest), DIFFCHECKS 64/64; diffcheck.sh's no-save guard
+
+- **Q24 (Jeremy, 2026-11-18): the original's keys only.** GAME.OVR's menu routine 0x8B57 (shared by MENU_HORIZONTAL
+  0x1E17, PARLAY 0x3311 and ENCOUNTER_MENU 0x2C3E) reads a key; 0x0D is taken only when its argument [bp+8] is set,
+  and then gives choice 0 (the first, never a lit one). MENU_HORIZONTAL sets it for a one-choice menu (0x1E5A:
+  PRESS <RETURN>), PARLAY (0x3370: push 0) and ENCOUNTER_MENU (0x2F18: push 0) never. Ours (`main.gd`
+  `_unhandled_input`): a script's horizontal menu of two or more choices takes its letters (digits too, ours' fallback
+  where two choices share a first letter: the original builds distinct highlight letters, 0x8A40) and the mouse;
+  Enter, keypad Enter, Space and Left / Right do nothing. One-choice, vertical and WHO menus keep Enter.
+- **Check 2's keys:** Enter (ENTER CAVE) and 2 (IGNORE CAVE) became E and I, the original's keys; resealed. With Enter
+  ignored ours had stayed at the menu and ended with 0x4A87 = 1 (the original 3).
+- **diffcheck.sh: a run that never saved is a difference** ("no save: ours.cfg unchanged by the run"). Check 2's start
+  cfg was an end-like state at the cave: a run ending in camp (F2 doesn't save there) compared equal to the original's
+  end. Every check saves (64/64). Break test at 61 with the guard: SUBTRACT 54/61, ADD 60/61.
+- **Check 62, 6:19 / 6:25 (Q24):** check 2's start and the original's end; at ENTER CAVE / IGNORE CAVE Right, End,
+  Enter, keypad Enter (nothing), E; the dragon's two pages; at the menu again Right, Enter, keypad Enter, I. Its start
+  cfg is check 32's. **MATCH on 9f5b101, 15 differences on 18c3cd1** (the old code took IGNORE by Right + Enter and
+  then camped on E). The original's end is check 2's: the ignored keys weren't replayed in DOSBox (the routine above
+  and chat 53's DOSBox observation).
+- **Check 63, 5:3 the sleeping giants:** `mksave.py J G 5 3 2 7 W`'s jump drops the original to DOS (as chat 40's
+  into 5:3), so ours took the jump and saved (ENCAMP SAVE H, renamed G), as check 24's start: 2,7 W 10:56, the hour
+  under 14 (four giants). tpseed 11111111, west onto 1,7 (its map value 39, & 31 = 7: 0xA51F): the surprise roll (0x9914:
+  PARTY_SKILL_CHECK, SURPRISE) gives AS YOU ENTER THE ROOM YOU SEE SOME SLEEPING GIANTS in both; Enter (nothing),
+  SNEAK OUT QUIETLY: back on 2,7 facing E (0x9C4B). **MATCH.** Seen (display): the original's position line keeps
+  "W" after SNEAK OUT until the screen is redrawn (the camp shows E); ours shows E at once. The awake branch
+  (seeds 22222222, 33333333, 60606063 with SEARCH on: the bucket kicked aside, THE GIANTS ... CHARGE!) ends in a
+  fight on every choice, FLEE included: left for a fight check.
+- **Check 64, 4:10 the marble chest:** check 12's real start (12,5 N; a jump into 4:10 lands at 0,4 E) with cells set
+  in the start save, read by both games: 0x4AF2 = 10 (the giant skeleton beaten), 0x4A01 / 02 / 03 / 07 = 0 (the
+  skeleton, zombie and wight squares quiet), 0x4A43 = 251 (the crypt at 12,4 done). 37 steps (route.py) to 6,6 E,
+  SEARCH on, east onto 7,6 (event 5, 0x9DDC: 0x4AF2 over 9, 0x6DCA = 1): YOU FIND A MARBLE CHEST. OPEN IT? Enter
+  (nothing), YES: THE PARTY HAS FOUND TREASURE, 5095 experience each, the treasure screen, EXIT, NO (leave the rest):
+  0x4A49 = 255, 7,6 E 11:41 (the searched step ten minutes). **MATCH.**
+- **The gate is DIFFCHECKS 64/64** (~75 s).
+
 ## Chat 55: checks 51-61 (1:18, 7:23, 1:24, 2:15, 6:28, 1:18's rest, 3:8, 5:7, 4:2, 5:4, 5:5), DIFFCHECKS 61/61; an arrival's square event after its on-move, the previous square after a step that leaves the area
 
 - **Check 51, 1:18 Podol Plaza** (`mksave.py J G 1 18 12 8 E 4AB0=1`): PLAZA AHEAD: DISGUISE (0x4A35 = 1), then the

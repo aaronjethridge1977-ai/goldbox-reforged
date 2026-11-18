@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 56:** checks 62-64 in `data/c56/chk62..64/` (`data/c56/cd/` links `game` and each; run one before joining with
+`DC_DATA=$PWD/data/c56/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`; **`cd/game` must be linked first**, or
+the driver hangs on a missing game copy until its timeout). Ours' keys at a script's menu of two or more choices are
+its letters now (Q24: Enter and the arrows do nothing there, as in the original). A start in an area whose jump drops
+the original to DOS (5:3): `mksave.py` the jump save, let ours take it and ENCAMP SAVE into an empty slot
+(`--keys=load=G,wait,Up,wait,wait,E,wait,S,wait,H,wait,wait,N`, in a /tmp copy of the checks' game), then
+`slot.py <tmp>/game H data/c56/chk<n>/start G` (leave out ours' `.GBR`). Cells in a real start save: byte
+`1 + 2 * (cell - 0x4900)` of SAVGAM (check 64 quietened 4:10's random squares that way). `route.py` takes map values:
+for 5:3 the event is the value & 31 (`R.INFO[y*16+x] & 31`), and `keys(path, facing)` wants the facing as 0-3.
+Lab slot G was backed up to `data/c56/gbak/` and put back at the end; J put back from `data/c48/slotJ_backup`.
+
 **Chat 55:** checks 51-61 in `data/c55/chk51..61/` (`data/c55/cd/` links `game` and each; run one before joining with
 `DC_DATA=$PWD/data/c55/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`). **`mksave.py J G ...` reads lab slot J:
 put the pristine J back first** (`data/c50/slot.py data/c48/slotJ_backup J game J`); after `slot.py <start> G game J`
