@@ -3,7 +3,7 @@ class_name LabHooks
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who", "temple", "ending"]
-const PREFIXES := ["order=", "memorize=", "stage=", "hp=", "foehp=", "poison="]
+const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison="]
 
 
 ## Whether `n` is one of these keys.
@@ -23,6 +23,9 @@ static func handle(main: Node, n: String) -> bool:
 	if n == "smartquick":               # SETTINGS' smarter QUICK tactics in the open fight
 		if combat._combat != null:
 			combat._combat.smart_quick = true
+	elif n.begins_with("magicat="):     # magicat=<draw>: MAGIC ON at the first computer turn from that draw on (Combat Chat 25)
+		Combat.magic_at_draw = int(n.trim_prefix("magicat="))
+		return true
 	elif n.begins_with("order="):       # order=<member>:<0-4>: B3's standing order (SmartQuick.ORDER_NAMES)
 		var a := n.trim_prefix("order=").split(":")
 		main._party[int(a[0])].quick_order = int(a[1])

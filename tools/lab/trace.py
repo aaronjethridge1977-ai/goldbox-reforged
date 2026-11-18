@@ -142,11 +142,12 @@ def holddump(r, base):
         row = rd(ds + 0x60DB + y * 0x32 + (0 if full_grid else 22), 50 if full_grid else 14)
         print("HOLD grid %2d %s" % (y, " ".join("%2d" % b if b else " ." for b in row)), flush=True)
     recs = {}
-    for i in range(1, NPOS):
+    nh = int(os.environ.get("HOLDN", NPOS))     # Combat Chat 25: HOLDN=<n> figures (the nomads' fight has 54)
+    for i in range(1, nh):
         off, seg = struct.unpack("<HH", rd(ds + 0x65B9 + 4 * i, 4))
         if seg:
             recs[(seg, off)] = i
-    for i in range(1, NPOS):
+    for i in range(1, nh):
         off, seg = struct.unpack("<HH", rd(ds + 0x65B9 + 4 * i, 4))
         if not seg:
             continue
@@ -157,6 +158,13 @@ def holddump(r, base):
         to, ts = struct.unpack_from("<HH", cr, 0xA)
         print("HOLD %2d %-15s target %-2s %s | +10c %s" % (i, name, recs.get((ts, to), "-" if not ts else "?"),
               cr.hex(" "), rd(rec + 0x10C, 0x14).hex(" ")), flush=True)
+        if os.environ.get("HOLDCC"):     # Combat Chat 23: the readied weapon (+0xCC far pointer) and the hands bytes
+            wo, wsg = struct.unpack("<HH", rd(rec + 0xCC, 4))
+            line = "HOLDCC %2d %-15s +0xCC %04x:%04x" % (i, name, wsg, wo)
+            if wsg:
+                it = rd(base + wsg * 16 + wo, 0x40)
+                line += " item %s | type %d" % (it.hex(" "), it[0x2E])
+            print(line + " | +0xC0 %s" % rd(rec + 0xC0, 0x18).hex(" "), flush=True)
         # Its standing effects (Combat Chat 4): the list at record +0x7F (far pointer), 9-byte
         # nodes: type, minutes (u16), power, next (far pointer at +5) (START.EXE 0xBA:0x2199).
         fx = []
@@ -278,6 +286,7 @@ if __name__ == "__main__":
             keys.key(k)
         pos_addr = r.psp + 0x100 + (0xC7C) * 16 + 0x5F2B     # DS:5F2B, 4 bytes a combatant: x, y
         last_pos = None
+        last_magic, magic_c, last_c = None, 0, 0
         # HOLD=<n>: stop the original just before it writes draw n (the reader takes no more
         # than n - 8, so the stub waits there), print the fight state (holddump), then go on.
         # Several: HOLD=4818,4819.
@@ -312,6 +321,17 @@ if __name__ == "__main__":
                     r.m.seek(r.psp + 0x100 + 0xC7C * 16 + 0x6718); near = r.m.read(3 * 12)
                     extra = "  list=%s near=%s" % (list(lst), [tuple(near[3 * i:3 * i + 3]) for i in range(1, near[2] + 1)] if near[2] < 12 else "?")
                 print("%5d %04x:%04x %-11s n=%-4d -> %d%s" % (c, cs, ip, where, n, (hi % n) if n else 0, extra), flush=True)
+                last_c = c
+            # Combat Chat 25: MAGIC ON / OFF (DS:0x6E30, Alt-M; 0 at every fight's start, GAME.OVR 0xE457) as it
+            # changes, between the last draw printed before and the last printed now (the original reads an
+            # injected Alt-M at a later computer turn, a real-time matter): segment replays send ours
+            # magicat=<from + 1>.
+            r.m.seek(r.psp + 0x100 + 0xC7C * 16 + 0x6E30); mg = r.m.read(1)[0]
+            if mg != last_magic:
+                if last_magic is not None:
+                    print("MAGIC %d between draws %d and %d" % (mg, magic_c, last_c), flush=True)
+                last_magic = mg
+            magic_c = last_c
             cells = [(pb[4 * k], pb[4 * k + 1]) for k in range(NPOS)]
             if cells != last_pos:
                 if last_pos is not None:

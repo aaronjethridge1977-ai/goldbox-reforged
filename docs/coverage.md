@@ -362,7 +362,7 @@ What can happen to a character (status byte 0x10C and the effect list).
 | Aging (Haste) | built |  | a year once per Haste |
 | Magic resistance (Tyranthraxus 15%) | checked | yes | the final fight; see monster power 0x6a (Combat Chat 4) |
 
-### Combat rules (9 checked)
+### Combat rules (10 checked)
 
 How a fight's turns run, beyond spells, items and powers (Combat Chat 7, each from GAME.OVR and matched roll for roll).
 
@@ -371,6 +371,7 @@ How a fight's turns run, beyond spells, items and powers (Combat Chat 7, each fr
 | The computer's choice of weapon (QUICK members, monsters) | checked | yes | GAME.OVR 0xBF8A, the rating 0xBE4D: dice count x size, + 8 a plus, + 2 a point of damage bonus, + (ITEMS byte 5 - 1) x 2 for a launcher (javelins are flagged one too), + 3 one-handed, kept in a byte; the best missile weapon if it rates over half the best hand weapon, has ammunition and no enemy is adjacent (or it works in melee). Not built (rare): item type 85's rating, items marked in bytes 61/62, more than 3 hands in use. 6:1's run for the gate |
 | The sweep (a fighter against level-0 enemies) | checked | yes | GAME.OVR 0x1367D "<NAME> SWEEPS": a character with a race and fighter levels (record 0x6B = record 0x98, START.EXE 0xBA:0x1003), beside more level-0 enemies (record 0x73 = 0) than its attacks, strikes up to its fighter level of them once each, the target first; after it the computer's turn loop picks a target once more (0xAD72). 6:1's buccaneers |
 | Free attacks on a figure leaving | checked | yes | in the order of the mover's reach-1 list, nearest first (0x130AD, 0xBA:0x2433) |
+| A blow or shot at a helpless figure (asleep, held, choking) | checked | yes | slays it, no dice: "SLAYS HELPLESS ... WITH ONE CRUEL BLOW", HP + 5 damage, every attack of the turn spent; a missile still flies and one is used (the attack routine 0x13C01 tests 0xBA:0xB73 first; DS:0x6E2D). Seen in p19e6 (a nomad's arrow at a sleeping kobold, draw 21571) |
 | Casting time and the caster's attacks | checked | yes | BEGINS CASTING only lowers the initiative (0x14C0F); a caster whose spell a wound spoils still strikes at its later turn |
 | The computer's approach: its first direction | checked | yes | from the mover's own square to the target's (GAME.OVR 0x14E38 at 0xB47D; a large figure's first cell), then the pattern's turns. The troll fight |
 | The computer's area spells weighed (Sleep, Stinking Cloud, Fireball) | checked | yes | refused when any enemy in range has a figure of the caster's side within the area round the enemy's own square (0xAEAB, 0xAE15). The troll fight: Bakshi's Sleep beside an ogre |

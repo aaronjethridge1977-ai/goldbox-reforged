@@ -74,6 +74,10 @@ var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
 var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
 var magic_on := false                # Alt-M: the party's QUICK members cast (the original's DS:0x6E30)
+## Lab (Combat Chat 25): `magicat=<draw>` turns MAGIC ON at the first computer turn opening at or
+## after that draw: a replay's Alt-M lands in the original when its harness's key arrives, a real-time
+## matter (p18b7: read after CEDRIC's weighing at draw 989, not at the turn it was sent).
+static var magic_at_draw := -1
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
 ## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
 ## spells (0xB105) are not stopped.
@@ -660,15 +664,20 @@ func shoot(i: int, j: int) -> void:
 		magic.reveal(am)
 		ac = magic.armour(tm, (tm.rear_ac if behind else tm.ac)) - penalty
 		bonus = magic.hit_bonus(am, tm)
+		# A helpless target (asleep, held, ...) is slain by the shot, no dice: the attack routine
+		# (GAME.OVR 0x13C01) tests it first (0xBA:0xB73) for missiles as for blows, after the flight
+		# (0x14EAB); one missile is counted (DS:0x6E2D, spent at 0x141EF) and both attack slots
+		# cleared (Combat Chat 25: p19e6 draw 21571, a nomad's arrow at a sleeping kobold).
+		if CombatSpells.held(tm) and am.shots_left() > 0:
+			_spend_shot(am)
+			a.attacks = 0
+			message.emit("%s SLAYS HELPLESS %s WITH ONE CRUEL BLOW" % [am.name, tm.name])
+			_hurt(j, tm.hp + 5)
+			return
 	var how := " (FROM BEHIND)" if behind else ""
 	while a.attacks > 0 and not t.down and am.shots_left() > 0:
 		a.attacks -= 1
-		var gone := am.use_shot()
-		if gone != null and types != null:
-			if (types.flags(gone.type) & 0x14) == 0x14:
-				var copy := gone.copy()
-				copy.name = gone.name
-				dropped.append(copy)
+		var gone := _spend_shot(am)
 		var need: int = am.thac0 - ac - bonus
 		need -= SpecialAffects.hit_bonus(am, tm)
 		need -= script_hit_mod(am)
@@ -698,6 +707,18 @@ func shoot(i: int, j: int) -> void:
 			am.recalculate(types)
 	if not am.missile_ready or am.shots_left() <= 0:
 		a.attacks = 0
+
+
+## One missile used (thrown ones land on the field, picked up after the fight). Returns the item
+## the shot came from (null: the launcher's own, e.g. a sling's stone).
+func _spend_shot(am: PartyMember) -> GameItem:
+	var gone := am.use_shot()
+	if gone != null and types != null:
+		if (types.flags(gone.type) & 0x14) == 0x14:
+			var copy := gone.copy()
+			copy.name = gone.name
+			dropped.append(copy)
+	return gone
 
 
 # --- The computer's choice of weapon -----------------------------------------------------
@@ -2047,6 +2068,11 @@ func ai_act() -> bool:
 	if c.down:
 		return false
 	if not c.get("ai", false):
+		# Lab (`magicat=<draw>`): the original read the replay's Alt-M at this turn's opening poll
+		# (GAME.OVR 0xABDC calls 0xBB81, before the item and spell weighing).
+		if magic_at_draw >= 0 and TpDice.on and TpDice.calls >= magic_at_draw:
+			magic_at_draw = -1
+			magic_on = true
 		c.powers_done = false
 		_ai_begin(active)
 		_turn_start_powers(active)

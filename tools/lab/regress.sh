@@ -88,18 +88,18 @@ run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wa
 # Combat Chat 24: the nomads' kobold waves (Player 20's p20a3, 7:17 from s11c to s11k: walk to the camp at 0,0 W, rest,
 # three waves; the original's trace cut at s11c). The approach cells 0x6DC0 / 0x6DC1 (SPRITE_START 0,2,0, then
 # ENCOUNTER_MENU 0, [6DC0]): 36 of the 56 kobolds seated two squares ahead (ours seated 48 at distance 0).
-# A segment replay (~4 min; needs the lab's p20a3 setup: logs/p20a3.*, .lab/player/saves/p20a3, its index lines).
+# A segment replay (~13 min: ours plays it in real time, as the original's 738 s; needs the lab's p20a3 setup: logs/p20a3.*, .lab/player/saves/p20a3, its index lines).
 if [ $WHAT = ours ]; then
   chmod u+w /home/aaron/gbr/combat_lab/logs/p20a3.segment_* 2>/dev/null
-  OP_SEG_TIMEOUT=600 combat18/seg.sh p20a3 s11c s11k
+  OP_SEG_TIMEOUT=1200 combat18/seg.sh p20a3 s11c s11k   # Combat Chat 25: 600 s cut the third wave (the original takes 738 s)
   python3 cmpdraws.py traces/seg_p20a3_nomads.txt logs/p20a3.segment_s11c-s11k.txt > /home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt 2>&1
   combat16/restore_saves.sh > /dev/null 2>&1
-  # Ours' replay sometimes stalls in the third wave (HASSAD's side, draw 27583, waiting at low CPU: open, Combat Chat 24);
-  # draws identical to ours' end past the second wave (26916) count as a match.
+  # Combat Chat 24's "stall" in the third wave was the old 600 s limit (Combat Chat 25: with 1200 s identical, all 37697);
+  # a slower run cut by the limit: draws identical to ours' end past the second wave (26916) still count as a match.
   r=/home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt
   n=$(grep '^original:' $r | sed 's/.*ours: //'); fd=$(grep -o 'first difference at draw [0-9]*' $r | grep -o '[0-9]*$')
   if grep -q "^draws: identical" $r; then v=MATCH
-  elif [ -n "$fd" ] && [ "$fd" = "$((n + 1))" ] && [ "$n" -gt 26916 ]; then v="MATCH (identical to ours' end, $n: the third wave's stall)"
+  elif [ -n "$fd" ] && [ "$fd" = "$((n + 1))" ] && [ "$n" -gt 26916 ]; then v="MATCH (identical to ours' end, $n: cut by the time limit)"
   else v="DIFFERS: $(grep VERDICT $r)"; fi
   echo "seg_p20a3_nomads: $(grep '^original:' /home/aaron/gbr/combat_lab/tmp/reg_seg_p20a3.txt) VERDICT: $v"
 fi
