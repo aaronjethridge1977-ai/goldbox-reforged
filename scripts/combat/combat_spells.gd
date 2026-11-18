@@ -173,14 +173,24 @@ func image_die(tm: PartyMember) -> void:
 		c.roll(1, (int(a.value) >> 4) + 1, "%s's images" % tm.name)
 
 
-## A spell aimed at a figure with mirror images may strike an image instead (0xF61B with a spell
-## in progress). Not yet called from the spells (open).
-func image_takes_it(tm: PartyMember) -> bool:
+## Spell handlers that mark their targets as an area's (DS:0x6820 = 1 first thing: GAME.OVR 0x28533
+## Sleep, 0x28B29 Stinking Cloud, 0x29087 (36), 0x2939D (41, 46), 0x29683 Fireball and the Necklace's).
+const AREA_HANDLERS := [21, 34, 36, 41, 46, 47, 64]
+
+
+## Magic damage on a figure with mirror images (Combat Chat 21): effect 0x1C's handler (GAME.OVR 0xF61B)
+## is the last of the magic damage list (category 6, dispatched by the damage routine 0x2C22E before a
+## save halves it). It rolls d(images + 1) every time; above 1 an image takes the spell instead (LOST AN
+## IMAGE, no damage, the last image ends the effect) only when the spell was aimed at picked figures:
+## DS:0x6820 is 0 there and 1 for an area's aim (0x14A00, 0x14AC0) or the handlers above.
+func image_takes_it(tm: PartyMember, id: int) -> bool:
 	var a := _affect(tm, EFFECT_MIRROR)
 	if a.is_empty():
 		return false
 	var images: int = int(a.value) >> 4
 	if c.roll(1, images + 1, "%s's images" % tm.name) <= 1:
+		return false
+	if aim_kind(id) == "area" or id in AREA_HANDLERS:
 		return false
 	images -= 1
 	c.message.emit("%s LOST AN IMAGE" % tm.name)
@@ -748,6 +758,8 @@ func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 	if dmg > 0 and (kind & SpecialAffects.MAGIC) and SpecialAffects.magic_resists(t, table.level(id),
 			func(): return c.roll(1, 100, "%s resists" % t.name)):
 		dmg = 0
+	if image_takes_it(t, id):
+		return                  # the damage routine prints nothing for 0 damage (0x2C26A)
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return
