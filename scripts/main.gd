@@ -1179,9 +1179,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_vm.write_byte(SEARCH_FLAG, 1)
 				_sync_position_to_vm(_facing)
 				_vm.clear_output()
+				# GAME.OVR 0x4136-0x416D: the flag is 1 for the whole of the square's script, menus and
+				# texts too, and goes back to SEARCH's bit when it ends (chat 63: 4:21's elf skeleton
+				# tests it after a PRESS RETURN: the pouch's scroll; ours put it back at the first stop).
+				_look_flag_after = 1 if _searching else 0
 				_vm.start(1)
-				if not _searching:
-					_vm.write_byte(SEARCH_FLAG, 0)
 				_after_vm()
 				# P67 (chat 35, DOSBox 7:17 6,14: L on a square with nothing shows nothing new
 				# and the place line's clock moves 10 minutes at once): redraw it now, not at
@@ -2477,6 +2479,7 @@ func _after_vm() -> void:
 			_typed.grab_focus()
 			return
 		EclVM.State.NEW_ECL:
+			_end_look()
 			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
 			var set_no := _vm.read_byte(EclVM.FILE_SET)
 			_by_new_ecl = true
@@ -2485,6 +2488,7 @@ func _after_vm() -> void:
 			return
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
+	_end_look()
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		# The step's on-move is done without leaving the area: the square of the attempt is
 		# the previous square (GAME.OVR 0x41B9; see _try_move's note).
@@ -2509,6 +2513,13 @@ func _after_vm() -> void:
 			# DOSBox: 1:18's PLAZA AHEAD menu, DISGUISE, then 12,8's d25 and the goblins).
 			_arrival_square_event()
 			_after_vm()
+
+
+## A LOOK's script has ended (or left the area): 0x6DCA goes back to SEARCH's bit (GAME.OVR 0x416D).
+func _end_look() -> void:
+	if _look_flag_after >= 0:
+		_vm.write_byte(SEARCH_FLAG, _look_flag_after)
+		_look_flag_after = -1
 
 
 ## NPC_ADD: the monster record joins the party as an NPC (the computer runs them in
@@ -2788,6 +2799,7 @@ func _start_event_fight() -> void:
 
 var _duelist: PartyMember = null
 var _arena := false
+var _look_flag_after := -1     # a LOOK's script is running: 0x6DCA's value for when it ends
 var _battle_begins := false    # row 24 says A BATTLE BEGINS... for a moment before a fight (Combat)
 var _ending: EndingScreen
 
