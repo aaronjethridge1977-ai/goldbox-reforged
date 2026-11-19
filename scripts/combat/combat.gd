@@ -652,8 +652,8 @@ func shoot(i: int, j: int) -> void:
 	a.target = j
 	_note_attack(a, t)
 	if t.received < 3:
-		t.dir = dir_between(t, a)
-	var behind: bool = t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4
+		t.dir = face_dir(t, a)
+	var behind: bool = t.received > 1 and face_dir(a, t) == t.dir and t.turned > 4
 	a.dir = dir_between(a, t)
 	a.moves = 0
 	var reach: int = range_of(a, t)
@@ -1039,6 +1039,14 @@ func dir_between(a: Dictionary, b: Dictionary) -> int:
 	return wedge_dir(pr[0], pr[1])
 
 
+## The direction the original's facing rules use (GAME.OVR 0x14E38 from 0x13FF1, 0x1407F, 0x13DDC, 0x14D6F):
+## from a's own cell to b's (DS:0x5F27 / 0x5F28, a large figure's anchor), not their closest cells
+## (Combat Chat 28: the troll fight, seed 98e616ec draw 2972: the original's troll faced 5 and had turned 4,
+## so PHINEAS's blow was a plain one; ours, from the closest cells, had it facing 6, turned 5, struck from behind).
+func face_dir(a: Dictionary, b: Dictionary) -> int:
+	return wedge_dir(a.cell, b.cell)
+
+
 ## Range from a to b in squares, from their closest cells.
 func range_of(a: Dictionary, b: Dictionary) -> int:
 	var pr := closest(a, b)
@@ -1206,7 +1214,7 @@ func free_attacks(i: int, to: Vector2i) -> void:
 ## and how far they have turned it), before the attack is made.
 func _note_attack(a: Dictionary, t: Dictionary) -> void:
 	t.received += 1
-	var diff := (dir_between(t, a) - int(t.dir) + 8) % 8
+	var diff := (face_dir(t, a) - int(t.dir) + 8) % 8
 	if diff > 4:
 		diff = 8 - diff
 	t.turned = (t.turned + diff) % 8
@@ -1234,8 +1242,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		# third attacker of the round, hits his rear AC 56; a probe in the to-hit showed it).
 		_note_attack(a, t)
 		if t.received < 3:
-			t.dir = dir_between(t, a)
-		if t.received > 1 and dir_between(a, t) == t.dir and t.turned > 4:
+			t.dir = face_dir(t, a)
+		if t.received > 1 and face_dir(a, t) == t.dir and t.turned > 4:
 			behind = true
 	a.dir = dir_between(a, t)
 	a.moves = 0
@@ -1501,7 +1509,7 @@ func _can_backstab(a: Dictionary, t: Dictionary) -> bool:
 		return false
 	if am.weapon != null and not am.weapon.type in BACKSTAB_WEAPONS:
 		return false
-	return int(t.received) > 1 and dir_between(a, t) == int(t.dir)
+	return int(t.received) > 1 and face_dir(a, t) == int(t.dir)
 
 
 ## Ends the active combatant's turn.
