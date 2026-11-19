@@ -1089,8 +1089,14 @@ func _exec(ins: Dictionary) -> void:
 				_:
 					_note("call %04X" % int(a[0].value))
 		"CLOCK":
-			# Pool of Radiance's form: one operand, minutes (its forced walk passes one a step).
-			minutes_passed += GameClock.add_minutes(self, _value(a[0]))
+			# GAME.OVR 0x3807 (chat 64): the handler reads its operand, then fetches the value of
+			# operand number [bp-1], a stack byte it never sets (what the previous handler left,
+			# as SPELL's flag, chat 62), and adds that many minutes (0x241A1, unit 1 = 0x49C7).
+			# Pool's only CLOCK (7:17 0x9D37, the nomads' escorted walks) always follows a GOSUB,
+			# and there the slot read holds 0: no time passes (DOSBox: 13 + 5 steps, the clock
+			# cells unchanged; differential check 94). Other cases keep the operand (not seen).
+			if prev_op != "GOSUB":
+				minutes_passed += GameClock.add_minutes(self, _value(a[0]))
 		"GOSUB":
 			stack.append(pc)
 			_jump(a[0])

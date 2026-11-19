@@ -172,6 +172,115 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; check 94, DIFFCHECKS 94/94
+
+**How the table was made.** `~/gbr/checks/diffcheck.sh` copied with `--coverage=/tmp/opcov/cov/$n.json` added to ours'
+command line (main.gd's dev coverage option, M6: each block's instruction offsets that ran), all 93 checks played
+(93/93), then lab `data/c64/opcov.py <cov dir> data/c62` maps each offset to its opcode through chat 62's listings
+(address = 0x9900 + offset). "Sites": how often the opcode appears in Pool's 29 blocks; "run": how many of those
+sites ran in at least one check; "checks": the checks whose replay ran it (ours ran it and the end state matched the
+original's). A check only compares state (ECL 0x4900-0x4AFF, the party, the place, the clock), so a handler whose
+effect is display only (PICTURE, SPRITE_*, PRINT_*, CLEAR_BOX, DELAY, CALL 0xBA03) is run but not judged.
+
+| opcode | sites | sites run | checks |
+|---|---|---|---|
+| ADD | 317 | 87 | 1 2 3 4 5 6 7 12 ... (61 checks) |
+| AND | 356 | 109 | 1 2 3 4 5 6 7 8 ... (90 checks) |
+| CALL | 180 | 55 | 2 3 4 5 7 10 12 13 ... (55 checks) |
+| CLEAR_BOX | 27 | 8 | 2 31 32 33 34 35 37 39 ... (13 checks) |
+| CLEAR_MON | 251 | 14 | 1 3 5 10 25 26 27 64 ... (19 checks) |
+| CLOCK | 1 | 1 | 94 |
+| COMBAT | 245 | 14 | 1 3 5 10 25 26 27 64 ... (19 checks) |
+| COMPARE | 1504 | 488 | 1 2 3 4 5 6 7 8 ... (93 checks) |
+| COMPARE_AND | 65 | 28 | 1 4 5 7 12 13 14 18 ... (39 checks) |
+| COPY_MEM | 271 | 90 | 1 2 4 5 7 10 13 15 ... (53 checks) |
+| DAMAGE | 48 | 11 | 24 25 30 47 60 69 70 87 ... (9 checks) |
+| DELAY | 188 | 31 | 4 5 13 16 21 24 30 37 ... (20 checks) |
+| DIVIDE | 29 | 9 | 4 18 51 67 71 72 73 77 ... (13 checks) |
+| ENCOUNTER_MENU | 94 | 9 | 5 6 10 13 18 71 72 73 ... (14 checks) |
+| EXIT | 985 | 172 | 1 2 3 4 5 6 7 8 ... (93 checks) |
+| FIND_ITEM | 7 | 2 | 2 59 62 |
+| GOSUB | 916 | 223 | 1 2 3 4 5 6 7 8 ... (77 checks) |
+| GOTO | 1844 | 242 | 1 2 3 4 5 6 7 9 ... (84 checks) |
+| IF_EQ | 690 | 257 | 1 2 3 4 5 6 7 8 ... (92 checks) |
+| IF_GE | 127 | 61 | 1 2 3 4 5 6 7 8 ... (92 checks) |
+| IF_GT | 281 | 65 | 1 3 4 5 6 7 12 13 ... (56 checks) |
+| IF_LE | 24 | 9 | 2 4 7 13 15 17 31 32 ... (25 checks) |
+| IF_LT | 180 | 59 | 1 4 5 7 9 12 13 18 ... (56 checks) |
+| IF_NE | 634 | 167 | 1 2 3 4 5 6 7 8 ... (90 checks) |
+| INPUT_NUMBER | 2 | 1 | 73 |
+| INPUT_STRING | 20 | 1 | 6 |
+| LOAD_AREA_DECO | 35 | 21 | 1 2 3 4 5 6 7 8 ... (70 checks) |
+| LOAD_AREA_MAP | 61 | 29 | 1 2 3 4 5 6 7 8 ... (78 checks) |
+| LOAD_CHAR | 36 | 14 | 3 4 5 18 20 30 48 51 ... (12 checks) |
+| LOAD_MON | 330 | 11 | 3 5 10 67 68 69 70 71 ... (12 checks) |
+| MENU_HORIZONTAL | 204 | 86 | 1 2 3 4 5 6 7 10 ... (74 checks) |
+| MENU_VERTICAL | 15 | 7 | 24 40 47 51 60 74 77 78 ... (13 checks) |
+| MULTIPLY | 12 | 2 | 71 72 73 77 78 79 80 84 |
+| NEW_ECL | 79 | 13 | 2 5 7 13 15 21 33 37 ... (15 checks) |
+| NPC_ADD | 8 | 1 | 54 |
+| ON_GOSUB | 37 | 12 | 1 2 7 13 15 31 32 33 ... (23 checks) |
+| ON_GOTO | 427 | 121 | 2 3 4 5 6 7 8 9 ... (91 checks) |
+| OR | 208 | 30 | 2 4 5 10 11 16 18 19 ... (23 checks) |
+| PARLAY | 41 | 5 | 6 54 59 71 72 73 86 |
+| PARTY_CHECK | 4 | 3 | 65 71 |
+| PARTY_SKILL_CHECK | 22 | 4 | 63 71 72 73 81 82 83 84 ... (9 checks) |
+| PARTY_STRENGTH | 18 | 4 | 17 38 44 51 67 71 72 73 ... (15 checks) |
+| PICTURE | 137 | 55 | 1 2 4 5 6 7 8 11 ... (61 checks) |
+| PRINT | 289 | 36 | 1 2 5 6 13 23 25 30 ... (34 checks) |
+| PRINT_CLEAR | 1401 | 278 | 1 2 3 4 5 6 7 10 ... (88 checks) |
+| PRINT_RETURN | 20 | 3 | 6 60 |
+| PRINT_RUNES | 12 | 2 | 60 |
+| PROGRAM | 4 | 1 | 5 |
+| RANDOM | 144 | 43 | 4 5 7 9 13 14 15 17 ... (55 checks) |
+| RETURN | 440 | 147 | 1 2 3 4 5 6 7 8 ... (77 checks) |
+| ROB | 14 | 6 | 72 73 74 76 93 |
+| SPELL | 1 | 1 | 90 91 |
+| SPRITE_ADVANCE | 97 | 12 | 4 13 21 51 57 68 69 70 ... (9 checks) |
+| SPRITE_OFF | 56 | 30 | 2 4 5 6 7 8 10 11 ... (58 checks) |
+| SPRITE_START | 187 | 29 | 3 4 10 11 13 16 21 28 ... (29 checks) |
+| SUBTRACT | 76 | 20 | 1 2 4 7 13 15 18 20 ... (29 checks) |
+| SURPRISE | 22 | 4 | 63 71 72 73 81 82 83 84 ... (9 checks) |
+| TREASURE | 77 | 7 | 1 25 26 27 64 76 92 |
+| WHO | 11 | 2 | 20 58 |
+| WRITE_MEM | 2341 | 553 | 1 2 3 4 5 6 7 8 ... (93 checks) |
+| WRITE_MEM_BASE_OFF | 17 | 5 | 1 4 18 90 91 |
+
+**Every one of Pool's 61 opcodes now runs in a matching check.** CLOCK was the only one with none (7:17 0x9D37, the
+nomads' escorted walks): check 94 is new. The five the Next step named: **LOAD_MON** checks 3, 5, 10, 67-71, 77, 79,
+80, 84; **CLEAR_MON** 1, 3, 5, 10, 25-27, 64, 67-71, 76, 77, 79, 80, 84, 92; **SPRITE_START** 3, 4, 10, 11, 13, 16,
+21, 28, 30, 41, 43, 51, 54, 55, 57, 59, 61, 63, 67-70, 74, 76, 81-83, 85, 87; **ENCOUNTER_MENU** (GAME.OVR 0x2C3E)
+5, 6, 10, 13, 18, 71-73, 77-80, 84, 86; **PARLAY** 6, 54, 59, 71-73, 86. **The fight's end** (ECL 0x6DE3 / 0x6DE6
+zeroed, chat 63) runs in every fight check (3, 5, 10, 67-71, 77, 79, 80, 84) but statediff doesn't compare 0x6Dxx
+and only the tavern brawl sets them: the brawl check (Combat's placement first) is its check. **LOOK's flag through
+the script** (chat 63): 4:21's elf skeleton changes no state either way (text, then PICTURE 255 / EXIT on both
+paths): no check; 7:22's corpse (0x4A00) would be one, behind its secret doors.
+
+**CALL by target** (the original acts on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E, 0xC018; GAME.OVR 0x3A36):
+0x2C90 41 of 114 sites run (checks 3, 4, 5, 10, 12, 13, 16, 17, 18, 23, ...), 0xC018 13 checks, 0xC01B 17, 0xC01E
+checks 19 and 38, 0x0806 13 checks. **Not run by any check:** 0x8000 (3:11's duel, 0x9CA6), 0x8001 (1:18's
+buccaneer challenge 0xA9D3, 8:16 0xA344): the one-against-one fights; 0x2C4E / 0x2C51 / 0xC003 / 0xC009 (7:26
+0xAD66-0xAE89 and 8:27 0xAB25-0xAB99, the bands' land-recovery loops: no-ops in the original, chat 24); 0xBA03 (a
+sound: nothing to compare).
+
+**ECL CLOCK (GAME.OVR 0x3807) passes no time after a GOSUB.** The handler reads its operand (0x74D3), then pushes
+`[bp-1]`, a stack byte it never sets, as the *operand number* to fetch (0x7609: operand slots 1..n at DS 0x7005 /
+0x7045 / 0x7085), and calls 0x241A1(that value, 1): add it to clock word 1 (0x49C7, minutes; the carries through
+DS 0x363A's limits 10, 10, 6, 24, 30, 12) and tick durations (0x23DCC). So the minutes come from whatever operand slot
+the previous handler's leftover byte names, as SPELL's stop flag (chat 62). Pool's only CLOCK (7:17 0x9D37) is
+reached only by GOSUB (0x9CF5, 0x9D2D), and there the slot holds 0: **in DOSBox the clock cells stay 10:57 through
+the 13 steps to the clearing and the 5 to the lodging** (read live with `ecl_poke.py`), and the party is in camp at
+18:57 (the script's WRITE_MEM 18 to the hour). Ours added a minute a step (18:15). `ecl_vm.gd`: CLOCK after GOSUB
+passes no time; any other CLOCK keeps its operand (not seen in Pool).
+
+- **Check 94, 7:17 the nomads' feast** (check 13's start, tpseed 11111111): Up, PARLAY, YES to the feast, seven
+  PRESS RETURNs (the escorted walks: the clearing at 9,9, then the lodging at 9,12 S), 'HERE YOU MAY REST.', camp
+  (PROGRAM 9), EXIT: 9,12 S 18:57 (the original's ENCAMP SAVE after the EXIT). Fails on the code before (18:15).
+  Three repeat runs MATCH.
+- **A coverage artefact, not the game:** blocks recorded as 2:20 hold two offsets (0x9926, 0x992C) that aren't
+  instruction starts in any Pool block (2:20's 0x9921 is a 6-byte WRITE_MEM); cause not found (no shadow VM in
+  these runs). Dev-only (M6 coverage), outside the checks' comparison; left as is.
+
 ## Chat 62: ECL SPELL and the character window's record bytes; memorized spells in statediff; the comparison flags; RANDOM 255; checks 90-93, DIFFCHECKS 93/93
 
 Read from the original's ECL dispatcher (GAME.OVR 0x3C73: the opcode in DS 0x6F7F, a near call per opcode; SURPRISE
