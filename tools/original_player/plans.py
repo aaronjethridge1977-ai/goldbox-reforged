@@ -24,6 +24,9 @@
   answer <words>|<choice>*<n>    (Player 19) given at most n times, then the next answer for <words> applies (main's
                                  bot answers a question with a LEAVE in it three times, then LEAVEs: "asked too often",
                                  4:2's chained man: FREE*3, then LEAVE)
+  shortcutwin <area> <x,y>       (Player 27, Q27 (a)) a step: the next fight that starts with the party on that square
+                                 is won by the logged shortcut (main's bot's): every monster's HP 0 and status dead at
+                                 the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
   answerfrom <words>|<choice>    (Player 16) a step of the plan: from here on this answer comes before the others
                                  (Kuto's Well: CLIMB DOWN is NO while events are left, then YES)
   map 7:26                       (Player 16) the following walks' map when it isn't the area's own GEO block (`map`
@@ -478,7 +481,7 @@ class Heal:
             raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
         if self.cure and (next_cure(M) is None or getattr(self, "nocast", False)):
             return True, None, ""
-        spent = self.prep and any(picks(m) for m in M)
+        spent = self.prep and any(picks(m, M) for m in M)
         # Player 15: at the inn the camp is already open (TO REST HERE): always go through the heal, which memorizes
         # (bot.gd _rest_at_inn rests there) and leaves the camp
         hrs = (self.until - p.g.mem.ecl(0x49C9)[0]) % 24 if self.until is not None else 0
@@ -533,9 +536,17 @@ class TripEnd:
 # Player 13: spell ids (the record's memorized bytes 0x17-0x2B, + 0x80 while being memorized) by class and level
 # (ours' SpellTable): cleric level 1 is 1-8, magic-user level 1 9-21. The bot's picks (bot.gd PICKS): level 1
 # clerics Cure Light Wounds, Cure Light Wounds, Bless in turn; magic-users Sleep, Magic Missile.
+# Player 27: all three levels, as bot.gd PICKS (Player 15 to 26 copied level 1 only: the original's casters went
+# into every fight from Sokal Keep on with their level-2 and level-3 slots empty; README "Player 27"). Ids by
+# class and level: cleric 1-8, 22-28, 36-44; magic-user 9-21, 29-35, 45-55.
 CLERIC1, MU1 = range(1, 9), range(9, 22)
-SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 15: "MAGIC MISSILE", 21: "SLEEP"}
+SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 15: "MAGIC MISSILE", 21: "SLEEP", 23: "HOLD PERSON",
+               26: "SLOW POISON", 31: "KNOCK", 32: "MIRROR IMAGE", 34: "STINKING CLOUD", 42: "PRAYER",
+               47: "FIREBALL", 48: "HASTE", 51: "LIGHTNING BOLT"}
 PICKS1 = ((CLERIC1, 0xB2, (3, 3, 1)), (MU1, 0xB5, (21, 15)))
+PICKS = ((range(1, 9), 0xB2, (3, 3, 1)), (range(22, 29), 0xB3, (23,)), (range(36, 45), 0xB4, (42,)),
+         (range(9, 22), 0xB5, (21, 15)), (range(29, 36), 0xB6, (31, 34, 32)), (range(45, 56), 0xB7, (47, 48, 51)))
+SLOW_POISON = 26
 CLW = 3
 
 
@@ -572,17 +583,23 @@ def next_cure(M):
     return None
 
 
-def picks(m):
-    """bot.gd _pick_spells for level 1: the spells to queue in the member's free level-1 slots (names)."""
+def picks(m, M=None):
+    """bot.gd _pick_spells: the spells to queue in the member's free slots of levels 1-3 (names), cleric levels
+    first; with the party M, one Slow Poison kept in the party (Chat 31's rule: the first free level-2 cleric slot
+    of a member who knows it, when nobody has one memorized or queued)."""
     if m["status"] != 0:
         return []
     out = []
-    for ids, slot, order in PICKS1:
-        used = sum(1 for b in m["mem"] if (b & 0x7F) in ids)
+    slow = M is None or any(SLOW_POISON in [b & 0x7F for b in o["mem"]] for o in M)
+    for ids, slot, order in PICKS:
+        n = max(0, m["rec"][slot] - sum(1 for b in m["mem"] if (b & 0x7F) in ids))
+        if not slow and slot == 0xB3 and n > 0 and m["rec"][0x33 + SLOW_POISON - 1]:
+            out.append(SPELL_NAMES[SLOW_POISON])
+            slow, n = True, n - 1
         known = [s for s in order if m["rec"][0x33 + s - 1]]     # the spell book: a byte per spell id
         if not known:
             continue
-        for k in range(max(0, m["rec"][slot] - used)):
+        for k in range(n):
             out.append(SPELL_NAMES[known[k % len(known)]])
     return out
 
@@ -611,6 +628,21 @@ class AnswerFrom:
 
     def next(self, p):
         p.plan.answers.insert(0, self.a)
+        return True, None, ""
+
+
+class ShortcutWin:
+    """Player 27: `shortcutwin <area> <x,y>` (Q27 (a)): arms the logged shortcut win for the next fight that starts
+    with the party on that square (game.py _shortcut_win: the monsters' HP 0 at its first poll)."""
+    def __init__(self, area, xy):
+        self.area, self.xy = area, xy
+
+    def __repr__(self):
+        return "shortcutwin %d:%d %d,%d" % (self.area + self.xy)
+
+    def next(self, p):
+        p.g.shortcut = (self.area, self.xy)
+        p.note("shortcut", "armed: the next fight at %d:%d %d,%d is won by shortcut (logged)" % (self.area + self.xy))
         return True, None, ""
 
 
@@ -1266,7 +1298,7 @@ class Plan:
             if h.get("prep") and not h.get("prep_done"):
                 # Player 15: bot.gd _prepare: _pick_spells fills the free slots, _memorize rests for them
                 for m in M:
-                    pk = picks(m)
+                    pk = picks(m, M)
                     if pk:
                         return self._memo_op(p, h, m, pk)
                 h["prep_done"] = True
@@ -1284,7 +1316,7 @@ class Plan:
                 h["phase"] = "days"
             else:
                 for m in M:
-                    pk = picks(m)
+                    pk = picks(m, M)
                     if pk:
                         return self._memo_op(p, h, m, pk)
                 if h["memo_any"]:
@@ -1293,7 +1325,7 @@ class Plan:
         # days: the bot's picks and a rest to memorize them first, then rests of min(need, 10) days
         if not h["days_memo"]:
             for m in M:
-                pk = picks(m)
+                pk = picks(m, M)
                 if pk:
                     return self._memo_op(p, h, m, pk)
             h["days_memo"] = True
@@ -1552,6 +1584,9 @@ def load(path):
         elif cmd == "answer":
             words, choice = rest.rsplit("|", 1)
             pl.answers.append((words.strip(), choice.strip(), os.path.basename(path)))
+        elif cmd == "shortcutwin":
+            ar, xy = rest.split()
+            pl.goals.append(ShortcutWin(area_of(ar), tuple(int(v) for v in xy.split(","))))
         elif cmd == "answerfrom":
             words, choice = rest.rsplit("|", 1)
             pl.goals.append(AnswerFrom(words.strip(), choice.strip(), os.path.basename(path)))

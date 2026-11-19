@@ -54,6 +54,10 @@ class Game:
         # magic_sent when the fight is over
         self.auto_magic = os.environ.get("OP_MAGIC") == "1"
         self.magic_sent = False
+        # Player 27: `shortcutwin <area> <x,y>` (Q27 (a), main's bot's logged shortcut win): ((area), (x, y)) armed by
+        # the plan; at the first poll of the next fight there, every monster's HP and status are set to 0 / dead
+        self.shortcut = None
+        self.shortcut_note = None
         self.party_size = 0
         self.beat = time.monotonic()
         self.stale = None         # (the figures' hit points, since when) while dice are drawn
@@ -116,6 +120,36 @@ class Game:
             out.append((r[1:1 + min(r[0], 15)].decode("latin1"), r[0x11B], r[0x10C]))
             o, s = struct.unpack_from("<HH", r, 0x104)
         return out
+
+    def _shortcut_win(self, site):
+        """Player 27: the logged shortcut win (Q27 (a)): every figure after the party in DS:0x5D96's list gets HP 0
+        (+0x11B), status 6, dead (+0x10C), out of the fight (+0x10D 0), no blows or spells, at the fight's first
+        poll, if the party stands where the plan armed it."""
+        (area, xy), here = self.shortcut, (self.area(), tuple(self.mem.ds(0x6AAD, 2)))
+        if here != (area, xy):
+            return
+        n = len(self.party())
+        out, i = [], 0
+        s, o = self.mem.farptr(0x5D96)
+        while s and i < 90:
+            r = self.mem.far(s, o, 0x120)
+            if i >= n:
+                out.append("%s %d" % (r[1:1 + min(r[0], 15)].decode("latin1"), r[0x11B]))
+                # HP 0, status dead, out of the fight (+0x10D: START.EXE 0xBA:0x23DB's count of enemies left; the
+                # turn order skips figures not in it); p27c1 showed HP and status alone don't stop a monster that
+                # already has its initiative, so its blows (cached dice +0x115-0x11A) and memorized spells
+                # (+0x17-0x2B) are emptied too for the rest of the round
+                self.mem.wlin(s * 16 + o + 0x11B, bytes([0]))
+                self.mem.wlin(s * 16 + o + 0x10C, bytes([6]))
+                self.mem.wlin(s * 16 + o + 0x10D, bytes([0]))
+                self.mem.wlin(s * 16 + o + 0x115, bytes(6))
+                self.mem.wlin(s * 16 + o + 0x17, bytes(21))
+            o, s = struct.unpack_from("<HH", r, 0x104)
+            i += 1
+        self.shortcut = None
+        self.shortcut_note = "SHORTCUT win at %d:%d %d,%d (Q27 (a), as main's bot's): %d monsters set to HP 0, dead, at %s: %s" % (
+            area + xy + (len(out), site, ", ".join(out)))
+        self.log(self.shortcut_note)
 
     def _nfigures(self):
         try:
@@ -193,6 +227,9 @@ class Game:
                 prev = (rows, site, box)
                 time.sleep(0.05)
                 continue
+            if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.shortcut \
+                    and len(self.party()) < self._nfigures():
+                self._shortcut_win(site)
             if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.auto_magic \
                     and not self.magic_sent \
                     and len(self.party()) < self._nfigures():
@@ -237,6 +274,9 @@ class Game:
         kind, site = self.until_waiting(timeout)
         if kind is None:
             raise Timeout("the original never waited for a key (before %r)" % k)
+        # Player 27: OP_KEYDELAY=<s>: wait that long before each key (a film for a person: texts stay readable)
+        if os.environ.get("OP_KEYDELAY"):
+            time.sleep(float(os.environ["OP_KEYDELAY"]))
         before = self.keys.read()
         self.nkeys += 1
         self.log("KEY %d %s at %s %s" % (self.nkeys, k, kind, site))

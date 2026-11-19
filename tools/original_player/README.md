@@ -1315,6 +1315,50 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; segment 28 to `stojanow`
+
+**For Jeremy** (`.lab/for-jeremy/stojanow/`: README.md, REPORT.md): two videos of the wall fight in the original at game
+SPEED 3 (p27v1: p26d2 replayed from `s28b` and its seed, every draw identical; p27v2: a FLEE try, p26e1's seed,
+identical to draw 1080), the report (the monsters' table, both parties, p26d2 round by round, what decided it), and
+two slot-H saves at 2:9 7,10 (`s28b`; `s28p` with every slot filled), both loaded in the original and in ours (0.1.5's
+6d34e55 and main 82bfafd: ours replays the fight from each draw for draw). Lab: `p27/film.sh` (a replay filmed from a log
+pattern to END), `figdump.py` (read-only: every figure's record at a fight's start, then HP each second), `ledger.py`
+(ours' fight log per round), `mons.py` (MONnCHA.DAX records), `botparty.py` (a bot checkpoint's party),
+`loadcheck.py` (boot the original on a slot).
+- **Why the party loses:** numbers (six ettins, 50 HP, AC 3, THAC0 10, two blows 2d8 / 3d6; two level-6 mages with
+  Magic Missile 3d4+3; two aides; 382 HP against ~205): p26d2 dealt 70 and lost in 5 rounds. Main's bot's stronger
+  party lost it twice in ours too.
+- **`OP_KEYDELAY=<s>`** (game.py): a pause before each key, for films a person watches; `OP_SPEED=3` is the game's
+  speed. The Alt-M (OP_MAGIC) isn't paused, so a film can meet MAGIC at another moment than the try did (p27v2).
+
+**Tool fault found: `prepare` filled only level-1 slots** (plans.py `picks`, since Player 13/15; main's bot.gd `PICKS`
+covers levels 1-3: Hold Person, Prayer; Knock / Stinking Cloud / Mirror Image; Fireball / Haste / Lightning Bolt; and
+one Slow Poison kept in the party, Chat 31). So from about Sokal Keep on the original's casters went into every fight
+with their level-2 and level-3 slots empty (at the gate CEDRIC 5 + 3, ELWEN 5 + 2 cleric and 2 magic-user, LIRA 1),
+where the bot's were full. **Fixed:** `picks(m, M)` mirrors `_pick_spells` (cleric levels 1-3, then magic-user 1-3,
+cycling the known picks; Slow Poison first in the first free cleric level-2 slot when nobody has one). Checked on the
+gate: p27a1 memorized CEDRIC Slow Poison, Hold Person x4, Prayer x3; ELWEN Hold Person x5, Prayer x2, Knock, Stinking
+Cloud; LIRA Knock (**`s28p`**). It didn't save the gate (p27a1, p27b1, p27b2 wiped: QUICK aimed Hold Person at the
+large ettins, never cast Prayer or Stinking Cloud), but every earlier deferred or lost fight (Sokal Keep's event 9,
+the kobold king) was fought short of spells the bot had.
+
+**`shortcutwin <area> <x,y>`** (plans.py, game.py `_shortcut_win`; Q27 (a), as main's bot's logged shortcut): a plan
+step that arms the next fight starting with the party on that square; at the fight's first poll every figure after
+the party in DS:0x5D96's list gets HP 0 (+0x11B), status dead (+0x10C), **out of the fight (+0x10D 0)**, no blows
+(+0x115-0x11A) and no spells (+0x17-0x2B); logged `SHORTCUT win ...` and in the summary's findings. **HP and status
+alone don't do it** (p27c1: the "dead" monsters kept their initiative and fought on; a member died): +0x10D is
+START.EXE 0xBA:0x23DB's count of enemies left (ours' combat.gd notes it). p27c2: the fight over in 3 s, nobody hurt,
+the party's XP for it as the bot's (each fighter +3346; the bot's +3668 with seven).
+
+**Segment 28 (`mopup1` -> `stojanow`): reached** (plan `plans/p27_c34d_28_stojanow.plan`, lab `p27/seg28_sc.plan`; run
+p27c2 from `p2start/p27a1_s28p`, `--after=s28p`, seed 27c10002): back in to 7,6 (FLEE, the fight comes), the shortcut
+win (**`s28w`**), YOU HAVE TAKEN THE GATE (0x4AB9 = 254, 0x4A77 = 127, as the bot's), the bot's tour (7,8 7,9 7,10 6,10
+2,12 4,14 4,5 11,5 0,0, the guard rooms up and down at 4,5 and 11,5): **`stojanow`** (2:9 11,5 N, nobody dead).
+- Against the bot's `stojanow` (`p27/stojanow.cpdiff.txt`): the gate's flags agree; new against `mopup1` only the clock's
+  words (0x49CC, 0x49F0, 0x4A62/63, the alarm's time) and 0x4A34 now agrees.
+- **The mages' two rings were left** (the bot took them): every member carries 16 items, the tool's take rule finds
+  no room.
+
 ## Player 26 (2026-11-19): segment 27 to `mopup1`; segment 28 blocked at the Stojanow Gate (6 of 6 lost); `restuntil`; 0x4A99 is the clerk's
 
 **Segment 27 (`graveyard` -> `mopup1`): reached, first try** (plan `plans/p26_c34d_27_mopup1.plan`, lab `p26/seg27.plan`;

@@ -139,6 +139,9 @@ class Player:
             raise Stop("no input wanted for 60 s (busy)")
         scr = screens.classify(st)
         st["kind"] = scr["kind"]
+        if self.g.shortcut_note:       # Player 27: a shortcut win, in the summary's findings
+            self.note("report", self.g.shortcut_note)
+            self.g.shortcut_note = None
         if scr["kind"] == "combat" and self.prev_kind not in ("combat",):
             if not self.in_fight:
                 self.fights += 1
