@@ -1240,7 +1240,9 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var stab := not free and _can_backstab(a, t)
 	var ac: int = tm.rear_ac if behind else tm.ac
 	if stab:
-		ac = tm.rear_ac + 4
+		# GAME.OVR 0x13DA8: a backstab (0x14D6F) strikes the target's record +0x112 less 2, its rear AC + 2
+		# (Combat Chat 26: p22a2 draw 4127, a thief's 10 at BRAM, rear AC 6, missed; ours had + 4 and hit).
+		ac = tm.rear_ac + 2
 	var bonus := 0
 	if magic:
 		magic.reveal(am)
@@ -1485,7 +1487,9 @@ func drain(j: int, levels: int) -> void:
 
 ## A thief's backstab (as the original): a thief with no weapon or a club, dagger or sword
 ## strikes a man-sized target from directly behind after it has been attacked more than
-## once this round: +4 to hit and damage x2 (levels 1-4), x3 (5-8)...
+## once this round: its rear AC + 2 (GAME.OVR 0x13DA8) and damage x2 (levels 1-4), x3 (5-8)...
+## (Read in 0x14D6F, not yet seen: the original also wants no body armour or leather, record +0xD4
+## type 0x32, takes weapon types 7, 8, 35-37 only, and has no size test there.)
 const BACKSTAB_WEAPONS := [7, 8, 35, 36, 37, 97]
 
 func _can_backstab(a: Dictionary, t: Dictionary) -> bool:
