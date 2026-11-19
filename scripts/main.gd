@@ -2919,12 +2919,14 @@ func _on_event_fight_finished(result: int) -> void:
 	if _arena and _duelist != null:
 		# The arena (lab 2026-11-11): no experience for the double and none of its gear;
 		# the duelist gets 100 experience per level (Thrender Grone, a 2nd-level fighter,
-		# 200; Bakshi, 1st level in three classes, 100).
+		# 200; Bakshi, 1st level in three classes, 100), through the class adjustments as any
+		# fight's share (combat lane, Combat Chat 30: main's 3:11 ready check, THRENDER GRONE at
+		# level 1 with 18 strength: 48 -> 158 in the original, ours had 148).
 		_arena = false
 		var top := 1
 		for c in 8:
 			top = maxi(top, _duelist.level_in(c))
-		_duelist.experience += 100 * top
+		_duelist.gain_experience(100 * top)
 		_after_fight([], "YOU HAVE WON THE DUEL.\n\nTHE DUELIST RECEIVES %d\n\nEXPERIENCE POINTS." % (100 * top))
 		return
 	var beaten := _combat.defeated()

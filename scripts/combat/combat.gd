@@ -1932,10 +1932,8 @@ func _speed(m: PartyMember) -> int:
 func _morale_check(i: int) -> String:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
-	if m.has_meta("arena_double"):
-		# "Normally not to the death": in the lab the arena's double ran (CONTINUE BATTLE)
-		# in both duels once it had been hurt. The original's exact trigger isn't traced.
-		return "flee" if m.hp < m.hp_max else ""
+	# The arena's double (morale 0xB2) takes this same test (Combat Chat 30, main's 3:11 ready check:
+	# ROLF hurt by 1 fought on in the original, draw 1021; ours had it run once hurt).
 	# GAME.OVR 0x0BC97 runs for every computer-run figure with morale over 127, on either side
 	# (Combat Chat 9: DIRTEN, an NPC with the party, 0x84 = 0xFF, surrenders on his first turn
 	# at 4:10 9,1 and Tyranthraxus). The side's morale (0xBDA5) can hold only a monster-side
