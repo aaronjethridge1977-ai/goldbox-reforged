@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 59: checks 68-70 (5:6 the priest of Bane: KILL THEM, ACCEPT BLESSING, LEAVE: fight checks), DIFFCHECKS 70/70
+## Chat 59: checks 68-71 (5:6 the priest of Bane: KILL THEM, ACCEPT BLESSING, LEAVE; 2:20 a patrol's RUN: fight checks), DIFFCHECKS 71/71
 
 - **Check 68, 5:6 the priest** (check 25's start with 0x4A69 bit 128 cleared: c34d's party had cleared the temple;
   lab `data/c59/chk68/`): tpseed 11111111, Left, Up, Up, Left, Up, PRESS RETURN, A PRIEST AND TWO ACOLYTES ..., KILL
@@ -190,6 +190,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **Check 70, the priest's LEAVE** (L): the fireball first, 5 Enters, QUICK. **1164 draws identical, every cell**;
   CEDRIC falls; at CONTINUE BATTLE the original holds him dying (status 5, `partyrec.py`), ours 4; both saves 4, HP 0.
   **MATCH.** (Q4: a win with a death; the check guards the state, not the verdict.)
+- **Check 71, 2:20 a slums patrol's RUN** (guards chat 57's PARTY_CHECK change): check 17's start; the seed found in
+  ours (a batch run: `load=G,tpseed=<s>,Up,wait,wait` for 60 seeds in one run, 8 s): tpseed 33330018 meets SEEDY-LOOKING
+  KOBOLDS on the first step (0x9B3A's d13 above 12; 0x9D58's menu). PARLAY, HAUGHTY (0xB2A1's 10 + d30 + [6DCF] lands
+  in 75-85): PAY / SURRENDER / RUN / FIGHT; RUN: 0xB488 `PARTY_CHECK [6C1B], 0, [6E81], [6E79], [6E79], [6E79]` leaves 0
+  in [6E79] (operand 6 written last), [9805] is above it: the fight (0xB157). QUICK: **1109 draws identical, every
+  cell**; BAKSHI down; CONTINUE BATTLE NO, 9 XP each, the treasure's EXIT, NO: 3,4 S 10:58. **MATCH; 8 differences on
+  the code before 6b2428f.**
 
 ## Chat 57: PARTY_CHECK's cells (Player 22's (d)), checks 65-67 (3:14 a door trap, 5:3 Cadorna's cell, 1:18 a rest interrupted by a fight: the first fight check), DIFFCHECKS 67/67; two fights compared draw for draw
 
