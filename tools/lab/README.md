@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 65:** checks 99-104: 99 and 100 were chat 64's / Combat 30's ready checks (`data/c64/chk_arena`, `data/c65/chk100`);
+101-104 in `data/c65/chk101..104/` (`data/c65/cd/` links `game` and each). The original's ends: `data/c65/sell/orig` (a SELL),
+`cure/orig` (camp Bless + cure; its start `cure/start`: check 26's with ARN's HP +0x11B = 5; trace `cure_orig.txt`),
+`train2/s1` (check 96 + a second TRAIN, slot G names: also check 103's base), `train2/start` / `orig` (level 2 -> 3; trace
+`train2_orig.txt`). **Camp MAGIC in the original:** the spell list's light starts on the last spell and End wraps it to the
+first. **A shop's SELL** sits under VIEW, ITEMS (not on the shop menu); a readied item isn't sold (no message). **`slot.py`**
+wants its target folder made first; renaming slot files by hand skips the SAVGAM name patch (use slot.py). **Testing a
+diffcheck.sh copy:** keep it beside the original (`~/gbr/checks/dc65.tmp.sh`): it finds `data/` beside itself. **Trace in a
+booted session:** `trace.py install` after each `pl.py boot` (the boot reloads the game). ENCOUNTER_MENU's disassembly:
+`ovr.py dis 2c3e 900` (the choice logic from 0x2EEF not read yet).
+
 **Chat 64:** checks 94-98 in `data/c64/chk94..98/` (`data/c64/cd/` links `game` and each; `cd/arena` and `cd/temple`
 are ready checks waiting on Combat: `DIFFCHECK_ONLY=arena` / `temple`). **The handler table:** `~/gbr/checks/diffcheck.sh`
 copied to `/tmp/opcov/dc.sh` with `--coverage=/tmp/opcov/cov/$n.json` added to ours' command line (main.gd's dev

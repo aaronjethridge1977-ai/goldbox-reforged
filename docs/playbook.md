@@ -15,10 +15,12 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
 - The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
 - Sell gems and jewellery (APPRAISE, then SELL; there is no KEEP), then POOL and SHARE so that each trainee has the fee (Player 15; *seen in the original*).
+- To sell an item, unready it first: SELL (under VIEW, ITEMS in a shop) does nothing to a readied item, with no message. The price comes in the largest coins (7 gp paid as 1 platinum and 2 gold) (main chat 65, check 101; *seen in the original*).
 - The party fell behind main's bot in levels. One possible cause is a trainee without 1000 gold of their own (Player 21; unconfirmed, *seen in the original*).
 - Town shops, City Hall and the training halls lock from hour 14. Rest at the inn until midnight first (Player 15, p15d1; *seen in the original*).
 - Hit points gained at training come from the game's dice: one roll of the hit die, split across classes, plus the CON bonus (Player 3; *read in the code*).
 - A magic-user's new-spell page opens on the last spell in the list, not the first. Check which spell is lit before LEARN (Player 3; *seen in the original*).
+- Camp CAST's spell list also opens on the last spell; End wraps to the first. Check which spell is lit before CAST (main chat 65, check 102; *seen in the original*).
 
 ## Spells
 

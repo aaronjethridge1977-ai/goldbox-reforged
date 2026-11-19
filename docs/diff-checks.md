@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 65: the arena's duel, a band fight, a SELL, a camp's Bless and cure; checks 99-102, DIFFCHECKS 102/102
+## Chat 65: the arena's duel, a band fight, a SELL, a camp's Bless and cure, a second training level; checks 99-104, DIFFCHECKS 104/104
 
 **The handler table's last line closes: CALL 0x8000 now runs in a matching check (99).** Every opcode Pool's scripts
 use, and every CALL target the original acts on (but 0xBA03, a sound), runs in a check that matches.
@@ -202,6 +202,20 @@ use, and every CALL target the original acts on (but 0xBA03, a sound), runs in a
   `cast_outside`: each target's effect goes through `SpecialAffects.blocks` (with the spell's level, for magic
   resistance) after its duration; a blocked one says IS UNAFFECTED (not seen out of a fight: Sleep and Charm can't be
   cast there). Fails on the code before; three runs MATCH (lab `data/c65/chk102`).
+- **Check 103, 3:11 the training hall, level 2 to 3**: the start is check 96's end in the original (after BEGIN
+  ADVENTURING, 8,0 N) with THRENDER GRONE's experience 9000 and gold 5000; tpseed 11111111: Down, Up, Down, Up (back
+  onto 8,0), YES, TRAIN, YES, BEGIN ADVENTURING. The original: level 3, one d10 (OVR:1dc04, 1): HP 22 -> 25, experience
+  cut to 8000, 1000 gp (trace `data/c65/train2_orig.txt`). A coverage check (matched at once). Three runs MATCH.
+- **Check 104, the training hall, TRAIN twice in one visit**: check 96 with a second TRAIN after the first (4000
+  experience, short of level 3's: the original shows nothing and stays on CHOOSE A FUNCTION), then BEGIN ADVENTURING.
+  Matched at once (a message needing a key in ours would put the keys out of step). Three runs MATCH.
+- **ENCOUNTER_MENU (GAME.OVR 0x2C3E) read beside ours, part:** the set-up (operand 1 the sprite -> DS 0x6F81, 2 the
+  maximum -> +0x580, 3 the picture -> 0x6F82, three texts, operands 13/14; the distance +0x582 = min(0x7955's open
+  squares, the maximum)) and the text by distance (0x2DB9-0x2E94: distance d starts at text d+1 and wraps until one
+  isn't empty) agree with `ecl_vm.gd`. Not in ours, effect unknown: the handler's first writes DS 0x84E9 = 1, 0x84E4 =
+  0, 0x4A00 = 1 (DS bytes, not ECL cells). For a distance above 2 the original picks no text (its buffer is left as
+  it was) where ours shows the third; Pool's constant maxima are 0-2, the cell ones are capped by the open squares.
+  **The choice logic (0x2EEF on, ~1 KB) is not read yet.**
 - **Still not checks:** the temple (COMBAT with 0x6DE2: the cure's d8 matches since Combat Chat 30's b8db5a7; the pile
   menus TAKE / SHARE and the retrieve question, and the jewelry slot, wait on Combat) and the tavern brawl (the
   patrons' placement, asked of the Lead by Combat Chat 30).
