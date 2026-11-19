@@ -1315,6 +1315,21 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 28 (2026-11-19): Valjevo's gate (a tool misread); segment 30 to `valjevo3`
+
+**The gate asked every time; the tool didn't see it.** ECL 5:3's on-move (0x9A80) runs before a step, with the square
+the party stands on and the new facing (as ours, main.gd `_try_move`; main's check 24): on event 31's squares (12,7 /
+12,8) facing W a bump W asks "WHAT IS THE PASSWORD?" (0xA8D0), a step onto them from the east doesn't (the on-move
+sees 13,x's info byte, 0). The original draws that vertical menu **over the walking menu, whose row 24 stays**, so
+the tool read "walking" and bumped on (p27k3's stop screen shows the question; p27k1-k5 all were asked). Probed with
+`p28/pk.py` (keys plus DS 0x6AAD-0x6AB1 and ECL 4A64/4A66/4A6A after each). **Fixed:** screens.py reads a walking
+screen with a question on row 17 and two or more items on rows 18-22, exactly one white (lit) and the rest green, as
+a vmenu (a wrapped question's second row counts as an item: the distance to the answer stays right).
+- **Segment 30 part d: `valjevo3` reached** (p28a2 from `p2start/p27k2_v3probe`, seed 28a20002, plan
+  `plans/p27_c34d_30d_valjevo3.plan`: one bump W, GIVE, RHODIA: 5:5 11,7 W, nobody hurt). Against the bot's
+  `valjevo3` (`p28/valjevo3.cpdiff.txt`): new words against `mopup2` only the clock's 49F0/49F1, the sky 49FD and
+  5:5's 4AFA/4AFC/4AFF (ours' bot's 5:5 locals); 49C7 and 4A63 now agree.
+
 ## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; `sell ... gear`; segments 28 to `stojanow`, 29 to `mopup2`, 30 to Valjevo's gate
 
 **For Jeremy** (`.lab/for-jeremy/stojanow/`: README.md, REPORT.md): two videos of the wall fight in the original at game

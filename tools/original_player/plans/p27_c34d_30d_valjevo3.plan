@@ -173,12 +173,7 @@ map 5:5
 norest
 answer WHAT IS THE PASSWORD|GIVE
 answer WHAT PASSWORD DO YOU GIVE|type:RHODIA
-# the gate: in the original the question comes on a bump into the gate from 12,8 facing W (lab p27e4; not from 12,7)
-# (the probe p27e4's exact moves from 12,7 W: E, W onto 12,7, E, S, W onto 12,8, then the bump W)
-step E
-step W
-step E
-step S
-step W
+# Player 28: the gate asks on a bump W from 12,7 (ECL 5:3 0xA8D0's vertical menu over the walking menu's row: p27k3-k5
+# were asked and the tool, reading "walking", bumped on; screens.py now reads it as a vmenu)
 step W
 checkpoint valjevo3

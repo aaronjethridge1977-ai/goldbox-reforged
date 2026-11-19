@@ -23,6 +23,30 @@ def items(bottom):
     return bottom.split()
 
 
+def _vmenu_items(rows, im):
+    its, hl = [], None
+    for r in range(18, 23):
+        t = rows[r].strip("? ").strip()
+        if not t:
+            continue
+        its.append(t)
+        if _rowcol(im, r) == WHITE:
+            hl = len(its) - 1
+    return its, hl
+
+
+def _vmenu_over_walking(rows, im):
+    """Player 28: a vertical menu whose bottom row still reads the walking menu: text on row 17 (not white), and
+    among rows 18-22 at least two items, exactly one of them white and the rest green."""
+    if not rows[17].strip("? \\") or _rowcol(im, 17) == WHITE:
+        return False
+    cols = [_rowcol(im, r) for r in range(18, 23) if rows[r].strip("? \\")]
+    return len(cols) >= 2 and cols.count(WHITE) == 1 and all(c in (WHITE, GREEN) for c in cols)
+
+
+GREEN = (85, 255, 85)
+
+
 def classify(st):
     rows, im, site = st["rows"], st["im"], st["site"]
     b = rows[24].strip("? ")
@@ -37,6 +61,12 @@ def classify(st):
         out["kind"] = "wiped"
     elif b.startswith("INPUT THE CODE WORD"):
         out["kind"] = "wheel"
+    elif "ENCAMP" in b and b.endswith("LOOK") and _vmenu_over_walking(rows, im):
+        # Player 28: a step script's MENU_VERTICAL can leave the walking menu on row 24 (Valjevo's gate, ECL 5:3
+        # 0xA8D0, on a bump W from 12,7 / 12,8: p27k3-k5 asked it, the tool read "walking" and bumped on): the
+        # question on row 17, one item white (lit), the others green
+        its, hl = _vmenu_items(rows, im)
+        out.update(kind="vmenu", question=rows[17].strip("? "), items=its, highlight=hl)
     elif "ENCAMP" in b and b.endswith("LOOK"):     # AREA CAST VIEW ENCAMP SEARCH LOOK; CAST ... LOOK in the wilderness
         out["kind"] = "walking"
     elif "PRESS <ENTER>" in b or "PRESS <RETURN>" in b or b.startswith("PRESS BUTTON OR") or b.startswith("PRESS ANY KEY"):   # 5:7 (Player 2); 2:9's "PRESS BUTTON OR <RETURN>" (Player 3)
