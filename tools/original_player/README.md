@@ -1358,6 +1358,11 @@ a main-path fight that blocks the end, a tactical try first, then Q27's logged s
   `won` rule). Lab `p29/tries.sh` takes `NEED=<flag>=<v>` (a "reached" needs that in the checkpoint line: p29c1's
   counted answer `NO*1` restarted at `--after` and checkpointed on the stairs; now `answerfrom` steps).
 
+**In ours** (on 39339c2): `segment.py p29d1 begin end --start=p29b2_s34h --tplog` (the guards' fight, lost in both):
+draws identical to **802 of 2819**; at 803, after ELWEN's "weighs a spell" d7 = 0, the original draws d18 at OVR:0b1cd
+(a spell pick), ours picks a melee target (d12). To Combat (Requests). p29b2 can't be lined up the same way (its trace
+starts at `s34g`); in ours it too wins the guards and falls to Tyranthraxus.
+
 ## Player 28 (2026-11-19): Valjevo's gate (a tool misread); segment 30 to `valjevo3`
 
 **The gate asked every time; the tool didn't see it.** ECL 5:3's on-move (0x9A80) runs before a step, with the square

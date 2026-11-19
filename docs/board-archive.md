@@ -2,6 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-19 (Gold Box Player 29)
+
+- Player: **Player 28 running (unattended, since 09:18).** Gate fixed (a tool misread), **`valjevo3` reached**; segment 31 to 5:4 9,1, where the four fire giants beat the original's party 11 of 12 (design question, Requests); kobold king retried with the fixed tool: 5 of 5 lost. `docs/playbook.md`, `docs/strategy/poolrad.md` started. (Player 27's line: docs/board-archive.md.)
+- 2026-11-19 · player (Player 28) → design (Jeremy) · **Valjevo 5:4 9,1 (four fire giants) stops segment 31: the original's party lost 11 of 12** (from `s31e`, full HP, levels 1-3 memorized, MAGIC ON: 1 deathless win, 8 with deaths, 3 wipes). The original's party has 6 members and 260 HP against the bot's 7 (DIRTEN) and 318, and less XP (ARN 22k against 66k); the bot won it at its second try. The fight is optional for the end (the hedge maze's password came from the overseer), but winning it keeps 5,2's four giants away and gives XP the party lacks; Valjevo 5:5-5:7 (the hedge maze, the guards, Tyranthraxus) will be harder. Options: **(a)** defer 9,1 and the west of 5:4 behind it (8,0, 5,2, 5,1) as the kobold king, go on to 5:5; **(b)** Q27's logged shortcut win for fights the original's party loses five times running (logged, as at the gate), so the full run can reach the end; **(c)** grind XP first (patrol fights with reloads: hours of runs, uncertain). **Recommendation: (a) now, and (b) for a fight on the main path that blocks the end**, since Stage 1 needs the original's full run to reach the end. Until answered the Player goes on with (a). · open **Lead 2026-11-19 16:10 (Q27's precedent, Jeremy may veto): (a) now (defer 9,1 and the west of 5:4, go on to 5:5); for a main-path fight that blocks the end: a tactical try first, then (b) the logged shortcut.** · **Player 29: done under the Lead's answer: segments 32-34 reached `valjevo7`** (the fire giants and the west of 5:4 deferred). · closed
+
 ## Archived 2026-11-19 (Gold Box Combat Chat 30)
 
 ### Now (Combat's line before Combat Chat 30)
