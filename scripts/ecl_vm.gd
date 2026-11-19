@@ -386,9 +386,12 @@ func close_shop() -> State:
 
 
 ## Every COMBAT ends by zeroing the script's fight modifiers 0x6E70-0x6E72 (to-hit and
-## movement, used by the combat screen; GAME.OVR 0x6BAF, side lane 2026-11-14).
+## movement, used by the combat screen; GAME.OVR 0x6BAF, side lane 2026-11-14), and the two
+## fight switches 0x6DE3 (no monster's item on the pile, read at 0x567D) and 0x6DE6 (the party
+## can't be destroyed, read at 0x5B0F): 0x6BDB / 0x6BE6. Chat 63: New Phlan's tavern brawl (3:0
+## 0xA767) sets both; ours kept 0x6DE3 = 1 after it, so no later fight dropped a monster's item.
 func _clear_fight_mods() -> void:
-	for a in [0x6E70, 0x6E71, 0x6E72]:
+	for a in [0x6E70, 0x6E71, 0x6E72, 0x6DE3, 0x6DE6]:
 		write_byte(a, 0)
 
 

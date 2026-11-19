@@ -2848,7 +2848,11 @@ func _on_event_fight_finished(result: int) -> void:
 		_after_vm()
 		_show()
 		return
-	if result == 2:
+	# GAME.OVR 0x5A47: with ECL 0x6DE6 = 1 (only New Phlan's tavern brawl, 3:0 0xA76D) every player
+	# character counts as standing (0x5B0F), so the party is never destroyed: the fight ends as won
+	# (0x6DC7 = 0, no experience if nobody is up, the pile) and the script goes on (THE CITY WATCH
+	# CHARGES IN). Chat 63; ours ended the game.
+	if result == 2 and _vm.read_byte(0x6DE6) != 1:
 		_party_lost()
 		return
 	if _arena and _duelist != null:
