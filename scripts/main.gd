@@ -3039,8 +3039,11 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	_vm.start(4)
 	# The original writes the area's block number to 0x49F2 once its init has run (GAME.OVR
 	# 0x192F, 0x40D6); many inits test it ("already here": a loaded game) and then skip
-	# placing the party, resetting the clock and the like.
-	_vm.write_byte(CURRENT_BLOCK, block_id)
+	# placing the party, resetting the clock and the like. A LOAD leaves the saved value (chat 61,
+	# DOSBox: a lab jump save in 2:20 holding 0x49F2 = 1 still reads 1 after loading; a real save
+	# always holds its own block).
+	if not loading:
+		_vm.write_byte(CURRENT_BLOCK, block_id)
 	# The init script may load a different map and place the party.
 	if follow_map and not _vm.on_overland and not _vm.area_map.is_empty() and _vm.area_map[0] < 127:
 		for i in _maps.size():
