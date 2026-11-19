@@ -1955,12 +1955,16 @@ func _morale_check(i: int) -> String:
 	return ""
 
 
-## One step of a running combatant. Returns "moved", "gone" or "stop".
+## One step of a running combatant. Returns "moved", "retry", "gone", "blocked", "stop" or "end" (the turn ends).
 func _flee_step(i: int) -> String:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
 	if c.moves / 2 <= 0:
-		return "stop"
+		# GAME.OVR's run loop (0xB75F) steps only while the movement is above 0; out of it, the action
+		# goes on to its blow (`fleeing_was`). With one half-move left the step (0xB3B2) ends the turn
+		# instead (0xBB0F: on guard, or done with a missile weapon) and the action strikes nothing
+		# (Player 23's p22c4, draw 1745: a KOBOLD LEADER stopped with 1 left; ours shot DORN).
+		return "stop" if c.moves <= 0 else "end"
 	var base := flee_dir if c.team == 1 else (flee_dir + 4) % 8
 	# The d2 becomes the figure's pattern (GAME.OVR 0xB49A): the next turn's pattern check reads it.
 	c.pattern = roll(1, 2, "%s runs" % m.name)
@@ -2142,6 +2146,10 @@ func ai_act() -> bool:
 			c.surrendered = true
 			sm.status = PartyMember.STATUS_UNCONSCIOUS
 			sm.hp = 0
+			# Counted among the enemies left until the next recount, as one that got away
+			# (CombatSpells._enemy_left).
+			c.surrender_round = round_no
+			c.surrender_fallen = fallen_count()
 			message.emit("%s SURRENDERS" % sm.name)
 			return false
 		# After its morale check (a goblin that surrendered drew nothing more) the original's
@@ -2189,6 +2197,9 @@ func ai_act() -> bool:
 			return true
 		c.fleeing_was = fr == "stop" and c.moves <= 0
 		c.fleeing = false
+		if fr == "end":
+			guard(active)
+			return false
 		if fr == "gone" or fr == "blocked" or c.down:
 			c.moves = 0
 			c.attacks = 0
