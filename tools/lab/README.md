@@ -173,6 +173,22 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 66:** checks 105-112 in `data/c66/chk105..112/` (`data/c66/cd/` links `game` and each); the original's ends and
+traces: `trade/`, `drop/`, `halve/` (orig only), `gem/`, `jewel/`, `raise/`, `cures/` (start, orig, trace.txt). A start
+made by editing check 101's or chat 64's temple start: gems +0x92, jewelry +0x94, platinum +0x90, status +0x10C (6 dead),
+a `.SPC` record appended (9 bytes: type, minutes u16, power, 5 zero bytes). **The original loads any `CHRDATxn.SPC`
+beside a record and deletes it when it saves a member with no effects** (so a stale `.SPC` in a lab folder is the
+copy's, not the game's: checks 19, 21, 34, 35 had some). **statediff** now compares whole items, the effects and the
+ability scores; a break test is `data/c44/brk` at origin/main + the new `tools/statediff.gd` copied in (then
+`git -C data/c44/brk checkout -- tools/statediff.gd`). **A variant to prove a check sees its step:** copy the check
+folder to /tmp, change its keys, reseal it there (`sha256sum keys ours.cfg area orig/* start/* > manifest`), link it
+from a /tmp `cd/` beside `game`, `DC_DATA=<that cd> DIFFCHECK_ONLY=<n>`. **Shop APPRAISE in the original:** A, then G
+(gems) or J (jewelry), SELL or KEEP; the camp item menu's TRADE / DROP / HALVE: T (TRADE WITH WHOM? End, SELECT), D (YES),
+H; a readied item is neither traded nor sold. **The temple's HEAL list** opens on CURE BLINDNESS (End x5 NEUTRALIZE
+POISON, x6 RAISE DEAD). **The Linux build:** `tools/build/linux_build.sh <commit> <version> [<out>]` (try it with a /tmp
+out first). ENCOUNTER_MENU's choice logic: `ovr.py dis 2eb0 1100`; the party speeds 0x9484; the walking-key routine
+`ovr.py dis 17060 1200`, the main loop's key handling `ovr.py dis 4060 400`.
+
 **Chat 65:** checks 99-104: 99 and 100 were chat 64's / Combat 30's ready checks (`data/c64/chk_arena`, `data/c65/chk100`);
 101-104 in `data/c65/chk101..104/` (`data/c65/cd/` links `game` and each). The original's ends: `data/c65/sell/orig` (a SELL),
 `cure/orig` (camp Bless + cure; its start `cure/start`: check 26's with ARN's HP +0x11B = 5; trace `cure_orig.txt`),

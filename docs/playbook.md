@@ -14,7 +14,7 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - Train as soon as a member qualifies. At TRAIN the game cuts experience to "the level after next, less 1", so experience above that is lost (Player 3; *seen in the original*).
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
 - The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
-- Sell gems and jewellery (APPRAISE, then SELL; there is no KEEP), then POOL and SHARE so that each trainee has the fee (Player 15; *seen in the original*).
+- Sell gems and jewellery (APPRAISE, then SELL; a shop's APPRAISE also offers KEEP, which takes a jewel off the coin count: main chat 66), then POOL and SHARE so that each trainee has the fee (Player 15, main chat 66; *seen in the original*).
 - To sell an item, unready it first: SELL (under VIEW, ITEMS in a shop) does nothing to a readied item, with no message. The price comes in the largest coins (7 gp paid as 1 platinum and 2 gold) (main chat 65, check 101; *seen in the original*).
 - The party fell behind main's bot in levels. One possible cause is a trainee without 1000 gold of their own (Player 21; unconfirmed, *seen in the original*).
 - Town shops, City Hall and the training halls lock from hour 14. Rest at the inn until midnight first (Player 15, p15d1; *seen in the original*).
