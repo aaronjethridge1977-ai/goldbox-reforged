@@ -1428,10 +1428,13 @@ two fights), `cure`: **`zhentil`** (6:28 5,0 E).
 - **The band rest before the riders** (3,31): p25j1's was interrupted five times; the plan now has main's bot's trip to
   the inn for an interrupted rest (an `inntrip` block: 6:25 15,20 E, the boat, the inn, back by 2:20, 8:29, 1:18,
   7:26 2,20 W), as the bot's own two inn trips here. p25j2-j4 void (two try loops ran at once).
+- **p25j10 reached `zhentil`** (from `s25b`: the band rest interrupted once, the inn trip, back, the riders, the dinner,
+  the night's two fights won, nobody dead). Against the bot's `zhentil` (`p25/zhentil.cpdiff.txt`): nothing new beside
+  `heir`'s; 0x4A98, 0x4A34, 0x4A05 and 0x4A19 now agree.
 
-Lab: `p25/` (seg20b.plan, seg21.plan, seg22.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
+Lab: `p25/` (seg20b.plan to seg25.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
-`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a` (and `.lab/player/saves/p25*`).
+`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a`, `p25g3_heir`, `p25h2_s25b` (and `.lab/player/saves/p25*`).
 
 ## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 
