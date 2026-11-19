@@ -1134,7 +1134,10 @@ func _exec(ins: Dictionary) -> void:
 			compare = -r
 			compare_eq_only = false
 		"RANDOM":
-			_write(a[1], _script_roll(maxi(0, _value(a[0]))))
+			# GAME.OVR 0xF7A: the top is a byte, raised by one unless it is 255, then Random(n): 0..top, but
+			# 0..254 for a top of 255 (3:0's tavern: RANDOM 255; ours rolled 0..255; chat 62).
+			var top := _value(a[0]) & 0xFF
+			_write(a[1], _script_roll(top if top < 255 else 254))
 		"RANDOM0":
 			var top := _value(a[1])
 			_write(a[0], _script_roll(top) if top > 0 else top)
