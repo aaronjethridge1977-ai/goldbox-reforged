@@ -187,6 +187,12 @@ func _end_round() -> void:
 	if magic:
 		magic.tick()
 	_power_timers()
+	# Then the round counter (DS:0x6DE3), the enemies' health (0x15074) and, for each figure,
+	# affect category 0x13: a troll's regeneration (0x62, 0x1135B), so after the count.
+	# (Combat Chat 29: ours regenerated at the next round's start; the troll fight seed 98e616ec,
+	# the original's troll 21 HP at draw 2972 where ours' had 24.)
+	_count_enemy_health()
+	_regenerate()
 
 
 func start_round() -> void:
@@ -194,9 +200,9 @@ func start_round() -> void:
 		_end_round()
 	else:
 		_battle_start_powers()
+		_count_enemy_health()     # the fight's setup (GAME.OVR 0xE550)
 	round_no += 1
 	_round_start_powers()
-	_count_enemy_health()
 	var delays := {}
 	for c in combatants:
 		c["init"] = 0
@@ -2405,10 +2411,18 @@ func _round_start_powers() -> void:
 		if c.down:
 			continue
 		var m: PartyMember = c.who
-		if m.has_affect(0x62):
-			m.hp = mini(m.hp + 3, m.hp_max)     # regeneration (0x1135B)
 		if m.has_affect(0x48):
 			_hide(i)
+
+
+## A troll's regeneration (0x62, GAME.OVR 0x1135B: +3 HP up to its most), at the round's end.
+func _regenerate() -> void:
+	for c in combatants:
+		if c.down:
+			continue
+		var m: PartyMember = c.who
+		if m.has_affect(0x62):
+			m.hp = mini(m.hp + 3, m.hp_max)
 
 
 ## The powers' own clocks, a round at a time (in the original, effects that run out).
@@ -2467,10 +2481,21 @@ func _revive(i: int, hp: int) -> bool:
 	return true
 
 
-## What happens as a figure goes down (category 13).
+## The affects a figure loses as it goes down (GAME.OVR 0x2BEF4, the table DS:0xC14), before
+## category 13 runs: among them a troll's regeneration (0x62) and its wait (0x3B, ours' regen_in),
+## so a troll that stands up again must be wounded again and wait 3 rounds (Combat Chat 29: the
+## troll fight seed 98e616ec, the original's troll down at draw 3086 where ours' kept 0x62).
+const DOWN_STRIPS := [0x07, 0x0B, 0x1E, 0x1F, 0x20, 0x33, 0x34, 0x35, 0x36, 0x3A, 0x3B, 0x5F, 0x62,
+		0x89, 0x4A, 0x4B]
+
+
+## What happens as a figure goes down (0x12DE7 / 0xED1B: the strip, then category 13).
 func _went_down(j: int) -> void:
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
+	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
+	t.regen_in = 0      # 0x3B
+	t.dies_in = 0       # 0x5F
 	if tm.has_affect(0x63) and tm.status in [PartyMember.STATUS_DYING, PartyMember.STATUS_UNCONSCIOUS]:
 		# A wild boar fights on (0x1138B): back up with 6 less the rounds it bled.
 		var hp := 6 if tm.status == PartyMember.STATUS_UNCONSCIOUS else maxi(6 - int(t.bleeding), 0)
