@@ -1330,6 +1330,39 @@ a vmenu (a wrapped question's second row counts as an item: the distance to the 
   `valjevo3` (`p28/valjevo3.cpdiff.txt`): new words against `mopup2` only the clock's 49F0/49F1, the sky 49FD and
   5:5's 4AFA/4AFC/4AFF (ours' bot's 5:5 locals); 49C7 and 4A63 now agree.
 
+**Segment 31 (`valjevo3` -> `valjevo4`): open at 5:4 9,1** (plans `plans/p28_c34d_31a..31d_valjevo4.plan`, lab
+`p28/seg31a-d.plan`). The bot's order (`p12/botorder.py valjevo3 valjevo4`, full_c34d.log 41366-45135): a town trip,
+5:4 (9 at 14,12, 8 at 14,9, 39 at 14,5, 69 at 14,2, 35 at 9,1, 36 at 8,0, 1 at 5,2, 34 at 5,1, 0,0), with three more town
+trips and four reloads (two deaths, two wipes, shortcut restores). ECL 5:4 in `p28/ecl5_4.txt`; 5:4 is GEO5 block 4
+(`map 5:4`); event numbers & 31 index the step table (bit 32 doubles the patrol odds' divisor, bit 64 a square with no
+patrol and a safe rest).
+- part a (p28b1 to **`s31t`**, **`s31in`**: the town as segment 30's, nobody trained; 5:3 12,0 N into 5:4 12,15 N).
+- part b (p28c2-c4): the scribes and two officers at 14,12 (won; two Two-Handed Swords +2 taken), the records at 14,9
+  (YES, as the bot: the patrol of six fighters, won: **`s31b`**; the walk on crossed 15,9 and read again: a death,
+  p28c3; now `answerfrom ...|NO` and the walks keep off 8 and 9), KILL THE OVERSEER (the hedge maze's password),
+  the armory: **`s31c`** (5:4 13,2; ~119 of 260 HP, cures spent). The giants at 9,1 then wiped p28c4.
+- part c (p28d1 a death in a patrol at 13,10; p28d2): a town trip out by 12,15 S: **`s31u`**, **`s31e`** (5:4 12,15 N,
+  full HP).
+- part d: **the four fire giants at 9,1 (event 35, ECL 0xA2B5): 1 deathless win in 12** (p28d2, p28e1-e3, p28f1-f9; p28e3
+  won and stopped on my avoid list, which then held every "32" square: fixed). Behind it: 8,0 (36, a slip of paper),
+  5,2 / 5,3 (event 1: the four giants charge unless 9,1 was won, 0x4A66 bit 16), 5,1 (34, an armed man), 0,0 (nothing).
+  With no alarm 9,1's giants parley (0xA38D: HAUGHTY or SLY gives the passwords, no fight; 0x4A66 bit 32), untried: it
+  doesn't stop 5,2's giants. Board: "player (Player 28) -> design".
+- The party against the bot's at `valjevo3`: XP ARN 22187 / 66634, BRAM 39831 / 25479, CEDRIC 69788 / 82505, ELWEN
+  21204 / 13414, LIRA 11690 / 15127, DORN 12843 / 32604, and the bot's DIRTEN; HP 260 / 318.
+
+**The Lead's item 2, the deferred fights with the fixed tool.** Sokal Keep's event 9 was won after all (Player 16: 2
+deathless wins in 8 at level 3), so it needs no retry. **The kobold king's throne room again** (plan
+`plans/p28_c34d_17r_kobold_retry.plan`: Player 23's segment 17 from `p2start/p23a2_s17a` with `sell gems share gear`
+and the fixed `picks`): p28g1 sold every spare item and memorized CEDRIC Hold Person x4, Prayer x2, Slow Poison, ELWEN
+Hold Person x4, Knock (the bot's picks); four fights on the way; at the door ARN 27/32, DORN 19/32 (cures spent).
+**5 of 5 destroyed in the horde** (p28g1, p28h1-h4 from `p2start/p28g1_s17door`, seeds 28a7000n), 23-31 of 56 figures
+standing at the last count (Player 23's: 16-23). **"Too hard at that level" stands.**
+
+**Docs (the Lead's note, Jeremy 09:40):** `docs/playbook.md` (Gold Box tactics, one line each, run and tag) and
+`docs/strategy/poolrad.md` (the route by segment, levels, the hard fights), seeded from Players 1-28 and the Stojanow
+report.
+
 ## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; `sell ... gear`; segments 28 to `stojanow`, 29 to `mopup2`, 30 to Valjevo's gate
 
 **For Jeremy** (`.lab/for-jeremy/stojanow/`: README.md, REPORT.md): two videos of the wall fight in the original at game
