@@ -1197,6 +1197,11 @@ func _exec(ins: Dictionary) -> void:
 		"NEW_ECL":
 			new_ecl = _value(a[0])
 			state = State.NEW_ECL
+			# Combat Chat 28, GAME.OVR 0x404E: entering the new block clears the script-pick flag (0x4430), so
+			# a LOAD_CHAR before NEW_ECL is never undone: the member it left stays selected (8:13's DO YOU
+			# WANT TO LEAVE looks for PRINCESS FATIMA with LOAD_CHAR 0..7 and leaves the last member lit; the
+			# original's camp at 8:27 opens on DORN, seen in DOSBox from p22c3's s16c).
+			_script_pick = false
 		"LOAD_AREA_MAP":
 			area_map = [_value(a[0]), _value(a[1]), _value(a[2])]
 			# The original keeps the loaded map's id at 0x49C5 (lab, chat 10: save F in New
