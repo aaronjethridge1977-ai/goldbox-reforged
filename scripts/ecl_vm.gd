@@ -1152,6 +1152,10 @@ func _exec(ins: Dictionary) -> void:
 			var items := []
 			for i in range(2, a.size()):
 				items.append(_string(a[i]))
+			# GAME.OVR 0x1E5A: a menu of one choice reading exactly this is shown as the
+			# game's own prompt (the other press-return wordings stay as the script has them).
+			if items.size() == 1 and items[0] == "PRESS <RETURN> OR BUTTON TO CONTINUE":
+				items[0] = PRESS_TO_CONTINUE
 			_pause_for_menu(a[0], items)
 		"MENU_VERTICAL":
 			var items := []
