@@ -1504,6 +1504,9 @@ func _say(line: String) -> void:
 ## PARTY_STRENGTH as the original works it out: for each character, (cleric levels x 4 +
 ## HP + 5 per point of AC below 0 + 5 per point of THAC0 below 21 + magic-user levels x 8)
 ## / 10, added up.
+## GAME.OVR 0x200C: per member (current HP + 5 x AC below 0 + 5 x (21 - THAC0) + 8 x MU level + 4 x cleric
+## level) / 10, from the record's cached AC and THAC0 (+0x111, +0x110), every figure in the list; the sum is
+## a byte, so it wraps past 255 (chat 62; ours capped it: no Pool party comes near).
 func party_strength() -> int:
 	var total := 0
 	for p in party:
@@ -1513,7 +1516,7 @@ func party_strength() -> int:
 		var ac_bonus := maxi(-m.ac, 0)
 		var hit_bonus := maxi(21 - m.thac0, 0)
 		total += (cleric * 4 + m.hp + ac_bonus * 5 + hit_bonus * 5 + mage * 8) / 10
-	return mini(total, 255)
+	return total & 0xFF
 
 
 func _pause_for_menu(dest: Dictionary, items: Array) -> void:
