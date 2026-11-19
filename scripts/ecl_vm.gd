@@ -727,9 +727,16 @@ func _hurt(m: PartyMember, damage: int) -> void:
 		m.status = PartyMember.STATUS_UNCONSCIOUS
 
 
+## The original's saving throw (GAME.OVR 0x2BC4D, the same one fights use: Combat's `_save`): a natural 1
+## fails and a natural 20 saves whatever the bonus (chat 61; ours had added the bonus to every roll).
 func _save_roll(m: PartyMember, bonus: int, kind: int) -> bool:
 	var need: int = m.saves[clampi(kind, 0, 4)] if m.saves.size() == 5 else 20
-	return _ri(1, 20) + bonus + CombatSpells.racial_save_bonus(m, clampi(kind, 0, 4)) >= need
+	var d := _ri(1, 20)
+	if d == 1:
+		return false
+	if d == 20:
+		return true
+	return d + bonus + CombatSpells.racial_save_bonus(m, clampi(kind, 0, 4)) >= need
 
 
 func _random_member() -> PartyMember:
@@ -754,19 +761,21 @@ func _damage(a: Array) -> void:
 	# member's form never use (GAME.OVR 0x354C-0x355E; trace of 5:3's gate, chat 42).
 	var picked: PartyMember = null if flags & 0x40 else _random_member()
 	if flags & 0x80:
+		# Bits 0-4 are the save bonus (GAME.OVR 0x3570; chat 61: no separate 0x10 "always hurt", which ours had;
+		# no DAMAGE in Pool sets 0x80 and 0x10 together), 0x20 no save for the whole party, 0x40 the whole party.
 		var bonus := flags & 0x1F
 		var kind := extra & 7
 		if flags & 0x40:
 			for m in party.duplicate():
-				if flags & 0x20 or not _save_roll(m, bonus, kind) or flags & 0x10:
+				if flags & 0x20 or not _save_roll(m, bonus, kind):
 					_hurt(m, damage)
 		elif extra & 0x80:
 			var m := selected_member()
-			if m != null and (kind == 0 or not _save_roll(m, bonus, kind - 1) or flags & 0x10):
+			if m != null and (kind == 0 or not _save_roll(m, bonus, kind - 1)):
 				_hurt(m, damage)
 		else:
 			var m := picked
-			if m != null and (not _save_roll(m, bonus, kind) or flags & 0x10):
+			if m != null and not _save_roll(m, bonus, kind):
 				_hurt(m, damage)
 	else:
 		for i in flags:
