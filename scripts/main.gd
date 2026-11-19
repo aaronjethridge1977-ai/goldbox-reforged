@@ -2873,6 +2873,16 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
+	if _duelist != null:
+		# The members set aside for a duel age their effects by the fight's rounds too (chat 66, check 95:
+		# 1:18's buccaneer duel, a 2-minute effect 1 on all six; the original's save has it gone from the
+		# five who stood aside as from the duelist; the original's figure list holds them, ours' fight ticks
+		# only its fighters).
+		var aside: Array = []
+		for m in _party:
+			if m != _duelist:
+				aside.append(m)
+		_show_time_news(SpellCaster.pass_time(aside, _combat.rounds()))
 	# The fight's end turns every dying member of the party unconscious, a member down before the fight
 	# too (the original's figure list holds the whole party; Combat's finish() covers the fighters).
 	# Chat 61: since a script's DAMAGE leaves a member dying, check 69's DIRTEN (the priest's fireball

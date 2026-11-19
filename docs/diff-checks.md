@@ -172,8 +172,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items; checks 105-109, DIFFCHECKS 109/109
+## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-109, DIFFCHECKS 109/109
 
+- **statediff compares the standing effects** (the original's `.SPC` beside each record: type, minutes, power; ours'
+  `affects`). Across the 109 checks five differed: **(1) stale `.SPC` files in four checks' original ends** (19 and 21:
+  F4, F5; 34 and 35: F1-F3, F7: ARN with a dwarf's race effects): DOSBox shows the original **deletes a member's `.SPC`
+  when it saves one with no effects** (check 19's start, LOOK, ENCAMP SAVE: SEAN's and DARKSTAR's went when their
+  2-minute effect 1 ran out) and writes none for ARN (check 34's start and keys played again: no F1-F3/F7 `.SPC`), and
+  that it **loads any `.SPC` it finds** beside a record (a stale one put by hand came back in the next save): the files
+  were left by how those folders were made. Removed from `~/gbr/checks/data/{19,21,34,35}/orig` and resealed.
+  **(2) Check 95, 1:18's buccaneer duel: a difference fixed.** The members set aside for a duel kept a 2-minute effect 1
+  in ours (the fight ticks only its fighters; the clock moves by its rounds after it); the original's save has it gone
+  from all six (its figure list holds them). `main.gd` `_on_event_fight_finished` now passes the fight's rounds for the
+  members set aside. Fails on the code before. Break test rerun: SUBTRACT 91/109, ADD 107/109 (on origin/main without
+  the duel fix, so 95 fails in both; otherwise as before).
 - **statediff compares the items whole** (`tools/statediff.gd` `_items`): until now only the name words (bytes 47-49)
   were compared, though its header said plus, count and readied; now type, the name words, plus and save plus,
   readied, cursed, count, price and bytes 60-62. **All 109 checks match with it** (check 26 with ARN's sword unreadied

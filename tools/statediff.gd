@@ -9,7 +9,8 @@ extends SceneTree
 ## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the seven kinds of coins, and the items (type, name words, plus, save
-## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the standing effects (the original's .SPC beside
+## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
@@ -92,7 +93,15 @@ func _init() -> void:
 		var d := FileAccess.get_file_as_bytes(sav)
 		var itm := folder.path_join(stem + ".ITM")
 		var items := FileAccess.get_file_as_bytes(itm) if FileAccess.file_exists(itm) else PackedByteArray()
-		theirs[_name(d)] = {"record": d, "items": items}
+		var spc := folder.path_join(stem + ".SPC")
+		var aff := []
+		if FileAccess.file_exists(spc):
+			var sd := FileAccess.get_file_as_bytes(spc)
+			for o in range(0, sd.size() - 8, 9):
+				if sd[o] != 0:
+					aff.append("%d/%d/%d" % [sd[o], sd.decode_u16(o + 1), sd[o + 3]])
+		aff.sort()
+		theirs[_name(d)] = {"record": d, "items": items, "affects": aff}
 	var ours := {}
 	for m in cfg.get_value("party", "members", []):
 		if not m.has("record"):
@@ -100,7 +109,11 @@ func _init() -> void:
 		var items := PackedByteArray()
 		for it in m.get("items", []):
 			items.append_array(it)
-		ours[_name(m.record)] = {"record": m.record, "items": items}
+		var aff := []
+		for e in m.get("affects", []):
+			aff.append("%d/%d/%d" % [int(e.effect), int(e.minutes), int(e.get("value", 0))])
+		aff.sort()
+		ours[_name(m.record)] = {"record": m.record, "items": items, "affects": aff}
 	for name in theirs:
 		if not ours.has(name):
 			diffs += 1
@@ -137,6 +150,9 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	if ts != us:
 		n += 1
 		print("%s memorized spells: original %s, ours %s" % [name, str(ts), str(us)])
+	if t.affects != u.affects:
+		n += 1
+		print("%s affects: original %s, ours %s" % [name, str(t.affects), str(u.affects)])
 	var ti := _items(t.items)
 	var ui := _items(u.items)
 	if ti != ui:
