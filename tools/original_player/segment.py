@@ -41,7 +41,8 @@ def magic_draws(run, a):
     """Player 23: the draw from which the original's MAGIC was on, one per Alt-M in turn, for ours' magicat=.
     OP_MAGICAT=<draw>,<draw>,... (Combat Chat 25's lab key; "-" for a plain `magic`) wins; else, for a replay from the
     run's start (`begin`: the trace's draws and ours' count alike), the trace's `MAGIC 1 between draws <a> and <b>`
-    lines (trace.py since Combat Chat 25) give <a> + 1. A trace from before that has no such lines: plain `magic`."""
+    lines (trace.py since Combat Chat 25) give <a> + 1, or <a> when a == b (Combat Chat 31: no draw between the two
+    looks, so the Alt-M was read at a turn-opening poll with a draws done; p29d1). No such lines: plain `magic`."""
     env = os.environ.get("OP_MAGICAT")
     if env is not None:
         return [int(x) if x.strip() not in ("", "-") else None for x in env.split(",")]
@@ -52,7 +53,8 @@ def magic_draws(run, a):
     for line in open(tr, errors="replace"):
         m = re.match(r"MAGIC 1 between draws (\d+) and (\d+)", line)
         if m:
-            out.append(int(m.group(1)) + 1)
+            a0, b0 = int(m.group(1)), int(m.group(2))
+            out.append(a0 if a0 == b0 else a0 + 1)
     return out
 
 
