@@ -712,20 +712,19 @@ func _hurt(m: PartyMember, damage: int) -> void:
 	if m.status == PartyMember.STATUS_DEAD:
 		return
 	_box_line("%s DIES." % m.name if m.hp + 10 < damage else "%s IS HIT FOR %d POINTS OF DAMAGE." % [m.name, damage])
-	m.hp -= damage
-	if m.hp > 0:
-		return
-	# The original's damage routine (START.EXE 0xBA:0x2228, called from GAME.OVR 0x96BF), as in a
-	# fight (combat.gd): exactly 0 HP is unconscious, below 0 dying at 0 HP, more than 9 below dead.
-	# Chat 61, check 87 (8:13's rocks: PHINEAS, 4 HP, hit for 5: dying in the original's save; ours
-	# had him unconscious).
-	if m.hp < -9:
+	# The original's damage routine (START.EXE 0xBA:0x2228, called from GAME.OVR 0x96BF), as in a fight
+	# (combat.gd): HP at or above the damage just drops (to 0: unconscious); short of it, the excess decides:
+	# more than 9 dead, else dying; an ANIMATED member brought to 0 dies; down, dying and dead keep 0 HP.
+	# Chat 61, check 87 (8:13's rocks: PHINEAS, 4 HP, hit for 5: dying in the original's save; ours had
+	# him unconscious, and a member killed outright kept a negative HP).
+	var past := damage - m.hp if damage > m.hp else 0
+	m.hp = maxi(m.hp - damage, 0)
+	if past > 9 or (m.hp == 0 and m.status == PartyMember.STATUS_ANIMATED):
 		m.status = PartyMember.STATUS_DEAD
+	elif past > 0:
+		m.status = PartyMember.STATUS_DYING
 	elif m.hp == 0:
 		m.status = PartyMember.STATUS_UNCONSCIOUS
-	else:
-		m.status = PartyMember.STATUS_DYING
-	m.hp = maxi(m.hp, 0) if m.status != PartyMember.STATUS_DEAD else m.hp
 
 
 func _save_roll(m: PartyMember, bonus: int, kind: int) -> bool:
