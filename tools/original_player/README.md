@@ -1315,6 +1315,56 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 25 (2026-11-18): segment 20 to `pyramid2`; segment 21 to `pyramid3`
+
+**Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
+p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
+(5,0: NO), a step E onto 6,0 (event 16, the dial on BLUE: the flash to 7:22 15,8 E), up 7:22's east corridor to 15,0
+and a step N (the secret door is known, 0x4A4B bit 0): AS YOU LEAVE ... RECOVER (0x4AA2 = 255, the river clean;
+its key is HIT <RETURN>, not PRESS BUTTON), the pyramid's menu GO BACK (the band's 6,14), 8,14, 8,29 and a step W onto
+7,29 (TAKE BOAT: the temple of Tyr), the inn (**`s20t`**); the way back as segment 19 (1:18, 7:26 by the river's west
+side, the rowboat at 6,14, ENTER: 7:22 15,0 S); down the corridor, a step W onto 14,8 (event 15: the flash to 5,11),
+13,13, **the secret door 13,14 E** (events 7/11, 0x4A4B bit 6, the bot's; `bumps 30`), up column 14 and a step N onto
+14,9 (event 16: the flash to 0,0), 6,0: **`pyramid2`** (7:22 6,0 W, p25b1, nobody hurt).
+- **7:22's flashes are fixed, not random** (ECL 7:22 0x992D, the table at 0x9955: x 5 1 8 9 0 1 8 11 15 12, y 11 10 14 8
+  0 3 6 1 7 15): 14,8 -> 5,11; 14,9 -> 0,0; a FLEE from a room's fight -> one of three squares in the same half
+  (RANDOM 3, +4 north of row 8). The pyramid is two halves (rows 0-7, 8-15) joined only by the flashes; its secret doors
+  are walls the GEO marks as doors, held shut by the on-move script (0x9B26) until their bit in 0x4A4B is set; each
+  entry to a door square rolls each member's search (1 in 5 without SEARCH, 2 in 5 for elves and half-elves).
+- **Lane decision:** the bot's 7:22 wanderings after the teleporter (its route finder in the flashes, back into 7:23
+  by 6,1 and out by its rocks) are left out: the corridor 15,8 -> 15,0 is the way out.
+- p25a1 stopped at AS YOU LEAVE (the key's wording), p25a2 at GO BACK (an `answerfrom` before `--after`'s checkpoint
+  is skipped: plain `answer` now); **p25a3 destroyed on the band** at 7:26 5,21 (a 51-figure encounter after two
+  fights won at 5,27 and 5,26); p25a4-a8 never ran (a 9-digit seed: `--seed` is hex, 8 digits at most); p25b1 from
+  `s20t` reached `pyramid2`.
+- Against the bot's `pyramid2` (`p25/pyramid2.cpdiff.txt`): the pyramid's flags agree (0x4A4B, 0x4AA2, 0x4A9A); new only
+  0x4A4C / 0x4A4E (which of 7:22's room fights were met: the bot met more), 0x4A4D (the rocks' bit, below) and 0x4A51
+  bit 5 (7:23's notebook: SEARCH on, segment 20a).
+
+**Segment 21 (`pyramid2` -> `pyramid2b` -> `pyramid3`)** (plan `plans/p25_c34d_21_pyramid3.plan`, lab `p25/seg21.plan`;
+runs p25c1-c5 from `p2start/p25b1_pyramid2`, p25d1-d3 from `p25c5_s21b`): 7,1 and a step W onto 6,1 (event 17: the
+flash to 7:23 0,12; 6,0 and 6,1 are walled apart), `heal` (**`s21a`**), 14,12 and a step E onto the rocks (15,12): MOVE
+ON: **`pyramid2b`** (7:22 15,7 E); then 7:22's events in the bot's order: 15,15, 14,8 (to 5,11), 5,10, 4,10, 1,12,
+1,13 (**`s21b`**), 13,14, 14,14, 13,15 (the priest: COMBAT, as the bot's), 14,10 and a step N (to 0,0), 7,1 and a
+step W: **`pyramid3`** (7:23 0,12 N, p25d3, nobody dead).
+- **The rocks:** MOVE ON's square depends on 0x4A4D bit 0 *after* THROW A ROCK toggles it (ECL 7:23 0x9C9D: bit set ->
+  7:22 15,7 (0x9E08), clear -> 7:23's table, the room's next square). The original's party came here with bit 0 set
+  (segment 20a's three rooms each threw once and moved on once: net no change), the bot's with it clear (its 7:22
+  wanderings crossed 7:22's rocks). **Lane decision: MOVE ON without the bot's throw**, which lands where the bot's
+  THROW + MOVE ON did (7:22's corridor). The bot's re-tour of 7:23's done events (each guarded by its 0x4A51 bit) is
+  crossed on the walk, not toured.
+- 7:22's room fights are strong for this party (ARN 3/32 HP; the bot's ARN 4/43): **p25c5 destroyed** at 12,15 (a
+  fight left ARN down, then the heal's camp rests were interrupted twice: 7:22 rolls a fight on rest); **p25d2
+  destroyed** at 11,13 (three fighters, THE LEADER WAVES AND CALLS TO YOU: COMBAT as the bot's rule); `norest` from
+  `s21b` on (cures only in 7:22, as on the bands). p25c1-c4: plan faults (the plan file, a step into a wall, a random
+  fight that ended the teleporter's step before it was taken), fixed.
+- Against the bot's `pyramid3` (`p25/pyramid3.cpdiff.txt`): 0x4A4B 77 against the bot's 79 (bit 1: the door at 15,15,
+  whose search roll failed for ours), 0x4A4C / 0x4A4E (the rooms' fights), the rest as at `pyramid2`.
+
+Lab: `p25/` (seg20b.plan, seg21.plan, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
+`ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
+`p25c5_s21b` (and `.lab/player/saves/p25*`).
+
 ## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 
 **The Alt-M replays with `magicat=`** (Combat Chat 25's request). The draw for an old trace, per fight: the last spell
