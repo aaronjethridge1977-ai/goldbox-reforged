@@ -172,6 +172,25 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 60: checks 72-73 (2:20 a patrol's SURRENDER and PAY: ROB as the original), DIFFCHECKS 73/73
+
+- **Check 72, 2:20 a slums patrol, SURRENDER** (check 71's start and tpseed 33330018; lab `data/c60/chk72/`): Up,
+  YOU SPY A GROUP OF SEEDY-LOOKING KOBOLDS, PARLAY, HAUGHTY, SURRENDER: THE MONSTERS ROB AND BLINDFOLD YOU (`ROB 1,
+  100, 100`), PRESS RETURN, the random spot (0xB225: 11,2 N in both). 23 draws identical (14 d100 at GAME.OVR 0x9337,
+  one per item). **Found:** the original's item loop (0x92C3) is called once per member with the chance as a
+  parameter, so the cut after a heavy item (-90 over 255, -50 over 24) lasts only for that member's items; ours
+  lowered one chance for the whole party, so after THRENDER's banded mail nobody lost anything. Fails on the code
+  before chat 60 (BROTHER SEAN's mace, DARKSTAR's and PHINEAS's darts and dagger).
+- **Check 73, the same patrol, PAY 99 gp** (`data/c60/chk73/`): THEY PAW THROUGH YOUR COINS AND LEAVE (`ROB 1, 50,
+  0`); DARKSTAR's darts go on a d100 of 48. **Found:** the original's ROB handler (0x2AF7) reads operand 2 twice
+  (0x7609 with 1, 2, 2): the items' chance is the coins' percentage and the third operand is never read. Ours now
+  does the same (`ecl_vm.gd` `_rob`); every ROB in Pool whose two numbers differ takes items more or less often than
+  the script's third number says (1:18 `ROB 1, 100, 50`; 2:9 `1, 100, 20`; 3:0 `1, 20, 5`; 6:1 `1, 75, 50`, `1, 75,
+  10`, `0, 25, 0`; 6:28 and 8:13 `1, 100, 255`; 8:13 `0, 20, 20`, `1, 25, 10`). 20 draws identical. Fails on the
+  code before chat 60.
+- PAY with 0 gp (the cheapskates, then the fight) plays check 71's fight draw for draw in ours (1109, INPUT_NUMBER
+  draws nothing): not made a check (it would repeat 71).
+
 ## Chat 59: checks 68-71 (5:6 the priest of Bane: KILL THEM, ACCEPT BLESSING, LEAVE; 2:20 a patrol's RUN: fight checks), DIFFCHECKS 71/71
 
 - **Check 68, 5:6 the priest** (check 25's start with 0x4A69 bit 128 cleared: c34d's party had cleared the temple;
