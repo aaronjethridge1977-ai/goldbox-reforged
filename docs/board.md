@@ -27,6 +27,8 @@ Files not listed: whoever needs them asks here first.
 
 ## Queues
 
+**Stage 1 is complete when** (Jeremy, Methods 7, 2026-11-19): the original's full run (Player) reaches the end and matches ours; every ECL handler the main path uses has a differential check; **the Linux build is out**; Jeremy signs off after his own run; and a quiet streak of finding runs finds nothing new (the number: Methods 7 Q5). **Main's queue, standing: the Linux build, as soon as the original's full run reaches the end** (Jeremy, Methods 7: put here so it doesn't drop out). **Every lane's end:** the board's Now keeps one line per lane (replace yours; older lines go to docs/board-archive.md with finished requests). **"Match the original?" questions go to the Lead, not to Jeremy** (the Lead decides them under the faithfulness rule).
+
 
 **Gate closed 2026-11-16: faithfulness first, then QoL** (was: gate items only) (Jeremy and the design office, Methods 5, "Usage goes further"; the Lead runs at most two lanes at once, only when both have independent gate items). A run that lands an item goes on to its next gate item. Everything else waits in Later; a Later item moves up only if it blocks a gate item. Only the design office (the Lead) and the feedback desk add items; only Jeremy reorders. Ticked items of earlier queues: `docs/board-archive.md`.
 
