@@ -172,6 +172,24 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 65: the arena's duel and a band fight, checks 99-100, DIFFCHECKS 100/100
+
+**The handler table's last line closes: CALL 0x8000 now runs in a matching check (99).** Every opcode Pool's scripts
+use, and every CALL target the original acts on (but 0xBA03, a sound), runs in a check that matches.
+
+- **Check 99, 3:11 the arena's duel (CALL 0x8000, 0x9CA6)**: chat 64's ready start at 7,4 W, tpseed 11111111: Up x3,
+  YES to the duel, QUICK: **all 1488 draws identical** (the double, morale 0xB2, fights on hurt: Combat Chat 30's
+  3741bdd; the duelist's 100 experience per level through the class adjustments: THRENDER GRONE 158), then CONTINUE
+  NO, the treasure, EXIT, F2. Fails on the code before Combat Chat 30's a6c7afb (the clock: the copy fled). Three runs
+  MATCH (lab `data/c64/chk_arena`).
+- **Check 100, 8:27 a band fight** (check 31's start, tpseed 31310016): one step north, YOU SPOT A GROUP OF KOBOLDS,
+  COMBAT, QUICK: the wilderness battlefield (GAME.OVR 0xD785's field: 0xCE75's flags, the scatter, the clutter;
+  Combat Chat 30's 0c76388), **7979 draws identical**, CONTINUE BATTLE NO, the treasure left (E, N), F2. Main chat
+  61's band kobold request, closed. Fails on the code before 0c76388. Three runs MATCH (lab `data/c65/chk100`).
+- **Still not checks:** the temple (COMBAT with 0x6DE2: the cure's d8 matches since Combat Chat 30's b8db5a7; the pile
+  menus TAKE / SHARE and the retrieve question, and the jewelry slot, wait on Combat) and the tavern brawl (the
+  patrons' placement, asked of the Lead by Combat Chat 30).
+
 ## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; the training hall, the inn, a purchase; checks 94-98, DIFFCHECKS 98/98
 
 **How the table was made.** `~/gbr/checks/diffcheck.sh` copied with `--coverage=/tmp/opcov/cov/$n.json` added to ours'
@@ -258,7 +276,7 @@ paths): no check; 7:22's corpse (0x4A00) would be one, behind its secret doors.
 
 **CALL by target** (the original acts on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E, 0xC018; GAME.OVR 0x3A36):
 0x2C90 41 of 114 sites run (checks 3, 4, 5, 10, 12, 13, 16, 17, 18, 23, ...), 0xC018 13 checks, 0xC01B 17, 0xC01E
-checks 19 and 38, 0x0806 13 checks. **Not run by any check:** 0x8000 (3:11's duel, 0x9CA6: ready, waits on Combat, below);
+checks 19 and 38, 0x0806 13 checks. **Not run by any check:** 0x8000 (3:11's duel, 0x9CA6: ready, waits on Combat, below; **chat 65: check 99**);
 0x8001 (1:18's buccaneer challenge 0xA9D3, 8:16 0xA344) is run by check 95 (new); 0x2C4E / 0x2C51 / 0xC003 / 0xC009 (7:26
 0xAD66-0xAE89 and 8:27 0xAB25-0xAB99, the bands' land-recovery loops: no-ops in the original, chat 24); 0xBA03 (a
 sound: nothing to compare).
