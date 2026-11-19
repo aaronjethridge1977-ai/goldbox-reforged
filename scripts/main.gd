@@ -1128,7 +1128,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dev_view = not _dev_view
 			CombatScreen.dev_view = _dev_view
 		elif key == KEY_A:
-			_area_view = not _area_view
+			if not _vm.on_overland and _vm.read_byte(NO_COORDINATES) != 0:
+				# Where the place line shows no square (0x49FB set: Valjevo's castle, the pyramid,
+				# Sokal Keep...) the original's AREA prints NOT HERE on row 24 and opens no map
+				# (GAME.OVR 0x170B3: "Not Here", colour 14); chat 61, DOSBox with 0x49FB = 1.
+				_note_24("NOT HERE")
+			else:
+				_area_view = not _area_view
 		elif key == KEY_E:
 			_make_camp()
 			get_viewport().set_input_as_handled()
