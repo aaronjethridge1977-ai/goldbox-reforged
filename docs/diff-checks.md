@@ -172,6 +172,34 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 66: camp TRADE, DROP and HALVE; ENCOUNTER_MENU's choices read; checks 105-107, DIFFCHECKS 107/107
+
+- **Check 105, 3:0 camp VIEW ITEMS, TRADE** (check 26's start, tpseed 11111111): ENCAMP, VIEW, ITEMS, READY (ARN's long
+  sword off; TRADE on a readied item does nothing in the original, no message), TRADE: TRADE WITH WHOM? SELECT EXIT,
+  End (BRAM), SELECT: the sword is BRAM's fourth item; EXIT x3, F2 (the original: ENCAMP SAVE). Matched at once; the
+  same keys without the TRADE differ (ARN's items), so the check sees it. Three runs MATCH (lab `data/c66/chk105`).
+- **Check 106, camp DROP**: the same start, READY (off), DROP: YOUR LONG SWORD WILL BE GONE FOREVER / DROP IT? YES NO,
+  YES. Matched at once. Three runs MATCH (`data/c66/chk106`).
+- **Check 107, camp HALVE**: the same start, Down x4 (LIRA), VIEW, ITEMS, Down x3 (her 10 ARROWS, readied), HALVE: 5
+  ARROWS readied and 5 ARROWS not, after them. Matched at once. Three runs MATCH (`data/c66/chk107`).
+- **ENCOUNTER_MENU's choice logic (GAME.OVR 0x2EEF-0x32ED) read beside `ecl_vm.gd` `_encounter_choice`: the five
+  reactions agree branch for branch** (outcome 1 a fight, 2 away, 0 the monsters flee with THE MONSTERS FLEE., 3
+  talk; BOTH SIDES WAIT. and the close-in loop back to the menu at 0x2D8D). **One difference fixed:** the party's
+  slowest and fastest come from 0x9484 (each figure's +0x11C, **doubled as a byte under Haste, effect 39, else halved
+  under Slow, effect 42**); ours ignored both (`_party_moves`). Only a member still hasted or slowed when a menu
+  comes can see it (reaction 0's FLEE, reaction 2's COMBAT): no check. A reaction above 4 writes nothing and leaves
+  the menu (ours would show it again); none of Pool's 94 ENCOUNTER_MENUs has one or takes one from a cell.
+  **DS 0x4A00, 0x84E9 and 0x84E4 are display:** 0x4A00 set makes the text printer wait 0x49E2 x 10 ms a character
+  (START.EXE 0x777B: the typewriter text during the menu; cleared at the end), 0x84E9 set (with 0x49F6 = 0) skips
+  0x7A21's redraw of the approaching figure, 0x84E4 = 0 makes the walking-key routine clear the text window once
+  (0x173ED).
+- **The walking-key routine and the main loop (GAME.OVR 0x17060, 0x40FF-0x418F) beside `main.gd`: they agree.** S
+  toggles bit 0 of the search word (+0x594 from 0x49D6) with no time and no step; a step costs 0x241A1(2, 1), ten
+  minutes, with the bit set, else (1, 1), a minute (0x16E99); L sets bit 1, passes ten minutes and the loop runs the
+  look entry [0x49E5] with the word at 1, then puts SEARCH's bit back (0x4136-0x416D); E calls the camp (0x3B19) and
+  reads the next key without the step scripts. Left and Right call a sound (0x8AE:0xDC with DS 0x2628), Down (turn
+  round) doesn't.
+
 ## Chat 65: the arena's duel, a band fight, a SELL, a camp's Bless and cure, a second training level; checks 99-104, DIFFCHECKS 104/104
 
 **The handler table's last line closes: CALL 0x8000 now runs in a matching check (99).** Every opcode Pool's scripts

@@ -1436,11 +1436,17 @@ func _show_encounter_menu() -> void:
 	_menu_kind = "encounter"
 
 
+## The party's slowest and fastest (GAME.OVR 0x9484, called at ENCOUNTER_MENU's start): each figure's
+## movement (+0x11C), doubled as a byte under Haste (effect 39), else halved under Slow (effect 42).
 func _party_moves() -> Vector2i:
 	var lo := 255
 	var hi := 0
 	for m in party:
 		var mv := (m as PartyMember).movement
+		if (m as PartyMember).has_affect(39):
+			mv = (mv << 1) & 0xFF
+		elif (m as PartyMember).has_affect(42):
+			mv >>= 1
 		lo = mini(lo, mv)
 		hi = maxi(hi, mv)
 	return Vector2i(lo, hi)
