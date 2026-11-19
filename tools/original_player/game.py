@@ -72,6 +72,12 @@ class Game:
             return "key", self.where(*b["caller"])
         if b["polls"] != a["polls"] and b["pcaller"] == a["pcaller"]:
             return "poll", self.where(*b["pcaller"])
+        if b["polls"] != a["polls"]:
+            # Player 24: an animated picture (7:23's fountain, p24b2) polls the keyboard from its own loop between the
+            # screen's waits, so the two reads can name different callers: a known input site among them is the wait.
+            for s in (self.where(*b["pcaller"]), self.where(*a["pcaller"])):
+                if s in KINDS:
+                    return "poll", s
         return "busy", None
 
     def rows(self, im=None):
@@ -163,6 +169,7 @@ class Game:
         t = time.monotonic()
         prev = None
         mark = None
+        near = 0
         while time.monotonic() - t < timeout:
             now = (self.mem.seed(), self.mem.ds(0x6AAD, 3))
             if now != mark:            # dice drawn or the party moved: the game is working, not stuck
@@ -175,11 +182,15 @@ class Game:
             if kind == "key" or (kind == "poll" and site in KINDS):
                 self.stale = None
                 rows, im = self.rows()
-                if prev is not None and rows == prev[0] and site == prev[1]:
+                box = [rows[r] for r in range(17, 25)]
+                if prev is not None and site == prev[1] and (rows == prev[0] or (box == prev[2] and near >= 5)):
+                    # (Player 24: or the text box and the site the same over five reads while an animated picture
+                    # keeps the other rows changing: 7:23's fountain)
                     self.last = {"wait": kind, "site": site, "rows": rows, "im": im,
                                  "bottom": rows[24].strip("? ")}
                     return self.last
-                prev = (rows, site)
+                near = near + 1 if prev is not None and site == prev[1] and box == prev[2] else 0
+                prev = (rows, site, box)
                 time.sleep(0.05)
                 continue
             if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.auto_magic \
@@ -191,6 +202,21 @@ class Game:
             if kind == "poll" and site not in self.unknown_sites:
                 self.unknown_sites.add(site)
                 self.log("SITE polled (not an input wait):", site)
+            if kind == "busy" and time.monotonic() - t > 15:
+                # Player 24: 7:23's fountain (p24b2, p24b3): its picture animates while the text box waits, and the
+                # original's key reads come from no caller we know; after 15 s busy, a text box asking for RETURN that
+                # reads the same twice is that wait (the menu site's, OVR:2ce3a, as every text box).
+                rows, im = self.rows()
+                if "PRESS BUTTON OR <RETURN> TO CONTINUE" in rows[24]:
+                    box = [rows[r] for r in range(17, 25)]    # the text box only: the picture's rows animate
+                    if prev is not None and box == prev[0] and prev[1] == "busy-enter":
+                        self.log("BUSY text box asks for RETURN: taken as the menu's wait")
+                        self.last = {"wait": "poll", "site": "OVR:2ce3a", "rows": rows, "im": im,
+                                     "bottom": rows[24].strip("? ")}
+                        return self.last
+                    prev = (box, "busy-enter")
+                    time.sleep(0.3)
+                    continue
             prev = None
             time.sleep(0.1)
         return None

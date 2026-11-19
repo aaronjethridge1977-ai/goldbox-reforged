@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`
+## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 
 **The Alt-M replays with `magicat=`** (Combat Chat 25's request). The draw for an old trace, per fight: the last spell
 weighing (OVR:0b16c) with no list (no OVR:0b1cd right after it) before the first with one, plus 2 (lab
@@ -1354,9 +1354,27 @@ only the clock and coin kind 5 (the sale); the pyramid's flags agree.
   bot's "only passing", c34d 26690).
 - 7:22's ECL: lab `p24/ecl7_22.txt` (`tools/ecl.py dis game/ECL7.DAX 22`).
 
+**Segment 20, first part (`pyramid1` -> `s20m`)** (plan `plans/p24_c34d_20a_mage.plan`, lab `p24/seg20a.plan`; runs
+p24b1-b6 from `p2start/p24a4_pyramid1`, `p24b1_s20a`, `p24b5_s20f`): 7:23 in the bot's order: events 5, 3, 4, 18, 1, 2,
+then 6 (3,13, five lizard men: **the original's reaction roll gave COMBAT WAIT FLEE ADVANCE, not the bot's "wary"
+PARLAY menu**, so the party fought and won; 0x4A51 bit 1 is set either way, the parley sets nothing more:
+`p24/ecl7_23.txt` 0x9E76-0x9F94; **`s20a`**), 7, 8, the rocks at 15,12 (THROW A ROCK, MOVE ON: to 11,3), **round to 13,3
+and a step W onto the second rocks room** (12,3 opens only east; 11,3 only south), to 0,4, 0,3 and a step N onto the
+third (to 0,0), 1,1 (the password NOKNOK), 2,1 (the fountain: MOVE QUICKLY AWAY; **`s20f`**), 4,1 (locked: PICK then
+BASH; the mage and his mutated guards, 13 figures): **p24b5 destroyed, p24b6 won** (nobody dead; ARN 3/32): **`s20m`**
+(7:23 4,1 E; 0x4AB3 = 254, the commission done). Left of the segment: the rest, the dial (event 26, NO), the
+teleporter (event 16, 6,0) into 7:22, and the bot's 7:22 wanderings, town trip and return (c34d 30288-31048).
+- **The harness and animated pictures** (`game.py`): 7:23's fountain animates while its text box waits; the two reads
+  of the key polls name different callers and the screen's rows never read the same twice (the picture's rows are read
+  as text), so the harness saw "busy" and stopped (p24b2-b4). Now: with the poll count moving, a known input site
+  among the two callers is the wait; a known site whose text box (rows 17-24) reads the same over five reads is
+  settled; and after 15 s busy, a text box asking PRESS BUTTON OR <RETURN> that reads the same twice is the menu's wait.
+- 7:23's ECL: lab `p24/ecl7_23.txt`.
+
 Lab: `p24/` (seg19.plan, `*.seg.out`, `*.cmpdraws.txt`, `pyramid1.cpdiff.txt`, `bot_band1_pyramid1.txt`,
 `ecl7_22.txt`, magicat.py, weigh.py, bandmap.py, `archive.sh`), saves `p2start/p23b1_band1`, `p24a1_s19t` (and
-`.lab/player/saves/p24*`); runs p24a1-a4; archive `player24_lab.tar.gz`.
+`.lab/player/saves/p24*`); runs p24a1-a4, p24b1-b6 (`p24/tries.sh`); saves also `p2start/p24a4_pyramid1`, `p24b1_s20a`,
+`p24b5_s20f`; archive `player24_lab.tar.gz`.
 
 ## Player 22 (2026-11-18): segments 14 to `kovel`, 15 to `band3`, 16 to `kobold_caves`; segments 13 and 14 in ours
 
