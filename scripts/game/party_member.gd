@@ -109,6 +109,11 @@ var weapon: GameItem = null
 var armor: GameItem = null
 var shield: GameItem = null
 var weight := 0
+## The load the original keeps in the record (+0x102, a word): START.EXE 0x1924 writes it when the record is
+## worked out again (0x1758; ours' recalculate()), the coin sites raise and lower it (GAME.OVR 0x24CC3 /
+## 0x24CA9), payments leave it, and the coin tests read it. Read from and written to saves (Q28 (a), chat 63:
+## main's part; Combat maps the recompute and coin sites and moves the tests onto it).
+var load_word := 0
 
 
 static func load_files(sav_path: String, itm_path: String) -> PartyMember:
@@ -210,6 +215,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.strength_exceptional = d[0x16]
 	m.hp_max = d[0x32]
 	m.hp = d[0x11B]
+	m.load_word = d.decode_u16(0x102)
 	m.experience = d.decode_u32(0xAC)
 	m.status = d[0x10C]
 	m.class_flags = d[0xB0]
@@ -267,6 +273,7 @@ func clone() -> PartyMember:
 	m.hp = hp
 	m.status = status
 	m.experience = experience
+	m.load_word = load_word
 	m.money = money.duplicate()
 	m.memorized = memorized.duplicate()
 	m.affects = affects.duplicate(true)
@@ -926,6 +933,7 @@ func recalculate(types: ItemTypes) -> void:
 	elif over > 0x200:
 		by_load = 9
 	movement = mini(movement, by_load)
+	load_word = weight & 0xFFFF
 
 
 # --- Money ---------------------------------------------------------------------------
@@ -1319,6 +1327,7 @@ func to_record() -> PackedByteArray:
 		d[0x11C] = clampi(movement, 0, 255)
 	for i in 7:
 		d.encode_u16(0x88 + i * 2, clampi(money[i], 0, 65535))
+	d.encode_u16(0x102, load_word & 0xFFFF)
 	for i in spell_book.size():
 		d[0x33 + i] = spell_book[i]
 	for i in range(0x17, 0x2C):
