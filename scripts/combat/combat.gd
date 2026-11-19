@@ -139,7 +139,7 @@ func outcome() -> int:
 	# Every enemy dead or gone: the fight ends at once (QoL, decided 2026-11-10). With some
 	# only down (dying, unconscious) the original plays out the round and then asks
 	# CONTINUE BATTLE (next_turn; checked roll for roll in the lab, 2026-11-14); NO wins.
-	if standing(1) == 0 and (decided or enemies_all_gone()):
+	if standing(1) == 0 and (decided or (enemies_all_gone() and not lab_play_out())):
 		return 1
 	if standing(0) == 0:
 		for c in combatants:
@@ -156,6 +156,13 @@ func outcome() -> int:
 
 ## The fight was ended by NO at CONTINUE BATTLE.
 var decided := false
+
+
+## Lab (Combat Chat 25): with GBR_PLAYOUT=1 in the environment a fight whose enemies are all dead or
+## gone plays out its round and asks CONTINUE BATTLE, as the original does, instead of ending at once
+## (the QoL rule above): segment replays of the original's runs go on past such fights.
+static func lab_play_out() -> bool:
+	return OS.has_environment("GBR_PLAYOUT")
 
 
 ## No enemy left on the field alive: each is dead or got away.
