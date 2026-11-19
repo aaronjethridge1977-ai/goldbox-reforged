@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 61: the wall ahead in statediff; checks 75-80 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE), DIFFCHECKS 80/80
+## Chat 61: the wall ahead in statediff; checks 75-86 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE, 5:4 the scribe, rests in 2:20 and 3:0, a band PARLAY), DIFFCHECKS 86/86
 
 - **The wall ahead joins statediff.** The original's save keeps ECL 0xC04E (DS 0x6AB0) at byte 0x3204; statediff
   now compares it in a 3D area (`wall ahead (0xC04E)`). On the code before chat 61, **13 of the 74 checks differed
@@ -202,6 +202,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   square on the place line). Five draws identical.
 - **Checks 79 and 80, the plaza's STRIDE with seeds 5151001c (ogres, 1292 draws identical, RHIANNON falls) and
   51510026 (orcs, 1320, BAKSHI falls)**; HP and status member for member as the original's.
+- **Checks 81-83, 5:4 the records building's scribe** (check 23's start, tpseed 54540005: the reading's d19 under
+  3): RUN AWAY (AN ALARM STARTS RINGING!, 0x4A62-0x4A64 from the clock, put back on 15,8 N), AMBUSH AND KILL HIM and
+  AMBUSH AND TIE HIM UP (each PRESS BUTTON OR <RETURN> TO CONTINUE as written, then NO to reading); four draws
+  identical each. 82 and 83 write no flags: they guard the vertical menu's routing.
+- **Check 84, 2:20 a rest interrupted** (check 71's start, tpseed 20200001): the rest's first d100 (21) interrupts at
+  12:56, ANGRY GOBLINS, COMBAT on QUICK: **1864 draws identical**, 3,4 S 13:02.
+- **Check 85, 3:0 a rest in the street** (check 46's start, tpseed 30300001): 3:0's rest odds are 101, so every rest
+  there is interrupted (21:01): ROUSTED BY THE CITY WATCH, GO. Two draws identical. STAY (the watch's fight)
+  destroys check 46's party in ours: not a check.
+- **Check 86, 8:27 a band encounter's PARLAY** (check 31's start, tpseed 31310016): kobolds, PARLAY, HAUGHTY: a d31,
+  back on the band with no text (every attitude the same in ours). Seven draws identical. COMBAT, WAIT and FLEE
+  there go to the fight, which parts at the wilderness clutter (below).
 - **Not a check yet: a band fight** (8:27, check 31's start, tpseed 31310016: YOU SPOT A GROUP OF KOBOLDS, COMBAT;
   c34d's party): parts at the field's setup, the wilderness clutter (GAME.OVR 0xD3A1: a d100 of 0 at 0xD3AC, then
   a d10 at 0xD3BF; ours, the dungeon rule, draws the next cell's d100), Player 21's open request (a) to Combat. The
