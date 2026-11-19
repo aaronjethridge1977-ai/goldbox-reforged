@@ -173,6 +173,22 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 64:** checks 94-98 in `data/c64/chk94..98/` (`data/c64/cd/` links `game` and each; `cd/arena` and `cd/temple`
+are ready checks waiting on Combat: `DIFFCHECK_ONLY=arena` / `temple`). **The handler table:** `~/gbr/checks/diffcheck.sh`
+copied to `/tmp/opcov/dc.sh` with `--coverage=/tmp/opcov/cov/$n.json` added to ours' command line (main.gd's dev
+coverage, a debug build's option) and `H=` pointed at `~/gbr/checks`, run on the repo; then `python3 tools/lab/opcov.py
+<cov dir> data/c62` (lab copy `data/c64/opcov.py`; the result `data/c64/opcov_93.txt`) prints per opcode its sites in
+Pool's 29 blocks and the checks that ran it; a CALL split by target is the same idea (docs/diff-checks.md "Chat 64").
+**Reading a clock cell live:** `data/c61/ecl_poke.py 49C7` while the original runs a script (CLOCK's no-op seen so).
+**ECL CLOCK** is GAME.OVR 0x3807 -> 0x241A1 (the clock words, the limits at DS 0x363A) -> 0x23DCC (durations). **A record
+edit for a start:** `CHRDATG<n>.SAV` experience +0xAC (u32), coins +0x88 + 2 x kind (u16; gold +0x8E) (`data/c64/train/start`,
+`data/c64/temple/start`). **Routes:** `route.py` `load(geo, map)`, `route(start, goals, avoid events)`, `keys(path, facing)`
+(3:0 is GEO3 map 0, 7:22 GEO7 map 22; `evmap.py <geo> <map>`); 7:22 hides the square on the place line, so `walk=` can't
+steer there. **7:22's corpse region** (13,4) connects only one way, out through 6,1 into 7:23 (the x=15 corridor, the
+rocks room and 7:23's returns all stay outside): no cheap start. In a duel the original's trace numbers the members set
+aside as figures (the opponent is figure 6), so cmpdraws' positions line is off by that. Ours' keys after a lost duel need
+one Enter more than the original's (fightend stops at the fight's last line). Lab slot J put back; G untouched.
+
 **Chat 63:** 0.1.5 built (`builds/release-0.1.5/`, from 6d34e55; the Windows exe's native smoke line in `builds/smoke-0.1.5-win.log`). **ECL handlers read beside ours** (`ovr.py dis <hex>`): CLEAR_MON 0x1FA3 (also empties the coin pile 0x67F4 and the item pile 0x6810; 0x4435 the creature count, 0x84E7 "a LOAD_MON since", 0x6F83 the icon slot), LOAD_MON 0x1196 (63 creatures since CLEAR_MON), COMBAT 0x24E1 (fight only when 0x84E7; else temple 0x6E6C / shop 0x6DE2 / the treasure routine 0x6AA5), the fight's end 0x6AA5-0x6BEE (zeroes ECL 0x6DE3 / 0x6DE6; 0x5A47 the party-destroyed test, 0x6DE6 at 0x5B0F), TREASURE 0x26F6, PARLAY 0x3311, SPRITE_START 0x10FA / SPRITE_ADVANCE 0x155D, NEW_ECL 0x1918-0x19B2, the main loop 0x40DB-0x424D (LOOK 0x4136, the step 0x4192, the arrival 0x3EFA), the walking menu's keys 0x170AC-0x171C5 (unit 0x166CB). ECL cell offsets from [0x49D6]: address = 0x6B00 + offset / 2 (+0x5C6 = 0x6DE3); DS 0x6DE3 is a different byte (the round counter). **Scanning every block's listing** (`data/c62/ecl_*.txt`) with awk for an opcode pattern (TREASURE before CLEAR_MON, a test of [6DCA] after a stop, the creatures per fight) tells whether a finding reaches Pool. **The tavern brawl** (3:0, check 93's start, tpseed 62620001, GRAB): the original's trace `data/c63/brawl_orig.txt` (6402 draws, won) and end save `data/c63/brawl/orig` (Enter, E, N, RUN, ENCAMP SAVE at 3,11 W); ours parts at draw 765 (Combat's request); a 1-HP party (`data/c63/brawl/weak`, HP is record +0x11B) still won in the original. **Q26's replay:** a private OP_LAB `/tmp/oplab63` (oplab59's files, `logs/p20a3.log` and `.trace.txt` copied, `proj` copied from the repo and imported) gave p20a3 s11c -> s11k 0 differences. `mksave.py ... 49F2=<block>` skips an init that tests 0x49F2 before its LOAD_AREA_MAP (7:22: the old map stays): not for 7:22. Lab slots J and G put back.
 
 **Chat 62:** checks 90-93 in `data/c62/chk90..93/` (`data/c62/cd/` links `game` and each). **The ECL dispatcher:**
