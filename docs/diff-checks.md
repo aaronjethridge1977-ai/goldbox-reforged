@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 59: check 68 (5:6 the priest of Bane: the second fight check), DIFFCHECKS 68/68
+## Chat 59: checks 68-70 (5:6 the priest of Bane: KILL THEM, ACCEPT BLESSING, LEAVE: fight checks), DIFFCHECKS 70/70
 
 - **Check 68, 5:6 the priest** (check 25's start with 0x4A69 bit 128 cleared: c34d's party had cleared the temple;
   lab `data/c59/chk68/`): tpseed 11111111, Left, Up, Up, Left, Up, PRESS RETURN, A PRIEST AND TWO ACOLYTES ..., KILL
@@ -182,6 +182,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   THERE IS STILL TREASURE LEFT NO; the original's ENCAMP SAVE J; DIRTEN at 0 HP. **MATCH.** It also MATCHes on the
   code before a93a0d0 (the parting at 940 changed only moves, not the end state), so it guards the fight's outcome, not
   that draw.
+- **Check 69, the priest's ACCEPT BLESSING** (check 68's start and seed, A): the blessing's DAMAGE page by page (a d10 and
+  a d7 per member, DIRTEN twice), THE PRIEST SHOUTS ... A FIREBALL EXPLODES (15 each: DIRTEN down before the fight), 13
+  Enters in all (ours pages the fireball's lines as the original), QUICK. **981 draws identical, every cell.** The
+  original numbers the downed DIRTEN as figure 6 (30,14), ours lists him apart (`downcell`), so cmpdraws' "positions"
+  lines name figures 6-8 differently: the cells agree. **MATCH.**
+- **Check 70, the priest's LEAVE** (L): the fireball first, 5 Enters, QUICK. **1164 draws identical, every cell**;
+  CEDRIC falls; at CONTINUE BATTLE the original holds him dying (status 5, `partyrec.py`), ours 4; both saves 4, HP 0.
+  **MATCH.** (Q4: a win with a death; the check guards the state, not the verdict.)
 
 ## Chat 57: PARTY_CHECK's cells (Player 22's (d)), checks 65-67 (3:14 a door trap, 5:3 Cadorna's cell, 1:18 a rest interrupted by a fight: the first fight check), DIFFCHECKS 67/67; two fights compared draw for draw
 
