@@ -172,8 +172,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-109, DIFFCHECKS 109/109
+## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-110, DIFFCHECKS 110/110
 
+- **Check 110, 3:0 the temple of Tempus (COMBAT with 0x6DE2 = 1: the handler table's temple line now runs in a matching
+  check)**: chat 64's ready check (`data/c64/chk_temple`): THRENDER GRONE's 2000 gp, tpseed 11111111, the walk, YES;
+  BAKSHI, HEAL, CURE LIGHT WOUNDS, HEAL, YES (no money on him: nothing), EXIT, POOL, HEAL, the cure (the game's d8,
+  draw 20), EXIT, SHARE, EXIT, the retrieve question, NO. **All 20 draws, statediff 0 (whole items and effects too)**
+  since Combat Chat 31's 1e9660d (the temple's pile as the shop's; the jewelry slot's 3500 / 2333 / ... is SHARE's
+  word wrap on THRENDER's stale load word); fails on the code before (15 differences). Three runs MATCH. The tavern
+  brawl still waits (Combat asked the Lead whether it is a gate item).
 - **statediff compares the standing effects** (the original's `.SPC` beside each record: type, minutes, power; ours'
   `affects`). Across the 109 checks five differed: **(1) stale `.SPC` files in four checks' original ends** (19 and 21:
   F4, F5; 34 and 35: F1-F3, F7: ARN with a dwarf's race effects): DOSBox shows the original **deletes a member's `.SPC`
