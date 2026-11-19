@@ -172,8 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-111, DIFFCHECKS 111/111
+## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-112, DIFFCHECKS 112/112
 
+- **Check 112, 3:0 the temple, NEUTRALIZE POISON and CURE DISEASE** (check 110's start with THRENDER's platinum = 3000;
+  RHIANNON dead, HP 0, with effect 0x37 added to her `.SPC`; BROTHER SEAN with effect 0x32, disease, 14400 minutes):
+  POOL, RHIANNON, HEAL, NEUTRALIZE POISON (End x5), HEAL, YES (1000 gp): **the 0x37 goes, but she stays DEAD at HP 0**
+  (a made-up state: chat 31's THRENDER, poisoned by the game itself, came back at HP 1; what the game's poison death
+  holds beyond 0x37 is not read); SEAN, CURE DISEASE, YES: the 0x32 goes; EXIT, SHARE, EXIT, NO. Matched at once,
+  effects and the jewelry slot's share too. Three runs MATCH (lab `data/c66/chk112`).
 - **Check 111, 3:0 the temple, RAISE DEAD** (check 110's start with RHIANNON dead, +0x10C = 6 and HP 0, and THRENDER
   GRONE's platinum +0x90 = 3000): the walk, YES, POOL, End x2, HEAL, End x6 (the list opens on CURE BLINDNESS), HEAL:
   RAISE DEAD WILL ONLY COST 5500 GOLD PIECES. / PAY FOR CURE YES: HP 1, OKAY, **CON 14 -> 13**, max HP kept (CON under
