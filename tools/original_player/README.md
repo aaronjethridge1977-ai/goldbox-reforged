@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 26 (2026-11-19): segment 27 to `mopup1`; 0x4A99 is the clerk's, not a difference
+## Player 26 (2026-11-19): segment 27 to `mopup1`; segment 28 blocked at the Stojanow Gate (6 of 6 lost); `restuntil`; 0x4A99 is the clerk's
 
 **Segment 27 (`graveyard` -> `mopup1`): reached, first try** (plan `plans/p26_c34d_27_mopup1.plan`, lab `p26/seg27.plan`;
 run p26a1 from `p2start/p25q5_graveyard`, seed 26a10001): main's bot's "town" (City Hall twice, the arms shop, the
@@ -1331,6 +1331,39 @@ the nomad camp ENTER, 7:17's rest: **`mopup1`** (7:17 1,14 E, the bot's square; 
   that lists "LORD URSLINGEN WISHES URGENTLY TO SPEAK WITH YOU" (ECL 3:8 0xAE9E: until the Stojanow gate is taken,
   0x4AB9 >= 254), after Urslingen's own 255 (0xB292). The original's party read 255 at `graveyard` because its last
   clerk visit came before Urslingen; at `s27t` (two clerk visits after) it reads 254, as the bot's.
+
+**Segment 28 (`mopup1` -> `stojanow`): blocked at the Stojanow Gate** (plan `plans/p26_c34d_28_stojanow.plan`, lab
+`p26/seg28.plan`; runs p26b1-b6 from `p2start/p26a1_mopup1`, p26c1 from `p26b6_s28g`, p26d1-d2 and p26e1-e5 from
+`p26c1_s28b`). Main's "log 17" in the bot's order: 7:17 0,14 W (BACK INTO THE WILDERNESS: YES; the camp LEAVE), the
+band to 11,27 and a step S onto 11,28 (WHICH ENTRANCE: NORTH, Podol's north gate), 1:18 4,0 N into 2:9 (4,15 N),
+**`restuntil 8`**, a step N onto 4,14 (the trader: PARLAY, YES, the wagon for 250 gold), 7,13, 7,12 and a step N (the
+toll: 15 gold; through to 8,5): **`s28g`**; the bot's explore: 11,5, 4,5, 0,0 (the guard rooms, quiet before the
+alarm), down the gate passage 7,6-7,9, 7,10 (THE BUGBEARS: ATTACK, the plan's answer: 16 bugbears; p26b6 lost a member,
+p26c1 won), `prepare`: **`s28b`** (ARN L3 32 HP, BRAM L5 50, CEDRIC L6 42, ELWEN L5/4/4 36, LIRA L3/3 22, DORN L3/4 30).
+Then 6,10, 2,12, 4,14 and back in: at 7,6 **"A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE WALL"** (ECL 2:9
+0xB081, once the bugbears at the gate are fought, 0x4A77 bit 16: monsters 24 x2, 53 x2, 71 x6; 16 figures, ~580 HP
+against the party's ~210): **the party destroyed 6 of 6** (p26d2 with COMBAT, p26e1-e5 with the bot's FLEE, its odds
+0.03: the fight comes anyway). Main's bot's stronger party (seven members, ARN L6 55 HP, DIRTEN) lost the same fight
+twice in ours and **took the gate by its logged shortcut win** (full_c34d.log: "the fight that beat the party will be
+won by shortcut: 2:9 7,6"); c34d's party in the original was destroyed there too (Player 9, `p9_mu1T`). Everything
+after (`stojanow`'s "YOU HAVE TAKEN THE GATE!", 0x4AB9 = 254; Valjevo, the castle, the finale) needs the gate:
+**design question** (board Requests, "player (Player 26) → design").
+- New plan line **`restuntil <hour>`** (plans.py; main's bot's "restuntil"): camp and rest (hour - now) mod 24 hours,
+  an interruption fought out and not rested again. The trader drives up only before hour 14, once a visit, without
+  the wagon (ECL 2:9 0xADAA: 0x49C9 < 14, 0x4A77 bit 64 clear, 0x4A00 = 0).
+- **The trader's menu screen shows only COMBAT WAIT FLEE PARLAY** (his words are on the screen before): the default
+  COMBAT kills him and takes the wagon (p26b5, 0xB056, no gold paid); the plan's `answerfrom COMBAT WAIT FLEE
+  PARLAY|PARLAY` around the step buys it as the bot did.
+- **A walk without `avoid` walks round every event square** (Player 13's rule), so in 2:9 the south yard is cut off
+  from the gate passage by event 4's squares (2,12, 4,12, 7,13, 12,12) and the passage's own events: the way back in
+  is `walk 11,5 avoid 3,64,65,66` (p26c1, p26d1 stopped at "no route").
+- **Two DOSBoxes for a moment** (p26b5, p26b6): p26b5 went on past `s28g` (a run goes to its plan's end) and was
+  still running when p26b6 started; p26b5 stopped at 04:28:18 as p26b6's began (its log ends without an END) and
+  p26b6 ran alone: kept. Before a new run: `grep -a " END " logs/<last run>.log`. The first p26e loop reused p26c's
+  seeds (stopped at once): `p26/tries.sh` now gives each prefix its own seeds (26 <letter> 1 <n>).
+
+Lab: `p26/` (seg27.plan, seg28.plan, `ecl2_9.txt`, `ecl2_20.txt`, `mopup1.cpdiff.txt`, tries.sh, tries.txt, `*.q.out`),
+saves `p2start/p25q5_graveyard`, `p26a1_mopup1`, `p26b6_s28g`, `p26c1_s28b` (and `.lab/player/saves/p26*`).
 
 ## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`, 26 to `graveyard`; `templecure`; `nocast`; 0x4A8C
 

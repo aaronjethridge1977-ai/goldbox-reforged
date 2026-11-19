@@ -62,6 +62,8 @@
                                  crossing every event (the library's stacks: a book a visit)
   innwait                        (Player 15) `innheal`, then from hour 14 a rest till midnight (bot.gd _wait_for_day:
                                  New Phlan locks its shops, City Hall and halls from hour 14)
+  restuntil <hour>               (Player 26) main's bot's: camp and rest (hour - now) mod 24 hours (Stojanow Gate's
+                                 trader drives up only before 14:00); an interruption is fought out, not rested again
   innheal                        (Player 14) inside `inntrip`: the heal in the inn's camp (TO REST HERE, the payer,
                                  then the camp opens before the walk sees the inn's square)
   answer <words>|@platinum       (Player 14) on a member list: the member with most platinum (main's bot pays the inn so)
@@ -410,7 +412,8 @@ class Heal:
     cures heal; then rests of min(most HP missing, 10) days until no one is hurt (REST: DAYS is Y, INC / DEC).
     An interrupted rest is fought out (the bot walks to the inn there; noted) and the heal goes on.
     The camp screens are answered in Plan._heal (p.heal holds the state)."""
-    def __init__(self, force=False, inn=False, prep=False, wait=False, cure=False):
+    def __init__(self, force=False, inn=False, prep=False, wait=False, cure=False, until=None):
+        self.until = until      # Player 26: `restuntil <hour>` (bot.gd "restuntil"): rest in camp till that hour
         self.cure = cure        # Player 16: `cure` (bot.gd _prepare where the plan's rest rule is the inn: Kuto's
                                 # Well before Norris): camp, the memorized cures on the most hurt, no MEMORIZE, no REST
         self.wait = wait        # Player 15: `innwait` (bot.gd _wait_for_day): from hour 14 rest till the doors open
@@ -419,6 +422,8 @@ class Heal:
         self.prep = prep        # Player 15: `prepare` (bot.gd _prepare): also memorize into free slots
 
     def __repr__(self):
+        if self.until is not None:
+            return "restuntil %d" % self.until
         return ("cure" if self.cure else "prepare" if self.prep else "heal") + (" at the inn" if self.inn else
                                                        " (after a fight)" if self.force and not self.prep else "")
 
@@ -476,7 +481,8 @@ class Heal:
         spent = self.prep and any(picks(m) for m in M)
         # Player 15: at the inn the camp is already open (TO REST HERE): always go through the heal, which memorizes
         # (bot.gd _rest_at_inn rests there) and leaves the camp
-        if not self.inn and not spent and not (needs_rest(M) if self.force else
+        hrs = (self.until - p.g.mem.ecl(0x49C9)[0]) % 24 if self.until is not None else 0
+        if not self.inn and not spent and not hrs and not (needs_rest(M) if self.force else
                               any(m["status"] != 0 or m["hp"] * 2 < m["max"] for m in M)):
             return True, None, ""
         new_heal(p)
@@ -484,6 +490,7 @@ class Heal:
         p.heal["wait"] = self.wait
         p.heal["nocast"] = getattr(self, "nocast", False)
         p.heal["cure"] = self.cure
+        p.heal["until"] = self.until
         return False, "e", "heal: ENCAMP"
 
 
@@ -1247,6 +1254,14 @@ class Plan:
             if hour >= 14:
                 p.note("heal", "waiting in the inn's camp for the doors to open: %02d:00" % hour)
                 return ("rest", (24 - hour) * 60)
+        if h.get("until") is not None and not h.get("waited"):
+            # Player 26: bot.gd "restuntil <hour>": one rest of (hour - now) mod 24 hours (Stojanow Gate's trader
+            # drives up only before 14:00, ECL 2:9 0xADAA); an interruption is fought out and the rest not taken again
+            h["waited"] = True
+            hrs = (h["until"] - p.g.mem.ecl(0x49C9)[0]) % 24
+            if hrs:
+                p.note("heal", "resting until %02d:00 (%d hours)" % (h["until"], hrs))
+                return ("rest", hrs * 60)
         if not needs_rest(M):
             if h.get("prep") and not h.get("prep_done"):
                 # Player 15: bot.gd _prepare: _pick_spells fills the free slots, _memorize rests for them
@@ -1494,6 +1509,8 @@ def load(path):
                 trip_outer, trip_area, pl.goals = pl.goals, pl.area, []
         elif cmd == "innwait":
             pl.goals.append(Heal(force=True, inn=True, prep=True, wait=True))
+        elif cmd == "restuntil":
+            pl.goals.append(Heal(force=True, until=int(rest.split()[0])))
         elif cmd == "innheal":
             pl.goals.append(Heal(force=True, inn=True, prep=True))
         elif cmd == "keys":
