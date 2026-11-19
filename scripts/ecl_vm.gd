@@ -715,10 +715,16 @@ func _hurt(m: PartyMember, damage: int) -> void:
 	m.hp -= damage
 	if m.hp > 0:
 		return
+	# The original's damage routine (START.EXE 0xBA:0x2228, called from GAME.OVR 0x96BF), as in a
+	# fight (combat.gd): exactly 0 HP is unconscious, below 0 dying at 0 HP, more than 9 below dead.
+	# Chat 61, check 87 (8:13's rocks: PHINEAS, 4 HP, hit for 5: dying in the original's save; ours
+	# had him unconscious).
 	if m.hp < -9:
 		m.status = PartyMember.STATUS_DEAD
-	else:
+	elif m.hp == 0:
 		m.status = PartyMember.STATUS_UNCONSCIOUS
+	else:
+		m.status = PartyMember.STATUS_DYING
 	m.hp = maxi(m.hp, 0) if m.status != PartyMember.STATUS_DEAD else m.hp
 
 
