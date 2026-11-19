@@ -163,7 +163,15 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 		if m.status == PartyMember.STATUS_DEAD:
 			continue
 		if effect > 0:
-			add_affect(m, effect, id, special_duration(table, id, lvl, rng, false), lvl)
+			# The original adds it through its add-effect routine (GAME.OVR 0x2C540) here too, which runs
+			# the target's race and resistance handlers for any effect: an elf (0x115ED) and a half-elf
+			# (0x11A3F) each draw a d100 even for a camp's Bless (chat 65, DOSBox: CEDRIC's Bless, d100s
+			# for ELWEN and LIRA, then the cure's d8; check 102).
+			var minutes := special_duration(table, id, lvl, rng, false)
+			if SpecialAffects.blocks(m, effect, func(): return _roll(rng, 1, 100), table.level(id)):
+				out.append("%s IS UNAFFECTED" % m.name)
+				continue
+			add_affect(m, effect, id, minutes, lvl)
 		if WORDS.has(id):
 			out.append("%s %s" % [m.name, WORDS[id]])
 	return out

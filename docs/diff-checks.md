@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 65: the arena's duel and a band fight, checks 99-100, DIFFCHECKS 100/100
+## Chat 65: the arena's duel, a band fight, a SELL, a camp's Bless and cure; checks 99-102, DIFFCHECKS 102/102
 
 **The handler table's last line closes: CALL 0x8000 now runs in a matching check (99).** Every opcode Pool's scripts
 use, and every CALL target the original acts on (but 0xBA03, a sound), runs in a check that matches.
@@ -186,6 +186,22 @@ use, and every CALL target the original acts on (but 0xBA03, a sound), runs in a
   COMBAT, QUICK: the wilderness battlefield (GAME.OVR 0xD785's field: 0xCE75's flags, the scatter, the clutter;
   Combat Chat 30's 0c76388), **7979 draws identical**, CONTINUE BATTLE NO, the treasure left (E, N), F2. Main chat
   61's band kobold request, closed. Fails on the code before 0c76388. Three runs MATCH (lab `data/c65/chk100`).
+- **Check 101, 3:0 the arms and armour shop, a SELL** (check 26's start, tpseed 11111111): Up, YES, VIEW, ITEMS,
+  SELL on ARN's readied long sword (the original does nothing: a readied item isn't sold), READY (off), SELL: I'LL
+  GIVE YOU 7 GOLD PIECES FOR YOUR LONG SWORD / IS IT A DEAL? YES: ARN gets **1 platinum and 2 gold** (the price
+  paid in the larger coins), EXIT x3, F2 (the original: ENCAMP SAVE). A coverage check (matched at once). Three runs
+  MATCH (lab `data/c65/chk101`; the original's end `data/c65/sell/orig`).
+- **Check 102, camp MAGIC: Bless, then Cure Light Wounds** (check 26's start with ARN's HP, record +0x11B, set to 5;
+  tpseed 11111111): ENCAMP, MAGIC, End x2 (CEDRIC), CAST (the light starts on the list's last spell), End (it wraps
+  to BLESS), CAST, then CAST again (CURE LIGHT WOUNDS), Home x2 (ARN), SELECT, EXIT x3, F2. **The original draws two
+  d100s for the Bless** (trace `data/c65/cure_orig.txt`: OVR:11a4d -> 70, OVR:115fb -> 38), then the cure's d8 is
+  draw 3 (1: ARN 5 -> 6). Those are the race handlers the add-effect routine (GAME.OVR 0x2C540) runs for every effect
+  it adds, in or out of a fight: the half-elf's 30% (0x11A3F, ELWEN) and the elf's 90% (0x115ED, LIRA), each a d100
+  whatever the effect (Combat's `SpecialAffects.blocks`, used in fights since Combat Chat 2). **Ours added a camp
+  spell's effect without them** (no draws: the cure took draw 1, ARN 8). Fixed in `scripts/game/spell_caster.gd`
+  `cast_outside`: each target's effect goes through `SpecialAffects.blocks` (with the spell's level, for magic
+  resistance) after its duration; a blocked one says IS UNAFFECTED (not seen out of a fight: Sleep and Charm can't be
+  cast there). Fails on the code before; three runs MATCH (lab `data/c65/chk102`).
 - **Still not checks:** the temple (COMBAT with 0x6DE2: the cure's d8 matches since Combat Chat 30's b8db5a7; the pile
   menus TAKE / SHARE and the retrieve question, and the jewelry slot, wait on Combat) and the tavern brawl (the
   patrons' placement, asked of the Lead by Combat Chat 30).
