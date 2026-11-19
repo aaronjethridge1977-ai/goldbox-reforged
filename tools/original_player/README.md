@@ -1315,6 +1315,24 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 29 (2026-11-19): segments 32 to `valjevo5` and 33 to `valjevo6`; the take loop skips overloaded members
+
+Lead's answer to "player (Player 28) -> design": (a), 5:4 9,1 (the four fire giants) and the west of 5:4 deferred; for
+a main-path fight that blocks the end, a tactical try first, then Q27's logged shortcut.
+- **Segment 32 (`valjevo4` -> `valjevo5`) reached** by Player 28 before the outage (p28i3 from `p2start/p28i1_s32in`,
+  plan `plans/p28_c34d_32_valjevo5.plan`: from `s31e` out of 5:4 by 12,15 S, the gate, 5:5 8,0, back to 5:3 13,7 E;
+  5:5's 10,11 has no route from 11,7 on GEO5 block 5 and the bot's LEAVE there is text only). `p28/valjevo5.cpdiff.txt`:
+  the flags against the bot's `valjevo5` differ in the deferred 5:4 events, the kobolds' and the counters.
+- **Tool gap fixed (p28j1):** after the smithy fight (5:6 3,14) the 40-item pile offered every heavy item (Long Sword,
+  Chain Mail, Bastard Sword, Two-Handed Sword...) to all six overloaded members, about 50 keys an item, until the
+  300-key stall watchdog stopped the run. `_pick` now skips a member for an item as heavy as or heavier than one
+  they refused (the refusal is the weight limit; 16 items is counted apart).
+- **Segment 33 (`valjevo5` -> `valjevo6`) reached** (p28j1 to `s33in`, then p29a2 from `p2start/p28j1_s33in`, seed
+  29a10002, plan `plans/p29_c34d_33_valjevo6.plan`): the smithy's smith and three fire giants (won on QUICK), the
+  laundry (SLY... NICE, the disguise YES, TIE), Bane's temple (LEAVE: the fight, won), the altar (NO, NO), 0,0; nobody
+  hurt at the end. `p29/valjevo6.cpdiff.txt`: the flags as at `valjevo5` (only the clock moved). The party lags the
+  bot's in XP (ARN 31296 / 116460, CEDRIC 78897 / 118773) and HP (45 / 64 for ARN).
+
 ## Player 28 (2026-11-19): Valjevo's gate (a tool misread); segment 30 to `valjevo3`
 
 **The gate asked every time; the tool didn't see it.** ECL 5:3's on-move (0x9A80) runs before a step, with the square

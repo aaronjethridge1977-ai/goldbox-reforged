@@ -962,7 +962,10 @@ class Plan:
             sig = (it["name"], it["type"], it["plus"], it["price"], it["weight"])
             for k in range(len(P)):
                 j = (t.get("turn", 0) + k) % len(P)
-                if P[j][2] < loot.LIMIT and P[j][3] > 0 and (sig, j) not in t.setdefault("refused", set()):
+                # Player 29: a member who refused an item (overloaded) refuses any as heavy or heavier: skip
+                # them (p28j1: a 40-item smithy pile offered each heavy item to six overloaded members).
+                heavy = min([s[4] for s, m in t.setdefault("refused", set()) if m == j] or [1 << 30])
+                if P[j][2] < loot.LIMIT and P[j][3] > 0 and (sig, j) not in t["refused"] and it["weight"] < heavy:
                     return i, j, it, sig
         return None
 
