@@ -903,6 +903,12 @@ static func paced() -> bool:
 	return _paced == 1
 
 
+## How long a spell's effect shows on a figure it reaches (P85): START.EXE 0x2B8B's 4 frames, 70 ms each,
+## (game speed + 1) times.
+static func sparkle_time() -> float:
+	return (CampScreen.speed + 1) * 4 * 0.07
+
+
 ## How long a combat message stays: game speed x 0.2 s, as the original.
 static func message_hold() -> float:
 	return CampScreen.speed * 0.2
@@ -1066,7 +1072,9 @@ func _show_messages() -> void:
 						break
 		_refresh()
 		if _sparkle >= 0:
-			var until := Time.get_ticks_msec() + int(maxf(message_hold(), 1.2) * 1000.0)
+			# P85: START.EXE 0x2B8B shows the effect's 4 frames 70 ms apart (speed + 1) times with the message up
+			# (GAME.OVR 0x2C617), and no hold after: 0.28 s at SPEED 0, 1.4 s at 4 (ours had at least 1.2 s).
+			var until := Time.get_ticks_msec() + int(sparkle_time() * 1000.0)
 			while Time.get_ticks_msec() < until and is_inside_tree():
 				await get_tree().create_timer(0.066).timeout
 				_refresh()
@@ -1604,7 +1612,7 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 ## A spell went off (paced): the caster's pose; for a spell aimed away from the caster, COMSPR's
 ## spark (5 / 133 by turns, ~240 px/s) flown to the aim after "CASTS A SPELL" (lab: Bakshi's
 ## Magic Missile and Sleep); each figure the spell reaches shows sparkles (9 / 137 by turns)
-## while its message is up, at least 1.2 s (lab: Sleep, "FALLS ASLEEP"). Fireball's and
+## while its message is up, (game speed + 1) x 0.28 s (sparkle_time; P85). Fireball's and
 ## Lightning's own pictures are not filmed yet.
 func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():

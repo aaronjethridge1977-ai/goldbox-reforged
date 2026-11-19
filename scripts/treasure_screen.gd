@@ -47,6 +47,7 @@ var _share_xp := 0
 var _note := Label.new() # the last thing that happened (the bot logs it)
 var _flash := ""         # a refusal on row 24 for a moment (OVERLOADED)
 var _flash_id := 0
+const REFUSAL_TIME := 1.5   # P71: the least time a refusal (OVERLOADED) stays on row 24, at any SPEED
 var _scr: GameScreen
 var _sheet: CharacterSheet
 
@@ -314,8 +315,10 @@ func _refuse(text: String) -> void:
 	if not is_inside_tree():
 		_flash = ""
 		return
-	await get_tree().create_timer(CharacterSheet.MESSAGE_TIME * CampScreen.delay_scale()).timeout
-	if id == _flash_id:
+	# P71 again (Jeremy, SPEED 0): the message time scaled by the speed (0.14 s at SPEED 0) was too short to
+	# read; a refusal now stays at least REFUSAL_TIME, and a key takes it away sooner (_unhandled_input).
+	await get_tree().create_timer(maxf(CharacterSheet.MESSAGE_TIME * CampScreen.delay_scale(), REFUSAL_TIME)).timeout
+	if id == _flash_id and _flash != "":
 		_flash = ""
 		_refresh()
 
@@ -360,6 +363,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key := (event as InputEventKey).keycode
 	get_viewport().set_input_as_handled()
+	if _flash != "":
+		_flash = ""            # a key takes a refusal away; the key then does what it does
+		_refresh()
 	if _mode == "results":
 		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_SPACE]:
 			# The menu comes with nothing to take too (the original's VIEW POOL EXIT; lab,
