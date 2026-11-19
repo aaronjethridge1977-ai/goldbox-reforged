@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; checks 94-95, DIFFCHECKS 95/95
+## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; the training hall, the inn; checks 94-97, DIFFCHECKS 97/97
 
 **How the table was made.** `~/gbr/checks/diffcheck.sh` copied with `--coverage=/tmp/opcov/cov/$n.json` added to ours'
 command line (main.gd's dev coverage option, M6: each block's instruction offsets that ran), all 93 checks played
@@ -286,6 +286,18 @@ passes no time; any other CLOCK keeps its operand (not seen in Pool).
   129 (THE BUCCANEER SMILES ...): `main.gd` now ends a lost duel as any fight. Both branches write the same state,
   so the check sees the fix only through the key list falling out of step (THE CREATURES IGNORE YOU, LEAVE: 4,9 N
   11:01); it fails on the code before. Three runs MATCH.
+- **PROGRAM by operand** (each opens a different engine screen): 9, camp (check 94; the inn's 3:0 0xA1AD below), 8,
+  the closing scene (check 5), **0, the training hall (3:11 0xA049): check 96, new**, from check 21's start with
+  THRENDER GRONE's record edited (experience +0xAC = 5000, gold +0x8E = 2000): YES to train, TRAIN, YES, BEGIN
+  ADVENTURING. The original: level 2, a d10 for hit points (8: 11 -> 22), the experience cut to 4000 (one level per
+  visit), 1000 gp paid from silver and gold (144 sp -> 4, 2000 gp -> 1007); ours the same at once (a coverage check,
+  no fix). Three draws identical. Three runs MATCH.
+- **Check 97, 3:0 the inn at 6,12** (check 46's start, tpseed 11111111, 20:56): twelve steps by route, STAY? YES,
+  WHO WILL PAY? THRENDER GRONE (a platinum piece), camp (PROGRAM 9), REST 8 hours (no interruption roll at the
+  inn), EXIT: 6,12 W 05:08; 13 draws identical. A coverage check (matched at once). Three runs MATCH.
+- **The temple (COMBAT with 0x6DE2 = 1), not a check yet:** 3:0's temple of Tempus (event 24, 2,12): the original's
+  cure draws a d8 from the game's dice (OVR:049B0) that ours doesn't, and POOL / SHARE / the retrieve question
+  differ (Requests, main -> combat); lab `data/c64/chk_temple` is ready.
 - **3:11's arena duel (CALL 0x8000), not a check yet:** draws identical to 1018 of 1486, then ours' copy flees in
   panic where the original's attacks (Requests, main -> combat); lab `data/c64/chk_arena` is ready for when it
   matches.
