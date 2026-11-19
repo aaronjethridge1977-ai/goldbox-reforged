@@ -43,6 +43,8 @@
                                  hurt (as `heal` after a fight); nothing when no slot is free and no one is hurt
   cure                           (Player 16) main's bot's `_prepare` where the plan's rest rule is the inn (Kuto's
                                  Well before Norris): camp, the memorized cures on the most hurt, no MEMORIZE or REST
+  nocast [off]                   (Player 25) the following goals' heals cast nothing (an anti-magic area: 8:16's
+                                 castle): `cure` does nothing, `heal` / `prepare` / a walk's stop rest only
   norest [off]                   (Player 16) the following walks' stop after a fight that leaves the party hurt is
                                  that `cure`, not a `prepare`
   bumps <n> [look]               (Player 16) the following walks try a step that leaves the party where it stands n
@@ -147,8 +149,9 @@ class Walk:
             if hurt(members(p.g.mem)):
                 p.note("walk", "fight %d left the party hurt (%s): prepare before going on (bot.gd _hurt, _prepare)" % (
                     p.fights, party_hp(p.g.mem)))
-                p.plan.goals.insert(p.goal, Heal(force=True, cure=True) if getattr(self, "norest", False)
-                                    else Heal(force=True, prep=True))
+                hg = Heal(force=True, cure=True) if getattr(self, "norest", False) else Heal(force=True, prep=True)
+                hg.nocast = getattr(self, "nocast", False)
+                p.plan.goals.insert(p.goal, hg)
                 p.goal_key = p.g.nkeys      # the stall guard counts from the heal's start (p14b1: TAKE + heal > 300)
                 return False, None, ""
         if self.avoid is not None:      # Player 13: the bot's tour (main.gd _find_path): only these are walked round
@@ -340,7 +343,7 @@ class Revisit:
         tx, ty = self.target
         self.target = None
         self.walk = Walk(tx, ty, self.area, (), [])
-        for a in ("aliases", "geo", "norest", "bumps", "look"):
+        for a in ("aliases", "geo", "norest", "bumps", "look", "nocast"):
             setattr(self.walk, a, getattr(self, a, None) if a != "aliases" else getattr(self, a, set()))
         self.walk.bumps = getattr(self, "bumps", None) or 3
         p.note("walk", "revisit %d: to %d,%d" % (self.ev, tx, ty))
@@ -457,7 +460,7 @@ class Heal:
         M = members(p.g.mem)
         if any(m["status"] == 6 or m["status"] > 6 for m in M):
             raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
-        if self.cure and next_cure(M) is None:
+        if self.cure and (next_cure(M) is None or getattr(self, "nocast", False)):
             return True, None, ""
         spent = self.prep and any(picks(m) for m in M)
         # Player 15: at the inn the camp is already open (TO REST HERE): always go through the heal, which memorizes
@@ -468,6 +471,7 @@ class Heal:
         new_heal(p)
         p.heal["prep"] = self.prep
         p.heal["wait"] = self.wait
+        p.heal["nocast"] = getattr(self, "nocast", False)
         p.heal["cure"] = self.cure
         return False, "e", "heal: ENCAMP"
 
@@ -1129,6 +1133,12 @@ class Plan:
         """The next thing to do from the CAMP menu: ("cast", caster, target) | ("memorize", member, [names]) |
         ("rest", minutes or None for the time offered) | ("leave",)."""
         M = members(p.g.mem)
+        if h.get("nocast"):
+            # Player 25: `nocast` (8:16's anti-magic shell: the original casts nothing there): no cures, rests only
+            def next_cure(M):
+                return None
+        else:
+            next_cure = globals()["next_cure"]
         op = h["op"]
         if op and op[0] == "rest":
             h["op"], h["memo_last"] = None, None
@@ -1364,7 +1374,12 @@ def load(path):
     pl = Plan()
     base = os.path.dirname(os.path.abspath(path))
     main_rules = []
+    mark = 0
     for line in open(path):
+        # Player 25: `nocast` tags the goals made while it holds (their heals cast nothing)
+        for g in pl.goals[mark:]:
+            g.nocast = getattr(pl, "nocast", False)
+        mark = len(pl.goals)
         line = line.split("#")[0].strip() if not line.lstrip().startswith("answer") else re.split(r"\s#", line)[0].strip()
         if not line or line.startswith("#"):
             continue
@@ -1423,6 +1438,8 @@ def load(path):
             pl.bumps, pl.look = int(rest.split()[0]), "look" in rest.split()
         elif cmd == "norest":
             pl.norest = rest.strip() != "off"
+        elif cmd == "nocast":
+            pl.nocast = rest.strip() != "off"
         elif cmd == "prepare":
             pl.goals.append(Heal(force=True, prep=True))
         elif cmd == "campday":
@@ -1432,7 +1449,7 @@ def load(path):
         elif cmd == "revisit":
             ev, n = (int(v) for v in rest.split())
             pl.goals.append(Revisit(ev, n, pl.area))
-            for a in ("aliases", "geo", "norest", "bumps", "look"):
+            for a in ("aliases", "geo", "norest", "bumps", "look", "nocast"):
                 setattr(pl.goals[-1], a, getattr(pl, a, None) if a != "aliases" else pl.aliases)
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
@@ -1460,4 +1477,6 @@ def load(path):
             if len(w) == 3 and w[0] == "answer" and area_of(w[1]) == pl.area and "[" not in w[2][:1]:
                 words, choice = w[2].rsplit("|", 1)
                 pl.answers.append((words.strip(), choice.strip(), os.path.basename(mr)))
+    for g in pl.goals[mark:]:
+        g.nocast = getattr(pl, "nocast", False)
     return pl

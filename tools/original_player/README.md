@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 25 (2026-11-18): segment 20 to `pyramid2`; segment 21 to `pyramid3`
+## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
 p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
@@ -1361,9 +1361,34 @@ step W: **`pyramid3`** (7:23 0,12 N, p25d3, nobody dead).
 - Against the bot's `pyramid3` (`p25/pyramid3.cpdiff.txt`): 0x4A4B 77 against the bot's 79 (bit 1: the door at 15,15,
   whose search roll failed for ours), 0x4A4C / 0x4A4E (the rooms' fights), the rest as at `pyramid2`.
 
-Lab: `p25/` (seg20b.plan, seg21.plan, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
+**Segment 22 (`pyramid3` -> `lizard`)** (plan `plans/p25_c34d_22_lizard.plan`, lab `p25/seg22.plan`; runs p25e1-e4 from
+`p2start/p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`): `heal` (**`s22a`**), 14,12 and a step E onto the rocks: THROW, MOVE
+ON (bit 0 was clear after segment 21: 7:22 15,7), the corridor, 15,0 N, GO BACK, the boat (7:26 7,29), the inn
+(**`s22b`**); City Hall three times (the river's reward), the arms shop (gems sold, shared), the halls (ARN, BRAM,
+CEDRIC, ELWEN, LIRA, DORN trained where they could: ARN 32 -> 46 HP), the inn (**`s22t`**); 3:0, 2:20, 8:29, 1:18, the
+band's west edge, 11,20, 15,20 E, 8:27 3,9, 11,9 and a step N (RUINED CASTLE: ENTER; 8:16 8,14 N, **`s22c`**); 8:16's
+events in the bot's order with `avoid 99` (15 5 8, prepare, 10 6 7 4 9 the stairs NO, **`s22d`**, 3 the giant lizards,
+prepare, 2 16 1 the lizard men, 13 12 11 14): **`lizard`** (8:16 1,15 S, p25e4, nobody dead; 3 fights).
+- **8:16's init sets 0x49E5 (the anti-magic shell): the original's CAST in camp does nothing** (p25e3: the heal's
+  CAST pressed 20 times, DORN at 0 HP). New plan line **`nocast [off]`** (plans.py): the goals after it heal by rests
+  only (`cure` does nothing; `heal`, `prepare` and a walk's stop rest). p25e4 healed DORN from 0 in 54 days of rests,
+  none interrupted. Ours has the shell (main chat 23, Combat Chat 2); main's bot's 32 camp casts in 8:16 in c34d's log
+  were not checked further (its party's QUICK casters' Sleeps in fights are the original's too: 0xB105 has no test).
+- **0x4A8C is set by the clerk, not by the kobold king** (ECL 3:8 0xAC9A: listing "THE HEIR TO THE HOUSE OF BIVANT MUST
+  BE RESCUED" writes 0x4A8C = 255 once 0x4AA7 = 255 and 0x4AA9 = 0): p25e3's clerk listed it, so **the Buccaneers' base
+  is open to the original's party** (`lizard`: 0x4A8C agrees with the bot's). Design's question (Player 23) updated.
+- **Cadorna's second summons waits**: the clerk lists three offers at most (0x4A05 > 2 ends the list, 0xA845): ours'
+  three are the kobolds (0x4AB6: the deferred king), the lizard men (0x4AB5) and Bivant, so "LORD CADORNA HAS A
+  DELICATE DIPLOMATIC MISSION" (0x4A98 = 254) didn't fit; the bot's (kobolds done) listed it. The plan's step S into
+  5,6 met YOUR PRESENCE IS NOT AUTHORIZED. It should fit at the next town trip (the lizard men's offer gone).
+- p25e1/p25e2 stopped at the rocks: the plan's answer block was cut short (a slice to the first of two `HEAL VIEW POOL`
+  answers; segment 21's plan too, rebuilt).
+- Against the bot's `lizard` (`p25/lizard.cpdiff.txt`): new beside `pyramid3`'s only 0x4A98 (above) and 0x4A5F (a kill
+  counter, ECL 8:16 0x99F6); 0x4A8C now agrees.
+
+Lab: `p25/` (seg20b.plan, seg21.plan, seg22.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
-`p25c5_s21b` (and `.lab/player/saves/p25*`).
+`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c` (and `.lab/player/saves/p25*`).
 
 ## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 
