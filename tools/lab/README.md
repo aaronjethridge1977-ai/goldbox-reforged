@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 62:** checks 90-93 in `data/c62/chk90..93/` (`data/c62/cd/` links `game` and each). **The ECL dispatcher:**
+GAME.OVR 0x3C73 (the opcode in DS 0x6F7F, a near call per opcode; the handler table printed by walking its `cmp al` /
+`call` pairs, e.g. SURPRISE 0x240F, SPELL 0x3949, RANDOM 0xF7A, the arithmetic 0xEE9, AND/OR 0x1B35, COMPARE_AND
+0x1833, FIND_ITEM 0x33B0, PARTY_STRENGTH 0x200C, WHO 0x3879). `data/c62/ecl_ECL<f>_<b>.txt`: every Pool block
+disassembled (`tools/ecl.py dis`), for grepping an opcode's uses and what follows it. **Getting a party to a square in
+the original:** editing SAVGAM's 0x3201 position doesn't move the party (the step starts from another copy); walk with
+`pl.py do walk=<geo>:<block>:<x>,<y>[:<event to avoid>...]`, bash locked doors, and turn a script off by its cell
+(0x4AB2 = 1 stopped 3:14's thieves; a cell is byte 1 + 2 x (address - 0x4900)); then ENCAMP SAVE J there and use that
+as the start (`data/c62/cab` at 3:14's cabinets, `rugstart` by the rugs). The first key after `boot` is sometimes
+lost: start with `wait=2`. **Picking a seed for an ECL roll:** compute it (TpDice: seed = seed x 134775813 + 1,
+Random(n) = (seed >> 16) mod n) instead of searching: consecutive seeds and a golden-ratio spread all landed just
+above the tavern's 25. Lab slots J and G put back.
+
 **Chat 61:** checks 75-88 in `data/c61/chk75..88/` (`data/c61/cd/` links `game` and each). **The wall ahead in
 statediff:** `tools/statediff.gd` compares the save's byte 0x3204 with ours' 0xC04E in a 3D area; the survey that found
 13 checks differing ran from a worktree (`/tmp/wa61`) with the comparison patched in, through `diffcheck.sh <worktree>`
