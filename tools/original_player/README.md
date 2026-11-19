@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; `sell ... gear`; segments 28 to `stojanow`, 29 to `mopup2`
+## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; `sell ... gear`; segments 28 to `stojanow`, 29 to `mopup2`, 30 to Valjevo's gate
 
 **For Jeremy** (`.lab/for-jeremy/stojanow/`: README.md, REPORT.md): two videos of the wall fight in the original at game
 SPEED 3 (p27v1: p26d2 replayed from `s28b` and its seed, every draw identical; p27v2: a FLEE try, p26e1's seed,
@@ -1324,7 +1324,8 @@ two slot-H saves at 2:9 7,10 (`s28b`; `s28p` with every slot filled), both loade
 6d34e55 and main 82bfafd: ours replays the fight from each draw for draw). Lab: `p27/film.sh` (a replay filmed from a log
 pattern to END), `figdump.py` (read-only: every figure's record at a fight's start, then HP each second), `ledger.py`
 (ours' fight log per round), `mons.py` (MONnCHA.DAX records), `botparty.py` (a bot checkpoint's party),
-`loadcheck.py` (boot the original on a slot).
+`loadcheck.py` (boot the original on a slot), `k.py` (keys to the running original, the screen after each),
+`tries.sh` (`SEEDP=<4 hex digits>` for a prefix not ending in a hex letter).
 - **Why the party loses:** numbers (six ettins, 50 HP, AC 3, THAC0 10, two blows 2d8 / 3d6; two level-6 mages with
   Magic Missile 3d4+3; two aides; 382 HP against ~205): p26d2 dealt 70 and lost in 5 rounds. Main's bot's stronger
   party lost it twice in ours too.
@@ -1379,6 +1380,27 @@ the bot's BRAM, ELWEN, LIRA), the inn: **`mopup2`** (3:0 4,12 S, nobody hurt). T
 p27d1 (without gear) reached it too but left the clerk's coins; p27d2 stopped at the cure's list (above).
 - Against the bot's `mopup2` (`p27/mopup2.cpdiff.txt`): 34 words, fewer than at `stojanow` (the clock and the save's
   own words now agree); no new one.
+
+**Segment 30 (`mopup2` -> `valjevo3`, Valjevo Castle 5:3): to the gate, not through it** (plans
+`plans/p27_c34d_30a..30d_valjevo3.plan`, lab `p27/seg30a-d.plan`). Main's "log 18": its answers (one word of each
+menu: RELEASE, SNEAK, AMBUSH, LET, GIVE; the password typed, `type:RHODIA`), "travel 5:3" (3:0 0,4 W, 2:20, 8:29,
+1:18 11,0 N, 2:9 4,0 N, 5:6 15,12 E), and its explore with its two town trips:
+- part a (p27f1 to **`s30in`**, p27f2): event 44 at 7,14 (the giants putting on their armour: the bot's FLEE, the
+  fight comes: 8 hill giants beaten, nobody dead): **`s30a`**.
+- part b (p27g2 to **`s30t`**, the training trip: ARN 5, BRAM 6, LIRA 4/4, DORN 4/5; p27j1 from it): 45, 75, 14 (two
+  hill giants), 52, 50 (the prisoner: RELEASE, YES), 49: **`s30b`**. p27g4 and p27h1 were wiped by **camps at 12,12
+  interrupted three times**: main's rest rule there is `rest 5:3 inn-while 4A64 1` (the alarm; ours reads 14-15), so
+  the bot never camps in 5:3, it only casts its memorized cures and rests at the inn (its trips). The plans now use
+  `norest` and `cure` inside 5:3.
+- part c (p27k1 to **`s30c`**, **`s30d`**, **`s30u`**): 47 at 14,8, the re-explore (49, 50, 14, 52, 42, 75, 44, 45),
+  31 at 12,7, the second town trip. **None of the bot's fights there came** (its three at 14,8, the patrol of 14 hill
+  giants, the six fighters at 12,7: patrols, 17% a step while the alarm holds, ECL 5:3).
+- **The gate (5:3 12,7 / 12,8 W, ECL 5:3 0x9AC7 -> 0xA8A0: the password, then Cadorna's slip, RHODIA): open.** Ours'
+  bot got the question walking to event 22 at 11,7. In the original the step W from 12,7 is refused with no question
+  (p27k1, p27k2; the GEO has door type 3 west of 12,7 and 12,8); **once, in a probe (p27e4, `p27/k.py` keys one
+  process each), a bump W from 12,8 asked it**, but the tool's same moves didn't (p27k3, p27k4; p27k5 with
+  `OP_KEYDELAY=2`); no dice are drawn at the bumps. Start for Player 28: `p2start/p27k2_v3probe` (5:3 12,7 W, after
+  part c; its index name `valjevo3` is that, not the bot's, which is through the gate in 5:5 11,7 W).
 
 ## Player 26 (2026-11-19): segment 27 to `mopup1`; segment 28 blocked at the Stojanow Gate (6 of 6 lost); `restuntil`; 0x4A99 is the clerk's
 
