@@ -423,7 +423,13 @@ func appraise_one(jewel: bool) -> int:
 		return -1
 	m.money[k] -= 1
 	_jewel = jewel
-	_value = jewel_value(_rng) if jewel else gem_value(_rng)
+	if not TpDice.on:
+		_value = jewel_value(_rng) if jewel else gem_value(_rng)
+	else:
+		# Lab replays (Player 22's (a)): the game's own stream, as the original draws it: a d100 (GAME.OVR
+		# 0x26900 a gem, 0x26B8D a piece of jewellery), then for jewellery Random(range) (START.EXE 0x8D1D).
+		_value = jewel_value_by(func(n: int) -> int: return TpDice.random(n, "appraise")) if jewel \
+				else gem_value_by(func(n: int) -> int: return TpDice.random(n, "appraise"))
 	_mode = "value"
 	_note.text = "THE %s IS VALUED AT %d GP." % ["JEWEL" if jewel else "GEM", _value]
 	_pick = 0
@@ -432,7 +438,12 @@ func appraise_one(jewel: bool) -> int:
 
 
 static func gem_value(rng: RandomNumberGenerator) -> int:
-	var r := rng.randi_range(1, 100)
+	return gem_value_by(func(n: int) -> int: return rng.randi_range(0, n - 1))
+
+
+## `random` is Random(n): 0..n-1. The table: GAME.OVR 0x26904.
+static func gem_value_by(random: Callable) -> int:
+	var r: int = random.call(100) + 1
 	if r <= 25:
 		return 10
 	if r <= 50:
@@ -447,11 +458,16 @@ static func gem_value(rng: RandomNumberGenerator) -> int:
 
 
 static func jewel_value(rng: RandomNumberGenerator) -> int:
-	var r := rng.randi_range(1, 100)
+	return jewel_value_by(func(n: int) -> int: return rng.randi_range(0, n - 1))
+
+
+## The table: GAME.OVR 0x26B95 (a d100, then the base + Random(range)).
+static func jewel_value_by(random: Callable) -> int:
+	var r: int = random.call(100) + 1
 	for row in [[10, 100, 900], [20, 200, 1000], [40, 300, 1500], [50, 500, 2500], [70, 1000, 5000], [90, 2000, 6000]]:
 		if r <= row[0]:
-			return row[1] + rng.randi_range(0, row[2] - 1)
-	return 2000 + rng.randi_range(0, 9999)
+			return row[1] + int(random.call(row[2]))
+	return 2000 + int(random.call(10000))
 
 
 ## SELL (true) or KEEP the piece just appraised.
