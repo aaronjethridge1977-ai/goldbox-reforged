@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`, 26 begun (the graveyard's trip 6); `templecure`; `nocast`; 0x4A8C
+## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`, 26 to `graveyard`; `templecure`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
 p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
@@ -1432,7 +1432,7 @@ two fights), `cure`: **`zhentil`** (6:28 5,0 E).
   the night's two fights won, nobody dead). Against the bot's `zhentil` (`p25/zhentil.cpdiff.txt`): nothing new beside
   `heir`'s; 0x4A98, 0x4A34, 0x4A05 and 0x4A19 now agree.
 
-**Segment 26 (`zhentil` -> `graveyard`), open** (plans `plans/p25_c34d_26a_town.plan`, `p25_c34d_26b_graveyard.plan`;
+**Segment 26 (`zhentil` -> `graveyard`): reached** (p25q5) (plans `plans/p25_c34d_26a_town.plan`, `p25_c34d_26b_graveyard.plan`;
 lab `p25/seg26a.plan`, `seg26b.plan`). **Part a to `s26t`** (p25k1 from `p2start/p25j10_zhentil`): out of 6:28 by its
 gate (one fight; 6:25's 3,32 made 0x4AB4 254), the boat, the inn (**`s26a`**), City Hall twice (the Zhentil reward:
 0x4AB4 255, 0x4ABE 255), the arms shop, the halls, the inn: **`s26t`**. **Lord Urslingen** (3:8 5,7, event 32, ECL 3:8
@@ -1453,10 +1453,20 @@ course), which killed BRAM in p25n2's day rests at the inn.
 - **No checkpoint with a member dead or gone** (plans.py): p25l3's `s26g6` was saved with BRAM and DORN drained away in a
   fight on a walk's last step, which no walk's check saw.
 - p25l1 stopped where the walk to 13,28 crossed 13,27 (the eastern edge's BOAT): the trips now step E onto it from 12,27.
+- **Trips 6-9 done:** p25o1 (from `p2start/p25l2_s26g5`) won the wight's fight and bought four CURE DISEASE at the
+  temple (**`s26g6`-`s26g8`**); trip 9 (from `p2start/p25o1_s26g8`): **the tower's door (15,6, event 10)** asks DO YOU
+  LEAVE after the spirits' warning (YES puts the party on 14,6; NO would fight its wights), so the walker looped
+  (p25p1): the plan steps onto it once from 15,5 and walks round it after (`avoid 5,10,28`); **15,7 and 15,8 (events
+  11, 12) lie behind it** (no way round; the bot's 103 LEAVEs never got in either): left out. **p25q5 reached
+  `graveyard`** (3:0 4,12, the inn; nobody dead; ARN drained to 21 HP max, LIRA 16, DORN 27, as the bot's ELWEN and
+  LIRA were). Against the bot's `graveyard` (`p25/graveyard.cpdiff.txt`, the bot's taken in 4:10 at 0,4): 4:10's own
+  flags 0x4A39-0x4A3B and 0x4A8F-0x4A93 differ (events left out, which fights were met), 0x4A00, 0x4A16, 0x4A1B; and
+  **0x4A99: the original's party 255, ours' bot 254, at `graveyard` and still at `stojanow`**: Urslingen's script
+  writes 255 after its two texts (ECL 3:8 0xB292); in ours' run the texts show but the write never happened (to main).
 
 Lab: `p25/` (seg20b.plan to seg26b.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
-`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a`, `p25g3_heir`, `p25h2_s25b` (and `.lab/player/saves/p25*`).
+`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a`, `p25g3_heir`, `p25h2_s25b`, `p25j10_zhentil`, `p25k1_s26t`, `p25l2_s26g5`, `p25o1_s26g8` (and `.lab/player/saves/p25*`).
 
 ## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 

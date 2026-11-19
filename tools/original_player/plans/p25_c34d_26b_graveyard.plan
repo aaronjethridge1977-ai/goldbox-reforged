@@ -11,6 +11,7 @@ answer LET HIM JOIN THE PARTY OR SEND HIM AWAY|SEND
 answer WHAT DO YOU WANT TO DO TO IT|SANCTIFY
 answer I GUARD HIS REMAINS|STAY
 answer YOU STAND BEFORE A HUGE TOWER|YES
+answer DO YOU LEAVE|YES
 answer ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
 answer WOODEN STAIRS LEAD INTO A PIT|NO
 answer DO YOU WANT TO DO ANYTHING WITH THE COFFIN|YES
@@ -451,15 +452,16 @@ walk 12,27
 step N
 area 4:10
 norest
-walk 15,6 avoid 5,28
-walk 14,4 avoid 5,28
-walk 15,7 avoid 5,28
-walk 15,8 avoid 5,28
-walk 12,4 avoid 5,28
-walk 15,1 avoid 5,28
-walk 15,0 avoid 5,28
-walk 8,2 avoid 5,28
-walk 0,4 avoid 5,28
+# (15,6, event 10: the tower's door: DO YOU LEAVE YES puts the party on 14,6: one step S from 15,5, then walked round)
+walk 15,5 avoid 5,28
+step S
+walk 14,4 avoid 5,10,28
+# (15,7 and 15,8, events 11 and 12: behind the tower's door, no way round it; the bot's 103 LEAVEs never got in)
+walk 12,4 avoid 5,10,28
+walk 15,1 avoid 5,10,28
+walk 15,0 avoid 5,10,28
+walk 8,2 avoid 5,10,28
+walk 0,4 avoid 5,10,28
 answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
 step W
 area 7:26
