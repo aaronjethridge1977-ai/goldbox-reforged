@@ -67,6 +67,10 @@ var square_info: Callable
 var wall_info: Callable   # (x, y, facing) -> the wall on the script's map (main: CALL 0xC01E / 0xC018)
 var stack: Array[int] = []
 var compare := 0
+## The original keeps six flags (DS 0x6F78-0x6F7D: EQ NE LT GT LE GE); COMPARE, AND and OR set all six
+## from two numbers (GAME.OVR 0x8DBE), `compare` here; COMPARE_AND and FIND_ITEM clear them and set only EQ
+## or NE, so IF_LT .. IF_GE are then false (chat 62).
+var compare_eq_only := false
 var _prev_op := ""         # the op run before (SPELL reads what its handler left: chat 62)
 
 # Output since the last clear_output()
@@ -198,6 +202,7 @@ func copy_from(src: EclVM) -> void:
 	pc = src.pc
 	stack.assign(src.stack)
 	compare = src.compare
+	compare_eq_only = src.compare_eq_only
 	_prev_op = src._prev_op
 	menu = src.menu.duplicate()
 	menu_vertical = src.menu_vertical
@@ -987,6 +992,7 @@ func _exec(ins: Dictionary) -> void:
 			# Sets the comparison: equal if anyone carries an item of that type.
 			var kind := _value(a[0])
 			compare = 1
+			compare_eq_only = true    # GAME.OVR 0x33B0: EQ or NE only
 			for m in party:
 				for it in (m as PartyMember).items:
 					if it.type == kind:
@@ -1002,6 +1008,7 @@ func _exec(ins: Dictionary) -> void:
 		"HAS_EFFECT":
 			var m := selected_member()
 			compare = 0 if m != null and m.has_affect(_value(a[0])) else 1
+			compare_eq_only = false
 		"PARTY_CHECK":
 			_party_check(a)
 		"NPC_ADD":
@@ -1087,6 +1094,7 @@ func _exec(ins: Dictionary) -> void:
 			else:
 				pc = stack.pop_back()
 		"COMPARE":
+			compare_eq_only = false
 			if a[0].type == 0x80 or a[1].type == 0x80 or a[0].type == 0x81 or a[1].type == 0x81:
 				var s0 := _string(a[0])
 				var s1 := _string(a[1])
@@ -1095,6 +1103,7 @@ func _exec(ins: Dictionary) -> void:
 				compare = _value(a[0]) - _value(a[1])
 		"COMPARE_AND":
 			compare = 0 if (_value(a[0]) == _value(a[1]) and _value(a[2]) == _value(a[3])) else 1
+			compare_eq_only = true    # GAME.OVR 0x1833: EQ or NE only
 		"IF_EQ", "IF_NE", "IF_LT", "IF_GT", "IF_LE", "IF_GE":
 			var passed := _test(op)
 			if coverage != null:
@@ -1115,11 +1124,15 @@ func _exec(ins: Dictionary) -> void:
 		"AND":
 			var r := _value(a[0]) & _value(a[1]) & 0xFF   # a byte (GAME.OVR 0x1B6B)
 			_write(a[2], r)
-			compare = 0 if r == 0 else 1
+			# GAME.OVR 0x1B84: the flags compare 0 with the result (0x8DBE), so IF_GT is never true and IF_LT
+			# is "not 0" (chat 62: 3:14's rugs test bit 4 with IF_GT; the original offers them again and again).
+			compare = -r
+			compare_eq_only = false
 		"OR":
 			var r := (_value(a[0]) | _value(a[1])) & 0xFF
 			_write(a[2], r)
-			compare = 0 if r == 0 else 1
+			compare = -r
+			compare_eq_only = false
 		"RANDOM":
 			_write(a[1], _script_roll(maxi(0, _value(a[0]))))
 		"RANDOM0":
@@ -1354,10 +1367,10 @@ func _test(op: String) -> bool:
 	match op:
 		"IF_EQ": return compare == 0
 		"IF_NE": return compare != 0
-		"IF_LT": return compare < 0
-		"IF_GT": return compare > 0
-		"IF_LE": return compare <= 0
-		"IF_GE": return compare >= 0
+		"IF_LT": return compare < 0 and not compare_eq_only
+		"IF_GT": return compare > 0 and not compare_eq_only
+		"IF_LE": return compare <= 0 and not compare_eq_only
+		"IF_GE": return compare >= 0 and not compare_eq_only
 	return false
 
 

@@ -164,7 +164,7 @@ func _follow(vm: EclVM, where: String, place: String, depth: int) -> void:
 
 
 func _snapshot(vm: EclVM) -> Dictionary:
-	return {"mem": vm.mem.duplicate(), "pc": vm.pc, "stack": vm.stack.duplicate(), "compare": vm.compare,
+	return {"mem": vm.mem.duplicate(), "pc": vm.pc, "stack": vm.stack.duplicate(), "compare": vm.compare, "eq_only": vm.compare_eq_only,
 		"state": vm.state, "menu": vm.menu.duplicate(), "kind": vm._menu_kind, "enc": vm._enc.duplicate(true),
 		"dest": vm._menu_dest.duplicate(), "parlay": vm._parlay_values.duplicate(), "dist": vm.encounter_distance,
 		"adv": vm.encounter_advances, "selected": vm.selected}
@@ -175,6 +175,7 @@ func _restore(vm: EclVM, s: Dictionary) -> void:
 	vm.pc = s.pc
 	vm.stack.assign(s.stack)
 	vm.compare = s.compare
+	vm.compare_eq_only = s.eq_only
 	vm.state = s.state
 	vm.menu = s.menu.duplicate()
 	vm._menu_kind = s.kind

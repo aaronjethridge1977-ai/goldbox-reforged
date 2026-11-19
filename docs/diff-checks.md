@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 62: ECL SPELL and the character window's record bytes; memorized spells in statediff; checks 90-91, DIFFCHECKS 91/91
+## Chat 62: ECL SPELL and the character window's record bytes; memorized spells in statediff; the comparison flags; checks 90-92, DIFFCHECKS 92/92
 
 Read from the original's ECL dispatcher (GAME.OVR 0x3C73: the opcode in DS 0x6F7F, a near call per opcode; SURPRISE
 0x240F, PARTY_SKILL_CHECK 0x236F, FIND_ITEM 0x33B0 and the door's KNOCK 0x16D13 agree with ours).
@@ -193,11 +193,22 @@ Read from the original's ECL dispatcher (GAME.OVR 0x3C73: the opcode in DS 0x6F7
   ours keeps no gaps). All 89 earlier checks still match; the deliberate-break test rerun at 89 checks: SUBTRACT
   80/89, ADD 88/89.
 - **PARTY_STRENGTH (0x200C) adds into a byte** (wraps past 255; ours capped). Not reachable with Pool's parties; no check.
+- **The comparison flags** (DS 0x6F78-0x6F7D, EQ NE LT GT LE GE; the IFs 0x1898 test one each): COMPARE (0xE6C)
+  sets all six from its two numbers (0x8DBE, the first against the second: ours' `compare = a - b` holds); **AND and
+  OR (0x1B35) compare 0 with the result**, so after them IF_GT is never true, IF_LT means "not 0", IF_LE always,
+  IF_GE "0" (ours had "not 0" for GT and GE); **COMPARE_AND (0x1833) and FIND_ITEM (0x33B0) clear the six and set
+  only EQ or NE**, so the other four IFs are false after them (`compare_eq_only`). In Pool only one script tests an
+  AND with anything but IF_EQ / IF_NE: **3:14's rugs and tapestries (14,14, 0xA274: AND 4, [4A47]; IF_GT; GOTO
+  leave): the original shows them and their treasure on every visit** (DOSBox: bit 4 set, LOOK, the treasure again);
+  ours left once the bit was set.
 - **Check 90, 3:14 the three cabinets, nobody with Knock** (a save from the original's own walk there: check 43's start
   with 0x4AB2 = 1, doors bashed, THRENDER given memorized spells 5 and 21): LOOK, A, CAST KNOCK, LEAVE: 0x4AEA = 1, the
   spells kept. Fails on the code before (ours refused, then LEAVE: 12 differences).
 - **Check 91, the same with BAKSHI holding Knock**: THRENDER casts, BAKSHI keeps it. Fails on the code before (BAKSHI's
   memorized spells: ours spent the Knock), with the new statediff.
+- **Check 92, 3:14 the rugs again** (a save of the original at 14,13 S after a first visit, 0x4A47 = 4): Up, the rugs'
+  text and treasure, EXIT, NO, Down, Up: 14,13 N 11:35. Fails on the code before (ours left at once; the later keys
+  opened camp).
 
 ## Chat 61: the wall ahead in statediff; checks 75-86 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE, 5:4 the scribe, rests in 2:20, 3:0, 8:13 and 3:14, a band PARLAY, a dying member outside fights), DIFFCHECKS 89/89
 
