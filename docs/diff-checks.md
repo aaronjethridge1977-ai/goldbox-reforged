@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 62: ECL SPELL and the character window's record bytes; memorized spells in statediff; checks 90-91, DIFFCHECKS 91/91
+
+Read from the original's ECL dispatcher (GAME.OVR 0x3C73: the opcode in DS 0x6F7F, a near call per opcode; SURPRISE
+0x240F, PARTY_SKILL_CHECK 0x236F, FIND_ITEM 0x33B0 and the door's KNOCK 0x16D13 agree with ours).
+
+- **SPELL (0x3949) never clears its stop flag** ([bp-8]): the flag holds what the previous handler left in that
+  stack slot. Pool's only SPELL (3:14's cabinets at 14,10, CAST KNOCK, 0x9ECA) follows the menu's ON_GOTO, whose last
+  call pushed a jump target's high byte there (never 0), so the loop never runs and SPELL answers place 1, member 0:
+  **the first member "casts a Knock spell and opens the lock" whoever has Knock, even when no one does, and no spell
+  is spent.** Seen in DOSBox with three parties (Knock on the second member; no Knock; the first member holding two
+  other spells): THRENDER GRONE casts every time, every spell kept. Ours answered "NO ONE IN THE PARTY HAS THE KNOCK
+  SPELL!" or named the holder and spent his Knock. (With the flag clear the loop would read only the first member's
+  record bytes 0x18..0x69 and count one past him; not seen.)
+- **The character window's 0x20-0x70 is the record's bytes** (the write, 0x7F6C: record byte = offset - 8, and the
+  cell too; the read 0x7C9F has no case for them: a plain cell). Ours had 0x21.. as the memorized list from its top,
+  so SPELL's follow-up write (0, at 0x6B21: record 0x19) took a spell away. 6:19's on-rest writes 0x6B32 (record 0x2A,
+  a memorized byte) but the dragon's den sends the party straight back to the band: no rest happens there.
+- **statediff compares each member's memorized spells** (record 0x17..0x2B, sorted: where they sit isn't compared, as
+  ours keeps no gaps). All 89 earlier checks still match; the deliberate-break test rerun at 89 checks: SUBTRACT
+  80/89, ADD 88/89.
+- **PARTY_STRENGTH (0x200C) adds into a byte** (wraps past 255; ours capped). Not reachable with Pool's parties; no check.
+- **Check 90, 3:14 the three cabinets, nobody with Knock** (a save from the original's own walk there: check 43's start
+  with 0x4AB2 = 1, doors bashed, THRENDER given memorized spells 5 and 21): LOOK, A, CAST KNOCK, LEAVE: 0x4AEA = 1, the
+  spells kept. Fails on the code before (ours refused, then LEAVE: 12 differences).
+- **Check 91, the same with BAKSHI holding Knock**: THRENDER casts, BAKSHI keeps it. Fails on the code before (BAKSHI's
+  memorized spells: ours spent the Knock), with the new statediff.
+
 ## Chat 61: the wall ahead in statediff; checks 75-86 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE, 5:4 the scribe, rests in 2:20, 3:0, 8:13 and 3:14, a band PARLAY, a dying member outside fights), DIFFCHECKS 89/89
 
 - **The wall ahead joins statediff.** The original's save keeps ECL 0xC04E (DS 0x6AB0) at byte 0x3204; statediff
