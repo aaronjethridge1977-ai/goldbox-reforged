@@ -109,8 +109,9 @@ const WILD_CLEAR := [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2
 
 ## GAME.OVR 0xCE75: the terrain byte's flags (a chain of range tests, run by the lab's
 ## combat30/ce75.py on every byte). 0x02 light woods, 0x04 woods, 0x08 forest, 0x10 / 0x20 a
-## river's chance, 0x40 its own trees, 0x80 bare. Bytes no case covers (0x00, 0x05, 0x86, 0xBB,
-## 0xF7-0xF9, 0xFB, 0xFD-0xFF) leave the result unset (a stack byte): 0 here.
+## river's chance, 0x40 its own trees, 0x80 bare. Bytes no case covers (UNSET) leave the
+## result a stack byte: see _flags.
+const UNSET := [0x00, 0x05, 0x86, 0xBB, 0xF7, 0xF8, 0xF9, 0xFB, 0xFD, 0xFE, 0xFF]
 const TERRAIN_FLAGS := [
 	0x00, 0x01, 0x01, 0x03, 0x03, 0x00, 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,   # 0x00
 	0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x02, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,   # 0x10
@@ -131,25 +132,57 @@ const TERRAIN_FLAGS := [
 ]
 
 var outdoors := false
+var _terrain := 0
+var _ecl_4ab3 := 0
+var _slot := 0      # an unset terrain's flags: the stack byte 0xCE75 reads (see _flags)
 
 
 ## The flags of the terrain byte (0xCE75 with its end, 0xD139): a bare terrain (0x80) counts
 ## as 0x01 instead while ECL word 0x4AB3 ([0x49D2] + 0x366) is 0xFF.
 static func terrain_flags(terrain: int, ecl_4ab3: int) -> int:
-	var f: int = TERRAIN_FLAGS[terrain & 0xFF]
+	return _fix(TERRAIN_FLAGS[terrain & 0xFF], ecl_4ab3)
+
+
+static func _fix(f: int, ecl_4ab3: int) -> int:
 	if f & 0x80 and ecl_4ab3 == 0xFF:
 		f = (f - 0x80) | 0x01
 	return f
 
 
-## Turns this field into the wilderness one (0xD785, before the clutter): `flags` from
-## terrain_flags, `roll` the fight's die (1..n). The map squares (side) stay as built.
-func make_wild(flags: int, roll: Callable) -> void:
+## 0xCE75 as each call site gets it. On an UNSET terrain byte (Player 21's lizard men, 7:26
+## 25,27: 0xFD) it returns the word under its [bp-2], what the last call at the same stack depth
+## left there (Combat Chat 30, the lab's combat30/wildunset.py: all of p21a2's setup draws):
+## the river and trees routines (6 bytes of locals each) share a slot each dice call fills with
+## its return offset (low byte: the river's d100 0x13, 5d4 0x26, d20 0xA1, d9 0xD3; the trees'
+## d100 0xDB, d10 0xEE, d2 0x02, d3 0x2C), the scatter routine (8) finds in its first calls a
+## byte with 0x80 set and 0x40 clear (the dice routine's saved bp: seen, the rest unknown) and
+## at its k = 4 test its d4's return offset (0x55). The river's own calls find what came before
+## the field (unknown): no river here. 0xD139's fix-up writes back into the slot.
+func _flags(site: int) -> int:
+	if not (_terrain in UNSET):
+		return terrain_flags(_terrain, _ecl_4ab3)
+	if site >= 0:
+		_slot = site
+	_slot = _fix(_slot, _ecl_4ab3)
+	return _slot
+
+
+## A die with its return offset's low byte (the unset terrain's slot in the river and trees).
+func _die(roll: Callable, n: int, ret: int) -> int:
+	_slot = ret
+	return roll.call(n)
+
+
+## Turns this field into the wilderness one (0xD785, before the clutter): `terrain` the byte
+## under the band square, `ecl_4ab3` ECL word 0x4AB3, `roll` the fight's die (1..n).
+func make_wild(terrain: int, ecl_4ab3: int, roll: Callable) -> void:
 	outdoors = true
+	_terrain = terrain & 0xFF
+	_ecl_4ab3 = ecl_4ab3
 	cells.fill(FLOOR)
-	_river(flags, roll)
-	_trees(flags, roll)
-	_wild_scatter(flags, roll)
+	_river(roll)
+	_trees(roll)
+	_wild_scatter(roll)
 
 
 ## A cell's ground is open (ground table class 0x16: ground 0x17 or 0x36).
@@ -167,15 +200,17 @@ func _ground(i: int, g: int) -> void:
 ## 0xD1AF: a river (ground 0x32 / 0x33, impassable, seen across) running down and right one
 ## cell a row from a start column 12, 19 or 26, with fords (0x34 / 0x35, 0xD168) where a d20
 ## comes up 1 and on the row after each; with no ford, one at row 16 - d9.
-func _river(flags: int, roll: Callable) -> void:
+func _river(roll: Callable) -> void:
+	var flags := _flags(0)
 	var chance := 0
 	if flags & 0x20:
 		chance = 0x23
 	if flags & 0x10:
 		chance = 0x4B
-	if roll.call(100) > chance:
+	if _die(roll, 100, 0x13) > chance:
 		return
 	var x := 0x22
+	_slot = 0x26         # 5d4: one call of the dice routine
 	for k in 5:
 		x -= roll.call(4)
 	while (x + 2) % 7 > 0:
@@ -186,13 +221,13 @@ func _river(flags: int, roll: Callable) -> void:
 		if x <= 0x31:
 			_ground(y * WIDTH + x, 0x32)
 			_ground(y * WIDTH + x + 1, 0x33)
-			if roll.call(20) == 1 or fords & 1:
+			if _die(roll, 20, 0xA1) == 1 or fords & 1:
 				_ground(y * WIDTH + x, 0x34)
 				_ground(y * WIDTH + x + 1, 0x35)
 				fords += 1
 			x += 1
 	if fords == 0:
-		var y: int = 16 - roll.call(9)
+		var y: int = 16 - _die(roll, 9, 0xD3)
 		x = start + y
 		_ground(y * WIDTH + x, 0x34)
 		_ground(y * WIDTH + x + 1, 0x35)
@@ -202,33 +237,34 @@ func _river(flags: int, roll: Callable) -> void:
 
 ## 0xD2E4: trees on two open cells one above the other; the density (d100 at most) 1, 3 for
 ## 0x04, 4 for 0x40, 7 for 0x08, none for 0x80 (later flags win).
-func _trees(flags: int, roll: Callable) -> void:
+func _trees(roll: Callable) -> void:
 	var dens := 1
-	if flags & 0x04:
+	if _flags(-1) & 0x04:
 		dens = 3
-	if flags & 0x40:
+	if _flags(-1) & 0x40:
 		dens = 4
-	if flags & 0x08:
+	if _flags(-1) & 0x08:
 		dens = 7
-	if flags & 0x80:
+	if _flags(-1) & 0x80:
 		dens = 0
 	for x in WIDTH:
 		for y in range(1, HEIGHT):
 			if not _open(x, y) or not _open(x, y - 1):
 				continue
-			if roll.call(100) > dens:
+			if _die(roll, 100, 0xDB) > dens:
 				continue
-			var k: int = roll.call(10)
-			k = 4 + roll.call(2) if k > 8 else (k + 1) / 2
-			if flags & 0x40:
-				k = 3 + roll.call(3)
+			var k: int = _die(roll, 10, 0xEE)
+			k = 4 + _die(roll, 2, 0x02) if k > 8 else (k + 1) / 2
+			if _flags(-1) & 0x40:
+				k = 3 + _die(roll, 3, 0x2C)
 			_ground(y * WIDTH + x, 0x1F + 4 + k)
 			if k < 5:
 				_ground((y - 1) * WIDTH + x, 0x1F + k)
 
 
 ## 0xD46F: each open cell draws a d255 for the ground's small things.
-func _wild_scatter(flags: int, roll: Callable) -> void:
+func _wild_scatter(roll: Callable) -> void:
+	var flags := _flags(0x80)
 	var a := 0
 	var b := 6
 	var c := 0x0F
@@ -267,7 +303,7 @@ func _wild_scatter(flags: int, roll: Callable) -> void:
 				_ground(i, 0x38 + (roll.call(10) - 1) / 3 + 1)
 			elif r <= a + b + c + e + d:
 				var k: int = roll.call(4)
-				if k == 4 and not flags & 0x40:
+				if k == 4 and not _flags(0x55) & 0x40:
 					k = roll.call(3)
 				_ground(i, 0x2D + k)
 

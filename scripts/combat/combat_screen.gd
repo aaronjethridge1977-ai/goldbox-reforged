@@ -804,7 +804,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 		clutter_rng.randomize()
 	if not wild.is_empty():
 		# The wilderness field (GAME.OVR 0xD785) comes first, with the clutter on top.
-		_field.make_wild(Battlefield.terrain_flags(_wild_terrain(), int(wild[3])), func(n: int) -> int:
+		_field.make_wild(_wild_terrain(), int(wild[3]), func(n: int) -> int:
 			return TpDice.random(n, "wild field") + 1 if TpDice.on else clutter_rng.randi_range(1, n))
 		_art = CombatArt.load_set(_game_path, true)
 	_field.scatter(func(n: int) -> int:
