@@ -3045,6 +3045,9 @@ func _temple_cures() -> void:
 				t._cure = cure
 				t._pay()
 				print("   temple: %s %s: %s" % [main._party[i].name, TempleScreen.CURES[cure][0], t._note.text])
+	# The pool goes on the temple's pile (Combat Chat 31): share it back before leaving.
+	if CoinPile.has_money(t.pile):
+		t._share()
 
 
 # --- Counters and the money ledger (strategy change 0) --------------------------------------

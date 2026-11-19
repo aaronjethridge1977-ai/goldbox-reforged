@@ -150,38 +150,48 @@ func _menu_items() -> Array:
 
 ## TAKE's coin page, the treasure's (GAME.OVR 0x8F:0x34 in both): the pile's coins, copper first.
 func _draw_coins() -> void:
-	_scr.clear()
+	draw_coin_page(_scr, pile, _mode == "coins", _coin, _amount_coin, _typed)
+
+
+## The coin page for any pile (the shop's and the temple's TAKE: GAME.OVR 0x25974): `choosing` the
+## SELECT TYPE OF COIN step with line `coin` lit, else HOW MUCH of kind `amount_coin` with `typed`.
+static func draw_coin_page(scr: GameScreen, coins: PackedInt32Array, choosing: bool, coin: int,
+		amount_coin: int, typed: String) -> void:
+	scr.clear()
 	for c in 40:
-		_scr.tile(c, 0, 22)
-		_scr.tile(c, 23, 22)
+		scr.tile(c, 0, 22)
+		scr.tile(c, 23, 22)
 	for r in range(1, 23):
-		_scr.tile(0, r, 21)
-		_scr.tile(39, r, 21)
+		scr.tile(0, r, 21)
+		scr.tile(39, r, 21)
 	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
-		_scr.tile(p.x, p.y, 20)
-	var kinds := _coin_kinds()
+		scr.tile(p.x, p.y, 20)
+	var kinds := coin_kinds_of(coins)
 	for i in kinds.size():
 		var c: int = kinds[i]
-		var lit := _mode == "coins" and i == _coin
-		_scr.text(2, 2 + i, "%s %d" % [TreasureScreen.MONEY_LABELS[c], pile[c]],
+		var lit := choosing and i == coin
+		scr.text(2, 2 + i, "%s %d" % [TreasureScreen.MONEY_LABELS[c], coins[c]],
 			GameScreen.WHITE if lit else GameScreen.GREEN)
-		_scr.list_line(2 + i, i)
-	if _mode == "coins":
-		_scr.list_chosen(_coin)
-	if _mode == "coins":
-		_scr.text(0, 24, "SELECT TYPE OF COIN", 13)
-		_scr.menu_line(24, ["EXIT"], 20, 0)
+		scr.list_line(2 + i, i)
+	if choosing:
+		scr.list_chosen(coin)
+		scr.text(0, 24, "SELECT TYPE OF COIN", 13)
+		scr.menu_line(24, ["EXIT"], 20, 0)
 	else:
-		var ask := "HOW MUCH %s WILL YOU TAKE? " % TreasureScreen.MONEY_LABELS[_amount_coin]
-		_scr.text(0, 24, ask, GameScreen.GREEN)
-		_scr.text(ask.length(), 24, _typed, GameScreen.WHITE)
-	_scr.update()
+		var ask := "HOW MUCH %s WILL YOU TAKE? " % TreasureScreen.MONEY_LABELS[amount_coin]
+		scr.text(0, 24, ask, GameScreen.GREEN)
+		scr.text(ask.length(), 24, typed, GameScreen.WHITE)
+	scr.update()
 
 
 func _coin_kinds() -> Array:
+	return coin_kinds_of(pile)
+
+
+static func coin_kinds_of(coins: PackedInt32Array) -> Array:
 	var out := []
 	for c in 7:
-		if pile[c] > 0:
+		if coins[c] > 0:
 			out.append(c)
 	return out
 
@@ -189,15 +199,24 @@ func _coin_kinds() -> Array:
 ## TAKE n coins of kind c from the pile for the buyer (refused whole when over his load, as the
 ## treasure's: GAME.OVR 0x2570F).
 func take_coins(c: int, n: int) -> void:
-	var m := _party[_buyer]
-	# The cached load (Combat Chat 29), tested with the amount asked, raised by what is taken (0x257DA).
-	if not m.can_take_coins(maxi(n, 0)):
+	var left := take_from(_party[_buyer], pile, c, n)
+	if left.is_empty():
 		_show_flash("OVERLOADED", true)
 		return
-	n = clampi(n, 0, pile[c])
+	pile = left
+
+
+## Member `m` takes n coins of kind c from `coins`: the pile left, or an empty array when refused
+## (the cached load, Combat Chat 29, tested with the amount asked, raised by what is taken: 0x257DA).
+static func take_from(m: PartyMember, coins: PackedInt32Array, c: int, n: int) -> PackedInt32Array:
+	if not m.can_take_coins(maxi(n, 0)):
+		return PackedInt32Array()
+	var out := coins.duplicate()
+	n = clampi(n, 0, out[c])
 	m.money[c] += n
 	m.raise_load(n)
-	pile[c] -= n
+	out[c] -= n
+	return out
 
 
 func _draw_list() -> void:

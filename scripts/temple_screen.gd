@@ -22,6 +22,15 @@ extends Control
 ## NEUTRALIZE POISON (GAME.OVR 0x4CC9, Combat Chat 3): needed when the member has effect 0x37
 ## (poisoned); paid, it removes 0x37, Slow Poison's 0x16 and its tick 0x0F, nothing else (a
 ## member dead of poison stays dead: Raise Dead after).
+## The money pile (GAME.OVR's temple loop 0x5280, Combat Chat 31; main's 3:0 temple ready check): the
+## shop's pile (CoinPile, DS:0x67F4), emptied as the temple opens (0x529D). POOL (0x25191) puts the
+## player characters' coins on it; with money on it the menu is HEAL VIEW TAKE POOL SHARE APPRAISE EXIT
+## (0x51B6), TAKE the treasure's coin page (0x25974), SHARE the treasure's split (0x252C3: a stale load
+## word's wrap included). A cure is paid (0x46E1) by the member's purse if it is worth the price (its
+## coins become platinum and gold: CoinPile.set_gold), else by the pile if it is, else "NOT ENOUGH
+## MONEY.". EXIT with money on the pile asks 'As you leave a priest says, "Excuse me but you have left
+## some money here"' / "Do you want to go back and retrieve your money?" (0x53A3, YES NO): NO leaves
+## it behind.
 ## Not yet: blindness and curses aren't conditions our characters can have, so those cures
 ## always ask "cast cure anyway"; APPRAISE; Raise Dead's loss of constitution.
 
@@ -33,13 +42,19 @@ const CURES := [["CURE BLINDNESS", 1000], ["CURE DISEASE", 1000], ["CURE LIGHT W
 const NOT_NEEDED := ["IS NOT BLIND.", "IS NOT DISEASED.", "", "", "", "IS NOT POISONED.",
 	"IS NOT DEAD.", "IS NOT CURSED.", "IS NOT STONED."]
 const MENU := ["HEAL", "VIEW", "POOL", "APPRAISE", "EXIT"]
+const POOL_MENU := ["HEAL", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
 const LIST_MENU := ["HEAL", "EXIT"]
 const YES_NO := ["YES", "NO"]
 
 var _party: Array[PartyMember] = []
 var _who := 0
 var _cure := 0               # the chosen line of the list (CURES.size() is EXIT)
-var _mode := "menu"          # menu, list, anyway, pay
+var _mode := "menu"          # menu, list, anyway, pay, coins, amount, ask_leave
+## The temple's money pile (CoinPile): POOL puts coins on it, TAKE and SHARE give them back.
+var pile := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
+var _coin := 0               # the coin page's lit line
+var _amount_coin := -1
+var _typed := ""
 var _pick := 0
 var _lines: Array = []       # the text box: [[text, colour], ...] a line each
 var _note := Label.new()     # what happened (the bot logs it)
@@ -76,6 +91,7 @@ func open(party: Array[PartyMember], who: int = 0) -> void:
 	_pick = 0
 	_lines = []
 	_note.text = ""
+	pile = PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
 	_rng.randomize()
 	if _scr == null:
 		ShopScreen._fill(self, 0)
@@ -97,8 +113,15 @@ func open(party: Array[PartyMember], who: int = 0) -> void:
 func _refresh() -> void:
 	if _scr == null:
 		return
-	if _mode == "menu":
-		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", PackedStringArray(), MENU, false, false, _pick)
+	if _mode in ["menu", "ask_leave"]:
+		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", PackedStringArray(), _menu_items(), false, false, _pick)
+		if _mode == "ask_leave":
+			TreasureScreen.draw_ask(_scr, "AS YOU LEAVE A PRIEST SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE\"",
+				"DO YOU WANT TO GO BACK AND RETRIEVE YOUR MONEY?")
+			_scr.update()
+		return
+	if _mode in ["coins", "amount"]:
+		ShopScreen.draw_coin_page(_scr, pile, _mode == "coins", _coin, _amount_coin, _typed)
 		return
 	_scr.clear()
 	for c in 40:
@@ -137,6 +160,13 @@ func _refresh() -> void:
 				_scr.text(col + 1, 24, w.substr(1), GameScreen.WHITE if i == _pick else GameScreen.GREEN)
 				col += w.length() + 1
 	_scr.update()
+
+
+## The walking menu's words: the pile's longer menu while money is on it (GAME.OVR 0x52C1).
+func _menu_items() -> Array:
+	if _mode == "ask_leave":
+		return YES_NO
+	return POOL_MENU if CoinPile.has_money(pile) else MENU
 
 
 func _say(lines: Array) -> void:
@@ -194,7 +224,14 @@ func _needs(m: PartyMember, i: int) -> bool:
 
 func _pay() -> void:
 	var m := _party[_who]
-	if not m.pay_gold(CURES[_cure][1]):
+	# GAME.OVR 0x46E1: the purse pays if it is worth the price, else the pile, else nothing.
+	var price: int = CURES[_cure][1]
+	var purse := CoinPile.gold_of(m.money)
+	if price <= purse:
+		m.money = CoinPile.set_gold(m.money, purse - price)
+	elif price <= CoinPile.gold_of(pile):
+		pile = CoinPile.set_gold(pile, CoinPile.gold_of(pile) - price)
+	else:
 		# The original says nothing here, not even briefly (lab, three captures over 3 s): the
 		# list comes back with an empty text box. Only the bot's note says why.
 		_lines = []
@@ -253,14 +290,29 @@ func _heal(m: PartyMember, amount: int) -> void:
 
 
 func _pool() -> void:
-	var to := _party[_who]
-	for m in _party:
-		if m == to:
-			continue
-		for c in 5:
-			to.money[c] += m.money[c]
-			m.money[c] = 0
+	pile = CoinPile.pool(_party, pile)
 	_refresh()
+
+
+func _share() -> void:
+	pile = CoinPile.share(_party, pile)
+	_pick = mini(_pick, _menu_items().size() - 1)
+	_refresh()
+
+
+func _close() -> void:
+	visible = false
+	closed.emit()
+
+
+## E from the menu: with money on the pile a priest asks first (GAME.OVR 0x53A3).
+func _leave() -> void:
+	if CoinPile.has_money(pile):
+		_mode = "ask_leave"
+		_pick = 0
+		_refresh()
+		return
+	_close()
 
 
 # --- Keys ---------------------------------------------------------------------------------
@@ -274,10 +326,31 @@ func _unhandled_input(event: InputEvent) -> void:
 		closed.emit()
 		return
 	var key := (event as InputEventKey).keycode
-	var items: Array = MENU
+	if _mode == "amount":
+		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
+			_typed += char(key)
+		elif key == KEY_BACKSPACE:
+			_typed = _typed.left(-1)
+		elif key in [KEY_ENTER, KEY_KP_ENTER]:
+			var left := ShopScreen.take_from(_party[_who], pile, _amount_coin, _typed.to_int())
+			if left.is_empty():
+				_note.text = "OVERLOADED"
+			else:
+				pile = left
+			_mode = "coins"
+			_coin = 0
+			if ShopScreen.coin_kinds_of(pile).is_empty():
+				_mode = "menu"
+				_pick = 0
+		elif key == KEY_ESCAPE:
+			_mode = "coins"
+		_refresh()
+		return
+	var items: Array = _menu_items()
 	match _mode:
 		"list": items = LIST_MENU
 		"anyway", "pay": items = YES_NO
+		"coins": items = ["EXIT"]
 	# The original moves through lists and the party with Home and End (keypad 7 and 1).
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
@@ -287,11 +360,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			_who = (_who + step + _party.size()) % _party.size()
 		elif _mode == "list":
 			_cure = clampi(_cure + step, 0, CURES.size())
+		elif _mode == "coins":
+			_coin = clampi(_coin + step, 0, maxi(ShopScreen.coin_kinds_of(pile).size() - 1, 0))
 		_refresh()
 		return
 	var choice := ""
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
+		if _mode == "coins":
+			choice = "COIN"
 	elif key == KEY_LEFT or key == KEY_RIGHT:
 		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
@@ -304,20 +381,45 @@ func _unhandled_input(event: InputEvent) -> void:
 				choice = it
 	if choice == "":
 		return
-	_pick = items.find(choice)
+	if choice != "COIN":
+		_pick = items.find(choice)
 	match _mode:
 		"menu":
 			match choice:
 				"HEAL":
+					# The list opens at its top every time (main's 3:0 temple check: End End reaches
+					# CURE LIGHT WOUNDS on both visits; ours reopened it on the last cure).
 					_mode = "list"
+					_cure = 0
 					_lines = []
 					_refresh()
 				"VIEW": _sheet.open(_party, "PARTY", _who)
+				"TAKE":
+					_mode = "coins"
+					_coin = 0
+					_refresh()
 				"POOL": _pool()
+				"SHARE": _share()
 				"APPRAISE": pass        # not yet
-				"EXIT":
-					visible = false
-					closed.emit()
+				"EXIT": _leave()
+		"coins":
+			if choice == "COIN":
+				var kinds := ShopScreen.coin_kinds_of(pile)
+				if _coin < kinds.size():
+					_amount_coin = kinds[_coin]
+					_typed = ""
+					_mode = "amount"
+			else:
+				_mode = "menu"
+				_pick = _menu_items().find("TAKE") if CoinPile.has_money(pile) else 0
+			_refresh()
+		"ask_leave":
+			if choice == "YES":
+				_mode = "menu"
+				_pick = 0
+				_refresh()
+			else:
+				_close()
 		"list":
 			if choice == "HEAL":
 				_ask()
