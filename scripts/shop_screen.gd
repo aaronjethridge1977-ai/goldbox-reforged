@@ -189,12 +189,14 @@ func _coin_kinds() -> Array:
 ## TAKE n coins of kind c from the pile for the buyer (refused whole when over his load, as the
 ## treasure's: GAME.OVR 0x2570F).
 func take_coins(c: int, n: int) -> void:
-	n = clampi(n, 0, pile[c])
 	var m := _party[_buyer]
-	if not m.can_take_coins(n):
+	# The cached load (Combat Chat 29), tested with the amount asked, raised by what is taken (0x257DA).
+	if not m.can_take_coins(maxi(n, 0)):
 		_show_flash("OVERLOADED", true)
 		return
+	n = clampi(n, 0, pile[c])
 	m.money[c] += n
+	m.raise_load(n)
 	pile[c] -= n
 
 
@@ -477,6 +479,7 @@ func settle(sell: bool) -> void:
 		m.money[4] += _value / 5
 	else:
 		m.items.append(appraised_item(_jewel, _value))
+	m.refresh_load_word()     # each piece settled works the record out again (GAME.OVR 0x26ECA)
 	if m.money[5] > 0 or m.money[6] > 0:
 		_mode = "appraise"
 		_show_collection()

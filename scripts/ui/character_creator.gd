@@ -183,6 +183,7 @@ func _finish() -> void:
 	_icons.open(game_path, m)
 	await _icons.finished
 	m.recalculate(types)
+	m.refresh_load_word()     # creation (GAME.OVR 0x1C22C)
 	visible = false
 	created.emit(m)
 

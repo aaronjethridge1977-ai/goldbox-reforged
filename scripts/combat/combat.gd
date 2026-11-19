@@ -96,6 +96,7 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		rng.randomize()
 	for c in combatants:
 		c["down"] = false
+		(c.who as PartyMember).refresh_load_word()     # the fight's setup (GAME.OVR 0xD8DA): the cached load
 		# The computer runs monsters, NPCs (0x6BB8 128+) and members a script set to 0x80.
 		c["quick"] = c.team == 1 or c.who.npc >= 128 or c.who.script_team == 0x80 or record_quick(c.who)
 		c["moves"] = 0
@@ -273,6 +274,7 @@ func next_turn() -> int:
 			order.clear()          # nobody has initiative left: the round is over
 			continue
 		var c: Dictionary = combatants[active]
+		(c.who as PartyMember).refresh_load_word()     # each figure's turn (0x99FD: 0x9A8A)
 		if c.down or (magic and CombatSpells.held(c.who)):
 			continue
 		c.acted = true

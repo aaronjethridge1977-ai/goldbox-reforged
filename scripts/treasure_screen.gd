@@ -280,7 +280,9 @@ func _take_item(i: int) -> bool:
 		return false
 	var m := _party[_who]
 	var it: GameItem = _spoils.items[i]
-	# GAME.OVR 0x6F0D: 0x23795 refuses a 17th item or one over the load ceiling ("OverLoaded").
+	# GAME.OVR 0x6F0D: 0x23795 refuses a 17th item or one over the load ceiling ("OverLoaded"), having
+	# worked the taker's record out again (0x237A1: the cached load too).
+	m.refresh_load_word()
 	if not m.can_take_item(it):
 		_refuse("OVERLOADED")
 		return false
@@ -294,13 +296,15 @@ func _take_item(i: int) -> bool:
 
 
 func _take_money(c: int, n: int) -> void:
-	n = clampi(n, 0, _spoils.money[c])
-	# GAME.OVR 0x2570F: when the amount doesn't fit under the load ceiling (0x24CDD), nothing
-	# is taken (main's lab, chat 26: Thrender at 1995 of 2000 took 5 gold, 6 refused).
-	if not _party[_who].can_take_coins(n):
+	# GAME.OVR 0x2570F: when the amount asked doesn't fit under the load ceiling by the cached load (0x24CDD),
+	# nothing is taken (main's lab, chat 26: Thrender at 1995 of 2000 took 5 gold, 6 refused); then at most
+	# the pile's count is taken and the cached load raised by it (0x257DA).
+	if not _party[_who].can_take_coins(maxi(n, 0)):
 		_refuse("OVERLOADED")
 		return
+	n = clampi(n, 0, _spoils.money[c])
 	_party[_who].money[c] += n
+	_party[_who].raise_load(n)
 	_spoils.money[c] -= n
 	_note.text = "%s TAKES %d %s." % [_party[_who].name, n, MONEY_LABELS[c]]
 

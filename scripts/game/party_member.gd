@@ -109,10 +109,11 @@ var weapon: GameItem = null
 var armor: GameItem = null
 var shield: GameItem = null
 var weight := 0
-## The load the original keeps in the record (+0x102, a word): START.EXE 0x1924 writes it when the record is
-## worked out again (0x1758; ours' recalculate()), the coin sites raise and lower it (GAME.OVR 0x24CC3 /
-## 0x24CA9), payments leave it, and the coin tests read it. Read from and written to saves (Q28 (a), chat 63:
-## main's part; Combat maps the recompute and coin sites and moves the tests onto it).
+## The load the original keeps in the record (+0x102, a word): START.EXE 0x1924 writes it when GAME.OVR asks
+## for the record to be worked out again (0xBA:0xBB8 -> 0x1758, 22 sites; ours: refresh_load_word() at
+## each, not in every recalculate()), the coin sites raise and lower it (GAME.OVR 0x24CC3 / 0x24CA9: raise_load /
+## lower_load), payments and item purchases leave it, and the coin tests read it (0x24CDD). Read from and
+## written to saves (Q28 (a), chat 63: main's part; Combat Chat 29: the sites and the tests).
 var load_word := 0
 
 
@@ -933,7 +934,6 @@ func recalculate(types: ItemTypes) -> void:
 	elif over > 0x200:
 		by_load = 9
 	movement = mini(movement, by_load)
-	load_word = weight & 0xFFFF
 
 
 # --- Money ---------------------------------------------------------------------------
@@ -1050,12 +1050,31 @@ func can_take_item(it: GameItem) -> bool:
 
 ## Whether `n` coins (any kind: each weighs 1) fit: GAME.OVR 0x24CDD. The treasure's TAKE of money
 ## (0x2570F) takes nothing at all when they don't ("OVERLOADED"); coins_room() is what still fits.
+## (Combat Chat 29: both read the cached word, load_word, as the original does.)
 func can_take_coins(n: int) -> bool:
-	return encumbrance() + n <= max_load()
+	return ((load_word + n) & 0xFFFF) <= (max_load() & 0xFFFF)
 
 
 func coins_room() -> int:
-	return maxi(max_load() - encumbrance(), 0)
+	return maxi((max_load() & 0xFFFF) - load_word, 0)
+
+
+## The original's recompute of the cached load (START.EXE 0x1924, from GAME.OVR's 22 calls of 0xBA:0xBB8):
+## a fight's setup for every figure (0xD8DA) and each figure's turn (0x9A8A), the character VIEW on entry and
+## after its item actions (0x2165C, 0x224AF, 0x2280B), the treasure's item TAKE (0x237A1), APPRAISE (0x26ECA),
+## ADD_NPC (0x3933), creation and MODIFY (0x1C22C / 0x1C23B), a level or strength change (0x10FE9, 0xF568,
+## 0xF715, 0x2C14D), 0x7018.
+func refresh_load_word() -> void:
+	load_word = encumbrance()
+
+
+## GAME.OVR 0x24CC3 / 0x24CA9: the coin sites' changes to the cached load (a word: it wraps).
+func raise_load(n: int) -> void:
+	load_word = (load_word + n) & 0xFFFF
+
+
+func lower_load(n: int) -> void:
+	load_word = (load_word - n) & 0xFFFF
 
 
 ## Encumbrance in coins: every coin, gem and piece of jewelry weighs 1, plus item weights (stacks count each piece).

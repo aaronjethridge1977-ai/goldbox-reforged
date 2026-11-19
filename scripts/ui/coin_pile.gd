@@ -36,6 +36,7 @@ static func pool(party: Array[PartyMember], pile: PackedInt32Array) -> PackedInt
 			continue
 		for c in 7:
 			out[c] += m.money[c]
+			m.lower_load(m.money[c])     # 0x25231: the cached load lowered kind by kind
 			m.money[c] = 0
 	return out
 
@@ -44,7 +45,8 @@ static func pool(party: Array[PartyMember], pile: PackedInt32Array) -> PackedInt
 ## Player 11's p11t1: the original's save after the fight has LIRA's jewellery at 63644, ARN's at 1290,
 ## BRAM's at 602, and ARN's load at its ceiling, 4500):
 ##   each player character in party order (an NPC, control 0x80 and over, skipped) takes his part of each
-##   kind, jewellery down to copper. One whose load (a word: items + all seven coin kinds) would pass his
+##   kind, jewellery down to copper. One whose cached load (record +0x102, load_word: Combat Chat 29; it
+##   goes stale after payments, 0x24CC3 raising it by every coin given) would pass his
 ##   ceiling (0x24CDD) takes the ceiling less his load instead, as a word: nothing at the ceiling, and from
 ##   an overloaded one the excess is taken away (his count wraps below 0); what he didn't take goes to the
 ##   remainder. One whose part fit takes one more coin of the remainder if the whole remainder would fit.
@@ -68,24 +70,28 @@ static func share(party: Array[PartyMember], pile: PackedInt32Array) -> PackedIn
 			continue
 		for c in range(6, -1, -1):
 			var top := m.max_load() & 0xFFFF
-			if ((m.encumbrance() + int(each[c])) & 0xFFFF) > top:
-				var fit := (top - m.encumbrance()) & 0xFFFF
+			if ((m.load_word + int(each[c])) & 0xFFFF) > top:
+				var fit := (top - m.load_word) & 0xFFFF
 				m.money[c] = (m.money[c] + fit) & 0xFFFF
+				m.raise_load(fit)
 				rest[c] = (int(rest[c]) + int(each[c]) - fit) & 0xFFFF
 			else:
 				m.money[c] = (m.money[c] + int(each[c])) & 0xFFFF
-				if rest[c] > 0 and ((m.encumbrance() + int(rest[c])) & 0xFFFF) <= top:
+				m.raise_load(int(each[c]))
+				if rest[c] > 0 and ((m.load_word + int(rest[c])) & 0xFFFF) <= top:
 					m.money[c] = (m.money[c] + 1) & 0xFFFF
+					m.raise_load(1)
 					rest[c] -= 1
 	for c in range(6, -1, -1):
 		if rest[c] == 0:
 			continue
 		for m in party:
-			var room := ((m.max_load() & 0xFFFF) - m.encumbrance()) & 0xFFFF
+			var room := ((m.max_load() & 0xFFFF) - m.load_word) & 0xFFFF
 			if room == 0:
 				continue
 			var give := mini(int(rest[c]), room)
 			m.money[c] = (m.money[c] + give) & 0xFFFF
+			m.raise_load(give)
 			rest[c] -= give
 	var out := PackedInt32Array()
 	for c in 7:

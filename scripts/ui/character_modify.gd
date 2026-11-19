@@ -99,6 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if tables != null:
 				_member.apply_class_tables(tables, spells)
 			_member.recalculate(types)
+			_member.refresh_load_word()     # MODIFY (GAME.OVR 0x1C23B)
 			visible = false
 			finished.emit(true)
 			return

@@ -136,6 +136,8 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 	_title = title
 	_index = clampi(start, 0, maxi(people.size() - 1, 0))
 	_target = _index      # TRADE TO? / WITH WHOM? start on the last one chosen (lab)
+	if not people.is_empty() and not people[_index].is_monster:
+		people[_index].refresh_load_word()     # VIEW's entry works the record out again (GAME.OVR 0x2165C)
 	_mode = "view"
 	_note = ""
 	_message = ""
@@ -670,6 +672,8 @@ func _after_change(items_changed: bool = true) -> void:
 		p.recalculate(types)
 	if items_changed:
 		_measure()
+		if _editable():
+			_who().refresh_load_word()     # after an item action (GAME.OVR 0x224AF)
 	var m := _who()
 	_cursor = clampi(_cursor, 0, maxi(m.items.size() - 1, 0))
 	_refresh()
@@ -1170,6 +1174,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						else:
 							m.items.erase(it)
 							to.items.append(it)
+							to.refresh_load_word()     # the receiver (GAME.OVR 0x2280B)
 					_mode = "items"
 				else:
 					_coin_cursor = 0
@@ -1227,9 +1232,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_amount = _amount.left(-1)
 			elif event.is_action("ui_accept"):
 				var n := mini(int(_amount) if _amount != "" else 0, m.money[_coin])
-				m.money[_coin] -= n
 				if _pending == "coin_trade" and _people[_target] != m:
+					# GAME.OVR 0x250D5 lowers and raises the giver's cached load by the same amount: neither
+					# word moves (Combat Chat 29). (Its test of the receiver's word, "Overloaded", read, not
+					# seen: not in ours yet.)
+					m.money[_coin] -= n
 					_people[_target].money[_coin] += n
+				else:
+					m.money[_coin] -= n
+					m.lower_load(n)     # a DROP (GAME.OVR 0x2568A)
 				_coin_cursor = 0
 				_mode = "coin"
 			_after_change(false)

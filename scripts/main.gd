@@ -2562,6 +2562,7 @@ func _add_npcs() -> void:
 		if m.raw.size() > 0x10F:
 			m.raw[0x10E] = 1 if int(req[0]) == 0x18 else 0
 		m.recalculate(_types)
+		m.refresh_load_word()     # ADD_NPC works the record out again (0x3933; Combat Chat 29's load word)
 		_party.append(m)
 		_vm.selected = _party.size() - 1
 	_vm.npc_requests = []
