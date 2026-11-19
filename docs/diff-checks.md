@@ -172,6 +172,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 59: check 68 (5:6 the priest of Bane: the second fight check), DIFFCHECKS 68/68
+
+- **Check 68, 5:6 the priest** (check 25's start with 0x4A69 bit 128 cleared: c34d's party had cleared the temple;
+  lab `data/c59/chk68/`): tpseed 11111111, Left, Up, Up, Left, Up, PRESS RETURN, A PRIEST AND TWO ACOLYTES ..., KILL
+  THEM; everyone on QUICK. **966 draws identical, every figure's cells** in both games (the original re-traced by hand:
+  boot J, `trace.py install`, `seed.py set`, the keys, `presser.py 280 noenter`), since Combat 25's a93a0d0 (DORN's load
+  tested signed: chat 57's parting at 940). CONTINUE BATTLE NO, THE PARTY HAS WON, 450 XP each, the treasure's EXIT,
+  THERE IS STILL TREASURE LEFT NO; the original's ENCAMP SAVE J; DIRTEN at 0 HP. **MATCH.** It also MATCHes on the
+  code before a93a0d0 (the parting at 940 changed only moves, not the end state), so it guards the fight's outcome, not
+  that draw.
+
 ## Chat 57: PARTY_CHECK's cells (Player 22's (d)), checks 65-67 (3:14 a door trap, 5:3 Cadorna's cell, 1:18 a rest interrupted by a fight: the first fight check), DIFFCHECKS 67/67; two fights compared draw for draw
 
 - **ECL PARTY_CHECK** (opcode 0x1E, GAME.OVR 0x217B; its writer 0x211D): operands 3, 4, 5, 6 get the party's worst,

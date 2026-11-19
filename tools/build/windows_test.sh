@@ -62,7 +62,10 @@ bad=$(cd "$T/src" && find . -type f \( -iname '*.dax' -o -iname '*.ovr' -o -inam
 [ -z "$bad" ] || fail "game data or a large file in the copy: $bad"
 echo "copy: $(cd "$T/src" && find . -type f | wc -l) files, no game data"
 
-# 2. The version.
+# 2. The version. The repo's own project.godot names the last release (P84: a copy run from source shows it
+# in the title): if the commit's differs from this build's, say so; bump it in the repo with the release.
+had=$(sed -nE 's/^config\/version="(.*)"$/\1/p' "$T/src/project.godot")
+[ "$had" = "$V" ] || echo "NOTE: the commit's project.godot says $had: bump config/version to $V in the repo with this release (P84)"
 sed -i -E "s/^config\/version=.*/config\/version=\"$V\"/" "$T/src/project.godot"
 sed -i -E "s/^application\/(file|product)_version=.*/application\/\1_version=\"$FV\"/" "$T/src/export_presets.cfg"
 grep -q "^config/version=\"$V\"$" "$T/src/project.godot" || fail "version not stamped in project.godot"
