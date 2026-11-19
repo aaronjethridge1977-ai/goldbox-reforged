@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-19 (Gold Box Player 28)
+
+### Now (the Player's line before Player 28)
+
+- Player: **Player 27 ended 2026-11-19 (unattended; Q27 = (a)).** On origin/main. **For Jeremy** (`.lab/for-jeremy/stojanow/`): two SPEED-3 videos of the wall fight in the original (p27v1 = p26d2 replayed draw for draw, COMBAT; p27v2 a FLEE try), **REPORT.md** (why the party loses: six ettins 50 HP / AC 3 / THAC0 10 / 2d8 + 3d6, two level-6 mages' Magic Missiles, 382 HP against ~205; p26d2 round by round: 70 damage dealt in 5 rounds; the bot's party lost it twice too), two slot-H saves (`s28b`, `s28p` with every spell slot), checked in the original, 0.1.5 and main. **Two Player-tool gaps found and fixed:** `prepare` filled only level-1 spell slots since Player 15 (now bot.gd `PICKS`, levels 1-3) and spare gear was never sold (every pack full, the party at MOVEMENT 3; new `sell gems share gear`): both weakened the original's party in every fight since Sokal Keep. New plan lines `shortcutwin` (Q27's logged shortcut: the monsters' HP 0, dead, out of the fight +0x10D) and `OP_KEYDELAY`. **Segments 28 to `stojanow` (p27c2) and 29 to `mopup2` (p27d3) reached; segment 30 to Valjevo's gate** (5:3's tour and two town trips done, `s30u`; the password gate at 12,7/12,8 W asked once in a probe, not when the tool repeats the moves: open, README "Player 27"). No bug a player would notice found. Nothing left running.
+
 ## Archived 2026-11-19 07:53 (Gold Box Lead)
 
 ### Now (stray lane lines, Lead)
