@@ -172,6 +172,46 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 61: the wall ahead in statediff; checks 75-80 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE), DIFFCHECKS 80/80
+
+- **The wall ahead joins statediff.** The original's save keeps ECL 0xC04E (DS 0x6AB0) at byte 0x3204; statediff
+  now compares it in a 3D area (`wall ahead (0xC04E)`). On the code before chat 61, **13 of the 74 checks differed
+  there** (41-46, 48, 49, 57, 59, 71-73): ours wrote the square's own wall at every position sync. The original
+  writes it only on a step (0x16E71: the new square's wall; at an edge the wrapped square on the map being left), a
+  turn (0x171AE, 0x171F5, 0x1723A), CALL 0xC01E (0x8F33, with the square's byte at 0x8F1F) and CALL 0xC018 in a 3D
+  area (0x3B12), and a LOAD reads it back from the save (DOSBox: check 71's start reads 0 after loading; after Up
+  2:20's patrol script put the party on 3,4 with the 0 of the step onto 14,6). Ours now does the same (`main.gd`
+  `_write_wall_ahead`, `_script_wall`; `ecl_vm.gd` CALL): 74/74 with the comparison on. The deliberate-break test
+  was rerun (statediff changed): SUBTRACT 66/74, ADD 73/74 (check 18). No arrival that shows it on screen found: the
+  Slums' two gates into New Phlan (15,4 and 15,12 east) land on events 25 and 24, not 3:0's night locked-door
+  squares (event 0 with wall 9, 4 with 7, 26 with 11).
+- **Check 75, 2:20 the Down key** (check 71's start, tpseed 11111111): Up (the arrival: 3,4 S), Left (E), Down, Up
+  into the wall. **Found:** the original's Down turns the party round where it stands (GAME.OVR 0x17187, scan code
+  0x50: the facing + 4 of 8, the wall ahead read again, no sound; DOSBox 3,4 E -> 3,4 W); ours stepped backwards.
+  Two d14 identical. Fails on the code before chat 61 (3 differences).
+- **Check 76, 6:1 the seedy little man** (event 6 at 2,11; `mksave.py J G 6 1 2 12 N 49F2=1`, tpseed 11111111): BUY
+  PASS: `ROB 0, 25, 0`, the selected member only (two d100 for THRENDER's two items, 70 and 38: nothing taken; his
+  coins at 25), the pass as treasure, TAKE, TAKE, EXIT. **Found:** the original's LOAD keeps 0x49F2 as saved (DOSBox:
+  a jump save in 2:20 holding 1 reads 1 after loading; check 74's reads its 20); ours wrote the block after the
+  load's init, so 6:1's init placed the party at the gate. Fails on the code before (12 differences).
+- **Check 77, 1:18 the plaza, STRIDE BOLDLY FORWARD** (check 51's start, tpseed 5151000a from a 40-seed search in
+  ours): THE MONSTERS STAND READY at once, COMBAT, QUICK: goblins, **1866 draws identical**, BAKSHI falls,
+  CONTINUE BATTLE NO, the treasure left. MATCHes on chat 60's code too (guards the fight). PARLAY there plays the
+  same fight, draw for draw (no check); WAIT shows the menu again with no draws in both.
+- **Check 78, the same encounter, FLEE**: THE PARTY RUNS AND ESCAPES to 9,4 W (a d4 and a d8), 0x49FB = 1 (no
+  square on the place line). Five draws identical.
+- **Checks 79 and 80, the plaza's STRIDE with seeds 5151001c (ogres, 1292 draws identical, RHIANNON falls) and
+  51510026 (orcs, 1320, BAKSHI falls)**; HP and status member for member as the original's.
+- **Not a check yet: a band fight** (8:27, check 31's start, tpseed 31310016: YOU SPOT A GROUP OF KOBOLDS, COMBAT;
+  c34d's party): parts at the field's setup, the wilderness clutter (GAME.OVR 0xD3A1: a d100 of 0 at 0xD3AC, then
+  a d10 at 0xD3BF; ours, the dungeon rule, draws the next cell's d100), Player 21's open request (a) to Combat. The
+  original's trace (from draw 7: the step's six ecl draws came before the reader attached; 7973 to CONTINUE BATTLE)
+  and its ENCAMP SAVE are in the lab (`data/c61/kobold_orig.txt`, `data/c61/kobold_band/orig`): a check once the
+  clutter lands. **The trace hook blocks the game when its buffer is full and no reader runs** (after ~7980 draws
+  the original froze at CONTINUE BATTLE until a second `trace.py run` drained it): give a long fight's reader time.
+- **Also fixed, from the original's walking-key routine (0x17060):** AREA where 0x49FB is set prints NOT HERE on row
+  24 and opens no map (0x170B3); CAST does nothing when the selected member isn't OKAY (0x170FC; DOSBox: status 4).
+
 ## Chat 60: checks 72-74 (2:20 a patrol's SURRENDER and PAY, 1:18 the tavern: ROB as the original), DIFFCHECKS 74/74
 
 - **Check 72, 2:20 a slums patrol, SURRENDER** (check 71's start and tpseed 33330018; lab `data/c60/chk72/`): Up,
