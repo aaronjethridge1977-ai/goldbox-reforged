@@ -64,6 +64,7 @@ var state := State.IDLE
 var pc := 0                      # offset into script.code
 ## The current map's info byte for a square (set by main), for CALL 0x2C90.
 var square_info: Callable
+var wall_info: Callable   # (x, y, facing) -> the wall on the script's map (main: CALL 0xC01E / 0xC018)
 var stack: Array[int] = []
 var compare := 0
 
@@ -172,6 +173,7 @@ func fork(cov: ScriptCoverage) -> EclVM:
 	var f := EclVM.new()
 	f.copy_from(self)
 	f.square_info = square_info
+	f.wall_info = wall_info
 	f.open_ahead = open_ahead
 	f.tables = tables
 	var copies: Array = []
@@ -1000,6 +1002,19 @@ func _exec(ins: Dictionary) -> void:
 					var d := read_byte(PARTY_DIR) & 3
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
+					# ... and reads the new square's info byte and wall ahead on the map up
+					# (GAME.OVR 0x8F1F, 0x8F33; chat 61).
+					if wall_info.is_valid() and not on_overland:
+						var nx := read_byte(PARTY_X) & 15
+						var ny := read_byte(PARTY_Y) & 15
+						if square_info.is_valid():
+							write_byte(SQUARE_INFO, int(square_info.call(nx, ny)))
+						write_byte(WALL_AHEAD, int(wall_info.call(nx, ny, d)))
+				0xC018 when not on_overland and wall_info.is_valid():
+					# In a 3D area (DS 0x49FA = 1) the original's 0xC018 reads the wall ahead
+					# again (GAME.OVR 0x3AFA-0x3B12; chat 61); nothing else.
+					write_byte(WALL_AHEAD, int(wall_info.call(read_byte(PARTY_X) & 15,
+						read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3)))
 				0xC01B, 0xC018:
 					# Read / change a wilderness square through 0x00FB, 0x00FC, 0x00B1 and
 					# 0x035F. The original never does either: its ECL memory ignores writes

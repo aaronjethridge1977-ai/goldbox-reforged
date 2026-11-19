@@ -9,7 +9,8 @@ extends SceneTree
 ## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the seven kinds of coins, and the items (name bytes, plus,
-## count, readied). Prints one line per difference and a total; exit code 1 if any.
+## count, readied); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
 	0x49C6: "clock (part)", 0x49C7: "clock (part)", 0x49C8: "clock (part)", 0x49C9: "clock hour",
@@ -60,6 +61,15 @@ func _init() -> void:
 		if o_place != u_place:
 			diffs += 1
 			print("place: original %s, ours %s" % [o_place, u_place])
+	# The wall ahead (chat 61): the original's save keeps ECL 0xC04E at 0x3204 (a 3D area only); it is
+	# the last step's or turn's wall, not the square's, after an arrival or a script's jump (13 of the
+	# 74 checks differed there before main.gd's _write_wall_ahead).
+	if orig.size() > 0x3206 and orig[0x3206] == 1:
+		var o_wall: int = orig[0x3204]
+		var u_wall: int = mem[0xC04E] if mem.size() > 0xC04E else -1
+		if o_wall != u_wall:
+			diffs += 1
+			print("wall ahead (0xC04E): original %d, ours %d" % [o_wall, u_wall])
 	# The party: the original's character files beside its save (CHRDAT<letter><n>).
 	var letter := orig_path.get_file().get_basename().right(1)
 	var folder := orig_path.get_base_dir()

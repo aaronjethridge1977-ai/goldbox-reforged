@@ -184,6 +184,7 @@ func _ready() -> void:
 	add_child(_sheet)
 	_shop.sheet = _sheet
 	_vm.square_info = _script_square_info
+	_vm.wall_info = _script_wall
 	_treasure = TreasureScreen.new()
 	_treasure.visible = false
 	_treasure.closed.connect(_on_treasure_closed)
@@ -1201,6 +1202,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			# standing (THE MONSTERS FLEE, a parley's end) is gone (P38; the original draws a
 			# figure only on the script's SPRITE commands).
 			_facing = ((_facing + (3 if event.is_action("ui_left") else 1)) % 4) as DungeonView.Dir
+			_write_wall_ahead()   # GAME.OVR 0x171AE / 0x171F5 (chat 61)
 			_vm.sprite_id = -1
 			Speaker.play(Speaker.STEP)    # GAME.OVR 0x171DF / 0x17224 (Combat's sound)
 		else:
@@ -1689,6 +1691,8 @@ func load_original_save(letter: String) -> bool:
 				_vm_map = i
 				_walls_for = -1
 				break
+	# The saved wall ahead (0x3204), as the original reads it back before the init (chat 61).
+	_vm.write_byte(EclVM.WALL_AHEAD, s[0x3204])
 	# The saved square, so the init sees it (_enter_script writes _pos and _facing to the VM).
 	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
 	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
@@ -1843,7 +1847,10 @@ func _try_move(direction: int) -> void:
 	if _vm.ecl != null:
 		var map: GeoMap = _maps[_map_index].map
 		_sync_position_to_vm(direction)
-		_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
+		# A step ahead: the on-move sees the wall ahead as the last step or turn left it (an
+		# arrival's stale value too, chat 61). A step another way (ours' Down) faces it first.
+		if direction != _facing:
+			_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)
 		# A step that would leave the map (through an open side or a door on the edge): the
 		# area's on-move script sees 0x6DD5 set and moves the party into the next area.
@@ -2095,6 +2102,7 @@ func _step_into(next: Vector2i) -> void:
 	_pass_time(GameClock.TEN_MINUTES if _searching else GameClock.MINUTE, 1)
 	if _vm.ecl != null:
 		_sync_position_to_vm(_facing)
+		_write_wall_ahead()   # GAME.OVR 0x16E71: the new square's wall
 		_vm.clear_output()
 		_vm.start(1)
 		_after_vm()
@@ -2174,12 +2182,40 @@ func _sync_position_to_vm(direction: int) -> void:
 	_vm.write_byte(EclVM.PARTY_Y, _pos.y)
 	_vm.write_byte(EclVM.PARTY_DIR, direction)
 	_vm.write_byte(EclVM.SQUARE_INFO, map.flag(_pos.x, _pos.y))
-	# The wall ahead, from where the party stands now: the step script after a move sees the
-	# new square's wall in the facing direction. Lab, chat 16: the original shows 6:1's slave
-	# pen ("YOU ARE JUST OUTSIDE A PEN", which tests 0xC04E = 8) on arriving at 6,9 facing N,
-	# where the pen's wall is ahead; we had kept the wall of the square stepped from.
-	_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, direction))
+	# Not the wall ahead (0xC04E, DS 0x6AB0): the original writes it only on a step, a turn, CALL
+	# 0xC01E / 0xC018 and a load (chat 61, _write_wall_ahead); an arrival, a script's jump and a
+	# fight leave the last step's value.
 	_synced = Vector3i(_pos.x, _pos.y, direction)
+
+
+## The wall ahead (ECL 0xC04E, DS 0x6AB0) from the square the party stands on, facing as it faces,
+## on the map up now. Chat 61 (GAME.OVR): written only by a step (0x16E71: the new square's wall; at
+## an edge the coordinates wrapped on the map being left), a turn (0x171AE, 0x171F5, 0x1723A), CALL
+## 0xC01E (0x8F33) and CALL 0xC018 in a 3D area (0x3B12), and read back from a save; an arrival
+## (NEW_ECL, 0x3EFA), a script's jump (0xC04B-0xC04D written) and a fight leave the last value (the
+## original's saves: check 49's boat to New Phlan keeps the band's 1, 2:20's patrol (checks 71-73)
+## the 0 of the step before the patrol moved the party). Readers: 3:0's night locked door (0x997E),
+## 5:5's hedge, 6:1's pen (chat 16: the pen's wall after the step onto 6,9 N), 7:17's camp.
+func _write_wall_ahead() -> void:
+	if _vm.ecl == null or _vm.on_overland or _maps.is_empty():
+		return
+	var map: GeoMap = _maps[_map_index].map
+	_vm.write_byte(EclVM.WALL_AHEAD, map.wall(_pos.x, _pos.y, _facing))
+
+
+## For the VM's CALL 0xC01E / 0xC018: the wall at x, y facing d on the map the script has up (a
+## LOAD_AREA_MAP takes effect at once, as for _script_square_info).
+func _script_wall(x: int, y: int, d: int) -> int:
+	if _maps.is_empty():
+		return 0
+	var i := _map_index
+	if not _vm.on_overland and not _vm.area_map.is_empty() and int(_vm.area_map[0]) < 127 \
+			and _vm.area_map != _area_map_seen:
+		for k in _maps.size():
+			if _maps[k].id == int(_vm.area_map[0]):
+				i = k
+				break
+	return _maps[i].map.wall(x, y, d)
 
 
 ## Scripts can move the party (a guided tour, a trap door): adopt what they wrote.
