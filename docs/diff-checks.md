@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 60: checks 72-73 (2:20 a patrol's SURRENDER and PAY: ROB as the original), DIFFCHECKS 73/73
+## Chat 60: checks 72-74 (2:20 a patrol's SURRENDER and PAY, 1:18 the tavern: ROB as the original), DIFFCHECKS 74/74
 
 - **Check 72, 2:20 a slums patrol, SURRENDER** (check 71's start and tpseed 33330018; lab `data/c60/chk72/`): Up,
   YOU SPY A GROUP OF SEEDY-LOOKING KOBOLDS, PARLAY, HAUGHTY, SURRENDER: THE MONSTERS ROB AND BLINDFOLD YOU (`ROB 1,
@@ -188,6 +188,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   the script's third number says (1:18 `ROB 1, 100, 50`; 2:9 `1, 100, 20`; 3:0 `1, 20, 5`; 6:1 `1, 75, 50`, `1, 75,
   10`, `0, 25, 0`; 6:28 and 8:13 `1, 100, 255`; 8:13 `0, 20, 20`, `1, 25, 10`). 20 draws identical. Fails on the
   code before chat 60.
+- **Check 74, 1:18 the tavern** (event 2 at 4,8; `mksave.py J G 1 18 4 9 N 4AB0=1`, tpseed 11111111;
+  `data/c60/chk74/`): DISGUISE, north onto 4,8: A DRUNK BUCCANEER, BRIBE, YES (`ROB 1, 10, 10`: 14 d100, nothing
+  under 10), the creatures ignore you, DRINK HEAVILY: put on 2,10 S, `ROB 1, 100, 50` (at 100 per member in the
+  original). 28 draws identical. Fails on the code before chat 60 (5 differences: ours robbed at 50 for the party).
+- **Also found:** a script's one-choice menu reading exactly `PRESS <RETURN> OR BUTTON TO CONTINUE` is shown as the
+  game's `PRESS <ENTER>/<RETURN> TO CONTINUE` (MENU_HORIZONTAL, GAME.OVR 0x1E5A; the other wordings as written): ours
+  now does the same (fbdb7fe; display only).
+- **The stale wall ahead after a real arrival (the standing question): answered.** The original's ECL reads of
+  0xC04B-0xC04F (GAME.OVR 0x82DF, 0x83C4) are DS 0x6AAD (x), 0x6AAE (y), 0x6AAF / 2 (facing), 0x6AB0 (the wall
+  ahead) and 0x6AB1 (the square's byte). The arrival (0x3EFA: init, on-move, event) refreshes 0x6AB1 only; 0x6AB0 is
+  written by a step (0x16E71: the new square's wall, on the old map with the coordinates wrapped at an edge), a turn
+  (0x171AE, 0x171F5, 0x1723A), CALL 0xC018 (0x3B12, when 0x49FA = 1) and CALL 0xC01E (0x8F33). So after a NEW_ECL
+  arrival or CALL 0x2C90 the wall ahead stays the last step's: check 49's original save (the boat to New Phlan
+  15,1 E) holds 1, the band's, where New Phlan's wall there is 14. Ours writes the new square's wall on every sync.
+  Scripts reading 0xC04E: 3:0's on-move (the night locked door, after 14:00 on an event-0 square: 0x997E), 5:5's
+  hedge, 6:1's slave pen, 7:17's camp. Not changed yet (main, open): no case found where an arrival shows it.
 - PAY with 0 gp (the cheapskates, then the fight) plays check 71's fight draw for draw in ours (1109, INPUT_NUMBER
   draws nothing): not made a check (it would repeat 71).
 

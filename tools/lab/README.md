@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 60:** checks 72-74 in `data/c60/chk72..74/` (`data/c60/cd/` links `game` and each). 72/73 start from check
+71's start (`slot.py data/c59/chk71/start G game J`, `boot j`, `seed.py set 33330018`); 74 from `mksave.py J G 1 18 4
+9 N 4AB0=1` (lab slot G backed up to `data/c60/gbak/` and put back, the extra G files mksave wrote deleted). Traces:
+`data/c60/surr_orig.txt` (23), `pay99_orig.txt` (20), `tavern_orig.txt` (28). The original's INPUT_NUMBER takes digit
+keys (`pl.py do 9 wait=1 9 wait=1 enter`), ours `9,9,wait,Enter`. **`ovr.py dis` needs `ndisasm` on the PATH:**
+`mkdir -p /tmp/c60bin && ln -sf ~/gbr/goldbox-reforged/tools/lab/ndisasm /tmp/c60bin/ndisasm`, then `PATH=$PATH:/tmp/c60bin`.
+Finding a routine from a draw: the trace gives the caller (`OVR:09337` = ROB's item roll); its callers by scanning
+every unit: `for fo,size in ovr.units(): ovr.dis(fo,size,stop=False)` and grep `-> 0x<routine>`. ECL operand reads
+are `0x7609(<operand number>)` (ROB's handler 0x2AF7 asks for 1, 2, 2); ECL memory reads `0x82DF` (0xC04B-0xC04F:
+0x83C4). Every ROB / one-item menu / 0xC04E reader in Pool: loop `tools/ecl.py dis` over each ECL block and grep.
+
 **Chat 59:** checks 68-71 in `data/c59/chk68..71/` (`data/c59/cd/` links `game` and each). **cmpfight2.sh's
 original side dropped the walk's keys from check 25's start (the party ended at the offering box): drive the original by
 hand instead:** `pl.py boot j`, `trace.py install`, `seed.py set <hex>`, the walk with `pl.py do <key> wait=4`, then
