@@ -1175,18 +1175,21 @@ func _exec(ins: Dictionary) -> void:
 		"SPRITE_START":
 			# A figure walks up: sprite id, starting distance, the portrait it ends on.
 			sprite_id = _value(a[0])
-			sprite_distance = clampi(_value(a[1]), 0, 2)
 			encounter_max = _value(a[1])
 			encounter_advances = 0
 			write_byte(APPROACH_MAX, encounter_max)
 			write_byte(APPROACH_DISTANCE, mini(int(open_ahead.call()) if open_ahead.is_valid() else 2, encounter_max))
+			# GAME.OVR 0x10FA: the figure is drawn at that distance (0x6DC1: the given one, nearer with a wall
+			# in the way), and SPRITE_ADVANCE counts it down (0x155D); ours drew it at the given one, so with a
+			# wall one square nearer it took one ADVANCE more to become the picture (chat 63).
+			sprite_distance = read_byte(APPROACH_DISTANCE)
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
 		"SPRITE_ADVANCE":
-			sprite_distance = maxi(0, sprite_distance - 1)
 			encounter_advances += 1
 			if read_byte(APPROACH_DISTANCE) > 0:
 				write_byte(APPROACH_DISTANCE, read_byte(APPROACH_DISTANCE) - 1)
+			sprite_distance = read_byte(APPROACH_DISTANCE)
 			# Reaching the party it becomes their picture at once (chat 40, DOSBox: the Slums'
 			# orcs, 2:20 0x9E22 START at 1, ADVANCE, PRINT: the orc's picture with the text and
 			# under A BATTLE BEGINS...; ours drew the nearest figure frame, then the corridor).
