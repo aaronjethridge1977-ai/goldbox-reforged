@@ -1501,21 +1501,37 @@ func drain(j: int, levels: int) -> void:
 		t.down = true
 
 
-## A thief's backstab (as the original): a thief with no weapon or a club, dagger or sword
-## strikes a man-sized target from directly behind after it has been attacked more than
-## once this round: its rear AC + 2 (GAME.OVR 0x13DA8) and damage x2 (levels 1-4), x3 (5-8)...
-## (Read in 0x14D6F, not yet seen: the original also wants no body armour or leather, record +0xD4
-## type 0x32, takes weapon types 7, 8, 35-37 only, and has no size test there.)
-const BACKSTAB_WEAPONS := [7, 8, 35, 36, 37, 97]
+## A thief's backstab (GAME.OVR 0x14D6F): a thief (record +0x9C) in no body armour or leather (the slot-2
+## pointer +0xD4: none or item type 0x32) with no weapon or one of types 7, 8, 35-37 (+0xCC), striking a target
+## already attacked more than once this round (its combat byte +0xF) from directly behind (0x14E38's direction,
+## the figures' own cells, equal to the target's facing +0x9). No size test: a troll is backstabbed too. Strikes
+## rear AC + 2 (0x13DA8) and damage x2 (levels 1-4), x3 (5-8)... (Combat Chat 29, seen: the troll fight seed
+## 31872a7a draw 3687, PHINEAS in leather with a dagger behind a troll, roll 15; the original's fight follows the
+## backstab's doubled damage through all 4329 draws. Ours had a man-sized test, took weapon type 97, any armour.)
+const BACKSTAB_WEAPONS := [7, 8, 35, 36, 37]
+const LEATHER_ARMOUR := 0x32
 
 func _can_backstab(a: Dictionary, t: Dictionary) -> bool:
 	var am: PartyMember = a.who
-	var tm: PartyMember = t.who
-	if am.thief_level() <= 0 or (tm.size & 0x7F) > 1:
+	if am.thief_level() <= 0:
+		return false
+	var body := _body_armour(am)
+	if body != null and body.type != LEATHER_ARMOUR:
 		return false
 	if am.weapon != null and not am.weapon.type in BACKSTAB_WEAPONS:
 		return false
 	return int(t.received) > 1 and face_dir(a, t) == int(t.dir)
+
+
+## The readied item in the body-armour slot (START.EXE 0x1847 sets record +0xD4 in list order: the last).
+func _body_armour(m: PartyMember) -> GameItem:
+	if types == null:
+		return m.armor
+	var found: GameItem = null
+	for it in m.items:
+		if it.readied and types.has(it.type) and types.slot(it.type) == ItemTypes.SLOT_ARMOR:
+			found = it
+	return found
 
 
 ## Ends the active combatant's turn.
