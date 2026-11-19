@@ -1,0 +1,137 @@
+# Player 25: c34d segment 24 (buccaneers0 -> heir), main's "log 14. The Buccaneers' base (6:1: stampede the animals)",
+# explore in the bot's order (full_c34d.log 32608-32751; event 5 deferred by its odds): 2 (6,10), 4 (7,11: the captain's
+# guards, LEAVE), 11 (7,6: the slave pen, the merchant: PUNCH MERCHANT, the bot's first item; a fight), 3 (6,6: the
+# pen's gate, LEAVE), 12 (6,7), 9 (12,5), 10 (11,6: RELEASE ANIMALS), 1 (7,0), 7 (6,0: a guard tower, LEAVE), 8 (5,2),
+# 6 (2,11); then the bot's tours to 11,6 and 7,7 (the pen: GET HIM): heir (6:1 7,6 N).
+area 6:1
+rules /home/aaron/gbr/goldbox-reforged/.claude/worktrees/enchanted-shimmying-token/tools/plans/playthrough.plan
+answer DO YOU HAVE A PASS TO SEE THE CAPTAIN|LEAVE
+answer PUNCH MERCHANT AGREE SAY NOTHING RESCUE BOY|PUNCH
+answer TWO GUARDS GUARD THE DOOR|LEAVE
+answer THE ANIMALS ARE RESTLESS|RELEASE
+answer INSIDE ARE FOUR BUCCANEERS|LEAVE
+answer STANDING NEAR YOU IS THE YOUNG BOY|GET
+answer HOW WILL YOU RESCUE THE BOY|SNEAK
+answer BUCCANEERS RIDE OUT TO ESCORT YOU IN|ENTER
+answer SMALL WOODED GROVE|LEAVE
+answer PARTIALLY BLOCKED SET OF STAIRS|NO
+answer BOAT DOCKED HERE|TAKE
+answer WHAT CAVE WILL YOU ENTER|LARGE
+answer DO YOU WANT TO LEAVE|NO
+answer STEEP RUBBLED SLOPE|YES
+answer A DRUNKEN KOBOLD LIES HERE|SLIP
+answer WE WILL PAY FOR A TRUCE|AGREE
+answer ESCORT YOU TO OUR TREASURE|FOLLOW
+answer AROUND THE CORNER IS OUR TREASURE|LET
+answer THE KOBOLD DISLODGES IT AND PROCEEDS|YES
+answer HE TRIES TO ATTACK THE PARTY BUT YOU STOP HIM|ATTACK
+answer PILE OF WEAPONS AND SHIELDS|TAKE
+answer WILL YOU CHASE THEM|YES
+answer WHICH PATH WILL YOU TAKE|SOUTH
+# (the bot: a question with a LEAVE in it, asked more than three times, gets the LEAVE)
+answer A WOODEN CABINET|EXAMINE*3
+answer A WOODEN CABINET|LEAVE
+answer FOUR SMALL CASKETS|SEARCH*1
+answer FOUR SMALL CASKETS|LEAVE
+answer WHICH CASKET WILL YOU SEARCH|A
+answer THREE CABINETS|A*2
+answer THREE CABINETS|LEAVE
+answer HOW WILL YOU OPEN THE LOCK|BREAK
+answer WHO WILL TRY TO PICK THE LOCK|DORN
+# Player 22: event 8 (4,3): the original's party finds the trap (the bot's did not: no menu); the bot's default, the first item
+answer WHAT DO YOU WANT TO DO|AVOID
+answer WHAT DO YOU DO WITH THE MAN|FREE*3
+answer WHAT DO YOU DO WITH THE MAN|LEAVE
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer BASH PICK KNOCK EXIT|PICK
+answer LOCKED. BASH KNOCK EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+answer CAN I SHOW YOU SOMETHING|YES
+answer MERCY! MERCY|COMBAT
+answer DULL BROWN REPTILIAN|COMBAT
+answer PLAZA AHEAD IS CROWDED|DISGUISE
+answer SURPRISED A PARTY OF KOBOLDS|COMBAT
+answer BEING AVOIDED BY SOME LIZARDMEN|COMBAT
+answer STAND AND LISTEN|STAND
+answer MAKE A BID|MAKE
+answer FOLLOW THE OGRE|FOLLOW
+answer WHO WILL IT BE|CHALLENGE
+answer WHO WILL CHALLENGE|ARN
+answer ROBED ORC|LEAVE
+answer IN NEED OF HEALING|YES
+answer KNOCK EXIT|EXIT
+answer YOUR PRESENCE IS NOT AUTHORIZED|YES
+answer WHICH ENTRANCE WILL YOU TAKE|LEAVE
+answer WHICH ROUTE WILL YOU TAKE|BOAT
+answer ENCHANTED WEAPON IF YOU ACCEPT|YES
+answer THIEVES ONLY|LEAVE
+answer WHAT DO YOU DO WITH THE BODY|SEARCH*2
+answer WHAT DO YOU DO WITH THE BODY|LEAVE
+answer OPENING THE BOX WILL DAMAGE THE SEAL|TAKE
+# Player 19: event 17's chained man: main's bot answers FREE / UNLOCK three times, then LEAVE (asked too often)
+answer WILL YOU ENTER|LEAVE
+answer NORTH EDGE OF THE CITY|LEAVE
+answer YOU SPOT A GROUP OF MERCHANTS|PARLAY
+answer DISPLACER BEAST|FLEE
+answer QUITE MAD|NO
+answer DO YOU INSIST HE COME|NO
+answer DO YOU TAKE IT|YES
+# Player 21: after SELL and SHARE some coins stay in the pile (the members' loads?); leave them
+answer GO BACK AND GET YOUR MONEY|NO
+answer THEY ARE WARY, BUT NOT HOSTILE|PARLAY
+answer IT DISAPPEARS WITH A FLASH|MOVE
+answer GO BACK MOVE ON THROW A ROCK|THROW
+answer YOU QUICKLY TRANSLATE THEM|type:NOKNOK
+answer DO YOU REALLY MEAN|YES
+answer MOVE QUICKLY AWAY|MOVE
+answer DO YOU WISH TO CHANGE THE SETTING|NO
+answer RECOVER FROM THE ALCHEMICAL POLLUTION|HIT
+answer SECRET DOOR THAT LEADS INTO THE PYRAMID|GO
+answer BACK TO THE CIVILISED SECTION OF PHLAN|TAKE
+answer WILL YOU TAKE IT TO THE PYRAMID|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+walk 6,10 avoid 5
+walk 7,11 avoid 5
+walk 7,6 avoid 5
+walk 6,6 avoid 5
+# (6,7: event 12, inside the pen: no route, as the bot's "no route from (8, 6)")
+walk 12,5 avoid 5
+walk 11,6 avoid 5
+walk 7,0 avoid 5
+walk 6,0 avoid 5
+walk 5,2 avoid 5
+walk 2,11 avoid 5
+checkpoint s24a
+walk 11,6 avoid 5
+walk 7,7 avoid 5
+checkpoint heir

@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`; `nocast`; 0x4A8C
+## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
 p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
@@ -1386,9 +1386,27 @@ prepare, 2 16 1 the lizard men, 13 12 11 14): **`lizard`** (8:16 1,15 S, p25e4, 
 - Against the bot's `lizard` (`p25/lizard.cpdiff.txt`): new beside `pyramid3`'s only 0x4A98 (above) and 0x4A5F (a kill
   counter, ECL 8:16 0x99F6); 0x4A8C now agrees.
 
+**Segment 23 (`lizard` -> `buccaneers0`)** (plan `plans/p25_c34d_23_buccaneers0.plan`, lab `p25/seg23.plan`; run p25f1
+from `p2start/p25e4_lizard`, the first try): 8,15 and a step S (the drawbridge; the castle's question LEAVE), 8:27 to
+9,28 and a step S (the boat), the inn (**`s23a`**), City Hall twice, the arms shop, the halls, the inn (**`s23t`**);
+2:20 (prepare), 8:29, 1:18, 7:26 (the river clean now: 11,20, 2,20) and a step W into 6:25 (**`s23b`**), 12,30 and a
+step S onto 12,31 (the Buccaneers' base: ENTER): **`buccaneers0`** (6:1 8,10 S). One band fight (displacer beasts:
+FLEE, the plan's old answer; the bot fought them). Against the bot's `buccaneers0`: new beside `lizard`'s only 0x4A34
+(Podol Plaza's fight counter, ECL 1:18: the bot met a fight crossing it).
+
+**Segment 24 (`buccaneers0` -> `heir`)** (plan `plans/p25_c34d_24_heir.plan`, lab `p25/seg24.plan`; runs p25g1-g3 from
+`p2start/p25f1_buccaneers0`, `p25g2_s24a`): 6:1 in the bot's order, event 5 left out (the bot's odds): 6,10, 7,11 (the
+captain's guards: LEAVE), 7,6 (the merchant at the pen: PUNCH MERCHANT, the bot's first item; the fight won at 6,9),
+6,6 (the pen's gate: LEAVE), 12,5, 11,6 (RELEASE ANIMALS), 7,0, 6,0 (a tower: LEAVE), 5,2, 2,11 (**`s24a`**); then the
+bot's tours to 11,6 and 7,7 (the pen's gate unguarded now: PICK, BASH; GET HIM): **`heir`** (6:1 7,6 N, p25g3).
+Against the bot's `heir`: new beside `buccaneers0`'s only 0x4A05 (the clerk's counter) and 0x4A19 (a saved band square).
+- p25g1 stopped at 6,7 (event 12, inside the pen: no route, as the bot's own "no route from (8, 6)"; dropped). p25g2
+  stopped at the tour to 7,7: **a step the square's script turned back stays refused for the whole run** (the pen's
+  gate while guarded), so after the stampede the walker found no way in; a new run from `s24a` (p25g3) went in.
+
 Lab: `p25/` (seg20b.plan, seg21.plan, seg22.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
-`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c` (and `.lab/player/saves/p25*`).
+`p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a` (and `.lab/player/saves/p25*`).
 
 ## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`; segment 20 to the mage
 
