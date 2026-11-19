@@ -94,6 +94,9 @@ var monsters: Array = []
 ## past the party selects them, as the original's list of players and monsters (Hassad's
 ## nomads, 7:17: LOAD_CHAR party size + n, 0x6C0C = 128).
 var monster_teams: Array[int] = []
+## Creatures loaded since the last CLEAR_MON (the original's DS:0x4435, GAME.OVR 0x1196): LOAD_MON stops
+## at 63, and only CLEAR_MON sets it back to 0 (a fight's end doesn't).
+var monsters_loaded := 0
 var selected_creature := -1
 ## Encounter distance: the maximum from SPRITE_START, less one per SPRITE_ADVANCE.
 var encounter_max := 0          # 0 until a SPRITE_START / ENCOUNTER (combat lane, Combat Chat 7: Player 5's Tyranthraxus from a save: the original places him and DIRTEN beside the party, 28,14 / 27,13, as distance 0 does)
@@ -1189,9 +1192,14 @@ func _exec(ins: Dictionary) -> void:
 		"SPRITE_OFF":
 			sprite_id = -1
 		"CLEAR_MON":
+			# GAME.OVR 0x1FA3: the creature count (0x4435) back to 0, the coin pile (0x67F4) and the item
+			# pile (0x6810) emptied: a TREASURE before CLEAR_MON is gone (no Pool script has one; chat 63).
 			sprite_id = -1
 			monsters = []
 			monster_teams = []
+			monsters_loaded = 0
+			treasure = []
+			treasure_items = []
 			PartyMember.colours_drawn.clear()
 		"DELAY":
 			state = State.WAIT
@@ -1323,10 +1331,14 @@ func _exec(ins: Dictionary) -> void:
 				treasure_items = treasure_maker.make(treasure[7] - 128, _ri)
 
 		"LOAD_MON":
-			if monsters.size() < 63:
-				monsters.append([_value(a[0]), maxi(_value(a[1]), 1), _value(a[2])])
+			# GAME.OVR 0x1196: at most 63 creatures since the last CLEAR_MON (0x4435), a count of 0 loads 1;
+			# with 63 loaded already it does nothing (Pool's fights stay under 57: 7:17 loads 56 - n).
+			if monsters_loaded < 63:
+				var n := mini(maxi(_value(a[1]), 1), 63 - monsters_loaded)
+				monsters_loaded += n
+				monsters.append([_value(a[0]), n, _value(a[2])])
 				PartyMember.draw_colours(_value(a[0]))   # the record loads now in the original
-				for n in maxi(_value(a[1]), 1):
+				for i in n:
 					if monster_teams.size() < 63:
 						monster_teams.append(0)
 		"DAMAGE":
