@@ -62,7 +62,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
     only ours shows (a known difference already on the board), so the replay can go on to the next difference."""
     out, on, camp, fight, rest_min, spells = [], False, False, False, 0, 0
     extra, n = extra or {}, 0
-    magicat = magic_draws(run, a)
+    magicat, magic_slot = magic_draws(run, a), 0
     for line in open(os.path.join(LOGS, "%s.log" % run)):
         if "GOAL done: checkpoint %s" % a in line or (a == "begin" and line.split()[1:2] == ["RUN"]):
             on = True
@@ -79,7 +79,14 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             # when its draw is known (magic_draws(): OP_MAGICAT, or the trace's MAGIC lines); else plain `magic`.
             n_alt = sum(1 for x in out if x == "magic" or x.startswith("magicat="))
             at = magicat[n_alt] if n_alt < len(magicat) else None
-            out += [("magicat=%d" % at) if at else "magic"] + (["tplog"] if tplog else [])
+            if at:
+                # Player 24: ours' QUICK fight can play past the draw before a key sent here arrives (p19d1: ELWEN's
+                # turn at 980 came before magicat=958 reached ours, so MAGIC was still off). Ours keeps the draw
+                # (Combat.magic_at_draw, static) until a computer turn reaches it, so send it where the walk to this
+                # fight began: after the previous fight's end, or at the segment's start.
+                out.insert(magic_slot, "magicat=%d" % at)
+            else:
+                out += ["magic"] + (["tplog"] if tplog else [])
             continue
         if re.search(r"NOTE fight fight \d+ ended|NOTE loss the party was destroyed", line):
             # Player 15: a fight the original played with no combat menu (all on QUICK) took no key, so nothing made
@@ -88,6 +95,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             if not fight:
                 out += ["fightend"] + (["tplog"] if tplog else [])
                 fight = True
+            magic_slot = len(out)
             continue
         m = re.match(r"\s*-?[\d.]+ KEY #\d+ (\S+)\s+\| ", line)   # Player 3: also a negative time (below)
         if not m:

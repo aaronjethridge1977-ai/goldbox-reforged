@@ -1315,6 +1315,49 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 24 (2026-11-18): `magicat=` settles the QUICK casters' replays; segment 19 to `pyramid1`
+
+**The Alt-M replays with `magicat=`** (Combat Chat 25's request). The draw for an old trace, per fight: the last spell
+weighing (OVR:0b16c) with no list (no OVR:0b1cd right after it) before the first with one, plus 2 (lab
+`p24/magicat.py <trace> <fight start draw> ...`, `p24/weigh.py <trace>` lists every weighing, L = with a list).
+**segment.py now sends a `magicat=<draw>` key where the walk to its fight began** (after the previous fight's end, or
+at the segment's start), not at the Alt-M's place: ours' QUICK fight can play past the draw before a key sent mid-fight
+arrives (p19d1: ELWEN's turn at 980 came before `magicat=958` reached ours). Ours keeps the draw
+(`Combat.magic_at_draw`, static) until a computer turn reaches it. A plain `magic` (no draw known) stays where it was.
+- **p21a3** (`OP_MAGICAT=928,2987,4677,6891,9608,11479,12736`, `OP_SEG_TIMEOUT=1100`: ours needs ~15 minutes, so run
+  it in the background and poll): **draws identical, all 13277; 0 differences at `bane`** (was 2966).
+- **p19d1** (`OP_MAGICAT=958`): **draws identical, all 2704; 0 differences at `textile`** (was 984; the reverse case was
+  the key's timing too).
+- **p22a1** (`OP_MAGICAT=1020,2300`; the second fight drew no list before the trace ends): identical through all of
+  ours' 1279 draws to `s14a`, only the 4AFB/4AFC tail (was 943).
+- **p22c5** (`OP_MAGICAT=1194`): past 1163 to **2124**, the wilderness clutter (Player 21's (a), with Combat).
+- **p17a7** (on 61b091b with `GBR_PLAYOUT=1`; Combat 25's helpless shot): without `magicat` identical to 5165 (was
+  3232: BRAM's bow settled), then the basilisk fight's QUICK CEDRIC (MAGIC not yet on in the original); with
+  `OP_MAGICAT=968,2827,5167` (Alt-Ms in fights 1, 2 and 4; fight 3 had none): **draws identical, all 5289**, only
+  the 4AFA-4AFF tail.
+- p22c4 with `GBR_PLAYOUT=1`: still 1744 (the fleeing kobold leader's shot: Player 23's (b), open with Combat).
+
+**Segment 19 (`band1` -> `pyramid1`)** (plan `plans/p24_c34d_19_pyramid1.plan`, lab `p24/seg19.plan`; runs p24a1-a4
+from `p2start/p23b1_band1`, reloads from `p2start/p24a1_s19t`): 6:25 15,20 E onto 7:26, 12,27 E into the town, the inn
+and `innwait` (**`s19a`**), seg18's town round (City Hall twice, sell and buy, the halls), the inn (**`s19t`**); 2:20,
+8:29, 1:18, onto 7:26; round the poisoned river's west side to **6,14, the rowboat's own square** (TAKE IT TO THE
+PYRAMID YES, the secret door ENTER: 7:22 15,0 S), `cure` (**`s19p`**); 15,7 and a step W onto the rocks (14,7: on a
+first visit with SEARCH off, the flash into 7:23 4,15): **`pyramid1`** (7:23 4,15 N, as the bot's). No fights in
+p24a4, nobody hurt. Against the bot's `pyramid1` (`p24/pyramid1.cpdiff.txt`): 86 differences, new beside `band1`'s
+only the clock and coin kind 5 (the sale); the pyramid's flags agree.
+- Lane decision: main's ten LOOKs at 7:22 15,0 (SEARCH on, facing N) are left out: they teach main's route finder the
+  door north (0x9A0B) and cost 100 minutes; the original's party needs nothing from them here.
+- **The wilderness has no map in the tools** (the band walk is greedy and stops at water): new `bandmap.py <band 6|7|8>
+  [x0,y0 x1,y1] [--river-ok]` reads START.EXE's overland map (format as ours' `scripts/formats/overland_map.gd`) and
+  prints the band, or a BFS route as waypoints. p24a1 stopped at 7:26 6,22 (the river, 0x4AA2 unset); p24a2 found
+  6,14 is the rowboat (the plan's step N was wrong); p24a3 met RUINED HUTS (5,26 on the new route: LEAVE, main's
+  bot's "only passing", c34d 26690).
+- 7:22's ECL: lab `p24/ecl7_22.txt` (`tools/ecl.py dis game/ECL7.DAX 22`).
+
+Lab: `p24/` (seg19.plan, `*.seg.out`, `*.cmpdraws.txt`, `pyramid1.cpdiff.txt`, `bot_band1_pyramid1.txt`,
+`ecl7_22.txt`, magicat.py, weigh.py, bandmap.py, `archive.sh`), saves `p2start/p23b1_band1`, `p24a1_s19t` (and
+`.lab/player/saves/p24*`); runs p24a1-a4; archive `player24_lab.tar.gz`.
+
 ## Player 22 (2026-11-18): segments 14 to `kovel`, 15 to `band3`, 16 to `kobold_caves`; segments 13 and 14 in ours
 
 **Segment 14 (`library2` -> `kovel`)** (plan `plans/p22_c34d_14_kovel.plan`, lab `p22/seg14.plan`): out of the library
