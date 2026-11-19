@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; check 94, DIFFCHECKS 94/94
+## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; checks 94-95, DIFFCHECKS 95/95
 
 **How the table was made.** `~/gbr/checks/diffcheck.sh` copied with `--coverage=/tmp/opcov/cov/$n.json` added to ours'
 command line (main.gd's dev coverage option, M6: each block's instruction offsets that ran), all 93 checks played
@@ -258,8 +258,8 @@ paths): no check; 7:22's corpse (0x4A00) would be one, behind its secret doors.
 
 **CALL by target** (the original acts on 0x2C90, 0x8000/0x8001, 0xBA03, 0xC01E, 0xC018; GAME.OVR 0x3A36):
 0x2C90 41 of 114 sites run (checks 3, 4, 5, 10, 12, 13, 16, 17, 18, 23, ...), 0xC018 13 checks, 0xC01B 17, 0xC01E
-checks 19 and 38, 0x0806 13 checks. **Not run by any check:** 0x8000 (3:11's duel, 0x9CA6), 0x8001 (1:18's
-buccaneer challenge 0xA9D3, 8:16 0xA344): the one-against-one fights; 0x2C4E / 0x2C51 / 0xC003 / 0xC009 (7:26
+checks 19 and 38, 0x0806 13 checks. **Not run by any check:** 0x8000 (3:11's duel, 0x9CA6: ready, waits on Combat, below);
+0x8001 (1:18's buccaneer challenge 0xA9D3, 8:16 0xA344) is run by check 95 (new); 0x2C4E / 0x2C51 / 0xC003 / 0xC009 (7:26
 0xAD66-0xAE89 and 8:27 0xAB25-0xAB99, the bands' land-recovery loops: no-ops in the original, chat 24); 0xBA03 (a
 sound: nothing to compare).
 
@@ -277,6 +277,18 @@ passes no time; any other CLOCK keeps its operand (not seen in Pool).
   PRESS RETURNs (the escorted walks: the clearing at 9,9, then the lodging at 9,12 S), 'HERE YOU MAY REST.', camp
   (PROGRAM 9), EXIT: 9,12 S 18:57 (the original's ENCAMP SAVE after the EXIT). Fails on the code before (18:15).
   Three repeat runs MATCH.
+- **Check 95, 1:18 the tavern's drunk buccaneer, CHALLENGE** (check 74's start, tpseed 11111111): DISGUISE, the
+  tavern, CHALLENGE, THRENDER GRONE duels the 4th-level fighter (CALL 0x8001, the first check to run it), QUICK:
+  **1063 draws identical** (in a duel the original's figure list holds the members set aside: the fighter is its
+  figure 6, at 27,12 as ours'), THRENDER GRONE loses. **The original: YOU HAVE LOST THE DUEL. / THE DUELIST RECEIVES
+  0 / EXPERIENCE POINTS., the treasure menu (VIEW POOL EXIT), then the script's 0x6DC7 <= 128 branch (THE BATTLE IS
+  OVER, THE PATRONS RETURN TO DRINKING.)**: the members set aside stand, so it isn't a lost fight. Ours went on with
+  129 (THE BUCCANEER SMILES ...): `main.gd` now ends a lost duel as any fight. Both branches write the same state,
+  so the check sees the fix only through the key list falling out of step (THE CREATURES IGNORE YOU, LEAVE: 4,9 N
+  11:01); it fails on the code before. Three runs MATCH.
+- **3:11's arena duel (CALL 0x8000), not a check yet:** draws identical to 1018 of 1486, then ours' copy flees in
+  panic where the original's attacks (Requests, main -> combat); lab `data/c64/chk_arena` is ready for when it
+  matches.
 - **A coverage artefact, not the game:** blocks recorded as 2:20 hold two offsets (0x9926, 0x992C) that aren't
   instruction starts in any Pool block (2:20's 0x9921 is a 6-byte WRITE_MEM); cause not found (no shadow VM in
   these runs). Dev-only (M6 coverage), outside the checks' comparison; left as is.

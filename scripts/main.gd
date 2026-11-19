@@ -2882,8 +2882,18 @@ func _on_event_fight_finished(result: int) -> void:
 	# the original's save had 0x4A01 = 42 and 0x4A39 = 63. Ours had left it 0, so the graveyard's
 	# kill counters (and 2:20's, 8:16's) never grew.
 	_vm.write_byte(EclVM.DEFEATED, mini(_combat.defeated().size(), 255))
-	if result == 3 or (result == 2 and _duelist != null):
-		# The party ran (or the duelist lost): the script goes on with 0x6DC7 = 129.
+	if result == 2 and _duelist != null:
+		# A lost duel isn't a lost fight (chat 64, DOSBox, 1:18's buccaneer, CALL 0x8001, check 96): the
+		# members set aside are still standing, so the fight ends as any other: "YOU HAVE LOST THE DUEL.
+		# THE DUELIST RECEIVES 0 EXPERIENCE POINTS.", the treasure menu (VIEW POOL EXIT), then the script
+		# with 0x6DC7 = 0 (THE BATTLE IS OVER, THE PATRONS RETURN TO DRINKING.). Ours went on with 129
+		# (THE BUCCANEER SMILES ...). The arena's (0x8000) lost duel is taken to be the same (not seen).
+		_arena = false
+		_fight_treasure = []
+		_after_fight([], "YOU HAVE LOST THE DUEL.\n\nTHE DUELIST RECEIVES 0\n\nEXPERIENCE POINTS.")
+		return
+	if result == 3:
+		# The party ran: the script goes on with 0x6DC7 = 129.
 		_duelist = null
 		_fight_treasure = []
 		_vm.end_combat(129)
