@@ -1183,6 +1183,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				# texts too, and goes back to SEARCH's bit when it ends (chat 63: 4:21's elf skeleton
 				# tests it after a PRESS RETURN: the pouch's scroll; ours put it back at the first stop).
 				_look_flag_after = 1 if _searching else 0
+				_deferred_then_arrive = _deferred_arrival
 				_vm.start(1)
 				_after_vm()
 				# P67 (chat 35, DOSBox 7:17 6,14: L on a square with nothing shows nothing new
@@ -2482,13 +2483,34 @@ func _after_vm() -> void:
 			_end_look()
 			# 0x6E12 names the data set (ECLn/GEOn...) the next block lives in.
 			var set_no := _vm.read_byte(EclVM.FILE_SET)
+			if _rest_script:
+				# Q26 (a): the block is loaded, its arrival waits (see _deferred_arrival).
+				_rest_script = false
+				_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true, false, PackedByteArray(), true)
+				_show()
+				return
 			_by_new_ecl = true
 			_step_off_map = false
 			_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true)
 			return
 		EclVM.State.ERROR:
 			_message.text += "\n[script error: %s]" % _vm.error
+	if _vm.state in [EclVM.State.DONE, EclVM.State.IDLE, EclVM.State.ERROR]:
+		_rest_script = false
+		if _deferred_then_arrive:
+			# A LOOK with the arrival pending: the square's event, then the arrival (GAME.OVR 0x4156-0x4161),
+			# the search flag still on (it goes back after both, 0x416D).
+			_deferred_then_arrive = false
+			if _deferred_arrival:
+				_arrive_deferred()
+				return
 	_end_look()
+	if _pending_move >= 0 and _vm.state == EclVM.State.DONE and _deferred_arrival:
+		# Q26 (a): a step with the arrival pending runs the loaded block's on-move, then the arrival,
+		# and the party doesn't move (GAME.OVR 0x4199-0x41AC: no 0x49F0/1 write, no step).
+		_pending_move = -1
+		_arrive_deferred()
+		return
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		# The step's on-move is done without leaving the area: the square of the attempt is
 		# the previous square (GAME.OVR 0x41B9; see _try_move's note).
@@ -2711,6 +2733,7 @@ func _on_rest_interrupted() -> void:
 	_camp.minutes_passed = 0
 	if _vm.ecl != null:
 		_vm.clear_output()
+		_rest_script = true
 		_vm.start(3)
 		_after_vm()
 	_show()
@@ -2800,6 +2823,12 @@ func _start_event_fight() -> void:
 var _duelist: PartyMember = null
 var _arena := false
 var _look_flag_after := -1     # a LOOK's script is running: 0x6DCA's value for when it ends
+## Q26 (Jeremy, (a)): a NEW_ECL from the rest-interrupted script loads the block and stops; the arrival
+## (init, on-move, event) waits for the next step or LOOK (GAME.OVR 0x3B19 returns without testing 0x442F).
+var _rest_script := false        # the running script started from an interrupted rest
+var _deferred_arrival := false   # 0x442F still set: the loaded block's arrival hasn't run
+var _deferred_prev_block := -1   # the block left (its menu mode is 0x49F9's at the arrival)
+var _deferred_then_arrive := false   # a LOOK's event is running: the arrival follows it
 var _battle_begins := false    # row 24 says A BATTLE BEGINS... for a moment before a fight (Combat)
 var _ending: EndingScreen
 
@@ -2989,7 +3018,7 @@ func _ensure_area_script() -> void:
 
 
 ## Switches to another ECL block (NEW_ECL or area change) and runs its init.
-func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false, loading: bool = false, image := PackedByteArray()) -> void:
+func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive: bool = false, loading: bool = false, image := PackedByteArray(), defer := false) -> void:
 	var ecl := DaxFile.open(_game_path.path_join("ECL%d.DAX" % file_no))
 	if ecl == null or not ecl.blocks.has(block_id):
 		# Look in the other script files.
@@ -3004,8 +3033,11 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 		_message.text += "\n[script %d not found]" % block_id
 		_vm.ecl = null
 		return
-	if arrive and not loading:
+	if arrive and not loading and not defer:
 		_menu_was_wild = _vm_block in WILD_MODE_BLOCKS   # 0x49F9 = 0x49FA, the area left (GAME.OVR 0x3F2B)
+	_deferred_prev_block = _vm_block
+	_deferred_arrival = false
+	_deferred_then_arrive = false
 	_vm_file = file_no
 	_vm_block = block_id
 	_step_from = Vector2i(-1, -1)
@@ -3056,6 +3088,26 @@ func _enter_script(file_no: int, block_id: int, follow_map: bool = true, arrive:
 	if arrive:
 		_vm.write_byte(EclVM.MOVEMENT_BLOCK, 0)     # the leaving script's stop doesn't carry over
 	_sync_position_to_vm(_facing)
+	if defer:
+		# GAME.OVR 0x1918-0x19A5: NEW_ECL writes the block left to 0x49F2, loads the new block (0x7814)
+		# and enters the area (0x7689), then sets 0x442F; the main loop runs the arrival later. The
+		# view and the menu stay as they were (DOSBox, chat 59: 7:17's camp after the waves).
+		_vm.write_byte(CURRENT_BLOCK, _deferred_prev_block)
+		_deferred_arrival = true
+		return
+	_init_and_arrive(block_id, follow_map, arrive, loading, from_step)
+
+
+## The pending arrival (Q26 (a)): the loaded block's init, on-move and square event, as a NEW_ECL's.
+func _arrive_deferred() -> void:
+	_deferred_arrival = false
+	_menu_was_wild = _deferred_prev_block in WILD_MODE_BLOCKS
+	_by_new_ecl = false
+	_init_and_arrive(_vm_block, true, true, false, true)
+
+
+## The second half of _enter_script: the new block's init, then (arriving) its on-move and event.
+func _init_and_arrive(block_id: int, follow_map: bool, arrive: bool, loading: bool, from_step: bool) -> void:
 	_jump_next = true
 	_vm.clear_output()
 	_vm.area_map = []
@@ -3646,6 +3698,9 @@ func dev_restore(s: Dictionary) -> bool:
 	_step_from = Vector2i(-1, -1)
 	_arrival_on_move = false
 	_arrival_pending = false
+	_rest_script = false
+	_deferred_arrival = false
+	_deferred_then_arrive = false
 	_synced = Vector3i(-1, -1, -1)
 	_sync_position_to_vm(_facing)
 	_show()
