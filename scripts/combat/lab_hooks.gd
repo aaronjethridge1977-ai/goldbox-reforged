@@ -24,7 +24,7 @@ static func handle(main: Node, n: String) -> bool:
 		if combat._combat != null:
 			combat._combat.smart_quick = true
 	elif n.begins_with("magicat="):     # magicat=<draw>: MAGIC ON at the first computer turn from that draw on (Combat Chat 25)
-		Combat.magic_at_draw = int(n.trim_prefix("magicat="))
+		Combat.magic_at_draws.append(int(n.trim_prefix("magicat=")))     # queued in draw order (Combat Chat 26)
 		return true
 	elif n.begins_with("order="):       # order=<member>:<0-4>: B3's standing order (SmartQuick.ORDER_NAMES)
 		var a := n.trim_prefix("order=").split(":")

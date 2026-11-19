@@ -77,7 +77,9 @@ var magic_on := false                # Alt-M: the party's QUICK members cast (th
 ## Lab (Combat Chat 25): `magicat=<draw>` turns MAGIC ON at the first computer turn opening at or
 ## after that draw: a replay's Alt-M lands in the original when its harness's key arrives, a real-time
 ## matter (p18b7: read after CEDRIC's weighing at draw 989, not at the turn it was sent).
-static var magic_at_draw := -1
+## Combat Chat 26: a queue, in draw order, so a replay can send every fight's key before the fights
+## (ours plays in real time: a key sent at the Alt-M's place could reach ours after its draw, p19d1).
+static var magic_at_draws: Array[int] = []
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
 ## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
 ## spells (0xB105) are not stopped.
@@ -2081,8 +2083,8 @@ func ai_act() -> bool:
 	if not c.get("ai", false):
 		# Lab (`magicat=<draw>`): the original read the replay's Alt-M at this turn's opening poll
 		# (GAME.OVR 0xABDC calls 0xBB81, before the item and spell weighing).
-		if magic_at_draw >= 0 and TpDice.on and TpDice.calls >= magic_at_draw:
-			magic_at_draw = -1
+		if not magic_at_draws.is_empty() and TpDice.on and TpDice.calls >= magic_at_draws[0]:
+			magic_at_draws.pop_front()
 			magic_on = true
 		c.powers_done = false
 		_ai_begin(active)
