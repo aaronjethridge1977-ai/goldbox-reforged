@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; the training hall, the inn; checks 94-97, DIFFCHECKS 97/97
+## Chat 64: the handler table (Methods 7: every ECL opcode Pool's scripts use, and the checks that run it); ECL CLOCK; a lost duel; the training hall, the inn, a purchase; checks 94-98, DIFFCHECKS 98/98
 
 **How the table was made.** `~/gbr/checks/diffcheck.sh` copied with `--coverage=/tmp/opcov/cov/$n.json` added to ours'
 command line (main.gd's dev coverage option, M6: each block's instruction offsets that ran), all 93 checks played
@@ -295,6 +295,10 @@ passes no time; any other CLOCK keeps its operand (not seen in Pool).
 - **Check 97, 3:0 the inn at 6,12** (check 46's start, tpseed 11111111, 20:56): twelve steps by route, STAY? YES,
   WHO WILL PAY? THRENDER GRONE (a platinum piece), camp (PROGRAM 9), REST 8 hours (no interruption roll at the
   inn), EXIT: 6,12 W 05:08; 13 draws identical. A coverage check (matched at once). Three runs MATCH.
+- **Check 98, 3:0 the arms and armour shop, a purchase** (check 26's start, tpseed 11111111): YES, DORN selected
+  (End x5; the only member with coins), BUY, BUY the hand axe (1 gp: gold 3 -> 2, one item more), EXIT, EXIT. The
+  first check with a purchase (26-27 leave without one). A coverage check (matched at once). Three runs MATCH. (A
+  `files` list can't be used with an F2 end: ours' quick save writes no CHRDAT files; statediff compares items.)
 - **The temple (COMBAT with 0x6DE2 = 1), not a check yet:** 3:0's temple of Tempus (event 24, 2,12): the original's
   cure draws a d8 from the game's dice (OVR:049B0) that ours doesn't, and POOL / SHARE / the retrieve question
   differ (Requests, main -> combat); lab `data/c64/chk_temple` is ready.
