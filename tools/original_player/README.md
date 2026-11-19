@@ -1315,6 +1315,23 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 26 (2026-11-19): segment 27 to `mopup1`; 0x4A99 is the clerk's, not a difference
+
+**Segment 27 (`graveyard` -> `mopup1`): reached, first try** (plan `plans/p26_c34d_27_mopup1.plan`, lab `p26/seg27.plan`;
+run p26a1 from `p2start/p25q5_graveyard`, seed 26a10001): main's bot's "town" (City Hall twice, the arms shop, the
+halls: ARN 2 -> 3, ELWEN 4 -> 5, LIRA 2/2 -> 3/3, DORN 3/3 -> 3/4; the inn: **`s27t`**), then its "mopup": 2:20 (the
+bot's rest; events 13 at 0,5 and 15 at 3,10, done long ago in both runs, 0x4AD6 / 0x4AD0 = 255: only the walk), out by
+0,11 W, 8:29, 1:18 11,15 S into 4:2 (the bot's walk to 0,4 W; event 18 left as the bot's: "4 Hold Person ahead"; the
+bot's two orc fights didn't come), 7:26 to 12,12 and a step N (two band fights won, as the bot's two lizard men),
+the nomad camp ENTER, 7:17's rest: **`mopup1`** (7:17 1,14 E, the bot's square; nobody dead).
+- Against the bot's `mopup1` (`p26/mopup1.cpdiff.txt`): fewer than at `graveyard` (0x4A00, 0x4A07, 0x4A16, 0x4A17, 0x4A1B,
+  0x4A92, 0x4A93 and the place words now agree); new only 0x4A34 (Podol's fight counter, as at `buccaneers0`) and 0x4AFA-0x4AFF (the
+  save's own words). **0x4A99 now agrees (254 in both).**
+- **0x4A99 is not a difference** (Player 25's request to main, withdrawn): the clerk's listing writes 254 at every visit
+  that lists "LORD URSLINGEN WISHES URGENTLY TO SPEAK WITH YOU" (ECL 3:8 0xAE9E: until the Stojanow gate is taken,
+  0x4AB9 >= 254), after Urslingen's own 255 (0xB292). The original's party read 255 at `graveyard` because its last
+  clerk visit came before Urslingen; at `s27t` (two clerk visits after) it reads 254, as the bot's.
+
 ## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`, 26 to `graveyard`; `templecure`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
