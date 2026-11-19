@@ -2822,6 +2822,13 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 
 func _on_event_fight_finished(result: int) -> void:
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
+	# The fight's end turns every dying member of the party unconscious, a member down before the fight
+	# too (the original's figure list holds the whole party; Combat's finish() covers the fighters).
+	# Chat 61: since a script's DAMAGE leaves a member dying, check 69's DIRTEN (the priest's fireball
+	# before the fight) is 4 in the original's save after the fight.
+	for m in _party:
+		if (m as PartyMember).status == PartyMember.STATUS_DYING:
+			(m as PartyMember).status = PartyMember.STATUS_UNCONSCIOUS
 	# The fight drew over the view: back on the walking screen the original shows the 3D view, not
 	# the encounter's picture (chat 40, DOSBox: the Slums' orcs at 13,1 W, the corridor after the
 	# treasure; the picture stays up only until the fight opens).
