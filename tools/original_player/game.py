@@ -58,6 +58,11 @@ class Game:
         # the plan; at the first poll of the next fight there, every monster's HP and status are set to 0 / dead
         self.shortcut = None
         self.shortcut_note = None
+        # Player 29: `shortcutwin <area> <x,y> <n>`: the next n fights there (5:7 3,8: the two guards, then
+        # Tyranthraxus after the vote); re-armed once the last one's figures are gone from the list
+        self.shortcut_more = 0
+        self.shortcut_rearm = None
+        self.shortcut_sig = None
         self.party_size = 0
         self.beat = time.monotonic()
         self.stale = None         # (the figures' hit points, since when) while dice are drawn
@@ -147,9 +152,25 @@ class Game:
             o, s = struct.unpack_from("<HH", r, 0x104)
             i += 1
         self.shortcut = None
+        self.shortcut_sig = self._monster_sig()
+        if self.shortcut_more > 0:
+            self.shortcut_more -= 1
+            self.shortcut_rearm = (area, xy)
         self.shortcut_note = "SHORTCUT win at %d:%d %d,%d (Q27 (a), as main's bot's): %d monsters set to HP 0, dead, at %s: %s" % (
             area + xy + (len(out), site, ", ".join(out)))
         self.log(self.shortcut_note)
+
+    def _monster_sig(self):
+        """Player 29: the figures after the party in DS:0x5D96's list, by name (a new fight's monsters differ)."""
+        n, out, i = len(self.party()), [], 0
+        s, o = self.mem.farptr(0x5D96)
+        while s and i < 90:
+            r = self.mem.far(s, o, 0x120)
+            if i >= n:
+                out.append(r[1:1 + min(r[0], 15)].decode("latin1"))
+            o, s = struct.unpack_from("<HH", r, 0x104)
+            i += 1
+        return tuple(out)
 
     def _nfigures(self):
         try:
@@ -227,6 +248,11 @@ class Game:
                 prev = (rows, site, box)
                 time.sleep(0.05)
                 continue
+            if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.shortcut_rearm \
+                    and len(self.party()) < self._nfigures() and self._monster_sig() != self.shortcut_sig:
+                self.shortcut, self.shortcut_rearm = self.shortcut_rearm, None
+                self.log("SHORTCUT re-armed at %d:%d %d,%d (%d more after this)" % (
+                    self.shortcut[0] + self.shortcut[1] + (self.shortcut_more,)))
             if kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.shortcut \
                     and len(self.party()) < self._nfigures():
                 self._shortcut_win(site)

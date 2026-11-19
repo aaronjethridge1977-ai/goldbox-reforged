@@ -1333,6 +1333,31 @@ a main-path fight that blocks the end, a tactical try first, then Q27's logged s
   hurt at the end. `p29/valjevo6.cpdiff.txt`: the flags as at `valjevo5` (only the clock moved). The party lags the
   bot's in XP (ARN 31296 / 116460, CEDRIC 78897 / 118773) and HP (45 / 64 for ARN).
 
+**Segment 34 (`valjevo6` -> `valjevo7`): the game won, the last two fights by logged shortcut** (plans
+`plans/p29_c34d_34_valjevo7.plan` for the real tries, `plans/p29_c34d_34s_valjevo7_shortcut.plan` for the win; the bot's
+"18e", full_c34d.log 46768-47113).
+- p29b1 from `p2start/p29a2_valjevo6`: the town trip (`s34t`: ELWEN trained to MU 5), back by 2:9 4,0 N (`s34in`), 5:3
+  by 5:6 15,12 E, the gate (`s34g`, 5:5 11,7). Stopped: no route to 4,0: a plain walk goes round every square with an
+  info byte, and 5:5's 32/64 bits (patrol odds, safe rest) count; the walks now name 5:5's real events (`avoid`).
+- p29b2 from `s34g`: 4,0 N (map 5 -> 4), 0,11 W (-> 3), 15,10 ... 12,15 (`s34s`), the stairs E to 5:7 5,7 (GO DOWN: NO),
+  LOOK (the secret door north found at once), 5,6 N (GO UP: YES), 4,4 4,5 4,6 3,6 (`s34h`), S down: the hall at 3,8.
+  **The two guards' fight (12 8th-level fighters) won** at the first try, 5 standing with 141 of 263 HP; the treasure
+  (12 Rings of Protection +3, Plate Mail +2...), the vote (ATTACK x6), and Tyranthraxus destroyed the party.
+- From `p2start/p29b2_s34h`: the guards **lost 4 of 4** more (p29d1-d4, under a minute each): 1 win in 5. With the
+  guards by shortcut (as main's bot), **Tyranthraxus lost 5 of 5** at full HP (p29e1-e5, ~18 s each; p29f1 too, see
+  below): 0 of 7 with p29b2 and p29f1. Main's bot (7 members, levels 6-7, ARN 116k XP against ours' 31k) won him for
+  real with CEDRIC dead (main's `won 4ABA 254` rule).
+- **`valjevo7` reached by shortcut** (p29f2, seed 29f10002, `shortcutwin 5:7 3,8 2`): both fights logged SHORTCUT,
+  0x4ABA = 254, the party (nobody hurt) at 3:0 0,4 E. `p29/valjevo7.cpdiff.txt`: the flags as the bot's but the clock
+  (0x4ABA agrees). **Pool's full run has reached the end in the original**, with these by shortcut: the Stojanow wall
+  (2:9 7,6), the finale guards and Tyranthraxus (5:7 3,8); deferred:
+  the kobold king's throne room (8:13), 5:4 9,1 and the west of 5:4.
+- **Tools:** `shortcutwin <area> <x,y> <n>` (the next n fights there; game.py re-arms when the figure list after the party
+  changes names: between the guards and Tyranthraxus the list never shrinks to the party, p29f1 missed the re-arm so);
+  plans.py `game_won` (0x4ABA = 254): a member dead after the winning fight doesn't stop a walk or a checkpoint (main's
+  `won` rule). Lab `p29/tries.sh` takes `NEED=<flag>=<v>` (a "reached" needs that in the checkpoint line: p29c1's
+  counted answer `NO*1` restarted at `--after` and checkpointed on the stairs; now `answerfrom` steps).
+
 ## Player 28 (2026-11-19): Valjevo's gate (a tool misread); segment 30 to `valjevo3`
 
 **The gate asked every time; the tool didn't see it.** ECL 5:3's on-move (0x9A80) runs before a step, with the square

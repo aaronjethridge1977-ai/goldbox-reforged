@@ -41,6 +41,9 @@ early fights. Levels are given where the README states them. General tactics are
 | 29 | `stojanow` -> `mopup2` | 3:0 | Sell spare gear (50 items); the gate's reward; Urslingen; halls. | ARN 4, ELWEN 5/5/4, LIRA 4/3, DORN 4/4 |
 | 30 | `mopup2` -> `valjevo3` | Valjevo Castle 5:3 -> 5:5 | Giants arming at 7,14 (8 hill giants won); training trip; RELEASE the prisoner; at 12,7 facing W bump W: password, GIVE, `RHODIA`. Camps at 12,12 were wiped: use cures only. | ARN 5, BRAM 6, LIRA 4/4, DORN 4/5 (at `s30t`) |
 | 31 | `valjevo3` -> `valjevo4` (open) | 3:0, Valjevo 5:4 | Town trip (`s31t`), 5:4 by 5:3 12,0 N (`s31in`): the scribes and officers at 14,12 (won), the records at 14,9 (YES once, a patrol; NO later), KILL THE OVERSEER at 14,5, the armory 14,2 (`s31c`); a town trip (`s31e`); the fire giants at 9,1 lost 11 of 12 (see below). | as `s31t`: ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
+| 32 | `valjevo4` -> `valjevo5` | Valjevo 5:4 -> 5:5 -> 5:3 | Under the Lead's (a): 9,1 and the west of 5:4 deferred; out by 12,15 S, the gate (bump W, GIVE, `RHODIA`), 5:5 8,0, back to 5:3 13,7 (p28i3). | as `s31e` |
+| 33 | `valjevo5` -> `valjevo6` | 3:0, Valjevo 5:6 | Town trip (`s33t`); 5:6 by 2:9 4,0 N: the smithy 0,14 (a smith and three fire giants, won on QUICK; a 40-item pile), the laundry 12,13 (NICE, the disguise YES, TIE), Bane's temple 1,2 (LEAVE: the fight, won), the altar 1,0 (NO, NO) (p29a2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
+| 34 | `valjevo6` -> `valjevo7` (**the end**) | 3:0, 5:5, Valjevo Castle 5:7 | Town trip (`s34t`); 5:3 by 5:6 15,12 E, the gate into 5:5 11,7; 5:5's maps 5 -> 4 -> 3 (4,0 N, 0,11 W, 15,10 11,10 11,14 12,14 12,15; walks need explicit `avoid` lists: the 32/64 bits count as events), the stairs E from 13,15 to 5:7 5,7 (GO DOWN: NO), LOOK (the secret door N), 5,6 N up (YES), 4,4 4,5 4,6 3,6, S down (YES): the hall at 3,8. The guards and Tyranthraxus by logged shortcut (see below); 0x4ABA = 254, the party at 3:0 0,4 (p29f2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/5, LIRA 4/4, DORN 4/5 |
 
 ## Hard fights
 
@@ -77,10 +80,17 @@ early fights. Levels are given where the README states them. General tactics are
 - **Valjevo patrol, 5:4** [75 x1, 55 x5], giants led by a human fighter. It comes on a camp while the alarm holds. Won 3 of 4 seeds (Player 3).
 - **Valjevo camps, 5:3 12,12**: p27g4 and p27h1 were wiped by camps interrupted three times. Inside 5:3 use cures only.
 - **Finale guards, 5:7 3,8** [85 x12]: party destroyed on every seed (Players 2, 3, 7, 9).
+  - Player 29 (the full run's party, 263 HP, levels 4-6, from `s34h` at full HP, levels 1-3 memorized, MAGIC ON): **1 win in 5**
+    (p29b2 won and was left with 5 standing, 141 HP; p29d1-d4 destroyed in under a minute). The 12 guards (8th-level
+    fighters, 75-87 HP) carry 12 Rings of Protection +3, Plate Mail +2 and Two-Handed Swords +2, but the vote and Tyranthraxus
+    come straight after the treasure: there is no camp to ready them. Main's bot lost it twice and took it by shortcut.
 - **Tyranthraxus alone, 5:7** [66 x1].
   - From c27a: won 2 of 2 (Player 3).
   - From c32a: won 2 of 4, every win with deaths (Player 7), which is a loss by the death rule.
   - His fear paralyses or weakens low-level members; he breathes electricity (80 damage to ELWEN in ours).
+  - Player 29 (after the guards by shortcut, the party at full 263 HP, all ATTACK votes): **0 of 7** (p29b2 after the won guards, p29f1 (the re-arm missed),
+    p29e1-e5: destroyed in about 18 s each). Taken by `shortcutwin 5:7 3,8 2` (p29f2): the game won by shortcut. Main's bot
+    (7 members, levels 6-7) beat him for real with one death.
 - **4:2 3,11** [28 x1, 7 x3, 6 x12] (GRISHNAK). Won 3 of 4, every win with deaths; lost seed 0badf00d (Player 8).
 - **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
 - **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).

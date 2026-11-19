@@ -24,7 +24,7 @@
   answer <words>|<choice>*<n>    (Player 19) given at most n times, then the next answer for <words> applies (main's
                                  bot answers a question with a LEAVE in it three times, then LEAVEs: "asked too often",
                                  4:2's chained man: FREE*3, then LEAVE)
-  shortcutwin <area> <x,y>       (Player 27, Q27 (a)) a step: the next fight that starts with the party on that square
+  shortcutwin <area> <x,y> [n]   (Player 27, Q27 (a)) a step: the next fight (Player 29: next n) that starts there
                                  is won by the logged shortcut (main's bot's): every monster's HP 0 and status dead at
                                  the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
   answerfrom <words>|<choice>    (Player 16) a step of the plan: from here on this answer comes before the others
@@ -153,7 +153,7 @@ class Walk:
             self._fights0 = p.fights
         elif p.fights > f0:
             self._fights0 = p.fights
-            if any(m["status"] >= 6 for m in members(p.g.mem)):
+            if any(m["status"] >= 6 for m in members(p.g.mem)) and not game_won(p):
                 # Player 25: a member dead after a walk's fight (p25h2: BRAM in a band fight in 6:25, the rest
                 # standing well, so no heal came to see it): a loss under the death rule
                 raise_stop(p, "walk: a member is dead after fight %d (a loss under the death rule: reload from the"
@@ -672,17 +672,27 @@ def spare_gear(rec, items):
     return [i for i, (it, rd) in enumerate(items) if not rd and not _keeper(it) and not kit(i, it) and it["price"] >= 2]
 
 
+def game_won(p):
+    """Player 29: main's plan's `won 4ABA 254` (Chat 33): Tyranthraxus fallen (5:7 0xA815 writes 254 to 0x4ABA); a
+    member who died in that fight ends the run as won, not a reload (the death rule is for fights the run goes on from)."""
+    try:
+        return p.g.mem.ecl(0x4ABA, 1)[0] == 254
+    except Exception:
+        return False
+
+
 class ShortcutWin:
     """Player 27: `shortcutwin <area> <x,y>` (Q27 (a)): arms the logged shortcut win for the next fight that starts
     with the party on that square (game.py _shortcut_win: the monsters' HP 0 at its first poll)."""
-    def __init__(self, area, xy):
-        self.area, self.xy = area, xy
+    def __init__(self, area, xy, n=1):
+        self.area, self.xy, self.n = area, xy, n
 
     def __repr__(self):
-        return "shortcutwin %d:%d %d,%d" % (self.area + self.xy)
+        return "shortcutwin %d:%d %d,%d" % (self.area + self.xy) + (" %d" % self.n if self.n > 1 else "")
 
     def next(self, p):
         p.g.shortcut = (self.area, self.xy)
+        p.g.shortcut_more = self.n - 1     # Player 29: the next n fights there
         p.note("shortcut", "armed: the next fight at %d:%d %d,%d is won by shortcut (logged)" % (self.area + self.xy))
         return True, None, ""
 
@@ -699,7 +709,7 @@ class Checkpoint:
         if self.done:
             return True, None, ""
         if p.saving is None:
-            if any(m["status"] >= 6 for m in members(p.g.mem)):
+            if any(m["status"] >= 6 for m in members(p.g.mem)) and not game_won(p):
                 # Player 25: never a checkpoint with a member dead or gone (p25l3's s26g6: BRAM and DORN drained
                 # away by 4:10's wight in a fight on a walk's last step, which no walk saw)
                 raise_stop(p, "checkpoint %s: a member is dead or gone (a loss under the death rule: reload from the"
@@ -1681,8 +1691,9 @@ def load(path):
             words, choice = rest.rsplit("|", 1)
             pl.answers.append((words.strip(), choice.strip(), os.path.basename(path)))
         elif cmd == "shortcutwin":
-            ar, xy = rest.split()
-            pl.goals.append(ShortcutWin(area_of(ar), tuple(int(v) for v in xy.split(","))))
+            w2 = rest.split()
+            pl.goals.append(ShortcutWin(area_of(w2[0]), tuple(int(v) for v in w2[1].split(",")),
+                                        int(w2[2]) if len(w2) > 2 else 1))
         elif cmd == "answerfrom":
             words, choice = rest.rsplit("|", 1)
             pl.goals.append(AnswerFrom(words.strip(), choice.strip(), os.path.basename(path)))

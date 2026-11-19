@@ -96,3 +96,9 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - While an alarm holds in Valjevo (0x4A64), each step off a "safe" square (info bit 64) may draw a patrol; resting on a bit-64 square draws none (ECL 5:4 0x9AB5, 0x9B32; *read in the code*, not tried).
 - Valjevo's barracks giants (5:4 9,1) parley when no alarm holds: HAUGHTY or SLY gives the passwords and no fight (ECL 5:4 0xA38D; *read in the code*, not tried). A won fight there instead stops the four giants of 5,2 (0x4A66 bit 16).
 - Reading Valjevo's records (5:4 14,9) during an alarm draws a patrol half the time; answer NO on later visits, as main's bot (Player 28, p28c3; *seen in the original*).
+
+## Added by Player 29
+
+- A fight that follows another with no camp between (Tyranthraxus after his guards' treasure and the vote) is fought with the first fight's damage and without its loot readied: judge the pair together, not the first alone (Player 29, p29b2; *seen in the original*).
+- A take loop over a big pile: a member who refuses an item for weight refuses anything heavier, so skip them for those (Player 29, p28j1; *seen in the original*).
+- Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
