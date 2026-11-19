@@ -27,6 +27,8 @@ Files not listed: whoever needs them asks here first.
 
 ## Queues
 
+**Playbook (Jeremy, 2026-11-19 09:40):** `docs/playbook.md` (general Gold Box tactics) and `docs/strategy/poolrad.md` (route, levels, hard fights). **Every lane, at its end: if it learned a tactic or a rule behind one, add one line** (with its source run and *seen in the original* / *read in the code*). The Lead tidies daily. **The Player's next big task after Valjevo: a tactical mode** (each member's orders chosen by the tool, guided by the playbook), tried before any logged shortcut.
+
 **Stage 1 is complete when** (Jeremy, Methods 7, 2026-11-19): the original's full run (Player) reaches the end and matches ours; every ECL handler the main path uses has a differential check; **the Linux build is out**; Jeremy signs off after his own run; and a quiet streak of finding runs finds nothing new (the number: Methods 7 Q5). **Main's queue, standing: the Linux build, as soon as the original's full run reaches the end** (Jeremy, Methods 7: put here so it doesn't drop out). **Every lane's end:** the board's Now keeps one line per lane (replace yours; older lines go to docs/board-archive.md with finished requests). **"Match the original?" questions go to the Lead, not to Jeremy** (the Lead decides them under the faithfulness rule).
 
 
