@@ -1155,7 +1155,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_C:
 			# CAST: the selected member's spells in memory (camp's CAST page), or "<NAME> HAS NO
 			# SPELLS MEMORIZED" for a moment (lab, chat 22).
-			if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and not _party.is_empty():
+			# In a 3D area only for a selected member whose status is OKAY: else the key does nothing
+			# (GAME.OVR 0x170FC tests record +0x10C of the selected member, DS 0x5D92; chat 61, from
+			# the code; the wilderness's own menu routine not read).
+			var sel_ok: bool = not _party.is_empty() and (_vm.on_overland \
+					or (_party[clampi(_vm.selected, 0, _party.size() - 1)] as PartyMember).status == 0)
+			if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and sel_ok:
 				for m in _party:
 					m.recalculate(_types)
 				var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
