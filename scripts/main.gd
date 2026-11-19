@@ -1196,7 +1196,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.is_action("ui_up"):
 			_try_move(_facing)
 		elif event.is_action("ui_down"):
-			_try_move((_facing + 2) % 4)
+			# Down turns the party round where it stands (GAME.OVR 0x17187: scan code 0x50, the facing
+			# + 4 of 8, the wall ahead read again, no sound); chat 61 in DOSBox: 2:20 3,4 E, Down, 3,4 W.
+			# Ours had stepped backwards.
+			_facing = ((_facing + 2) % 4) as DungeonView.Dir
+			_write_wall_ahead()
+			_vm.sprite_id = -1
 		elif event.is_action("ui_left") or event.is_action("ui_right"):
 			# A turn redraws the view from the map, as a step does: a figure an encounter left
 			# standing (THE MONSTERS FLEE, a parley's end) is gone (P38; the original draws a
