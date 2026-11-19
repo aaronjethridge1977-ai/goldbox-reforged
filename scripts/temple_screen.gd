@@ -204,11 +204,11 @@ func _pay() -> void:
 		return
 	match CURES[_cure][0]:
 		"CURE LIGHT WOUNDS":
-			_heal(m, _rng.randi_range(1, 8))
+			_heal(m, _d8(1))
 		"CURE SERIOUS WOUNDS":
-			_heal(m, _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + 1)
+			_heal(m, _d8(2) + 1)
 		"CURE CRITICAL WOUNDS":
-			_heal(m, _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + _rng.randi_range(1, 8) + 3)
+			_heal(m, _d8(3) + 3)
 		"CURE DISEASE":
 			SpecialAffects.cure_disease(m)
 		"RAISE DEAD":
@@ -232,6 +232,15 @@ func _pay() -> void:
 	_say([["%s IS CURED." % m.name, GameScreen.GREEN]])
 	_mode = "list"
 	_refresh()
+
+
+## n d8 from the game's dice, as GAME.OVR 0x49AB / 0x49F7 / 0x4A45 draw them after the payment
+## (main's 3:0 temple ready check: the original's d8 at 0x49B0, draw 20).
+func _d8(n: int) -> int:
+	var t := 0
+	for k in n:
+		t += (TpDice.random(8, "cure") + 1) if TpDice.on else _rng.randi_range(1, 8)
+	return t
 
 
 func _heal(m: PartyMember, amount: int) -> void:
