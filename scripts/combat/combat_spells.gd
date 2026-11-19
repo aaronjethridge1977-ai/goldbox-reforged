@@ -125,8 +125,7 @@ func hit_bonus(am: PartyMember, tm: PartyMember) -> int:
 		b += 1
 	if am.has_affect(EFFECT_CURSE):
 		b -= 1
-	if am.has_affect(EFFECT_PRAYER):
-		b += 1
+	b += prayer(am)
 	# Protection from Evil / Good (effects 8, 9, 0x2D, 0x2E; handler GAME.OVR 0xEFD2) takes 2 off
 	# DS:0x6822 in category 0xB, which the attack (0x13D89) and a touch spell (0x279CA) run on
 	# the target before the to-hit routine (0x2BBA1) writes a fresh d20 there: no effect on the
@@ -244,8 +243,7 @@ func save(m: PartyMember, kind: int, bonus: int, caster: PartyMember) -> bool:
 	d += bonus
 	if m.has_affect(EFFECT_SHIELD):
 		d += 1
-	if m.has_affect(EFFECT_PRAYER):
-		d += 1
+	d += prayer(m)
 	if caster != null and _protected_from(m, caster):
 		d += 2
 	d += racial_save_bonus(m, kind)
@@ -259,6 +257,31 @@ func save(m: PartyMember, kind: int, bonus: int, caster: PartyMember) -> bool:
 ## always save against poison).
 static func racial_save_bonus(m: PartyMember, kind: int) -> int:
 	return SpecialAffects.save_bonus(m, kind)
+
+
+## Prayer's +1 or -1 for `m`, to hit (category 0xA) and on saves (0xC): GAME.OVR's handler runner
+## 0x2B04A (Combat Chat 31, the Player's p29d1, the finale guards). Prayer goes on its caster alone (area
+## code 0: "self"); in a fight its effect (0x31, one of the set {0x15, 0x2D, 0x2E, 0x31} at cs:0x140) also
+## reaches a figure without it from the first figure, in combatant order, that carries it and has the
+## figure in its in-sight list within 6 (0x3045B); the handler (0xFF0D) gives +1 to the carrier's side
+## (0xF861) and -1 to the other.
+func prayer(m: PartyMember) -> int:
+	if m.has_affect(EFFECT_PRAYER):
+		return 1
+	var me := -1
+	for j in c.combatants.size():
+		if c.combatants[j].who == m:
+			me = j
+	if me < 0:
+		return 0
+	for j in c.combatants.size():
+		var e: Dictionary = c.combatants[j]
+		if j == me or e.down or not (e.who as PartyMember).has_affect(EFFECT_PRAYER):
+			continue
+		var f: Dictionary = c.combatants[me]
+		if c.range_of(e, f) <= 6 and c.clear_line(e, f).y == 1:
+			return 1 if e.team == f.team else -1
+	return 0
 
 
 ## Whether `t` throws off Sleep, Charm, Hold or poison (SpecialAffects.blocks).
@@ -472,9 +495,11 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 	if dur < 0:
 		dur = table.duration_for(id, lvl)
 	match id:
-		1, 42:      # Bless, Prayer: the caster's side (Bless: not those next to an enemy)
+		42:         # Prayer: on the caster alone, its reach is prayer()'s (GAME.OVR 0x2B04A)
+			_effects(i, id, [i], dur, lvl)
+		1:          # Bless: the caster's side, not those next to an enemy
 			var side: Array[int] = []
-			for j in (targets if id == 1 else range(c.combatants.size())):
+			for j in targets:
 				var e: Dictionary = c.combatants[j]
 				if e.down or e.team != me.team:
 					continue
