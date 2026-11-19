@@ -172,8 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-110, DIFFCHECKS 110/110
+## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-111, DIFFCHECKS 111/111
 
+- **Check 111, 3:0 the temple, RAISE DEAD** (check 110's start with RHIANNON dead, +0x10C = 6 and HP 0, and THRENDER
+  GRONE's platinum +0x90 = 3000): the walk, YES, POOL, End x2, HEAL, End x6 (the list opens on CURE BLINDNESS), HEAL:
+  RAISE DEAD WILL ONLY COST 5500 GOLD PIECES. / PAY FOR CURE YES: HP 1, OKAY, **CON 14 -> 13**, max HP kept (CON under
+  14); EXIT, SHARE, EXIT, NO, F2. No draws past the walk's 19. Matched at once; NO instead of paying differs (23).
+  **statediff compares the ability scores** (+0x10-0x15, STR 18/xx +0x16) from here: 111/111 with it; break test
+  rerun: SUBTRACT 94/111, ADD 110/111 (17 and 1 caught, as before). Three runs MATCH (lab `data/c66/chk111`).
 - **Check 110, 3:0 the temple of Tempus (COMBAT with 0x6DE2 = 1: the handler table's temple line now runs in a matching
   check)**: chat 64's ready check (`data/c64/chk_temple`): THRENDER GRONE's 2000 gp, tpseed 11111111, the walk, YES;
   BAKSHI, HEAL, CURE LIGHT WOUNDS, HEAL, YES (no money on him: nothing), EXIT, POOL, HEAL, the cure (the game's d8,

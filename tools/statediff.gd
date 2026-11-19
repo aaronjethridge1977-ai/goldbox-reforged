@@ -8,7 +8,7 @@ extends SceneTree
 ## Compared: script memory 0x4900-0x4AFF (the original's save keeps it at byte 1 + 2 x
 ## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
-## points, experience, status, the seven kinds of coins, and the items (type, name words, plus, save
+## points, experience, status, the ability scores (chat 66), the seven kinds of coins, and the items (type, name words, plus, save
 ## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the standing effects (the original's .SPC beside
 ## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
@@ -139,6 +139,8 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	var fields := [["HP", 0x11B, 1], ["max HP", 0x32, 1], ["experience", 0xAC, 4], ["status", 0x10C, 1]]
 	for i in 7:
 		fields.append(["coins %d" % i, 0x88 + 2 * i, 2])
+	for i in 7:     # the ability scores and STR 18/xx (chat 66: a temple's RAISE DEAD costs a point of CON)
+		fields.append([["STR", "INT", "WIS", "DEX", "CON", "CHA", "STR 18/xx"][i], 0x10 + i, 1])
 	for f in fields:
 		var x := _int(a, f[1], f[2])
 		var y := _int(b, f[1], f[2])
