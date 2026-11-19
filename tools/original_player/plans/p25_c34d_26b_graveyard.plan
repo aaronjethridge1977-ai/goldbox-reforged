@@ -1,0 +1,474 @@
+# Player 25: c34d segment 26, second part (s26t -> graveyard): main's "log 16. Valhingen Graveyard (4:10), with the
+# council's weapons", explore in the bot's nine trips with the inn between (4:10's rest rule is the inn; full_c34d.log
+# 35000-38325; events 28 (the tower) and 5 left for later by the bot's odds): 1 2 3 4 | 13 14 15 6 | 16 | 26 17 18 |
+# 7 8 | 19 | 20 | 21 22 23 | 10 9 11 12 25 29 27 24. Each trip: 3:0 0,4 W, 2:20, 8:29, 1:18, the band's west edge LEAVE,
+# 7:26 12,27 and a step N onto 12,26 (GRAVEYARD; 4:10's init puts the party on 0,4 E), the events, 0,4 and a step W
+# (the north edge: LEAVE), 13,28 and a step N onto 13,27 (BOAT), the inn.
+area 3:0
+rules /home/aaron/gbr/goldbox-reforged/.claude/worktrees/enchanted-shimmying-token/tools/plans/playthrough.plan
+answer YOUR PRESENCE IS NOT AUTHORIZED.  LEAVE|YES
+answer LET HIM JOIN THE PARTY OR SEND HIM AWAY|SEND
+answer WHAT DO YOU WANT TO DO TO IT|SANCTIFY
+answer I GUARD HIS REMAINS|STAY
+answer YOU STAND BEFORE A HUGE TOWER|YES
+answer ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+answer WOODEN STAIRS LEAD INTO A PIT|NO
+answer DO YOU WANT TO DO ANYTHING WITH THE COFFIN|YES
+answer DO YOU READ THE SCROLL|YES
+answer VARIOUS OBJECTS ARE SCATTERED ABOUT|YES
+answer BUCCANEERS RIDE OUT TO ESCORT YOU IN|LEAVE
+answer ARE YOU THE DIPLOMATIC ENVOYS FROM NEW PHLAN|YES
+answer WALK AROUND OR WILL YOU JUST RELAX|RELAX
+answer WHAT WILL YOU TALK ABOUT|CITY
+answer NEW OR OLD PHLAN|OLD
+answer ANY TROUBLE WITH TYRANTHRAXUS|TROUBLE
+answer HOW STRONG ARE THEY|DON'T
+answer NEXT TOPIC OF DISSCUSION|MAGIC*1
+answer NEXT TOPIC OF DISSCUSION|POLITICS
+answer UNIQUE MAGICAL ITEMS OR PLACES|MENTION
+answer ULRICH EBERHARD|DON'T
+answer HOW DO YOU SPEND THE NIGHT|SLEEP
+answer RETURN TO THEM NOW|RETURN
+answer THE WALL IS CLIMBABLE|CLIMB
+answer YOU MAY RANSOM YOURSELVES OR DIE|SURRENDER
+answer SURRENDER OR DIE|ATTACK
+answer SEE A LARGE CAVE|IGNORE
+answer DISAPPEARS INTO A CAVE|IGNORE
+answer DO YOU HAVE A PASS TO SEE THE CAPTAIN|LEAVE
+answer PUNCH MERCHANT AGREE SAY NOTHING RESCUE BOY|PUNCH
+answer TWO GUARDS GUARD THE DOOR|LEAVE
+answer THE ANIMALS ARE RESTLESS|RELEASE
+answer INSIDE ARE FOUR BUCCANEERS|LEAVE
+answer STANDING NEAR YOU IS THE YOUNG BOY|GET
+answer HOW WILL YOU RESCUE THE BOY|SNEAK
+answer SMALL WOODED GROVE|LEAVE
+answer PARTIALLY BLOCKED SET OF STAIRS|NO
+answer BOAT DOCKED HERE|TAKE
+answer WHAT CAVE WILL YOU ENTER|LARGE
+answer DO YOU WANT TO LEAVE|NO
+answer STEEP RUBBLED SLOPE|YES
+answer A DRUNKEN KOBOLD LIES HERE|SLIP
+answer WE WILL PAY FOR A TRUCE|AGREE
+answer ESCORT YOU TO OUR TREASURE|FOLLOW
+answer AROUND THE CORNER IS OUR TREASURE|LET
+answer THE KOBOLD DISLODGES IT AND PROCEEDS|YES
+answer HE TRIES TO ATTACK THE PARTY BUT YOU STOP HIM|ATTACK
+answer PILE OF WEAPONS AND SHIELDS|TAKE
+answer WILL YOU CHASE THEM|YES
+answer WHICH PATH WILL YOU TAKE|SOUTH
+answer A WOODEN CABINET|EXAMINE*3
+answer A WOODEN CABINET|LEAVE
+answer FOUR SMALL CASKETS|SEARCH*1
+answer FOUR SMALL CASKETS|LEAVE
+answer WHICH CASKET WILL YOU SEARCH|A
+answer THREE CABINETS|A*2
+answer THREE CABINETS|LEAVE
+answer HOW WILL YOU OPEN THE LOCK|BREAK
+answer WHO WILL TRY TO PICK THE LOCK|DORN
+answer WHAT DO YOU WANT TO DO|AVOID
+answer WHAT DO YOU DO WITH THE MAN|FREE*3
+answer WHAT DO YOU DO WITH THE MAN|LEAVE
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer BASH PICK KNOCK EXIT|PICK
+answer LOCKED. BASH KNOCK EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainF:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainC:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT2:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer CHOOSE A FUNCTION|seq:trainT3:@ARN,t,y,@BRAM,t,y,@CEDRIC,t,y,@ELWEN,t,y,@LIRA,t,y,@DORN,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+answer WILL YOU FORCE IT OPEN|YES
+answer SURRENDER FIGHT|FIGHT
+answer DO YOU WANT TO CLIMB DOWN|NO
+answer CLIMB UP THE RUNGS|NO
+answer CAN I SHOW YOU SOMETHING|YES
+answer MERCY! MERCY|COMBAT
+answer DULL BROWN REPTILIAN|COMBAT
+answer PLAZA AHEAD IS CROWDED|DISGUISE
+answer SURPRISED A PARTY OF KOBOLDS|COMBAT
+answer BEING AVOIDED BY SOME LIZARDMEN|COMBAT
+answer STAND AND LISTEN|STAND
+answer MAKE A BID|MAKE
+answer FOLLOW THE OGRE|FOLLOW
+answer WHO WILL IT BE|CHALLENGE
+answer WHO WILL CHALLENGE|ARN
+answer ROBED ORC|LEAVE
+answer IN NEED OF HEALING|YES
+answer KNOCK EXIT|EXIT
+answer YOUR PRESENCE IS NOT AUTHORIZED|YES
+answer WHICH ENTRANCE WILL YOU TAKE|LEAVE
+answer WHICH ROUTE WILL YOU TAKE|BOAT
+answer ENCHANTED WEAPON IF YOU ACCEPT|YES
+answer THIEVES ONLY|LEAVE
+answer WHAT DO YOU DO WITH THE BODY|SEARCH*2
+answer WHAT DO YOU DO WITH THE BODY|LEAVE
+answer OPENING THE BOX WILL DAMAGE THE SEAL|TAKE
+answer WILL YOU ENTER|LEAVE
+answer NORTH EDGE OF THE CITY|LEAVE
+answer YOU SPOT A GROUP OF MERCHANTS|PARLAY
+answer DISPLACER BEAST|FLEE
+answer QUITE MAD|NO
+answer DO YOU INSIST HE COME|NO
+answer DO YOU TAKE IT|YES
+answer GO BACK AND GET YOUR MONEY|NO
+answer THEY ARE WARY, BUT NOT HOSTILE|PARLAY
+answer IT DISAPPEARS WITH A FLASH|MOVE
+answer GO BACK MOVE ON THROW A ROCK|THROW
+answer YOU QUICKLY TRANSLATE THEM|type:NOKNOK
+answer DO YOU REALLY MEAN|YES
+answer MOVE QUICKLY AWAY|MOVE
+answer DO YOU WISH TO CHANGE THE SETTING|NO
+answer RECOVER FROM THE ALCHEMICAL POLLUTION|HIT
+answer SECRET DOOR THAT LEADS INTO THE PYRAMID|GO
+answer BACK TO THE CIVILISED SECTION OF PHLAN|TAKE
+answer WILL YOU TAKE IT TO THE PYRAMID|YES
+answer HEAL VIEW POOL APPRAISE EXIT|EXIT
+# main's bot buys CURE DISEASE at a temple for whoever needs it (bot.gd _temple_cures): 4:10's mummies give disease
+# (the original asks NEUTRALIZE POISON's price of anyone, poisoned or not: left out)
+templecure CURE DISEASE
+# Lord Urslingen (3:8 5,7, event 32): ours' clerk set 0x4A99 = 254 at the second visit of s26t's round, after the walk
+# to 5,7 (the first visit was the Zhentil reward): once more, the clerk, then 5,7
+alias 3:8
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step E
+walk 5,7 through 26,27,28,29,30,31,32,33,34,35
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,12 through 2,3,9,25
+# trip 1
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 0,4 avoid 5,28
+walk 0,0 avoid 5,28
+walk 6,4 avoid 5,28
+walk 5,6 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g1
+# trip 2
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 1,12 avoid 5,28
+walk 1,13 avoid 5,28
+walk 0,15 avoid 5,28
+walk 6,9 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g2
+# trip 3
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 5,9 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g3
+# trip 4
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 8,9 avoid 5,28
+walk 5,10 avoid 5,28
+walk 4,10 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g4
+# trip 5
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 10,15 avoid 5,28
+walk 9,15 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g5
+# trip 6
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 9,11 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g6
+# trip 7
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 9,5 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g7
+# trip 8
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 9,6 avoid 5,28
+walk 9,7 avoid 5,28
+walk 9,1 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint s26g8
+# trip 9
+walk 0,4 through 9,19,20,21,22,23,24,25
+step W
+area 2:20
+walk 0,4 avoid 20
+step W
+area 8:29
+walk 0,4 avoid 99
+step W
+area 1:18
+walk 0,4 avoid 99
+step W
+area 7:26
+cure
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|GRAVEYARD
+walk 12,27
+step N
+area 4:10
+norest
+walk 15,6 avoid 5,28
+walk 14,4 avoid 5,28
+walk 15,7 avoid 5,28
+walk 15,8 avoid 5,28
+walk 12,4 avoid 5,28
+walk 15,1 avoid 5,28
+walk 15,0 avoid 5,28
+walk 8,2 avoid 5,28
+walk 0,4 avoid 5,28
+answerfrom ENTER THE NORTHERN CITY GATES OR ENTER THE GRAVEYARD|LEAVE
+step W
+area 7:26
+norest off
+walk 12,27
+step E
+area 3:0
+# the temple of Tyr (11,3) on the way: CURE DISEASE, NEUTRALIZE POISON (the bot's boat landing crosses it)
+walk 11,3 through 2,3,6,9,25
+walk 4,12 through 2,3,6,9,25
+innheal
+checkpoint graveyard

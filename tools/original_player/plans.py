@@ -43,6 +43,8 @@
                                  hurt (as `heal` after a fight); nothing when no slot is free and no one is hurt
   cure                           (Player 16) main's bot's `_prepare` where the plan's rest rule is the inn (Kuto's
                                  Well before Norris): camp, the memorized cures on the most hurt, no MEMORIZE or REST
+  templecure CURE DISEASE        (Player 25) at a temple's HEAL VIEW POOL APPRAISE EXIT: that service for each member
+                                 who needs it (bot.gd _temple_cures; the original asks CAST CURE ANYWAY otherwise: NO)
   nocast [off]                   (Player 25) the following goals' heals cast nothing (an anti-magic area: 8:16's
                                  castle): `cure` does nothing, `heal` / `prepare` / a walk's stop rest only
   norest [off]                   (Player 16) the following walks' stop after a fight that leaves the party hurt is
@@ -146,7 +148,7 @@ class Walk:
             self._fights0 = p.fights
         elif p.fights > f0:
             self._fights0 = p.fights
-            if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+            if any(m["status"] >= 6 for m in members(p.g.mem)):
                 # Player 25: a member dead after a walk's fight (p25h2: BRAM in a band fight in 6:25, the rest
                 # standing well, so no heal came to see it): a loss under the death rule
                 raise_stop(p, "walk: a member is dead after fight %d (a loss under the death rule: reload from the"
@@ -430,7 +432,7 @@ class Heal:
                 return True, None, ""
             if h.get("op") and h["op"][0] == "rest" and p.fights > h["fights0"]:
                 h["interrupts"] += 1
-                if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+                if any(m["status"] >= 6 for m in members(p.g.mem)):
                     # Player 25: the fight that interrupted the rest killed a member (p25j5: BRAM at 6:25 3,31)
                     raise_stop(p, "heal: a member is dead after fight %d (a loss under the death rule: reload from"
                                   " the last checkpoint)" % p.fights)
@@ -617,6 +619,11 @@ class Checkpoint:
         if self.done:
             return True, None, ""
         if p.saving is None:
+            if any(m["status"] >= 6 for m in members(p.g.mem)):
+                # Player 25: never a checkpoint with a member dead or gone (p25l3's s26g6: BRAM and DORN drained
+                # away by 4:10's wight in a fight on a walk's last step, which no walk saw)
+                raise_stop(p, "checkpoint %s: a member is dead or gone (a loss under the death rule: reload from the"
+                              " last checkpoint)" % self.name)
             p.saving = self
             return False, "e", "checkpoint %s: ENCAMP" % self.name
         return False, None, ""
@@ -645,6 +652,7 @@ class Plan:
         self.buys = []           # Player 12: one list of (member, name) per shop visit
         self.sells = []          # Player 15: `sell gems`: one per shop visit
         self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
+        self.temple_cures = []   # Player 25: `templecure <service>` (bot.gd _temple_cures)
         self.inntrip = []        # Player 14: the `inntrip` block's goals (an interrupted rest's trip to the inn)
         self.mem = None          # Player 14: the game's memory, for `@platinum` answers
         self.defaults = {"enter": "enter", "combat": "q", "encounter": "c", "continue": "n",
@@ -708,7 +716,7 @@ class Plan:
         if h is None and scr["bottom"].split()[:1] == ["CAMP:"] and p.goal + 1 < len(gs) \
                 and isinstance(gs[p.goal], Walk) and isinstance(gs[p.goal + 1], Heal) and gs[p.goal + 1].inn:
             # Player 14: the inn (TO REST HERE, WHO WILL PAY) opens its camp before the walk sees its square.
-            if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+            if any(m["status"] >= 6 for m in members(p.g.mem)):
                 raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
             p.log("GOAL done: %s (the inn's camp)" % gs[p.goal])
             p.goal += 1
@@ -752,6 +760,10 @@ class Plan:
                     p.ready_tried.add(todo[0])
                     return "r", "readyall: READY %s" % rows[todo[0]][1]
                 return ("end" if todo[0] > lit[0] else "home"), "readyall: light to %s" % rows[todo[0]][1]
+        if self.temple_cures:
+            r = self._templecure(scr, st, p)
+            if r:
+                return r
         if self.sells and getattr(p, "sell_visit", 0) < len(self.sells):
             r = self._sell(scr, st, p)
             if r:
@@ -940,6 +952,58 @@ class Plan:
     # -- Player 15: `sell gems`: main's bot's shop visit (bot.gd: "appraised and sold gems and jewellery"): every
     # member with gems or jewellery (record 0x92 / 0x94, money[5] / money[6]) in party order: APPRAISE, GEMS or
     # JEWELRY, SELL each, until none is left; then the shop's EXIT (or the visit's `buy` line goes on) -----------
+    def _templecure(self, scr, st, p):
+        """Player 25: `templecure <service>` (bot.gd _temple_cures: Stone to Flesh, Cure Disease, Neutralize Poison
+        for whoever needs them): at a temple's HEAL VIEW POOL APPRAISE EXIT, each member in turn selected (End /
+        Home), HEAL, the service lit on the list (rows 4-12; End / Home), HEAL; the original asks CAST CURE ANYWAY
+        for a member who doesn't need it (NO) and PAY FOR CURE for one who does (YES; the member's own coins); then
+        EXIT the list. The plan's answer EXITs the temple after the last member."""
+        bw = scr["bottom"].split()
+        b = " ".join(bw)
+        if scr["kind"] == "walking":
+            p.tc = None
+            return None
+        mem = p.g.mem
+        P = loot.party(mem)
+        tc = getattr(p, "tc", None)
+        if b.startswith("HEAL VIEW POOL"):
+            if tc is None:
+                tc = p.tc = {"todo": [(j, c) for j in range(len(P)) for c in self.temple_cures], "cur": None}
+            if tc["cur"] is not None:
+                tc["todo"].pop(0)
+                tc["cur"], tc["asked"] = None, None
+            if not tc["todo"]:
+                return None
+            j, c = tc["todo"][0]
+            sel = loot.selected(mem)
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "templecure: select %s" % P[j][1]
+            tc["cur"] = (j, c)
+            return "h", "templecure: HEAL for %s" % P[j][1]
+        if tc is None or tc.get("cur") is None:
+            return None
+        j, c = tc["cur"]
+        if bw[:2] == ["HEAL", "EXIT"]:
+            if tc.get("asked") == (j, c):
+                return "e", "templecure: %s done, back to the menu" % P[j][1]
+            rows = st["rows"]
+            names = {r: str(rows[r]).strip("?\\ ").strip() for r in range(4, 14)}
+            target = [r for r, n in names.items() if n.startswith(c)]
+            lit = [r for r, n in names.items() if n and screens._rowcol(st["im"], r) == screens.WHITE]
+            if not target:
+                raise_stop(p, "templecure: no %s on the list (%s)" % (c, [n for n in names.values() if n]))
+            if len(lit) == 1 and lit[0] != target[0]:
+                return ("end" if target[0] > lit[0] else "home"), "templecure: light to %s" % c
+            tc["asked"] = (j, c)
+            return "h", "templecure: HEAL %s for %s" % (c, P[j][1])
+        if "ANYWAY" in b:
+            p.note("temple", "%s: %s not needed" % (P[j][1], c))
+            return "n", "templecure: %s doesn't need %s (CAST CURE ANYWAY: NO)" % (P[j][1], c)
+        if "PAY FOR CURE" in b:
+            p.note("temple", "%s: %s bought" % (P[j][1], c))
+            return "y", "templecure: PAY for %s's %s" % (P[j][1], c)
+        return None
+
     def _sell(self, scr, st, p):
         mem = p.g.mem
         bw = scr["bottom"].split()
@@ -1451,6 +1515,8 @@ def load(path):
             pl.norest = rest.strip() != "off"
         elif cmd == "nocast":
             pl.nocast = rest.strip() != "off"
+        elif cmd == "templecure":
+            pl.temple_cures.append(rest.strip().upper())
         elif cmd == "prepare":
             pl.goals.append(Heal(force=True, prep=True))
         elif cmd == "campday":

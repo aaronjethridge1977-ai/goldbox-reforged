@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`; `nocast`; 0x4A8C
+## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`, 26 begun (the graveyard's trip 6); `templecure`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
 p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
@@ -1432,7 +1432,29 @@ two fights), `cure`: **`zhentil`** (6:28 5,0 E).
   the night's two fights won, nobody dead). Against the bot's `zhentil` (`p25/zhentil.cpdiff.txt`): nothing new beside
   `heir`'s; 0x4A98, 0x4A34, 0x4A05 and 0x4A19 now agree.
 
-Lab: `p25/` (seg20b.plan to seg25.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
+**Segment 26 (`zhentil` -> `graveyard`), open** (plans `plans/p25_c34d_26a_town.plan`, `p25_c34d_26b_graveyard.plan`;
+lab `p25/seg26a.plan`, `seg26b.plan`). **Part a to `s26t`** (p25k1 from `p2start/p25j10_zhentil`): out of 6:28 by its
+gate (one fight; 6:25's 3,32 made 0x4AB4 254), the boat, the inn (**`s26a`**), City Hall twice (the Zhentil reward:
+0x4AB4 255, 0x4ABE 255), the arms shop, the halls, the inn: **`s26t`**. **Lord Urslingen** (3:8 5,7, event 32, ECL 3:8
+0xB158) needs 0x4A99 = 254, which ours' clerk set only at the round's second visit (the first was the reward), after
+the walk to 5,7: part b begins with one more visit and the walk (p25l2: the texts at 6,7). **Part b**, Valhingen
+Graveyard in the bot's nine trips (4:10's rest rule is the inn; events 28 and 5 left for later as the bot's): trips
+1-5 done (**`s26g1`-`s26g5`**, p25l2, from `p2start/p25k1_s26t`); p25l2 then destroyed by a band fight at 7:26 12,27;
+**trip 6 (9,11: "YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT", with mummies) is where the run stands**: p25l3, p25l4,
+p25n1 lost a member there (drained away or dead); p25m1 won it but ARN stayed at 14/51 through cures and 80 days of
+rest: **the mummies' disease** (ours: SpecialAffects 0x32, no healing; "ROTS AWAY", status 8, when it runs its
+course), which killed BRAM in p25n2's day rests at the inn.
+- New plan line **`templecure <service>`** (plans.py; main's bot's `_temple_cures`): at a temple's HEAL VIEW POOL
+  APPRAISE EXIT, each member selected in turn, HEAL, the service lit, HEAL; CAST CURE ANYWAY (the member doesn't need
+  it): NO; PAY FOR CURE: YES. Checked in p25n7 at the temple of Tyr: CURE DISEASE bought for BRAM, CEDRIC, LIRA and
+  DORN, ANYWAY for ARN and ELWEN. **NEUTRALIZE POISON is priced for anyone** (no ANYWAY: p25n7 bought ARN's), so the
+  plan buys only CURE DISEASE. The trips' walk from the pier now crosses the temple (11,3) and back out (the temple's
+  inside, 11,4 to 9,4, has no way out but its own squares).
+- **No checkpoint with a member dead or gone** (plans.py): p25l3's `s26g6` was saved with BRAM and DORN drained away in a
+  fight on a walk's last step, which no walk's check saw.
+- p25l1 stopped where the walk to 13,28 crossed 13,27 (the eastern edge's BOAT): the trips now step E onto it from 12,27.
+
+Lab: `p25/` (seg20b.plan to seg26b.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
 `p25c5_s21b`, `p25d3_pyramid3`, `p25e1_s22a`, `p25e3_s22c`, `p25e4_lizard`, `p25f1_buccaneers0`, `p25g2_s24a`, `p25g3_heir`, `p25h2_s25b` (and `.lab/player/saves/p25*`).
 
