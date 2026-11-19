@@ -2742,6 +2742,10 @@ func _on_rest_interrupted() -> void:
 
 ## Open squares ahead of the party (0..2), as the encounter menu measures distance.
 func _open_ahead() -> int:
+	# GAME.OVR 0x7955 (combat lane, Combat Chat 30): with ECL 0x49E6 at 0 (the bands' scripts clear it
+	# while the wilderness view is up) it is 2, without looking at a map.
+	if _vm.read_var(0x49E6) == 0:
+		return 2
 	var map: GeoMap = _maps[_map_index].map
 	var field := Battlefield.build(map, _pos.x, _pos.y)
 	return Placement.encounter_distance(field, _pos.x, _pos.y, int(_facing), 2)
@@ -2803,6 +2807,11 @@ func _start_event_fight() -> void:
 	_combat.area_mods = [_vm.read_byte(0x6E70), _vm.read_byte(0x6E71), _vm.read_byte(0x6E72)]
 	_combat.anti_magic = _vm.read_byte(0x49E5) > 0   # the shell (combat lane, Combat Chat 2)
 	_combat.area_block = _vm.read_byte(CURRENT_BLOCK)   # the clutter rule (combat lane, Combat Chat 5)
+	# The wilderness field (combat lane, Combat Chat 30): in the bands' blocks (the view DS:0x49FA
+	# 2-4) the band, the party's band square (ECL 0x49C3 / 0x49C4) and ECL 0x4AB3.
+	_combat.wild = [_vm_block - 25, _vm.read_var(0x49C3), _vm.read_var(0x49C4), _vm.read_var(0x4AB3)] \
+			if _vm_block in WILD_MODE_BLOCKS else []
+	_combat.open_two = _vm.read_var(0x49E6) == 0   # COMBAT's distance is 2 (GAME.OVR 0x253D, 0x7955)
 	if _duelist != null:
 		_combat.duel_party = _party.duplicate()   # a duel's figure order (combat lane, Combat Chat 6)
 	if CombatScreen.paced():

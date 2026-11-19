@@ -86,8 +86,204 @@ func scatter(roll: Callable, no_bones: bool = false) -> void:
 				cells[i] = CLUTTER[2] if roll.call(10) <= 6 else CLUTTER[3]
 
 
+# --- The wilderness field (Combat Chat 30) -----------------------------------------------
+#
+# GAME.OVR 0xD8A2 builds the dungeon field (0xCDE1) when the view DS:0x49FA is 1 and the
+# wilderness one (0xD785) otherwise (2-4: the bands 6:25, 7:26, 8:27). The field holds ground
+# ids; ground 0x20-0x41 show WILDCOM.DAX block 1's pictures 0x00-0x21 and ground 0x17 its
+# picture 0x16 (START.EXE's ground table DS:0x2744, 4 bytes an id: move cost 1 or 0xFF, 0,
+# sight 0 or 2 (2 blocks the line walk 0x2FF74), picture). Cells here keep the picture, as
+# for the dungeon: ground 0x17 and 0x36 (both "01 00 00 16") are both 22 = FLOOR.
+# 0xD785: fill with 0x17; the terrain byte DS:0x465A = the overland map's byte at the party's
+# band square (ECL 0x49C3 + the band's edge, 0x49C4; OverlandMap); then the river 0xD1AF, the
+# trees 0xD2E4, the ground scatter 0xD46F, then the clutter 0xC5D1 (scatter above).
+
+## Pictures a figure can stand on outdoors (cost 1): WILDCOM 4-7, 10-17, 20-22, 25-27, 32 and
+## RANDCOM's six.
+const WILD_WALKABLE := [4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 25, 26, 27, 32,
+		34, 35, 36, 37, 38, 39]
+## Pictures the line walk sees through outdoors (sight 0): the walkable ones and the river
+## (18, 19) and the other impassable low ground (8, 9, 23, 24, 28).
+const WILD_CLEAR := [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+		25, 26, 27, 28, 32, 34, 35, 36, 37, 38, 39]
+
+## GAME.OVR 0xCE75: the terrain byte's flags (a chain of range tests, run by the lab's
+## combat30/ce75.py on every byte). 0x02 light woods, 0x04 woods, 0x08 forest, 0x10 / 0x20 a
+## river's chance, 0x40 its own trees, 0x80 bare. Bytes no case covers (0x00, 0x05, 0x86, 0xBB,
+## 0xF7-0xF9, 0xFB, 0xFD-0xFF) leave the result unset (a stack byte): 0 here.
+const TERRAIN_FLAGS := [
+	0x00, 0x01, 0x01, 0x03, 0x03, 0x00, 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,   # 0x00
+	0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x02, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,   # 0x10
+	0x02, 0x02, 0x02, 0x02, 0x02, 0x04, 0x41, 0x05, 0x01, 0x01, 0x05, 0x01, 0x05, 0x44, 0x44, 0x40,   # 0x20
+	0x40, 0x40, 0x40, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x04, 0x48, 0x48, 0x48, 0x08, 0x08, 0x08,   # 0x30
+	0x04, 0x48, 0x48, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x20, 0x01,   # 0x40
+	0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x88, 0x88, 0x88, 0x88, 0x01, 0x01, 0x44, 0x44, 0x44,   # 0x50
+	0x44, 0x44, 0x40, 0x40, 0x40, 0x40, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x80, 0x81, 0x81,   # 0x60
+	0x81, 0x81, 0x90, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x08, 0x08, 0x08, 0x08, 0x09, 0x28, 0x28,   # 0x70
+	0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x00, 0x08, 0x08, 0x08, 0x09, 0x08, 0x09, 0x08, 0x09, 0x09,   # 0x80
+	0x08, 0x08, 0x08, 0x08, 0x09, 0x08, 0x09, 0x08, 0x08, 0x05, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05,   # 0x90
+	0x08, 0x08, 0x08, 0x88, 0x04, 0x04, 0x08, 0x08, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21, 0x21,   # 0xA0
+	0x21, 0x21, 0x60, 0x60, 0x04, 0x14, 0x14, 0x14, 0x14, 0x11, 0x14, 0x00, 0x11, 0x11, 0x11, 0x11,   # 0xB0
+	0x11, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,   # 0xC0
+	0x02, 0x12, 0x12, 0x12, 0x12, 0x12, 0x08, 0x08, 0x08, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,   # 0xD0
+	0x88, 0xA0, 0xA0, 0xA0, 0xA0, 0x28, 0x28, 0x28, 0x20, 0x20, 0xA0, 0xA0, 0xA0, 0xA0, 0x08, 0x04,   # 0xE0
+	0x04, 0x01, 0x40, 0x04, 0x80, 0x20, 0x80, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00,   # 0xF0
+]
+
+var outdoors := false
+
+
+## The flags of the terrain byte (0xCE75 with its end, 0xD139): a bare terrain (0x80) counts
+## as 0x01 instead while ECL word 0x4AB3 ([0x49D2] + 0x366) is 0xFF.
+static func terrain_flags(terrain: int, ecl_4ab3: int) -> int:
+	var f: int = TERRAIN_FLAGS[terrain & 0xFF]
+	if f & 0x80 and ecl_4ab3 == 0xFF:
+		f = (f - 0x80) | 0x01
+	return f
+
+
+## Turns this field into the wilderness one (0xD785, before the clutter): `flags` from
+## terrain_flags, `roll` the fight's die (1..n). The map squares (side) stay as built.
+func make_wild(flags: int, roll: Callable) -> void:
+	outdoors = true
+	cells.fill(FLOOR)
+	_river(flags, roll)
+	_trees(flags, roll)
+	_wild_scatter(flags, roll)
+
+
+## A cell's ground is open (ground table class 0x16: ground 0x17 or 0x36).
+func _open(x: int, y: int) -> bool:
+	return cells[y * WIDTH + x] == FLOOR
+
+
+## Sets ground id g (0x20-0x41) at the flat index i (the original indexes y * 50 + x, so x 50
+## is the next row's first cell; past the field's end nothing is written).
+func _ground(i: int, g: int) -> void:
+	if i >= 0 and i < cells.size():
+		cells[i] = g - 0x20
+
+
+## 0xD1AF: a river (ground 0x32 / 0x33, impassable, seen across) running down and right one
+## cell a row from a start column 12, 19 or 26, with fords (0x34 / 0x35, 0xD168) where a d20
+## comes up 1 and on the row after each; with no ford, one at row 16 - d9.
+func _river(flags: int, roll: Callable) -> void:
+	var chance := 0
+	if flags & 0x20:
+		chance = 0x23
+	if flags & 0x10:
+		chance = 0x4B
+	if roll.call(100) > chance:
+		return
+	var x := 0x22
+	for k in 5:
+		x -= roll.call(4)
+	while (x + 2) % 7 > 0:
+		x -= 1
+	var start := x
+	var fords := 0
+	for y in 25:
+		if x <= 0x31:
+			_ground(y * WIDTH + x, 0x32)
+			_ground(y * WIDTH + x + 1, 0x33)
+			if roll.call(20) == 1 or fords & 1:
+				_ground(y * WIDTH + x, 0x34)
+				_ground(y * WIDTH + x + 1, 0x35)
+				fords += 1
+			x += 1
+	if fords == 0:
+		var y: int = 16 - roll.call(9)
+		x = start + y
+		_ground(y * WIDTH + x, 0x34)
+		_ground(y * WIDTH + x + 1, 0x35)
+		_ground((y + 1) * WIDTH + x + 1, 0x34)
+		_ground((y + 1) * WIDTH + x + 2, 0x35)
+
+
+## 0xD2E4: trees on two open cells one above the other; the density (d100 at most) 1, 3 for
+## 0x04, 4 for 0x40, 7 for 0x08, none for 0x80 (later flags win).
+func _trees(flags: int, roll: Callable) -> void:
+	var dens := 1
+	if flags & 0x04:
+		dens = 3
+	if flags & 0x40:
+		dens = 4
+	if flags & 0x08:
+		dens = 7
+	if flags & 0x80:
+		dens = 0
+	for x in WIDTH:
+		for y in range(1, HEIGHT):
+			if not _open(x, y) or not _open(x, y - 1):
+				continue
+			if roll.call(100) > dens:
+				continue
+			var k: int = roll.call(10)
+			k = 4 + roll.call(2) if k > 8 else (k + 1) / 2
+			if flags & 0x40:
+				k = 3 + roll.call(3)
+			_ground(y * WIDTH + x, 0x1F + 4 + k)
+			if k < 5:
+				_ground((y - 1) * WIDTH + x, 0x1F + k)
+
+
+## 0xD46F: each open cell draws a d255 for the ground's small things.
+func _wild_scatter(flags: int, roll: Callable) -> void:
+	var a := 0
+	var b := 6
+	var c := 0x0F
+	var d := 0x28
+	var e := 0
+	if flags & 0x02:
+		c = 0x2D
+		d = 0x0A
+	if flags & 0x04:
+		c = 0x19
+	if flags & 0x40:
+		d = 5
+		e = 0x1E
+	if flags & 0x80:
+		a = 0x0F
+		d = 0x19
+		c = 0x0A
+	for x in WIDTH:
+		for y in HEIGHT:
+			if not _open(x, y):
+				continue
+			var i := y * WIDTH + x
+			var r: int = roll.call(255)
+			if r <= a:
+				var k: int = roll.call(4)
+				if k == 4 and y > 0 and _open(x, y - 1):
+					_ground(i - WIDTH, 0x41)
+					_ground(i, 0x40)
+				if k < 4:
+					_ground(i, 0x3C + k)
+			elif r <= a + b:
+				_ground(i, 0x36 + roll.call(3))
+			elif r <= a + b + c:
+				_ground(i, 0x29 + roll.call(4))
+			elif r <= a + b + c + e:
+				_ground(i, 0x38 + (roll.call(10) - 1) / 3 + 1)
+			elif r <= a + b + c + e + d:
+				var k: int = roll.call(4)
+				if k == 4 and not flags & 0x40:
+					k = roll.call(3)
+				_ground(i, 0x2D + k)
+
+
 func walkable(x: int, y: int) -> bool:
+	if outdoors:
+		return tile(x, y) in WILD_WALKABLE
 	return tile(x, y) in WALKABLE
+
+
+## The line walk's test (0x2FF74: the ground's sight byte): as walkable but outdoors, where
+## the river and some low ground block a step, not the view.
+func see_through(x: int, y: int) -> bool:
+	if outdoors:
+		return tile(x, y) in WILD_CLEAR
+	return walkable(x, y)
 
 
 func tile(x: int, y: int) -> int:
@@ -125,8 +321,10 @@ func _own_side(x: int, y: int, side: int) -> int:
 	return DOOR if _map.door(x, y, side) != 0 else WALL
 
 
-## A side as both squares see it.
+## A side as both squares see it. Outdoors there are no walls (the wilderness field has no map).
 func side(x: int, y: int, s: int) -> int:
+	if outdoors:
+		return OPEN
 	return _own_side(x, y, s) | _own_side(x + _DU[s], y + _DV[s], (s + 2) % 4)
 
 

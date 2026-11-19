@@ -573,7 +573,7 @@ func line_steps(a: Vector2i, b: Vector2i, walls: bool = true) -> Vector2i:
 	var err := 0
 	var steps := 0
 	while true:
-		if walls and not field.walkable(cur.x, cur.y):
+		if walls and not field.see_through(cur.x, cur.y):
 			return Vector2i(steps, 0)
 		if cur == b:
 			return Vector2i(steps, 1)
@@ -1604,7 +1604,7 @@ func can_see(a: Vector2i, b: Vector2i) -> bool:
 	var cur := a
 	var err := 0
 	while true:
-		if not field.walkable(cur.x, cur.y):
+		if not field.see_through(cur.x, cur.y):
 			return false
 		if cur == b:
 			return true

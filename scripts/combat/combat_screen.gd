@@ -53,6 +53,14 @@ var area_mods: Array[int] = [0, 0, 0]
 ## The area's ECL block (0x49F2, main sets it): the original's clutter skips bones and flowers
 ## in block 10 (GAME.OVR 0xC67B tests DS:0x84DC, its copy of the block).
 var area_block := 0
+## Set by main before a scripted fight in the wilderness bands (the original's view DS:0x49FA
+## 2-4): [band 0-2, x, y, ECL 0x4AB3]; empty elsewhere. See Battlefield.make_wild.
+var wild: Array = []
+## Set by main before a scripted fight: ECL 0x49E6 is 0 (the wilderness view). COMBAT (GAME.OVR
+## 0x253D) takes the lesser of the approach distance (ECL 0x6DC1) and 0x7955's open squares
+## ahead, and 0x7955 with 0x49E6 at 0 sets 0x6DC1 to 2 and gives 2: the fight starts at 2
+## whatever the event's own maximum and advances (8:27's kobolds, main's ready check).
+var open_two := false
 var anti_magic := false                  # set by main before a fight: ECL 0x49E5 above 0 (the shell)
 var _surprise := 0          # the script's ambush flag
 var _px := 0
@@ -210,7 +218,8 @@ func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_encounters = [{"monsters": rows, "text": ""}]
 	_enc_index = 0
 	var open_ahead := Placement.encounter_distance(_field, px, py, facing, 2)
-	_distance = maxi(mini(open_ahead, max_distance) - advances, 0)
+	_distance = 2 if open_two else maxi(mini(open_ahead, max_distance) - advances, 0)
+	open_two = false
 	_load_monsters()
 	_start_fight(dev_seed, false)
 	if dev_win_if.is_valid() and dev_win_if.call(rows):
@@ -793,6 +802,11 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 		clutter_rng.seed = seed_value
 	else:
 		clutter_rng.randomize()
+	if not wild.is_empty():
+		# The wilderness field (GAME.OVR 0xD785) comes first, with the clutter on top.
+		_field.make_wild(Battlefield.terrain_flags(_wild_terrain(), int(wild[3])), func(n: int) -> int:
+			return TpDice.random(n, "wild field") + 1 if TpDice.on else clutter_rng.randi_range(1, n))
+		_art = CombatArt.load_set(_game_path, true)
 	_field.scatter(func(n: int) -> int:
 		return TpDice.random(n, "clutter") + 1 if TpDice.on else clutter_rng.randi_range(1, n), area_block == 10)
 	# The members who are down get places too (Placement.place_team's `down`), in party order.
@@ -861,6 +875,17 @@ var _asking_ally := false
 var _move_start := {}          # where MOVE began (Esc puts the figure back there)
 var _asking_abort := false     # ABORT SPELL? (EXIT from a spell's aim)
 var _ally_target := -1
+
+
+## The terrain byte under the party's band square (0xD7A0: DS:0x3648[y * 44 + x + the band's
+## edge], read from the player's START.EXE by OverlandMap); 0 when it can't be read.
+func _wild_terrain() -> int:
+	var om := OverlandMap.shared(_game_path)
+	if om == null or wild.size() < 4:
+		return 0
+	var band: int = clampi(int(wild[0]), 0, om.band_left.size() - 1)
+	var i: int = int(wild[2]) * OverlandMap.WIDTH + int(wild[1]) + om.band_left[band]
+	return om.cells[i] if i >= 0 and i < om.cells.size() else 0
 
 
 ## A figure's attack pose (its icon's block + 128), kept with it.

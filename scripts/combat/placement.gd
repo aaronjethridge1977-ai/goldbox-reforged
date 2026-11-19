@@ -171,7 +171,7 @@ func _place_one(facing: int, anchor: Vector2i, is_party: bool, half: int, free: 
 			var foot := Combat.cells_at(cell, fp)
 			var ok := true
 			for p in foot:
-				if not _field.tile(p.x, p.y) in Battlefield.WALKABLE or _used.has(p):
+				if not _field.walkable(p.x, p.y) or _used.has(p):
 					ok = false
 			if ok:
 				free[tries].erase(cur)
