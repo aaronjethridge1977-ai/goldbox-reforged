@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 61: the wall ahead in statediff; checks 75-86 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE, 5:4 the scribe, rests in 2:20 and 3:0, a band PARLAY), DIFFCHECKS 86/86
+## Chat 61: the wall ahead in statediff; checks 75-86 (2:20 the Down key, 6:1 the seedy little man's ROB 0, 1:18 the plaza's fights and FLEE, 5:4 the scribe, rests in 2:20, 3:0, 8:13 and 3:14, a band PARLAY), DIFFCHECKS 88/88
 
 - **The wall ahead joins statediff.** The original's save keeps ECL 0xC04E (DS 0x6AB0) at byte 0x3204; statediff
   now compares it in a 3D area (`wall ahead (0xC04E)`). On the code before chat 61, **13 of the 74 checks differed
@@ -214,6 +214,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **Check 86, 8:27 a band encounter's PARLAY** (check 31's start, tpseed 31310016): kobolds, PARLAY, HAUGHTY: a d31,
   back on the band with no text (every attitude the same in ours). Seven draws identical. COMBAT, WAIT and FLEE
   there go to the fight, which parts at the wilderness clutter (below).
+- **Check 87, 8:13 a rest interrupted by the kobolds' rocks** (check 42's start, tpseed 61610001): ECL DAMAGE on
+  every member, two pages, 11:01; PHINEAS (4 HP) hit for 5. **Found:** the original's save has him **dying** (status
+  5, 0 HP); ours made him unconscious. The original's damage routine (START.EXE 0xBA:0x2228, from GAME.OVR 0x96BF)
+  follows the fight's rule (ours' `combat.gd`): 0 HP unconscious, below 0 dying, more than 9 below dead; ours'
+  `ecl_vm.gd` `_hurt` now does too. That moved check 69 (the priest's fireball fells DIRTEN before the fight): the
+  original's save after the fight has him at 4: **a fight's end turns every dying member unconscious, one down before
+  the fight too** (its figure list holds the whole party); `main.gd` `_on_event_fight_finished` now does (Combat's
+  `finish()` covers the fighters). 25 draws identical; fails on the code before.
+- **Check 88, 3:14 a rest interrupted by three thieves with slings** (check 43's start, tpseed 61610001): DAMAGE's
+  volley form (a random member and a d20 to hit per bullet), PHINEAS hit for 4 and 3 at 4 HP: dying. 12 draws
+  identical; fails on the code before.
+- **Open (to Combat, Rule changes):** a member left dying by a script bleeds from 0 in ours' next fight; whether the
+  original bleeds a dying member outside fights (steps, time) was not seen (an event cut the DOSBox walk short).
 - **Not a check yet: a band fight** (8:27, check 31's start, tpseed 31310016: YOU SPOT A GROUP OF KOBOLDS, COMBAT;
   c34d's party): parts at the field's setup, the wilderness clutter (GAME.OVR 0xD3A1: a d100 of 0 at 0xD3AC, then
   a d10 at 0xD3BF; ours, the dungeon rule, draws the next cell's d100), Player 21's open request (a) to Combat. The

@@ -173,6 +173,23 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 61:** checks 75-88 in `data/c61/chk75..88/` (`data/c61/cd/` links `game` and each). **The wall ahead in
+statediff:** `tools/statediff.gd` compares the save's byte 0x3204 with ours' 0xC04E in a 3D area; the survey that found
+13 checks differing ran from a worktree (`/tmp/wa61`) with the comparison patched in, through `diffcheck.sh <worktree>`
+(90 s): a quick way to test a new comparison against every check before it joins. **Reading the original's state
+live:** `dsread.py <DS hex> <n>` (0x6AAD: x, y, facing x 2, the wall ahead, the square's byte); ECL cells through the
+far pointer at DS 0x49D2 (cell = 0x4900 + 2 x index; `/tmp/c61/ecl_poke.py`, kept in `data/c61/ecl_poke.py`, reads and
+writes one: 0x49FB = 1 showed AREA's NOT HERE), the selected member's record through DS 0x5D92 (`data/c61/selstat.py`:
+status at +0x10C). **Seed searches in ours:** one run over 40 seeds (`load=G,wait,tpseed=<s>,...` repeated) found the
+plaza's encounters (check 51's start), the scribe (check 23's), a band encounter (check 31's) and rest interruptions
+(an eight-hour rest after the arrival: `E,R,H,I x8,R`; the original `e r h i x8 r`). **Trace:** start the reader 3 s
+before the first key (`sleep 3`), or it misses the first draws (an empty trace, or one starting at draw 7); **a full
+buffer blocks the game** (~7980 draws: the original froze at CONTINUE BATTLE until a second `trace.py run` drained
+it), so give a long fight's reader enough seconds. **Mksave jump saves:** the original's LOAD keeps 0x49F2 as saved,
+so `49F2=<block>` makes the target area's init keep the jump's square (6:1's would place the party at the gate).
+Traces: `data/c61/*_orig.txt`; the band's kobold fight (for Combat's clutter) `data/c61/kobold_orig.txt` (from draw
+7) and its end save `data/c61/kobold_band/orig`. Lab slot G backed up in `data/c61/gbak/` and put back; J put back.
+
 **Chat 60:** checks 72-74 in `data/c60/chk72..74/` (`data/c60/cd/` links `game` and each). 72/73 start from check
 71's start (`slot.py data/c59/chk71/start G game J`, `boot j`, `seed.py set 33330018`); 74 from `mksave.py J G 1 18 4
 9 N 4AB0=1` (lab slot G backed up to `data/c60/gbak/` and put back, the extra G files mksave wrote deleted). Traces:
