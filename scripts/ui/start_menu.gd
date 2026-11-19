@@ -254,6 +254,17 @@ func _draw() -> void:
 	g.update()
 
 
+## P83 (Jeremy): on the screens that wait for any key (the SSI logo, the title, the original's credits) a
+## left click goes on as Enter does. The pictures' controls stop the click before _unhandled_input sees it.
+func _input(event: InputEvent) -> void:
+	if not visible or not MouseInput.on() or not _stage in ["logo", "title", "orig_credits"]:
+		return
+	var b := event as InputEventMouseButton
+	if b != null and b.pressed and b.button_index == MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()
+		MouseInput.press(KEY_ENTER)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or event.is_echo():
 		return
