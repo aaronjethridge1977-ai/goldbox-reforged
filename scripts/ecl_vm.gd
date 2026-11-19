@@ -67,6 +67,7 @@ var square_info: Callable
 var wall_info: Callable   # (x, y, facing) -> the wall on the script's map (main: CALL 0xC01E / 0xC018)
 var stack: Array[int] = []
 var compare := 0
+var _prev_op := ""         # the op run before (SPELL reads what its handler left: chat 62)
 
 # Output since the last clear_output()
 var text := ""                   # accumulated message text
@@ -131,7 +132,7 @@ var error := ""
 var program := -1
 ## The character window: ECL addresses 0x6B00 + offset read and write fields of the selected
 ## party member (LOAD_CHAR, WHO), at the offsets the Gold Box engine uses:
-##   0x00 name   0x18 constitution   0x21.. memorized spells (from 1, as SPELL counts)
+##   0x00 name   0x18 constitution   0x20..0x70 the record's bytes 0x18..0x68 (writes only)
 ##   0x73 class (0x72 race is not read: a plain cell, as GAME.OVR 0x7C8F)   0x9B save vs petrification   0xA5..0xAC thief skills
 ##   0xB8 control (0 a player character, 128+ an NPC)   0xBB copper 0xBD electrum
 ##   0xBF silver 0xC1 gold 0xC3 platinum (16-bit)   0xD8 alignment
@@ -197,6 +198,7 @@ func copy_from(src: EclVM) -> void:
 	pc = src.pc
 	stack.assign(src.stack)
 	compare = src.compare
+	_prev_op = src._prev_op
 	menu = src.menu.duplicate()
 	menu_vertical = src.menu_vertical
 	menu_question = src.menu_question
@@ -533,8 +535,6 @@ func _char_get(off: int, whole := false) -> int:
 		if whole:
 			return coins if off == base else -1
 		return coins & 0xFF if off == base else (coins >> 8) & 0xFF
-	if off >= 0x21 and off <= 0x35:
-		return m.memorized[off - 0x21] if off - 0x21 < m.memorized.size() else 0
 	if off >= 0xA5 and off <= 0xAC:
 		return m.thief_skill(tables, off - 0xA5) if tables != null else 0
 	match off:
@@ -585,14 +585,12 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 		else:
 			m.money[i] = (m.money[i] & 0xFF) | (v << 8)
 		return true
-	if off >= 0x21 and off <= 0x35:
-		var k := off - 0x21
-		if k < m.memorized.size():
-			if v == 0:
-				m.memorized.remove_at(k)
-			else:
-				m.memorized[k] = v
-		return true
+	if off >= 0x20 and off <= 0x70:
+		# Chat 62, GAME.OVR 0x7F6C: the record's bytes 0x18..0x68 as they lie (offset - 8: the memorized
+		# spells, the spell book...), and the cell as well (0x8199 stores it first); a read is the plain
+		# cell (0x7C9F has no case for them). Ours had 0x21.. as the memorized list from its top.
+		m.set_record_byte(off - 8, v & 0xFF)
+		return false
 	match off:
 		0xB8:
 			m.npc = v
@@ -939,6 +937,8 @@ const QUIET := ["CLEAR_BOX",
 func _exec(ins: Dictionary) -> void:
 	var a: Array = ins.args
 	var op := String(ins.op)
+	var prev_op := _prev_op
+	_prev_op = op
 	if op in QUIET:
 		return
 	match op:
@@ -963,17 +963,24 @@ func _exec(ins: Dictionary) -> void:
 			_pause_for_menu({}, names)
 			_menu_kind = "who"
 		"SPELL":
-			# Finds the spell memorized by anyone: its place in that member's list (from 1)
-			# and the member's index; 255 and the last index if no one has it.
+			# Chat 62, GAME.OVR 0x3949: the loop's stop flag ([bp-8]) is never cleared before it, so it
+			# holds what the handler before left in that stack slot. After an ON_GOTO / ON_GOSUB (Pool's
+			# only SPELL, 3:14's cabinets: CAST KNOCK) that is the high byte of a jump target, never 0: the
+			# loop doesn't run and SPELL answers place 1, member 0, so the first member "casts Knock"
+			# whether anyone has it or not, and nobody's Knock is spent (DOSBox, three parties). With the
+			# flag clear (ours assumes so after any other op: not seen) the loop reads only the first
+			# member's record bytes 0x18..0x69 and counts one past him.
 			var id := _value(a[0])
-			var place := 255
-			var who := party.size() - 1
-			for i in party.size():
-				var k: int = (party[i] as PartyMember).memorized.find(id)
-				if k >= 0:
-					place = k + 1
-					who = i
-					break
+			var place := 1
+			var who := 0
+			if not (prev_op in ["ON_GOTO", "ON_GOSUB"]) and not party.is_empty():
+				var d: PackedByteArray = (party[0] as PartyMember).to_record()
+				place = 255
+				for p in range(1, 0x53):
+					if 0x17 + p < d.size() and d[0x17 + p] == id:
+						place = p
+						break
+				who = 1
 			_write(a[1], place)
 			_write(a[2], who)
 		"FIND_ITEM":

@@ -9,7 +9,7 @@ extends SceneTree
 ## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the seven kinds of coins, and the items (name bytes, plus,
-## count, readied); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## count, readied), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
@@ -132,6 +132,11 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 		if x != y:
 			n += 1
 			print("%s %s: original %d, ours %d" % [name, f[0], x, y])
+	var ts := _spells(a)
+	var us := _spells(b)
+	if ts != us:
+		n += 1
+		print("%s memorized spells: original %s, ours %s" % [name, str(ts), str(us)])
 	var ti := _items(t.items)
 	var ui := _items(u.items)
 	if ti != ui:
@@ -147,6 +152,17 @@ static func _int(d: PackedByteArray, off: int, size: int) -> int:
 		1: return d[off]
 		2: return d.decode_u16(off)
 	return d.decode_u32(off)
+
+
+## The memorized spells (record bytes 0x17..0x2B, a spell id each, + 0x80 while being memorized), sorted:
+## where they sit in the record isn't compared (ours keeps no gaps; chat 62).
+static func _spells(d: PackedByteArray) -> Array:
+	var out := []
+	for i in range(0x17, mini(0x2C, d.size())):
+		if d[i] != 0:
+			out.append(d[i])
+	out.sort()
+	return out
 
 
 ## Items as comparable keys: name word bytes 47-49, plus, count, readied (63-byte records).

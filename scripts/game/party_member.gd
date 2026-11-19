@@ -555,6 +555,30 @@ func sort_memorized() -> void:
 	memorized = out
 
 
+## A script's write into the record (the character window's 0x20..0x70, GAME.OVR 0x7F6C: record byte
+## `r` = offset - 8): the memorized spells 0x17..0x2B (`memorized` from 0x2B down; a 0 between them drops
+## out, as our list keeps no gaps), the maximum HP at 0x32, the spell book from 0x33, else the raw byte.
+func set_record_byte(r: int, v: int) -> void:
+	if r >= 0x17 and r <= 0x2B:
+		var b: Array[int] = []
+		b.resize(21)
+		b.fill(0)
+		for k in mini(memorized.size(), 21):
+			b[20 - k] = memorized[k]
+		b[r - 0x17] = v
+		var out: Array[int] = []
+		for i in range(20, -1, -1):
+			if b[i] != 0:
+				out.append(b[i])
+		memorized = out
+	elif r == 0x32:
+		hp_max = v
+	elif r >= 0x33 and r < 0x33 + spell_book.size():
+		spell_book[r - 0x33] = v
+	elif r < raw.size():
+		raw[r] = v
+
+
 ## Removes one memorized copy of `id` (after casting it, or losing it).
 func forget(id: int) -> void:
 	# The copy lowest in the record goes (Combat Chat 18, DOSBox: ELWEN's Bless cast with the list's last
