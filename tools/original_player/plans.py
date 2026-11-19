@@ -146,6 +146,11 @@ class Walk:
             self._fights0 = p.fights
         elif p.fights > f0:
             self._fights0 = p.fights
+            if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+                # Player 25: a member dead after a walk's fight (p25h2: BRAM in a band fight in 6:25, the rest
+                # standing well, so no heal came to see it): a loss under the death rule
+                raise_stop(p, "walk: a member is dead after fight %d (a loss under the death rule: reload from the"
+                              " last checkpoint)" % p.fights)
             if hurt(members(p.g.mem)):
                 p.note("walk", "fight %d left the party hurt (%s): prepare before going on (bot.gd _hurt, _prepare)" % (
                     p.fights, party_hp(p.g.mem)))
@@ -425,6 +430,10 @@ class Heal:
                 return True, None, ""
             if h.get("op") and h["op"][0] == "rest" and p.fights > h["fights0"]:
                 h["interrupts"] += 1
+                if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+                    # Player 25: the fight that interrupted the rest killed a member (p25j5: BRAM at 6:25 3,31)
+                    raise_stop(p, "heal: a member is dead after fight %d (a loss under the death rule: reload from"
+                                  " the last checkpoint)" % p.fights)
                 h["op"], h["memo_last"] = None, None     # Player 15: the rest's spells may be lost: MEMORIZE again
                 if h.get("campday"):
                     # Player 19: `campday`: the interruption is what the camp waits for (the nomads' kobolds); the
@@ -699,6 +708,8 @@ class Plan:
         if h is None and scr["bottom"].split()[:1] == ["CAMP:"] and p.goal + 1 < len(gs) \
                 and isinstance(gs[p.goal], Walk) and isinstance(gs[p.goal + 1], Heal) and gs[p.goal + 1].inn:
             # Player 14: the inn (TO REST HERE, WHO WILL PAY) opens its camp before the walk sees its square.
+            if any(m["status"] == 6 or m["status"] > 6 for m in members(p.g.mem)):
+                raise_stop(p, "heal: a member is dead (a loss under the death rule: reload from the last checkpoint)")
             p.log("GOAL done: %s (the inn's camp)" % gs[p.goal])
             p.goal += 1
             p.goal_key = p.g.nkeys

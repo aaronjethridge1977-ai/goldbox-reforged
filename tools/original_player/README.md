@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`; `nocast`; 0x4A8C
+## Player 25 (2026-11-18): segments 20 to `pyramid2`, 21 to `pyramid3`, 22 to `lizard`, 23 to `buccaneers0`, 24 to `heir`, 25 to `zhentil`; `nocast`; 0x4A8C
 
 **Segment 20, second part (`s20m` -> `pyramid2`)** (plan `plans/p25_c34d_20b_pyramid2.plan`, lab `p25/seg20b.plan`; runs
 p25a1-a3 from `p2start/p24b6_s20m` and `p25a1_s20r`, p25b1 from `p25a3_s20t`): `heal` at 7:23 4,1 (**`s20r`**), the dial
@@ -1403,6 +1403,31 @@ Against the bot's `heir`: new beside `buccaneers0`'s only 0x4A05 (the clerk's co
 - p25g1 stopped at 6,7 (event 12, inside the pen: no route, as the bot's own "no route from (8, 6)"; dropped). p25g2
   stopped at the tour to 7,7: **a step the square's script turned back stays refused for the whole run** (the pen's
   gate while guarded), so after the stampede the walker found no way in; a new run from `s24a` (p25g3) went in.
+
+**Segment 25 (`buccaneers` -> `zhentil`)** (the bot's `buccaneers` is its `heir`: nothing between; plan
+`plans/p25_c34d_25_zhentil.plan`, lab `p25/seg25.plan`; runs p25h1-h2 from `p2start/p25g3_heir`, p25j* from
+`p25h2_s25b`): out of 6:1 by its gate (7,0 N), 6:25 12,20, 15,20 E, 7:26 7,20, 7,28 and a step S (the boat), the inn
+(**`s25a`**); City Hall twice, each visit with a step S into Cadorna's chambers (5,6), the shop, the halls, the inn
+(**`s25t`**); 2:20, 8:29, 1:18, 7:26 11,20, 2,20 W into 6:25 (**`s25b`**), 3,30, 3,31, `prepare`, a step S onto 3,32 (the
+riders: ARE YOU THE DIPLOMATIC ENVOYS: YES), 6:28 (**`s25c`**, `norest`: main's `rest 6:28 none`), the tours to 6,0 and
+5,0 (the dinner: CITY OLD TROUBLE DON'T TALK, MAGIC MENTION POOL, POLITICS DON'T KNOW; SLEEP WITH A WATCH; the night's
+two fights), `cure`: **`zhentil`** (6:28 5,0 E).
+- **The heir's escape** (ECL 6:1 0x9A64): with the boy, each step adds 1 to 0x4A19 and a d11 (+1 while the animals
+  run) at or under it brings the next wave (0x4A1A: 20 guards; the alarm, 30 and 4; 40 and 4; then the captain:
+  "YOU MAY RANSOM YOURSELVES OR DIE", SURRENDER (robbed: ROB 1, 75, 50; the rescue kept, 0x4AA9 = 128) or ATTACK (the
+  captain, 15 and 40: a win captures the fort, 0x4A8B = 255)). The bot's dice let it walk out unseen; p25h1 met all
+  three waves and stopped at the captain (no answer); **lane decision: SURRENDER** (main's bot takes the choice that
+  isn't an attack: "LEAVE rather than ATTACK"). p25h2 met two waves and walked out.
+- **Cadorna's summons came at this trip** (the heir rescued, Bivant's offer is gone from the clerk's three): 0x4A98
+  254, his chambers, the packet (0x4A98 = 255), which 6:25's riders (3,32, ECL 6:25 0x9E4C) need.
+- **A member dead after a fight now stops the run wherever it happens** (plans.py: after a walk's fight, after the
+  fight that interrupts a rest, at the inn's camp): p25h2's BRAM died in a band fight in 6:25 after `s25b`, the others
+  standing well, so no heal came to look and the run went on into 6:28 with him dead (its `s25c` and `zhentil` are
+  void; p25i1-i3 from that `s25c` too); p25j5's BRAM died in the fight that interrupted the band rest at 3,31 and the
+  inn trip healed the rest.
+- **The band rest before the riders** (3,31): p25j1's was interrupted five times; the plan now has main's bot's trip to
+  the inn for an interrupted rest (an `inntrip` block: 6:25 15,20 E, the boat, the inn, back by 2:20, 8:29, 1:18,
+  7:26 2,20 W), as the bot's own two inn trips here. p25j2-j4 void (two try loops ran at once).
 
 Lab: `p25/` (seg20b.plan, seg21.plan, seg22.plan, `ecl3_8.txt`, `ecl8_16.txt`, tries.sh: `tries.sh <prefix> <first> <last> <p2start save> <plan> <after> <goal>`,
 `ecl7_26.txt`, `*.cpdiff.txt`, `*.q.out`), saves `p2start/p24b6_s20m`, `p25a1_s20r`, `p25a3_s20t`, `p25b1_pyramid2`,
