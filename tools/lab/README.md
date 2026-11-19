@@ -173,6 +173,19 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 59:** checks 68-71 in `data/c59/chk68..71/` (`data/c59/cd/` links `game` and each). **cmpfight2.sh's
+original side dropped the walk's keys from check 25's start (the party ended at the offering box): drive the original by
+hand instead:** `pl.py boot j`, `trace.py install`, `seed.py set <hex>`, the walk with `pl.py do <key> wait=4`, then
+`(DISPLAY=:99 setsid timeout 400 python3 trace.py run 380 > <trace> &)` before the first drawing key, the menu keys with
+`dump`, `presser.py <s> noenter`, `killmine.py "trace.py run"`, `partyrec.py <names>` appended; then CONTINUE BATTLE
+`n`, `enter`, `e`, `n`, ENCAMP SAVE J (`e s j`, `n`), `slot.py game J <dir>/orig F`. Traces: `data/c59/accept_orig.txt`
+(981), `leave_orig.txt` (1164), `run220_orig.txt` (1109). **Never write the word the kill helper matches in a command
+line that runs cmpfight2.sh** (`cat data/<that>.pid` killed the shell). **A seed search in ours in one run:** keys
+`load=G,wait,tpseed=<s1>,Up,wait,wait,load=G,wait,tpseed=<s2>,...` through `data/c51/run.sh <check dir>` (60 seeds, 8 s).
+A Player segment in a private OP_LAB: `/tmp/oplab59` (godot linked, `qs.cfg`, `root/POOLRAD`, `logs/<run>.log` and
+`.trace.txt` copied, `proj/` imported), `OP_LAB=/tmp/oplab59 OP_SAVES=~/gbr/player_lab/.lab/player/saves
+OP_SEG_TIMEOUT=1300 setsid nohup timeout 1500 python3 segment.py p20a3 s11c s11k --tplog` (12 minutes).
+
 **Chat 57:** checks 65-67 in `data/c57/chk65..67/` (`data/c57/cd/` links `game` and each; run one with
 `DC_DATA=$PWD/data/c57/cd DIFFCHECK_ONLY=<n> bash data/c52/dc_new.sh <repo>`). `data/c57/oursrun.sh <game dir> <cfg>
 "<keys>"` runs ours on a kept game folder (for ours' ENCAMP SAVE after a 5:3 jump: run.sh keeps nothing). **A fight
