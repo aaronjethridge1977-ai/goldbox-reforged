@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; segment 28 to `stojanow`
+## Player 27 (2026-11-19): the Stojanow Gate for Jeremy (videos, report, saves); `picks` at all three levels; `shortcutwin`; `sell ... gear`; segments 28 to `stojanow`, 29 to `mopup2`
 
 **For Jeremy** (`.lab/for-jeremy/stojanow/`: README.md, REPORT.md): two videos of the wall fight in the original at game
 SPEED 3 (p27v1: p26d2 replayed from `s28b` and its seed, every draw identical; p27v2: a FLEE try, p26e1's seed,
@@ -1358,6 +1358,27 @@ win (**`s28w`**), YOU HAVE TAKEN THE GATE (0x4AB9 = 254, 0x4A77 = 127, as the bo
   words (0x49CC, 0x49F0, 0x4A62/63, the alarm's time) and 0x4A34 now agrees.
 - **The mages' two rings were left** (the bot took them): every member carries 16 items, the tool's take rule finds
   no room.
+
+**Second tool gap: spare gear never sold.** Main's bot sells "spare gear" at every town trip's shop (bot.gd: not
+readied, not a keeper, not the member's missile kit, price 2 or more: `m.items.erase`, half price); the Player's
+`sell gems` sold only gems, so by `stojanow` every member carried 16 items (Long Bows and Chain Mail from Podol on):
+**encumbrance 4085, MOVEMENT 3** on ARN's sheet (the whole party moved 3 in fights, the wall's included), loot and
+the clerk's coins left behind ("treasure left", p27d1). **New: `sell gems [share] gear`** (plans.py `spare_gear`,
+`_sell_gear`): after the gems, each member's spare gear sold at the shop, VIEW, ITEMS, the item lit, SELL, YES (the
+light stays on the next row; an item offered twice and kept is left); missile kit from the ITEMS file (+13 class
+flags against the record's +0xB0, +14 launcher 0x08 / thrown 0x10; ammunition types 28 and 73). Probed in the shop
+from `mopup2` (p27e1-e3: 37 items sold). Also: the camp's spell lists are read on rows 4-22 (CEDRIC's three levels
+put the light below row 17: p27d2 stopped at "no single lit spell").
+
+**Segment 29 (`stojanow` -> `mopup2`): reached** (plan `plans/p27_c34d_29_mopup2.plan`, lab `p27/seg29b.plan`; run
+p27d3 from `p2start/p27c2_stojanow`, seed 27d10003): main's "town" (out by 4,15 S, 1:18 0,4 W, the band's western
+edge LEAVE, 12,27 and a step E: BOAT; the temple of Tyr, the inn), **one extra shop visit, gear only, before City
+Hall** (lane decision: the packs the old tool filled; 50 items sold in the two visits), City Hall twice (the gate's
+reward, Urslingen at 5,7), the shop (gems, gear, the pile shared), the halls (ARN 4, ELWEN 5/5/4, LIRA 4/3, DORN 4/4;
+the bot's BRAM, ELWEN, LIRA), the inn: **`mopup2`** (3:0 4,12 S, nobody hurt). The bot's "mopup" had nothing to do.
+p27d1 (without gear) reached it too but left the clerk's coins; p27d2 stopped at the cure's list (above).
+- Against the bot's `mopup2` (`p27/mopup2.cpdiff.txt`): 34 words, fewer than at `stojanow` (the clock and the save's
+  own words now agree); no new one.
 
 ## Player 26 (2026-11-19): segment 27 to `mopup1`; segment 28 blocked at the Stojanow Gate (6 of 6 lost); `restuntil`; 0x4A99 is the clerk's
 

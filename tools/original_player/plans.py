@@ -74,7 +74,7 @@
   (a walk to an event that turned the party back is done); a fight on a walk that leaves the party hurt (bot.gd
   _hurt) is followed by a heal of anyone hurt before the walk goes on.
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
-  sell gems [share]              (Player 15) the next shop visit: every member's gems and jewellery APPRAISEd and
+  sell gems [share] [gear]       (Player 15; gear: Player 27, the bot's spare gear after the gems) the next shop visit: every member's gems and jewellery APPRAISEd and
                                  SOLD (main's bot sells them before training), then EXIT (or the visit's `buy`);
                                  `share`: then everyone's coins POOLed and SHAREd (to fund every trainee)
   buy <m> <item> | <m> <item> ...
@@ -631,6 +631,47 @@ class AnswerFrom:
         return True, None, ""
 
 
+# Player 27: main's bot's spare gear (bot.gd's town "sell": "sold spare gear"): an item nobody has readied, not a
+# keeper (loot.worth_taking's magic and quest words), not the member's missile kit (ammunition; the best launcher or
+# thrown weapon the member can use), priced 2 or more. The ITEMS file: 16 bytes a type (slot +0, class flags +13,
+# flags +14: 0x08 launcher, 0x10 thrown; ours' item_types.gd); a member's class flags at record +0xB0.
+_ITEM_TYPES = None
+
+
+def _item_types():
+    global _ITEM_TYPES
+    if _ITEM_TYPES is None:
+        d = open(os.path.join(orig.GAME, "ITEMS"), "rb").read()
+        _ITEM_TYPES = [d[i:i + 16] for i in range(2, len(d) - 15, 16)]
+    return _ITEM_TYPES
+
+
+def _keeper(it):
+    up = it["name"].upper()
+    return it["plus"] != 0 or "+" in up or it["type"] in loot.QUEST_ITEM_TYPES or any(w in up for w in loot.LOOT_WORDS)
+
+
+def spare_gear(rec, items):
+    """bot.gd's spare gear of one member: [index in the item list] to sell. items: [(item dict, readied byte)]."""
+    T = _item_types()
+
+    def missile(it):
+        t = T[it["type"]] if it["type"] < len(T) else bytes(16)
+        return t[0] == 0 and rec[0xB0] & t[13] and t[14] & 0x18
+
+    def kit(i, it):
+        if it["type"] in (28, 73):
+            return True
+        if not missile(it):
+            return False
+        for k, (o, _) in enumerate(items):
+            if k != i and missile(o) and (o["plus"] > it["plus"] or o["plus"] == it["plus"] and (
+                    o["price"] > it["price"] or o["price"] == it["price"] and k < i)):
+                return False
+        return True
+    return [i for i, (it, rd) in enumerate(items) if not rd and not _keeper(it) and not kit(i, it) and it["price"] >= 2]
+
+
 class ShortcutWin:
     """Player 27: `shortcutwin <area> <x,y>` (Q27 (a)): arms the logged shortcut win for the next fight that starts
     with the party on that square (game.py _shortcut_win: the monsters' HP 0 at its first poll)."""
@@ -1065,6 +1106,11 @@ class Plan:
             if jw:
                 return "j", "sell: JEWELRY (%s has %d)" % (P[sel][1], jw)
             return "e", "sell: %s's gems and jewellery sold" % P[sel][1]
+        gear = "gear" in self.sells[getattr(p, "sell_visit", 0)]
+        if gear and not any(sum(held(j)) for j in range(len(P))):
+            r = self._sell_gear(scr, st, p, P, sel, bw)
+            if r:
+                return r
         if scr["kind"] == "hmenu" and bw[:2] == ["BUY", "VIEW"]:
             todo = [j for j in range(len(P)) if sum(held(j))]
             if not todo and "share" in self.sells[getattr(p, "sell_visit", 0)] and not getattr(p, "sell_shared", False):
@@ -1086,7 +1132,7 @@ class Plan:
                     "%s %d" % (P[j][1], struct.unpack_from("<H", mem.far(P[j][0][0], P[j][0][1], 0x120), 0x88 + 8)[0])
                     for j in range(len(P))))
                 p.sell_visit = getattr(p, "sell_visit", 0) + 1
-                p.sell_shared, p.sell_pooled = False, set()
+                p.sell_shared, p.sell_pooled, p.gear_tries = False, set(), {}
                 if self.buys and getattr(p, "buy_visit", 0) < len(self.buys):
                     if not self.buys[p.buy_visit if hasattr(p, "buy_visit") else 0]:
                         # Player 17: an empty `buy` line is this visit's (the sale's): nothing bought, EXIT
@@ -1098,6 +1144,53 @@ class Plan:
             if sel != j:
                 return ("end" if sel is None or j > sel else "home"), "sell: select %s" % P[j][1]
             return "a", "sell: APPRAISE (%s: %d gems, %d jewellery)" % ((P[j][1],) + held(j))
+        return None
+
+    def _sell_gear(self, scr, st, p, P, sel, bw):
+        """Player 27: `sell gems share gear`: after the gems, each member's spare gear (spare_gear) sold at the shop:
+        the member selected, VIEW, ITEMS, the item lit (End / Home), SELL, YES ("IS IT A DEAL?"); the light stays on
+        the next row. An item offered twice and still there is left (the shop wouldn't take it). None when done."""
+        mem = p.g.mem
+        tries = getattr(p, "gear_tries", None)
+        if tries is None:
+            tries = p.gear_tries = {}
+
+        def todo(j):
+            (s_, o_), r = P[j][0], mem.far(P[j][0][0], P[j][0][1], 0x120)
+            io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
+            items = [(loot.item(x), x[52]) for _, x in loot.chain(mem, iseg, io)]
+            idx = [i for i in spare_gear(r, items) if tries.get((j, len(items), i, items[i][0]["name"]), 0) < 2]
+            return idx, items
+        b = " ".join(bw)
+        if "IS IT A DEAL" in b:
+            got = " ".join(str(st["rows"][r]).strip("?\\ ") for r in (21, 22))
+            p.note("sell", "%s: %s" % (P[sel][1] if sel is not None else "?", got))
+            return "y", "sell gear: YES (%s)" % got
+        if scr["kind"] == "hmenu" and bw[:2] == ["BUY", "VIEW"]:
+            left = [j for j in range(len(P)) if todo(j)[0]]
+            if not left:
+                return None
+            j = left[0]
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "sell gear: select %s" % P[j][1]
+            return "v", "sell gear: VIEW (%s)" % P[j][1]
+        if bw[:1] == ["VIEW:ITEMS"]:
+            return ("i", "sell gear: ITEMS (%s)" % P[sel][1]) if sel is not None and todo(sel)[0] else \
+                ("e", "sell gear: %s done, EXIT the sheet" % (P[sel][1] if sel is not None else "?"))
+        if "SELL" in bw and "ITEMS" in str(st["rows"][1]):
+            idx, items = todo(sel)
+            if not idx:
+                return "e", "sell gear: %s's list done, EXIT" % P[sel][1]
+            i = idx[0]
+            target = 5 + i
+            lit = [r for r in range(5, 21) if screens._rowcol(st["im"], r) == screens.WHITE]
+            if len(lit) != 1:
+                raise_stop(p, "sell gear: no single lit item (rows %s)" % lit)
+            if lit[0] != target:
+                return ("end" if target > lit[0] else "home"), "sell gear: light to %s" % items[i][0]["name"]
+            k = (sel, len(items), i, items[i][0]["name"])
+            tries[k] = tries.get(k, 0) + 1
+            return "s", "sell gear: SELL %s" % items[i][0]["name"]
         return None
 
     # -- Player 12: BUY (`buy` lines; the shop's list is the loot pointer DS:0x6810, the buyer DS:0x5D92) ----
@@ -1211,9 +1304,9 @@ class Plan:
             if not spells:
                 return "e", "memorize: the member's list done, EXIT"
             want = spells[0].upper()
-            rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+            rows = {r: st["rows"][r].strip("?\\ *") for r in range(4, 23)}
             hit = [r for r, t in rows.items() if t == want]
-            lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+            lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
             if hit:
                 if len(lit) != 1:
                     raise_stop(p, "memorize: no single lit spell (rows %s)" % lit)
@@ -1379,9 +1472,9 @@ class Plan:
         if bw[:2] == ["CHOOSE", "SPELL:"] and "CAST" in bw and op[0] == "cast":
             if h.get("sub") == "over":
                 return "e", "heal: EXIT the spells in memory"
-            rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+            rows = {r: st["rows"][r].strip("?\\ *") for r in range(4, 23)}
             hit = [r for r, t in rows.items() if t == "CURE LIGHT WOUNDS"]
-            lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+            lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
             if not hit:
                 raise_stop(p, "heal: no CURE LIGHT WOUNDS in %s's memory" % P[op[1]][1])
             if len(lit) != 1:
@@ -1407,9 +1500,9 @@ class Plan:
                 if not spells or h.get("sub") == "over":
                     return "e", "heal: the member's list done, EXIT"
                 want = spells[0]
-                rows = {r: st["rows"][r].strip("?\\ *") for r in range(5, 18)}
+                rows = {r: st["rows"][r].strip("?\\ *") for r in range(4, 23)}
                 hit = [r for r, t in rows.items() if t == want]
-                lit = [r for r in range(5, 18) if screens._rowcol(st["im"], r) == screens.WHITE]
+                lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
                 if not hit:
                     # Player 22: NEXT, and PREV from the last page (p22a4: ELWEN's MAGIC MISSILE is on the page
                     # before SLEEP's), as the `memorize` goal pages
