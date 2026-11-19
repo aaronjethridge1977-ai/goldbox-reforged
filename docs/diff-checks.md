@@ -172,7 +172,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 66: camp TRADE, DROP and HALVE; ENCOUNTER_MENU's choices read; checks 105-107, DIFFCHECKS 107/107
+## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items; checks 105-109, DIFFCHECKS 109/109
+
+- **statediff compares the items whole** (`tools/statediff.gd` `_items`): until now only the name words (bytes 47-49)
+  were compared, though its header said plus, count and readied; now type, the name words, plus and save plus,
+  readied, cursed, count, price and bytes 60-62. **All 109 checks match with it** (check 26 with ARN's sword unreadied
+  after it now differs on `r1`/`r0`). Deliberate-break test rerun (`data/c44/brk`, on origin/main 94e810d + the new
+  statediff): SUBTRACT off by one 92/109 (17 caught), ADD off by one over 200 108/109 (1 caught), as before.
+- **Check 108, 3:0 the arms and armour shop, APPRAISE gems** (check 101's start with ARN's gems, record +0x92, = 2;
+  tpseed 11111111): Up, YES, APPRAISE (YOU HAVE A FINE COLLECTION OF: 2 GEMS), GEMS: a d100 (OVR:26900, 38): THE GEM
+  IS VALUED AT 50 GP. / YOU CAN : SELL KEEP, SELL; GEMS (68: 100 GP), KEEP; EXIT, F2 (the original: ENCAMP SAVE).
+  Draws identical (3, with the shop step's d20). Matched at once; KEEP replaced by SELL differs (ARN's platinum).
+  Three runs MATCH (lab `data/c66/chk108`, the original's trace `data/c66/gem/trace.txt`).
+- **Check 109, the same shop, APPRAISE jewelry** (ARN's jewelry, +0x94, = 2): JEWELRY: a d100 (OVR:26b8d, 38), then
+  START.EXE 0x8D1D's d1500 (1068: VALUED AT 1368 GP), SELL: ARN gets 273 platinum (the 3 gp over dropped); JEWELRY
+  (97, then a d10000: 8144 GP), KEEP: the jewel leaves the coin slot. Draws identical (5); three runs MATCH
+  (`data/c66/chk109`, trace `data/c66/jewel/trace.txt`).
 
 - **Check 105, 3:0 camp VIEW ITEMS, TRADE** (check 26's start, tpseed 11111111): ENCAMP, VIEW, ITEMS, READY (ARN's long
   sword off; TRADE on a readied item does nothing in the original, no message), TRADE: TRADE WITH WHOM? SELECT EXIT,

@@ -8,8 +8,8 @@ extends SceneTree
 ## Compared: script memory 0x4900-0x4AFF (the original's save keeps it at byte 1 + 2 x
 ## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
-## points, experience, status, the seven kinds of coins, and the items (name bytes, plus,
-## count, readied), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## points, experience, status, the seven kinds of coins, and the items (type, name words, plus, save
+## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
@@ -165,10 +165,13 @@ static func _spells(d: PackedByteArray) -> Array:
 	return out
 
 
-## Items as comparable keys: name word bytes 47-49, plus, count, readied (63-byte records).
+## Items as comparable keys (63-byte records): name words 47-49, type 46, plus 50 and 51, readied 52, cursed 54,
+## count 57, price 58-59, bytes 60-62 (chat 66: until then only the name words were compared; all 109 checks
+## matched with the rest added).
 static func _items(d: PackedByteArray) -> Array:
 	var out := []
 	for i in range(0, d.size() - 62, 63):
-		out.append("%d.%d.%d" % [d[i + 47], d[i + 48], d[i + 49]])
+		out.append("%d.%d.%d t%d +%d/%d r%d c%d n%d $%d x%d.%d.%d" % [d[i + 47], d[i + 48], d[i + 49], d[i + 46],
+				d[i + 50], d[i + 51], d[i + 52], d[i + 54], d[i + 57], d.decode_u16(i + 58), d[i + 60], d[i + 61], d[i + 62]])
 	out.sort()
 	return out
