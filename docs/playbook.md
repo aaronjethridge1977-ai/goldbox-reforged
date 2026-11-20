@@ -18,6 +18,49 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - **Magic-users stay out of melee** except in an emergency or to finish incapacitated (sleeping, held) enemies, whom any blow slays (Jeremy, 2026-11-20).
 - **Clerics are good front-line fighters:** keep their AC low (the best armour and shields they can use). They manage the party's HP and can't do that dead. A sling from the rear only when necessary, for instance when badly wounded (Jeremy, 2026-11-20).
 
+## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
+
+**Combat rules**
+- Stepping away from or past an adjacent enemy gives it a free attack at your back: never walk weak or wounded members past enemies (Manual).
+- The first two attackers strike a defender's front; the third and later strike its rear, at a much worse AC: gang up three or four on the dangerous enemy (Manual).
+- Backstab: a fighter attacks first, the thief attacks from the square directly opposite (Delay until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8 (Manual, Cluebook).
+- Missiles can't be fired while an enemy is adjacent: keep archers and dart-throwers unengaged (marching order, Guard) (Manual).
+- Bows shoot twice a round; extra attacks go to the first target, then to another if it dies (Manual).
+- A caster hit recently loses the Cast option: guard casters with fighters (Manual).
+- If the whole party flees, every unconscious or dead member is lost for good: bandage the dying, or reload; never flee and leave bodies (Manual).
+- Fleeing the map works only if the party's movement is at least the fastest enemy's: unready heavy armour to raise it; retreat early (Manual, Cluebook).
+- Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act after the melee settles (Manual).
+- Initiative is Dex plus a random number: high-Dex members act first (Manual).
+- Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps; spread out against breath and area spells (Cluebook).
+- Encounter sizes scale with how strong the party looks: inflated starting stats bring bigger fights without the HP, spells or items to match (Cluebook).
+
+**Spells and preparation**
+- Pre-buff scripted fights: camp on the square before the trigger, cast Bless, Protection from Evil, Prayer, Enlarge / Strength on fighters, then step in (Cluebook).
+- Bless helps only members not yet in melee (+1 to hit, 6 rounds): cast it before contact (Manual).
+- Protection from Evil: +2 AC and better saves against evil attackers; cast in camp just before a known fight (Manual). (It does not stop level drain in the books; to be confirmed in the code.)
+- Prefer restraint over damage: one blow kills a helpless target. Hold Person (3 targets cleric, 4 magic-user; human-sized only), Sleep (no save, up to 16, weakest first, not large or strong monsters, short range), Stinking Cloud (2x2; a failed save leaves the target helpless 2-5 rounds even after it leaves the cloud; a made save still leaves it helpless while inside and 1 round after) (Manual, Cluebook).
+- Magic Missile never misses, ignores most resistances (good against undead) and interrupts enemy casting; Shield cancels it (Manual, Cluebook).
+- Fireball: radius 3 squares indoors, 2 outdoors; Lightning Bolt bounces off walls: mind your own party (Manual).
+- Haste doubles attacks and movement; Slow halves an enemy group's; Silence 15' stops enemy casters (Manual).
+- QUICK: casters skip area spells when an ally is in the area, so give QUICK casters Magic Missile, Hold Person and Stinking Cloud; QUICK members always use readied magic items, and shoot readied bows when no enemy is adjacent; QUICK suits weak hordes, not boss fights (Manual, Cluebook).
+- Memorizing: 4 hours of rest then 15 minutes per spell level; an interrupted rest keeps only the spells finished, in the order picked (Manual).
+- Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first (Manual).
+
+**Turning undead (Journal tables)**
+- Minimum cleric level to turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric destroys skeletons and zombies outright (Adventurer's Journal, Cluebook).
+
+**Level drain, petrification, poison, disease**
+- Drainers: wights, wraiths, spectres (Ferran Martinez drains 2 levels a hit), vampires. A Restoration scroll restores one level. Temples don't cure drain; they do cure petrification (stone to flesh), poison (Neutralize) and disease (Cluebook).
+- Slow Poison keeps a poisoned member alive until a temple; a mummy's touch brings disease (Cluebook, Journal).
+
+**Money and gear**
+- Gems and jewellery weigh far less than coins: keep them as items rather than cash (Manual).
+- Monsters' ordinary weapons and armour don't appear as loot; leftover missiles are stacked (Manual).
+- An inn charges once per stay; resting there is cheaper than temple cures. Resting heals only 1 HP a day: real healing is spells and temples (Manual, Cluebook).
+- Each member holds two things in hand: sword plus shield plus bow doesn't work (Manual).
+- The training hall trains only to fighter 8, thief 9, cleric 6, magic-user 6: multi-class demi-humans give up almost nothing in this game; party of 6 characters plus up to 2 NPCs (Manual).
+- A strong party: 4 fighters, 2 cleric and 2 magic-user casters, 2 bows and a thief, using multi-classes to fit it into six; one member with exceptional Strength (Cluebook).
+
 ## Party and preparation
 
 - Fill every spell level before a hard fight, not just level 1. Until Player 27 the tool memorized only level-1 spells, so its casters fought from Sokal Keep onwards with level-2 and level-3 slots empty (Player 27, Stojanow REPORT; *seen in the original*).
