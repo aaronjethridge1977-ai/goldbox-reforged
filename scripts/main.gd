@@ -261,13 +261,7 @@ func _ready() -> void:
 		# dice, the screens', the doors, Godot's global); it used to seed only the global one, so the script's
 		# dice stayed on the clock (check 4's bugbear: the toll or "THEY ARE IMPOSTERS!" at random).
 		if arg.begins_with("--seed="):
-			var from := RandomNumberGenerator.new()
-			from.seed = int(arg.get_slice("=", 1))
-			_vm._rng.seed = from.randi()
-			dev_rng = RandomNumberGenerator.new()
-			dev_rng.seed = from.randi()
-			_door_rng.seed = from.randi()
-			seed(from.randi())
+			_seed_all(int(arg.get_slice("=", 1)))
 		# --fast: the lab's long tours run every pause and fight step 25 times faster.
 		if arg == "--fast":
 			Engine.time_scale = 25.0
@@ -423,7 +417,38 @@ var _menu_sel := 0   # the event menus' highlight, kept from one menu to the nex
 
 
 ## A new game with the ready-made party: New Phlan at the start of the adventure.
+## Every generator that rolls from one seed (--seed=, the lab's seed=, RECORD MY GAME).
+func _seed_all(n: int) -> void:
+	var from := RandomNumberGenerator.new()
+	from.seed = n
+	_vm._rng.seed = from.randi()
+	dev_rng = RandomNumberGenerator.new()
+	dev_rng.seed = from.randi()
+	_door_rng.seed = from.randi()
+	seed(from.randi())
+
+
+## RECORD MY GAME (chat 70): a new session file as a game is loaded or started, its seed in every generator
+## before the load, so the lab's replay (seed=<n>, then the load) rolls the same dice.
+func _record_start(kind: String, letter: String = "") -> void:
+	var files := {}
+	if kind == "slot":
+		for f in GameData.list_files(_game_path):
+			var u := f.to_upper()
+			if u == "SAVGAM%s.DAT" % letter.to_upper() or u.begins_with("CHRDAT%s" % letter.to_upper()):
+				files[f] = _game_path.path_join(f)
+		var c := CompanionSave.path(_game_path, letter)
+		if FileAccess.file_exists(c):
+			files[c.get_file()] = c
+	elif kind == "quick":
+		files["quick.cfg"] = _save_path()
+	var n := GameRecorder.begin(kind, letter, files)
+	if n >= 0:
+		_seed_all(n)
+
+
 func _new_game() -> void:
+	_record_start("new")
 	_mode = Mode.WALK
 	# A fresh start: no flags or places from an earlier game.
 	_vm.mem.fill(0)
@@ -500,6 +525,9 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "automap":                # automap: the squares the automap holds, per map (lab)
 			for k in _automap.visited:
 				print("   automap %s: %d squares" % [k, (_automap.visited[k] as PackedByteArray).count(1)])
+			continue
+		elif n.begins_with("seed="):        # seed=<n>: every generator from n (a RECORD MY GAME replay, before its load)
+			_seed_all(int(n.trim_prefix("seed=")))
 			continue
 		elif n.begins_with("tpseed="):      # tpseed=<hex>: the original's own dice from that seed (TpDice)
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
@@ -948,6 +976,8 @@ func _state_line() -> String:
 
 ## Alt+Enter / F11 switch full screen on any screen (side lane, DisplayMode).
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		GameRecorder.key(event)     # RECORD MY GAME (off unless SETTINGS turns it on)
 	if DisplayMode.handle_key(get_tree(), event):
 		get_viewport().set_input_as_handled()
 		return
@@ -1648,6 +1678,8 @@ func load_original_save(letter: String) -> bool:
 	var path := _game_path.path_join("SAVGAM%s.DAT" % letter.to_upper())
 	var s := GameData.read_bytes(path)
 	_menu_was_wild = false
+	if s.size() >= 0x3300:
+		_record_start("slot", letter)
 	if s.size() < 0x3300:
 		_status.text = "No saved game %s." % letter.to_upper()
 		return false
@@ -1742,6 +1774,14 @@ func load_original_save(letter: String) -> bool:
 	# end, which the original loads back and saves again (lab, chat 25: 7:26's save, 856 bytes).
 	for i in range(code_len, OriginalSave.SCRIPT_BYTES):
 		_vm.mem[EclScript.BASE + i] = s[0x1401 + i]
+	# The view is the save's (0x3206), whatever the init's LOAD_AREA_MAP loads: the original sets the
+	# wilderness view (DS:0x49FA 2-4) only in the arrival routine, from the block number (GAME.OVR 0x3F4C:
+	# 25, 26, 27), which a load doesn't run (the main loop 0x403E). Chat 70, Player 33's p20a3_s11k: saved
+	# camped in 7:17's camp with the NEW_ECL to 26 still pending (image 26, 0x49F2 17, view 1): the original
+	# loads it in the 3D view on 7:17's map, 26's script running (its LARGE NOMAD CAMP one step on); ours put
+	# the party in the wilderness.
+	if s[0x3206] < 2 and _vm.on_overland:
+		_vm.on_overland = false
 	if _vm.on_overland:
 		_wall_slots_reset()
 	_pos = Vector2i(s[0x3201] & 15, s[0x3202] & 15)
@@ -1763,6 +1803,7 @@ func _shown_from_save(keys) -> void:
 
 
 func _quick_load() -> void:
+	_record_start("quick")
 	var cfg := ConfigFile.new()
 	if cfg.load(_save_path()) != OK:
 		_status.text = "No quick save yet (F2 in walk mode saves)."
