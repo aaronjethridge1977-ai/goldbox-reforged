@@ -41,11 +41,16 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 - **Demi-humans have level limits by race and class; humans have none.** For a party carried through the series these
   limits are the main thing to weigh. *Jeremy* (Pool) Dwarf fighter 9; elf fighter 7, magic-user 11; gnome fighter 6;
   half-elf fighter 8, magic-user 8; halfling fighter 6; thieves unlimited in every race. *book* (Pool Manual p.5)
-  Each later game's limits: **unconfirmed** (request to the lanes).
+  (Pool) Neither START.EXE nor GAME.OVR holds these limits as a race-by-class table of bytes (searched both orders);
+  under the halls' caps (fighter 8, thief 9, cleric and magic-user 6) only the elf (7), gnome and halfling (6) fighter
+  limits are within reach. *code* (main chat 71) Whether the game enforces those: **unconfirmed** (a level-7 elf
+  fighter at a hall would tell). Each later game's limits, Curse's first (its files are on the PC; to read next):
+  **unconfirmed** (request to the lanes).
 - (Pool) Who may multi-class: dwarf, gnome and halfling fighter/thief; elf F/MU, F/T, MU/T, F/MU/T; half-elf as the elf
   and also with cleric. Humans are single-class. *book* (Pool Manual p.5)
-- Elves and half-elves resist Sleep and charm: one 90% and the other 30% (the tabletop gives elves 90%). *code*
-  (START.EXE 0x2C540; Combat Chat 33). **unconfirmed** which race has which (request to Combat).
+- **Elves throw off Sleep and charm 90% of the time, half-elves 30%.** An elf or half-elf rolls that d100 for every
+  effect put on it, but only Sleep and charm can be thrown off. *code* (START.EXE 0x2C540; effects 0x6B elf, 0x7C
+  half-elf; SpecialAffects.blocks; Combat Chats 33-34) + *seen* for the half-elf (Combat Chat 33)
 - Elves and half-elves find secret doors 2 in 5 instead of 1 in 5. *code* (ECL 7:22; Player 25)
 - **unconfirmed** (tabletop rules; requests to the lanes): humans dual-class instead of multi-class (from Curse);
   dwarves and halflings get save bonuses from Constitution.
@@ -71,8 +76,10 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
     Chat 33)
   - Out of melee except in an emergency or to finish a sleeping or held enemy, whom one blow slays. *Jeremy*
   - Darts for rounds with no spell worth casting; don't spend them in fights that don't matter. *Jeremy*
-  - (Pool) Weapons: dagger and staff. *book* (Manual) Darts too by our code read (ITEMS), which the manual omits:
-    **unconfirmed** (request to Combat).
+  - (Pool) Weapons: dagger, staff and **darts** (the manual omits darts). ITEMS gives the dart (type 9) the
+    magic-user's class bit (1; class bits 93: magic-user, thief, fighter, paladin), and the original's own saves show
+    DARKSTAR, a pure magic-user, with darts readied, the stack going from 11 to 8. *seen* + *code* (main chat 71: the
+    Player lab's saves of the original; ITEMS) + *book* (Manual)
 - **Before importing:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter caps
   differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual) Players report the racial limits still
   hold in Pools of Darkness while humans go far higher, which makes demi-humans weak there. *players*
@@ -104,7 +111,7 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Ready the arrows as well as the bow. When joining stacks of arrows (JOIN), highlight the readied stack first: the
   joined stack keeps the highlighted stack's readied flag. *seen* (main chat 67, check 116)
 - **Re-equip on the battlefield when the fight changes:** VIEW, ITEMS, READY works in combat; TRADE doesn't. *book*
-  (Pool Manual) Whether readying uses the turn: **unconfirmed** (request to Combat).
+  (Pool Manual) Whether readying uses the turn: **unconfirmed** (request to Combat; not answered in Combat Chat 34).
 - **Choose weapons by expected damage:** the damage it deals and the chance to hit with it, together. *Jeremy*
 - **Use a magic weapon when it's better, or when the enemy needs one.** *Jeremy*
 - Fighters swap between their best-AC set and their most-damage set to suit the coming fight (section 4). *Jeremy*
@@ -117,7 +124,7 @@ of its classes may)
 | Bows | 2 | 16-22 | fighters only |
 | Light crossbow (quarrels) | 1 | 19 | fighters only |
 | Sling | 1 | 21 | fighters and thieves |
-| Darts | 3 | 6 | fighters, thieves; magic-users **unconfirmed** (the manual says dagger or staff only) |
+| Darts | 3 | 6 | fighters, thieves, magic-users (*seen*, main chat 71; the manual says dagger or staff only) |
 
 Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings and thieves short bows (section 1).
 
@@ -152,8 +159,11 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 **Undead**
 - **Some undead need a magic weapon and some don't;** skeletons and zombies, for example, fall to plain weapons.
   *Jeremy* Where they do need one, give every front-liner a magic weapon before the fight, trading them round the party.
-  In Pool, wights need one: a plain mace left a wight untouched for five rounds. *seen* (Player 32, p32b8) Which undead
-  need one in each game: **unconfirmed** (request to Combat).
+  In Pool, wights need one: a plain mace left a wight untouched for five rounds. *seen* (Player 32, p32b8)
+- (Pool) **Which undead need what:** wights are hurt only by magic or silver weapons; wraiths take full damage from
+  magic weapons, half from silver, none from others; a mummy takes half damage from magic weapons; monsters flagged
+  0x77 are hurt only by magic weapons. Any plus counts: no "+2 or better" rule appears in the code. *code* (Combat Chat
+  34; special_affects.gd, GAME.OVR category 5) Later games: **unconfirmed** (request to Combat).
 
 ## 3. Spells
 
@@ -182,9 +192,11 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 | 5 | 3/3/1 | 5/5/2 | 4/2/1 |
 | 6 (cap) | 3/3/2 | 5/5/3 | 4/2/2 |
 
-- Wisdom 13 and 14 each add a first-level spell, 15 and 16 a second-level, 17 a third-level, each once the cleric has
-  that spell level. *code* (our engine, party_member.gd; matched to the original's first-level cleric) Above level 1:
-  **unconfirmed**. Intelligence adds no spells.
+- (Pool) **Wisdom's bonus spells hold at every level:** 13 and 14 each add a first-level spell, 15 and 16 each a
+  second-level, 17 a third-level, each once the cleric has that level's spells; Wisdom 18 adds no more than 17. The
+  original's own records: CEDRIC (WIS 18) at levels 1-6 has 3, 4, 4/3, 5/4, 5/5/2, 5/5/3; DIRTEN (WIS 16) at 4-6 has
+  5/4, 5/5/1, 5/5/2. *seen* (main chat 71: record bytes 0xB2-0xB4 in the Player lab's saves) + *code* (our engine,
+  party_member.gd) Intelligence adds no spells.
 - Clerics know every cleric spell. A magic-user's book starts with 4 first-level spells and gains one a level, plus
   what is copied from scrolls, so its picks matter. *book* (Manual)
 
@@ -196,9 +208,12 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   - Next turn: every other cleric spell (Cure Light Wounds, Bless, Hold Person, Prayer...) and the third-level
     magic-user spells (Fireball, Lightning Bolt, Haste, Slow, Hold Person...). Cast these before the lines meet: Hold
     Person and Prayer begun in melee never went off. *seen* (Player 30, p30d1/d3/e1)
-  - Some have longer delays (Bless, Cure Blindness): what that means in a fight is **unconfirmed** (request to Combat).
-- A wounded caster LOSES A SPELL but keeps it in memory. *seen* (Combat Chat 33) (Pool's original takes the copy from
-  the attacker's memory instead, if it has one: START.EXE 0xBA:0x148B.)
+  - The rule: a spell whose casting time (byte 12) is 3 or more rounds' worth BEGINS CASTING and goes off at the
+    caster's next turn; under 3 it goes off at once. Bless (10) and Cure Blindness (10) wait; Hold Person (5) waits
+    one. *code* (Combat Chat 34; GAME.OVR 0x14C0F)
+- A caster wounded before a begun spell goes off LOSES A SPELL but keeps it in memory. *seen* (Combat Chat 33) + *code*
+  (Combat Chat 34) (Pool's original takes the copy from the attacker's memory instead, if it has one: START.EXE
+  0xBA:0x148B.)
 - A caster hit recently can't choose CAST: guard casters with fighters. *book* (Manual)
 - In a fight's CAST list Home moves the highlight up and End down; it opens on the last spell, and long lists page with
   NEXT. EXIT from a spell's aim asks ABORT SPELL? *seen* (Player 30)
@@ -224,8 +239,8 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 **Prefer restraint to damage**
 - One blow kills a sleeping or held enemy, so Sleep, Hold Person and Stinking Cloud usually beat damage spells. *book*
   (Cluebook)
-- **Among the cleric spells, healing comes first.** A member knocked out loses the fight's experience (**unconfirmed**:
-  request to the lanes), and too big an experience gap between members can sink a run. *Jeremy*
+- **Among the cleric spells, healing comes first.** A member knocked out loses the fight's experience (section 6), and
+  too big an experience gap between members can sink a run. *Jeremy*
 
 **The spells** (Pool; *seen* in Combat's spell lab, Combat Chats 33-34, unless marked; "level" is the caster's level in
 the spell's class)
@@ -234,7 +249,8 @@ the spell's class)
   the Slums' ogres. It sleeps 4d4 hit dice of creatures (about 10 a cast; kobolds and orcs cost 1 each), so everything in
   the 3x3 sleeps, **the caster too**: aim it two squares off (a lone caster aiming at the next square put the party to
   sleep and it was destroyed). Not big monsters (ettins) or a level-6 magic-user (*seen*, Stojanow); short range (*book*).
-  An ogre goes down now and then, a troll or a spectre never. *seen* (Combat Chat 34)
+  An ogre goes down now and then, a troll or a spectre never: on the Slums' ogres and trolls (2:20 0,14), 10 casts
+  (4d4 = 7-13) put 2 ogres to sleep and no troll. *seen* (Combat Chat 34; each fight matched ours draw for draw)
 - **Stinking Cloud** (magic-user 2; at once; range 3). *Jeremy:* very good for taking out casters and making fights
   easier.
   - **The cloud is 2x2:** the aimed square and the squares right, below and below-right. With enemies to your right or
@@ -246,7 +262,8 @@ the spell's class)
     walks into it**, so a cloud across a corridor holds monsters back. *seen* (Combat Chat 34)
   - Kobolds resist 25% of the time; orcs need about 13-16. Bunched ettins in a cloud died to single blows. *seen*
     (Player 30, p30d2)
-  - On ogres and trolls it works about half the time (23 saves, 10 made); spectres ignore it. *seen* (Combat Chat 34)
+  - On ogres and trolls it works about half the time (23 saves, 13 failed, 10 made); spectres ignore it. *seen*
+    (Combat Chat 34, the spell lab on 2:20 0,14)
 - **Hold Person** (cleric 2, next turn, 3 picks; magic-user 3, next turn, 4 picks; save vs spell; man-sized only).
   *Jeremy:* great for taking out annoying enemies with poorer saves. The cleric's lasts 4 + 1/level rounds, the
   magic-user's 2/level. A held figure is slain by any blow and loses its guard and any spell it was casting. Use it on
@@ -282,6 +299,11 @@ the spell's class)
   table) **Strength** (magic-user 2) is camp only. *code*
 - **Silence 15'** stops enemy casters. *book* **Slow Poison** keeps a poisoned member alive until a temple (section 6).
   *book*
+- **Animate Dead** (cleric 3; a fight spell). Each dead figure (not already undead) in its area, up to a number set by
+  the spell's power, gets up on the caster's side ("is animated") at full hit points, as undead (TURN works on it),
+  with no memorized spells, movement 6, attack level 0; brought to 0 again it dies for good. Works on monsters and on
+  fallen members alike. Not yet in ours (docs/coverage.md, spell 36). *code* (main chat 71: GAME.OVR 0x29087,
+  0x2C753)
 
 The rest of Pool's list, with suggested uses (Jeremy, 2026-11-20: "a good starting point"; to be tried in play or the
 arena):
@@ -291,7 +313,7 @@ arena):
   weapons can't hurt); **Dispel Magic** (ends enemy effects, frees our held or charmed); **Find Traps** (camp);
   **Cure Blindness**, **Cure Disease** (camp only), **Remove Curse** (save the temple's 1000, 1000, 3500); **Snake
   Charm** (snakes only); **Curse**, **Cause Light Wounds**, **Cause Blindness**, **Cause Disease**, **Bestow Curse**,
-  **Protection from Good** (rarely worth a slot); **Animate Dead** (what it does in Pool: **unconfirmed**);
+  **Protection from Good** (rarely worth a slot); **Animate Dead** (above: raises the fallen, enemies or ours, to fight for the party);
   **Restoration** is in the table at cleric level 7, beyond Pool's cap: scrolls only.
 - Magic-user: **Shield** (at once; stops Magic Missile, better AC: for a mage facing mages); **Mirror Image** (at once;
   keeps the mage alive); **Ray of Enfeeblement** (cuts a big melee enemy's damage: ogres, giants); **Read Magic** (camp;
@@ -302,10 +324,11 @@ arena):
 
 **Turning undead**
 - **TURN every time undead appear, once per cleric per fight, in round 1, before casting or fighting.** *Jeremy*
-  TURN with no undead in the fight does NOTHING and spends that fight's TURN. A level-5 cleric turned two spectres.
-  *seen* (Combat Chat 34)
-- QUICK clerics (and paladins from level 3) turn by themselves once a fight, at their first turn with undead in sight.
-  *code* (GAME.OVR 0xADC3) + *seen* (the graveyard, Combat Chat 5)
+  TURN with no undead on the field says NOTHING HAPPENS and spends the cleric's TURN for the fight. A level-5 cleric
+  turned both of 4:10's spectres. *seen* (Combat Chat 34)
+- QUICK clerics (and paladins from level 3) turn by themselves once a fight, at their first turn with undead in sight,
+  so taking control of one after its first turn leaves no TURN on the menu. *code* (GAME.OVR 0xADC3) + *seen* (the
+  graveyard, Combat Chat 5; Combat Chat 34)
 - The lowest cleric level that can turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric
   destroys skeletons and zombies outright. *book* (Journal, Cluebook)
 - (Pool) The d20 needed: a wight 20 / 19 / 16 / 10 / 7 / 4 at cleric levels 1-6; a spectre can't be turned below level
@@ -452,8 +475,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   (Player 30, p30a1)
 
 **Healing in the fight**
-- Keep members conscious: a member who drops may lose the fight's experience (**unconfirmed**), and too big a gap sinks
-  a run (section 3). Bandage the dying (section 6). *Jeremy*
+- Keep members conscious: a member down at the fight's end gets none of its experience (section 6), and too big a gap
+  sinks a run (section 3). Bandage the dying (section 6). *Jeremy*
 
 **Undead and drainers**
 - TURN first (section 3). Wights, wraiths, spectres and vampires drain levels, and a drained member can end "DEAD
@@ -477,14 +500,20 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   anything that would cost a human player about an hour with no obvious gain, **unless** a temple cures it at a price
   the party can pay and reach.
 - **A death means a reload**, even though Raise Dead (5500 GP) is affordable: a human would rather replay the fight than
-  pay and perhaps lose Constitution (tabletop rule; in Pool **unconfirmed**). Raise Dead only when reloading would cost
-  an hour or more. *Jeremy* (2026-11-20)
+  pay and lose Constitution. Raise Dead only when reloading would cost an hour or more. *Jeremy* (2026-11-20) (Pool)
+  Raise Dead costs 1 Constitution and, at CON 14 and up, the hit points that came from the old Constitution bonus.
+  *code* (Combat Chat 34; main chat 26's lab)
 - **A win with a member dead counts as a loss.** Several "wins" in the original were losses by this rule. *seen*
   (Players 7, 8, 13)
 - **Unconscious is not dead:** 0 HP with status UNCONSCIOUS (4) heals; DEAD (6) is dead. *seen* (Player 8)
 - **Reload and change something** (a different seed, a different plan): the same seed and the same keys can replay the
   same dice and the same loss. *seen* (Player 14, p14b3/p14b4)
 - Unsure whether a human would reload? Ask Jeremy (Players: through the Lead). *Jeremy*
+
+**Experience**
+- (Pool) **No experience for the downed:** a fight's experience is divided among the members still standing and given
+  only to them, so an unconscious or dying member at the fight's end gets none. *code* (Combat Chat 34; GAME.OVR
+  0x58A0, 0x58D3)
 
 **The dying**
 - Bandage the dying at once; heal anyone unconscious before the last enemy falls if you can (section 5). *book* (Manual)
@@ -599,18 +628,24 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
   PEOPLE") + *Jeremy* Before training, sell what's needed (APPRAISE, then SELL; APPRAISE also offers KEEP, which takes a
   jewel off the coin count), POOL the party's money, then SHARE so that each trainee holds the fee. *seen* (Player 15;
   main chat 66)
-- The fee comes out of the member's coins, and change was seen given in gold, not platinum. *seen* (Player 3)
+- The fee comes out of the member's coins. Change was seen given in gold, not platinum (Player 3), and in silver (main
+  labs, chats 8 and 10): *seen*; which coins and when: **unconfirmed** (request).
 - A multi-class trains in the hall's class when that class is ready, even if a slower class isn't. *seen* (Player 3)
-- Hit points gained at training: one roll of the hit die (Player 3, *code*) or the better of two (our engine's notes
-  from the original's rules), split across the classes, plus the Constitution bonus: **unconfirmed** which (request).
+- (Pool) **Hit points gained at training:** one roll of the trained class's hit die (at least two-thirds of the die at
+  level 1), plus the Constitution bonus, divided by the member's number of classes, at least 1. A multi-class training
+  one class gets that one roll divided by its class count. *code* (Player 3; main chat 71: GAME.OVR 0x1DBB4 / 0x1DB4C;
+  ours the same, matched in check 103)
 - (Pool) The training hall's caps: fighter 8, thief 9, cleric and magic-user 6 (section 1). *book*
 
 **Money and savings**
 - **Don't oversell:** sell only what pays for this trip's training and needs. *Jeremy*
 - There's no bank: keep value light. Gems and jewellery, kept unsold (APPRAISE, KEEP), are the lightest store of value;
   coins all weigh the same each, so carry platinum (1 = 5 gold) rather than gold; useful magic (potions, scrolls,
-  wands) is worth keeping. Convert gems when the next training comes due. *Jeremy* + *book* (Manual) Whether a shop
-  changes gold into platinum: **unconfirmed** (request).
+  wands) is worth keeping. Convert gems when the next training comes due. *Jeremy* + *book* (Manual)
+- (Pool) **Shops change coins into platinum:** any purchase regroups the buyer's whole purse into platinum and gold (the
+  part under a gold piece is lost; silver, copper and electrum too), and a sale pays in platinum and gold. So buying
+  something cheap turns a member's gold into platinum, a fifth of the weight. *seen* (main labs, chats 8 and 10;
+  party_member.gd `pay_gold_in_shop`, `receive_gold`)
 
 **Shops**
 - **Sell spare gear on every town trip** (section 2). *seen* (Player 27)
@@ -661,19 +696,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-
-
-- *code* (Combat Chat 34): **Sleep and charm by race**: an elf throws them off 90% of the time (effect 0x6B), a half-elf 30% (0x7C); an elf or half-elf rolls that d100 for every effect put on it, but only Sleep and charm can be thrown off (SpecialAffects.blocks; *seen* for the half-elf, Combat Chat 33).
-- *code* (Combat Chat 34): **Casting delays**: a spell whose casting time (spell table byte 12) is 3 or more rounds' worth BEGINS CASTING and goes off at the caster's next turn; any wound before then spoils it (LOST A SPELL, the caster keeps it memorized). Bless (10) and Cure Blindness (10) wait; Hold Person (5) waits one; delays under 3 cast at once (GAME.OVR 0x14C0F).
-- *code* (Combat Chat 34): **Undead and weapons in Pool**: wights are hurt only by magic or silver weapons, wraiths take full damage from magic, half from silver, none from others; a mummy takes half from magic weapons; monsters flagged 0x77 only by magic weapons. Any plus counts: no "+2 or better" rule appears in the code (special_affects.gd, GAME.OVR category 5).
-- *code* (Combat Chat 34): **No experience for the downed**: a fight's experience is divided by the members still standing and given only to them, so an unconscious or dying member at the fight's end gets none (GAME.OVR 0x58A0, 0x58D3).
-- *code* (Combat Chat 34; main chat 26's lab): **Raise Dead costs 1 Constitution** (and, at CON 14 and up, the hit points that came from the old Constitution bonus).
-- *seen* (Combat Chat 34, the spell lab on 2:20 0,14): **Sleep takes the ogres now and then, the trolls never**: 10 casts (4d4 = 7-13), 2 ogres asleep; Hold Person never holds a troll (7 casts); Stinking Cloud sickens ogres and trolls about half the time (23 saves, 13 failed), and the computer never walks into the cloud. Each fight matched ours draw for draw.
-- *seen* (Combat Chat 34): **TURN** with no undead on the field says NOTHING HAPPENS and spends the cleric's TURN for the fight; a level-5 cleric turned both of 4:10's spectres. A QUICK cleric turns by itself, so taking control after its first turn leaves no TURN on the menu.
-- Not answered yet (Combat Chat 34): READY during a fight (whether it uses the turn).
-- (Pool) **Magic-users can ready and throw darts.** ITEMS gives the dart (type 9) the magic-user's class bit (1; class bits 93: magic-user, thief, fighter, paladin), and the original's own saves show DARKSTAR, a pure magic-user, with darts readied, the stack going from 11 to 8. *seen* + *code* (main chat 71: the Player lab's saves of the original; ITEMS)
-- (Pool) **Wisdom's bonus spells hold at every level:** 13 and 14 each +1 first-level, 15 and 16 each +1 second-level, 17 +1 third-level, each once the cleric has that level's spells. The original's own records: CEDRIC (WIS 18) at levels 1-6 has 3, 4, 4/3, 5/4, 5/5/2, 5/5/3; DIRTEN (WIS 16) at 4-6 has 5/4, 5/5/1, 5/5/2 (base 1, 2, 2/1, 3/2, 3/3/1, 3/3/2). WIS 18 adds no more than 17. *seen* (main chat 71: record bytes 0xB2-0xB4 in the Player lab's saves)
-- (Pool) **Animate Dead** is a fight spell: each dead figure (not already undead) in its area, up to a number set by the spell's power, gets up on the caster's side ("is animated") at full hit points, as undead (TURN works on it), with no memorized spells, movement 6, attack level 0; brought to 0 again it dies for good. Works on monsters and on fallen members alike. Not yet in ours (docs/coverage.md, spell 36). *code* (main chat 71: GAME.OVR 0x29087, 0x2C753)
-- (Pool) **Training's hit points:** one roll of the trained class's hit die (at least two-thirds of the die at level 1), plus the Constitution bonus, divided by the member's number of classes, at least 1. A multi-class training one class gets that one roll divided by its class count. *code* (main chat 71: GAME.OVR 0x1DBB4 / 0x1DB4C; ours the same, matched in check 103)
-- (Pool) **Shops change coins into platinum:** any purchase regroups the buyer's whole purse into platinum and gold (the part under a gold piece is lost; silver, copper and electrum too), and a sale pays in platinum and gold. So buying something cheap turns a member's gold into platinum (a fifth of the weight). Training's change comes in silver. *seen* (main labs, chats 8 and 10; party_member.gd `pay_gold_in_shop`, `receive_gold`)
-- (Pool) **Racial level limits:** neither START.EXE nor GAME.OVR holds the manual's limits as a race-by-class table of bytes (searched both orders); the halls' caps (fighter 8, thief 9, cleric and magic-user 6) leave only the elf (7), gnome and halfling (6) fighter limits within reach, and whether the game enforces those is still **unconfirmed** (a level-7 elf fighter at a hall would tell). Curse's limits: still **unconfirmed** (its files are on the PC; to read next). *code* (main chat 71)

@@ -174,7 +174,7 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 
 ## 5. The magic-gear map
 
-(main chat 69; read in the game's data, not from memory; *code*. Coins and gems: requested of main, 2026-11-20.)
+(main chat 69; read in the game's data, not from memory; *code*. Coins and gems: main chat 71, in the second table.)
 
 Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX` list) and every item a monster carries (`MON<n>ITM.DAX`: a beaten monster's items all go on the treasure pile, each monster of a group with its own set). Made by `tools/lab/gearmap.gd` (dumps the lists) and `tools/lab/gearmap.py` (joins them with the areas' ECL listings; lab `data/c69/gearmap.txt` is the full output with addresses, coins and the plain items). **Squares** come from the search script's dispatch (the square's event number, through the script's byte table where it has one); "squares not traced" where the code is shared or reached from another event. **Who** is the item type's class byte (ITEMS byte 13; START.EXE DS:0x05D6: magic-user 1, cleric 2, thief 4, fighter 8, druid 16, paladin 64); "any" = every class. Plain items under 100 gp and the shops' stock are left out. Scroll spells are the record's bytes 60-62.
 
@@ -207,6 +207,34 @@ Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX
 | 8:13 Kobold Caves | the efreeti bottle (12,0); the kobolds' wealth (13,1) | **Efreeti Bottle** (tell the truth); 2 MU scrolls (Charm Person, Protection from Evil, Strength; Friends, Invisibility, Protection from Normal Missiles), coins | |
 | 8:16 Ruined Castle | the caches (5,12 6,6 9,6 and others; lists 31, 32) | Shield +2; Long Sword +1 | |
 | 8:29 Kuto's Well | Norris the Gray; under the rug (7,14) | Long Sword +1; **Banded Mail +1, Quarter Staff +1, Bracers AC 4** | staff MU/C/F/D/P |
+
+**Coins and gems** (the fixed treasures' coins: copper, silver, electrum, gold, platinum, gems, jewellery; lab
+`data/c69/gearmap.txt`; *code*, main chat 71). Gems and jewellery are valued when found (appraised in a shop); 1 pp =
+5 gp; heavy copper and silver are worth little for their weight. 3:8's commission and 8:16's are set by the script at
+run time (not fixed).
+
+| Area | Where (squares) | Coins and gems |
+|---|---|---|
+| 2:20 Slums | the level 3 MU (11-13,9-10) | 150 pp, 1 jewellery |
+| 2:20 | the stable's bag (5,2 6,2) | 100 gp, 2 gems |
+| 2:20 | the hobgoblins' valuables (0,2 0,3) | 500 gp, 50 pp |
+| 2:20 | the storage room (0,0) | 1000 ep, 92 gp, 50 pp, 4 gems, 2 jewellery |
+| 2:20 | the floorboard chest (4-5,9-11) | 200 pp, 2 gems |
+| 2:20 | the trolls and ogres (0,14) | 30 gp, 50 pp, 1 jewellery |
+| 4:2 Textile House | Grishnak's temple (3,11 2,12) | 100 cp, 20 sp, 30 ep, 40 gp, 8 pp |
+| 4:2 | Cadorna's iron box (12,14) | 450 cp, 20 sp, 400 pp, 8 gems, 4 jewellery |
+| 4:2 | Restal's guild (1,3) | 200 pp, 4 gems, 2 jewellery |
+| 4:10 Graveyard | the marble chest (7,6-8) | 28 sp, 69 gp, 10 gems, 12 jewellery |
+| 4:10 | the zombie room (9,15) | 290 sp, 110 gp |
+| 4:10 | **the vampire's trove (14,0)** | **9000 gp, 12 gems** |
+| 5:3 Valjevo outer | the loose stone (0,2) | 200 gp |
+| 6:25 Western Wilderness | 2,8 | 2000 sp, 1000 gp, 3 gems, 1 jewellery |
+| 7:17 Nomad Camp | the reward (9,12) | **5000 gp** |
+| 7:23 Yarash's Pyramid | the magical junk (8-9,0-2) | 1200 sp, 400 gp |
+| 8:13 Kobold Caves | 14,6 | 1000 sp, 500 ep, 1000 gp, 2 gems, 2 jewellery |
+| 8:13 | the kobolds' wealth (13,1) | 50000 cp, 6 gems, 2 jewellery |
+| 8:27 Eastern Wilderness | 0,2 (the wyvern's) | 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewellery |
+| 8:27 | 2,11 | 6000 cp, 4000 sp, 3000 ep |
 
 Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (0,2 the wyvern's, one; 2,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
 
@@ -349,5 +377,3 @@ The cluebook gives no area order or expected levels; its only marker: if the par
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-
-- **Gear map, coins and gems** (the fixed treasures' coins: copper, silver, electrum, gold, platinum, gems, jewellery; lab `data/c69/gearmap.txt`; *code*, main chat 71): **2:20 Slums** the level 3 MU (11-13,9-10) 150 pp, 1 jewellery; the stable's bag (5,2 6,2) 100 gp, 2 gems; the hobgoblins' valuables (0,2 0,3) 500 gp, 50 pp; the storage room (0,0) 1000 ep, 92 gp, 50 pp, 4 gems, 2 jewellery; the floorboard chest (4-5,9-11) 200 pp, 2 gems; 0,14 30 gp, 50 pp, 1 jewellery. **4:2 Textile House** Grishnak's temple (3,11 2,12) 100 cp, 20 sp, 30 ep, 40 gp, 8 pp; Cadorna's iron box (12,14) 450 cp, 20 sp, 400 pp, 8 gems, 4 jewellery; Restal's guild (1,3) 200 pp, 4 gems, 2 jewellery. **4:10 Graveyard** the marble chest (7,6-8) 28 sp, 69 gp, 10 gems, 12 jewellery; the zombie room (9,15) 290 sp, 110 gp; **the vampire's trove (14,0) 9000 gp, 12 gems**. **5:3 Valjevo** the loose stone (0,2) 200 gp. **6:25 Western Wilderness** 2,8: 2000 sp, 1000 gp, 3 gems, 1 jewellery. **7:17 Nomad Camp** 9,12: **5000 gp**. **7:23 Yarash's Pyramid** (8-9,0-2) 1200 sp, 400 gp. **8:13 Kobold Caves** 14,6: 1000 sp, 500 ep, 1000 gp, 2 gems, 2 jewellery; 13,1: 50000 cp, 6 gems, 2 jewellery. **8:27 Eastern Wilderness** 0,2: 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewellery; 2,11: 6000 cp, 4000 sp, 3000 ep. 3:8's commission and 8:16's are set by the script at run time (not fixed). Gems and jewellery are valued when found (appraised in a shop); 1 pp = 5 gp; heavy copper and silver are worth little for their weight.
