@@ -90,6 +90,11 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             else:
                 out += ["magic"] + (["tplog"] if tplog else [])
             continue
+        if re.match(r"\s*[\d.]+ SHORTCUT win at ", line):
+            # Player 34: the original's logged shortcut win (Q27 (a), plan line `shortcutwin`) as ours' lab key
+            # `shortcutwin` (main chat 70: the same write in ours' open fight, once the battle has begun)
+            out += ["shortcutwin"] + (["tplog"] if tplog else [])
+            continue
         if re.search(r"NOTE fight fight \d+ ended|NOTE loss the party was destroyed", line):
             # Player 15: a fight the original played with no combat menu (all on QUICK) took no key, so nothing made
             # ours wait for its end: the CONTINUE BATTLE NO and the Enter after it reached ours mid-fight and were lost
