@@ -32,6 +32,7 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - Inside an anti-magic shell, CAST in camp does nothing. Heal by resting there; it took 54 days to bring a member up from 0 HP (Player 25, 8:16; *seen in the original*).
 - With nobody knowing Knock, try PICK and then BASH. After a failed PICK and BASH, a door offers only KNOCK on later bumps (Player 17, Player 21; *seen in the original*).
 - A creature's spell can cover itself. The game rolls magic resistance for each target after its save (Player 6; *read in the code*, GAME.OVR 0x115BF).
+- Prayer works only near its caster. It goes on the caster alone; party members within 6 squares in sight get +1 to hit and on saves, and enemies within the same 6 squares get -1. Cast it from the middle of the line, not from the back (Combat Chat 31; *read in the code*, GAME.OVR 0x2B04A, and matched draw for draw in the original's finale guards fight, p29d1).
 
 ## In combat
 
