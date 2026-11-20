@@ -341,7 +341,8 @@ arena):
   **Restoration** is in the table at cleric level 7, beyond Pool's cap: scrolls only.
 - Magic-user: **Shield** (at once; stops Magic Missile, better AC: for a mage facing mages); **Mirror Image** (at once;
   keeps the mage alive against enemy spells; (Pool) **not against blows**: an image takes only a spell aimed at its owner,
-  never a weapon or a touch, unlike the tabletop rule *code* (GAME.OVR 0xF61B) + *seen* (2:9's two magic-users, Combat
+  never a weapon or a touch, unlike the tabletop rule: the original's bug #14 (docs/original-bugs.md; fixed in ours unless
+  ORIGINAL'S BUGS is on) *code* (GAME.OVR 0xF61B) + *seen* (2:9's two magic-users, Combat
   Chats 6-7, matched to the fight's end); so no help against drainers); **Ray of Enfeeblement** (cuts a big melee enemy's damage: ogres, giants); **Read Magic** (camp;
   for scrolls); **Knock** (camp; locks); **Friends** (camp; Charisma for a parley); **Protection from Normal Missiles**
   (archer-heavy fights); **Protection from Evil 10'** (the party version); **Blink**, **Invisibility**,
