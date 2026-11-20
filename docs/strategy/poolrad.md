@@ -183,9 +183,13 @@ files); results *seen* unless marked.
 - **The west tower:** a 5th-level magic-user, an aide, 3 ettins (50 HP, AC 3, THAC0 10); the east: a 6th-level
   magic-user (Mirror Image, Fireball), an aide, 3 ettins. Stinking Cloud on the bunched ettins in the surprise round,
   Hold Person on the mage and the aide, fighters on the helpless ettins. About 8,200 experience a tower. *code*
-- **The patrol inside** (a 6th-level fighter, 5 hill giants) parleys: HARASH, or TYRANTHRAXUS as the authority. *code*
-- Results: Player 34 won the west tower 3 of 5 with a death (movement 3, no cloud, CEDRIC in reach). Plan:
-  stuck-fights.md section 2. *seen*
+- **The patrol inside** (a 6th-level fighter, 5 hill giants) parleys only with no alarm ringing (HARASH, or TYRANTHRAXUS
+  as the authority; 0x9E73) *code*; after a tower's alarm it comes "THEY ADVANCE, WEAPONS READY" with no PARLAY: fight
+  it. *seen* (Player 35) The east tower's garrison comes down to the party once the west is taken. **No road out
+  before the gate:** the town trip waits until the bugbears are beaten. *seen* (Player 35)
+- **Results:** Player 34 won the west tower 3 of 5 with a death (movement 3, no cloud, CEDRIC in reach). **Player 35,
+  after the audit (movement 9-12): both towers, the patrol and the 16 bugbears won, nobody dead: the gate taken**
+  (`s35g`). The audit was the difference. *seen*
 
 The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
