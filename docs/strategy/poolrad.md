@@ -207,7 +207,7 @@ files); results *seen* unless marked.
   in the guards' last rounds**, once most are held, to be fresh for him (Haste lasts 3 + level rounds: cast in camp
   before the guards it may run out; whether a spell's effect carries from one fight into the next: **unconfirmed**,
   asked of Combat). **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY them in his fight
-  (READY in a fight is free; **unconfirmed** for rings and for two rings a member, asked of Combat). **The vote:**
+  (READY in a fight is free; **unconfirmed** for rings, asked of Combat). One ring a member (two don't stack, *Jeremy*, to confirm; nor, by the rule book, with magic armour: to confirm): AC 3 better, so Tyranthraxus (THAC0 5) hits AC -1 75% of the time and AC -4 60%; a guard's Two-Handed Sword +2 hits AC -1 50%, AC -4 35%. **The vote:**
   everyone ATTACK (a JOIN vote makes that member his, as do evil-aligned NPCs; Genheeris doesn't vote). *code*
 - **Rings of Protection before the finale** (main's gear map): the Slums' hobgoblins' valuables (+1, 2:20 0,2-0,3); the
   east tower's level 6 magic-user at Stojanow (+2, 2:9 11,7); the graveyard's level 6 magic-user (+2, 4:10 8,9);
