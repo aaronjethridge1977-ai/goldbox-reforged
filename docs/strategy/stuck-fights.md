@@ -1,10 +1,11 @@
 # Stuck fights (Pool of Radiance, the original)
 
 Kept by the Player lane (the Lead's note, Jeremy's decision 2026-11-20 12:44) for Gold Box Guide 2, Jeremy's
-stuck-fights chat. One section per fight that has reached five losses in a row under the reload rule. Text only;
-the saves and logs named here are in the Player lab (`~/gbr/player_lab`, archived in
-`/mnt/d/ai_projects/goldbox-reforged/.lab/playerNN_lab.tar.gz`): saves `.lab/player/saves/p2start/<name>/`, logs
-`logs/<run>.log` (and `.trace.txt`, `_screen_*.png`).
+stuck-fights chat. One section per fight that has reached five losses in a row under the reload rule. Text only.
+**Each fight's logs, plans and the original's saves are copied to `D:\ai_projects\goldbox-reforged\.lab\stuck\<fight>\`**
+(`/mnt/d/ai_projects/goldbox-reforged/.lab/stuck/<fight>/`; git-ignored; a README.txt in each names every file):
+`sokal9`, `stojanow`, `kobold_king`, `graveyard_spectres`. The Player lab's own copies: `~/gbr/player_lab`, saves
+`.lab/player/saves/p2start/<name>/`, logs `logs/<run>.log`.
 
 "Loss" here is the reload rule's: a wipe, or a won fight with a member dead (a death is reloaded, not raised).
 The party is always the same six (ARN, BRAM fighters; CEDRIC cleric; ELWEN cleric/fighter/magic-user; LIRA
@@ -18,6 +19,8 @@ shoot only what is adjacent.
 in packs. Worth an audit before each fight here (playbook top: the party audit).
 
 ## 1. Sokal Keep, event 9 (4:21 7,4 / 8,5): the army
+
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
 
 - **Enemy:** 50 figures: 31 orcs, 4 orc leaders, 15 hobgoblins (*code*, poolrad.md section 3); the room 7-8,2-5,
   doors on its south row (7,5 W, 8,5 E) and north row (7,2 W, 8,2 E). The party enters at 8,5 from 9,5 (facing W).
@@ -51,6 +54,8 @@ in packs. Worth an audit before each fight here (playbook top: the party audit).
 
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
 
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\stojanow\`.
+
 - **Enemy (the wall, event 13 at 7,6 / 8,6):** six ettins (50 HP, AC 3, THAC0 10, 2d8 + 3d6), two level-6 magic-users
   (Magic Missile 3d4+3, Mirror Image), two fighter-3 aides: ~382 HP (*code*, poolrad.md). The two tower rooms (stairs
   at 4,5 and 11,5, a step S, GO UPSTAIRS YES) hold the level-6 mage and the 6th-level fighter; they are manned only
@@ -65,11 +70,15 @@ in packs. Worth an audit before each fight here (playbook top: the party audit).
   `s28p` in one try (p34c1: the wagon, the toll, the bugbears; nobody dead). From `s28p` the walk to the towers crossed
   7,6 and set off the wall on QUICK (p34d1, destroyed in 53 s; a plan error, not counted). The cluebook's way
   (towers first) needs `s28g` (after the toll, before the bugbears): **p34e1, the west tower's room: won, CEDRIC dead**
-  (reload). Further tries: the board's Now line and the Player 34 README.
+  (reload); p34e2 the same (CEDRIC fell at ~170 s and bled to death while the fight went on: the tool never bandaged;
+`tactics.py` now BANDAGEs the dying, from p34e4); p34e3 party destroyed. Further tries: the board and the Player 34
+README. The west tower's room: the 5th-level fighter, aides, three ettins (188 HP).
 - **Read:** the wall fight is both towers' ettins at once (the cluebook: "forcing both gates"); beating the tower rooms
   one at a time before the bugbears is the intended way, untried until Player 34.
 
 ## 3. The kobold king's throne room (8:13 4,3, event 9)
+
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
 
 - **Enemy:** three fights in a row with no camp: the horde (LOAD_MON 31 x4, 0 x35, 1 x11: 50 figures, four of them
   TROLLs, 36 HP, which Sleep doesn't take), then the ballista (120 x5, 0 x45, 1 x8), then the envoys (ECL, Player 23).
@@ -84,6 +93,8 @@ in packs. Worth an audit before each fight here (playbook top: the party audit).
   levels first). Every new try is reported on the board (Jeremy).
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
+
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
 
 - **Enemy:** two spectres (drain 2 levels a hit; magic weapons only).
 - **Party** (`p33c1_s26g7c`, trained): ARN F6 65 AC -1; BRAM F6 60 AC 0, Two-Handed Sword +1 (+3 vs undead) readied;
