@@ -52,6 +52,17 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
   (b) the north door (7,2 / 8,2 via room 20) for a different map; (c) leave it at level 3 (p16a2's deathless win
   stands) and come back at level 4. Recommendation: (a), it is the tactic the sources name.
 
+- **Analysis (Gold Box Guide 2, 2026-11-20; plan waiting on Jeremy):** (1) **Hold Person took one figure a cast:**
+  `tactics.py` `_aim` takes its first pick and throws the other two away (board request; same in the throne room).
+  (2) **The audit:** owed ARN F4, BRAM F4, DORN F2; ARN's Bracers AC 6 not worn (they beat DORN's leather: AC 4 -> 2;
+  over Banded Mail they do nothing); a spare Shield in BRAM's pack while LIRA has none; BRAM's MU scroll (Stinking
+  Cloud) unread. (3) **The experience:** per class x classes, every member had earned 3,800-4,600 (ELWEN 1383 x 3 =
+  4149, LIRA 1916 x 2 = 3832, DORN 2082 x 2 = 4164, the rest 4583): the gap in levels is the multi-class split, not lost
+  experience. ELWEN's C2 is 354 away, LIRA's F2 170. (4) Only 2 Sleeps (MU1 each). (5) **Ruled out:** Ferran Martinez
+  first would cancel the army (0x4A26 empties the hall), but his rooms are only reachable across the army's squares
+  (7-8,4-5; GEO4 block 21). (6) **Jeremy's line rule** (playbook Inbox): GUARD only when no enemy can be reached;
+  otherwise the fighters close and form a line of four, or three with the fourth covering the corner.
+
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
 
 Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\stojanow\`.
@@ -156,3 +167,12 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
 - **Read:** level and gear: only BRAM's sword is better than +1; every hit drains. Left out by the five-losses rule,
   with 8,2 behind it (the knight's tomb: Potion of Healing, Wand of Lightning Bolt, 2 Restoration). Jeremy has the
   saves (`.lab/for-jeremy/graveyard/`).
+- **Analysis and Plan 1 (Gold Box Guide 2, Jeremy agreed 2026-11-20 14:40):** poolrad.md section 3, "Valhingen
+  Graveyard". In short: the pair is optional (the knight's tomb only) but **worth taking** (8 Restorations, Plate Mail
+  +2, Long Sword +2, Ring of Fire Resistance); not before the audit: at `s26g7c` levels owed (ELWEN F5 and MU5, LIRA
+  MU5, DORN T7), everyone at movement 3, ARN's Bracers worn over Banded Mail (no effect: DORN's instead), one
+  Restoration left (a 2-level hit needs a whole scroll). Then camp on 10,1 (Haste on the fighters, Prayer, Bless), step
+  in, Fireball and bows +1 in round 1, focus one spectre. Simulated: about 2 in 3 fights without a drain, 98% with one
+  at most; bring 2+ Restoration scrolls so a hit costs a scroll, not a reload. Leave the vampire's last fight until
+  after (his death stops the tomb's event too).
+  - **Results:** (the Player's lines here)

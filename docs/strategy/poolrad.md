@@ -129,6 +129,37 @@ files); results *seen* unless marked.
     door); a camp at the door draws kobolds bombarding the party with rocks. The cluebook route (wyvern cave, Fatima,
     the efreeti) is untried.
 
+**Valhingen Graveyard (4:10)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
+- **The two spectres at the brass doors (event 23, 9,1) are optional:** they guard only the knight's tomb (8,2), the one
+  way into that block of crypts. The vampire's coffin and lair don't depend on them; the three lone spectres creating
+  skeletons, zombies and wights make the 3 kills the mystic man waits for; the graveyard is cleared when the vampire
+  dies the second time (at his coffin). *code* (ECL4 block 10, GEO4 block 10) The cluebook names "#13 and #16" as
+  needed for the vampire's room; the script doesn't check them. They stay until beaten (no parley; fleeing throws
+  the party out), but **the vampire's final death (0x4A41 = 255) stops every event in the graveyard, the tomb's
+  too**: to take the tomb later, leave the vampire's last fight until after. *code*
+- **The knight's gifts** (ITEM4 list 29): four clerical scrolls, each **two Restorations** (8 in all); Plate Mail +2;
+  Long Sword +2 (lawful good only: ARN, BRAM, CEDRIC); Shield +1; Ring of Fire Resistance. *code* + *players*
+  ([GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/valhingengraveyard.php)) **Worth taking** (*Jeremy*):
+  ARN in the plate and the sword goes from AC -1 to AC -4.
+- **The spectres** (MON4CHA 17): 38 HP each (fixed), AC 2, THAC0 12, one 1d8 touch draining two levels (on a hit
+  only), move 30 (on the party in round 1), magic weapons only; immune to Sleep, charm, Hold, poison and cold; about
+  2,030 experience each. *code* **TURN:** a spectre needs a d20 of 20 at cleric 5, 16 at cleric 6 (Pool's cap), so
+  never reliable here; they are turned, never destroyed. *code* (the turning table, DS:0x447)
+- **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed
+  (every try drained). *seen*
+- **The plan** (Jeremy agreed, 2026-11-20; a simulation of the fight from the party's real numbers, Gold Box Guide 2):
+  1. **The audit first:** train what's owed (Player 33's save: ELWEN F5 and **MU5**, LIRA **MU5**, DORN T7);
+     movement 6+; every fighter a magic weapon (the Slums' Bows +1 for the archers: a magic bow makes every shot
+     magic); DORN in the Bracers AC 6; **two or more Restoration scrolls** in the packs (the marble chest at 7,6-8
+     gives four), so a hit costs a scroll, not a reload.
+  2. **On 10,1, in camp:** Haste on the four fighters (one magic-user's third-level slot), Prayer, Bless; then step
+     onto 9,1.
+  3. **Round 1:** the other magic-user's Fireball on both spectres; the bows; then every fighter on one spectre at a
+     time, BRAM's sword first. Magic Missiles after the Fireball.
+  - The simulation (20,000 fights, two fighters reaching a spectre each round): as at Player 33's save, about 1 fight
+    in 5 without a drain and 1.4 drains on average; with Prayer, one Fireball and the camp's Haste, about 2 in 3
+    without a drain and almost never two (98% one at most). **Mirror Image doesn't help** (section 4's rule: images take spells, not blows).
+
 The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
 ## 4. Pool-only rules
@@ -383,3 +414,4 @@ and where it was learnt. The Lead folds them into the sections daily and clears 
 - Route levels, stretches 6-12 (*seen*, Player 34, segments 9-25): City Hall to Bane at F4/C4 with multis 2-3 (ELWEN C2/F2/MU1, LIRA F3/MU1, DORN F3/T2); Kovel at F4-5/C5 (ARN drained 4 -> 2); the kobold caves and Sorcerer's Island at ARN F3, BRAM F5, CEDRIC C5, ELWEN C4/F3/MU3, LIRA F3/MU3, DORN F3/T4 (the throne room lost 5 of 5 at these); the Buccaneers and Zhentil at F5-6/C6, multis 4/4/4, LIRA F4/MU4, DORN F4/T5.
 - Route levels, stretches 13-15 (*seen*, Player 34): the graveyard entered at ARN F5, BRAM F6, CEDRIC C6, ELWEN C4/F4/MU4, LIRA F4/MU4, DORN F4/T5 and left drained (ARN F2, LIRA F2/MU2, DORN F3/T3: p25q5); Player 33's redo with no drain reached `graveyard` at ARN F6, BRAM F6, CEDRIC C6, ELWEN C5/F4/MU4, LIRA F5/MU4, DORN F5/T6, and 4:10 9,1's two spectres still won 5 of 5 there; Stojanow's wall was lost at ARN F3, BRAM F5, CEDRIC C6, multis 3-5 (still drained); Valjevo at ARN F5, BRAM F6, CEDRIC C6, ELWEN C5/F5/MU4-5, LIRA F4/MU4, DORN F4/T5 (guards 1 of 5).
 - Stojanow's tower rooms (*code*, main's coverage notes `tools/plans/cover_2-9-climb.plan`; *seen*, Player 34): the rooms (4,5 and 11,5, a step S, GO UPSTAIRS YES) are manned only until the gate's bugbears (7,10) are fought, which marks both towers beaten (ECL 2:9 0xA60E): the cluebook's "each tower's guards one at a time" has to come right after the toll, before the bugbears. The west tower's room holds the 5th-level fighter, his aides and three ettins (188 HP); a level 5-6 party lost it 5 of 5 (three wins with CEDRIC dead), docs/strategy/stuck-fights.md.
+- **Gear map, the knight's tomb (4:10 8,2) is ITEM4 list 29:** four clerical scrolls of RESTORATION x2, Shield +1, Ring of Fire Resistance, Long Sword +2 (lawful good), Plate Mail +2; the table's 4:10 row seems to give the tomb the Wand of Lightning Bolt and Potion of Healing instead: please check the square-to-list joins (main). **And a "reserved for" column** (Jeremy, the magic-item rule, playbook section 2): each wand, scroll and potion with the fight it's kept for (Gold Box Guide 2 fills it in with Jeremy). *code* (Gold Box Guide 2)

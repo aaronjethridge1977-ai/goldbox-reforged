@@ -112,6 +112,10 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
   joined stack keeps the highlighted stack's readied flag. *seen* (main chat 67, check 116)
 - **Re-equip on the battlefield when the fight changes:** VIEW, ITEMS, READY works in combat; TRADE doesn't. *book*
   (Pool Manual) Whether readying uses the turn: **unconfirmed** (request to Combat; not answered in Combat Chat 34).
+- (Pool) **Bracers AC 6 are body armour that weighs nothing:** the game counts only the best body armour readied, so worn
+  over Banded Mail (AC 4) they do nothing; they beat leather (AC 8) and no armour. Give them to the thief: DORN in
+  leather, shield and DEX 17 goes from AC 4 to AC 2, and his thief skills don't suffer. *code* (ITEMS type 77, armour
+  value AC 10 plus the item's 4) + *seen* (ARN AC -1 with them readied over Banded Mail, Player 33's graveyard save)
 - **Choose weapons by expected damage:** the damage it deals and the chance to hit with it, together. *Jeremy*
 - **Use a magic weapon when it's better, or when the enemy needs one.** *Jeremy*
 - Fighters swap between their best-AC set and their most-damage set to suit the coming fight (section 4). *Jeremy*
@@ -146,8 +150,28 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 
 **Ammunition**
 - Save magic ammunition (Arrows +1 and the like) for very hard fights; a magic bow can be used any time. *Jeremy*
+- (Pool) **A shot is magic when the bow is magic:** the game checks the readied bow; a magic arrow counts only when it is
+  the last of its stack. So a Bow +1 lets an archer hurt wights and spectres. *code* (combat.gd `_spend_shot`, the
+  original's rule as ours reproduces it; not yet seen against a magic-only enemy)
 
 **Magic items and scrolls**
+
+**The magic-item rule** (*Jeremy*, 2026-11-20, Gold Box Guide 2)
+1. **Use before selling.** A magic item that beats what a member has readied goes to that member and is readied; the
+   audit table (section 4) lists anything carried and not readied.
+2. **Sell only what nobody can use better,** and keep a magic weapon (melee or bow) for every member who fights: some
+   enemies are hurt only by magic weapons. A weapon with a plus beats the same weapon without; a plain weapon can still
+   beat a small magic one by its dice (a plain Two-Handed Sword d10 against a Dagger +1 d4+1) where magic isn't needed.
+3. **Identify before selling.** Readying an item and comparing the stats shows who should have it; it is identified
+   (a shop, 200 gp) before any sale.
+4. **Wands, scrolls and potions are reserved for named fights** (the game's strategy file names the fight for each);
+   charges left after their fight go to other hard fights, never to an easy one.
+5. **Restoration scrolls** are never sold, and are spent on the drain that can't be reloaded around.
+6. **Movement 6 or better for everyone, always:** junk goes first; magic items stay unless rule 2 sells them.
+7. **Cursed items** are marked and never readied outside a lab.
+8. **Magic-user scrolls:** copy each spell the magic-users don't know into the spellbook first; we want every spell
+   in the game. Then keep or reserve the scroll by rule 4.
+
 - Unidentified magic items show without their plus in the item list: identify them before a hard fight (section 4).
   *seen* (Player 32)
 - To read a clerical scroll: VIEW, ITEMS, READY it (both hands free: weapon and shield off), then USE, CAST, and pick
@@ -287,7 +311,7 @@ the spell's class)
   monster strikes every other round); on a hasted figure it only ends the Haste.
 - **Haste** (magic-user 3; next turn). *Jeremy:* turns your fighters into killing machines. The caster's level in
   allies; 3 + 1/level rounds; doubles movement and attacks; each target ages a year; on a slowed figure it only ends the
-  Slow.
+  Slow. A hasted caster still casts one spell a turn (a cast ends the turn): Haste the fighters. *code* (Gold Box Guide 2)
 - **Bless** (cleric 1; next turn, a long delay). *Jeremy:* can be used well, but he rarely does: try it. +1 to hit for 6
   rounds, only for members not yet in melee. *book* + *seen*
 - **Prayer** (cleric 3; next turn). Within 6 squares of the caster, the party +1 to hit and on saves and enemies -1, 1
@@ -316,7 +340,9 @@ arena):
   **Protection from Good** (rarely worth a slot); **Animate Dead** (above: raises the fallen, enemies or ours, to fight for the party);
   **Restoration** is in the table at cleric level 7, beyond Pool's cap: scrolls only.
 - Magic-user: **Shield** (at once; stops Magic Missile, better AC: for a mage facing mages); **Mirror Image** (at once;
-  keeps the mage alive); **Ray of Enfeeblement** (cuts a big melee enemy's damage: ogres, giants); **Read Magic** (camp;
+  keeps the mage alive against enemy spells; (Pool) **not against blows**: an image takes only a spell aimed at its owner,
+  never a weapon or a touch, unlike the tabletop rule *code* (GAME.OVR 0xF61B) + *seen* (2:9's two magic-users, Combat
+  Chats 6-7, matched to the fight's end); so no help against drainers); **Ray of Enfeeblement** (cuts a big melee enemy's damage: ogres, giants); **Read Magic** (camp;
   for scrolls); **Knock** (camp; locks); **Friends** (camp; Charisma for a parley); **Protection from Normal Missiles**
   (archer-heavy fights); **Protection from Evil 10'** (the party version); **Blink**, **Invisibility**,
   **Invisibility 10'**, **Detect Invisibility**, **Reduce**, **Burning Hands**, **Shocking Grasp** (touch spells: poor
@@ -393,6 +419,15 @@ fight: a scripted battle, a boss, a known killer, or anything the game's strateg
 7. **Health:** everyone at full HP; no poison, disease or drain left untreated.
 8. **A save** just before the trigger, so that a loss costs minutes, not an hour. *Jeremy* + *book* (Curse reference
    card: "go back to your last saved game")
+
+**The audit table** (*Jeremy*, 2026-11-20, Gold Box Guide 2): printed before every hard fight (the Player's tool at each
+checkpoint before one), one row per member: levels; experience per class and the total earned (per class x classes);
+**levels owed now**; the next level and the experience still to earn for it; HP; AC; THAC0; movement; magic items
+carried but not readied. Then the party's totals: HP, the disablers (Sleeps; Hold Person casts and picks; Stinking
+Clouds), cures, Restoration scrolls, the reserved items for this fight, and the members at AC 0 or better. **Flags:**
+any level owed; a level within 500 experience of a member (a short detour may be worth it); gear not readied; anyone
+below movement 6; undead ahead without magic weapons for the fighters or Restoration scrolls in the packs. Example:
+docs/strategy/stuck-fights.md (Sokal Keep and the graveyard each had levels owed; the kobold king's had seven).
 
 **A failed audit** means fixing it first: earn levels on mop-up fights and train, then plan the tactics by hand. Cheats
 (save edits, auto-level, teleports) are a last resort. *Jeremy*
