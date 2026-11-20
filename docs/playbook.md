@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-3 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-4 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -348,13 +348,67 @@ Cloud (3), Ray of Enfeeblement (4), Haste (5), Slow (6).
 
 Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies: adjust the books when they're found.
 
+## 4. Before a fight
+
+**The party audit: before every hard fight** (*Jeremy*, 2026-11-20; ai-business-ideas ideas/game-modernizer.md). A hard
+fight: a scripted battle, a boss, a known killer, or anything the game's strategy file flags.
+
+1. **Levels:** the party is at the level this stretch needs (the method below; poolrad.md gives Pool's), and everyone
+   who qualifies has trained.
+2. **Gear:** each member's best weapon and armour readied; fighters in the AC set or the damage set, whichever this
+   fight needs (section 2).
+3. **Magic weapons:** where the enemy needs them (some undead), every front-liner has one, traded round the party.
+4. **Spells:** every slot at every level full, with spells that suit this fight (Resist Fire for fire, Slow for
+   multi-attackers...).
+5. **Items:** magic items identified and readied; wands and potions with the members who will use them.
+6. **Weight:** junk sold; movement 6 or better for everyone (section 2).
+7. **Health:** everyone at full HP; no poison, disease or drain left untreated.
+8. **A save** just before the trigger, so that a loss costs minutes, not an hour. *Jeremy* + *book* (Curse reference
+   card: "go back to your last saved game")
+
+**A failed audit** means fixing it first: earn levels on mop-up fights and train, then plan the tactics by hand. Cheats
+(save edits, auto-level, teleports) are a last resort. *Jeremy*
+
+**Is the party's level right?** (the method; *Jeremy*, 2026-11-20) Three signals, cheapest first:
+1. **Players' reports:** the levels human players had when they took the stretch (*players*, with links, in the game's
+   strategy file).
+2. **A fight rating from the game's data:** for each hard fight, the expected rounds the party needs to kill the enemy
+   against the expected rounds the enemy needs to drop the party, at the party's real stats. Well above 1: ready; below
+   1: earn levels first. (To be built after Stage 1; board request.)
+3. **Results:** under the audit, two losses in three tries means under-levelled.
+
+**Train as soon as anyone qualifies.** If the funds are short, go and get them (treasure, mop-up fights), then come
+back. *Jeremy* Training cuts experience to "the level after next, less 1", so experience above that is lost: a
+multi-class left long untrained lost experience, and one party carried four untrained levels into the graveyard's
+spectres. *seen* (Player 3; Player 33)
+
+**Buffs: long ones in camp, short ones at the pivotal moment** (*Jeremy* + *code*: START.EXE spell table, bytes 4-5; a
+round is a minute; "a level" is the caster's level)
+- In camp just before the trigger, the long buffs: Strength (60 rounds a level), Enlarge, Resist Fire, Resist Cold,
+  Protection from Normal Missiles (10 a level), Shield (5 a level), Protection from Evil (cleric 3 a level; magic-user
+  and the 10' radius version 2 a level), Mirror Image (2 a level). Spells cast in camp carry into the fight while their
+  time runs. *seen* (Player 33, p33c3)
+- In the fight, at the pivotal moment (the turn before the lines meet, the round the boss closes): Bless (6 rounds),
+  Prayer (1 a level), Haste (3 + 1 a level), Spiritual Hammer (1 a level).
+- The cluebook and Curse's card say to cast everything (Bless, Prayer, Protection from Evil, Enlarge, Invisibility 10',
+  Haste) in camp on the square before the trigger, then step in. *book* The durations above say which of those last.
+
+**Before any fight**
+- **Press Alt-M (MAGIC ON)** at the start of every fight if anyone is on QUICK (section 3). *code* + *seen*
+- **Marching order:** four in front to protect the back, one shooting from the back, the magic-user held in reserve
+  (section 5). *Jeremy* Archers in the back: a missile can't be fired with an enemy adjacent. *book* (Manual)
+- **Judge back-to-back fights together:** a fight that follows another with no camp between is fought with the first
+  fight's damage and without its loot readied. *seen* (Player 29, p29b2: Tyranthraxus after his guards)
+
+**The game isn't a straight line.** Knock out what you can, move forward, and come back to what's too hard. *Jeremy*
+Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
 
 ## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
 
-- **Audit the party before every hard fight** (Jeremy, Methods 8, 2026-11-20): levels against the cluebook's expectations, the best gear readied, every spell slot full, magic items identified, junk sold. A failed audit means earning levels first; cheats are a last resort.
 - **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
 - **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
@@ -372,7 +426,6 @@ Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies:
 - Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act after the melee settles (Manual).
 - Initiative is Dex plus a random number: high-Dex members act first (Manual).
 - Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps; spread out against breath and area spells (Cluebook).
-- Encounter sizes scale with how strong the party looks: inflated starting stats bring bigger fights without the HP, spells or items to match (Cluebook).
 
 **Level drain, petrification, poison, disease**
 - Drainers: wights, wraiths, spectres (Ferran Martinez drains 2 levels a hit), vampires. A Restoration scroll restores one level. Temples don't cure drain; they do cure petrification (stone to flesh), poison (Neutralize) and disease (Cluebook).
@@ -384,7 +437,6 @@ Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies:
 ## Party and preparation
 
 - A member killed by poison stays dead after a temple's NEUTRALIZE POISON (it only removes the poison): cast Slow Poison first (HP 1, standing), then neutralize (main chat 68, GAME.OVR 0x4CC9; *read in the code*).
-- Train as soon as a member qualifies. At TRAIN the game cuts experience to "the level after next, less 1", so experience above that is lost (Player 3; *seen in the original*).
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
 - The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
 - Sell gems and jewellery (APPRAISE, then SELL; a shop's APPRAISE also offers KEEP, which takes a jewel off the coin count: main chat 66), then POOL and SHARE so that each trainee has the fee (Player 15, main chat 66; *seen in the original*).
@@ -425,7 +477,6 @@ Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies:
 - For traps, AVOID TRAP keeps the party safe but leaves the loot. AVOID followed by EXAMINE rolls the trap again; once it went off (Player 22; *seen in the original*).
 - To find a trap, the game rolls RANDOM 99 against the party's best value, not the average (Player 22, ECL 3:14; *read in the code*).
 - For locks, PICK once with the best thief, then BREAK or BASH. At a locked door every member rolls a d100 to pick (Player 22, Player 14; *seen in the original*).
-- Some fights can be held off by answering LEAVE and taken on later at a higher level (Players 15, 23; *seen in the original*).
 
 ## Movement and scripts
 
@@ -457,7 +508,6 @@ Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies:
 
 ## Added by Player 29
 
-- A fight that follows another with no camp between (Tyranthraxus after his guards' treasure and the vote) is fought with the first fight's damage and without its loot readied: judge the pair together, not the first alone (Player 29, p29b2; *seen in the original*).
 - A take loop over a big pile: a member who refuses an item for weight refuses anything heavier, so skip them for those (Player 29, p28j1; *seen in the original*).
 - Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
 
@@ -482,7 +532,6 @@ Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies:
 
 ## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
 
-- Pre-buff scripted fights: camp on the square before the trigger, cast Bless, Protection from Evil, Prayer, Enlarge / Strength on fighters, then step in (Cluebook).
 - With nobody knowing Knock, try PICK and then BASH. After a failed PICK and BASH, a door offers only KNOCK on later bumps (Player 17, Player 21; *seen in the original*).
 - (For the lanes, the spell lab's method) *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
 - Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
