@@ -1315,6 +1315,39 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 30 (2026-11-19): the tactical mode (`tactics on`, tactics.py); the Stojanow wall by hand: 8 of 8 lost; `picks`; segment.py's magicat
+
+The Lead's note (Jeremy's standing goal): beat the shortcut fights for real, the tool giving each member's orders
+from the playbook instead of QUICK; after five losses in a row, ask the Lead.
+- **segment.py:** `MAGIC 1 between draws a and a` gives `magicat=a` (Combat Chat 31: the Alt-M read at a turn-opening
+  poll); a < b keeps a + 1. `segment.py p29d1 begin end --start=p29b2_s34h --tplog`: **all 2819 draws identical**.
+- **`OP_STOPAT=<kind>,...`** (player.py): a probe stops at the first screen of that kind with DOSBox left running
+  (lab `p27/k.py`, `p30/lit.py` the rows' colours, `p30/fig.py` the fight's figures and the aim list).
+- **The original's fight screens, seen** (the wall from `s28p`): Space during a QUICK member's turn hands every QUICK
+  party member back (GAME.OVR 0xBC26); a member's menu MOVE VIEW AIM USE CAST [TURN] QUICK DONE, the member on row 1;
+  CAST: "<NAME>'S SPELLS IN MEMORY", spell names under level headers, the lit one white, opening on the last, **Home up
+  one, End down one**, a long list pages (CAST NEXT [PREV] EXIT); a spell is **begun** at CAST and **goes off at a later
+  turn of the caster** with its AIM (no menu); AIM:NEXT PREV MANUAL [TARGET] CENTER EXIT opens on the caster; the aim
+  list is DS:0x671A (count) and 0x671B (3 bytes: the fight's figure, 1-based, distance in half squares, direction),
+  the aimed entry **DS:0xBEFD - 1** (for a begun spell's aim at a later turn it can point past the list: the tool then
+  reads the right panel's name and HITPOINTS); the fight's figure n is the record at the far pointer DS:0x65B9 + 4n,
+  its cell DS:0x5F2B + 4(n - 1); **cleric Hold Person takes three picks** (the aim stays up after each TARGET); EXIT
+  from a spell's aim asks **ABORT SPELL? YES NO**.
+- **tactics.py, `tactics on|off`:** game.py presses Space at the fight's first poll; at each member's menu a caster
+  gets an order (Stinking Cloud on the biggest bunch with nobody of the party in its radius 1, Prayer once, Magic
+  Missile on the magic-users, Hold Person on persons only, Bless once before contact, Sleep on the aides), anyone else
+  QUICK (and stays QUICK). Every menu logs `TACTICS state` (both sides' HP). Long tactical fights want
+  `OP_STUCK_KEYS=3000`.
+- **`picks <NAME> <spell>, ...`** (plans.py): `prepare` / `heal` memorize these first (known spells, while their level
+  has a free slot), the bot's picks fill the rest.
+- **The wall (2:9 7,6), tactical: 8 of 8 lost** (p30a3, c3, d1-d3 from `p27a1_s28p`, plan `p30/wall.plan`; e1-e3
+  from `p26c1_s28b` with three Stinking Clouds, `p30/wall2.plan`; a1, a2, b1, b2, c1, c2 were tool stops, fixed). Best:
+  **p30d2, 139 of 382 HP dealt, two ettins slain** (ELWEN's Stinking Cloud on the bunch: helpless ettins die to one
+  blow); the rest 49-78 (the old best 70). What failed: the begun spells (Hold Person, Prayer) never went off for a
+  caster in melee (a hit takes CAST away for the round: ours' combat_screen.gd notes GAME.OVR 0x9F46); Stinking Clouds
+  in e2/e3 went off but the QUICK fighters didn't slay the helpless ettins; the six ettins (300 HP, two attacks each)
+  outlast the party (~205 HP) by rounds. Asked the Lead (Requests, "player (Player 30) → Lead").
+
 ## Player 29 (2026-11-19): segments 32 to `valjevo5` and 33 to `valjevo6`; the take loop skips overloaded members
 
 Lead's answer to "player (Player 28) -> design": (a), 5:4 9,1 (the four fire giants) and the west of 5:4 deferred; for

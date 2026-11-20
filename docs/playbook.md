@@ -102,3 +102,11 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - A fight that follows another with no camp between (Tyranthraxus after his guards' treasure and the vote) is fought with the first fight's damage and without its loot readied: judge the pair together, not the first alone (Player 29, p29b2; *seen in the original*).
 - A take loop over a big pile: a member who refuses an item for weight refuses anything heavier, so skip them for those (Player 29, p28j1; *seen in the original*).
 - Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
+
+## Added by Player 30
+
+- Space during a QUICK member's turn hands every QUICK party member back to the player; the menu returns at each one's next turn (Player 30, p30a1; *seen in the original*).
+- A spell is begun at CAST and goes off at the caster's later turn, aimed then; a caster hit in between loses it. Hold Person and Prayer begun in melee never went off at the Stojanow wall; cast them before contact (Player 30, p30d1/d3/e1; *seen in the original*).
+- Stinking Cloud on bunched ettins makes them helpless, and a helpless ettin dies to one blow: two slain in p30d2. QUICK fighters don't always turn on the helpless ones (Player 30, p30d2/e2; *seen in the original*).
+- In a fight's CAST list Home moves the light up and End down; it opens on the last spell, and long lists page with NEXT (Player 30; *seen in the original*).
+- A cleric's Hold Person takes three picks; EXIT from a spell's aim asks ABORT SPELL? (Player 30; *seen in the original*).

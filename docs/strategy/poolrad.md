@@ -56,6 +56,7 @@ early fights. Levels are given where the README states them. General tactics are
   - Earlier parties from c27a, c32a and c34d were destroyed there too (Players 3, 7, 9).
   - The gate was passed by `shortcutwin` (Player 27, p27c2).
   - The report suggests (untried): more levels first; cast by hand (Stinking Cloud while the ettins are bunched, Prayer and Bless before contact, Hold Person on the mages); sell gear; position the line.
+  - Player 30, the tactical mode (casts by hand, fighters on QUICK): 8 of 8 lost (p30a3-p30e3, from `s28p` and from `s28b` with three Stinking Clouds memorized). Best p30d2: 139 of 382 HP dealt, two ettins slain while helpless in a Stinking Cloud. Hold Person and Prayer begun in melee never went off (*seen in the original*).
 - **Sokal Keep event 9, 4:21 7,4** ("A LARGE FORCE OF ORCS AND HOBGOBLINS", 56 figures).
   - Level 2: 10 tries, 8 wipes and 2 wins, each with a member dead (Player 15). The early tries ran with MAGIC OFF.
   - Deferred to level 3. Player 15: 6 tries, 1 win with nobody dead. Player 16: p16a1 lost a member, p16a2 won deathless. At level 3 in all: 8 tries, 2 deathless wins.

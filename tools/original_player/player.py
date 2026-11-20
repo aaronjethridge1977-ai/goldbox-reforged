@@ -9,6 +9,7 @@ import json, os, re, shutil, sys, time
 import orig, hooks
 import game as G
 import screens
+import tactics as T
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAVES = os.environ.get("OP_SAVES", os.path.join(orig.LAB, ".lab", "player", "saves"))
@@ -28,6 +29,7 @@ class Player:
         self.run = run_id
         self.logf = open(log_path, "a")
         self.g = G.Game(log=self.log)
+        self.tactics = T.Tactics(self.log)     # Player 30: the tactical mode (`tactics on`)
         self.events = []          # (kind, text) for the summary
         self.t0 = time.monotonic()
         self.goal = 0
@@ -155,6 +157,9 @@ class Player:
         if scr["kind"] in ("walking", "treasure", "continue"):   # Player 2: waves fought back to back
             self.in_fight = False
             self.g.magic_sent = False      # Player 15: OP_MAGIC: the next fight gets its Alt-M
+            if self.g.control_sent:
+                self.g.control_sent = False    # Player 30: the next fight gets its Space
+                self.tactics.reset()
             if not self.g.party_size and scr["kind"] == "walking":
                 self.g.party_size = len(self.g.party())
                 self.start_names = [m[0] for m in self.g.party()]   # Player 11: members lost show in the summary
@@ -164,6 +169,9 @@ class Player:
             st["im"].save(shot)
             self.log("NEW SCREEN", scr["kind"], shot)
         self.prev_kind = scr["kind"]
+        if os.environ.get("OP_STOPAT") and scr["kind"] in os.environ["OP_STOPAT"].split(","):
+            # Player 30: a probe stops at the first screen of a kind (DOSBox left running for k.py)
+            raise Stop("OP_STOPAT: screen %s (%s)" % (scr["kind"], st["bottom"]))
         if scr["kind"] == "walking":
             return self.walk(st)
         if scr["kind"] == "wiped":

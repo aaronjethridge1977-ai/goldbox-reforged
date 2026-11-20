@@ -27,6 +27,11 @@
   shortcutwin <area> <x,y> [n]   (Player 27, Q27 (a)) a step: the next fight (Player 29: next n) that starts there
                                  is won by the logged shortcut (main's bot's): every monster's HP 0 and status dead at
                                  the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
+  picks <NAME> <spell>, ...      (Player 30) `prepare` / `heal` memorize these first for the member (known spells, in
+                                 order, while their level has a free slot), then the bot's picks in the rest
+  tactics on|off                 (Player 30) a step: from here the casters get orders by hand in fights (tactics.py:
+                                 Prayer, Bless, Hold Person on the mages, Stinking Cloud, Magic Missile, Sleep), the
+                                 rest go on QUICK; game.py presses Space at each fight's first poll to take the party back
   answerfrom <words>|<choice>    (Player 16) a step of the plan: from here on this answer comes before the others
                                  (Kuto's Well: CLIMB DOWN is NO while events are left, then YES)
   map 7:26                       (Player 16) the following walks' map when it isn't the area's own GEO block (`map`
@@ -583,13 +588,28 @@ def next_cure(M):
     return None
 
 
+PICK_OVERRIDE = {}    # Player 30: `picks <NAME> <spell>, ...`: these first, in order, into the member's free slots
+
+
 def picks(m, M=None):
     """bot.gd _pick_spells: the spells to queue in the member's free slots of levels 1-3 (names), cleric levels
     first; with the party M, one Slow Poison kept in the party (Chat 31's rule: the first free level-2 cleric slot
-    of a member who knows it, when nobody has one memorized or queued)."""
+    of a member who knows it, when nobody has one memorized or queued). Player 30: a plan's `picks` line for the
+    member goes first (known spells only, while their level has a free slot); the bot's picks fill the rest."""
     if m["status"] != 0:
         return []
     out = []
+    over = PICK_OVERRIDE.get(m.get("name"))
+    if over:
+        ids_of = {v: k for k, v in SPELL_NAMES.items()}
+        free = {slot: max(0, m["rec"][slot] - sum(1 for b in m["mem"] if (b & 0x7F) in ids)) for ids, slot, _ in PICKS}
+        for name in over:
+            sid = ids_of.get(name)
+            slot = next((sl for ids, sl, _ in PICKS if sid in ids), None)
+            if sid and slot and free.get(slot, 0) > 0 and m["rec"][0x33 + sid - 1]:
+                out.append(name)
+                free[slot] -= 1
+        m = dict(m, mem=list(m["mem"]) + [ids_of[n] for n in out])
     slow = M is None or any(SLOW_POISON in [b & 0x7F for b in o["mem"]] for o in M)
     for ids, slot, order in PICKS:
         n = max(0, m["rec"][slot] - sum(1 for b in m["mem"] if (b & 0x7F) in ids))
@@ -697,6 +717,21 @@ class ShortcutWin:
         return True, None, ""
 
 
+class TacticsStep:
+    """Player 30: `tactics on|off`: the tactical mode (tactics.py) from here on."""
+    def __init__(self, on):
+        self.on = on
+
+    def __repr__(self):
+        return "tactics %s" % ("on" if self.on else "off")
+
+    def next(self, p):
+        p.tactics.on = self.on
+        p.g.take_control = self.on
+        p.note("tactics", "tactical mode %s" % ("on" if self.on else "off"))
+        return True, None, ""
+
+
 class Checkpoint:
     def __init__(self, name):
         self.name = name
@@ -797,6 +832,10 @@ class Plan:
     def answer(self, scr, st, p):
         kind = scr["kind"]
         self.mem = p.g.mem
+        if p.tactics.on:     # Player 30: the tactical mode's screens (a member's menu, CAST's list, AIM)
+            k = p.tactics.answer(scr, st, p)
+            if k:
+                return k
         if getattr(p, "seq", None):
             k, why = self._seq(scr, st, p)
             if k:
@@ -1694,6 +1733,11 @@ def load(path):
             w2 = rest.split()
             pl.goals.append(ShortcutWin(area_of(w2[0]), tuple(int(v) for v in w2[1].split(",")),
                                         int(w2[2]) if len(w2) > 2 else 1))
+        elif cmd == "picks":      # Player 30: `picks <NAME> <spell>, <spell>`
+            who, _, sp = rest.strip().partition(" ")
+            PICK_OVERRIDE[who.strip()] = [x.strip().upper() for x in sp.split(",") if x.strip()]
+        elif cmd == "tactics":
+            pl.goals.append(TacticsStep(rest.strip() == "on"))
         elif cmd == "answerfrom":
             words, choice = rest.rsplit("|", 1)
             pl.goals.append(AnswerFrom(words.strip(), choice.strip(), os.path.basename(path)))

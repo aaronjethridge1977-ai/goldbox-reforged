@@ -54,6 +54,10 @@ class Game:
         # magic_sent when the fight is over
         self.auto_magic = os.environ.get("OP_MAGIC") == "1"
         self.magic_sent = False
+        # Player 30: `tactics on`: Space at the fight's first poll hands the party's QUICK members back to the player
+        # (GAME.OVR 0xBC26); player.py clears control_sent when the fight is over, as magic_sent
+        self.take_control = False
+        self.control_sent = False
         # Player 27: `shortcutwin <area> <x,y>` (Q27 (a), main's bot's logged shortcut win): ((area), (x, y)) armed by
         # the plan; at the first poll of the next fight there, every monster's HP and status are set to 0 / dead
         self.shortcut = None
@@ -262,6 +266,11 @@ class Game:
                 self.magic_sent = True
                 _keys.key("alt+m")
                 self.log("MAGIC alt+m (MAGIC ON for the party's QUICK members) at %s" % site)
+            elif kind == "poll" and site not in KINDS and str(site).startswith("OVR:") and self.take_control \
+                    and not self.control_sent and len(self.party()) < self._nfigures():
+                self.control_sent = True
+                _keys.key("space")
+                self.log("CONTROL space (the party's QUICK members handed back for the tactical mode) at %s" % site)
             if kind == "poll" and site not in self.unknown_sites:
                 self.unknown_sites.add(site)
                 self.log("SITE polled (not an input wait):", site)

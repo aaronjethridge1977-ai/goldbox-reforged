@@ -1,0 +1,288 @@
+"""Player 30: the tactical mode (Jeremy's standing goal: beat the shortcut fights for real). Instead of QUICK for
+everyone, the tool gives the casters their orders by hand, guided by docs/playbook.md: Prayer and Bless before
+contact, Hold Person on the enemy magic-users (persons; not on large creatures), Stinking Cloud on bunched enemies away
+from the party, Magic Missile on the magic-users, Sleep on low-level persons; anyone with nothing worth casting goes
+on QUICK (and stays QUICK for the fight).
+
+Plan line `tactics on` / `tactics off` (a step). While on, game.py presses Space at the fight's first poll (the
+original hands every QUICK party member back to the player: GAME.OVR 0xBC26, as ours' combat_screen.gd), then each
+member's menu comes here.
+
+The original's screens (seen in DOSBox, Player 30, the Stojanow wall from `s28p`):
+  menu      MOVE VIEW AIM USE CAST QUICK DONE (CAST only for a caster with spells left; row 1 the member's name)
+  CAST      "<NAME>'S SPELLS IN MEMORY": rows of spell names under "1ST LEVEL" ... headers, the lit one white, the rest
+            green; it opens on the last; Home moves the light up one, End down one; bottom CHOOSE SPELL: CAST EXIT
+  AIM       SPELL:<name> on row 23, AIM:NEXT PREV MANUAL [TARGET] CENTER EXIT; it opens on the caster; NEXT steps
+            through the aim list, DS:0x671A (count) and 0x671B (3 bytes an entry: the fight's figure number 1-based,
+            distance in half squares, direction), the aimed entry is DS:0xBEFD - 1; TARGET only where the spell may go
+  figures   the fight's figure n (1-based) is the record at the far pointer DS:0x65B9 + 4n (name +0, HP +0x11B, status
+            +0x10C); its cell is DS:0x5F2B + 4(n - 1) (x, y); the party comes first
+"""
+import struct
+
+MAGES = ("MU", "MAGE", "MAGIC-USER", "MAGIC USER", "WIZARD", "SHAMAN", "CLERIC", "PRIEST")
+LARGE = ("ETTIN", "GIANT", "OGRE", "TROLL", "DRAGON", "HILL GIANT", "FIRE GIANT", "BASILISK", "BULETTE", "OWLBEAR",
+         "WYVERN", "TYRANTHRAXUS", "SCORPION", "SPIDER", "BEETLE", "WOLF", "WORG", "UNDEAD", "SKELETON", "ZOMBIE",
+         "GHOUL", "WIGHT", "SPECTRE", "MUMMY", "VAMPIRE", "ELEMENTAL", "BEAR", "LIZARD", "RAT", "BAT")
+
+
+def _name(r):
+    return r[1:1 + min(r[0], 15)].decode("latin1")
+
+
+def figures(mem):
+    """The fight's figures: [{n, name, hp, status, x, y}] (n 1-based, as the aim list)."""
+    out = []
+    pos = mem.ds(0x5F2B, 4 * 64)
+    for n in range(1, 64):
+        off, seg = struct.unpack("<HH", mem.ds(0x65B9 + 4 * n, 4))
+        if not seg:
+            if n > 1 and not out:
+                continue
+            break
+        r = mem.far(seg, off, 0x120)
+        out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
+                    "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1]})
+    return out
+
+
+def aim_list(mem):
+    n = mem.u8(0x671A)
+    return [mem.u8(0x671B + 3 * i) for i in range(n)], mem.u8(0xBEFD) - 1
+
+
+def _up(f):
+    return f["hp"] > 0 and f["status"] == 0
+
+
+def _dist(a, b):
+    return max(abs(a["x"] - b["x"]), abs(a["y"] - b["y"]))
+
+
+def _is_mage(f):
+    w = f["name"].upper().split()
+    return any(m in w for m in MAGES) or any(m in f["name"].upper() for m in ("MAGIC", "MAGE"))
+
+
+def _is_large(f):
+    return any(m in f["name"].upper() for m in LARGE)
+
+
+class Tactics:
+    def __init__(self, log):
+        self.log = log
+        self.on = False
+        # Player 30: v2 (p30a3 lost with Prayer / Bless first: begun spells are lost to a hit before they go off):
+        # the enemy's numbers first, the party's bonuses after
+        self.priority = ("STINKING CLOUD", "PRAYER", "MAGIC MISSILE", "HOLD PERSON", "BLESS", "SLEEP")
+        self.spells = {}         # member -> the spells seen in their CAST list (kept across fights; refreshed at each look)
+        self.reset()
+
+    def reset(self):
+        """A new fight."""
+        self.cast = {}           # spell -> times ordered this fight (Prayer, Bless once)
+        self.held = set()        # figures given Hold Person (not tried again)
+        self.order = None        # [member, spell, pages turned] while CAST's list is up
+        self.scan = None         # aim: entries with TARGET seen
+        self.refused = set()     # (member, spell) refused this turn (not in the list, nowhere to aim)
+        self.last_member = None
+        self.party_n = 0
+
+    # -- reading -------------------------------------------------------------------------------------------
+    def _sides(self, p):
+        figs = figures(p.g.mem)
+        names = [m[0] for m in p.g.party()]
+        self.party_n = len(names)
+        party = [f for f in figs if f["n"] <= self.party_n]
+        foes = [f for f in figs if f["n"] > self.party_n and _up(f)]
+        return figs, party, foes
+
+    # -- the menu: choose the member's order ----------------------------------------------------------------
+    def choose(self, member, p):
+        """The spell this member should cast now, or None (QUICK)."""
+        figs, party, foes = self._sides(p)
+        me = next((f for f in party if f["name"] == member), None)
+        if me is None or not foes:
+            return None
+        known = self.spells.get(member)       # the spells seen in this member's CAST list (None: not looked yet)
+        contact = any(_dist(a, f) <= 1 for a in party if _up(a) for f in foes)
+        for spell in self.priority:
+            if (member, spell) in self.refused or (known is not None and spell not in known):
+                continue
+            if spell in ("PRAYER", "BLESS") and self.cast.get(spell):
+                continue           # once a fight
+            if spell == "BLESS" and contact:
+                continue           # before contact
+            if spell in ("PRAYER", "BLESS") or self.targets(spell, me, party, foes):
+                return spell
+        return None
+
+    def targets(self, spell, me, party, foes):
+        """Figures to aim at, best first ([] none worth it; None: on the caster)."""
+        if spell in ("PRAYER", "BLESS"):
+            return None
+        mages = sorted([f for f in foes if _is_mage(f)], key=lambda f: f["hp"])
+        persons = [f for f in foes if not _is_large(f)]
+        if spell == "HOLD PERSON":     # the mages first, then other persons (not large creatures)
+            return [f["n"] for f in mages if f["n"] not in self.held] + \
+                [f["n"] for f in persons if f["n"] not in self.held and not _is_mage(f)]
+        if spell == "STINKING CLOUD":  # the biggest bunch with no party member in its area (radius 1)
+            best = []
+            for f in foes:
+                if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6):
+                    continue
+                k = sum(1 for g in foes if _dist(g, f) <= 1)
+                if k >= 2:
+                    best.append((-k, f["n"]))
+            return [n for _, n in sorted(best)]
+        if spell == "MAGIC MISSILE":   # the mages (weakest first), then the weakest
+            return [f["n"] for f in mages] + [f["n"] for f in sorted(foes, key=lambda f: f["hp"]) if not _is_mage(f)]
+        if spell == "SLEEP":
+            return [f["n"] for f in persons if not _is_mage(f)]
+        return [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))]
+
+    def answer(self, scr, st, p):
+        """One key for a tactical screen, or None (the plan's other rules go on)."""
+        b = st["bottom"]
+        if b.startswith("ABORT SPELL?"):
+            # the original after an aim's EXIT (seen, p30b1): a spell with nowhere to go is given up
+            self.scan = None
+            return "y", "tactics: ABORT SPELL? YES (no target in reach)"
+        if b.startswith("CHOOSE SPELL:") and self.order:
+            return self._spell_list(st, p)
+        if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
+            return self._aim(st, p)
+        if scr["kind"] != "combat":
+            return None
+        member = scr.get("member", "")
+        self.order = None
+        self.scan = None
+        try:
+            figs, party, foes = self._sides(p)
+            self.log("TACTICS state at %s's menu: party %d up %d HP; enemies %d up %d HP (%s)" % (
+                member, sum(1 for f in party if _up(f)), sum(f["hp"] for f in party),
+                len(foes), sum(f["hp"] for f in foes),
+                ", ".join("%d:%s %d" % (f["n"], f["name"][:6], f["hp"]) for f in foes)))
+        except Exception as e:
+            self.log("TACTICS state unreadable: %s" % e)
+        if member != self.last_member:
+            self.refused = {r for r in self.refused if r[0] != member}
+            self.last_member = member
+        items = b.split()
+        if "CAST" in items:
+            o = self.choose(member, p)
+            if o:
+                self.order = [member, o, 0]
+                self.scan = None
+                return "c", "tactics: %s casts %s" % (member, o)
+        return "q", "tactics: %s on QUICK (%s)" % (member, "no spell worth casting" if "CAST" in items else "no CAST")
+
+    def _spell_list(self, st, p):
+        member, spell = self.order[0], self.order[1]
+        rows, im = st["rows"], st["im"]
+        items = []
+        for r in range(3, 23):
+            t = rows[r].strip("? ").strip()
+            if t and not t.endswith(" LEVEL"):
+                items.append((r, t))
+        names = [t for _, t in items]
+        if self.order[2] == 0:
+            self.seen_names = set()
+        self.seen_names |= set(names)
+        lit = [i for i, (r, _) in enumerate(items) if _white(im, r)]
+        if spell not in names or not lit:
+            if "NEXT" in st["bottom"].split() and self.order[2] < 4:
+                self.order[2] += 1
+                return "n", "tactics: %s's spells, next page" % member
+            self.spells[member] = set(self.seen_names)
+            self.refused.add((member, spell))
+            self.order = None
+            return "e", "tactics: %s has no %s in memory (%s): EXIT" % (member, spell, ", ".join(sorted(self.seen_names)))
+        here = [i for i, t in enumerate(names) if t == spell]
+        tgt = min(here, key=lambda i: abs(i - lit[0]))
+        d = tgt - lit[0]
+        if d == 0:
+            self.cast[spell] = self.cast.get(spell, 0) + 1     # Prayer, Bless: once (begun now, aimed when it goes off)
+            self.log("TACTICS %s begins %s" % (member, spell))
+            self.order = None
+            return "c", "tactics: CAST %s" % spell
+        return ("end" if d > 0 else "home"), "tactics: to %s" % spell
+
+    def _aim(self, st, p):
+        """The aim of a spell going off (now, or a begun one at a later turn: the caster is the aim list's first).
+        Scan the list once (NEXT) for the figures TARGET may take, then go to the best and take it; a spell that picks
+        several figures (Hold Person: 3, the magic-user's 4) keeps the aim up: the next best, distinct."""
+        lst, at = aim_list(p.g.mem)
+        spell = st["rows"][23].strip("? ").strip()
+        spell = spell.split(":", 1)[1].strip() if ":" in spell else spell
+        figs, party, foes = self._sides(p)
+        can = "TARGET" in st["bottom"].split()
+        cur = self._aimed(st, lst, at, figs)
+        caster = lst[0] if lst else None
+        me = next((f for f in figs if f["n"] == caster), None)
+        member = me["name"] if me else "?"
+        if self.scan is None or self.scan.get("spell") != (caster, spell):
+            t = self.targets(spell, me, party, foes) if me else []
+            if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
+                t = [caster] + [f["n"] for f in party if f["n"] != caster]
+            near = [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))] if me else [f["n"] for f in foes]
+            if spell not in ("PRAYER", "BLESS", "HOLD PERSON"):
+                t = t + [n for n in near if n not in t]
+            self.scan = {"spell": (caster, spell), "ok": set(), "steps": 0, "goal": None, "picked": set(),
+                         "targets": t}
+        sc = self.scan
+        sc["steps"] += 1
+        if sc["steps"] > 6 * max(len(lst), 4) + 10:
+            p.note("tactics", "%s: %s aim gave up (%d keys)" % (member, spell, sc["steps"]))
+            return "e", "tactics: %s %s: the aim gave up: EXIT" % (member, spell)
+        if sc["goal"] is None:
+            if cur is not None and can:
+                sc["ok"].add(cur)
+            if cur is not None and cur == next((t for t in sc["targets"] if t not in sc["picked"]), None) and can:
+                return self._take(member, spell, cur)
+            if sc["steps"] <= len(lst):
+                return "n", "tactics: aim scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
+            ok = [t for t in sc["targets"] if t in sc["ok"] and t not in sc["picked"]]
+            if not ok and sc["picked"]:
+                # a spell that picks several figures with no new one in reach: a figure picked again counts once
+                # (GAME.OVR 0x14B3C, "Already been targeted" for the player; ours' combat_spells.gd notes)
+                ok = [t for t in sc["targets"] if t in sc["ok"]]
+            if not ok:
+                p.note("tactics", "%s: %s can reach none of its targets" % (member, spell))
+                return "e", "tactics: %s %s: no target in reach: EXIT" % (member, spell)
+            sc["goal"] = ok[0]
+        if cur == sc["goal"] and can:
+            return self._take(member, spell, cur)
+        return "n", "tactics: to figure %d (at %s)" % (sc["goal"], cur)
+
+    def _aimed(self, st, lst, at, figs):
+        """The figure aimed at: the aim list's entry DS:0xBEFD - 1; when that is out of the list (p30b2, p30c1: a
+        begun spell's aim at a later turn) the right panel's name and HITPOINTS, if one figure only matches."""
+        if 0 <= at < len(lst):
+            return lst[at]
+        name = st["rows"][1].strip("? ").strip()
+        hp = st["rows"][3].strip("? ").split()
+        hp = int(hp[-1]) if hp and hp[-1].isdigit() else None
+        m = [f["n"] for f in figs if f["name"] == name and (hp is None or f["hp"] == hp)]
+        if len(m) == 1:
+            return m[0]
+        live = [n for n in m if n not in (self.scan or {}).get("picked", set())]
+        return live[0] if live else None
+
+    def _take(self, member, spell, target):
+        sc = self.scan
+        sc["picked"].add(target)
+        sc["goal"] = None
+        if spell == "HOLD PERSON":
+            self.held.add(target)
+        self.log("TACTICS %s's %s at figure %d" % (member, spell, target))
+        self.order = None
+        return "t", "tactics: %s %s at figure %d" % (member, spell, target)
+
+
+def _white(im, r):
+    for x in range(8, 312):
+        for y in range(r * 8, r * 8 + 8):
+            if im.getpixel((x, y)) == (255, 255, 255):
+                return True
+    return False
