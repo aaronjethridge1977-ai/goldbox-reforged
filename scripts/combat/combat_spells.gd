@@ -184,10 +184,23 @@ func damage_after(am: PartyMember, dmg: int) -> int:
 ## handler (GAME.OVR 0xF61B) runs after the to-hit and damage dice and rolls d(images + 1), but
 ## only takes an image when a spell is being cast (DS:0x681B, the spell's id, above 0; 0x6820 0),
 ## so a blow always lands on the figure (2:9's MUs, `orig_A_mu29`: d20, d10, then the d5).
-func image_die(tm: PartyMember) -> void:
+## Returns whether an image took the blow: never with ORIGINAL'S BUGS on (the original's bug #14,
+## docs/original-bugs.md); off, a die above 1 strikes an image, which vanishes (AD&D 1e), as a spell's.
+func image_die(tm: PartyMember) -> bool:
 	var a := _affect(tm, EFFECT_MIRROR)
-	if not a.is_empty():
-		c.roll(1, (int(a.value) >> 4) + 1, "%s's images" % tm.name)
+	if a.is_empty():
+		return false
+	var images: int = int(a.value) >> 4
+	var d := c.roll(1, images + 1, "%s's images" % tm.name)
+	if OriginalBugs.on() or d <= 1:
+		return false
+	images -= 1
+	c.message.emit("%s LOST AN IMAGE" % tm.name)
+	if images <= 0:
+		tm.affects.erase(a)
+	else:
+		a.value = images << 4
+	return true
 
 
 ## Spell handlers that mark their targets as an area's (DS:0x6820 = 1 first thing: GAME.OVR 0x28533

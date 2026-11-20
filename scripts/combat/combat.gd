@@ -742,15 +742,17 @@ func shoot(i: int, j: int) -> void:
 		else:
 			var dice: Array = am.damage_large if tm.is_large() else am.damage
 			var dmg := maxi(roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2]), 0)
-			if magic:
-				magic.image_die(tm)
+			var imaged: bool = magic != null and magic.image_die(tm)
 			var weapon: GameItem = gone if gone != null else am.readied_weapon(types)
 			var notes: Array = []
 			var before := dmg
-			dmg = SpecialAffects.weapon_damage(am, tm, weapon, types, dmg, _dice, range_of(a, t) > 1, notes)
+			if not imaged:
+				dmg = SpecialAffects.weapon_damage(am, tm, weapon, types, dmg, _dice, range_of(a, t) > 1, notes)
 			for n in notes:
 				message.emit(n)
-			if dmg == 0 and before > 0:
+			if imaged:
+				pass                # an image took it (bug #14's fix: ORIGINAL'S BUGS off)
+			elif dmg == 0 and before > 0:
 				if notes.is_empty():
 					message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 			else:
@@ -1334,8 +1336,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var dice: Array = am.base_damage_2 if second else (am.damage_large if tm.is_large() else am.damage)
 		var dmg := roll(dice[0], dice[1], "%s damage" % am.name) + int(dice[2])
 		dmg = maxi(dmg, 0)
-		if magic:
-			magic.image_die(tm)
+		if magic and magic.image_die(tm):
+			continue
 		if stab:
 			dmg *= (am.thief_level() - 1) / 4 + 2
 		if magic:

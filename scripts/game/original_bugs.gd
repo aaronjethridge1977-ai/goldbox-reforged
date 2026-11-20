@@ -23,6 +23,7 @@ const LIST := [
 	"PARTY STRENGTH WRAPS",
 	"CHARISMA BELOW 3 PARLEY BONUS",
 	"PROTECTION FROM EVIL'S TO-HIT",
+	"MIRROR IMAGE DOESN'T STOP BLOWS",
 ]
 
 static var _setting := -1     # -1: not read yet
