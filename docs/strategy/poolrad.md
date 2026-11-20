@@ -148,7 +148,8 @@ files); results *seen* unless marked.
 - **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed
   (every try drained). *seen*
 - **The plan** (Jeremy agreed, 2026-11-20; a simulation of the fight from the party's real numbers, Gold Box Guide 2):
-  1. **The audit first:** train what's owed (Player 33's save: ELWEN F5 and **MU5**, LIRA **MU5**, DORN T7);
+  1. **The audit first:** nothing was owed at Player 33's save (corrected 15:10), but **LIRA is 1,295 from MU5**, which
+     brings Fireball and Haste: earn it first (or use the Kovel scrolls if a magic-user 4 can cast them: Combat);
      movement 6+; every fighter a magic weapon (the Slums' Bows +1 for the archers: a magic bow makes every shot
      magic); DORN in the Bracers AC 6; **two or more Restoration scrolls** in the packs (the marble chest at 7,6-8
      gives four), so a hit costs a scroll, not a reload.

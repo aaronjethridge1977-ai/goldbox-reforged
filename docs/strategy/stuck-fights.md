@@ -54,7 +54,7 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
 
 - **Analysis (Gold Box Guide 2, 2026-11-20; plan waiting on Jeremy):** (1) **Hold Person took one figure a cast:**
   `tactics.py` `_aim` takes its first pick and throws the other two away (board request; same in the throne room).
-  (2) **The audit:** owed ARN F4, BRAM F4, DORN F2; ARN's Bracers AC 6 not worn (they beat DORN's leather: AC 4 -> 2;
+  (2) **The audit:** owed DORN F2 (ARN and BRAM are 3418 from F4; corrected 15:10); ARN's Bracers AC 6 not worn (they beat DORN's leather: AC 4 -> 2;
   over Banded Mail they do nothing); a spare Shield in BRAM's pack while LIRA has none; BRAM's MU scroll (Stinking
   Cloud) unread. (3) **The experience:** per class x classes, every member had earned 3,800-4,600 (ELWEN 1383 x 3 =
   4149, LIRA 1916 x 2 = 3832, DORN 2082 x 2 = 4164, the rest 4583): the gap in levels is the multi-class split, not lost
@@ -65,7 +65,7 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
 - **Plan 1 (Jeremy approved 2026-11-20 15:01; Gold Box Guide 2):**
   - **Tool first:** the Hold Person fix (all three picks) and the line step (board requests).
   - **A detour, then train:** Kuto's Well (won deathless at level 3, p16d1) and mop-up fights until ELWEN reaches
-    C2 (354 to earn) and LIRA F2 (170); then train every owed level (ARN F4, BRAM F4, DORN F2, ELWEN C2, LIRA F2),
+    C2 (354 to earn) and LIRA F2 (170); then train every owed level (DORN F2, ELWEN C2, LIRA F2),
     each checked on the character sheet. The audit table (playbook section 4) before stepping in.
   - **Gear:** ARN's Bracers AC 6 to DORN (AC 4 -> 2, he stands in the line); BRAM's spare Shield to LIRA; identify
     LIRA's two Short Bows (the Slums' +1s?) and ready a bow for LIRA and ELWEN behind the line; movement 6+ for all.
@@ -138,8 +138,8 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   - **Why lost:** (1) the trolls were left standing: at each wipe they had 25-36 HP each (p31c7: 27, 25, 36, 36); the
     blows went to "the weakest" (kobolds). (2) Spells unused: p31c7 cast 2 of its 10 Sleeps, 0 of 4 Stinking Clouds,
     and 6 Hold Persons that "can reach none of its targets" (trolls aren't persons). (3) The audit failed (guide
-    section 4): **7 class levels owed at `s17a`** (ARN F4; ELWEN C4, F4, MU4; LIRA F4, MU4; DORN F4; Player 23 trained
-    ELWEN's C4; Player 31's training visits didn't raise ARN's, LIRA's or DORN's HP); BRAM's Two-Handed Sword +1 +3 vs
+    section 4): no level owed at the door (ELWEN's C4 was the only one at `s17a`, trained by Player 23; corrected 15:10,
+    an earlier count read the fighter table a level off), but LIRA and DORN are 672 from fighter 4, ARN 867; BRAM's Two-Handed Sword +1 +3 vs
     undead carried, Flail readied; LIRA's cloak (effect 0x59: Cloak of Displacement) unreadied; a magic-user scroll
     (Shocking Grasp, **Stinking Cloud**, Detect Magic) unread in BRAM's pack; arrows readied with no bow; movement 3
     for all six at `s17door` (dozens of junk bows and mail; Player 31 sold junk first, its movement unknown).
@@ -153,7 +153,8 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   - **Not in the plan (Jeremy, 13:07):** SURRENDER after a fled wave keeps the waves won (0x4A8D) and leads to the
     prison and Fatima, at the cost of ROB 1, 25 (coins and each item 25%), everything the second time. *code*
 - **Plan 1 (Jeremy approved 2026-11-20 13:10; Gold Box Guide 2):**
-  - **Before (the audit):** train every owed level and **check each on the character sheet** before leaving town;
+  - **Before (the audit):** anyone who qualifies trains (none at the door; a fight or two puts LIRA, DORN and ARN at
+    fighter 4), each level checked on the character sheet;
     BRAM readies the Two-Handed Sword (shield off: AC -1); LIRA readies the cloak; the Stinking Cloud scroll to LIRA or
     ELWEN; LIRA, ELWEN and DORN each keep a long bow and arrows readied (DORN is the back rank: AC 4); junk sold and
     coins spent down to **movement 6+ for all**; inn: magic-users' level 1 all Sleep, level 2 all Stinking Cloud;
@@ -186,10 +187,11 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
   saves (`.lab/for-jeremy/graveyard/`).
 - **Analysis and Plan 1 (Gold Box Guide 2, Jeremy agreed 2026-11-20 14:40):** poolrad.md section 3, "Valhingen
   Graveyard". In short: the pair is optional (the knight's tomb only) but **worth taking** (8 Restorations, Plate Mail
-  +2, Long Sword +2, Ring of Fire Resistance); not before the audit: at `s26g7c` levels owed (ELWEN F5 and MU5, LIRA
-  MU5, DORN T7), everyone at movement 3, ARN's Bracers worn over Banded Mail (no effect: DORN's instead), one
+  +2, Long Sword +2, Ring of Fire Resistance); not before the audit: at `s26g7c` no level owed (corrected 15:10), but
+  LIRA is 1295 from MU5 (Fireball, Haste); everyone at movement 3, ARN's Bracers worn over Banded Mail (no effect: DORN's instead), one
   Restoration left (a 2-level hit needs a whole scroll). Then camp on 10,1 (Haste on the fighters, Prayer, Bless), step
-  in, Fireball and bows +1 in round 1, focus one spectre. Simulated: about 2 in 3 fights without a drain, 98% with one
-  at most; bring 2+ Restoration scrolls so a hit costs a scroll, not a reload. Leave the vampire's last fight until
+  in, Fireball and bows +1 in round 1, focus one spectre. Haste and Fireball need LIRA at MU5 (earn it first) or the
+  Kovel scrolls if a magic-user 4 can cast them (Combat). Simulated: with them about 2 in 3 fights without a drain,
+  98% with one at most; with Prayer only, about 1 in 4; bring 2+ Restoration scrolls so a hit costs a scroll, not a reload. Leave the vampire's last fight until
   after (his death stops the tomb's event too).
   - **Results:** (the Player's lines here)

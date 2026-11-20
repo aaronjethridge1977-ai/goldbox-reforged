@@ -441,7 +441,8 @@ carried but not readied. Then the party's totals: HP, the disablers (Sleeps; Hol
 Clouds), cures, Restoration scrolls, the reserved items for this fight, and the members at AC 0 or better. **Flags:**
 any level owed; a level within 500 experience of a member (a short detour may be worth it); gear not readied; anyone
 below movement 6; undead ahead without magic weapons for the fighters or Restoration scrolls in the packs. Example:
-docs/strategy/stuck-fights.md (Sokal Keep and the graveyard each had levels owed; the kobold king's had seven).
+docs/strategy/stuck-fights.md (Sokal Keep: DORN owed fighter 2, ELWEN and LIRA within 354 and 170 of a level;
+Stojanow: LIRA 452 from magic-user 5, i.e. Fireball).
 
 **A failed audit** means fixing it first: earn levels on mop-up fights and train, then plan the tactics by hand. Cheats
 (save edits, auto-level, teleports) are a last resort. *Jeremy*
