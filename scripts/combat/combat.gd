@@ -211,6 +211,7 @@ func start_round() -> void:
 		# dropped (not forgotten), and a wounded figure may cast again.
 		c["pending"] = {}
 		c["no_spells"] = false
+		c["no_items"] = false      # combat byte +2 (Combat Chat 33: the cough clears it)
 		c.erase("kept_attacks")
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
@@ -219,7 +220,7 @@ func start_round() -> void:
 		var m: PartyMember = c.who
 		c.moves = _round_movement(m) * 2
 		c.attacks = attacks_for(m)
-		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 0 else 0)) / 2
+		c.second = second_for(m)
 		c.attacks += c.second
 		c.acted = false
 		if magic:
@@ -275,8 +276,18 @@ func next_turn() -> int:
 			continue
 		var c: Dictionary = combatants[active]
 		(c.who as PartyMember).refresh_load_word()     # each figure's turn (0x99FD: 0x9A8A)
-		if c.down or (magic and CombatSpells.held(c.who)):
+		if c.down:
 			continue
+		if magic and CombatSpells.held(c.who):
+			# Its turn comes, but the holding effects' handler (GAME.OVR 0xFF9A: sleep, hold, snake charm,
+			# nausea) ends it at once with the turn end 0xBA:0x2637: its guard (combat byte +7) and any spell
+			# it was casting (+0, left in memory) are gone (Combat Chat 33, the spell lab's Hold Person on the
+			# net trap's kobolds: a kobold held while guarding struck nobody once free; ours kept the guard).
+			c.guarding = false
+			c.pending = {}
+			continue
+		if magic and (c.who as PartyMember).has_affect(CombatSpells.EFFECT_COUGH):
+			magic.cough(active)      # its turn start's handlers (category 15, GAME.OVR 0x9AA3)
 		c.acted = true
 		c.received = 0
 		c.turned = 0
@@ -421,12 +432,30 @@ func attacks_for(m: PartyMember) -> int:
 	var shooting := m.weapon_ranged and m.missile_ready
 	if shooting:
 		half = m.missile_half_attacks
+	half = speed_half(m, half)
 	if round_no % 2 == 0:
 		half += 1
 	var n := half / 2
 	if shooting:
 		n = mini(n, m.shots_left())
 	return n
+
+
+## Haste and Slow work on the half-attacks before the round's rounding (category 0x12 between GAME.OVR 0x135A7
+## and 0x1364D, and 0x12850 for the second count): Haste's handler (0xF8A6) doubles them, Slow's (0xFD1C) halves
+## them (shr), so a slowed one-attack figure strikes every other round (Combat Chat 33, the spell lab's Slow on
+## the net trap's kobolds: ours took the attack away every round).
+func speed_half(m: PartyMember, half: int) -> int:
+	if m.has_affect(CombatSpells.EFFECT_HASTE):
+		return (half * 2) & 0xFF
+	if m.has_affect(CombatSpells.EFFECT_SLOW):
+		return half >> 1
+	return half
+
+
+## The second attack count this round (record +0xA2 -> +0x114, GAME.OVR 0x12843-0x12869).
+func second_for(m: PartyMember) -> int:
+	return (speed_half(m, m.half_attacks_2) + (1 if round_no % 2 == 0 else 0)) / 2
 
 
 ## The end of a round: the dying bleed; anyone past 9 dies.
@@ -870,7 +899,7 @@ func choose_weapon(i: int) -> void:
 	m.recalculate(types)
 	if m.weapon != weapon_before and c.attacks > 0:
 		c.attacks = attacks_for(m)
-		c.second = (m.half_attacks_2 + (1 if round_no % 2 == 0 else 0)) / 2
+		c.second = second_for(m)
 		c.attacks += c.second
 
 
@@ -921,7 +950,11 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 		# and 1, set again at each round's start, 0x127FB).
 		t.no_spells = true
 		if not t.get("pending", {}).is_empty():
-			tm.forget(int(t.pending.id))
+			# The spell is dropped (combat byte +0), but START.EXE 0xBA:0x148B takes it out of the memory of
+			# the figure whose turn it is (DS:0x5D92), not the wounded caster's: the caster keeps it, an attacker
+			# with the same spell memorized loses one (Combat Chat 33, the spell lab's Prayer: BAKSHI's 19 kept).
+			if active >= 0 and active < combatants.size():
+				(combatants[active].who as PartyMember).forget(int(t.pending.id))
 			t.pending = {}
 			message.emit("%s LOST A SPELL" % tm.name)
 	if tm.hp >= dmg:
@@ -1738,6 +1771,38 @@ func _by_distance(c: Dictionary, list: Array[int], any_sight := false) -> void:
 	for j in keep:            # (anyone the scan left out keeps its place at the end)
 		if not (j in list):
 			list.append(j)
+
+
+## `list` in the order GAME.OVR 0x3045B gives figures seen from a square (an area spell's aim point, 0x14A64:
+## the area's figures, its target list 0x6C91 in that order): nearest first, the distance to each figure's
+## nearest cell with a clear line, ties by direction as in _by_distance (Combat Chat 33, the spell lab's Slow:
+## a level 1 caster's one figure is the aimed kobold, not the first in figure order).
+func by_distance_from(cell: Vector2i, list: Array[int]) -> void:
+	var full: Array = []
+	for j in list:
+		var best_r := 1 << 30
+		var pr := [cell, combatants[j].cell]
+		for q in cells(combatants[j]):
+			if line_steps(cell, q).y == 1:
+				var r := line_steps(cell, q, false).x
+				if r < best_r:
+					best_r = r
+					pr = [cell, q]
+		var d: Vector2i = (pr[1] - pr[0]).abs()
+		full.append([j, 2 * (maxi(d.x, d.y) - mini(d.x, d.y)) + 3 * mini(d.x, d.y), wedge_dir(pr[0], pr[1])])
+	for a in range(full.size() - 1):
+		for b in range(a + 1, full.size()):
+			var x: Array = full[a]
+			var y: Array = full[b]
+			var swap: bool = y[1] < x[1]
+			if y[1] == x[1] and y[2] < x[2] and not (y[2] % 2 > x[2] % 2):
+				swap = true
+			if swap:
+				full[a] = y
+				full[b] = x
+	list.clear()
+	for e in full:
+		list.append(e[0])
 
 
 ## A figure's movement for the round (GAME.OVR 0x1291E): a party figure's gets the script's

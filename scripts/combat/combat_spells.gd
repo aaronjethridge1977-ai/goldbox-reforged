@@ -69,6 +69,7 @@ const EFFECT_RESIST_COLD := 0x0A
 const EFFECT_RESIST_FIRE := 0x14
 const EFFECT_SILENCED := 0x15
 const EFFECT_BLIND := 0x21
+const EFFECT_COUGH := 0x1E
 const EFFECT_BESTOW_CURSE := 0x24
 const EFFECT_PNM := 0x29
 const EFFECT_DISAPPEAR := 0x47
@@ -151,9 +152,26 @@ func _protected_from(tm: PartyMember, am: PartyMember) -> bool:
 
 ## AC as spells leave it (Shield: no worse than 3).
 func armour(tm: PartyMember, ac: int) -> int:
+	if tm.has_affect(EFFECT_COUGH):
+		# The cough's handler, last of the struck figure's category 11 (GAME.OVR 0x2B1E4), works the record out
+		# again and makes its rear AC 2 worse (AC 10 at most, 0xF71D) and its AC the same (0xF744).
+		return mini(tm.rear_ac + 2, 10)
 	if tm.has_affect(EFFECT_BLIND):
 		ac += 4
 	return mini(ac, 3) if tm.has_affect(EFFECT_SHIELD) else ac
+
+
+## Effect 0x1E's handler (GAME.OVR 0xF6C0), run as Stinking Cloud's save is made (0x2AEEA) and at the
+## coughing figure's turn start (category 15, 0x9AA3): "IS COUGHING" while it may still use an item this round
+## (combat byte +2, set each round 0x127FB), then no spell (+1) and no item (+2) for the rest of the round; a
+## spell it is casting goes on (+0 stays). Its AC part is in armour(). Read in the code (Combat Chat 33); the
+## made save's "STARTS TO COUGH" and not helpless seen in the original (the spell lab, 27 saves vs kobolds).
+func cough(j: int) -> void:
+	var cb: Dictionary = c.combatants[j]
+	if not cb.get("no_items", false):
+		c.message.emit("%s IS COUGHING" % cb.who.name)
+	cb.no_spells = true
+	cb.no_items = true
 
 
 func damage_after(am: PartyMember, dmg: int) -> int:
@@ -211,8 +229,7 @@ func reveal(m: PartyMember) -> void:
 func adjust_round(entry: Dictionary) -> void:
 	var m: PartyMember = entry.who
 	if m.has_affect(EFFECT_HASTE):
-		entry.moves *= 2
-		entry.attacks *= 2
+		entry.moves *= 2      # (attacks: Combat.speed_half, before the round's rounding)
 		var h := _affect(m, EFFECT_HASTE)
 		if not h.is_empty() and (int(h.value) & 0x10) == 0:
 			h.value = int(h.value) + 0x10
@@ -221,7 +238,6 @@ func adjust_round(entry: Dictionary) -> void:
 				m.raw.encode_u16(0x30, m.raw.decode_u16(0x30) + 1)
 	if m.has_affect(EFFECT_SLOW):
 		entry.moves /= 2
-		entry.attacks /= 2
 
 
 ## A round passes for every effect on the field.
@@ -467,6 +483,8 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 			targets = _people_in(area_cells(i, id, cell))
 			if id == LIGHTNING:
 				targets.erase(i)
+			else:
+				c.by_distance_from(cell, targets)     # the area's list, nearest the aim point first (0x14A64)
 		"pick":
 			targets = picked.duplicate()
 	if targets.size() > 0 and id != LIGHTNING:
@@ -595,10 +613,11 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				if save(t, 0, 0, m):
-					# A made save (GAME.OVR 0x2BAA1) adds effect 0x1E, "starts to cough", for a round; its handler
-					# (0xF6C0) says "is coughing" only for a figure casting, clears its spell and makes its AC 2 worse
-					# (10 at most). Not in ours yet beyond the message: unseen in a replay (Combat Chat 32).
+					# A made save (GAME.OVR 0x2BAA1) adds effect 0x1E, "starts to cough", for a round, and runs its
+					# handler at once (0x2AEEA): see cough() (Combat Chat 33; the message seen in the original).
+					SpellCaster.add_affect(t, EFFECT_COUGH, id, 1, 0)
 					c.message.emit("%s STARTS TO COUGH" % t.name)
+					cough(j)
 					continue
 				SpellCaster.add_affect(t, EFFECT_HELPLESS, id, c.roll(1, 4, "nausea") + 1, 0)
 				c.message.emit("%s CHOKES AND GAGS FROM NAUSEA" % t.name)
@@ -709,6 +728,11 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				var a := _affect(t, other)
 				if not a.is_empty():
 					t.affects.erase(a)
+					continue
+				# The add (0x278DB -> 0x2C540) runs the resistances as for any effect: a half-elf's or an elf's
+				# d100 (Combat Chat 33, the spell lab's Haste on BAKSHI, a half-elf: GAME.OVR 0x11A4D).
+				if resists(t, table.effect(id)):
+					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
 				SpellCaster.add_affect(t, table.effect(id), id, dur, lvl)
 				c.message.emit("%s %s" % [t.name, "IS HASTED" if id == 48 else "IS SLOWED"])
@@ -968,7 +992,8 @@ func ai_cast(i: int, tries: int = -1) -> bool:
 func ai_use_item(i: int, tries: int) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	if m.has_affect(EFFECT_SILENCED) or c.anti_magic or not _enemy_left(i) or CharacterSheet.types == null:
+	if m.has_affect(EFFECT_SILENCED) or me.get("no_items", false) or c.anti_magic or not _enemy_left(i) \
+			or CharacterSheet.types == null:
 		return false
 	var chosen: GameItem = null
 	var chosen_id := 0
@@ -1019,8 +1044,7 @@ func _enemy_left(i: int) -> bool:
 			continue
 		if not e.down:
 			return true
-		if e.get("surrendered", false) and int(e.get("surrender_round", -1)) == c.round_no \
-				and int(e.get("surrender_fallen", -1)) == fallen:
+		if e.get("surrendered", false) and int(e.get("surrender_round", -1)) == c.round_no:
 			return true
 		if e.get("fled", false) and int(e.get("away_round", -1)) == c.round_no and int(e.get("away_fallen", -1)) == fallen:
 			return true

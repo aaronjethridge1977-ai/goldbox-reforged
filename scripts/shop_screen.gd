@@ -277,11 +277,15 @@ func _buy() -> void:
 		_note.text = "OVERLOADED."
 		_show_flash("OVERLOADED", true)
 		return
+	# 0x6F0D adds the item and works the buyer's record out again (0x7018: the cached load word now counts
+	# the item and the coins before payment); the payment after it (0x70C7) leaves the word (Combat Chat 33,
+	# Player 32's segment 1: DORN's word, 0 in an old start save, was 322 in the original's `shopped` save).
+	member.items.append(it.copy())
+	member.refresh_load_word()
 	if from_pile:
 		pile = CoinPile.set_gold(pile, CoinPile.gold_of(pile) - it.price)
 	else:
 		member.money = CoinPile.set_gold(member.money, purse - it.price)
-	member.items.append(it.copy())
 	_note.text = ""
 	var has := 0
 	for own in member.items:

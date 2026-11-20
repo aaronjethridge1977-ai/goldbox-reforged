@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 (Combat Chat 33)
+
+### Now (Combat's line before Combat Chat 33)
+
+- Combat: **Combat Chat 32 ended 2026-11-20** (unattended, on Opus; the Lead's note: the brawl, Player 30's five, Player 23's (a); then the Lead's notes from Jeremy). Setup: regress 47/47. **(1) The tavern brawl ✓** (gate): all 6402 draws: the figure list in load order, a script's 0x6BB8 = the morale (+0x84); main made it checks 118-120. **(2) Player 30's five:** (5) ✓ p27d3 all 143 (the shop SELL's overflow to the pile), (3) ✓ p25j10 all 25450 (the ankheg's spit ends its turn); (2) now 5616 (ELWEN's spell count), (1) p24b6 1838 and (4) p26a1 3932 need the original's state in the Player's chain (requests on Player 30's entry). **(3) Player 23's (a): not reached.** **The Lead's notes:** the four drain/turning/temple questions, bows and slings, Stinking Cloud: answered on the board's reload-rule paragraph and in docs/playbook.md; our screens with 7 and 8 members: the mini-map fixed, the rest fit (Findings). Each push: regress 47/47, DIFFCHECKS all. Lab archive `.lab/combat32_lab.tgz`. Next (Combat Chat 33): the spell lab (Lead 02:20), then Player 32's two requests. Background jobs: none (Xvfb :94 pid 3020845 left running for windowed shots).
+
 ## Archived 2026-11-20 (Gold Box Chat 68)
 
 ### Now (main's line before chat 68)

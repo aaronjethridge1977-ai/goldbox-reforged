@@ -1469,7 +1469,10 @@ func _bottom_menu() -> Array:
 	if _combat.magic != null and not c.get("no_spells", false) and not _combat.anti_magic and \
 			not _combat.magic.castable(_combat.active).is_empty():
 		items.append("CAST")
-	if Combat.turn_level(who) > 0:
+	# TURN: a cleric level (record +0x96) and no turn yet this fight (GAME.OVR 0x9F89: combat byte +0x11, set by
+	# the turn 0x139A5, the block zeroed at each fight's setup 0xD909). Undead in sight or not (Player 32, p32a1:
+	# ELWEN's menu lost TURN after her TURN; Combat Chat 33). The turn itself ends the turn (0x13B39).
+	if Combat.turn_level(who) > 0 and not c.get("tried_turning", false):
 		items.append("TURN")
 	items.append_array(["QUICK", "DONE"])
 	return items
