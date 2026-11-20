@@ -65,8 +65,17 @@ def selected(mem):
     return None
 
 
+# Player 32: Jeremy's take rule (board, 2026-11-20 01:20; with the reload rule, OP_RELOAD=1): only magic items, gems
+# and jewellery, coins worth their weight, missiles to USE (never bought while looted ones last), and anything else
+# worth 100 gp or more; junk stays.
+JEREMY = __import__("os").environ.get("OP_RELOAD") == "1"
+MISSILE_WORDS = ("ARROW", "QUARREL", "DART", "BOLT", "SLING STONE")
+
+
 def worth_taking(it):
     up = it["name"].upper()
     if it["plus"] != 0 or "+" in up or it["type"] in QUEST_ITEM_TYPES or any(w in up for w in LOOT_WORDS):
         return True
+    if JEREMY:
+        return any(w in up for w in MISSILE_WORDS) or (it["price"] >= 100 and it["weight"] <= 400)
     return it["price"] >= 20 and it["weight"] <= 400
