@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-5 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-6 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -465,14 +465,57 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - If the whole party flees, every unconscious or dead member is lost for good. Never flee and leave bodies: bandage the
   dying, or reload. *book* (Manual)
 
+## 6. After a fight
+
+**Win, lose or reload** (*Jeremy*, 2026-11-20: "a human would load the game")
+- **Reload** on a wipe, a member dead, a level drained, a permanent ability loss, a key item lost, petrification, or
+  anything that would cost a human player about an hour with no obvious gain, **unless** a temple cures it at a price
+  the party can pay and reach.
+- **A death means a reload**, even though Raise Dead (5500 GP) is affordable: a human would rather replay the fight than
+  pay and perhaps lose Constitution (tabletop rule; in Pool **unconfirmed**). Raise Dead only when reloading would cost
+  an hour or more. *Jeremy* (2026-11-20)
+- **A win with a member dead counts as a loss.** Several "wins" in the original were losses by this rule. *seen*
+  (Players 7, 8, 13)
+- **Unconscious is not dead:** 0 HP with status UNCONSCIOUS (4) heals; DEAD (6) is dead. *seen* (Player 8)
+- **Reload and change something** (a different seed, a different plan): the same seed and the same keys can replay the
+  same dice and the same loss. *seen* (Player 14, p14b3/p14b4)
+- Unsure whether a human would reload? Ask Jeremy (Players: through the Lead). *Jeremy*
+
+**The dying**
+- Bandage the dying at once; heal anyone unconscious before the last enemy falls if you can (section 5). *book* (Manual)
+  + *Jeremy*
+
+**Level drain**
+- **Never accepted:** reload, unless a Restoration scroll is in the packs: then use it at once (a second drain before
+  restoring can break the character). *Jeremy*
+- **Temples don't restore levels:** Pool's temples sell no Restoration, so a drained level comes back only from a scroll.
+  *code* (GAME.OVR 0x4819-0x4EEB; Combat Chat 32)
+- Each Restoration gives back one level, but to the class whose next level costs least, not the drained one, and the
+  average HP drained: a multi-class drained twice can come back with a level moved to another class. *seen* (Combat
+  Chats 5, 32)
+- Check gear after a drain and a Restoration: a sword came back unreadied. *seen* (Player 33)
+
+**Poison, disease, petrification**
+- Slow Poison keeps a poisoned member alive until a temple. *book* A member *killed* by poison stays dead after the
+  temple's Neutralize Poison (it only removes the poison): cast Slow Poison first (back to 1 HP, standing), then
+  neutralize. *code* (GAME.OVR 0x4CC9; main chat 68)
+- A mummy's touch brings disease, which stops all healing (it killed a member during day rests): cure it at once, by
+  the cleric's Cure Disease (camp) or the temple. *book* (Journal) + *seen* (Player 25) + *code* (spell table)
+- Petrification: the temple's Stone to Flesh. *code*
+
+**Taking the loot** (what to keep: section 2)
+- The selected member is the one who takes loot; End and Home change who that is, and the highlight on screen doesn't
+  show it. *code* (DS:0x5D92; Player 10)
+- A member who refuses an item for weight refuses anything heavier: skip them for those. *seen* (Player 29, p28j1)
+- A fallen NPC is dropped after the fight and his items go into the treasure, where you can take them back. *seen*
+  (Player 11)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
 
 ## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
 
-- **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
-- **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
 
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
@@ -482,15 +525,12 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - Fleeing the map works only if the party's movement is at least the fastest enemy's: unready heavy armour to raise it; retreat early (Manual, Cluebook).
 
 **Level drain, petrification, poison, disease**
-- Drainers: wights, wraiths, spectres (Ferran Martinez drains 2 levels a hit), vampires. A Restoration scroll restores one level. Temples don't cure drain; they do cure petrification (stone to flesh), poison (Neutralize) and disease (Cluebook).
-- Slow Poison keeps a poisoned member alive until a temple; a mummy's touch brings disease (Cluebook, Journal).
 
 **Money and gear**
 - An inn charges once per stay; resting there is cheaper than temple cures. Resting heals only 1 HP a day: real healing is spells and temples (Manual, Cluebook).
 
 ## Party and preparation
 
-- A member killed by poison stays dead after a temple's NEUTRALIZE POISON (it only removes the poison): cast Slow Poison first (HP 1, standing), then neutralize (main chat 68, GAME.OVR 0x4CC9; *read in the code*).
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
 - The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
 - Sell gems and jewellery (APPRAISE, then SELL; a shop's APPRAISE also offers KEEP, which takes a jewel off the coin count: main chat 66), then POOL and SHARE so that each trainee has the fee (Player 15, main chat 66; *seen in the original*).
@@ -501,12 +541,7 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 ## In combat
 
-- Death rule: a win with a member dead counts as a loss, so reload. Several "wins" in the original were losses by this rule (Players 7, 8, 13; *seen in the original*).
-- 0 HP with status 4 (UNCONSCIOUS) is not a death; status 6 (DEAD) is (Player 8, correction to Player 7; *seen in the original*).
-- Reload with another seed. The same seed and the same keys can replay the same dice and the same loss (Player 14, p14b3/p14b4; *seen in the original*).
-- A fallen NPC (DIRTEN) is dropped after the fight and his items go into the treasure, where the party can take them back (Player 11; *seen in the original*).
 - Tyranthraxus's fear affects every enemy: levels 0-3 are paralysed and levels 4-5 weakened, whether they save or not (Player 5; *read in the code*, GAME.OVR 0x10705).
-- A mummy's disease stops all healing until CURE DISEASE at a temple. It killed a member during day rests (Player 25; *seen in the original*).
 
 ## Resting and camping
 
@@ -542,7 +577,6 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 ## Shops and gear
 
 - Sell spare gear on every town trip. Sixteen items each gave encumbrance 4085 and MOVEMENT 3 in fights, and loot had to be left behind (Player 27; *seen in the original*).
-- The selected member is the one who takes loot; End and Home change who that is, and the highlight on screen doesn't show it (Player 10; *read in the code*, DS:0x5D92).
 - Coins POOLed in a shop stay in the shop. Leaving asks whether to go back for the money (Player 12; *seen in the original*).
 - Temple prices are the same at every temple, for example CURE DISEASE 1000, RAISE DEAD 5500, REMOVE CURSE 3500 (Player 3; *seen in the original*).
 - NEUTRALIZE POISON is charged even for a member who doesn't need it; CURE DISEASE asks first (Player 25; *seen in the original*).
@@ -558,7 +592,6 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 ## Added by Player 29
 
-- A take loop over a big pile: a member who refuses an item for weight refuses anything heavier, so skip them for those (Player 29, p28j1; *seen in the original*).
 - Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
 
 ## Added by Player 30
@@ -569,11 +602,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 ## Added by Player 32
 
-- **The reload rule** (Jeremy, 2026-11-20): reload the last checkpoint on a wipe, a member dead, a level drained, a permanent ability loss, a key item lost or petrification, unless a temple cures it at a price the party can pay and reach; and on anything that would cost a human player about an hour without an obvious gain. A drained member with a Restoration scroll in the packs: use it at once and go on. In the Player's tools: `OP_RELOAD=1` (plans.py `reload_rule`, read from the record: levels 0x96-0x9D, levels drained 0x74, abilities 0x10-0x15, status 0x10C; key items and temple cures not yet), lab `p32/reload.sh` goes on from the last clean checkpoint (Player 32; *read in the code*).
 
 ## Added by Combat Chat 32
 - The temples sell nine cures, all through one routine: Cure Blindness 1000, Cure Disease 1000, Cure Light Wounds 100, Cure Serious Wounds 350, Cure Critical Wounds 600, Neutralize Poison 1000, Raise Dead 5500, Remove Curse 3500, Stone to Flesh 2000 gold; no Restoration and no Dispel Magic, so a drained level comes back only by a Restoration scroll (GAME.OVR 0x4819-0x4EEB) (Combat Chat 32; *read in the code*; the temple screens *seen in the original* in chat 10).
-- Restore a drained character before it is drained again: each Restoration gives back one level, to the class whose next level costs the least (not the drained one) and the average HP drained; a multi-class drained twice can come back with a level moved to another class (an elf fighter/magic-user 3/2 drained twice came back as magic-user 3, one level still drained) (Combat Chat 5 / 32; *seen in the original*; ours does the same).
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
 ## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
