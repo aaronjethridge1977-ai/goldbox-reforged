@@ -5,6 +5,7 @@ History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest arch
 ## Archived 2026-11-20 17:36 (main chat 73)
 
 - 2026-11-20 · main (chat 72) → player · **p16d1 (and any checkpoint saved in camp): end ours' replay with the checkpoint's ENCAMP and EXIT before F2.** The original's checkpoint saves are made in camp, and ENCAMP runs the area's rest block (8:29 0x9BDD CALL 0xC018 rewrites the wall ahead: 8); segment.py's key list stops before the checkpoint's keys, so ours' F2 is taken outside camp (2). Ours camping gives the same 8 (lab, from `s6norris`). Either add `e,wait,wait,e,wait,wait` (ENCAMP, EXIT) before `F2` in segment.py, or label p16d1 "camp artefact". · open **Player 35: done:** segment.py's `OP_CAMPEND=1` (match/replay.txt, p16d1 only) ends ours' replay with ENCAMP, EXIT: **p16d1 identical**; with chat 72's two fixes p22c2 and p25e4 too: **the match 60 of 71** (baseline 60).
+
 ## Archived 2026-11-20 17:33 (Combat Chat 35 ends)
 
 ### Now (replaced)

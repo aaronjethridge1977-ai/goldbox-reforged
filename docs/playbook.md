@@ -756,3 +756,4 @@ and where it was learnt. The Lead folds them into the sections daily and clears 
 - (Pool) Raise Dead at the temple costs one point of CON (RHIANNON 14 -> 13; HP 1 after). *seen* (the original, check 111, main chat 66/73)
 - (Pool) Training rolls the hit die once (no better-of-two): one d10 per level for a fighter, plus the CON bonus. *seen* (the original's traces, checks 96 and 103, main chats 64-65)
 - (Pool) A Potion of Giant Strength must be readied to be used (it takes a hand: with sword and shield readied READY refuses it); USE drinks it without a message: STR 21/00 for (d4 x 10) + 40 minutes. *seen* (the original, check 137, main chat 73)
+- (Pool) A magic-user can ready darts: DARKSTAR (magic-user 1) unready and READY again on his 8 Darts in the original's camp (the pre-made party carries them readied). *seen* (the original, check 71's start, main chat 73)

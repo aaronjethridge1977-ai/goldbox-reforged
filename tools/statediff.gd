@@ -6,7 +6,7 @@ extends SceneTree
 ##     --ours=<our quick save .cfg> --orig=<folder>/SAVGAM<X>.DAT [--ignore=49C9,49CA,...]
 ##
 ## Compared: script memory 0x4900-0x4AFF (the original's save keeps it at byte 1 + 2 x
-## (address - 0x4900); ours keeps all of ECL memory), and for each party member (by name, from
+## (address - 0x4900); ours keeps all of ECL memory), the party's order (chat 73), and for each party member (by name, from
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the ability scores (chat 66), the seven kinds of coins, and the items (type, name words, plus, save
 ## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the standing effects (the original's .SPC beside
@@ -75,6 +75,7 @@ func _init() -> void:
 	var letter := orig_path.get_file().get_basename().right(1)
 	var folder := orig_path.get_base_dir()
 	var theirs := {}
+	var their_order: Array[String] = []
 	# Chat 41: only the files the save names (its party: 0x3208 the count, 41-byte names from 0x3209); a
 	# slot keeps older files past the party's size (the original leaves them), which aren't the party.
 	var stems: Array[String] = []
@@ -102,7 +103,9 @@ func _init() -> void:
 					aff.append("%d/%d/%d" % [sd[o], sd.decode_u16(o + 1), sd[o + 3]])
 		aff.sort()
 		theirs[_name(d)] = {"record": d, "items": items, "affects": aff}
+		their_order.append(_name(d))
 	var ours := {}
+	var our_order: Array[String] = []
 	for m in cfg.get_value("party", "members", []):
 		if not m.has("record"):
 			continue
@@ -114,6 +117,7 @@ func _init() -> void:
 			aff.append("%d/%d/%d" % [int(e.effect), int(e.minutes), int(e.get("value", 0))])
 		aff.sort()
 		ours[_name(m.record)] = {"record": m.record, "items": items, "affects": aff}
+		our_order.append(_name(m.record))
 	for name in theirs:
 		if not ours.has(name):
 			diffs += 1
@@ -124,6 +128,10 @@ func _init() -> void:
 		if not theirs.has(name):
 			diffs += 1
 			print("party: %s is in ours, not the original's" % name)
+	# Main chat 73 (check 142, camp ALTER ORDER): the party's order (the original's save lists it in order).
+	if their_order != our_order and theirs.size() == ours.size() and theirs.keys().all(func(k): return ours.has(k)):
+		diffs += 1
+		print("party order: original %s, ours %s" % [str(their_order), str(our_order)])
 	print("%d difference%s" % [diffs, "" if diffs == 1 else "s"])
 	quit(1 if diffs > 0 else 0)
 
