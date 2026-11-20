@@ -133,6 +133,28 @@ files); results *seen* unless marked.
   front-line magic-user (they replace body armour: with a shield one AC better than chain mail, and lighter); Banded
   Mail +1 to the fighter/thief in the line (his thief skills wait while he wears it). *code* + *Jeremy*
 
+**Yarash's pyramid (7:22, 7:23)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:15)
+- **Yarash (7:23 4,1):** a 9th-level magic-user (27 HP, AC 9; Fireball at 9d6, Stinking Cloud, Mirror Image, Shield,
+  Blink, Protection from Normal Missiles) and 6 mutant lizard men (fighter 4, 18 HP, AC 3, THAC0 14, move 6). The
+  menu's PARLAY fights too; FLEE gets away with the party's slowest at movement 12. **Optional:** breaking the pump
+  finishes the council's commission as his death does (both write 0x4AB3 = 254; the cluebook: break the pump once and
+  leave); his room holds the Wand of Paralyzation, Bracers AC 4, a Potion of Speed and 2 Potions of Healing. *code*
+  (ECL7 block 23, MON7CHA)
+  - Works: everything on Yarash in round 1 (a hit spoils a spell he has begun): CEDRIC's Hold Person (he is human),
+    Magic Missiles before his Shield, magic arrows (his spell stops plain ones), the fighters' blows (Mirror Image
+    doesn't stop them); Stinking Cloud on the slow lizard men; the party spread out against his Fireball. *Jeremy*
+  - Results: p24b5 destroyed, p24b6 won with nobody dead; both with ARN drained to fighter 3. *seen*
+- **The rooms' fights (7:22):** random, each kind met once: north half 20 stirges, 3 driders (magic-user 7), 3
+  minotaurs, 3 "emaciated elves" (magic-user 5) or 3 kobolds; south half 3 human fighter 6s, 3 displacer beasts, 3
+  dwarf fighter 7s, 3 lizard men or 3 driders. **A fight comes 1 step in 2 with SEARCH on, 1 in 20 with it off: walk
+  7:22 with SEARCH off.** "THE LEADER WAVES AND CALLS TO YOU" is only text: COMBAT, WAIT, ADVANCE and PARLAY all fight;
+  **FLEE gets away** when the party's slowest has the kind's movement (human and dwarf fighters, lizard men 6; kobolds
+  9; driders, minotaurs, elves 12; displacer beasts 15; stirges 18; 3 more when surprised) and drops the party
+  somewhere in the pyramid. No treasure, only experience. A rest in 7:22 can bring one: heal with cures. *code* (ECL7
+  block 22, its tables at 0xA58D-0xA602)
+  - Results: p25c5 destroyed at 12,15 (a fight, then rests interrupted), p25d2 destroyed at 11,13 (COMBAT on a waving
+    band of three fighters); ARN drained to fighter 3. *seen*
+
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
   more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
