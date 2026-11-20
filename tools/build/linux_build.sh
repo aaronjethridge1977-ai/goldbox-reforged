@@ -46,6 +46,15 @@ cleanup() { [ -n "$GPID" ] && kill "$GPID" 2>/dev/null; [ -n "$XPID" ] && kill "
 trap cleanup EXIT
 echo "== linux_build.sh: $V from $COMMIT ($REF) -> $OUT"
 
+# 0. The release gate (chat 70, Player 33's request): the Stage 1 match's baseline recordings replayed in ours at
+# the commit (tools/build/match_gate.sh: ~5 min a recording); SKIP_MATCH_GATE=1 skips it (said in the build-info).
+if [ "${SKIP_MATCH_GATE:-}" = 1 ]; then GATE="match gate: SKIPPED (SKIP_MATCH_GATE=1)"
+else
+	g=$("$HERE/match_gate.sh" "$COMMIT" | tail -1) || fail "release gate: $g"
+	GATE="$g"
+fi
+echo "$GATE"
+
 # 1. The clean copy: the tracked files at the commit, without tools/ and docs/.
 mkdir -p "$T/src" "$T/out" "$T/unpack"
 git -C "$REPO" archive --format=tar "$COMMIT" -- . ':(exclude)tools' ':(exclude)docs' | tar -x -C "$T/src"
@@ -153,6 +162,7 @@ cp "$T/pck-list.txt" "$OUT.pck-list.txt"
 	(cd "$OUT" && sha256sum "$BIN" "$TGZ.tar.gz")
 	echo "copy: no game data; pck: $n files, only ours"
 	echo "$SMOKE"
+	echo "$GATE"
 } > "$OUT.build-info.txt"
 cat "$OUT.build-info.txt"
 echo "BUILD OK: $OUT"
