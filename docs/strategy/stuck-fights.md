@@ -1,0 +1,97 @@
+# Stuck fights (Pool of Radiance, the original)
+
+Kept by the Player lane (the Lead's note, Jeremy's decision 2026-11-20 12:44) for Gold Box Guide 2, Jeremy's
+stuck-fights chat. One section per fight that has reached five losses in a row under the reload rule. Text only;
+the saves and logs named here are in the Player lab (`~/gbr/player_lab`, archived in
+`/mnt/d/ai_projects/goldbox-reforged/.lab/playerNN_lab.tar.gz`): saves `.lab/player/saves/p2start/<name>/`, logs
+`logs/<run>.log` (and `.trace.txt`, `_screen_*.png`).
+
+"Loss" here is the reload rule's: a wipe, or a won fight with a member dead (a death is reloaded, not raised).
+The party is always the same six (ARN, BRAM fighters; CEDRIC cleric; ELWEN cleric/fighter/magic-user; LIRA
+fighter/magic-user; DORN fighter/thief), driven by the Player's tool (`tools/original_player/`): `tactics on` gives
+the casters their orders by hand (Sleep, Hold Person, Stinking Cloud, Prayer, Bless, Magic Missile), the others
+attack an adjacent enemy by hand or GUARD; the tool has **no step to move members into a formation** and archers
+shoot only what is adjacent.
+
+**Party audit (seen in every save below):** magic gear carried but not readied: ARN's Bracers +4 at `s9door`
+(readied later), LIRA's Chain Mail +1 and Cloak +2 (plain Chain Mail readied), spare Ring Mail +1 and Chain Mail
+in packs. Worth an audit before each fight here (playbook top: the party audit).
+
+## 1. Sokal Keep, event 9 (4:21 7,4 / 8,5): the army
+
+- **Enemy:** 50 figures: 31 orcs, 4 orc leaders, 15 hobgoblins (*code*, poolrad.md section 3); the room 7-8,2-5,
+  doors on its south row (7,5 W, 8,5 E) and north row (7,2 W, 8,2 E). The party enters at 8,5 from 9,5 (facing W).
+- **Party** (`p34a1_s9door`, Player 34; trained at `s6t`): ARN F3 37 HP AC -1 (Broad Sword +1, Banded Mail, Shield);
+  BRAM F3 34 HP AC -1 (Flail +1); CEDRIC C3 25 HP AC -1 (Mace); ELWEN C1/F1/MU1 9 HP AC 0 (Mace); LIRA F1/MU1 9 HP
+  AC 1 (Broad Sword +1, Short Bow carried); DORN F1/T2 15 HP AC 4 (Mace +2). Memorized: ELWEN Sleep, LIRA Sleep,
+  CEDRIC Hold Person and Bless (plan `picks`), the bot's picks in the rest; Bless cast in camp at 9,5 just before.
+- **Tries, Player 34** (plan lab `p34/sokal9.plan`, `OP_TACTICS=horde`; each from `p34a1_s9door`):
+  - p34a1 (34010001): a tool stop at 548 s (the tool's 300-key limit) mid-fight, 5 up with 102 HP, 37 enemies left.
+    Not counted.
+  - p34b1 (34020001): **lost**: down to 6 enemies (29 HP), but BRAM, CEDRIC, LIRA, DORN dead; ARN and ELWEN standing.
+  - p34b2 (34020002): **party destroyed** at 762 s (at 604 s 1 up against 32).
+  - p34b3 (34020003): **won with CEDRIC dead** (1 enemy left at 5 HP at the last menu; 2 up).
+  - p34b4 (34020004): **party destroyed** at 423 s, 45 enemies still up.
+  - p34b5 (34020005): **party destroyed** at 390 s, 43 up.
+  - Who fell to what: the log keeps no blow-by-blow text; the HP lines show the party losing 40-80 HP in the first
+    three rounds before contact, which fits the archers.
+- **Earlier:** at level 2, 10 tries, 8 wipes, 2 wins with a death (Player 15, p15f4-f15); at level 3, 8 tries, 2
+  deathless wins (Players 15-16; p16a2 won it deathless on QUICK, from the east door too).
+- **Read (Player 34):** tactics and tool more than level. The fight's map puts the party in the open at the door
+  with enemies on several sides (`logs/p34b5_screen_combat.png`), not a short line with secure flanks; the tool can't
+  form a line or hold it (MOVE by hand), and doesn't shoot the orc leaders first. The two level-1 Sleeps took few
+  (sleeping figures listed in the enemy count; 1-2 kills by blows each). ELWEN and LIRA at 9 HP fall to two arrows.
+- **Suggestions so far:** the cluebook's southern door, a short line, Sleep and Hold Person on the archers and the
+  front rank, the archers out of arrows after ~4 rounds (*book*); fighters on Guard at the doorway, leaders shot first
+  (*players*, Demetrios1453). Asked of the Lead (board, Player 34): options below.
+- **Options (Player 34):** (a) a tool step to form a line at the fight's start (MOVE members by hand into the
+  doorway: the fighters in front, the casters behind) and archers aiming at ORC LEADERs, then five more tries;
+  (b) the north door (7,2 / 8,2 via room 20) for a different map; (c) leave it at level 3 (p16a2's deathless win
+  stands) and come back at level 4. Recommendation: (a), it is the tactic the sources name.
+
+## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
+
+- **Enemy (the wall, event 13 at 7,6 / 8,6):** six ettins (50 HP, AC 3, THAC0 10, 2d8 + 3d6), two level-6 magic-users
+  (Magic Missile 3d4+3, Mirror Image), two fighter-3 aides: ~382 HP (*code*, poolrad.md). The two tower rooms (stairs
+  at 4,5 and 11,5, a step S, GO UPSTAIRS YES) hold the level-6 mage and the 6th-level fighter; they are manned only
+  until the gate's bugbears (7,10) are fought, which marks both towers beaten (ECL 2:9 0xA60E; main's coverage notes,
+  `tools/plans/cover_2-9-climb.plan`).
+- **Earlier tries (all lost):** p26d2 (COMBAT) and p26e1-e5 (FLEE: the fight comes anyway), Player 26 from `s28b`
+  (ARN F3 drained, LIRA F3/MU3, DORN F3/T4 drained); p27v1/v2 (videos for Jeremy, `.lab/for-jeremy/stojanow/`); Player
+  30's tactical mode 8 of 8 from `s28p` / `s28b` (p30a3-p30e3: best 139 of 382 HP dealt). Taken by `shortcutwin` in the
+  first full run (p27c2).
+- **Player 34, the redo** (party undrained: ARN F6 65 HP AC -1, BRAM F6 60 AC 0 with the Two-Handed Sword +1/+3,
+  CEDRIC C6 42, ELWEN C5/F4/MU4 37, LIRA F5/MU4 39 AC -2, DORN F5/T6 46 AC 4; from `p33f3_mopup1`): the first half to
+  `s28p` in one try (p34c1: the wagon, the toll, the bugbears; nobody dead). From `s28p` the walk to the towers crossed
+  7,6 and set off the wall on QUICK (p34d1, destroyed in 53 s; a plan error, not counted). The cluebook's way
+  (towers first) needs `s28g` (after the toll, before the bugbears): **p34e1, the west tower's room: won, CEDRIC dead**
+  (reload). Further tries: the board's Now line and the Player 34 README.
+- **Read:** the wall fight is both towers' ettins at once (the cluebook: "forcing both gates"); beating the tower rooms
+  one at a time before the bugbears is the intended way, untried until Player 34.
+
+## 3. The kobold king's throne room (8:13 4,3, event 9)
+
+- **Enemy:** three fights in a row with no camp: the horde (LOAD_MON 31 x4, 0 x35, 1 x11: 50 figures, four of them
+  TROLLs, 36 HP, which Sleep doesn't take), then the ballista (120 x5, 0 x45, 1 x8), then the envoys (ECL, Player 23).
+- **Party** (`p23a3_s17door`): ARN F3 (drained 1) 32 HP AC -1; BRAM F5 52/54 AC -2 (Flail +1; the Two-Handed Sword +1/+3
+  carried, not readied); CEDRIC C5 30/33; ELWEN C4/F3/MU3 28; LIRA F3/MU3 22 AC 1; DORN F3/T4 29/32 AC 4.
+- **Tries:** Player 23 p23a3-p23a7 (seeds 23230003-07, QUICK): destroyed every time in the horde fight (16-23 still
+  standing). Player 30 p30h1-h3 by hand from the inn (MAGIC OFF on the way): h3 lost (37 of 56 standing). Player 31
+  p31c1, c3, c4, c6, c7 by hand (`p31/king3.plan`, Sleep in every MU level-1 slot): 5 of 5 lost, 18-34 of 56 slain;
+  the trolls finish the party. A camp at the door draws KOBOLDS ... BOMBARD YOU WITH ROCKS (p30g1). Ours loses the
+  same fight draw for draw to 16203 (p23a4).
+- **Read (Players 23, 31):** level: the party was at F3-5 with a drained ARN; the four trolls. Asked the Lead (more
+  levels first). Every new try is reported on the board (Jeremy).
+
+## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
+
+- **Enemy:** two spectres (drain 2 levels a hit; magic weapons only).
+- **Party** (`p33c1_s26g7c`, trained): ARN F6 65 AC -1; BRAM F6 60 AC 0, Two-Handed Sword +1 (+3 vs undead) readied;
+  CEDRIC C6 42 (Mace +2); ELWEN C5/F4/MU4 37 (Long Sword +1); LIRA F5/MU4 39 AC -2 (Broad Sword +1); DORN F5/T6 46 AC 4
+  (Long Sword +1). Camp casts before: CEDRIC's Bless (all six), Prayer, Protection from Evil on BRAM.
+- **Tries, Player 33:** p33c1 ARN drained 6->4, BRAM dead; p33c2 ELWEN drained; p33c3 DORN drained (ELWEN turned:
+  nothing turned); p33c4 ARN dead, BRAM drained; p33c5 DORN drained. Player 32: 18 tries without BRAM's sword readied.
+  The original offered no TURN in p33c1 (the computer had already turned under QUICK, Combat Chat 34).
+- **Read:** level and gear: only BRAM's sword is better than +1; every hit drains. Left out by the five-losses rule,
+  with 8,2 behind it (the knight's tomb: Potion of Healing, Wand of Lightning Bolt, 2 Restoration). Jeremy has the
+  saves (`.lab/for-jeremy/graveyard/`).
