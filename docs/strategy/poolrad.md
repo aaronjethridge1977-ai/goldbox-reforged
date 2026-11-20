@@ -108,6 +108,9 @@ files); results *seen* unless marked.
     spells); at **level 3**, 2 deathless wins in 8. (Players 15, 16, 27)
   - At level 2 the example party carries 4 Sleeps (two magic-users with 2 each); the comparison party carried fewer.
     *Jeremy* Open to experiment: the doorway tactic by hand (request to the Player).
+  - (Gold Box Guide 2, 2026-11-20) Freeing Ferran first would empty the hall (0x4A26), but his rooms lie beyond the
+    army's squares (7-8,4-5). The party's Hold Persons took one figure each (a tool fault, fixed); the line of four in
+    the doorway, Sleep and Hold Person on leaders and archers, bows behind. Plan: stuck-fights.md section 1. *code*
 - **Ferran Martinez** (the spectre; 2 levels a hit): never melee him. Parley, say LUX, tell the truth (he shows the
   hidden treasure). *book*
 - **Resting at 15,1:** undead interrupted four rests in five; four camps ended with a death. (Player 15)
@@ -128,6 +131,16 @@ files); results *seen* unless marked.
     cleared 15-35 kobolds, then the trolls finished the party; walking in cost HP and spells (123-193 of ~197 HP at the
     door); a camp at the door draws kobolds bombarding the party with rocks. The cluebook route (wyvern cave, Fatima,
     the efreeti) is untried.
+  - (Gold Box Guide 2, 2026-11-20) **The waves** (ECL8 block 13): 4 trolls, 35 kobolds, 11 leaders; a ballista volley,
+    then 5 wild boars, 45 kobolds, 8 leaders; then 2 trolls, 2 boars, 8 kobolds and 2 envoys (F6/MU6, 45 HP). The
+    trolls do the killing (kobolds hit AC -1 only on a 20): at every wipe they stood at 25-36 HP while the blows went
+    to kobolds. **Kill the trolls first:** Stinking Cloud on them (half fail, and a sick troll dies to one blow), three
+    fighters on one, stand on a fallen troll's square. **Princess Fatima** waits in her cell west of the throne and
+    joins for the asking (F4, 33 HP, AC 10: give her spare armour). The efreeti helps against a vampire, not here.
+    SURRENDER after a fled wave keeps the waves won but robs the party (not used, *Jeremy*). *code* + *seen* +
+    *players* ([Demetrios1453](https://www.enworld.org/goto/post?id=9305676): won with two Fireballs and Fatima;
+    [GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/koboldcave.php): a Fireball for each of the
+    first two waves). Plan: docs/strategy/stuck-fights.md section 3.
 
 **Valhingen Graveyard (4:10)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **The two spectres at the brass doors (event 23, 9,1) are optional:** they guard only the knight's tomb (8,2), the one
@@ -160,6 +173,19 @@ files); results *seen* unless marked.
   - The simulation (20,000 fights, two fighters reaching a spectre each round): as at Player 33's save, about 1 fight
     in 5 without a drain and 1.4 drains on average; with Prayer, one Fireball and the camp's Haste, about 2 in 3
     without a drain and almost never two (98% one at most). **Mirror Image doesn't help** (section 4's rule: images take spells, not blows).
+
+**Stojanow Gate (2:9)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
+- **Take the towers one at a time, by surprise, and the wall fight never comes.** Each tower room opens with the guards
+  unaware (the party gets the surprise round) and starts an alarm of about an hour. The wall fight (7,6) comes only
+  while an alarm rings and brings only the towers not yet beaten; winning it marks both beaten (0xA60E). Fighting the
+  gate's bugbears first rings the alarm with both towers manned: that is the fight every earlier run lost. *code*
+  (ECL2 block 9) + *book* (the wagon, the towers, resting out the alarm in a tower)
+- **The west tower:** a 5th-level magic-user, an aide, 3 ettins (50 HP, AC 3, THAC0 10); the east: a 6th-level
+  magic-user (Mirror Image, Fireball), an aide, 3 ettins. Stinking Cloud on the bunched ettins in the surprise round,
+  Hold Person on the mage and the aide, fighters on the helpless ettins. About 8,200 experience a tower. *code*
+- **The patrol inside** (a 6th-level fighter, 5 hill giants) parleys: HARASH, or TYRANTHRAXUS as the authority. *code*
+- Results: Player 34 won the west tower 3 of 5 with a death (movement 3, no cloud, CEDRIC in reach). Plan:
+  stuck-fights.md section 2. *seen*
 
 The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
@@ -414,5 +440,4 @@ and where it was learnt. The Lead folds them into the sections daily and clears 
 - Route levels, stretches 1-5 (*seen*, Player 34 from the original's checkpoint saves, segments 1-8): the Slums were cleared at level 1 (fighters, cleric 1, multis 1/1/1; trained to F2/C2 only after `slums2`); Sokal Keep's event 9 was lost 5 of 5 at F2/C2/multis 1 and won at F3/C3 (multis still 1/1/1, DORN F1/T2); Kuto's Well at F3/C3, multis 1; **Mendor's Library at F3/C3, multis 1-2 (ELWEN C1/F2/MU1, LIRA F2/MU1), not 3-4**.
 - Route levels, stretches 6-12 (*seen*, Player 34, segments 9-25): City Hall to Bane at F4/C4 with multis 2-3 (ELWEN C2/F2/MU1, LIRA F3/MU1, DORN F3/T2); Kovel at F4-5/C5 (ARN drained 4 -> 2); the kobold caves and Sorcerer's Island at ARN F3, BRAM F5, CEDRIC C5, ELWEN C4/F3/MU3, LIRA F3/MU3, DORN F3/T4 (the throne room lost 5 of 5 at these); the Buccaneers and Zhentil at F5-6/C6, multis 4/4/4, LIRA F4/MU4, DORN F4/T5.
 - Route levels, stretches 13-15 (*seen*, Player 34): the graveyard entered at ARN F5, BRAM F6, CEDRIC C6, ELWEN C4/F4/MU4, LIRA F4/MU4, DORN F4/T5 and left drained (ARN F2, LIRA F2/MU2, DORN F3/T3: p25q5); Player 33's redo with no drain reached `graveyard` at ARN F6, BRAM F6, CEDRIC C6, ELWEN C5/F4/MU4, LIRA F5/MU4, DORN F5/T6, and 4:10 9,1's two spectres still won 5 of 5 there; Stojanow's wall was lost at ARN F3, BRAM F5, CEDRIC C6, multis 3-5 (still drained); Valjevo at ARN F5, BRAM F6, CEDRIC C6, ELWEN C5/F5/MU4-5, LIRA F4/MU4, DORN F4/T5 (guards 1 of 5).
-- Stojanow's tower rooms (*code*, main's coverage notes `tools/plans/cover_2-9-climb.plan`; *seen*, Player 34): the rooms (4,5 and 11,5, a step S, GO UPSTAIRS YES) are manned only until the gate's bugbears (7,10) are fought, which marks both towers beaten (ECL 2:9 0xA60E): the cluebook's "each tower's guards one at a time" has to come right after the toll, before the bugbears. The west tower's room holds the 5th-level fighter, his aides and three ettins (188 HP); a level 5-6 party lost it 5 of 5 (three wins with CEDRIC dead), docs/strategy/stuck-fights.md.
 - **Gear map, the knight's tomb (4:10 8,2) is ITEM4 list 29:** four clerical scrolls of RESTORATION x2, Shield +1, Ring of Fire Resistance, Long Sword +2 (lawful good), Plate Mail +2; the table's 4:10 row seems to give the tomb the Wand of Lightning Bolt and Potion of Healing instead: please check the square-to-list joins (main). **And a "reserved for" column** (Jeremy, the magic-item rule, playbook section 2): each wand, scroll and potion with the fight it's kept for (Gold Box Guide 2 fills it in with Jeremy). *code* (Gold Box Guide 2)

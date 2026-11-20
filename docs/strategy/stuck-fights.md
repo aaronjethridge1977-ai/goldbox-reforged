@@ -112,6 +112,31 @@ from `p34c1_s28g`, seeds 34050001-05, campcast Prayer before the stairs: **5 of 
   5th-level fighter. A rerun with the fixed tool is the first thing to try (asked of the Lead).
 - **Read:** the wall fight is both towers' ettins at once (the cluebook: "forcing both gates"); beating the tower rooms
   one at a time before the bugbears is the intended way, untried until Player 34.
+- **Analysis (Gold Box Guide 2, 2026-11-20; ECL2 block 9, MON2CHA):** (1) **Each tower room opens with the guards
+  unaware** ("THEY SEEM UNAWARE OF YOU"; attacking sets 0x6DCB = 2: the monsters are surprised) and starts an alarm of
+  about an hour (0x9BE2). (2) **The wall fight (0xA3FC) comes only while an alarm rings, and only with the towers not
+  yet beaten** (0x4A77 bits 4 and 8); winning it marks both beaten (0xA60E). The earlier runs fought the gate's
+  bugbears first (alarm, both towers manned), so crossing 7,6 brought both towers' ettins at once. Both towers taken
+  separately: the wall is empty. (3) The patrol inside (a 6th-level fighter, 5 hill giants; 0x9E73) parleys: HARASH, or
+  TYRANTHRAXUS as the authority, passes. (4) Then the gate's 16 bugbears (0xA79B). (5) **The west tower:** 5TH LVL MU
+  (20 HP, AC 9), an aide (F3, 18 HP), 3 ETTIN (50 HP, AC 3, THAC0 10): about 8,200 experience, 1,370 a member, enough
+  for LIRA's MU5 (452 to earn at `s28g`). The east: a LEVEL 6 MU (23 HP; Mirror Image, Fireball), an aide, 3 ettins.
+  (6) **Why lost:** movement 3 for five of six (the fighters stood on GUARD 10-13 times a try: nobody in reach); no
+  Stinking Cloud cast (four memorizable; bunched ettins in a cloud died to single blows, p30d2); CEDRIC in ettin reach;
+  the tool faults Player 34 fixed (bandaging; repeated unplaceable Hold Persons). No level owed (corrected count).
+- **Plan 1 (Jeremy approved 2026-11-20 15:16; Gold Box Guide 2):**
+  1. **The audit at `s28g`:** drop the junk so everyone moves 6+; the Bracers to DORN (AC 4 -> 2); BRAM's spare Shield
+     +1 to CEDRIC; LIRA's spare Chain Mail +1 to ELWEN; a bow readied for LIRA; magic-users Stinking Cloud x2 at 2nd
+     level, Sleep and Magic Missile at 1st; CEDRIC Hold Person and cures.
+  2. **The west tower:** camp at the stairs (Bless, Prayer), GO UPSTAIRS, attack while they're unaware. Surprise round:
+     LIRA and ELWEN Stinking Cloud on the bunched ettins (the party outside the 2x2); CEDRIC Hold Person on the
+     magic-user and the aide. Fighters close on the helpless ettins (one blow each; the line rule); CEDRIC in the back
+     rank; the dying bandaged at once.
+  3. **Rest out the alarm in the tower** (*book*), then **town: train LIRA to MU5** (Fireball; Jeremy, 15:16).
+  4. **The east tower** the same way, Hold Person on its magic-user first; LIRA's Fireball on the ettins and the mage.
+  5. The patrol: PARLAY, HARASH / TYRANTHRAXUS. The 16 bugbears: Sleep, clouds, the line.
+  6. Stop rule: 2 losses in the first 3 tries, levels first.
+  - **Results:** (the Player's lines here)
 
 ## 3. The kobold king's throne room (8:13 4,3, event 9)
 
