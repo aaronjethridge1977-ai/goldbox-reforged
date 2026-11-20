@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145); DIFFCHECKS 145/145
+## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147); DIFFCHECKS 147/147
 
 - **Check 143, SELL of a readied item** (main path): check 132's start (3:0's arms and armour shop, tpseed 11111111).
   In the original (DOSBox): VIEW, ITEMS, SELL with ARN's readied Long Sword lit does nothing (no message on the bottom
@@ -188,6 +188,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   ENCAMP, ALTER, End x2 (CEDRIC), DROP: CEDRIC / WILL BE GONE and DROP FROM PARTY? YES NO; YES: the message area is
   cleared and the party is five (the slot's save holds five CHRDAT files). Ours the same. Matched at once, 3 of 3; NO
   instead of YES differs (CEDRIC still in ours).
+- **Check 146, the shop's BUY four times** (main path): check 98's start, DORN (3 gold, 8 platinum) buys four
+  Bardiches (7 gp each): 43 gp -> 15 gp, his purse regrouped as 3 platinum, seven items. Matched at once; three BUYs
+  differ.
+- **Check 147, BUY refused for money** (main path): check 146's end (slot.py F -> G), DORN with 15 gp buys the
+  Glaive-Guisarme (10 gp) twice: the first bought (1 platinum left), the second refused (GAME.OVR 0x712C, "Not enough
+  Money." through the message routine; not caught on screen by any grab). Matched at once; the Glaive (6 gp, both
+  bought) differs.
 
 ## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140), a band REST interrupted that fights (check 141), the camp's ALTER ORDER (check 142; statediff compares the party's order); DIFFCHECKS 142/142
 
