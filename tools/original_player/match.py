@@ -4,16 +4,19 @@ original's full run replayed in ours, one scoreboard.
   match.py manifest            hash every recording (match/recordings.txt) into match/manifest.txt: a recording is
                                frozen once listed; a changed file is an error, a re-recording a new line (new run id)
   match.py verify              check the lab's files against the manifest (exit 1 on any change)
-  match.py run [run ...]       replay each recording in ours (segment.py <run> begin <checkpoint> --start=<save>
+  match.py run [-j N] [run ...] replay each recording in ours (segment.py <run> begin <checkpoint> --start=<save>
                                --tplog), line the draws up (the lab's cmpdraws.py) and keep both under LAB/match/;
-                               then the scoreboard. One Godot at a time (the lab's rule); about 5 min a recording.
+                               then the scoreboard. About 5 min a recording; -j N runs N side by side, each in
+                               its own scratch lab (LAB/match_w/wK: own game copy and proj; Player 34)
   match.py score [--md FILE]   the scoreboard from the kept outputs (no replay): X of N identical, by segment, and for
                                the rest the first differing roll and the state there, each labelled
   match.py baseline            write match/baseline.txt: the recordings identical now
   match.py gate [--run]        exit 1 if a recording identical in the baseline parts now (the release gate; --run
                                replays the baseline's recordings on this checkout first: the build script's form)
 
-A recording is identical when its draws agree up to its checkpoint (cmpdraws "draws: identical", or the first
+A replay counts only when it ran to its end (ours' F2 line and statediff's "N differences" line in ours' log);
+otherwise it is NOT RUN, never identical (main chat 70). A recording is identical when its draws agree up to its
+checkpoint (cmpdraws "draws: identical", or the first
 difference at N with ours' count N - 1: the trace goes on past the checkpoint) and statediff, ours' save against the
 original's at the checkpoint, has no difference left after match/known.txt's `ignore` lines (the wall-set slot cells).
 Every other difference is labelled from match/known.txt (`label <run> <game|replay tool|known shortcut> <note>`);
@@ -110,10 +113,74 @@ def verify(quiet=False):
     return bad
 
 
-def replay(r):
+def worker_labs(n):
+    """Player 34: n scratch labs under LAB/match_w/ for replays side by side (the Lead's note: 3-4 at a time). Each
+    has its own game copy (slot F), proj copy, Godot user folder and run_seg; logs/, match/, the saves, Godot,
+    qs.cfg and cmpdraws.py are the lab's own (symlinks), so the outputs land where `score` reads them."""
+    import shutil
+    labs = []
+    for k in range(n):
+        w = os.path.join(LAB, "match_w", "w%d" % k)
+        shutil.rmtree(w, ignore_errors=True)
+        os.makedirs(os.path.join(w, "root"))
+        os.makedirs(os.path.join(w, ".lab", "player"))
+        shutil.copytree(os.path.join(LAB, "root", "POOLRAD"), os.path.join(w, "root", "POOLRAD"))
+        shutil.copytree(os.path.join(LAB, "proj"), os.path.join(w, "proj"), symlinks=True)
+        for f in ("logs", "match", "godot", "qs.cfg", "cmpdraws.py"):
+            os.symlink(os.path.join(LAB, f), os.path.join(w, f))
+        os.symlink(SAVES, os.path.join(w, ".lab", "player", "saves"))
+        labs.append(w)
+    return labs
+
+
+def replay_all(rs, jobs=1):
+    """Replay rs, jobs at a time (each in its own worker lab when jobs > 1)."""
+    if jobs <= 1:
+        for r in rs:
+            print("replaying %s (segment %d)" % (r["run"], r["seg"]), flush=True)
+            replay(r)
+        return
+    import queue, threading, time
+    os.makedirs(OUT, exist_ok=True)
+    free = queue.Queue()
+    for w in worker_labs(jobs):
+        free.put(w)
+    todo = list(rs)
+    lock = threading.Lock()
+
+    def work():
+        while True:
+            with lock:
+                if not todo:
+                    return
+                r = todo.pop(0)
+            w = free.get()
+            print("%s replaying %s (segment %d) in %s" % (time.strftime("%H:%M:%S"), r["run"], r["seg"],
+                                                         os.path.basename(w)), flush=True)
+            try:
+                replay(r, w)
+            finally:
+                free.put(w)
+            print("%s done %s" % (time.strftime("%H:%M:%S"), r["run"]), flush=True)
+
+    ts = [threading.Thread(target=work) for _ in range(jobs)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+
+
+def replay(r, lab=None):
     os.makedirs(OUT, exist_ok=True)
     seg = os.path.join(OUT, r["run"] + ".seg.txt")
+    # a replay that fails must not leave the last run's outputs to be scored (main chat 70): clear them first
+    for f in (os.path.join(OUT, r["run"] + ".cmpdraws.txt"),
+              os.path.join(LOGS, "%s.segment_begin-%s.txt" % (r["run"], r["cp"]))):
+        if os.path.exists(f):
+            os.remove(f)
     env = dict(os.environ, OP_SEG_TIMEOUT=os.environ.get("OP_SEG_TIMEOUT", "3200"))
+    if lab:
+        env["OP_LAB"] = lab
     with open(seg, "w") as f:
         subprocess.run([sys.executable, os.path.join(HERE, "segment.py"), r["run"], "begin", r["cp"],
                         "--start=" + r["start"], "--tplog"], stdout=f, stderr=subprocess.STDOUT, cwd=HERE, env=env)
@@ -129,7 +196,7 @@ def replay(r):
 
 
 def result(r, ign, lab):
-    """(state, text): state identical | differs | missing."""
+    """(state, text): state identical | differs | notrun | missing."""
     cmp_ = os.path.join(OUT, r["run"] + ".cmpdraws.txt")
     ours = os.path.join(LOGS, "%s.segment_begin-%s.txt" % (r["run"], r["cp"]))
     if not os.path.exists(cmp_) or not os.path.exists(ours):
@@ -138,6 +205,10 @@ def result(r, ign, lab):
     if not os.path.exists(os.path.join(LOGS, r["run"] + ".trace.txt")):
         c = "no trace: draws unchecked\n"      # (the early runs: statediff is the comparison)
     o = open(ours, errors="replace").read()
+    # a replay that never ran to its end is not a comparison (main chat 70: ours stopped at draw 0 with no
+    # statediff read as identical): ours' F2 save and statediff's count line must both be there
+    if not re.search(r"^F2 ", o, re.M) or not re.search(r"^\d+ differences?$", o, re.M):
+        return "notrun", "NOT RUN: ours' replay didn't reach F2 and statediff (see LAB/match/%s.seg.txt)" % r["run"]
     sd = o.split("--- statediff", 1)[1].splitlines()[1:] if "--- statediff" in o else ["(no statediff: ours stopped?)"]
     sd = [l for l in sd if l.strip() and not re.match(r"\d+ differences?$", l.strip())
           and not any(p.search(l) for p in ign)]
@@ -182,13 +253,14 @@ def score(md=None):
     ign, lab = known()
     rs = recordings()
     res = [(r, ) + result(r, ign, lab) for r in rs]
-    done = [x for x in res if x[1] != "missing"]
+    done = [x for x in res if x[1] not in ("missing", "notrun")]
+    notrun = [x for x in res if x[1] == "notrun"]
     ident = [x for x in done if x[1] == "identical"]
     game = [x for x in done if x[1] == "differs" and x[2].startswith("[game")]
     lines = ["# The Stage 1 match (match.py score)", "",
-             "**%d of %d recordings identical** (%d replayed, %d not yet); differences: %d game, %d replay tool, %d"
-             " known shortcut; the frozen files: %s." % (
-                 len(ident), len(rs), len(done), len(rs) - len(done), len(game),
+             "**%d of %d recordings identical** (%d replayed, %d NOT RUN, %d not yet); differences: %d game, %d replay"
+             " tool, %d known shortcut; the frozen files: %s." % (
+                 len(ident), len(rs), len(done), len(notrun), len(rs) - len(done) - len(notrun), len(game),
                  sum(1 for x in done if x[2].startswith("[replay tool")),
                  sum(1 for x in done if x[2].startswith("[known shortcut")),
                  "as frozen" if not verify(quiet=True) else "CHANGED (match.py verify)"), "",
@@ -197,10 +269,11 @@ def score(md=None):
         xs = [x for x in res if x[0]["seg"] == s]
         lines.append("| %d | %d of %d | %s |" % (s, sum(1 for x in xs if x[1] == "identical"), len(xs),
                      ", ".join(x[0]["run"] + ("" if x[1] == "identical" else " (%s)" % (
-                         "not yet" if x[1] == "missing" else x[2][1:x[2].index("]")].split(":")[0])) for x in xs)))
+                         "not yet" if x[1] == "missing" else "NOT RUN" if x[1] == "notrun" else
+                         x[2][1:x[2].index("]")].split(":")[0])) for x in xs)))
     lines += ["", "## The rest: first differing roll and the state there", ""]
     for r, st, txt in res:
-        if st == "differs":
+        if st in ("differs", "notrun"):
             lines.append("- **%s** (segment %d, `%s` -> `%s`): %s" % (r["run"], r["seg"], r["start"], r["cp"], txt))
     text = "\n".join(lines) + "\n"
     if md:
@@ -219,11 +292,9 @@ def main():
         bad = verify()
         if bad:
             sys.exit("recordings changed since the manifest: re-record as new runs, don't replay changed files")
-        want = set(sys.argv[2:])
-        for r in recordings():
-            if not want or r["run"] in want:
-                print("replaying %s (segment %d)" % (r["run"], r["seg"]), flush=True)
-                replay(r)
+        jobs = int(sys.argv[sys.argv.index("-j") + 1]) if "-j" in sys.argv else 1
+        want = set(a for i, a in enumerate(sys.argv[2:], 2) if a != "-j" and sys.argv[i - 1] != "-j")
+        replay_all([r for r in recordings() if not want or r["run"] in want], jobs)
         score()
     elif cmd == "score":
         md = sys.argv[sys.argv.index("--md") + 1] if "--md" in sys.argv else None
