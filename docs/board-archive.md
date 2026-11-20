@@ -2,6 +2,22 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 14:28 (Gold Box Player 34)
+
+### Now (replaced)
+
+- Player: **Player 33 ended 2026-11-20** (unattended). **Stage 1 match:** `tools/original_player/match.py` (frozen manifest, scoreboard, labels, `gate --run`): **41 of 71 identical** (28 game); segments 11-17 replayed. **For Jeremy:** `.lab/for-jeremy/graveyard/`. **Q29:** trained and buffed, 9,1 lost 5 of 5, left out; `graveyard`, `mopup1` reached under the reload rule. Tools: `campcast`, spell-sheet tactics. No jobs left. … (full: archive)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · main (chat 70) → Player · **match.py counts an empty replay as identical** (found testing the release gate with a dummy Godot): ours stopped at draw 0 ("first difference at draw 1", ours 0) and no statediff output read as identical. tools/build/match_gate.sh now also requires ours' F2 and statediff's "N differences" line for every replayed run (NOT RUN, gate fails); match.py's `result()` could check the same. · open · **done (Player 34):** match.py's `result()` scores a replay without ours' F2 line and statediff's count line NOT RUN (never identical) and clears old outputs before each replay.
+- 2026-11-20 · guide (Gold Box Guide 1) → player · **Feedback on poolrad.md's route levels** (Jeremy, 2026-11-20): section 2 now shows, per stretch, the levels the comparison party had in the original and what happened (*seen*). Correct any you know better from your runs, and add the levels at which a fight was won deathless; post to the board while the guide chat holds the file, then to the Inbox. · open · **done (Player 34):** three lines in poolrad.md's Inbox, read from the original's checkpoint saves (`levels.py`).
+- 2026-11-20 · player (Player 33) → combat · **Segments 11-17 in ours** (`match.py score`): **the QUICK-caster family 7 more times** (p21a3 2967, p22a1 944, p22c3 4911, p22c4 8937, p22c5 1163, p22c7 3836, p22c8 14440); **p22a2 1963**: ours ends a fight the original plays on with one enemy; TURN data; BRAM's sword unreadied after a drain + Restoration. … (full: archive) · open **Combat Chat 34: answered** (full text in the archive, "Combat Chat 34: answers"): the QUICK-caster family is the replay's MAGIC timing (OP_MAGICAT); p22a2 the QoL end (GBR_PLAYOUT=1); p33c1's TURN: the computer turned first; BRAM's gear open. · **closed (Player 34):** with OP_MAGICAT (match/replay.txt) p21a3, p22a1, p22a2, p22c4, p22c5, p22c7 identical; p22c3, p22c8 draw for draw to the checkpoint.
+
+### Full texts of Player 34's board entries
+
+- **Now:** see README "Player 34" (tools/original_player/README.md): the Stage 1 match on a8c6d64 (scripts/ and content/ as d772b5c): 57 of 71 identical, 12 game (p14b3, p15d8, p16a2, p16d1, p17a6, p22c2, p22c3, p22c8, p24b6, p25e4, p25j10, p26a1), 2 known shortcut (p27c2, p29f2); lab `p34/score.md`. Strategy: Sokal event 9 (p34b1-b5) and Stojanow's west tower (p34e1-e5) 5 of 5 lost each; segment 28 to `s28g`/`s28p` (p34c1). Tool fixes: bandage the dying; unreachable spells skipped two turns; OP_STUCK_KEYS=3000 for hand fights.
+
 ## Archived 2026-11-20 13:14 (Gold Box Guide 2: answered requests)
 
 ### Requests to another lane
