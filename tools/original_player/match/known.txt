@@ -8,8 +8,8 @@
 ignore ^memory 4AF[A-F]
 #
 # label <run> <game | replay tool | known shortcut> <note>
-label p27c2 known shortcut: the Stojanow wall won by the logged shortcut (Q27 (a)); scored after main confirms ours applies the same win
-label p29f2 known shortcut: the finale's guards and Tyranthraxus by the logged shortcut; scored after main confirms (Lead, Methods 8)
+label p27c2 known shortcut: the Stojanow wall won by the logged shortcut (Q27 (a)); main chat 71: identical to 1057 (the shortcut), then the hack's artefact (the original's party plays the round on against the figures left on its map)
+label p29f2 known shortcut: the finale's guards and Tyranthraxus by the logged shortcut; main chat 70: identical to 801, then the hack's artefact (4 differences from those casts: the Lead's answer, known shortcut)
 label p13a1 game: LIRA's 10 arrows' value word $1 in the original, $0 in ours (Combat Chat 33: open)
 label p17a7 game: a QUICK caster's spell pick after "weighs a spell" (Requests, to combat: the QUICK-caster family)
 label p18b7 game: the QUICK-caster family (990)
