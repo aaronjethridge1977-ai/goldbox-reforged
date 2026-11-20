@@ -1129,10 +1129,14 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 	# the figure would catch one of the caster's side. A figure picked twice counts once
 	# (0x14B3C; the player gets "Already been targeted"); an aim with 20 failed tries adds
 	# nobody. (Combat Chat 10, Player 8's 4:2 3,11: GRISHNAK's Hold Person draws three aims.)
+	# The list is the blow's: range and a clear line between the figures' cells (Combat Chat 31, Player 20's
+	# p20a3 draw 1434: LIRA's Sleep, the original's d3; a gnoll at range 7 seen from LIRA's cell to one of its
+	# cells but not to its anchor, which `why_not`, the player's aim at a square, looks at).
+	var reach := spell_range(i, id)
 	var near: Array[int] = []
 	for j in c.combatants.size():
 		var e: Dictionary = c.combatants[j]
-		if not e.down and e.team != me.team and why_not(i, id, e.cell) == "":
+		if not e.down and e.team != me.team and c.range_of(me, e) <= reach and c.clear_line(me, e).y == 1:
 			near.append(j)
 	if near.is_empty():
 		return {}
