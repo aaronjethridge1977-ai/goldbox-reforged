@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-2 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-3 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -155,6 +155,199 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   In Pool, wights need one: a plain mace left a wight untouched for five rounds. *seen* (Player 32, p32b8) Which undead
   need one in each game: **unconfirmed** (request to Combat).
 
+## 3. Spells
+
+**Memorizing**
+- Fill every spell level before a hard fight, not just level 1: a party that fought with its level-2 and level-3 slots
+  empty lost fights it could have won. *seen* (Player 27, Stojanow report)
+- Camp and memorize before each event: a party that reached a 30-figure fight with its Sleep spells used up lost.
+  *seen* (Player 15, p15c1/p15c2)
+- Rest time to memorize: 4 hours plus 15 minutes for each spell, counted for the member with the most to learn. *seen*
+  (Player 15) (The manual says 15 minutes per spell level: plan by the *seen* figure.) An interrupted rest keeps only
+  the spells already finished, in the order picked. *book* (Manual)
+- Keep one Slow Poison memorized in the party, in a cleric's first free level-2 slot. *code* (Player 27)
+- The magic-user's LEARN page and camp CAST's spell list open on the *last* spell; End wraps to the first. Check which
+  spell is lit before choosing. *seen* (Player 3; main chat 65, check 102)
+- Spells cast in camp last into the next fight while their time runs (Bless, Prayer, Protection from Evil). *seen*
+  (Player 33, p33c3)
+
+**What the game gives the casters** (Pool; *code*: START.EXE class tables, read 2026-11-20)
+
+| Level | Cleric (before Wisdom) | Cleric, Wisdom 17-18 | Magic-user |
+|---|---|---|---|
+| 1 | 1 | 3 | 1 |
+| 2 | 2 | 4 | 2 |
+| 3 | 2/1 | 4/3 | 2/1 |
+| 4 | 3/2 | 5/4 | 3/2 |
+| 5 | 3/3/1 | 5/5/2 | 4/2/1 |
+| 6 (cap) | 3/3/2 | 5/5/3 | 4/2/2 |
+
+- Wisdom 13 and 14 each add a first-level spell, 15 and 16 a second-level, 17 a third-level, each once the cleric has
+  that spell level. *code* (our engine, party_member.gd; matched to the original's first-level cleric) Above level 1:
+  **unconfirmed**. Intelligence adds no spells.
+- Clerics know every cleric spell. A magic-user's book starts with 4 first-level spells and gains one a level, plus
+  what is copied from scrolls, so its picks matter. *book* (Manual)
+
+**Casting in a fight**
+- **Some spells go off at once; the rest go off at the caster's next turn, aimed then, and a hit in between spoils
+  them.** *Jeremy* + *code* (START.EXE spell table, byte 12)
+  - At once: every first-level magic-user spell but Read Magic, every second-level magic-user spell, Blink, Detect
+    Magic, Slow Poison.
+  - Next turn: every other cleric spell (Cure Light Wounds, Bless, Hold Person, Prayer...) and the third-level
+    magic-user spells (Fireball, Lightning Bolt, Haste, Slow, Hold Person...). Cast these before the lines meet: Hold
+    Person and Prayer begun in melee never went off. *seen* (Player 30, p30d1/d3/e1)
+  - Some have longer delays (Bless, Cure Blindness): what that means in a fight is **unconfirmed** (request to Combat).
+- A wounded caster LOSES A SPELL but keeps it in memory. *seen* (Combat Chat 33) (Pool's original takes the copy from
+  the attacker's memory instead, if it has one: START.EXE 0xBA:0x148B.)
+- A caster hit recently can't choose CAST: guard casters with fighters. *book* (Manual)
+- In a fight's CAST list Home moves the highlight up and End down; it opens on the last spell, and long lists page with
+  NEXT. EXIT from a spell's aim asks ABORT SPELL? *seen* (Player 30)
+- Magic resistance is rolled for each target after its save; a creature's spell can catch the creature itself. *code*
+  (GAME.OVR 0x115BF; Player 6)
+- In an anti-magic area, CAST does nothing, even in camp: heal there by resting. *seen* (Player 25; Pool's place is in
+  poolrad.md)
+
+**Computer-run casters (QUICK)**
+- **QUICK members cast only with MAGIC ON: press Alt-M in every fight,** because the game turns it off at each fight's
+  start. *code* (GAME.OVR 0xE457) + *seen* (Player 15)
+- QUICK casters often swing instead of casting: they never cast Prayer or Stinking Cloud in three tries, and the clerics
+  left Bless unused. **Cast key spells by hand.** *seen* (Stojanow report)
+- The computer never aims an area spell where it would catch its own side, so once the lines meet QUICK casters seldom
+  cast Sleep, Stinking Cloud or Fireball. *book* (Manual, Cluebook) + *seen* (Combat Chat 33)
+- QUICK still throws Hold Person and Sleep at monsters they can't affect (ettins). *seen* (Player 27, p27a1)
+- QUICK suits weak hordes, not boss fights; QUICK members always use readied magic items and shoot readied bows when no
+  enemy is adjacent. *book* (Manual, Cluebook)
+- The computer's choice: each turn it tries spells by priority: 7 Sleep, Stinking Cloud, the cleric's Hold Person,
+  Fireball, Lightning Bolt; 6 Magic Missile, Charm Person, the magic-user's Hold Person, Prayer; 5 Slow, the cleric's
+  Dispel Magic; down to 1 Protection from Evil. *code* (START.EXE spell table byte 13; Combat Chat 33)
+
+**Prefer restraint to damage**
+- One blow kills a sleeping or held enemy, so Sleep, Hold Person and Stinking Cloud usually beat damage spells. *book*
+  (Cluebook)
+- **Among the cleric spells, healing comes first.** A member knocked out loses the fight's experience (**unconfirmed**:
+  request to the lanes), and too big an experience gap between members can sink a run. *Jeremy*
+
+**The spells** (Pool; *seen* in Combat's spell lab, Combat Chats 33-34, unless marked; "level" is the caster's level in
+the spell's class)
+
+- **Sleep** (magic-user 1; at once; no save). *Jeremy:* the spell to cut the enemy down at low levels; it can take out
+  the Slums' ogres. It sleeps 4d4 hit dice of creatures (about 10 a cast; kobolds and orcs cost 1 each), so everything in
+  the 3x3 sleeps, **the caster too**: aim it two squares off (a lone caster aiming at the next square put the party to
+  sleep and it was destroyed). Not big monsters (ettins) or a level-6 magic-user (*seen*, Stojanow); short range (*book*).
+- **Stinking Cloud** (magic-user 2; at once; range 3). *Jeremy:* very good for taking out casters and making fights
+  easier.
+  - **The cloud is 2x2:** the aimed square and the squares right, below and below-right. With enemies to your right or
+    below, aim one square past the nearest so you stay outside.
+  - A **failed** save vs poison: helpless d4+1 rounds, its turn lost at once. A **made** save only "starts to cough":
+    for a round no spell or item and AC 2 worse, but **not helpless**, whatever the manual says. *code* (GAME.OVR
+    0xF6C0) + *Jeremy*
+  - **The cloud stays for the caster's level in rounds**; anyone in it saves again each round. **The computer never
+    walks into it**, so a cloud across a corridor holds monsters back. *seen* (Combat Chat 34)
+  - Kobolds resist 25% of the time; orcs need about 13-16. Bunched ettins in a cloud died to single blows. *seen*
+    (Player 30, p30d2)
+- **Hold Person** (cleric 2, next turn, 3 picks; magic-user 3, next turn, 4 picks; save vs spell; man-sized only).
+  *Jeremy:* great for taking out annoying enemies with poorer saves. The cleric's lasts 4 + 1/level rounds, the
+  magic-user's 2/level. A held figure is slain by any blow and loses its guard and any spell it was casting. Use it on
+  enemy casters (they are persons). **By hand:** after each TARGET the aim starts again on the caster, so press NEXT to
+  the next figure; a figure picked twice costs no pick; EXIT uses up a pick; when the picks run out the spell goes off on
+  those taken. *seen* (Combat Chat 34)
+- **Magic Missile** (magic-user 1; at once). *Jeremy:* the first-level spell once Sleep no longer serves. Never misses
+  (no roll, no save), ignores most resistances (good on undead), interrupts enemy casting; Shield cancels it. *book*
+  **In the original Pool a level-1 magic-user's does nothing** (level / 2 missiles, rounded down: *code*, GAME.OVR
+  0x28451; an original bug: ours fixes it unless SETTINGS ORIGINAL'S BUGS is on). Enemy mages' Magic Missiles finish
+  wounded members: kill the mages first. *seen* (Stojanow report)
+- **Charm Person** (magic-user 1; at once). *Jeremy:* can turn the tide in some battles.
+- **Fireball** (magic-user 3; next turn). *Jeremy:* loosens up large groups, best on many low-HP enemies. The caster's
+  level in d6, half on a save; 7x7 indoors (radius 3), radius 2 outdoors; a caster aiming within 3 squares burns
+  himself.
+- **Lightning Bolt** (magic-user 3; next turn). *Jeremy:* great if you can get it bouncing round right; it depends on the
+  map. It bounces off walls: mind your own party. *book*
+- **Slow** (magic-user 3; next turn; no save). *Jeremy:* useful against enemies with several attacks. As many figures
+  as the caster's level, nearest the aim point first; 3 + 1/level rounds; halves movement and attacks (a one-attack
+  monster strikes every other round); on a hasted figure it only ends the Haste.
+- **Haste** (magic-user 3; next turn). *Jeremy:* turns your fighters into killing machines. The caster's level in
+  allies; 3 + 1/level rounds; doubles movement and attacks; each target ages a year; on a slowed figure it only ends the
+  Slow.
+- **Bless** (cleric 1; next turn, a long delay). *Jeremy:* can be used well, but he rarely does: try it. +1 to hit for 6
+  rounds, only for members not yet in melee. *book* + *seen*
+- **Prayer** (cleric 3; next turn). Within 6 squares of the caster, the party +1 to hit and on saves and enemies -1, 1
+  round a level: cast it from the middle of the line, not the back. *code* (GAME.OVR 0x2B04A) + *seen* (p29d1)
+- **Protection from Evil** (cleric 1, next turn; magic-user 1, at once). +2 on saves against evil attackers (its -2 to
+  be hit is overwritten before the roll); it **doesn't stop level drain**. *book* + *code* (Combat Chat 32, GAME.OVR
+  0x10FFF)
+- **Enlarge** (magic-user 1; at once; camp or fight) on a fighter, before or during a fight. *Jeremy* + *code* (spell
+  table) **Strength** (magic-user 2) is camp only. *code*
+- **Silence 15'** stops enemy casters. *book* **Slow Poison** keeps a poisoned member alive until a temple (section 6).
+  *book*
+
+The rest of Pool's list, with suggested uses (Jeremy, 2026-11-20: "a good starting point"; to be tried in play or the
+arena):
+- Cleric: **Cure Light Wounds** (the healing priority); **Detect Magic** (at once; which loot is magic: part of the
+  audit); **Resist Fire** / **Resist Cold** (before a known fire or cold fight: fire giants, breath, enemy Fireballs; the
+  cluebook suggests Resist Fire for the finale); **Spiritual Hammer** (a magic weapon for the cleric, for enemies plain
+  weapons can't hurt); **Dispel Magic** (ends enemy effects, frees our held or charmed); **Find Traps** (camp);
+  **Cure Blindness**, **Cure Disease** (camp only), **Remove Curse** (save the temple's 1000, 1000, 3500); **Snake
+  Charm** (snakes only); **Curse**, **Cause Light Wounds**, **Cause Blindness**, **Cause Disease**, **Bestow Curse**,
+  **Protection from Good** (rarely worth a slot); **Animate Dead** (what it does in Pool: **unconfirmed**);
+  **Restoration** is in the table at cleric level 7, beyond Pool's cap: scrolls only.
+- Magic-user: **Shield** (at once; stops Magic Missile, better AC: for a mage facing mages); **Mirror Image** (at once;
+  keeps the mage alive); **Ray of Enfeeblement** (cuts a big melee enemy's damage: ogres, giants); **Read Magic** (camp;
+  for scrolls); **Knock** (camp; locks); **Friends** (camp; Charisma for a parley); **Protection from Normal Missiles**
+  (archer-heavy fights); **Protection from Evil 10'** (the party version); **Blink**, **Invisibility**,
+  **Invisibility 10'**, **Detect Invisibility**, **Reduce**, **Burning Hands**, **Shocking Grasp** (touch spells: poor
+  for a mage who stays out of melee); **Dispel Magic**.
+
+**Turning undead**
+- **TURN every time undead appear, once per cleric per fight, in round 1, before casting or fighting.** *Jeremy*
+- QUICK clerics (and paladins from level 3) turn by themselves once a fight, at their first turn with undead in sight.
+  *code* (GAME.OVR 0xADC3) + *seen* (the graveyard, Combat Chat 5)
+- The lowest cleric level that can turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric
+  destroys skeletons and zombies outright. *book* (Journal, Cluebook)
+- (Pool) The d20 needed: a wight 20 / 19 / 16 / 10 / 7 / 4 at cleric levels 1-6; a spectre can't be turned below level
+  5, then 20 / 16 / 13 / 10 at 5-8: against spectres, fight with magic weapons. *code* (Combat Chat 32)
+
+**Example spell lists (party A; Jeremy, 2026-11-20: a starting point)**
+
+Clerics (Wisdom 17-18; CLW = Cure Light Wounds, PfE = Protection from Evil; levels 1 / 2 / 3 split by "/"):
+
+| Level | Healer (human cleric 1) | Battle cleric (human cleric 2) |
+|---|---|---|
+| 1 | CLW x2, PfE | CLW x2, PfE |
+| 2 | CLW x3, PfE | CLW x2, PfE x2 |
+| 3 | CLW x3, PfE / Hold x1, Slow Poison, Spiritual Hammer | CLW x3, PfE / Hold x3 |
+| 4 | CLW x4, PfE / Hold x2, Slow Poison, Sp. Hammer | CLW x3, PfE x2 / Hold x3, Sp. Hammer |
+| 5 | CLW x4, PfE / Hold x2, Slow Poison, Sp. Hammer, Resist Fire* / Prayer, Dispel Magic | CLW x3, PfE x2 / Hold x3, Sp. Hammer x2 / Prayer x2 |
+| 6 | as 5 / as 5 / Prayer, Dispel Magic, Cure Blindness* | as 5 / as 5 / Prayer x2, Dispel Magic |
+
+\* swapped in for known fights (Resist Fire: fire giants, the finale; Cure Blindness and Cure Disease after the mummies).
+Bless, if wanted, takes a PfE slot.
+
+Human magic-user: book Sleep, Magic Missile, Shield, Charm Person; then Stinking Cloud (3), Mirror Image (4), Fireball
+(5), Lightning Bolt (6).
+
+| Level | Memorized |
+|---|---|
+| 1 | Sleep |
+| 2 | Sleep x2 |
+| 3 | Sleep x2 / Stinking Cloud |
+| 4 | Sleep, Magic Missile, Charm / Stinking Cloud x2 |
+| 5 | MM x2, Sleep, Charm / Stinking Cloud x2 / Fireball |
+| 6 | MM x2, Charm, Shield / Stinking Cloud, Mirror Image / Fireball, Lightning Bolt |
+
+Elf fighter/magic-user (its magic-user level trails): book Sleep, Enlarge, Charm Person, Magic Missile; then Stinking
+Cloud (3), Ray of Enfeeblement (4), Haste (5), Slow (6).
+
+| Level | Memorized |
+|---|---|
+| 1 | Sleep |
+| 2 | Sleep, Enlarge |
+| 3 | Sleep, Charm / Stinking Cloud |
+| 4 | Sleep, Enlarge, Charm / Stinking Cloud, Ray of Enfeeblement |
+| 5 | Charm, Enlarge, MM, Shield / Stinking Cloud x2 / Haste |
+| 6 | as 5 / as 5 / Haste, Slow |
+
+Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies: adjust the books when they're found.
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
@@ -164,7 +357,6 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 - **Audit the party before every hard fight** (Jeremy, Methods 8, 2026-11-20): levels against the cluebook's expectations, the best gear readied, every spell slot full, magic items identified, junk sold. A failed audit means earning levels first; cheats are a last resort.
 - **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
 - **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
-- **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
 
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
@@ -175,27 +367,12 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 - Backstab: a fighter attacks first, the thief attacks from the square directly opposite (Delay until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8 (Manual, Cluebook).
 - Missiles can't be fired while an enemy is adjacent: keep archers and dart-throwers unengaged (marching order, Guard) (Manual).
 - Bows shoot twice a round; extra attacks go to the first target, then to another if it dies (Manual).
-- A caster hit recently loses the Cast option: guard casters with fighters (Manual).
 - If the whole party flees, every unconscious or dead member is lost for good: bandage the dying, or reload; never flee and leave bodies (Manual).
 - Fleeing the map works only if the party's movement is at least the fastest enemy's: unready heavy armour to raise it; retreat early (Manual, Cluebook).
 - Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act after the melee settles (Manual).
 - Initiative is Dex plus a random number: high-Dex members act first (Manual).
 - Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps; spread out against breath and area spells (Cluebook).
 - Encounter sizes scale with how strong the party looks: inflated starting stats bring bigger fights without the HP, spells or items to match (Cluebook).
-
-**Spells and preparation**
-- Pre-buff scripted fights: camp on the square before the trigger, cast Bless, Protection from Evil, Prayer, Enlarge / Strength on fighters, then step in (Cluebook).
-- Bless helps only members not yet in melee (+1 to hit, 6 rounds): cast it before contact (Manual).
-- Protection from Evil: +2 AC and better saves against evil attackers; cast in camp just before a known fight (Manual). (It does not stop level drain in the books; to be confirmed in the code.)
-- Prefer restraint over damage: one blow kills a helpless target. Hold Person (3 targets cleric, 4 magic-user; human-sized only), Sleep (no save, up to 16, weakest first, not large or strong monsters, short range), Stinking Cloud (2x2; very useful, but **not** a sure thing: the manual says even a made save leaves the target helpless while inside, but Jeremy's experience is that it does not render enemies helpless no matter what; count on it only for those that fail; **confirmed in the code, Combat Chat 32:** a made save is only "starts to cough", see the Stinking Cloud line under Player 30) (Manual, Cluebook).
-- Magic Missile never misses, ignores most resistances (good against undead) and interrupts enemy casting; Shield cancels it (Manual, Cluebook).
-- Fireball: radius 3 squares indoors, 2 outdoors; Lightning Bolt bounces off walls: mind your own party (Manual).
-- Haste doubles attacks and movement; Slow halves an enemy group's; Silence 15' stops enemy casters (Manual).
-- QUICK: casters skip area spells when an ally is in the area, so give QUICK casters Magic Missile, Hold Person and Stinking Cloud; QUICK members always use readied magic items, and shoot readied bows when no enemy is adjacent; QUICK suits weak hordes, not boss fights (Manual, Cluebook).
-- Memorizing: 4 hours of rest then 15 minutes per spell level; an interrupted rest keeps only the spells finished, in the order picked (Manual).
-
-**Turning undead (Journal tables)**
-- Minimum cleric level to turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric destroys skeletons and zombies outright (Adventurer's Journal, Cluebook).
 
 **Level drain, petrification, poison, disease**
 - Drainers: wights, wraiths, spectres (Ferran Martinez drains 2 levels a hit), vampires. A Restoration scroll restores one level. Temples don't cure drain; they do cure petrification (stone to flesh), poison (Neutralize) and disease (Cluebook).
@@ -206,9 +383,6 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 
 ## Party and preparation
 
-- Fill every spell level before a hard fight, not just level 1. Until Player 27 the tool memorized only level-1 spells, so its casters fought from Sokal Keep onwards with level-2 and level-3 slots empty (Player 27, Stojanow REPORT; *seen in the original*).
-- Camp and memorize before each event. Without it the party reached a 30-figure fight with its Sleep spells used up and lost (Player 15, p15c1/p15c2; *seen in the original*).
-- Keep one Slow Poison in the party, in the first free cleric level-2 slot (Player 27, main's bot's picks; *read in the code*).
 - A member killed by poison stays dead after a temple's NEUTRALIZE POISON (it only removes the poison): cast Slow Poison first (HP 1, standing), then neutralize (main chat 68, GAME.OVR 0x4CC9; *read in the code*).
 - Train as soon as a member qualifies. At TRAIN the game cuts experience to "the level after next, less 1", so experience above that is lost (Player 3; *seen in the original*).
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
@@ -218,20 +392,6 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 - The party fell behind main's bot in levels. One possible cause is a trainee without 1000 gold of their own (Player 21; unconfirmed, *seen in the original*).
 - Town shops, City Hall and the training halls lock from hour 14. Rest at the inn until midnight first (Player 15, p15d1; *seen in the original*).
 - Hit points gained at training come from the game's dice: one roll of the hit die, split across classes, plus the CON bonus (Player 3; *read in the code*).
-- A magic-user's new-spell page opens on the last spell in the list, not the first. Check which spell is lit before LEARN (Player 3; *seen in the original*).
-- Camp CAST's spell list also opens on the last spell; End wraps to the first. Check which spell is lit before CAST (main chat 65, check 102; *seen in the original*).
-
-## Spells
-
-- QUICK members cast spells only with MAGIC ON. Press Alt-M in every fight, because the game turns it off at each fight's start (Player 15; *read in the code*, GAME.OVR 0xE457, and *seen in the original*).
-- Hold Person does not affect large creatures. QUICK casters still aimed it at ettins and wasted it (Player 27, p27a1; *seen in the original*).
-- Sleep does not affect monsters with many hit dice (ettins) or a level-6 magic-user. At the Stojanow Gate it only worked on the level-3 aides (Stojanow REPORT; *seen in the original*).
-- QUICK casters often swing instead of casting. They never cast Prayer or Stinking Cloud in three tries, and clerics kept Bless unused. For key spells, cast by hand (Stojanow REPORT; *seen in the original*; casting by hand untried).
-- Enemy magic-users' Magic Missile never misses and finishes hurt members. Kill the mages first, for example with Hold Person on them (they are persons) (Stojanow REPORT; *seen in the original*; the advice is untried).
-- Inside an anti-magic shell, CAST in camp does nothing. Heal by resting there; it took 54 days to bring a member up from 0 HP (Player 25, 8:16; *seen in the original*).
-- With nobody knowing Knock, try PICK and then BASH. After a failed PICK and BASH, a door offers only KNOCK on later bumps (Player 17, Player 21; *seen in the original*).
-- A creature's spell can cover itself. The game rolls magic resistance for each target after its save (Player 6; *read in the code*, GAME.OVR 0x115BF).
-- Prayer works only near its caster. It goes on the caster alone; party members within 6 squares in sight get +1 to hit and on saves, and enemies within the same 6 squares get -1. Cast it from the middle of the line, not from the back (Combat Chat 31; *read in the code*, GAME.OVR 0x2B04A, and matched draw for draw in the original's finale guards fight, p29d1).
 
 ## In combat
 
@@ -304,10 +464,6 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 ## Added by Player 30
 
 - Space during a QUICK member's turn hands every QUICK party member back to the player; the menu returns at each one's next turn (Player 30, p30a1; *seen in the original*).
-- A spell is begun at CAST and goes off at the caster's later turn, aimed then; a caster hit in between loses it. Hold Person and Prayer begun in melee never went off at the Stojanow wall; cast them before contact (Player 30, p30d1/d3/e1; *seen in the original*).
-- Stinking Cloud on bunched ettins makes them helpless, and a helpless ettin dies to one blow: two slain in p30d2. QUICK fighters don't always turn on the helpless ones (Player 30, p30d2/e2; *seen in the original*). Only a failed save vs poison does it: helpless for d4+1 rounds ("chokes and gags from nausea"); a made save only "starts to cough": for a round its AC is 2 worse and its casting state is cleared (a spell being cast, as read), but it is not helpless, whatever the manual says (GAME.OVR 0x2BA88, effect 0x1E's handler 0xF6C0; Combat Chat 32, *read in the code*).
-- In a fight's CAST list Home moves the light up and End down; it opens on the last spell, and long lists page with NEXT (Player 30; *seen in the original*).
-- A cleric's Hold Person takes three picks; EXIT from a spell's aim asks ABORT SPELL? (Player 30; *seen in the original*).
 
 ## Added by Player 31
 
@@ -317,28 +473,16 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 ## Added by Player 32
 
 - **The reload rule** (Jeremy, 2026-11-20): reload the last checkpoint on a wipe, a member dead, a level drained, a permanent ability loss, a key item lost or petrification, unless a temple cures it at a price the party can pay and reach; and on anything that would cost a human player about an hour without an obvious gain. A drained member with a Restoration scroll in the packs: use it at once and go on. In the Player's tools: `OP_RELOAD=1` (plans.py `reload_rule`, read from the record: levels 0x96-0x9D, levels drained 0x74, abilities 0x10-0x15, status 0x10C; key items and temple cures not yet), lab `p32/reload.sh` goes on from the last clean checkpoint (Player 32; *read in the code*).
-- With undead on the field, the clerics TURN first (once a fight each) before casting or fighting (Jeremy, 2026-11-20; tactics.py since Player 32; results to be added as the graveyard redo shows them).
 
 ## Added by Combat Chat 32
-- Protection from Evil does not stop level drain: a wight's or spectre's hit drains with no save and no check of the target (GAME.OVR 0x10FFF / 0x1101D -> 0x10D7D); PfE's -2 to hit is overwritten before the roll, only its +2 on saves counts (Combat Chat 32; *read in the code*, the to-hit part *seen in the original* in Combat Chat 10).
-- QUICK clerics (and paladins from level 3) turn undead by themselves, once a fight, at their first turn with an unturned undead in sight, before any spell (GAME.OVR 0xADC3 -> 0x13B4C, 0x13965) (Combat Chat 32; *read in the code*, *seen in the original* at the graveyard in Combat Chat 5).
-- Turning (d20 against GAME.OVR's table): a wight needs 20 / 19 / 16 / 10 / 7 / 4 at cleric levels 1-6; a spectre can't be turned below level 5 and needs 20 / 16 / 13 / 10 at levels 5-8: against spectres, fight with magic weapons (Combat Chat 32; *read in the code*).
 - The temples sell nine cures, all through one routine: Cure Blindness 1000, Cure Disease 1000, Cure Light Wounds 100, Cure Serious Wounds 350, Cure Critical Wounds 600, Neutralize Poison 1000, Raise Dead 5500, Remove Curse 3500, Stone to Flesh 2000 gold; no Restoration and no Dispel Magic, so a drained level comes back only by a Restoration scroll (GAME.OVR 0x4819-0x4EEB) (Combat Chat 32; *read in the code*; the temple screens *seen in the original* in chat 10).
 - Restore a drained character before it is drained again: each Restoration gives back one level, to the class whose next level costs the least (not the drained one) and the average HP drained; a multi-class drained twice can come back with a level moved to another class (an elf fighter/magic-user 3/2 drained twice came back as magic-user 3, one level still drained) (Combat Chat 5 / 32; *seen in the original*; ours does the same).
 - Shooting into a melee costs nothing and never hits a friend; what stops a shot is an enemy next to the shooter (only axes and spears, which also strike in melee, are used then) and range: beyond a third of the weapon's range the target's AC counts 2 better, beyond two thirds 5 (Combat Chat 32; *read in the code*, the range penalty *seen in the original* in side chat 2).
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
-## Spell sheet (Combat Chat 33, the spell lab)
-*Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
-- **Stinking Cloud** (MU 2, range 3, cast at once): **the cloud is 2x2: the aimed square and the squares right of it, below it and diagonally below-right** (not the 3x3 the aim's area code suggests; GAME.OVR 0x28B29, seen in Combat Chat 34's replays of the hand-cast fights). Each figure in it saves vs poison. Failed: helpless d4+1 rounds ("CHOKES AND GAGS FROM NAUSEA"; one blow slays a helpless figure; its turn that round is gone at once). **Made: "STARTS TO COUGH", not helpless**; for the rest of the round no spell and no item, and its AC is its rear AC 2 worse (AC 10 at most) (that part *read in the code*: GAME.OVR 0xF6C0). **The cloud stays for the caster's level in rounds**: anyone standing in it saves again at each round's start and on stepping in, unless already coughing or sick; **the computer never walks into it** (GAME.OVR 0xB304), so a cloud across a corridor holds monsters back. A caster inside his own cloud saves too. Kobolds: 22 casts, 35 saves, 10 made (every d20 of 16+), 25 failed (15 or less): **a kobold resists 25% of the time**. The computer never aims an area spell whose area round any enemy in reach would catch its own side, so QUICK casters seldom cast it once the lines meet: cast it by hand, **remembering the 2x2 grows right and down from the aimed square**: with the enemy to your right or below, aim one square past the nearest so you stay outside.
-- **Hold Person** (cleric 2, 3 picks; magic-user 3, 4 picks; save vs spell; man-sized only, *read in the code*): cleric's lasts 4 + 1/level, the magic-user's 2/level. Kobolds: cleric's 11 casts, 23 saves, 22 held (only a natural 20 saved, a 19 failed: **kobolds hold 95%**); magic-user's 9 casts, 30 saves, 30 held. A held figure is slain by any one blow, and at each of its turns loses its guard and any spell it was casting. *Kobolds were a lab target, not advice*: a player would never spend Hold Person on kobolds. **Picking by hand:** after each TARGET the aim starts again on the caster, so press NEXT to the next figure each time; a figure picked twice costs no pick ("ALREADY BEEN TARGETED"); EXIT uses up one pick, and once the picks are used the spell goes off on those picked (*seen in the original*, Combat Chat 34).
-- **Magic Missile always hits** (no to-hit roll, no save), but **in Pool of Radiance a level-1 magic-user's does no damage**: the original fires (level / 2) missiles of d4+1, rounded down, so none at level 1, one at 2-3, two at 4-5 (GAME.OVR 0x28451: (L/2)d4 + L/2; checked for the Lead in Combat Chat 34: BAKSHI's magic-user level in the fixture is 1, no damage die is drawn in 11 casts, the level-6 MU fights in regress draw 3d4 the same way in both games, and main's cold-open capture of a real fight showed nothing either). The tabletop rule is one missile at level 1, so this is an original bug (docs/original-bugs.md). A level-1 magic-user casts Sleep.
-- **Slow** (MU 3, no save): as many figures as the caster's level, **nearest the aim point first** (the aimed figure itself first); lasts 3 + 1/level; halves movement and half-attacks, so a one-attack monster strikes only every other round; on a hasted figure it ends the Haste instead. Kobolds: 9 casts, 9 slowed. A second Slow on a slowed figure keeps the longer of the two.
-- **Haste** (MU 3): the caster's level in figures of its own side, nearest the aim point; 3 + 1/level; doubles movement and half-attacks (one attack becomes two); the target ages a year (once per Haste); on a slowed figure it only ends the Slow. 3 casts.
-- **Bless** (cleric 1): 4 casts, 13 members blessed (the party in its area); +1 to hit, 6 rounds. **Prayer** (cleric 3): 4 casts; on the caster, +1 to hit and saves for its side and -1 for the other within 6 squares of it, 1 round per level (Combat Chat 31's rule, matched). **Protection from Evil**: the computer picked it once in a 9-round fight (priority 1).
-- **A wound while casting** spoils the spell ("LOST A SPELL") but the caster keeps it in memory: the original takes it from the memory of the figure whose turn it is (the attacker) instead (START.EXE 0xBA:0x148B); ours now does the same.
-- **The computer's (QUICK, MAGIC on) choice**: each turn d7 tries at falling priority; Sleep, Stinking Cloud, the cleric's Hold Person and Fireball are priority 7 (tried every turn), Magic Missile, the magic-user's Hold Person and Prayer 6, Slow 5, Haste 3, Bless 2, Protection from Evil 1 (START.EXE's spell table byte 13). Elves and half-elves roll a d100 for every effect put on them (30% / 90% to throw off Sleep or charm).
-- **Sleep** (MU 1, by hand, no save): 4d4 "hit dice" a cast (14 casts: 6 to 15, mean 10), a kobold or orc costing 1, so **everything in the 3x3 area sleeps**, the caster too: a lone caster aiming at a neighbour put himself to sleep and the party (all asleep) was destroyed. Aim it two squares off.
-- **Fireball** (MU 3, by hand): the caster's level in d6 (1d6 at level 1), half on a save vs spell; its area is 7x7 (radius 3; outdoors 2), so a caster aiming within 3 squares burns himself (6 casts, BAKSHI hit by each); 6 casts finished the net trap's kobolds.
-- **Orcs** (the Slums, by hand, few): Stinking Cloud 9 casts, orcs made the save at 16, 18, 19, 20 and failed at 2-12: they need about 13-16 (a fighter 1's 14 fits); Hold Person held the one orc picked.
+## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
+
+- Pre-buff scripted fights: camp on the square before the trigger, cast Bless, Protection from Evil, Prayer, Enlarge / Strength on fighters, then step in (Cluebook).
+- With nobody knowing Knock, try PICK and then BASH. After a failed PICK and BASH, a door offers only KNOCK on later bumps (Player 17, Player 21; *seen in the original*).
+- (For the lanes, the spell lab's method) *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
 - Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
