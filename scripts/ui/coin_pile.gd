@@ -22,8 +22,10 @@ static func pools(m: PartyMember) -> bool:
 
 
 static func has_money(pile: PackedInt32Array) -> bool:
+	# Not zero: the original's pile counts are double words, so APPRAISE's SELL with a wrapped room (the
+	# original's bug #10 family, ShopScreen.appraisal_pay) leaves a huge count, here negative (main chat 74's tapp).
 	for c in pile:
-		if c > 0:
+		if c != 0:
 			return true
 	return false
 

@@ -1450,12 +1450,13 @@ func _act(choice: String) -> void:
 					_say_name(_who().name, "HAS BEEN SELECTED")
 					_pick = 0
 				"PLACE":
+					# Main chat 73 (check 142, DOSBox): PLACE clears the message area, through EXIT.
 					_ordering = -1
-					_lines = []
+					_say_lines([])
 					_pick = 0
 				"EXIT":
 					_ordering = -1
-					_lines = []
+					_say_lines([])
 					_pick = 0
 					_alter_menu()
 					return

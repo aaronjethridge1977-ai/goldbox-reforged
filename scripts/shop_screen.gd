@@ -51,6 +51,7 @@ var _buyer := 0
 var _flash_green := false   # the flash is the original's refusal, not our BOUGHT line
 ## The character sheet main uses, for VIEW (set by main).
 var sheet: CharacterSheet
+var _keep_ok := true     # APPRAISE: KEEP offered for the piece just valued
 var _mode := "menu"      # menu, list, appraise (the collection), value (SELL / KEEP), coins, amount, ask_leave
 ## The shop's money pile (CoinPile): POOL puts coins on it, TAKE and SHARE give them back.
 var pile := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
@@ -142,7 +143,7 @@ func _refresh() -> void:
 func _menu_items() -> Array:
 	match _mode:
 		"appraise": return ["GEMS", "JEWELRY", "EXIT"]
-		"value": return ["SELL", "KEEP"]
+		"value": return ["SELL", "KEEP"] if _keep_ok else ["SELL"]
 		"ask_leave": return ASK_MENU
 		"coins": return ["EXIT"]
 	return POOL_MENU if CoinPile.has_money(pile) else MENU
@@ -439,13 +440,7 @@ func _appraise() -> void:
 
 
 func _show_collection() -> void:
-	var m := _party[_buyer]
-	var lines := PackedStringArray(["YOU HAVE A FINE COLLECTION OF:"])
-	if m.money[5] > 0:
-		lines.append("%d GEM%s" % [m.money[5], "" if m.money[5] == 1 else "S"])
-	if m.money[6] > 0:
-		lines.append("%d PIECE%s OF JEWELRY" % [m.money[6], "" if m.money[6] == 1 else "S"])
-	_note.text = "\n".join(lines)
+	_note.text = "\n".join(collection_lines(_party[_buyer]))
 	_pick = 0
 	_refresh()
 
@@ -458,18 +453,33 @@ func appraise_one(jewel: bool) -> int:
 		return -1
 	m.money[k] -= 1
 	_jewel = jewel
-	if not TpDice.on:
-		_value = jewel_value(_rng) if jewel else gem_value(_rng)
-	else:
-		# Lab replays (Player 22's (a)): the game's own stream, as the original draws it: a d100 (GAME.OVR
-		# 0x26900 a gem, 0x26B8D a piece of jewellery), then for jewellery Random(range) (START.EXE 0x8D1D).
-		_value = jewel_value_by(func(n: int) -> int: return TpDice.random(n, "appraise")) if jewel \
-				else gem_value_by(func(n: int) -> int: return TpDice.random(n, "appraise"))
+	_value = piece_value(jewel, _rng)
 	_mode = "value"
+	_keep_ok = keep_offered(m)
 	_note.text = "THE %s IS VALUED AT %d GP." % ["JEWEL" if jewel else "GEM", _value]
 	_pick = 0
 	_refresh()
 	return _value
+
+
+## A piece's value as APPRAISE draws it (the shop's and the temple's).
+static func piece_value(jewel: bool, rng: RandomNumberGenerator) -> int:
+	if not TpDice.on:
+		return jewel_value(rng) if jewel else gem_value(rng)
+	# Lab replays (Player 22's (a)): the game's own stream, as the original draws it: a d100 (GAME.OVR
+	# 0x26900 a gem, 0x26B8D a piece of jewellery), then for jewellery Random(range) (START.EXE 0x8D1D).
+	return jewel_value_by(func(n: int) -> int: return TpDice.random(n, "appraise")) if jewel \
+			else gem_value_by(func(n: int) -> int: return TpDice.random(n, "appraise"))
+
+
+## "YOU HAVE A FINE COLLECTION OF:" and the counts (APPRAISE, the shop's and the temple's).
+static func collection_lines(m: PartyMember) -> PackedStringArray:
+	var lines := PackedStringArray(["YOU HAVE A FINE COLLECTION OF:"])
+	if m.money[5] > 0:
+		lines.append("%d GEM%s" % [m.money[5], "" if m.money[5] == 1 else "S"])
+	if m.money[6] > 0:
+		lines.append("%d PIECE%s OF JEWELRY" % [m.money[6], "" if m.money[6] == 1 else "S"])
+	return lines
 
 
 static func gem_value(rng: RandomNumberGenerator) -> int:
@@ -505,21 +515,54 @@ static func jewel_value_by(random: Callable) -> int:
 	return 2000 + int(random.call(10000))
 
 
-## SELL (true) or KEEP the piece just appraised.
+## SELL (true) or KEEP the piece just appraised (KEEP only when offered: `_keep_ok`).
 func settle(sell: bool) -> void:
 	var m := _party[_buyer]
-	if sell:
-		m.money[4] += _value / 5
+	var said := ""
+	if sell or not _keep_ok:
+		var paid := appraisal_pay(m, _value / 5)
+		said = paid[0]
+		pile[4] += int(paid[1])
 	else:
 		m.items.append(appraised_item(_jewel, _value))
 	m.refresh_load_word()     # each piece settled works the record out again (GAME.OVR 0x26ECA)
 	if m.money[5] > 0 or m.money[6] > 0:
 		_mode = "appraise"
 		_show_collection()
+		if said != "":
+			_note.text = said + "\n" + _note.text
 	else:
 		_mode = "menu"
-		_note.text = ""
+		_note.text = said
 	_refresh()
+
+
+## Whether APPRAISE offers KEEP (GAME.OVR 0x269D3, main chat 74): one more coin fits the load (0x24CDD with 1:
+## the cached word, as the original; the load carried with ORIGINAL'S BUGS off) and fewer than 16 items; else
+## row 24 is SELL alone (and K sells).
+static func keep_offered(m: PartyMember) -> bool:
+	return m.can_take_coins(1) and m.items.size() < 16
+
+
+## The platinum of a sale paid to `m` (GAME.OVR 0x24E8C, APPRAISE's SELL at 0x26B5D, main chat 74): when it
+## doesn't fit (0x24CDD), "Overloaded.  Money will be put in Pool.", the room (ceiling - the cached word, a
+## 16-bit word, so it can wrap huge: the original's bug #10 family) is added to his platinum (a word) whatever
+## the price, and the price less the room goes on the pile (a double word). With ORIGINAL'S BUGS off he gets
+## what fits of it (the load carried), the rest goes on the pile. Returns [message, platinum to the pile].
+static func appraisal_pay(m: PartyMember, plat: int) -> Array:
+	if m.can_take_coins(plat):
+		m.money[4] += plat
+		m.raise_load(plat)
+		return ["", 0]
+	if not OriginalBugs.on():
+		var fit := mini(m.coins_room(), plat)
+		m.money[4] += fit
+		m.raise_load(fit)
+		return ["OVERLOADED.  MONEY WILL BE PUT IN POOL.", plat - fit]
+	var room := ((m.max_load() & 0xFFFF) - m.load_word) & 0xFFFF
+	m.money[4] = (m.money[4] + room) & 0xFFFF
+	m.raise_load(room)
+	return ["OVERLOADED.  MONEY WILL BE PUT IN POOL.", (plat - room) & 0xFFFFFFFF]
 
 
 ## The item KEEP makes, as the original's record: type 70, weight 1, price = the value,
@@ -586,6 +629,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		for it in items:
 			if String(it).unicode_at(0) == key:
 				choice = it
+		if _mode == "value" and not _keep_ok and key == KEY_K:
+			choice = "SELL"
 	get_viewport().set_input_as_handled()
 	if choice == "":
 		return
@@ -646,4 +691,4 @@ func _unhandled_input(event: InputEvent) -> void:
 				"JEWELRY": appraise_one(true)
 				"EXIT": _exit()
 		"value":
-			settle(choice == "SELL")
+			settle(choice == "SELL")      # with KEEP not offered, K sells too (main chat 74)
