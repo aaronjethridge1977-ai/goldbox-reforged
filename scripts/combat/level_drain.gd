@@ -39,6 +39,7 @@ const DRAINED_LEVELS := 0x74
 const DRAINED_HP := 0x75
 const HIGHEST := 0x73
 const STATUS_GONE := 8
+const DRAINED_META := &"drained_classes"     # ours only: the classes drained, newest last (bug #8's fix)
 
 
 ## The race level caps (START.EXE 0x3AF7): true when this class can't go up from its level.
@@ -119,6 +120,9 @@ static func drain(m: PartyMember, levels: int, t: ClassTables, spells: SpellTabl
 		else:
 			var p := _drain_pick(m, t)
 			m.set_level(p[0], m.level_in(p[0]) - 1)
+			var taken: Array = m.get_meta(DRAINED_META, [])
+			taken.append(int(p[0]))
+			m.set_meta(DRAINED_META, taken)
 			if m.hp == 0 and m.status != PartyMember.STATUS_DEAD:
 				m.status = PartyMember.STATUS_DEAD
 				out.append("%s IS KILLED" % m.name)
@@ -155,12 +159,48 @@ static func restore(m: PartyMember, t: ClassTables, spells: SpellTable) -> Strin
 			chosen = c
 	# With no class able to go up the original raises an unset class index and the
 	# experience to 10,000,000; not reachable in Pool (cleric 6, fighter 8...): left out.
+	if not OriginalBugs.on():
+		var fixed := _restored_class(m, t)
+		if fixed >= 0:
+			chosen = fixed
+			least = t.needed(chosen, m.level_in(chosen) + 1)
 	if chosen >= 0:
 		m.set_level(chosen, m.level_in(chosen) + 1)
 		if m.experience < least:
 			m.experience = least
 	recount(m, t, spells)
 	return "%s IS RESTORED" % m.name
+
+
+## The original's bug #8 (docs/original-bugs.md), fixed with ORIGINAL'S BUGS off (Combat Chat 36):
+## Restoration gives the level back to the class the last drain took it from. Ours keeps the classes
+## drained (DRAINED_META, newest last; in ours' quick saves, not in the original's record); without it
+## (a slot save loaded since), the class a drain would take from again once raised (undoing the last
+## drain), the cheapest next level among several (a guess when several would). -1: none (the original's
+## pick stands).
+static func _restored_class(m: PartyMember, t: ClassTables) -> int:
+	var taken: Array = m.get_meta(DRAINED_META, [])
+	while not taken.is_empty():
+		var c: int = taken.pop_back()
+		m.set_meta(DRAINED_META, taken)
+		if m.level_in(c) >= 1 and not race_capped(m, c):
+			return c
+	var chosen := -1
+	var least := 10000000
+	for c in 8:
+		var lv := m.level_in(c)
+		if lv <= 0 or race_capped(m, c):
+			continue
+		var need := t.needed(c, lv + 1)
+		if need <= 0 or need >= least:
+			continue
+		m.set_level(c, lv + 1)
+		var undoes: bool = int(_drain_pick(m, t)[0]) == c
+		m.set_level(c, lv)
+		if undoes:
+			chosen = c
+			least = need
+	return chosen
 
 
 ## The level recount (GAME.OVR 0x2AA87), from ours' class tables.
