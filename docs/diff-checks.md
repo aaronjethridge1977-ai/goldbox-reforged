@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 71: 3:14's poison gas trap (check 125); the shortcut win's segment 28 replayed; DIFFCHECKS 125/125
+## Chat 71: 3:14's poison gas trap (check 125), STONE TO FLESH on a member not stoned (check 126), REMOVE CURSE on a cursed item (ready, Combat's fix); the shortcut win's segment 28 replayed; DIFFCHECKS 126/126
 
 - **Check 125, 3:14 Kovel Mansion, the poison gas trap** (event 4 at 13,11: the step's dispatch 0x99D6 -> the find-traps
   test 0xB3A2 -> 0x9AA4, `DAMAGE 129, 1, 3, 0, 0`: 0x80 one random member, save bonus 1, kind 0): a jump save
@@ -181,6 +181,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   DISARM TRAP), D, SELECT (THRENDER GRONE, the first): d100 95 fails, THE PARTY HEARS THE CRACKING OF GLASS, d3 = 3,
   d6 picks PHINEAS, d20 = 4 (+1 fails): PHINEAS IS HIT FOR 3 (4 -> 1); Enter, F2. **Matched at once, 3 of
   3.** Variant (tpseed 2222224b: d20 12, PHINEAS saves) differs: PHINEAS HP 1 / 4. Lab `data/c71/chk125`.
+- **Check 126, the temple's STONE TO FLESH on a member who isn't stoned** (check 122's start and keys, End x8): IS NOT
+  STONED, CAST CURE ANYWAY YES, 2000 gp, YES; nothing else changes in the original. **Matched at once, 3 of 3**; check
+  122's keys against this end differ (the coins). Lab `data/c71/chk126`.
+- **Ready check `curse`: REMOVE CURSE on a member with a cursed item** (check 122's start, THRENDER GRONE's Flail
+  unreadied and ITEM3 list 27's first record appended, readied: the Broad Sword -2 from 3:14's weapons pile, record
+  byte 54 = 1, count +0xC7 3, weight +0x102 721). The original (GAME.OVR 0x4DB6): a carried item with byte 54 set, or
+  effect 0x24, means cursed: no "IS NOT CURSED", the price, YES, then the spell (0x29558): effect 0x24 goes if there is
+  one, else the first cursed item's byte 54 is cleared ("'S ITEM IS UN-CURSED"). Ours' temple doesn't model curses
+  (temple_screen.gd `_needs`): it stops at IS NOT CURSED and the keys part. **A difference on the main path** (3:14's
+  sword, 4:2's Cursed Necklace); Combat's file: requested on the board, with `data/c71/remove_curse.patch` (MATCH with
+  it). Joins the list as check 127 once it lands.
 - **The shortcut win, segment 28 (p27c2, the Stojanow wall at 2:9 7,6)** replayed in ours with `shortcutwin` after the
   fight's opening key (`segment.py p27c2 begin stojanow --start=p27a1_s28p --tplog --ours-key=46:shortcutwin`, in a
   scratch copy of the Player's lab): **draws identical to 1057** (the shortcut's point, as segment 34's 801); then the
