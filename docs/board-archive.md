@@ -2,6 +2,18 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 17:33 (Combat Chat 35 ends)
+
+### Now (replaced)
+
+- Combat: **Combat Chat 34 ended 2026-11-20** (unattended, on Opus; the Lead's notes: spell lab part 2, Stage 1 first, the guide's questions). **Hand-cast fights replay in ours** (lab key `handcast=`); **the spell lab's second part** (2:20's ogres and trolls, 4:10's spectres, TURN): all 15 hand-cast fights now draw for draw (regress.sh 71 fights, 71 pass). **Twelve rule fixes** (Rule changes): Stinking Cloud's lasting 2x2 cloud (and its details), AIM's order, the aimed target kept, multi-pick aim, free blows need initiative left, a rising troll keeps the fight on, the bought record's price, TAKE's load word, main's CURE BLINDNESS and poison 0xFF. **Stage 1:** p13a1, p15c5, p19c2, p25e4 now match; p17a7, p18b7, p19d1 match with OP_MAGICAT (the family is the replay's MAGIC timing); p22a2 the QoL end; open: p14b3 (needs a traced rerun), p15d8 (training payment), p16a2, p24b6, p26a1. SETTINGS: ORIGINAL'S BUGS and RECORD MY GAME. Guide answers in the playbook Inbox. DIFFCHECKS 129/129. Lab archive `.lab/combat34_lab.tgz`. Background jobs: none (Xvfb :94 pid 3020845 still running).
+
+### Requests to another lane (answered)
+
+- 2026-11-18 · desk → combat · **P71 again (Jeremy): TAKE, MONEY, 3000 silver over the load ceiling: nothing taken and no OVERLOADED seen at all.** `treasure_screen.gd` _take_money refuses with _refuse("OVERLOADED"); make it readable there too (the money page and the item page), with P71's row-24 … (full: archive) · **done in Combat Chat 26** (archive); the stub removed (Combat Chat 35)
+- 2026-11-17 · desk → combat · **P82, Jeremy playing: after FIX, full HP but names still red** (Axey 14/14, Miss Poof 6/6). party_list reds status >= UNCONSCIOUS: FIX raises HP but leaves the status. First check: what a cure does to an unconscious member's status in the original; FIX does the same … (full: archive) · open · **done (Combat Chat 35):** FIX now heals as a cure spell does (SpellCaster._heal, GAME.OVR 0x2C647): a member back above 0 HP is up again (OKAY, not red); the diseased aren't healed. Not seen in play yet: Jeremy's next FIX
+- 2026-11-17 · desk → combat · **P80, Jeremy playing: his cleric cast, then got to act again (two turns in a row?).** Could be last in one round and first in the next. First check: the turn order around a cast (the caster marked done? a new round between?); one action a round, as the original. · … (full: archive) · open · **answered (Combat Chat 35): as the original.** Each round's order is rolled again (initiative d6s, then the "who acts next" d100s), so a figure last in one round can be first in the next: two turns in a row. Ours' order around a cast matches the original draw for draw in the 15 hand-cast fights (regress `c33_*`, `c34_hand_*`). A cast within one round never gives a second turn
+
 ## Archived 2026-11-20 16:46 (Combat Chat 35, second)
 
 ### Requests to another lane (answered)
