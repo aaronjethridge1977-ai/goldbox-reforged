@@ -12,11 +12,11 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
 - **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
 - **Loot to use, not junk:** take magic items, gems and jewellery, coins worth their weight, and anything else worth at least 100 GP; leave the rest (Jeremy, 2026-11-20).
-- **Loot projectiles to use:** keep enough arrows, quarrels and darts from treasure that the party never has to buy them (Jeremy, 2026-11-20).
-- **The thief fights from the back with a bow or crossbow,** stepping into melee only when it's safe or necessary (Jeremy, 2026-11-20).
+- **Loot projectiles to use:** keep the arrows, quarrels and darts found in treasure; buy them only when the party runs out (Jeremy, 2026-11-20).
+- **The thief fights from the back with a bow or crossbow,** stepping into melee only when it's safe or necessary, or when the thief is clearly stronger than the enemies being faced (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
 - **Magic-users stay out of melee** except in an emergency or to finish incapacitated (sleeping, held) enemies, whom any blow slays (Jeremy, 2026-11-20).
-- **Clerics use slings when they need to fight from the rear,** even just for a while when wounded (Jeremy, 2026-11-20).
+- **Clerics are good front-line fighters:** keep their AC low (the best armour and shields they can use). They manage the party's HP and can't do that dead. A sling from the rear only when necessary, for instance when badly wounded (Jeremy, 2026-11-20).
 
 ## Party and preparation
 
