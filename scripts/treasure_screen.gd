@@ -288,6 +288,9 @@ func _take_item(i: int) -> bool:
 		return false
 	_spoils.items.remove_at(i)
 	m.items.append(it)
+	# ... and once the item is added, again (0x7018), as BUY: the cached load counts it (Combat Chat 34, Player 32's
+	# p15c5: ARN's and ELWEN's words were stale at the next SHARE, and one electrum went to ELWEN, not ARN).
+	m.refresh_load_word()
 	_note.text = "%s TAKES THE %s." % [m.name, it.name.to_upper()]
 	_cursor = clampi(_cursor, 0, maxi(_spoils.items.size() - 1, 0))
 	_top = clampi(_top, 0, maxi(_spoils.items.size() - PAGE, 0))
