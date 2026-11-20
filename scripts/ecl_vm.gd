@@ -94,6 +94,10 @@ var monsters: Array = []
 ## past the party selects them, as the original's list of players and monsters (Hassad's
 ## nomads, 7:17: LOAD_CHAR party size + n, 0x6C0C = 128).
 var monster_teams: Array[int] = []
+## Each loaded creature's morale (record +0x84) as a script wrote it through 0x6BB8, -1 untouched (Combat
+## Chat 32: GAME.OVR 0x7F94 stores the value, less 0x32 over 0xB2, in the selected figure's +0x84; the
+## tavern brawl's patrons get 178: own morale (0x32) x 2 = 100, so they fight on where 255 made them surrender).
+var monster_morale: Array[int] = []
 ## Creatures loaded since the last CLEAR_MON (the original's DS:0x4435, GAME.OVR 0x1196): LOAD_MON stops
 ## at 63, and only CLEAR_MON sets it back to 0 (a fight's end doesn't).
 var monsters_loaded := 0
@@ -220,6 +224,7 @@ func copy_from(src: EclVM) -> void:
 	encounter_max = src.encounter_max
 	monsters = src.monsters.duplicate(true)
 	monster_teams.assign(src.monster_teams)
+	monster_morale.assign(src.monster_morale)
 	selected = src.selected
 	walk_selected = src.walk_selected
 	_script_pick = src._script_pick
@@ -403,6 +408,7 @@ func end_combat(result: int) -> State:
 	_clear_fight_mods()
 	monsters = []
 	monster_teams = []
+	monster_morale = []
 	treasure = []
 	treasure_items = []
 	PartyMember.colours_drawn.clear()
@@ -567,6 +573,9 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 	if selected < 0 and selected_creature >= 0 and off == 0x10C:
 		monster_teams[selected_creature] = v
 		return true
+	if selected < 0 and selected_creature >= 0 and off == 0xB8:
+		monster_morale[selected_creature] = (v - 0x32 if v > 0xB2 else v) & 0xFF
+		return true
 	var m := selected_member()
 	if m == null:
 		return false
@@ -608,6 +617,11 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 			# The same byte of the record (the original's saves carry it; chat 31).
 			if m.raw.size() > 0xB8:
 				m.raw[0xB8] = v
+			# The original's write goes to the record's +0x84, the morale (GAME.OVR 0x7F94: less 0x32 over
+			# 0xB2; Combat Chat 32), which its fights' morale check reads.
+			m.morale = (v - 0x32 if v > 0xB2 else v) & 0xFF
+			if m.raw.size() > 0x84:
+				m.raw[0x84] = m.morale
 			return true
 		0x10C:
 			m.script_team = v
@@ -1209,6 +1223,7 @@ func _exec(ins: Dictionary) -> void:
 			sprite_id = -1
 			monsters = []
 			monster_teams = []
+			monster_morale = []
 			monsters_loaded = 0
 			treasure = []
 			treasure_items = []
@@ -1353,6 +1368,7 @@ func _exec(ins: Dictionary) -> void:
 				for i in n:
 					if monster_teams.size() < 63:
 						monster_teams.append(0)
+						monster_morale.append(-1)
 		"DAMAGE":
 			_damage(a)
 		"GIVE_EXP":

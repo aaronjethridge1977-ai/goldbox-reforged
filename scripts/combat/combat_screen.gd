@@ -68,6 +68,7 @@ var _py := 0
 var _distance := 0
 var _mon_file := 1
 var _monster_teams: Array[int] = []
+var _monster_morale: Array[int] = []   # a script's morale per loaded creature (EclVM.monster_morale), -1 none
 ## Dev shortcut (M6, PlayBot): the next scripted fight is won at once. Debug builds only.
 var dev_auto_win := false
 ## Dev only (M6): asked at each new round with the round number; true ends the fight as won
@@ -208,10 +209,11 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 func open_event(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 		party: Array[PartyMember], mon_file: int, rows: Array, max_distance: int, advances: int,
 		morale_base: int = 99, surprise: int = 0, extra: Array[PartyMember] = [],
-		teams: Array[int] = []) -> void:
+		teams: Array[int] = [], morale: Array[int] = []) -> void:
 	open_test(game_path, map, px, py, facing, party, mon_file, null, false)
 	_extra_monsters = extra
 	_monster_teams = teams
+	_monster_morale = morale
 	_event_fight = true
 	_morale_base = morale_base
 	_surprise = surprise
@@ -668,6 +670,7 @@ func _load_monsters() -> void:
 			if first == null:
 				continue
 			first.recalculate(_types)
+			var base_morale := first.morale
 			for i in int(row[1]):
 				if _monsters.size() >= 63:   # the original's limit
 					break
@@ -680,6 +683,7 @@ func _load_monsters() -> void:
 					m.recalculate(_types)
 				var k := _monsters.size()
 				m.script_team = _monster_teams[k] if k < _monster_teams.size() else 0
+				m.morale = _monster_morale[k] if k < _monster_morale.size() and _monster_morale[k] >= 0 else base_morale
 				_monsters.append(m)
 				_pictures.append(int(row[2]))
 	for m in _extra_monsters:
@@ -749,11 +753,16 @@ func _place() -> void:
 	if TpDice.on:
 		for i in down:
 			TpDice.log.append("downcell %s %d,%d" % [home[i].name, party_cells[i].x, party_cells[i].y])
+	# The creatures follow the party in the order they were loaded, whichever side each is on
+	# (the original's figure list: Combat Chat 32, main's tavern brawl, 3:0 0xA696: LOAD_CHAR 41-53
+	# sets the last 11 loaded to 0x80; its figures 6-25 are the drunks, 26-31 the patrons on the
+	# party's row 11, the cells as ours). The order decides the initiative and target draws.
+	var creatures: Array = []
 	for i in range(home.size(), side_list.size()):
 		if party_cells[i].x < 0:
 			continue
 		var k := _monsters.find(side_list[i])
-		_combatants.append({"who": side_list[i], "team": 0, "cell": party_cells[i],
+		creatures.append({"who": side_list[i], "team": 0, "cell": party_cells[i],
 			"icon": _art.monster_icon(_mon_file, _pictures[k]) if _pictures[k] >= 0 else _art.character_icon(side_list[i]),
 			"dir": party_dir, "pic": _pictures[k]})
 	for i in foes.size():
@@ -762,8 +771,10 @@ func _place() -> void:
 			continue
 		var icon: Variant = _art.character_icon(foes[i]) if foe_pictures[i] < 0 \
 			else _art.monster_icon(_mon_file, foe_pictures[i])
-		_combatants.append({"who": foes[i], "team": 1, "cell": cell,
+		creatures.append({"who": foes[i], "team": 1, "cell": cell,
 			"icon": icon, "dir": (party_dir + 4) % 8, "pic": foe_pictures[i]})
+	creatures.sort_custom(func(a, b): return _monsters.find(a.who) < _monsters.find(b.who))
+	_combatants.append_array(creatures)
 
 
 ## Is party member `m` on the monsters' side: a script's 0x81 this session, or the record's
