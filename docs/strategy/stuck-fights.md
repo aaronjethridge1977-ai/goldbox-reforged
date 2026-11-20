@@ -70,9 +70,18 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\stojanow\`.
   `s28p` in one try (p34c1: the wagon, the toll, the bugbears; nobody dead). From `s28p` the walk to the towers crossed
   7,6 and set off the wall on QUICK (p34d1, destroyed in 53 s; a plan error, not counted). The cluebook's way
   (towers first) needs `s28g` (after the toll, before the bugbears): **p34e1, the west tower's room: won, CEDRIC dead**
-  (reload); p34e2 the same (CEDRIC fell at ~170 s and bled to death while the fight went on: the tool never bandaged;
-`tactics.py` now BANDAGEs the dying, from p34e4); p34e3 party destroyed. Further tries: the board and the Player 34
-README. The west tower's room: the 5th-level fighter, aides, three ettins (188 HP).
+  (reload). **The west tower's room** (the 5th-level fighter, his aides, three ettins: 188 HP against the party's 289),
+from `p34c1_s28g`, seeds 34050001-05, campcast Prayer before the stairs: **5 of 5 lost** under the reload rule:
+  - p34e1: won, CEDRIC dead (fell at ~170 s and bled to death while the fight went on: the tool never bandaged).
+  - p34e2: won, CEDRIC dead (the same).
+  - p34e3: party destroyed at 193 s (2 up with 58 HP against the last aide, then wiped; BANDAGE was on offer).
+  - p34e4: party destroyed at 217 s (4 enemies left; LIRA bandaged ARN: the bandage step from here).
+  - p34e5: won, CEDRIC dead.
+- **Read (Player 34):** the tool, then tactics. Two tool faults found and fixed after these tries: the dying were never
+  bandaged (`tactics.py` now DONE, BANDAGE), and ELWEN and CEDRIC began an unreachable Hold Person every turn (the
+  refusal was forgotten when another member acted; now skipped for two turns): the two clerics lost most turns.
+  CEDRIC (42 HP, AC -1) falls first every time: in reach of an ettin (2d8 + 3d6). The Magic Missiles all went at the
+  5th-level fighter. A rerun with the fixed tool is the first thing to try (asked of the Lead).
 - **Read:** the wall fight is both towers' ettins at once (the cluebook: "forcing both gates"); beating the tower rooms
   one at a time before the bugbears is the intended way, untried until Player 34.
 
