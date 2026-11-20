@@ -968,6 +968,13 @@ class Plan:
             if not items:
                 raise_stop(p, "seq %s: a spell list with no spells" % name)
             names = [t for _, t in items]
+            # Player 35 (p35e1: FIREBALL was on the list's next page, INVISIBILITY taken): a plan's `learn` spell not on
+            # this page: NEXT, up to four pages, before the bot's order
+            if LEARN_FIRST and not any(s in names for s in LEARN_FIRST) and "NEXT" in scr.get("bottom", "").split() \
+                    and getattr(p, "learn_pages", 0) < 4:
+                p.learn_pages = getattr(p, "learn_pages", 0) + 1
+                return "n", "seq %s: NEXT page for %s" % (name, ", ".join(LEARN_FIRST))
+            p.learn_pages = 0
             want = next((s for s in LEARN_FIRST + LEARN_ORDER if s in names), names[0])
             lit = [i for i, (r, _) in enumerate(items) if screens._rowcol(st["im"], r) == screens.WHITE]
             if not lit:

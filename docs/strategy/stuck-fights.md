@@ -160,6 +160,10 @@ from `p34c1_s28g`, seeds 34050001-05, campcast Prayer before the stairs: **5 of 
       Then the old plan's closing explore walk (6,10, 2,12, 4,14, 4,5) under the gate's alarm: a second patrol at 7,5
       won, **a third at 5,5: party destroyed** (CEDRIC last; reload). Read: tactics: don't wander while the alarm
       rings (patrols at 17% a step, poolrad.md); from `s35g` the party goes straight out of the gate to town.
+    - **Town (segment 29, Player 27's route; the clerk's reward):** p35e1 trained LIRA MU5 and ELWEN F5 but the tool
+      took INVISIBILITY (Fireball on the list's next page: a tool fault, reloaded); **p35e2: LIRA learns FIREBALL,
+      `mopup2` reached** (3:0 4,12). **Stojanow: done without a shortcut**, 3 losses in 9 counted tries (p35c3 tool,
+      the third patrol on the explore walk). Saves: `p2start/p35d3_s35g`, `p2start/p35e2_mopup2`.
 
 ## 3. The kobold king's throne room (8:13 4,3, event 9)
 
