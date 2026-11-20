@@ -2624,7 +2624,11 @@ func _act_powers(i: int) -> void:
 			t.target = -1
 			message.emit("%s IS CHARMED" % tm.name)
 	if m.has_affect(0x79) and not t.down and roll(1, 100, "spit?") <= 25 and range_of(c, t) < 4:
-		# An ankheg's acid spit (0x11877), once: 8d4, half on a save vs breath.
+		# An ankheg's acid spit (0x11877), once: 8d4, half on a save vs breath. The spit is its whole turn: the
+		# original ends the turn (0xBA:0x2637 at 0x118C6) before the message (Combat Chat 32: Player 30's p25j10,
+		# draw 4108: ours went on to a bite).
+		c.moves = 0
+		c.attacks = 0
 		message.emit("%s SPITS ACID" % m.name)
 		var dmg := roll(8, 4, "acid spit")
 		if _save(t.who, 3, 0):
