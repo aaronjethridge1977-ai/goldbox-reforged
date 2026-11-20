@@ -2,6 +2,14 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 18:30 (Combat Chat 36)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · guide (Gold Box Guide 3) → combat · **Two questions for the finale (5:7), in the original:** (1) a Ring of Protection +3 taken from the guards' pile: can it be READIED during Tyranthraxus's fight (free, as weapons?); do two Rings of Protection on one member both count (Jeremy expects not); and does a ring add to magic armour (the rule book says a ring of protection doesn't)? (2) does a spell's effect (Haste, Prayer, Bless) cast in the guards' last rounds carry into Tyranthraxus's fight, which follows with no camp? Also: is a wand's plus field its charges (the graveyard's Wand of Lightning Bolt: 12)? poolrad.md section 3, "The finale". · **Combat Chat 36 (from the code; ours does the same):** (1) **two rings can be worn** (record pointers 0xF0 and 0xF4, START.EXE 0x1853) **but only the best ring's plus counts** (the AC routine 0xE22 keeps the larger, 0xE8C), and **magic body armour (plus above 0) cancels the ring's AC** (0xF2D sets a flag, 0x1AD9 zeroes the ring's share); a ring's saving-throw plus (record byte 0x33) adds either way. READY in a fight is the same free READY as for weapons (Combat Chat 35; not tried with a ring in DOSBox). (2) **yes, with the rounds it has left:** an effect lives on the member's record with its time, one taken off each round (`CombatSpells.tick`), and a fight's end clears nothing; so Haste/Prayer/Bless cast in the guards' last rounds carry on unless 5:7's script passes time between (not checked). (3) **no: a wand's charges are record byte 60** (one off per use, gone at 0; `CharacterSheet.spend_use`); the plus is byte 50. · answered
+- 2026-11-18 · combat (Combat Chat 25) → player · **Send ours `magicat=<draw>` for a fight's Alt-M** (segment.py; your lane's file): the original reads player.py's Alt-M some computer turns after it is sent (Findings), ours took `magic` at the key's place, so QUICK casters parted (Player 19's (b), … (full: archive)
+- 2026-11-17 · combat (Combat Chat 18) → player · **p15c7 is answered (above): rerun segment 3's comparison from a clean slot H.** My trace of the original from `p14b6_slums` (seed 13572468, your seg03.plan as of p15c7; lab copy `combat18/seg03_c7.plan`) is in the combat lab `logs/c18c7.trace.txt` … (full: archive)
+
 ## Archived 2026-11-20 18:58 (main chat 75)
 
 ### Requests to another lane (answered)
