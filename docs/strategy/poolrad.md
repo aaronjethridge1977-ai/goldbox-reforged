@@ -258,8 +258,9 @@ files); results *seen* unless marked.
   too**: to take the tomb later, leave the vampire's last fight until after. *code*
 - **The earlier trips** (Gold Box Guide 4, 2026-11-20, from the parked notes): trips 1-6 go without a drain when the
   clerics TURN first (Player 32). **Trip 6, the summoner at 9,11 with the mummies:** three of five tries lost a member
-  (p25l3, p25l4, p25n1); the mummies' disease stops all healing until CURE DISEASE: buy it at the temple before the
-  next trip, and raise saves (Prayer, Bless) against their fear before the door. **Trip 7, 9,5 (4 wights, 16
+  (p25l3, p25l4, p25n1); the mummies' disease stops all healing: cure it at once after the fight, by a cleric's Cure
+  Disease in camp (3rd level: free) or, if no cleric has it memorized, the temple of Tyr in New Phlan (3:0 11,3; HEAL,
+  CURE DISEASE, 1000 gp a member, and it asks first, so only the diseased pay). Raise saves (Prayer, Bless) against their fear before the door. **Trip 7, 9,5 (4 wights, 16
   zombies):** 17 losses until BRAM READIED the council's Two-Handed Sword +1 (+3 vs undead) and CEDRIC took DORN's Mace
   +2; then won. Wights need magic weapons (p32b8): **ready every magic weapon before the graveyard, not in it.** *seen*
 - **The knight's gifts** (ITEM4 list 29): four clerical scrolls, each **two Restorations** (8 in all); Plate Mail +2;
