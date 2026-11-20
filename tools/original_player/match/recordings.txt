@@ -4,10 +4,10 @@
 # Methods 8), so flagged `shortcut`; segment 31 (5:4) and 17's king are deferred fights (no recording)
 1 p13a1 c34d_start13 shopped
 2 p13b6 c34d_shopped13 s2a
-2 p14b3 p13b6_s2a s2b
+2 p35i2 p13b6_s2a s2b   # Player 35: p14b3 traced rerun, slot emptied (Combat Chat 35's ask; p14b3 had no trace)
 2 p14b6 p14b3_s2b slums
 3 p15c5 p14b6_slums s3a
-3 p15d8 p15c5_s3a slums2
+3 p35i1 p15c5_s3a slums2   # Player 35: p15d8 rerun, slot emptied (Combat Chat 35: p15d8 loaded leftover files), traced
 4 p15e3 p15d8_slums2 sokal0
 5 p15f4 p15e3_sokal0 s5c13
 5 p15f14 p15f4_s5c13 s5pre9

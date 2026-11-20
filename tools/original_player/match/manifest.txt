@@ -1,10 +1,10 @@
 # run | segment | start -> checkpoint | sha256[:16] of log, trace, start save, checkpoint save (match.py manifest; a recording already here is kept as it was: frozen)
 p13a1 | 1 | c34d_start13 -> shopped | log=098c4fb8408f69a1 trace=- start=66b4afd34a27016a checkpoint=0818d4a7f0baa98b
 p13b6 | 2 | c34d_shopped13 -> s2a | log=aa846c8a4e7fe4cd trace=06e63bda51ecd3f1 start=0818d4a7f0baa98b checkpoint=77d1b741254585ea
-p14b3 | 2 | p13b6_s2a -> s2b | log=a858342a74afa162 trace=- start=77d1b741254585ea checkpoint=1e9502b3c86f2c5b
+p35i2 | 2 | p13b6_s2a -> s2b | log=208d88c54cf735ec trace=5e8279df39c67d71 start=77d1b741254585ea checkpoint=0ccef2755020782c
 p14b6 | 2 | p14b3_s2b -> slums | log=0a9e3f5f1575ac43 trace=- start=1e9502b3c86f2c5b checkpoint=317d174cfe062dad
 p15c5 | 3 | p14b6_slums -> s3a | log=7a6cd834ab2cc85a trace=- start=317d174cfe062dad checkpoint=845489697724f91b
-p15d8 | 3 | p15c5_s3a -> slums2 | log=0eefbdb93283b345 trace=- start=845489697724f91b checkpoint=39d044e4178bb664
+p35i1 | 3 | p15c5_s3a -> slums2 | log=9b043d8fa99d7b02 trace=e68db0cf4631a585 start=845489697724f91b checkpoint=78d9f1821473699c
 p15e3 | 4 | p15d8_slums2 -> sokal0 | log=87394b65c9f74209 trace=- start=39d044e4178bb664 checkpoint=bff8d040d972da70
 p15f4 | 5 | p15e3_sokal0 -> s5c13 | log=e167c1b45281fb55 trace=- start=bff8d040d972da70 checkpoint=9070106edfc4b5c7
 p15f14 | 5 | p15f4_s5c13 -> s5pre9 | log=51b2b533e263cbf3 trace=- start=9070106edfc4b5c7 checkpoint=26d342421c51fb02
