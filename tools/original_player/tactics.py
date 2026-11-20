@@ -138,9 +138,10 @@ class Tactics:
         # holds persons 95% (a held figure dies to one blow) and goes before Magic Missile (level/2 missiles, none at
         # level 1); Slow has no save and halves the attacks of the caster's level in figures nearest the aim point
         self.priority = ("STINKING CLOUD", "HOLD PERSON", "SLOW", "PRAYER", "MAGIC MISSILE", "BLESS", "SLEEP")
+        self.horde = ("SLEEP", "STINKING CLOUD", "HOLD PERSON", "PRAYER", "SLOW", "BLESS", "MAGIC MISSILE")
         if os.environ.get("OP_TACTICS") == "horde":
             # Player 30: a horde of small figures (the kobold king): the area spells first
-            self.priority = ("SLEEP", "STINKING CLOUD", "HOLD PERSON", "PRAYER", "SLOW", "BLESS", "MAGIC MISSILE")
+            self.priority = self.horde
         # Player 31: the Lead's advice: members with nothing to cast attack by hand (helpless enemies first);
         # OP_MELEE=0 keeps Player 30's QUICK
         self.melee = os.environ.get("OP_MELEE", "1") != "0"
@@ -181,7 +182,10 @@ class Tactics:
             return None
         known = self.spells.get(member)       # the spells seen in this member's CAST list (None: not looked yet)
         contact = any(_dist(a, f) <= 1 for a in party if _up(a) for f in foes)
-        for spell in self.priority:
+        prio = self.priority
+        if sum(1 for f in foes if not _is_large(f)) >= 10:
+            prio = self.horde     # Player 33 (p33f1: the band's 29 kobolds, Sleep last, CEDRIC dead): a horde
+        for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
             if spell in ("PRAYER", "BLESS") and self.cast.get(spell):

@@ -1315,6 +1315,41 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 33 (2026-11-20): saves for Jeremy; 9,1 trained and pre-buffed: 5 more lost, left out; `graveyard` reached; `campcast`; the spell sheet in the tactics; segments 11-17 in ours
+
+- **For Jeremy** (`.lab/for-jeremy/graveyard/`, README.md): slot-H saves `s26t` (the inn before the graveyard),
+  `s26g7b` (4:10 9,7, before 9,1) and `s26g7c` (trained, at 10,1); each loaded in the original and in 0.1.5 (a
+  source build of 6d34e55, lab `p33/src_015`, `--keys=load=H,wait,wait,F2` and statediff: s26t 0 differences, the
+  others only an item's lent effect, which ours works out from the readied item); party tables with XP per class
+  (lab `p33/sheet.py <save folder>`: the CHRDAT records and items) and the bot's party for comparison.
+- **BRAM's Two-Handed Sword was not readied at `s26g7b`** (seen in the original's memory, lab `p33/items.py` on a
+  probe): Player 32's `ready` showed it readied before trip 7, but the Flail +1 and Shield +1 were back by `s26g7`
+  (around BRAM's drain and the scroll's Restoration): all 18 of Player 32's 9,1 tries were without it.
+- **Levels owed:** XP at `s26g7` allowed ARN F6, ELWEN C5, LIRA F5, DORN F5/T6; the redo's plan never visited the
+  halls. `p33/seg26c.plan` (from `s26g7b`): the sword readied, LIRA a Broad Sword +1, out to town, `innwait`, the
+  halls (3:0's own map, alias 3:11: **13,9 N is the arms shop**), the inn: `s26g7t`; back to 10,1: `s26g7c`.
+- **New plan step `campcast <CASTER> <SPELL>[|<TARGET>]`** (plans.py CampCast, on the heal's camp screens): camp,
+  MAGIC, CAST, the spell lit, CAST, CAST SPELL ON WHOM (the caster when no target); Bless and Prayer ask nobody.
+  Seen working in the original: CLW in camp (to free a slot for Protection from Evil, id 6), Bless (effect 1 on all
+  six), Prayer (49 on CEDRIC), Protection from Evil on BRAM (8). `picks CEDRIC PROTECTION FROM EVIL` then filled it.
+- **9,1 with everything (p33c1-c5 from `s26g7c`): 5 of 5 lost** (drains or deaths within 80-160 s). **TURN was not
+  offered to either cleric in p33c1** (their menus MOVE VIEW AIM USE CAST QUICK DONE), and was offered to ELWEN in
+  p33c3. By the Lead's five-losses rule 9,1 was left out (`p33/seg26d.plan`: event 23 avoided on every walk; 8,2,
+  event 24, the knight's tomb, is reached only through 9,1: left out too). **`graveyard` reached** (p33e1, nobody
+  drained); its flags against the first run's: 4A42 1 (255 there), 4A3C 3 (6), 4A3B 12 (11), 4AF8 unset (1).
+- **Tactics** (tactics.py, from docs/playbook.md's spell sheet): Hold Person before Magic Missile; no Magic Missile
+  below magic-user 2 (it fires none); Slow added (no save: the strongest enemy not slowed yet, the caster's level in
+  figures nearest it counted as slowed); a standing Bless (effect 1) or Prayer (49) is not cast again (p33c1 cast
+  both again after the camp's); the party's effects are logged at a fight's first menu; **ten or more small enemies
+  up: the horde order (Sleep first)** (p33f1: the band's 29 kobolds with Sleep last, CEDRIC dead). Checked on the
+  Stojanow wall once (p33a1, from `p26c1_s28b`: lost as before, no tool fault).
+- **Segment 27 under the reload rule** (`p33/seg27.plan`, Player 26's with `tactics on`): the clerk's reward as in
+  the first run; `s27t` (trained); the band in 7:26 11,26: lost twice (p33f1 29 kobolds, p33f2 ten displacer beasts:
+  CEDRIC dead both times).
+- **Segments 11-17 in ours** (`p33/rest2.lst`, `p33/replays.txt`): see the board (Requests to combat and main).
+- Lab: `p33/` (reload.sh, wait.sh: now watches only reload.txt's last line, seg26c/d.plan, seg27.plan, sheet.py,
+  items.py, replays.sh, `*.cmpdraws.txt`), saves `p2start/p33c1_s26g7c`, `p33d1_s26g8`, `p33e1_graveyard`.
+
 ## Player 32 (2026-11-20): the reload rule; the graveyard redo; segments 1-17 replayed in ours on today's main
 
 The Lead's answer to Player 31: keep the logged shortcuts for the match, the no-shortcut wins as standing work; then

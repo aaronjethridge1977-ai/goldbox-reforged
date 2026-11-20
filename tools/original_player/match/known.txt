@@ -1,0 +1,31 @@
+# Player 33: the match's known differences (match.py). Unlabelled differences are game (they count against us).
+#
+# ignore <regex>: a statediff line that is not a difference in play.
+# 0x4AFA-0x4AFF are the three wall-set slots and their numbers, which both games write into the image only when
+# saving (GAME.OVR 0x1FE77-0x1FEFE; ours main.gd, chat 22/27): the original saves in camp after its area's
+# LOAD_AREA_DECO, ours' F2 saves wherever the replay's keys end, so the cells differ with no difference in play
+# (Players 13-32 counted them as identical). The Lead may overrule.
+ignore ^memory 4AF[A-F]
+#
+# label <run> <game | replay tool | known shortcut> <note>
+label p27c2 known shortcut: the Stojanow wall won by the logged shortcut (Q27 (a)); scored after main confirms ours applies the same win
+label p29f2 known shortcut: the finale's guards and Tyranthraxus by the logged shortcut; scored after main confirms (Lead, Methods 8)
+label p13a1 game: LIRA's 10 arrows' value word $1 in the original, $0 in ours (Combat Chat 33: open)
+label p17a7 game: a QUICK caster's spell pick after "weighs a spell" (Requests, to combat: the QUICK-caster family)
+label p18b7 game: the QUICK-caster family (990)
+label p19d1 game: the QUICK-caster family (984)
+label p21a3 game: the QUICK-caster family (2967)
+label p22a1 game: the QUICK-caster family (944)
+label p22c3 game: the QUICK-caster family (4911)
+label p22c4 game: the QUICK-caster family (8937)
+label p19c2 game: a fleeing goblin guard: the original draws run steps, ours a blow from behind (5003)
+label p22a2 game: the fight ends in ours with one enemy left in the original's (1963)
+label p20a4 game: the start save (made camped in the wilderness, 7:26) loads into 7:17 0,0 in the original, into the wilderness in ours (Requests, to main)
+label p18a4 game: the QUICK-caster family (5460)
+label p22c5 game: the QUICK-caster family (1163)
+label p22c7 game: the QUICK-caster family (3836)
+label p25e4 game: the QUICK-caster family: a QUICK LIRA's Magic Missile target pick (Player 30's request, to combat)
+label p24b6 game: the mage YARASH with no spell found ends his turn in the original, moves in ours (Player 30's request, to combat)
+label p25j10 game: the AHNKHEG's acid spit ends its turn in the original (Player 30's request, to combat)
+label p26a1 game: one NOMAD figure more in ours' initiative (Player 30's request, to combat)
+label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the original asks first (Player 30's request, to combat)
