@@ -564,6 +564,57 @@ def members(mem):
     return out
 
 
+# Player 32: Jeremy's reload rule (board, Queues, 2026-11-20 00:40): reload on a wipe, a death, a level drain, a
+# permanent ability loss, a key item lost or petrification (unless a temple cures it at a price the party can pay).
+# OP_RELOAD=1 (q.sh / tries): at every walking screen the party is compared with the last checkpoint's (or the run's
+# start); a breach stops the run with "RELOAD: ...", and the lab's reload loop goes on from the run's last checkpoint.
+# Read from the record (ai-business-ideas research/pool-of-radiance-formats.md): abilities 0x10-0x15, class levels
+# 0x96-0x9D, levels drained 0x74, status 0x10C (6 dead, 7 stoned, 8 gone). Not in the tool yet: the key items, a
+# temple's cure (death and stone are always a reload here), a Restoration scroll used at once on a drain (logged).
+RELOAD_RULE = os.environ.get("OP_RELOAD") == "1"
+
+
+def rule_state(p):
+    out = {}
+    for m in members(p.g.mem):
+        r = m["rec"]
+        out[m["name"]] = {"abil": list(r[0x10:0x16]), "lev": sum(r[0x96:0x9E]), "drained": r[0x74],
+                          "status": m["status"]}
+    return out
+
+
+def reload_rule(p):
+    now = rule_state(p)
+    base = getattr(p, "rule_base", None)
+    if base is None:
+        p.rule_base = now
+        p.note("rule", "reload rule on: %s" % "; ".join("%s L%d %s" % (n, s["lev"], "/".join(map(str, s["abil"])))
+                                                         for n, s in now.items()))
+        return
+    if game_won(p):
+        return
+    why = []
+    for n, b in base.items():
+        s = now.get(n)
+        if s is None:
+            why.append("%s gone from the party" % n)
+            continue
+        if s["status"] >= 6:
+            why.append("%s %s" % (n, {6: "dead", 7: "stoned", 8: "gone"}.get(s["status"], "status %d" % s["status"])))
+        if s["drained"] > b["drained"] or s["lev"] < b["lev"]:
+            why.append("%s drained (levels %d -> %d)" % (n, b["lev"], s["lev"]))
+        # CON, INT, WIS, DEX, CHA; STR (0x10) left out: a Strength spell's end brings it back down
+        lost = [k for k, i in (("INT", 1), ("WIS", 2), ("DEX", 3), ("CON", 4), ("CHA", 5)) if s["abil"][i] < b["abil"][i]]
+        if lost:
+            why.append("%s lost %s" % (n, "/".join(lost)))
+        if s["lev"] > b["lev"]:
+            b["lev"] = s["lev"]          # trained since: the new levels are the ones to keep
+            b["abil"] = s["abil"]
+    if why:
+        p.note("loss", "the reload rule: " + "; ".join(why))
+        raise_stop(p, "RELOAD: %s (Jeremy's reload rule: reload from the last checkpoint)" % "; ".join(why))
+
+
 def party_hp(mem):
     return " ".join("%s %d/%d%s" % (m["name"], m["hp"], m["max"], "" if m["status"] == 0 else " s%d" % m["status"])
                     for m in members(mem))

@@ -10,6 +10,7 @@ import orig, hooks
 import game as G
 import screens
 import tactics as T
+import plans    # Player 32: the reload rule (plans.reload_rule) from the Player's methods
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SAVES = os.environ.get("OP_SAVES", os.path.join(orig.LAB, ".lab", "player", "saves"))
@@ -111,6 +112,8 @@ class Player:
         open(os.path.join(SAVES, "index.txt"), "a").write(line + "\n")
         self.note("checkpoint", line)
         self.saving = None
+        if plans.RELOAD_RULE:
+            self.rule_base = plans.rule_state(self)    # Player 32: the reload rule counts from the last checkpoint
 
     def key(self, k, why):
         st = self.g.last
@@ -173,6 +176,8 @@ class Player:
             # Player 30: a probe stops at the first screen of a kind (DOSBox left running for k.py)
             raise Stop("OP_STOPAT: screen %s (%s)" % (scr["kind"], st["bottom"]))
         if scr["kind"] == "walking":
+            if plans.RELOAD_RULE:
+                plans.reload_rule(self)       # Player 32: Jeremy's reload rule (plans.py)
             return self.walk(st)
         if scr["kind"] == "wiped":
             self.note("loss", "the party was destroyed at %d,%d %s" % self.where())

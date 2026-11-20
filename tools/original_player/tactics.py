@@ -90,6 +90,14 @@ def _is_large(f):
     return any(m in f["name"].upper() for m in LARGE)
 
 
+UNDEAD = ("SKELETON", "ZOMBIE", "GHOUL", "GHAST", "WIGHT", "WRAITH", "SPECTRE", "MUMMY", "VAMPIRE", "SHADOW",
+          "GHOST", "LICH", "UNDEAD")
+
+
+def _is_undead(f):
+    return any(m in f["name"].upper() for m in UNDEAD)
+
+
 class Tactics:
     def __init__(self, log):
         self.log = log
@@ -118,6 +126,7 @@ class Tactics:
         self.reach = {}          # member -> this turn's attack: "none" (nothing in reach), "done", "hit"
         self.idle = {}           # member -> turns in a row with nothing in reach
         self.guard = None        # the member whose DONE asked for GUARD
+        self.turned = set()      # Player 32: members who tried TURN this fight
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -213,6 +222,17 @@ class Tactics:
             self.reach.pop(member, None)
             self.last_member = member
         items = b.split()
+        if "TURN" in items and member not in self.turned:
+            # Player 32 (Jeremy, 2026-11-20 01:10): whenever undead are on the field, the clerics turn first (once a
+            # fight each)
+            try:
+                undead = [f for f in self._sides(p)[2] if _is_undead(f)]
+            except Exception:
+                undead = []
+            if undead:
+                self.turned.add(member)
+                self.log("TACTICS %s turns undead (%s)" % (member, ", ".join(f["name"] for f in undead[:6])))
+                return "t", "tactics: %s TURNs undead" % member
         if "CAST" in items:
             o = self.choose(member, p)
             if o:
