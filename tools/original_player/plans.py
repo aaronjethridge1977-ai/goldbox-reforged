@@ -412,6 +412,38 @@ class ReadyAll:
         return False, "v", "readyall: VIEW %s" % P[self.j][1]
 
 
+class ReadyItems(ReadyAll):
+    """Player 32: `ready <NAME> -<words>, +<words>, ...` on the walking screen: VIEW, ITEMS for that member, then READY
+    toggles the listed items in order (- unready, + ready; the first row whose name holds the words; the list shows an
+    unidentified item without its plus): the graveyard's BRAM -FLAIL, -SHIELD, +TWO-HANDED SWORD (the council's +3 vs
+    undead, cluebook). Same screens as readyall (Plan.answer, p.ready_spec)."""
+    def __init__(self, who, spec):
+        ReadyAll.__init__(self)
+        self.who, self.spec = who.upper(), spec
+
+    def __repr__(self):
+        return "ready %s %s" % (self.who, self.spec)
+
+    def next(self, p):
+        P = loot.party(p.g.mem)
+        if getattr(p, "readying", None) is not None:
+            if not p.ready_over:
+                raise_stop(p, "ready: back on the walking screen with %s not done" % self.who)
+            p.readying, p.ready_spec = None, None
+            return True, None, ""
+        js = [i for i, m in enumerate(P) if m[1].upper() == self.who]
+        if not js:
+            p.note("ready", "%s not in the party: skipped" % self.who)
+            return True, None, ""
+        self.j = js[0]
+        sel = loot.selected(p.g.mem)
+        if sel != self.j:
+            return False, ("end" if sel is None or self.j > sel else "home"), "ready: select %s" % self.who
+        p.readying, p.ready_tried, p.ready_over = self.j, set(), False
+        p.ready_spec = list(self.spec)
+        return False, "v", "ready: VIEW %s" % self.who
+
+
 class Heal:
     """Player 13: `heal` on the walking screen: main's bot's `_heal_if_low` and `_heal` (scripts/dev/bot.gd) for an
     area whose rest rule is camp. Nothing unless a member isn't OKAY or is below half HP. Then in camp: every
@@ -929,6 +961,22 @@ class Plan:
                         rows[r] = (m.group(1), m.group(2).strip())
                 lit = [r for r in rows if screens._rowcol(st["im"], r) == screens.WHITE]
                 todo = [r for r, (y, n) in rows.items() if y == "NO" and r not in p.ready_tried]
+                spec = getattr(p, "ready_spec", None)
+                if spec is not None:      # Player 32: `ready`: the listed toggles only, in order
+                    todo = []
+                    while spec and not todo:
+                        want, words = spec[0]
+                        hit = [r for r, (y, n) in sorted(rows.items()) if words in n.upper()
+                               and (y == "YES") != want and (r, want) not in p.ready_tried]
+                        if hit:
+                            todo = [hit[0]]
+                            if lit and lit[0] == hit[0]:
+                                p.ready_tried.add((hit[0], want))
+                                spec.pop(0)
+                        else:
+                            p.note("ready", "%s: nothing to %s for %s" % (
+                                loot.party(p.g.mem)[p.readying][1], "ready" if want else "unready", words))
+                            spec.pop(0)
                 if not todo:
                     p.ready_over = True
                     for r, (y, n) in sorted(rows.items()):
@@ -1773,6 +1821,10 @@ def load(path):
             pl.goals.append(Revisit(ev, n, pl.area))
             for a in ("aliases", "geo", "norest", "bumps", "look", "nocast"):
                 setattr(pl.goals[-1], a, getattr(pl, a, None) if a != "aliases" else pl.aliases)
+        elif cmd == "ready":      # Player 32: `ready <NAME> -<words>, +<words>`
+            who, _, sp = rest.strip().partition(" ")
+            pl.goals.append(ReadyItems(who, [(x.strip()[0] == "+", x.strip()[1:].strip().upper())
+                                             for x in sp.split(",") if x.strip()[:1] in "+-" and x.strip()]))
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
