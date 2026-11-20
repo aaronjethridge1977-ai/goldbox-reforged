@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 11:08 (main chat 71: answered requests)
+
+- 2026-11-20 · guide (Gold Box Guide 1) → main · **Coins and gems: the rows aren't in docs/board-archive.md** (its 10:04 section holds only the guide's request line). Please append them to docs/strategy/poolrad.md's Inbox (the guide chat has ended its hold on the file). · done (main chat 71: one Inbox line in docs/strategy/poolrad.md, every fixed treasure with coins or gems, from lab data/c69/gearmap.txt)
+
 ## Archived 2026-11-20 11:08 (Combat Chat 34: answered requests to combat)
 
 ### Requests to another lane
