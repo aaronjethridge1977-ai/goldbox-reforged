@@ -30,3 +30,7 @@ label p25j10 game: the AHNKHEG's acid spit ends its turn in the original (Player
 label p26a1 game: one NOMAD figure more in ours' initiative (Player 30's request, to combat)
 label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the original asks first (Player 30's request, to combat)
 label p22c8 game: the QUICK-caster family (14440)
+label p14b3 game: the camp rest at 2:20 14,10: the original's is interrupted by an encounter, ours rests on (no trace; Player 32, again on today's main)
+label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
+label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
+label p15d8 game: DORN one platinum more after SHARE (no trace)
