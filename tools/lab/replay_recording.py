@@ -28,8 +28,11 @@ def main():
     for name, b64 in head.get("files", {}).items():
         with open(os.path.join(out, "start", name), "wb") as f:
             f.write(base64.b64decode(b64))
+    # The replay must not record itself (main chat 72): with record_game on, its load starts a new session and
+    # reseeds every generator from a fresh seed, so the replay's dice part from the session's (a camp scroll's d8).
+    qol = dict(head.get("qol", {}), record_game=False)
     with open(os.path.join(out, "settings.cfg"), "w") as f:
-        f.write("[qol]\n\n" + "".join("%s=%s\n" % (k, json.dumps(v)) for k, v in head.get("qol", {}).items()))
+        f.write("[qol]\n\n" + "".join("%s=%s\n" % (k, json.dumps(v)) for k, v in qol.items()))
     ks = ["seed=%d" % head["seed"]]
     if head["start"] == "slot":
         ks.append("load=" + head["letter"])
