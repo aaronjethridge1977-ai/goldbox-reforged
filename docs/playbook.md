@@ -1,10 +1,83 @@
-# Gold Box playbook
+# Gold Box Players' Guide
 
-Started by Player 28 (2026-11-19, the Lead's note from Jeremy) from the Player lane's READMEs (Players 1-28, `tools/original_player/README.md`) and the Stojanow report. One line a tactic; add a line when a run shows one, with its run and tag.
+Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-1 are done;
+the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
-General tactics for the Gold Box engine, learnt by the Player lane playing DOS Pool of Radiance in DOSBox. Each line
-gives the source and a tag: *seen in the original* (seen in DOSBox runs) or *read in the code* (GAME.OVR, START.EXE or
-ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
+## 0. How to read this guide
+
+- **Tags** at the end of each line: *seen* (seen in the original game, DOSBox runs); *code* (read in the original's code:
+  GAME.OVR, START.EXE, ECL scripts); *book* (the game's manual, reference card, cluebook or Adventurer's Journal,
+  paraphrased); *players* (human players online, with links); *Jeremy* (a human player's experience, applied as a rule).
+- **unconfirmed** marks a line nobody has checked yet. Each one is listed on the board as a request.
+- **Brackets** after the tag say where the line was learnt (run, save, code address). They're for the lanes; players
+  can skip them.
+- **(Pool)** marks a rule read from Pool's own data. Later Gold Box games may change it: check each game.
+- **Two rules above all:** audit the party before every hard fight (section 4), and reload on anything a human would
+  reload for (section 6). *Jeremy*
+
+## 1. Making the party
+
+**Shape**
+- **Six characters.** Count story NPCs as a bonus when they join, not as part of the plan. *Jeremy* The game allows up
+  to 2 NPCs beyond the six. *book* (Manual)
+- **Build for the whole series.** Characters carry over from game to game, so a party should still work in the last
+  game, not just the first. Check each game's level caps and race limits before settling the six. *Jeremy*
+- **Roles to cover within the six:** about four members who can fight in the line, two cleric casters, two magic-user
+  casters, two bows and a thief. Multi-classes let one member fill two roles. Give one member exceptional Strength.
+  *book* (Cluebook)
+- Consider two clerics: they share the healing, and both can turn undead. *Jeremy*
+- Don't inflate starting stats. Encounter sizes scale with how strong the party looks, so inflated stats bring bigger
+  fights without the HP, spells or items to match. *book* (Cluebook)
+- Check the game's training caps before choosing classes. Where the caps are low, multi-class demi-humans give up almost
+  nothing. (Pool) Fighter 8, thief 9, cleric 6, magic-user 6. *book* (Manual)
+- (Pool) Four classes only: cleric, fighter, magic-user, thief; no paladins or rangers, and no dual-classing (both come
+  with Curse of the Azure Bonds). *book* (Pool Manual) + *players* ([GameBanshee, Curse party creation](https://www.gamebanshee.com/curseoftheazurebonds/walkthrough/partycreation.php))
+
+**Races**
+- **Choose classes first, then the races that make them work.** Pick the classes the party needs, then for each member
+  the race that allows that class or multi-class. *Jeremy*
+- **Demi-humans have level limits by race and class; humans have none.** For a party carried through the series these
+  limits are the main thing to weigh. *Jeremy* (Pool) Dwarf fighter 9; elf fighter 7, magic-user 11; gnome fighter 6;
+  half-elf fighter 8, magic-user 8; halfling fighter 6; thieves unlimited in every race. *book* (Pool Manual p.5)
+  Each later game's limits: **unconfirmed** (request to the lanes).
+- (Pool) Who may multi-class: dwarf, gnome and halfling fighter/thief; elf F/MU, F/T, MU/T, F/MU/T; half-elf as the elf
+  and also with cleric. Humans are single-class. *book* (Pool Manual p.5)
+- Elves and half-elves resist Sleep and charm: one 90% and the other 30% (the tabletop gives elves 90%). *code*
+  (START.EXE 0x2C540; Combat Chat 33). **unconfirmed** which race has which (request to Combat).
+- Elves and half-elves find secret doors 2 in 5 instead of 1 in 5. *code* (ECL 7:22; Player 25)
+- **unconfirmed** (tabletop rules; requests to the lanes): humans dual-class instead of multi-class (from Curse);
+  dwarves and halflings get save bonuses from Constitution.
+
+**Each member's job**
+- **Fighters** hold the front line. They wear the best AC or carry the most damage, whichever the coming fight needs,
+  and re-equip when the need changes (section 4). *Jeremy* (Pool) Only fighters, and multi-classes with a fighter
+  class, can shoot bows. *code* (ITEMS class mask; Combat Chat 32)
+- **Clerics** are good front-line fighters. Keep their AC low with the best armour and shield they can use. They manage
+  the party's HP and can't do that dead. *Jeremy*
+  - (Pool) No cutting weapons (swords, arrows) and no missile weapon at all. *book* (Manual) + *code* (ITEMS; main chat
+    70) + *players* ([C64-Wiki](https://c64-wiki.com/wiki/Pool_of_Radiance))
+  - From Curse on: a staff sling from the rear when necessary, for instance when badly wounded. *book* (Curse reference
+    card) + *Jeremy*
+- **The thief:** (Pool) make it a fighter/thief, because a pure thief can't use bows (only the sling). *Jeremy* + *code*
+  + *players* ([GOG forum](https://gog.com/forum/forgotten_realms_collection/shifting_class_equippables_between_games_porpod/page1))
+  - It fights from the back with a bow, steps into melee only when that's safe or needed (or it is clearly stronger
+    than the enemies there), and backstabs with a fighter (section 5). *Jeremy*
+  - From Curse on, pure thieves use short bows. *book* (Curse reference card) + *players* (GOG forum, above)
+- **Magic-users** are necessary but limited: their few spells are saved for the fights that need them. *Jeremy*
+  - Early on, Sleep in any fight that could turn tricky. Aim it to catch as many enemies as possible, and two squares
+    off so it misses the party: it sleeps everything in its 3x3, the caster too. *Jeremy* + *seen* (spell lab, Combat
+    Chat 33)
+  - Out of melee except in an emergency or to finish a sleeping or held enemy, whom one blow slays. *Jeremy*
+  - Darts for rounds with no spell worth casting; don't spend them in fights that don't matter. *Jeremy*
+  - (Pool) Weapons: dagger and staff. *book* (Manual) Darts too by our code read (ITEMS), which the manual omits:
+    **unconfirmed** (request to Combat).
+- **Race note for the series:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter
+  caps differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual)
+
+---
+
+# Not yet folded in (the old playbook, being moved into the sections above)
 
 ## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
 
@@ -14,10 +87,7 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
 - **Loot to use, not junk:** take magic items, gems and jewellery, coins worth their weight, and anything else worth at least 100 GP; leave the rest (Jeremy, 2026-11-20).
 - **Loot projectiles to use:** keep the arrows, quarrels and darts found in treasure; buy them only when the party runs out (Jeremy, 2026-11-20).
-- *(In Pool, a pure thief can't use bows or crossbows (item rules, main chat 70): only a fighter/thief can; check each game.)* **The thief fights from the back with a bow or crossbow,** stepping into melee only when it's safe or necessary, or when the thief is clearly stronger than the enemies being faced (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
-- **Magic-users stay out of melee** except in an emergency or to finish incapacitated (sleeping, held) enemies, whom any blow slays (Jeremy, 2026-11-20).
-- *(In Pool, clerics can't use slings or darts (item rules, main chat 70): they stay in the front line; check each game.)* **Clerics are good front-line fighters:** keep their AC low (the best armour and shields they can use). They manage the party's HP and can't do that dead. A sling from the rear only when necessary, for instance when badly wounded (Jeremy, 2026-11-20).
 
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
 
@@ -59,8 +129,6 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - Monsters' ordinary weapons and armour don't appear as loot; leftover missiles are stacked (Manual).
 - An inn charges once per stay; resting there is cheaper than temple cures. Resting heals only 1 HP a day: real healing is spells and temples (Manual, Cluebook).
 - Each member holds two things in hand: sword plus shield plus bow doesn't work (Manual).
-- The training hall trains only to fighter 8, thief 9, cleric 6, magic-user 6: multi-class demi-humans give up almost nothing in this game; party of 6 characters plus up to 2 NPCs (Manual).
-- A strong party: 4 fighters, 2 cleric and 2 magic-user casters, 2 bows and a thief, using multi-classes to fit it into six; one member with exceptional Strength (Cluebook).
 
 ## Party and preparation
 
