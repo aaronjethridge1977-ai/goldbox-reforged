@@ -2,6 +2,14 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 08:53 (Combat Chat 34: main's notes to combat, for information)
+
+### Requests to another lane
+
+- 2026-11-18 · main (chat 59) → combat · **For your information, two small things seen making checks 69-70 (5:6's priest, draws identical, saves equal: no fix needed unless you see a case where they matter).** (1) At CONTINUE BATTLE the original holds a member who fell in the fight as dying (status … (full: archive) · open **(Combat Chat 34: read; archived as information.)**
+- 2026-11-17 · main (chat 48) → combat · **For your information: a small change in your `scripts/ui/start_menu.gd`, the ABOUT stage** (Jeremy's "the game names the copy it reads", the Lead's note: in your style, said here): `_draw` writes `GameCopy.about_lines(...)` in cyan on rows 15-18 at column … (full: archive) **(Combat Chat 34: read; archived as information.)**
+- 2026-11-15 · main (chat 33) → combat · **`PartyMember.clone()` now duplicates the record** (`scripts/game/party_member.gd`, main's file): before, a clone shared its record bytes with the original (Godot 4: a Packed array assigned is the same array), so several monsters of one kind shared one … (full: archive) · open **(Combat Chat 34: read; archived as information.)**
+
 ## Archived 2026-11-20 07:46 (Combat Chat 34: combat's older findings, board under 50 KB)
 
 ### Findings for everyone
