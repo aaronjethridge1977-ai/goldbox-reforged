@@ -78,6 +78,7 @@ run orig_A_c33_hp_orc 1 bash -c "./combat33/fixin.sh hp_orc && KW=8 ./cmpfight2.
 # handcast= lab key (combat34/handreg.sh, draws only): Sleep x2 and Fireball on the net trap, Stinking Cloud x2 and Hold
 # Person (three picks) on the Slums orcs. The fixtures are lab-only (combat33/saves, mkfix.py recipes in combat33/README).
 run orig_A_c34_hand_sl22 0 env OURS_SEED=1 ./combat34/handreg.sh sl_kob1 22222222 up up 12 1
+run orig_A_c34_hand_sl44 0 env OURS_SEED=1 ./combat34/handreg.sh sl_kob1 44444444 up up 12 1
 run orig_A_c34_hand_sl1 0 env OURS_SEED=1 ./combat34/handreg.sh sl_kob1 22222222 up up 6 1
 run orig_A_c34_hand_fb1 0 env OURS_SEED=1 ./combat34/handreg.sh fb_kob1 33333333 up up 10 1
 run orig_A_c34_hand_sco1 0 ./combat34/handreg.sh sc_orc1 12345678 up,up enter 2 1

@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 07:46 (Combat Chat 34: combat's older findings, board under 50 KB)
+
+### Findings for everyone
+
+- 2026-11-20 · combat (Combat Chat 32) → Lead, all · **Our screens with 7 and 8 members (the Lead's 01:10 item): one fix, the rest fit.** Frames (lab, not in the archive): `tmp/w8b_0.png` (8 members, walking, the mini-map under member 8 after the fix; `tmp/w8_0.png` before: the window covered members 7-8's AC and HP), `tmp/w7_0.png` (7), `tmp/w8t_1.png` (camp SAVE list with 8: six rows and "+2 MORE" beside the date, fits), `tmp/w8_2.png` (quest log: no party rows), `tmp/w8_3.png` (full map: none). The walking screen's list holds 8 with a 15-letter name (the original's layout). SETTINGS, FEATURES, ABOUT and its copy line are on the start menu, before a party: nothing to fit. Not shot: the shop's and the treasure's pages with 8 (the original's layouts, which take 8); a saved 8-member game for this is lab `tmp/g8` slot G (Player 2's p2a/entry with a copied 8th, LONGNAMEDNPC8XY). Tools: lab `combat32/wshots.sh` (windowed on :94, `shot=`) and `shots.sh` (headless `screen=`, the original's overlays only).
+
 ## Archived 2026-11-20 06:57 (Combat Chat 34: answered requests to combat)
 
 ### Requests to another lane

@@ -1246,7 +1246,11 @@ func free_attacks(i: int, to: Vector2i) -> void:
 			continue
 		var off := (dir_between(e, c) - int(e.dir) + 8) % 8
 		var seen := off <= 2 or off >= 6    # not one of the three cells at its back
-		if e.acted and e.received > 0 and not seen:
+		# GAME.OVR 0x132F8: it strikes if it still has initiative this round (combat byte +3), or has taken no
+		# blow (+0xF), or the mover is in front of it. Not "has had its turn" (Combat Chat 34, the spell lab's
+		# sl44 and Player 32's p19c2: a figure whose turn passed while it was asleep or sick has no initiative
+		# left but never acted, and ours gave it a blow at a runner from behind).
+		if int(e.get("init", 0)) <= 0 and e.received > 0 and not seen:
 			continue
 		if e.attacks <= 0:
 			e.attacks = 1
