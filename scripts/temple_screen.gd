@@ -32,7 +32,7 @@ extends Control
 ## some money here"' / "Do you want to go back and retrieve your money?" (0x53A3, YES NO): NO leaves
 ## it behind.
 ## Not yet: blindness and curses aren't conditions our characters can have, so those cures
-## always ask "cast cure anyway"; APPRAISE; Raise Dead's loss of constitution.
+## always ask "cast cure anyway"; Raise Dead's loss of constitution. APPRAISE is the shop's (main chat 74).
 
 signal closed
 
@@ -50,7 +50,11 @@ const BLIND := 0x21     # Cause Blindness's effect (GAME.OVR 0x47D9 tests it, 0x
 var _party: Array[PartyMember] = []
 var _who := 0
 var _cure := 0               # the chosen line of the list (CURES.size() is EXIT)
-var _mode := "menu"          # menu, list, anyway, pay, coins, amount, ask_leave
+var _mode := "menu"          # menu, list, anyway, pay, coins, amount, ask_leave, appraise, value
+var _app_text := ""          # APPRAISE's text box (the shop's: ShopScreen), "" when none
+var _jewel := false          # APPRAISE: the piece just valued is jewellery
+var _value := 0              # ... and its value
+var _keep_ok := true         # ... and KEEP is offered for it
 ## The temple's money pile (CoinPile): POOL puts coins on it, TAKE and SHARE give them back.
 var pile := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
 var _coin := 0               # the coin page's lit line
@@ -114,8 +118,12 @@ func open(party: Array[PartyMember], who: int = 0) -> void:
 func _refresh() -> void:
 	if _scr == null:
 		return
-	if _mode in ["menu", "ask_leave"]:
-		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", PackedStringArray(), _menu_items(), false, false, _pick)
+	if _mode in ["menu", "ask_leave", "appraise", "value"]:
+		var lines := PackedStringArray()
+		if _mode != "ask_leave":
+			for l in _app_text.split("\n", false):
+				lines.append_array(GameScreen.wrap(l, 38))
+		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", lines, _menu_items(), false, false, _pick)
 		if _mode == "ask_leave":
 			TreasureScreen.draw_ask(_scr, "AS YOU LEAVE A PRIEST SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE\"",
 				"DO YOU WANT TO GO BACK AND RETRIEVE YOUR MONEY?")
@@ -167,6 +175,10 @@ func _refresh() -> void:
 func _menu_items() -> Array:
 	if _mode == "ask_leave":
 		return YES_NO
+	if _mode == "appraise":
+		return ["GEMS", "JEWELRY", "EXIT"]
+	if _mode == "value":
+		return ["SELL", "KEEP"] if _keep_ok else ["SELL"]
 	return POOL_MENU if CoinPile.has_money(pile) else MENU
 
 
@@ -181,6 +193,65 @@ func _say(lines: Array) -> void:
 
 
 # --- Actions (the bot calls these too) ----------------------------------------------------
+
+## APPRAISE (main chat 74: the original's temple APPRAISE is the shop's, GAME.OVR 0x26680): the member's
+## gems and jewellery one at a time, SELL or KEEP (ShopScreen's rules and helpers).
+func _appraise() -> void:
+	var m := _party[_who]
+	if m.money[5] == 0 and m.money[6] == 0:
+		_app_text = "NO GEMS OR JEWELRY"
+		_note.text = _app_text
+		_refresh()
+		return
+	_mode = "appraise"
+	_show_collection()
+
+
+func _show_collection() -> void:
+	_app_text = "\n".join(ShopScreen.collection_lines(_party[_who]))
+	_note.text = _app_text.replace("\n", " ")
+	_pick = 0
+	_refresh()
+
+
+func appraise_one(jewel: bool) -> int:
+	var m := _party[_who]
+	var k := 6 if jewel else 5
+	if m.money[k] <= 0:
+		return -1
+	m.money[k] -= 1
+	_jewel = jewel
+	_value = ShopScreen.piece_value(jewel, _rng)
+	_keep_ok = ShopScreen.keep_offered(m)
+	_mode = "value"
+	_app_text = "THE %s IS VALUED AT %d GP." % ["JEWEL" if jewel else "GEM", _value]
+	_note.text = _app_text
+	_pick = 0
+	_refresh()
+	return _value
+
+
+func settle(sell: bool) -> void:
+	var m := _party[_who]
+	var said := ""
+	if sell or not _keep_ok:
+		var paid := ShopScreen.appraisal_pay(m, _value / 5)
+		said = paid[0]
+		pile[4] += int(paid[1])
+	else:
+		m.items.append(ShopScreen.appraised_item(_jewel, _value))
+	m.refresh_load_word()     # GAME.OVR 0x26ECA
+	if m.money[5] > 0 or m.money[6] > 0:
+		_mode = "appraise"
+		_show_collection()
+		if said != "":
+			_app_text = said + "\n" + _app_text
+	else:
+		_mode = "menu"
+		_app_text = said
+	_note.text = _app_text.replace("\n", " ")
+	_refresh()
+
 
 func _ask() -> void:
 	if _cure >= CURES.size():
@@ -425,12 +496,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		for it in items:
 			if String(it).unicode_at(0) == key:
 				choice = it
+		if _mode == "value" and not _keep_ok and key == KEY_K:
+			choice = "SELL"
 	if choice == "":
 		return
 	if choice != "COIN":
 		_pick = items.find(choice)
 	match _mode:
 		"menu":
+			_app_text = ""       # APPRAISE's last words go with the next choice
 			match choice:
 				"HEAL":
 					# The list opens at its top every time (main's 3:0 temple check: End End reaches
@@ -446,8 +520,19 @@ func _unhandled_input(event: InputEvent) -> void:
 					_refresh()
 				"POOL": _pool()
 				"SHARE": _share()
-				"APPRAISE": pass        # not yet
+				"APPRAISE": _appraise()
 				"EXIT": _leave()
+		"appraise":
+			match choice:
+				"GEMS": appraise_one(false)
+				"JEWELRY": appraise_one(true)
+				"EXIT":
+					_mode = "menu"
+					_app_text = ""
+					_pick = _menu_items().find("APPRAISE")
+					_refresh()
+		"value":
+			settle(choice == "SELL")
 		"coins":
 			if choice == "COIN":
 				var kinds := ShopScreen.coin_kinds_of(pile)
