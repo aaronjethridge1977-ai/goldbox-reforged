@@ -29,3 +29,4 @@ label p24b6 game: the mage YARASH with no spell found ends his turn in the origi
 label p25j10 game: the AHNKHEG's acid spit ends its turn in the original (Player 30's request, to combat)
 label p26a1 game: one NOMAD figure more in ours' initiative (Player 30's request, to combat)
 label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the original asks first (Player 30's request, to combat)
+label p22c8 game: the QUICK-caster family (14440)
