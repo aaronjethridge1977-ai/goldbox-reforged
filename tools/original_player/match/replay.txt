@@ -1,0 +1,19 @@
+# Player 34: replay settings per recording (match.py settings()): `<run> KEY=VALUE ...  # source`.
+# These belong to the replay tool, not the game. OP_MAGICAT: the recording's trace has no MAGIC lines, so ours'
+# magicat= for each Alt-M is given here (one per Alt-M, "-" a plain `magic`; Combat Chat 34: the QUICK-caster family
+# is the replay's MAGIC timing; values from the lab's p34/magicat_all.py, Player 24's rule: the last spell weighing
+# with no list before the first with one, + 2). GBR_PLAYOUT=1: ours plays the round out after the last kill and asks
+# CONTINUE BATTLE, as the original (Combat Chat 25; ours' QoL ends the fight at once).
+p17a7 OP_MAGICAT=968,2827,5167 GBR_PLAYOUT=1   # Player 24: identical, all 5289
+p18a4 OP_MAGICAT=1159,5460,6843
+p18b7 OP_MAGICAT=1059,6160
+p19d1 OP_MAGICAT=958                             # Player 24: identical, all 2704
+p21a3 OP_MAGICAT=928,2987,4677,6891,9608,11479,12736   # Player 24: identical, all 13277
+p22a1 OP_MAGICAT=1020,2300                       # Player 24
+p22a2 OP_MAGICAT=-,-,-,4016,6185,10338 GBR_PLAYOUT=1   # Combat Chat 34: the QoL end
+p22c3 OP_MAGICAT=795,4953,16273,24413,28699,35334,42654,48283,52995
+p22c4 OP_MAGICAT=-,10761                         # Combat Chat 31: all 16466
+p22c5 OP_MAGICAT=1194,6185,15106,21671,32415,40386,47238,53184,58021,62251
+p22c7 OP_MAGICAT=3964,14955
+p22c8 OP_MAGICAT=-,14482,23729
+p29f2 GBR_PLAYOUT=1                              # main chat 70: the shortcut's closing round

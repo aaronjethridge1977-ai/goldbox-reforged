@@ -113,6 +113,20 @@ def verify(quiet=False):
     return bad
 
 
+def settings():
+    """Player 34: match/replay.txt: `<run> KEY=VALUE ...  # source`: a recording's replay settings, given to segment.py's
+    environment (OP_MAGICAT: the trace has no MAGIC lines, so the Alt-M's draw is set by hand, Combat Chat 34;
+    GBR_PLAYOUT=1: ours plays the round out after the last kill as the original, Combat Chat 25; OP_SEG_TIMEOUT).
+    They are the replay tool's, not the game's: the scoreboard says which recordings used them."""
+    out = {}
+    p = os.path.join(M, "replay.txt")
+    for l in open(p) if os.path.exists(p) else []:
+        l = l.split("#", 1)[0].split()
+        if len(l) >= 2:
+            out[l[0]] = dict(x.split("=", 1) for x in l[1:])
+    return out
+
+
 def worker_labs(n):
     """Player 34: n scratch labs under LAB/match_w/ for replays side by side (the Lead's note: 3-4 at a time). Each
     has its own game copy (slot F), proj copy, Godot user folder and run_seg; logs/, match/, the saves, Godot,
@@ -181,6 +195,7 @@ def replay(r, lab=None):
     env = dict(os.environ, OP_SEG_TIMEOUT=os.environ.get("OP_SEG_TIMEOUT", "3200"))
     if lab:
         env["OP_LAB"] = lab
+    env.update(settings().get(r["run"], {}))
     with open(seg, "w") as f:
         subprocess.run([sys.executable, os.path.join(HERE, "segment.py"), r["run"], "begin", r["cp"],
                         "--start=" + r["start"], "--tplog"], stdout=f, stderr=subprocess.STDOUT, cwd=HERE, env=env)
@@ -271,6 +286,10 @@ def score(md=None):
                      ", ".join(x[0]["run"] + ("" if x[1] == "identical" else " (%s)" % (
                          "not yet" if x[1] == "missing" else "NOT RUN" if x[1] == "notrun" else
                          x[2][1:x[2].index("]")].split(":")[0])) for x in xs)))
+    st_ = settings()
+    if st_:
+        lines += ["", "Replay settings (match/replay.txt): " + "; ".join(
+            "%s %s" % (k, " ".join("%s=%s" % kv for kv in v.items())) for k, v in sorted(st_.items()))]
     lines += ["", "## The rest: first differing roll and the state there", ""]
     for r, st, txt in res:
         if st in ("differs", "notrun"):
