@@ -1315,6 +1315,48 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 34 (2026-11-20): the Stage 1 match fresh, 57 of 71 identical; NOT RUN; replay settings; Sokal's event 9 and Stojanow's west tower by hand, 5 of 5 lost each; stuck-fights.md
+
+**The Stage 1 match** (on origin/main a8c6d64; d772b5c has the same scripts/ and content/): `match.py run -j 4` over all
+71 recordings (~2.5 h, four scratch labs side by side), then the QUICK-caster family again with its replay settings:
+**57 of 71 identical**, 12 game, 2 known shortcut, 0 NOT RUN (`p34/score.md` in the lab; baseline 57). By segment: every
+segment identical but 2 (p14b3), 3 (p15d8), 5 (p16a2), 6 (p16d1), 8 (p17a6), 16 (p22c2, p22c3, p22c8; 3 of 6), 20
+(p24b6), 22 (p25e4), 25 (p25j10), 27 (p26a1), 28 and 34 (the shortcuts).
+- **match.py:** (1) **NOT RUN** (main chat 70's finding): a replay counts only if ours' log has its F2 line and
+  statediff's "N differences" line; otherwise NOT RUN, never identical; each replay clears its old outputs first.
+  (2) `run -j N`: N replays side by side, each in `LAB/match_w/<pid>/wK` (own game copy, proj, Godot user folder; logs/
+  and match/ shared). `gate --run` takes `OP_MATCH_JOBS=N`. (3) **`match/replay.txt`**: per-recording replay settings
+  (OP_MAGICAT, GBR_PLAYOUT=1), listed on the scoreboard. Combat Chat 34 found the QUICK-caster family is the replay's
+  MAGIC timing (traces before Player 23 have no MAGIC lines); `magicat_all.py <run>` (run in the lab) works out each
+  Alt-M's draw from the trace (Player 24's rule; fights start at each run of OVR:1efd6 draws) and gives Player 24's known
+  values back (p21a3, p17a7, p19d1). With them **p17a7, p18a4, p18b7, p19d1, p20a4, p21a3, p22a1, p22a2, p22c4, p22c5,
+  p22c7 identical**; p22c3 and p22c8 draw for draw to the checkpoint with one state difference each.
+- **segment.py:** a `SHORTCUT win` line of the original's log becomes ours' `shortcutwin` key (main chat 70's lab key);
+  p27c2 identical to 1057 and p29f2 to 801, then the hack's artefact (known shortcut, the Lead's answer).
+- **New differences** (all on the main path; none needs a fix in this lane): ARN's (p22c3) and BRAM's (p25j10) affect
+  0x37 POISONED power 0xFF is in the original's saves and not in ours (to combat); the wall ahead (ECL 0xC04E) after
+  p16d1 and p22c2, ECL 0x4A5F after p25e4's lizard men (to main); a copper of a split (p22c8, as p15d8).
+- **Route levels** for poolrad.md (the guide's request): `levels.py` reads each checkpoint's levels (three Inbox lines).
+
+**Strategy track** (reload rule; `p34/reload.sh`; `OP_STUCK_KEYS=3000`: a hand-fought 50-figure fight takes more than
+the 300 keys the stuck rule allowed, p34a1):
+- **Sokal Keep event 9 by hand at level 3** (Jeremy's doorway tactic; `p34/sokal9.plan`, from `p34a1_s9door` at 9,5,
+  Bless from camp, step W into 8,5, `tactics on`, horde order): **5 of 5 lost** (p34b1 4 dead with 6 enemies left; b3
+  won with CEDRIC dead; b2, b4, b5 destroyed). The map puts the party in the open; the tool can't form a line or shoot
+  the leaders first. To the Lead (options in stuck-fights.md).
+- **Segment 28, the redo** from `p33f3_mopup1`: `s28g` and `s28p` in one try (p34c1, nobody dead). From `s28p` the
+  towers are already beaten (the bugbears' fight sets both bits): so from `s28g`, **the west tower's room** (the
+  5th-level fighter, aides, three ettins; `p34/seg28c.plan`): **5 of 5 lost** (p34e1, e2, e5 won with CEDRIC dead; e3,
+  e4 destroyed). Two tool faults found and fixed: **the dying were never bandaged** (tactics: DONE, BANDAGE, from
+  p34e4) and **an unreachable Hold Person was begun every turn** (the refusal forgotten when another member acted; now
+  skipped for two turns, after p34e5).
+- `docs/strategy/stuck-fights.md` (the Lead's note, Jeremy 12:44): the four stuck fights; each one's logs and saves on
+  D: `.lab/stuck/<fight>/` with a README.txt.
+
+Lab: `p34/` (reload.sh, wait.sh, rwait.sh, replays.sh, archive.sh, sheet.py, levels.py, magicat_all.py, sokal9.plan,
+seg28a.plan, seg28b.plan, seg28c.plan, match_run*.out, score.md, reload.txt), `match/`, saves `p2start/p34a1_s9door`,
+`p34c1_s28g`, `p34c1_s28p`; runs p34a1, p34b1-b5, p34c1, p34d1-d2, p34e1-e5.
+
 ## Player 33 (2026-11-20): saves for Jeremy; 9,1 trained and pre-buffed: 5 more lost, left out; `graveyard` reached; `campcast`; the spell sheet in the tactics; segments 11-17 in ours
 
 - **For Jeremy** (`.lab/for-jeremy/graveyard/`, README.md): slot-H saves `s26t` (the inn before the graveyard),
