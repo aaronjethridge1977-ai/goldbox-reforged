@@ -12,14 +12,14 @@ Older entries (finished requests, earlier Now lines, rule changes before the cur
 
 Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk and the combat lane; work moves between lanes, files don't.
 
-| Lane | Chat | Runs where | Owns |
-|---|---|---|---|
-| Main (differential checks, the full run and bot, walking screen, engine gaps outside combat, saves) | Gold Box Chat 49 (next; chat 48 ended 2026-11-17) | Claude Code on Jeremy's PC, lab `~/gbr/lab` (= /home/claude/lab) | `scripts/main.gd`, `scripts/ecl_vm.gd` (shared core: see CLAUDE.md), `scripts/game/`, `scripts/formats/`, `scripts/dev/`, `project.godot`, `tools/` coverage, report and check scripts, `tools/plans/`, `docs/coverage-areas.md`, `docs/cover-fights.md`, `docs/diff-checks.md` |
-| Combat (combat fidelity, combat display, screens and UI) | Gold Box Combat Chat 20 (next; Combat Chat 19 ended 2026-11-17) | Jeremy's PC (Methods 5): worktree `~/gbr/combat_wt` (branch combat-lane), lab `~/gbr/combat_lab` (combat1-5 archives over main's tools; godot/ and DOSBox linked to main's lab), display :96 | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`, `stagefight.sh`), `docs/coverage.md` (the engine-feature scoreboard), `docs/combat-tests.md` |
-| Feedback desk (Jeremy's play notes; builds nothing) | Gold Box Feedback Desk 2 | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
-| Player (plays the **original** in DOSBox by program: plan, memory reads, QUICK fights, recording; Methods 4) | Gold Box Player 5 (next; Player 4 ended 2026-11-15, stopped by the Lead: one lane at a time) | Claude Code on Jeremy's PC, a second Ubuntu tab, its own worktree and lab folder; long runs as background jobs overnight | `tools/original_player/` (lab `~/gbr/player_lab`, display :97, its own pid files); reads main's plans and lab tools, asks main for changes |
-| **Lead** (trial from 2026-11-15, Methods 5: starts main's and the Player's chats as unattended runs, lane management, Jeremy's queue `plans/for-jeremy.md`) | Gold Box Lead 1 (running) | Claude Code on Jeremy's PC, tmux session `lead`, ~/gbr | `~/gbr/lead/` (launcher, logs, state); the board's Queues and Lanes; opening posts |
-| Design office | Gold Box Methods N | claude.ai | no code; proposals and Jeremy's decisions (`ideas/game-modernizer.md`) |
+| Lane | Runs where | Owns |
+|---|---|---|
+| Main (differential checks, the full run and bot, walking screen, engine gaps outside combat, saves) | Claude Code on Jeremy's PC, lab `~/gbr/lab` (= /home/claude/lab) | `scripts/main.gd`, `scripts/ecl_vm.gd` (shared core: see CLAUDE.md), `scripts/game/`, `scripts/formats/`, `scripts/dev/`, `project.godot`, `tools/` coverage, report and check scripts, `tools/plans/`, `docs/coverage-areas.md`, `docs/cover-fights.md`, `docs/diff-checks.md` |
+| Combat (combat fidelity, combat display, screens and UI) | Jeremy's PC (Methods 5): worktree `~/gbr/combat_wt` (branch combat-lane), lab `~/gbr/combat_lab` (combat1-5 archives over main's tools; godot/ and DOSBox linked to main's lab), display :96 | `scripts/combat/`, `scripts/ui/`, `content/features.json`, screens (`*_screen.gd`, `party_menu.gd`, `character_sheet.gd`), fight tools (`cmpfight*`, `trace.py`, `seed.py`, `regress.sh`, `stagefight.sh`), `docs/coverage.md` (the engine-feature scoreboard), `docs/combat-tests.md` |
+| Feedback desk (Jeremy's play notes; builds nothing) | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
+| Player (plays the **original** in DOSBox by program: plan, memory reads, QUICK fights, recording; Methods 4) | Claude Code on Jeremy's PC, a second Ubuntu tab, its own worktree and lab folder; long runs as background jobs overnight | `tools/original_player/` (lab `~/gbr/player_lab`, display :97, its own pid files); reads main's plans and lab tools, asks main for changes |
+| **Lead** (starts every lane's runs, lane management, Jeremy's queue `plans/for-jeremy.md`; Methods 5-8) | Claude Code on Jeremy's PC, tmux session `lead`, ~/gbr | `~/gbr/lead/` (launcher, logs, state); the board's Queues and Lanes; opening posts |
+| Design office | claude.ai | no code; proposals and Jeremy's decisions (`ideas/game-modernizer.md`) |
 
 Files not listed: whoever needs them asks here first.
 
