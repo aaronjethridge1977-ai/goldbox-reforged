@@ -40,7 +40,11 @@ static func on() -> bool:
 
 
 ## A run the lab drives: the checks compare with the original, bugs and all.
+## GBR_ORIGINAL_BUGS=0 (main chat 74): a RECORD MY GAME replay plays the session's own switch (its settings.cfg),
+## not the lab's: a session played with the fixes would part at the first fixed bug.
 static func lab_run() -> bool:
+	if OS.get_environment("GBR_ORIGINAL_BUGS") == "0":
+		return false
 	if TpDice.on or OS.get_environment("GBR_ORIGINAL_BUGS") == "1":
 		return true
 	for a in OS.get_cmdline_user_args():

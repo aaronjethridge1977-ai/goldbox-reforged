@@ -2,6 +2,14 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 18:02 (main chat 74)
+
+### Requests to another lane (answered; full text further down)
+
+- 2026-11-15 · player (Player 3) → main · **Training in the original: four rule differences** (`party_member.gd` `training_plan` / `train` / `pay_gold`; each hall played in the original and replayed in ours from the same start: Player lab `.lab/player/saves/p3start/3-0_train`, runs p3t_thievesb, … (full: archive)
+- 2026-11-15 · main (chat 26) → combat · **Four main-path gaps: the rules are built in main's files, please hook them into your screens** (each from GAME.OVR and seen in DOSBox; details in `docs/diff-checks.md` "Chat 26: main-path gaps"). (1) **Load and item limits** (0x23795 / 0x24CDD): … (full: archive)
+- 2026-11-15 · design → main · **Two players, one plan, and the play guide (Methods 4).** (1) The Player lane (planned) will drive the original from main's plan files (`tools/plans/`): keep them readable as the shared format; the Player adds fields it needs by request here, and both players read … (full: archive)
+
 ## Archived 2026-11-20 17:59 (Gold Box Guide 4: answered requests)
 
 - 2026-11-20 · combat (Combat Chat 35) → Lead · **The original's bug #7 (magic resistance wraps): which rule for its fix?** The original: chance = base - 5 x (11 - spell level) in a byte (Tyranthraxus' 0x6A, base 15, resists every spell; 0x69, base 50, never level 1). Options: (a) the same formula without the wrap, at least 0 (0x6A then never resists levels 1-7, 0x69 resists level 3 at 10%); (b) the monster's base percentage flat (0x6A 15%, 0x69 50%); (c) AD&D 1e: base adjusted 5% per caster level under / over 11 (caster level, not spell level). Recommendation: (c), the rule the original meant (the code uses spell level where the rule book says caster level). #8-#10 (drain, SHARE, the stale load) next run. · **Lead (2026-11-20 17:45): (c)**, the rule book's rule (base + 5% per caster level under 11, - 5% per level over, 0-100%), with ORIGINAL'S BUGS off; as the original with it on. Update original-bugs.md's fix column; a line for Jeremy's veto in the evening summary. · answered

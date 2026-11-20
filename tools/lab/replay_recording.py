@@ -11,6 +11,9 @@ was recorded with: replay it on that version's commit. Then, e.g.:
   cp <out>/start/* <game copy>/ ; godot --headless --path <proj> -- --game-path=<game copy> --save=<out>/start/quick.cfg \
       "--keys=$(cat <out>/keys)"
 
+ORIGINAL'S BUGS (main chat 74): a --keys= run plays the original's bugs unless GBR_ORIGINAL_BUGS=0; the session's own
+switch is in settings.cfg (off by default), so run the replay with the GBR_ORIGINAL_BUGS=<n> this script prints.
+
 A slot session loads with load=<letter>; a quick-save session with F3 (--save= its quick.cfg); a new game's keys start
 at the start menu. Keys with Alt are written as `alt+<key>` (main.gd's replay sets Alt on the key: Alt-M in a fight).
 The mouse (main chat 73): a click a screen made into keys is in the file as those keys; a click no screen took as keys
@@ -64,8 +67,9 @@ def main():
         ks.append(name)
     with open(os.path.join(out, "keys"), "w") as f:
         f.write(",".join(ks))
-    print("build %s, recorded %s, seed %d, start %s %s: %d keys -> %s" % (
-        head.get("build"), head.get("date"), head["seed"], head["start"], head.get("letter", ""), len(keys), out))
+    bugs = 1 if qol.get("original_bugs", False) else 0
+    print("build %s, recorded %s, seed %d, start %s %s: %d keys -> %s; replay with GBR_ORIGINAL_BUGS=%d" % (
+        head.get("build"), head.get("date"), head["seed"], head["start"], head.get("letter", ""), len(keys), out, bugs))
 
 
 if __name__ == "__main__":
