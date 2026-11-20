@@ -116,3 +116,53 @@ static func set_gold(money: PackedInt32Array, gold: int) -> PackedInt32Array:
 	out[4] = gold / 5
 	out[3] = gold % 5
 	return out
+
+
+## ROB's coins (GAME.OVR 0x2AF7 -> 0x9196, Combat Chat 35): each count times (100 - taken) / 100 in
+## Turbo Pascal's 6-byte Real, then Trunc. The keep factor comes from RDiv (START.EXE 0xAF8:0x118C,
+## rounded to its 40-bit mantissa: 0.8 is a hair over); the count, an integer, has a 16-bit mantissa,
+## so RMul takes its short path (0xBEEA), which drops the low byte's partial product before rounding
+## at bit 7: 610 x 0.8 gives 487, 150 x 0.8 gives 120 (Player 34's p22c8, 8:13's pit, ROB 0, 20, 20).
+static func real48_keep(count: int, keep_pct: int) -> int:
+	if count <= 0 or keep_pct <= 0:
+		return 0
+	if keep_pct >= 100:
+		return count
+	count &= 0xFFFF
+	# The factor: m40 in [2^39, 2^40), its value m40 x 2^(kexp - 40).
+	var kexp := 0
+	while (keep_pct << (40 - kexp)) / 100 < (1 << 39):
+		kexp -= 1
+	var m40: int = (((keep_pct << (48 - kexp)) / 100) + 0x80) >> 8
+	if m40 >= (1 << 40):
+		m40 >>= 1
+		kexp += 1
+	# The count: its top word (hidden bit included), the value bp x 2^(b - 16).
+	var b := 0
+	while (count >> b) > 0:
+		b += 1
+	var bp := count << (16 - b)
+	var di := m40 >> 24
+	var si := (m40 >> 8) & 0xFFFF
+	var ch := m40 & 0xFF
+	var bx := ((bp >> 8) * ch) & 0xFFFF
+	var p := bp * si
+	var t := bx + (p & 0xFFFF)
+	bx = t & 0xFFFF
+	var cx := (p >> 16) + (t >> 16)
+	p = bp * di
+	var ax := (p & 0xFFFF) + cx
+	var dx := (p >> 16) + (ax >> 16)
+	ax &= 0xFFFF
+	var v := (dx << 32) | (ax << 16) | bx       # 48 bits: high, middle, low
+	var shift := 0
+	if (dx & 0x8000) == 0:
+		v = (v << 1) & 0xFFFFFFFFFFFF
+		shift = 1
+	v += 0x80
+	if v >> 48:
+		v = ((v & 0xFFFFFFFFFFFF) >> 1) | (1 << 47)
+		shift -= 1
+	var r40 := v >> 8
+	var e := b + kexp - shift
+	return (r40 << e) >> 40 if e >= 0 else 0

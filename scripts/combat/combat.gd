@@ -962,7 +962,9 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 			# The spell is dropped (combat byte +0), but START.EXE 0xBA:0x148B takes it out of the memory of
 			# the figure whose turn it is (DS:0x5D92), not the wounded caster's: the caster keeps it, an attacker
 			# with the same spell memorized loses one (Combat Chat 33, the spell lab's Prayer: BAKSHI's 19 kept).
-			if active >= 0 and active < combatants.size():
+			if not OriginalBugs.on():
+				tm.forget(int(t.pending.id))     # bug #5's fix: the caster loses the spoiled spell
+			elif active >= 0 and active < combatants.size():
 				(combatants[active].who as PartyMember).forget(int(t.pending.id))
 			t.pending = {}
 			message.emit("%s LOST A SPELL" % tm.name)

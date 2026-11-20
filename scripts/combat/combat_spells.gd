@@ -132,6 +132,8 @@ func hit_bonus(am: PartyMember, tm: PartyMember) -> int:
 	# the target before the to-hit routine (0x2BBA1) writes a fresh d20 there: no effect on the
 	# to-hit. Its +2 on a save (category 0xC, 0x2BC9A) stays (`save`). (Combat Chat 10, Player
 	# 8's 2:20 0,14 seed 2468ace1: the ogre's d20 of 16 hits CEDRIC under it in the original.)
+	if not OriginalBugs.on() and _protected_from(tm, am):
+		b -= 2      # bug #13's fix (ORIGINAL'S BUGS off): evil (good) attackers -2 to hit
 	if tm.has_affect(EFFECT_INVISIBLE) or tm.has_affect(EFFECT_DISAPPEAR):
 		b -= 4
 	if am.has_affect(EFFECT_BLIND):
@@ -722,6 +724,8 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			# + level / 2, not the rule book's (level + 1) / 2 missiles: at level 1 no damage
 			# and no dice (lab 2026-11-14, a QUICK Bakshi's missile drew nothing).
 			var n := lvl / 2
+			if not OriginalBugs.on():
+				n = (lvl + 1) / 2     # bug #1's fix: one missile at levels 1-2, one more every two levels
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				if t.has_affect(EFFECT_SHIELD):
