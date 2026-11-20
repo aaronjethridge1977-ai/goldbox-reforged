@@ -840,14 +840,14 @@ func _damage(a: Array) -> void:
 ## coins' percentage and the third operand is never read (2:20's PAY, `ROB 1, 50, 0`, takes
 ## items half the time).
 func _rob(a: Array) -> void:
-	var keep := (100 - _value(a[1])) / 100.0
+	var keep := 100 - _value(a[1])      # the percentage kept: CoinPile.real48_keep (Combat Chat 35)
 	var victims: Array = party if _value(a[0]) != 0 else [selected_member()]
 	for m in victims:
 		if m == null:
 			continue
 		var chance := _value(a[1])
 		for i in m.money.size():
-			m.money[i] = int(m.money[i] * keep)
+			m.money[i] = CoinPile.real48_keep(m.money[i], keep)
 		var kept: Array[GameItem] = []
 		for it in m.items:
 			if it.weight > 255:
