@@ -3,7 +3,10 @@
 # recording of the original's full run that was identical in tools/original_player/match/baseline.txt is replayed
 # in ours at <commit>, and `match.py gate --run` fails (exit 1) when one parts now.
 #
-#   tools/build/match_gate.sh origin/main          (about 5 minutes a recording: ~3 hours for 40)
+#   tools/build/match_gate.sh origin/main          (about 5 minutes a recording, four side by side: ~1.5 hours for 57)
+#
+# OP_MATCH_JOBS (default 4; Player 34's request) replays that many recordings side by side, each in its own worker
+# lab inside the scratch lab (match.py worker_labs); OP_MATCH_JOBS=1 replays one at a time.
 #
 # Called by windows_test.sh and linux_build.sh before the export (SKIP_MATCH_GATE=1 skips it, said in the
 # build-info). It never writes in the Player's lab: the recordings (logs, traces, start and checkpoint saves),
@@ -50,7 +53,7 @@ for run in $(grep -v '^#' "$M/baseline.txt"); do
 done
 echo "== match_gate.sh: $(grep -vc '^#' "$M/baseline.txt") baseline recordings on $COMMIT ($REF), log $LOG"
 st=0
-(cd "$T/src/tools/original_player" && OP_LAB=$L python3 match.py gate --run) > "$LOG" 2>&1 || st=$?
+(cd "$T/src/tools/original_player" && OP_LAB=$L OP_MATCH_JOBS=${OP_MATCH_JOBS:-4} python3 match.py gate --run) > "$LOG" 2>&1 || st=$?
 # Every replay must have run to its end: ours' F2 and statediff's count line (match.py reads an empty run, ours
 # stopped at its first draw with no statediff, as identical).
 for run in $(grep -v '^#' "$M/baseline.txt"); do
