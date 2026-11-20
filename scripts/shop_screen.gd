@@ -280,7 +280,13 @@ func _buy() -> void:
 	# 0x6F0D adds the item and works the buyer's record out again (0x7018: the cached load word now counts
 	# the item and the coins before payment); the payment after it (0x70C7) leaves the word (Combat Chat 33,
 	# Player 32's segment 1: DORN's word, 0 in an old start save, was 322 in the original's `shopped` save).
-	member.items.append(it.copy())
+	var bought := it.copy()
+	# The record keeps the shop's price, a 0 made 1 (Combat Chat 34, Player 32's segment 1: LIRA's 10 arrows had
+	# price word 1 in the original's `shopped` save, 0 in ours; record bytes 58-59).
+	bought.price = it.price
+	if bought.raw.size() >= 60:
+		bought.raw.encode_u16(58, it.price)
+	member.items.append(bought)
 	member.refresh_load_word()
 	if from_pile:
 		pile = CoinPile.set_gold(pile, CoinPile.gold_of(pile) - it.price)
