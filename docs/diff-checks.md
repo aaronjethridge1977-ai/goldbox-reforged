@@ -172,6 +172,37 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 70: CURE BLINDNESS as check 123; a save made with a NEW_ECL pending (check 124); the Player's shortcut win in ours; DIFFCHECKS 124/124
+
+- **Check 123, the temple's CURE BLINDNESS** (main chat 68's lab check `chkblind`, now numbered; Combat Chat 34
+  landed the fix in temple_screen.gd): a blind member (effect 0x21 in his .SPC), the walk, YES, POOL, End x3, HEAL,
+  HEAL, YES (1000 gp), EXIT, SHARE, EXIT, NO, save. MATCH 3 of 3; on the code before the fix (4689ebf^) 41
+  differences.
+- **A save made while a NEW_ECL's arrival is pending loads in the 3D view** (Player 33's `p20a3_s11k`, fixed in
+  main.gd `load_original_save`, read in GAME.OVR, the Player's recording the evidence). The party left 7:17's
+  nomad camp after its waves: the NEW_ECL to 26 loaded 26's script but its arrival waits for the main loop
+  (0x442F; the view and menu stay 3D, chat 59), and the Player camped and saved there: image 26, 0x49F2 17, view
+  byte 1. The original's load runs the image's init (the main loop 0x403E skips the block load while LOAD's 0x49F8
+  is set) and **keeps the save's view**: only the arrival routine sets the wilderness view, from the block number
+  (0x3F4C: 25, 26, 27 -> 2, 3, 4); 26's init's `LOAD_AREA_MAP 5,5,0` doesn't. Ours turned the wilderness on at
+  that LOAD_AREA_MAP. Now the view after a load is the save's: 7:17's map at 0,0 W, 26's script running (one step
+  north: LARGE NOMAD CAMP ENTER/LEAVE), as the original. The Player's segment p20a4 (`begin nomads`) was 78
+  differences from its first keys; now its draws are identical for the 12069 ours played before segment.py's
+  900 s limit (the full run: the board). **Check 124** (the save as slot G, tpseed 70700001): load,
+  Right, Up (0,15 N: LARGE NOMAD CAMP, ENTER LEAVE), L (LEAVE: the 3D view stays, 0,15 N), save: MATCH 3 of 3; on
+  the code before the fix (3583e43^) and without the L it differs.
+- **The Player's logged shortcut win in ours' replay** (the Lead's Stage 1 item; lab key `shortcutwin`, main.gd):
+  the same write as tools/original_player game.py `_shortcut_win` (every monster HP 0, status dead, out of the fight,
+  no blows or spells), sent after the fight opens (`segment.py ... --ours-key=<n>:shortcutwin`). Segment 34 (p29f2:
+  the finale's 12 guards, then Tyranthraxus): draws identical to 801 (the shortcut's point); then the original's
+  party plays out the round against the "dead" figures, which stay on its map as targets (the hack skips the kill
+  routine that takes a fallen figure off the map), ELWEN and CEDRIC casting, while ours' have left the field. With
+  `GBR_PLAYOUT=1` (ours plays the round out and asks CONTINUE BATTLE) and 70 waits for the closing scene, statediff
+  at valjevo7 is 8: the wall-set cells match.py ignores and 4 from those casts (CEDRIC's and ELWEN's memorized
+  spells, Bless-type effect 2 on ARN and DORN, CEDRIC's 49). Ours applies the same state change; the parting is the
+  hack's artefact, not a game difference. (The bot's own shortcut is different again: `dev_auto_win` ends the fight
+  before any round, no CONTINUE BATTLE; unchanged, the Lead holds bot changes.)
+
 ## Chat 69: 5:5's poisonous hedge; the square left behind after a script moves the party; REMOVE CURSE on a member who isn't cursed; checks 121-122, DIFFCHECKS 122/122
 
 - **Check 121, 5:5's poisonous hedge** (ECL 5:5 0x9B4B: CUT THROUGH, `DAMAGE 128, 1, 1, 200, 0`, then CALL 0xC01E;
