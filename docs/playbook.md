@@ -6,6 +6,18 @@ General tactics for the Gold Box engine, learnt by the Player lane playing DOS P
 gives the source and a tag: *seen in the original* (seen in DOSBox runs) or *read in the code* (GAME.OVR, START.EXE or
 ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 
+## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
+
+- **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
+- **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
+- **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
+- **Loot to use, not junk:** take magic items, gems and jewellery, coins worth their weight, and anything else worth at least 100 GP; leave the rest (Jeremy, 2026-11-20).
+- **Loot projectiles to use:** keep enough arrows, quarrels and darts from treasure that the party never has to buy them (Jeremy, 2026-11-20).
+- **The thief fights from the back with a bow or crossbow,** stepping into melee only when it's safe or necessary (Jeremy, 2026-11-20).
+- **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
+- **Magic-users stay out of melee** except in an emergency or to finish incapacitated (sleeping, held) enemies, whom any blow slays (Jeremy, 2026-11-20).
+- **Clerics use slings when they need to fight from the rear,** even just for a while when wounded (Jeremy, 2026-11-20).
+
 ## Party and preparation
 
 - Fill every spell level before a hard fight, not just level 1. Until Player 27 the tool memorized only level-1 spells, so its casters fought from Sokal Keep onwards with level-2 and level-3 slots empty (Player 27, Stojanow REPORT; *seen in the original*).
