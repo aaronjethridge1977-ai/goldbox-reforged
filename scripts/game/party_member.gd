@@ -1054,10 +1054,14 @@ func can_take_item(it: GameItem) -> bool:
 ## (0x2570F) takes nothing at all when they don't ("OVERLOADED"); coins_room() is what still fits.
 ## (Combat Chat 29: both read the cached word, load_word, as the original does.)
 func can_take_coins(n: int) -> bool:
+	if not OriginalBugs.on():
+		return encumbrance() + n <= max_load()       # bug #10's fix: the load as carried
 	return ((load_word + n) & 0xFFFF) <= (max_load() & 0xFFFF)
 
 
 func coins_room() -> int:
+	if not OriginalBugs.on():
+		return maxi(max_load() - encumbrance(), 0)  # bug #10's fix
 	return maxi((max_load() & 0xFFFF) - load_word, 0)
 
 

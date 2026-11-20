@@ -942,6 +942,8 @@ func _sell_pay(m: PartyMember, price: int) -> String:
 	if not m.can_take_coins(plat + gold):
 		said = "OVERLOADED.  MONEY WILL BE PUT IN POOL."
 		var room := ((m.max_load() & 0xFFFF) - m.load_word) & 0xFFFF
+		if not OriginalBugs.on():
+			room = m.coins_room()      # bugs #9 and #10's fix: the load as carried, no wrap
 		if room <= plat:
 			m.money[4] += room
 			shop_pile_platinum += plat - room

@@ -60,6 +60,8 @@ static func share(party: Array[PartyMember], pile: PackedInt32Array) -> PackedIn
 			n += 1
 	if n == 0:
 		return pile.duplicate()
+	if not OriginalBugs.on():
+		return _share_fixed(party, pile, n)
 	var each := []
 	var rest := []
 	for c in 7:
@@ -93,6 +95,40 @@ static func share(party: Array[PartyMember], pile: PackedInt32Array) -> PackedIn
 			m.money[c] = (m.money[c] + give) & 0xFFFF
 			m.raise_load(give)
 			rest[c] -= give
+	var out := PackedInt32Array()
+	for c in 7:
+		out.append(rest[c])
+	return out
+
+
+## SHARE with ORIGINAL'S BUGS off (the original's bugs #9 and #10 fixed): the same order and remainder rules,
+## each member's room worked out from the load he carries (not the cached word) and never wrapping: one
+## at or over his ceiling takes nothing more and keeps what he has.
+static func _share_fixed(party: Array[PartyMember], pile: PackedInt32Array, n: int) -> PackedInt32Array:
+	var each := []
+	var rest := []
+	for c in 7:
+		each.append(pile[c] / n)
+		rest.append(pile[c] % n)
+	for m in party:
+		if m.npc >= 0x80:
+			continue
+		for c in range(6, -1, -1):
+			var fit := mini(int(each[c]), maxi(m.max_load() - m.encumbrance(), 0))
+			m.money[c] += fit
+			rest[c] = int(rest[c]) + int(each[c]) - fit
+			if fit == int(each[c]) and rest[c] > 0 and m.encumbrance() + int(rest[c]) <= m.max_load():
+				m.money[c] += 1
+				rest[c] -= 1
+		m.refresh_load_word()
+	for c in range(6, -1, -1):
+		for m in party:
+			if rest[c] <= 0:
+				break
+			var give := mini(int(rest[c]), maxi(m.max_load() - m.encumbrance(), 0))
+			m.money[c] += give
+			rest[c] -= give
+			m.refresh_load_word()
 	var out := PackedInt32Array()
 	for c in 7:
 		out.append(rest[c])
