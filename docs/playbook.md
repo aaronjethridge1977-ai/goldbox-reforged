@@ -8,6 +8,7 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 
 ## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
 
+- **Audit the party before every hard fight** (Jeremy, Methods 8, 2026-11-20): levels against the cluebook's expectations, the best gear readied, every spell slot full, magic items identified, junk sold. A failed audit means earning levels first; cheats are a last resort.
 - **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
 - **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
 - **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
