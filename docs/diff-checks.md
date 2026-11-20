@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140); DIFFCHECKS 140/140
+## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140), a band REST interrupted that fights (check 141); DIFFCHECKS 141/141
 
 - **Check 137, the camp's USE of a potion** (main path): check 130's start with ARN given a Potion of Giant Strength
   (the record from check 100's start: type 84, byte 61 = 82, the item spell 59; ARN's item count +0xC7 3 -> 4). In the
@@ -193,6 +193,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   cleric 5, 40000 experience); 3:11's clerics' room is 5,0 (through 6,0's west door; the magic-users' 7,0, east):
   YES, TRAIN: NOT ENOUGH EXPERIENCE (Pool's half-elf cleric cap, GAME.OVR 0x1C3F7-0x1C501, ours' race_capped).
   Matched at once; as a cleric 4 it trains (differs).
+- **Check 141, a band REST interrupted that fights** (main path): check 133's start (8:27, tpseed 35353535), REST 8
+  hours: YOU SURPRISE A GROUP OF GNOLLS, COMBAT (the party already on QUICK), 5642 draws identical, CONTINUE BATTLE NO,
+  93 XP each, DIRTEN at 0 HP, the treasure left. Matched at once. In the original's trace a fleeing gnoll is put back
+  on the square it left while the two free blows' d20s (GAME.OVR 0x2BBBF) are rolled, then steps on; ours rolls the
+  same two without that position (a logging difference: same draws, same end).
 - **Item type table** (DS:0x5582, 16 bytes a type): +0 the slot, +1 hands, +0xD the classes allowed (and-ed with the
   character's +0xB0); READY's results (GAME.OVR 0x22585-0x2274C): 1 "Wrong Class", 2 a slot taken.
 
