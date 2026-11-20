@@ -7,12 +7,13 @@ original's full run replayed in ours, one scoreboard.
   match.py run [-j N] [run ...] replay each recording in ours (segment.py <run> begin <checkpoint> --start=<save>
                                --tplog), line the draws up (the lab's cmpdraws.py) and keep both under LAB/match/;
                                then the scoreboard. About 5 min a recording; -j N runs N side by side, each in
-                               its own scratch lab (LAB/match_w/wK: own game copy and proj; Player 34)
+                               its own scratch lab (LAB/match_w/<pid>/wK: own game copy and proj; Player 34)
   match.py score [--md FILE]   the scoreboard from the kept outputs (no replay): X of N identical, by segment, and for
                                the rest the first differing roll and the state there, each labelled
   match.py baseline            write match/baseline.txt: the recordings identical now
   match.py gate [--run]        exit 1 if a recording identical in the baseline parts now (the release gate; --run
-                               replays the baseline's recordings on this checkout first: the build script's form)
+                               replays the baseline's recordings on this checkout first: the build script's form;
+                               OP_MATCH_JOBS=N for N side by side)
 
 A replay counts only when it ran to its end (ours' F2 line and statediff's "N differences" line in ours' log);
 otherwise it is NOT RUN, never identical (main chat 70). A recording is identical when its draws agree up to its
@@ -134,7 +135,7 @@ def worker_labs(n):
     import shutil
     labs = []
     for k in range(n):
-        w = os.path.join(LAB, "match_w", "w%d" % k)
+        w = os.path.join(LAB, "match_w", "%d" % os.getpid(), "w%d" % k)   # its own per run: two runs side by side
         shutil.rmtree(w, ignore_errors=True)
         os.makedirs(os.path.join(w, "root"))
         os.makedirs(os.path.join(w, ".lab", "player"))
@@ -182,6 +183,8 @@ def replay_all(rs, jobs=1):
         t.start()
     for t in ts:
         t.join()
+    import shutil
+    shutil.rmtree(os.path.join(LAB, "match_w", "%d" % os.getpid()), ignore_errors=True)
 
 
 def replay(r, lab=None):
@@ -329,9 +332,8 @@ def main():
             # the build script's form: replay the baseline's recordings on this checkout first (about 5 min each)
             if verify():
                 sys.exit("recordings changed since the manifest")
-            for r in recordings():
-                if r["run"] in base:
-                    replay(r)
+            # Player 34: OP_MATCH_JOBS=N replays N side by side (57 recordings: ~5 h one at a time, ~1.5 h with 4)
+            replay_all([r for r in recordings() if r["run"] in base], int(os.environ.get("OP_MATCH_JOBS", "1")))
         ign, lab = known()
         rs = {r["run"]: r for r in recordings()}
         broke = [(b, result(rs[b], ign, lab)) for b in base if b in rs]
