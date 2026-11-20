@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 73: the camp's USE of a Potion of Giant Strength (check 137); DIFFCHECKS 137/137
+## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138); DIFFCHECKS 138/138
 
 - **Check 137, the camp's USE of a potion** (main path): check 130's start with ARN given a Potion of Giant Strength
   (the record from check 100's start: type 84, byte 61 = 82, the item spell 59; ARN's item count +0xC7 3 -> 4). In the
@@ -182,6 +182,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   sheet and in the save. Ours the same (also the refusal with hands full). Matched at once; variants: without USE
   differs (STR 18), tpseed 11111115 differs (the effect's minutes 50). No potion of Healing exists in any save of the
   lab (only Giant Strength's record), so Healing's 2d4+2 stays without a check.
+- **Check 138, TRADE of a readied cursed item** (main path): check 131's start (THRENDER GRONE's readied Broad Sword -2):
+  TRADE says MUST BE UNREADIED (the bottom line, as DROP's) and nothing moves; there is no curse message, the readied
+  test comes first. Ours the same; matched at once.
 - **Item type table** (DS:0x5582, 16 bytes a type): +0 the slot, +1 hands, +0xD the classes allowed (and-ed with the
   character's +0xB0); READY's results (GAME.OVR 0x22585-0x2274C): 1 "Wrong Class", 2 a slot taken.
 
