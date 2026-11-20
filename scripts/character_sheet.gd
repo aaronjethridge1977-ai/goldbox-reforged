@@ -145,7 +145,9 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 	_note = ""
 	_message = ""
 	_pick = pick
-	_rng.randomize()
+	# From the global generator, which RECORD MY GAME's seed (main _seed_all) sets: a replay rolls the same
+	# dice (main chat 72: a camp scroll's d8 differed); random otherwise, as Godot seeds it at start.
+	_rng.seed = randi()
 	_measure()
 	if _scr == null:
 		_build()
