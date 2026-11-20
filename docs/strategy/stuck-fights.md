@@ -136,7 +136,26 @@ from `p34c1_s28g`, seeds 34050001-05, campcast Prayer before the stairs: **5 of 
   4. **The east tower** the same way, Hold Person on its magic-user first; LIRA's Fireball on the ettins and the mage.
   5. The patrol: PARLAY, HARASH / TYRANTHRAXUS. The 16 bugbears: Sleep, clouds, the line.
   6. Stop rule: 2 losses in the first 3 tries, levels first.
-  - **Results:** (the Player's lines here)
+  - **Results (Player 35, 2026-11-20; plans and saves in the lab's `p35/`, files to D: `.lab/stuck/stojanow/p35/`):**
+    - **The audit** (p35a1-a3, from `p34c1_s28g`): **movement was 3 for five of six** (ARN load 4500 against 3000
+      allowed: seven spare Long Bows each, spare Chain Mail, platinum). Dropped the plain spares: movement ARN, BRAM,
+      CEDRIC 9 (Banded Mail), ELWEN, LIRA, DORN 12. Bracers to DORN (AC 4 -> 2), Shield +1 to CEDRIC (AC -1 -> -2),
+      Chain Mail +1 to ELWEN, LIRA's Short Bow +1 readied (the Brass Mirror unreadied: a bow takes both hands). Knock x2
+      cast away in camp (LOSE IT? YES), Stinking Cloud x2 memorized for LIRA and ELWEN (`s35b`). *Seen:* TRADE to a
+      member holding 16 items fails silently (p35a1: drop first). *Seen:* the original swapped LIRA's bow back to her
+      sword once her readied arrows ran out (the spare stack stays unreadied).
+    - **p35b1 (seed 35020001), the west tower room: won, nobody dead** (CEDRIC unconscious, healed); the whole party on
+      QUICK (a plan slip left `tactics on` before the resume point): over in about two rounds. Read: **the audit** (the
+      same room was 5 of 5 lost at movement 3, p34e1-e5). Rested a day in the room (`s35w`).
+    - **The east tower's garrison comes to the party** at 4,5 on the way down (the level-6 magic-user, an aide, three
+      ettins; "THEY ADVANCE"). p35c3 (35030003): **party destroyed** (tool: Stinking Cloud never placed, Hold Person
+      out of reach, four Sleeps at one aide, fighters stopping a square short of the ettins; all fixed after). p35c4
+      (35030004): **won, nobody dead** (BRAM unconscious; the fighters' MOVE-attacks, LIRA's arrows at the mage) (`s35d`).
+    - **No way out before the gate:** from inside the wall (8,5) the only road out is the gate's bugbears (7,10), so
+      step 3's town trip (LIRA's MU5, owed since the west tower: 22,606 of 22,501) comes after the bugbears.
+    - **The patrol doesn't parley here:** a 6th-level fighter and five hill giants at 5,5, "THEY ADVANCE, WEAPONS
+      READY", menu COMBAT WAIT FLEE ADVANCE (no PARLAY). p35d3 (35040003, run capped by the Player's timeout in the
+      camp after): **won the patrol, then the 16 bugbears** (they came out to 8,7), nobody dead (BRAM unconscious).
 
 ## 3. The kobold king's throne room (8:13 4,3, event 9)
 

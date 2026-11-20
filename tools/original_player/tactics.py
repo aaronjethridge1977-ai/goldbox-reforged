@@ -307,6 +307,11 @@ class Tactics:
             return "y", "tactics: ABORT SPELL? YES (no target in reach)"
         if b.startswith("CHOOSE SPELL:") and self.order:
             return self._spell_list(st, p)
+        if b.startswith("AIM:") and not self.order and getattr(self, "shot", None) and "SPELL:" not in st["rows"][23]:
+            # Player 35 (p35d3: a bow shoots twice a round): AIM comes back for the second arrow
+            self.order, self.far, self.scan = [self.shot, "ATTACK", 0], True, None
+            self.shot = None
+            self.log("TACTICS %s's second shot" % self.order[0])
         if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK":
             if getattr(self, "far", False):
                 return self._aim_shoot(st, p)
@@ -343,6 +348,7 @@ class Tactics:
         member = scr.get("member", "")
         self.order = None
         self.scan = None
+        self.shot = None
         try:
             figs, party, foes = self._sides(p)
             self.log("TACTICS state at %s's menu: party %d up %d HP; enemies %d up %d HP (%s)" % (
@@ -589,6 +595,7 @@ class Tactics:
             sc["goal"] = (ok[0]["name"], ok[0]["hp"])
         if sig == sc["goal"] and can:
             self.log("TACTICS %s shoots figure %d %s (%d HP)" % (member, cur["n"], cur["name"], cur["hp"]))
+            self.shot = member
             self.order, self.reach[member], self.idle[member] = None, "hit", 0
             return "t", "tactics: %s shoots figure %d" % (member, cur["n"])
         return "n", "tactics: %s's shot: to %s (at %s)" % (member, sc["goal"], sig)

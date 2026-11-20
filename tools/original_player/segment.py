@@ -207,7 +207,10 @@ def main():
         ca = index(run, a)
     install(ca)
     seed = ca[4].split()[1]
-    ks = ["load=" + SLOT, "tpseed=" + seed] + keys_between(run, a, b, magic, tplog, extra) + ["wait", "F2"]
+    # Player 35 (main chat 72, p16d1): OP_CAMPEND=1 (match/replay.txt): the original's checkpoint save is made in camp,
+    # and ENCAMP runs the area's rest block (8:29's CALL 0xC018 rewrites the wall ahead): ours ENCAMPs and EXITs too
+    camp = ["e", "wait", "wait", "e", "wait", "wait"] if os.environ.get("OP_CAMPEND") == "1" else []
+    ks = ["load=" + SLOT, "tpseed=" + seed] + keys_between(run, a, b, magic, tplog, extra) + ["wait"] + camp + ["F2"]
     cfg = os.path.join(LOGS, "%s.segment_%s-%s.cfg" % (run, a, b))
     shutil.copy(os.path.join(orig.LAB, "qs.cfg"), cfg)
     G = os.path.join(orig.LAB, "godot", "Godot_v4.7.2-stable_linux.x86_64")
