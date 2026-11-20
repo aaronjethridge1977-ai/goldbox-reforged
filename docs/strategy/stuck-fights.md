@@ -62,6 +62,23 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
   first would cancel the army (0x4A26 empties the hall), but his rooms are only reachable across the army's squares
   (7-8,4-5; GEO4 block 21). (6) **Jeremy's line rule** (playbook Inbox): GUARD only when no enemy can be reached;
   otherwise the fighters close and form a line of four, or three with the fourth covering the corner.
+- **Plan 1 (Jeremy approved 2026-11-20 15:01; Gold Box Guide 2):**
+  - **Tool first:** the Hold Person fix (all three picks) and the line step (board requests).
+  - **A detour, then train:** Kuto's Well (won deathless at level 3, p16d1) and mop-up fights until ELWEN reaches
+    C2 (354 to earn) and LIRA F2 (170); then train every owed level (ARN F4, BRAM F4, DORN F2, ELWEN C2, LIRA F2),
+    each checked on the character sheet. The audit table (playbook section 4) before stepping in.
+  - **Gear:** ARN's Bracers AC 6 to DORN (AC 4 -> 2, he stands in the line); BRAM's spare Shield to LIRA; identify
+    LIRA's two Short Bows (the Slums' +1s?) and ready a bow for LIRA and ELWEN behind the line; movement 6+ for all.
+    BRAM's Stinking Cloud scroll waits for magic-user 3 (a 2nd-level spell).
+  - **Spells:** both magic-users Sleep; CEDRIC Hold Person in every 2nd-level slot (3), Bless and cures at 1st;
+    Bless cast in camp at 9,5, then step W.
+  - **In the fight:** round 1, ARN, BRAM, CEDRIC and DORN close into a short line of four in the doorway (or three
+    and one covering the corner; GUARD only when no enemy can be reached); ELWEN and LIRA behind it Sleep the
+    thickest clump coming at the line (aimed two squares off); CEDRIC's Hold Person on the orc leaders, then the
+    archers in reach. Fighters: the helpless first (one blow), then the leaders. Back rank: bows at leaders and
+    archers (the archers run dry after about 4 rounds, *book*).
+  - **Stop rule:** 2 losses in the first 3 tries: more levels first, then come back.
+  - **Results:** (the Player's lines here)
 
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
 

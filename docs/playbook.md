@@ -207,6 +207,19 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 
 **What the game gives the casters** (Pool; *code*: START.EXE class tables, read 2026-11-20)
 
+**A spell's level needs a caster level** (*Jeremy*, 2026-11-20, Gold Box Guide 2; *code*: the slot tables below)
+
+| Spell level | Cleric level | Magic-user level | Examples |
+|---|---|---|---|
+| 1st | 1 | 1 | Bless, Cure Light Wounds; Sleep, Magic Missile, Shield |
+| 2nd | 3 | 3 | Hold Person (cleric), Spiritual Hammer; Stinking Cloud, Mirror Image |
+| 3rd | 5 | 5 | Prayer, Dispel Magic; Fireball, Lightning Bolt, Haste, Slow, Hold Person (magic-user) |
+| 4th+ | 7 | 7 | beyond Pool's caps (cleric 6, magic-user 6): Curse of the Azure Bonds on |
+
+A multi-class casts by its level in that class: a fighter 5 / magic-user 4 has second-level spells, not Fireball.
+Whether a magic-user can copy a scroll's spell above its level into the spellbook, or cast it from the scroll:
+**unconfirmed** (request to Combat).
+
 | Level | Cleric (before Wisdom) | Cleric, Wisdom 17-18 | Magic-user |
 |---|---|---|---|
 | 1 | 1 | 3 | 1 |
