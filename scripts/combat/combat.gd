@@ -2799,7 +2799,11 @@ func _bolt_hit(p: Vector2i, dmg: int) -> bool:
 
 
 ## The bolt's walk on from `aim` (0x29973): see _breathe. `from` is the caster's square.
-func _bolt(from: Vector2i, aim: Vector2i, reach: int, dmg: int) -> void:
+## `hit(cell) -> bool` (the wall flag) replaces the breath's _bolt_hit for a spell's bolt; `first` is the
+## routine's first-bounce flag (Lightning Bolt passes 1, the breath 0: 0x29B79): at the first wall, when the
+## caster stands 8 steps or fewer from it, 8 more steps are spent.
+func _bolt(from: Vector2i, aim: Vector2i, reach: int, dmg: int, hit: Callable = Callable(),
+		first := false) -> void:
 	if from == aim:
 		return
 	var budget := reach * 2
@@ -2825,8 +2829,15 @@ func _bolt(from: Vector2i, aim: Vector2i, reach: int, dmg: int) -> void:
 			var ground2: int = field.tile(cur.x, cur.y) if field != null else 1
 			if ground2 <= 0:
 				budget = 0
-			var wall := _bolt_hit(cur, dmg)
+			var wall: bool = hit.call(cur) if hit.is_valid() else _bolt_hit(cur, dmg)
 			if wall:
+				if first:
+					var back := _walker(cur, from)
+					while _walk_step(back):
+						pass
+					if int(back.steps) <= 8:
+						w.steps = int(w.steps) + 8
+				first = false
 				aim = cur
 				sgn = -sgn
 				last = -1

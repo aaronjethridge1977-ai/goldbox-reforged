@@ -42,9 +42,9 @@ extends RefCounted
 ##   the spell ("IS SILENCED"). Protection from Normal Missiles (0x29): missiles without a
 ##   plus are avoided (SpecialAffects.weapon_damage). Haste ages its target a year, once
 ##   ("AGES", handler 0x27).
-## Not yet: Stinking Cloud's lasting cloud, Lightning Bolt bouncing off walls (it runs
-## straight), Spiritual Hammer's weapon, Charm Person lasting beyond the fight, Blink,
-## Silence's own area and save.
+## Lightning Bolt walks the breath's bolt and bounces off walls (Combat Chat 36); Stinking Cloud's
+## cloud (Combat Chat 34). Not yet: Spiritual Hammer's weapon, Charm Person lasting beyond the fight,
+## Blink, Silence's own area and save.
 
 const EFFECT_BLESS := 1
 const EFFECT_CURSE := 2
@@ -434,6 +434,19 @@ func prayer(m: PartyMember) -> int:
 	return 0
 
 
+## Lightning Bolt's hit on one square (GAME.OVR 0x298D4 with the spell's save, type 4): the figure there,
+## the caster too, saves for half and takes the damage (0x2C22E, the spell being cast). True at a wall.
+func _bolt_square(i: int, id: int, p: Vector2i, dmg: int, lvl: int) -> bool:
+	var j := c.occupant(p)
+	if j >= 0:
+		var t: PartyMember = c.combatants[j].who
+		var hit := dmg
+		if save(t, table.field(id, 9), element_save_bonus(t, kind_of(id)), c.combatants[i].who):
+			hit /= 2
+		_damage(i, id, j, hit, lvl)
+	return c.field != null and c.field.tile(p.x, p.y) > 0 and not c.field.walkable(p.x, p.y)
+
+
 ## Whether `t` throws off Sleep, Charm, Hold or poison (SpecialAffects.blocks).
 func resists(t: PartyMember, type: int) -> bool:
 	return SpecialAffects.blocks(t, type, func(): return c.roll(1, 100, "%s resists" % t.name),
@@ -759,6 +772,14 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			c.message.emit("%s IS DUPLICATED" % m.name)
 		47, 51, NECKLACE:   # Fireball, Lightning Bolt: the caster's level in d6, half on a save
 			var dmg := c.roll(lvl, 6, "%s damage" % (table.name_of(id).to_lower()))
+			if id == LIGHTNING:
+				# Combat Chat 36 (GAME.OVR 0x29BCF; the spell lab's lb1, BAKSHI hit by his own bolt): the
+				# breath's bolt routines, the aim square first (0x298D4), then the walk from it, 8 squares'
+				# worth, bouncing off walls (0x29973 with the first-bounce flag).
+				var hit_one := func(p: Vector2i) -> bool: return _bolt_square(i, id, p, dmg, lvl)
+				hit_one.call(_cast_cell)
+				c._bolt(me.cell, _cast_cell, 8, dmg, hit_one, true)
+				return
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				var hit := dmg
