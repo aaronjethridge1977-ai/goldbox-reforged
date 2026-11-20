@@ -163,6 +163,11 @@ class Tactics:
             return None
         mages = sorted([f for f in foes if _is_mage(f)], key=lambda f: f["hp"])
         persons = [f for f in foes if not _is_large(f)]
+        if spell in ("HOLD PERSON", "STINKING CLOUD", "SLEEP"):
+            # Player 32 (p32a1: Sleep thrown at 4:10's skeletons): the undead take no Sleep, Hold or poison cloud
+            foes = [f for f in foes if not _is_undead(f)]
+            mages = [f for f in mages if not _is_undead(f)]
+            persons = [f for f in persons if not _is_undead(f)]
         if spell == "HOLD PERSON":     # the mages first, then other persons (not large creatures)
             return [f["n"] for f in mages if f["n"] not in self.held] + \
                 [f["n"] for f in persons if f["n"] not in self.held and not _is_mage(f)]
