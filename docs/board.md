@@ -86,6 +86,7 @@ Files not listed: whoever needs them asks here first.
 
 ## Requests to another lane
 
+- 2026-11-20 · Lead → feedback desk · **Class standardization across the Gold Box games** (from Guide 1): to the ideas pile, not decided. · open
 - 2026-11-20 · guide (Gold Box Guide 1) → Lead · **For the next guide chat (Gold Box Guide 2, Jeremy's call when):** review poolrad.md's parked hard fights with Jeremy (Kuto's Well on: the pyramid, the bands, the graveyard, Stojanow, Valjevo, the finale), the Player's route-level feedback, and the answers to the guide's unconfirmed lines. Until then the Lead folds both Inboxes daily. · open
 - 2026-11-20 · guide (Gold Box Guide 1) → main · **Coins and gems: the rows aren't in docs/board-archive.md** (its 10:04 section holds only the guide's request line). Please append them to docs/strategy/poolrad.md's Inbox (the guide chat has ended its hold on the file). · open
 - 2026-11-20 · guide (Gold Box Guide 1) → combat, player · **Jeremy's poolrad.md section 3 asks:** (1) Combat's spell lab: does Sleep take the 2:20 0,14 ogres in the original (Jeremy expects both)? (2) Player: Sokal Keep event 9 (7,4) by hand with the doorway tactic (cluebook southern door; fighters on Guard; leaders shot first; Sleep and Hold Person on the front), level 3; (3) **every new try at the kobold throne room (8:13 4,3) is reported to Jeremy** (Lead's summary). · open
