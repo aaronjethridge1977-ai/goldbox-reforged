@@ -172,13 +172,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 74: the shop's SELL of a readied item (check 143); DIFFCHECKS 143/143
+## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144); DIFFCHECKS 144/144
 
 - **Check 143, SELL of a readied item** (main path): check 132's start (3:0's arms and armour shop, tpseed 11111111).
   In the original (DOSBox): VIEW, ITEMS, SELL with ARN's readied Long Sword lit does nothing (no message on the bottom
   line, grabbed at once, 0.3 s and 0.7 s; the list unchanged), as ours (`character_sheet.gd`: SELL only of an unreadied
   item); READY unreadies it, SELL: I'LL GIVE YOU 7 GOLD PIECES FOR YOUR LONG SWORD, YES, the sword gone and 7 gp to
   ARN. Matched at once, 3 of 3; without the READY it differs (ARN's coins).
+- **Check 144, the temple's CURE DISEASE** (main path): check 136's start (3:0, the walk to Tyr's temple) with
+  THRENDER GRONE given a mummy's disease in his CHRDATG1.SPC: 0x32 (14400 minutes, power 255) and 0x39 (43200 minutes,
+  0x3F: 3 months). In the original: POOL, HEAL, End, HEAL: CURE DISEASE WILL ONLY COST 1000 GOLD PIECES, YES: both
+  effects gone (the other standing effects kept), as ours (`SpecialAffects.cure_disease`). Matched at once, 3 of 3; a
+  variant with a standing 0x24 added to ours' start only differs (statediff compares the effects).
 
 ## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140), a band REST interrupted that fights (check 141), the camp's ALTER ORDER (check 142; statediff compares the party's order); DIFFCHECKS 142/142
 
