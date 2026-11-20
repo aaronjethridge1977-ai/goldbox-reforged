@@ -29,6 +29,7 @@
                                  the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
   picks <NAME> <spell>, ...      (Player 30) `prepare` / `heal` memorize these first for the member (known spells, in
                                  order, while their level has a free slot), then the bot's picks in the rest
+  advance <NAME>,...|none        (Player 35) a step: who MOVEs toward the enemy when nothing is in reach (OP_ADVANCE)
   learn <spell>, ...             (Player 35) a magic-user's new spell at training: these first, then LEARN_ORDER
   drop <NAME> <words>*<n>, ...   (Player 35) several drops in one VIEW (`<words> +0`: a plain one, matched on the plus)
   tactics on|off                 (Player 30) a step: from here the casters get orders by hand in fights (tactics.py:
@@ -787,6 +788,22 @@ def picks(m, M=None):
         for k in range(n):
             out.append(SPELL_NAMES[known[k % len(known)]])
     return out
+
+
+class Advance:
+    """Player 35: `advance <NAME>,<NAME>|none`: from here, the members who MOVE toward the enemy when nothing is in reach
+    (tactics.ADVANCE; Jeremy's line rule); `none`: everyone holds (Sokal's doorway)."""
+    def __init__(self, names):
+        self.names = [] if names.strip().lower() == "none" else [n.strip().upper() for n in names.split(",") if n.strip()]
+
+    def __repr__(self):
+        return "advance %s" % (",".join(self.names) or "none")
+
+    def next(self, p):
+        import tactics
+        tactics.ADVANCE[:] = self.names
+        p.note("tactics", "advance: %s" % (",".join(self.names) or "none"))
+        return True, None, ""
 
 
 class Exit:
@@ -1996,6 +2013,8 @@ def load(path):
             w2 = rest.split()
             pl.goals.append(ShortcutWin(area_of(w2[0]), tuple(int(v) for v in w2[1].split(",")),
                                         int(w2[2]) if len(w2) > 2 else 1))
+        elif cmd == "advance":    # Player 35: `advance <NAME>,<NAME>|none`
+            pl.goals.append(Advance(rest))
         elif cmd == "learn":      # Player 35: `learn <spell>, <spell>`: a magic-user's new spell at training
             LEARN_FIRST[:0] = [x.strip().upper() for x in rest.split(",") if x.strip()]
         elif cmd == "picks":      # Player 30: `picks <NAME> <spell>, <spell>`

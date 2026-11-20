@@ -417,10 +417,13 @@ class Tactics:
         if self.reach.get(member) == "none":
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
-            if member.upper() in ADVANCE and "MOVE" in items and me is not None and foes \
-                    and member not in self.moved:
-                # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack
-                goal = min(foes, key=lambda f: (not helpless(f), _dist(me, f)))
+            goal = min(foes, key=lambda f: (not helpless(f), _dist(me, f))) if me is not None and foes else None
+            if member.upper() in ADVANCE and "MOVE" in items and goal is not None and member not in self.moved \
+                    and _dist(me, goal) <= 8 and self.idle.get(member, 0) < 8:
+                # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack; not
+                # past 8 squares nor after 8 turns without a blow (p35g2: two zombies 21 squares off behind walls,
+                # the greedy steps went round in circles): then GUARD, then QUICK (the computer finds the way)
+                self.idle[member] = self.idle.get(member, 0) + 1
                 self.moved.add(member)
                 self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None}
                 self.log("TACTICS %s moves toward figure %d %s (%d squares)" % (member, goal["n"], goal["name"],

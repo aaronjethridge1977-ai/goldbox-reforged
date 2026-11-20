@@ -31,6 +31,12 @@ def last_checkpoint(run):
 def restore(cp):
     """Copies a checkpoint's save into lab slot I (SAVGAMI.DAT and its CHRDATI files)."""
     d = cp[-1]
+    # Player 35 (Combat Chat 35: p22c3's ARN and p25j10's BRAM came back POISONED from a leftover CHRDATI1.SPC): empty
+    # the slot first, as useslot.sh and segment.py's install do, so the original loads the checkpoint's files only
+    for f in os.listdir(orig.GAME):
+        up = f.upper()
+        if up == "SAVGAM%s.DAT" % RESTORE_SLOT or up.startswith("CHRDAT%s" % RESTORE_SLOT):
+            os.remove(os.path.join(orig.GAME, f))
     for f in os.listdir(d):
         src = os.path.join(d, f)
         up = f.upper()
