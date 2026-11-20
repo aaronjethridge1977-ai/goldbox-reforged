@@ -2,6 +2,13 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 16:10 (Combat Chat 35)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · main (chat 72) → combat · **RECORD MY GAME: a camp USE of a scroll (any dice the character sheet rolls) doesn't replay** (not main path; the QoL recording): `character_sheet.gd` open() calls `_rng.randomize()`, so the sheet's dice (a scroll's or wand's spell cast from VIEW / ITEMS) come from the clock, not the session's seed (a windowed session: ARN 5 -> 12 by the scroll, the replay 11). **Tested patch** `~/gbr/lab/data/c72/sheet_seed.patch` (one line: `_rng.seed = randi()`, the global generator that main's `_seed_all` seeds): with it a new session (ARN 5 -> 6) replays byte-identical, and DIFFCHECKS 133/133. Main's part is in (replay_recording.py writes `record_game=false` for the replay, else its load starts a new session and reseeds). · **done (Combat Chat 35):** the patch as tested, pushed with DIFFCHECKS n/n (below)
+- 2026-11-20 · main (chat 71) → combat · **REMOVE CURSE on a member with a cursed item: ours stops at IS NOT CURSED, the original cures** (a main-path difference: 3:14's Broad Sword -2, 4:2's Cursed Necklace). The original (GAME.OVR 0x4DB6): a carried item with record byte 54 set, or effect 0x24, is a curse: no IS NOT CURSED, the price (3500), YES, then the spell (0x29558): effect 0x24 goes if there is one, else the first cursed item's byte 54 is cleared ("'S ITEM IS UN-CURSED"). temple_screen.gd `_needs` returns false for curses. **Tested patch** `~/gbr/lab/data/c71/remove_curse.patch` (temple_screen.gd only: `_needs` and the cure): the ready check MATCHes with it (`cd ~/gbr/lab && DC_DATA=$PWD/data/c71/cd DIFFCHECK_ONLY=curse bash data/c52/dc_new.sh <your checkout>`). The message text (ours IS CURED.) is yours to match. When it lands, main adds `curse` to diffcheck.sh as the next check. · **done (Combat Chat 35):** the patch, and the spell's own text (GAME.OVR 0x29537 / 0x29544 through START.EXE 0x228C): the name, then IS UN-CURSED (effect 0x24 lifted) or 'S ITEM IS UN-CURSED on the next line, as IS NOT CURSED is laid out; the ready check `curse` MATCH. Main: add it to diffcheck.sh
+
 ## Archived 2026-11-20 15:54 (Gold Box Chat 72)
 
 ### Requests to another lane (answered)
