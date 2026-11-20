@@ -222,7 +222,13 @@ func _needs(m: PartyMember, i: int) -> bool:
 			return m.has_affect(SpellCaster.POISONED)
 		"CURE BLINDNESS":
 			return m.has_affect(BLIND)
-	return false   # curses: not modelled yet
+		"REMOVE CURSE":
+			# GAME.OVR 0x4DB6: a carried item with its curse byte (record 54) set, or effect 0x24.
+			for it in m.items:
+				if it.cursed:
+					return true
+			return m.has_affect(0x24)
+	return false
 
 
 func _pay() -> void:
@@ -271,6 +277,37 @@ func _pay() -> void:
 				if int(b.effect) == BLIND:
 					m.affects.erase(b)
 					break
+		"REMOVE CURSE":
+			# GAME.OVR 0x29558 (the spell): effect 0x24 goes if there is one, else the first carried
+			# item with its curse byte set loses it ("'S ITEM IS UN-CURSED").
+			var gone := false
+			for b in m.affects:
+				if int(b.effect) == 0x24:
+					m.affects.erase(b)
+					gone = true
+					break
+			var said := ""
+			if gone:
+				said = "IS UN-CURSED"
+			else:
+				for it in m.items:
+					if it.cursed:
+						it.cursed = false
+						said = "'S ITEM IS UN-CURSED"
+						break
+			# The spell's own text (GAME.OVR 0x29537 / 0x29544 through START.EXE 0x2B8B -> 0x228C: out of
+			# combat the name on one line, the text on the next, as IS NOT CURSED), not "IS CURED.";
+			# nothing when there was nothing to lift (CAST CURE ANYWAY). The original then holds and
+			# clears the box (0x709:0xDBE, 0x2383); ours keeps it until the next key.
+			if said == "":
+				_lines = []
+				_note.text = ""
+			else:
+				_lines = [["", GameScreen.GREEN], [m.name, GameScreen.CYAN], [said, GameScreen.GREEN]]
+				_note.text = "%s %s" % [m.name, said]
+			_mode = "list"
+			_refresh()
+			return
 		"NEUTRALIZE POISON":
 			for b in m.affects.duplicate():
 				if int(b.effect) in [SpellCaster.POISONED, SpellCaster.SLOWED_POISON, SpellCaster.POISON_TICK]:
