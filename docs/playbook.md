@@ -21,8 +21,9 @@ the old playbook below "Not yet folded in" is still in force until its lines mov
 **Shape**
 - **Six characters.** Count story NPCs as a bonus when they join, not as part of the plan. *Jeremy* The game allows up
   to 2 NPCs beyond the six. *book* (Manual)
-- **Build for the whole series.** Characters carry over from game to game, so a party should still work in the last
-  game, not just the first. Check each game's level caps and race limits before settling the six. *Jeremy*
+- **Build for the game at hand;** before importing a party into the next game, check that game's race and level limits.
+  Carrying one party through the whole series is not the goal; importing a finished party is a feature to test. *Jeremy*
+  (2026-11-20)
 - **Roles to cover within the six:** about four members who can fight in the line, two cleric casters, two magic-user
   casters, two bows and a thief. Multi-classes let one member fill two roles. Give one member exceptional Strength.
   *book* (Cluebook)
@@ -72,8 +73,27 @@ the old playbook below "Not yet folded in" is still in force until its lines mov
   - Darts for rounds with no spell worth casting; don't spend them in fights that don't matter. *Jeremy*
   - (Pool) Weapons: dagger and staff. *book* (Manual) Darts too by our code read (ITEMS), which the manual omits:
     **unconfirmed** (request to Combat).
-- **Race note for the series:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter
-  caps differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual)
+- **Before importing:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter caps
+  differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual) Players report the racial limits still
+  hold in Pools of Darkness while humans go far higher, which makes demi-humans weak there. *players*
+  ([GameBanshee](https://gamebanshee.com/poolsofdarkness/walkthrough/gameplaynotes.php),
+  [GOG forum](https://gog.com/forum/forgotten_realms_collection/pool_of_radiance_lvl_draining)) Pools of Darkness's
+  human cap (40 or 18; the sources disagree): **unconfirmed**.
+
+**Example party for Pool** (Jeremy, 2026-11-20)
+
+| # | Character | Line | Bow | Spells | Notes |
+|---|---|---|---|---|---|
+| 1 | Human fighter, exceptional Strength | yes | yes | | the anchor |
+| 2 | Dwarf fighter/thief | yes | yes | | the thief; fighter cap 9 |
+| 3 | Human cleric | yes | | cleric | |
+| 4 | Human cleric | yes | | cleric | |
+| 5 | Elf fighter/magic-user | yes | yes | magic-user | fighter cap 7, magic-user 11 |
+| 6 | Human magic-user | | | magic-user | |
+
+Five in the line, three bows, two clerics, two magic-users and a thief. A party that leans on multi-classed demi-humans
+(half-elf cleric/fighters, elf fighter/magic-users) is stronger early in Pool but stops early (a half-elf cleric at 5:
+*players*, [GameBanshee](https://www.gamebanshee.com/poolofradiance/races.php); **unconfirmed** in the game).
 
 ---
 

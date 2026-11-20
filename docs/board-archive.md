@@ -1012,6 +1012,14 @@ Later: luck scoring; regression from Player saves; screens compared; Curse of th
 
 
 ## Rule changes (archived)
+- 2026-11-20 · combat (Combat Chat 33) · **A held figure's turn ends its guard and its spell being cast** (sleep, hold, snake charm, nausea: handler 0xFF9A -> turn end 0xBA:0x2637) · fights with held guards; Hold Person, Sleep.
+- 2026-11-20 · combat (Combat Chat 33) · **Enemies that surrendered this round stay counted after another enemy falls** (a fall only decrements, START.EXE 0x2EA2) · the computer's spell and item weighing late in a fight.
+- 2026-11-20 · combat (Combat Chat 33) · **An area spell's figures in order nearest the aim point** (0x3045B from the aim, 0x14A64; was figure order) · Haste / Slow's figures, the order of saves and messages in Sleep, Stinking Cloud, Fireball.
+- 2026-11-20 · combat (Combat Chat 33) · **Haste and Slow scale half-attacks before the round's rounding**: a slowed one-attack figure strikes every other round (was never); Haste/Slow's add draws a half-elf's or elf's resist d100 (0x2C540) · fights with Haste or Slow.
+- 2026-11-20 · combat (Combat Chat 33) · **LOST A SPELL keeps the spell in the caster's memory**; the figure whose turn it is loses a copy if it has one (START.EXE 0xBA:0x148B) · casters wounded while casting.
+- 2026-11-20 · combat (Combat Chat 33) · **Stinking Cloud's made save: "IS COUGHING", no spell or item for the round, AC = rear AC + 2 (10 at most)** (effect 0x1E, handler 0xF6C0; read in the code, the message seen) · fights with Stinking Cloud.
+- 2026-11-20 · combat (Combat Chat 33) · **The shop's BUY works the buyer's load word out** (0x6F0D) · TAKE / POOL after a purchase (Player 32's segment 1).
+- 2026-11-20 · combat (Combat Chat 33) · **TURN leaves the fight menu once the member turned this fight** (0x9F89) · display; the Player's tactics see the same menu as the original.
 - 2026-11-20 · combat (Combat Chat 32) · **Stinking Cloud's made save reads STARTS TO COUGH** (GAME.OVR 0x2BAC0; was IS COUGHING) · display only.
 - 2026-11-20 · combat (Combat Chat 32) · **The mini-map repaints when the party grows** (`automap.gd`: it repainted only when the walking screen showed or hid, so a party of 7 or 8 loaded while walking kept the 6-member window over members 7 and 8) · display only.
 - 2026-11-20 · combat (Combat Chat 32) · **A shop's SELL pays as the original** (`character_sheet.gd` `_sell_pay`, GAME.OVR 0x22E47): price/5 platinum + price%5 gold; when the seller's cached load word can't take them, only the room left (16-bit) in platinum goes to him and the rest on the shop's pile, with "OVERLOADED.  MONEY WILL BE PUT IN POOL."; the gold always; "SOLD!" otherwise. Was: all to the seller, no message. · may affect: shop visits with heavy sellers (the exit's GO BACK question now comes as in the original); p27d3 all 143 draws.
