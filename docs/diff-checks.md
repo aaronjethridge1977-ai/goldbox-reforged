@@ -172,6 +172,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 73: the camp's USE of a Potion of Giant Strength (check 137); DIFFCHECKS 137/137
+
+- **Check 137, the camp's USE of a potion** (main path): check 130's start with ARN given a Potion of Giant Strength
+  (the record from check 100's start: type 84, byte 61 = 82, the item spell 59; ARN's item count +0xC7 3 -> 4). In the
+  original (DOSBox, tpseed 11111111): VIEW, ITEMS; with sword and shield readied, READY of the potion is refused (no
+  message to be seen) and USE of an unreadied potion does nothing; the shield unreadied, READY, USE: one d4 (GAME.OVR
+  0x2783D: 2), the potion gone without a message, effect 0x26 for 70 minutes (3 x 10 + 40; power 101), STR 21/00 on the
+  sheet and in the save. Ours the same (also the refusal with hands full). Matched at once; variants: without USE
+  differs (STR 18), tpseed 11111115 differs (the effect's minutes 50). No potion of Healing exists in any save of the
+  lab (only Giant Strength's record), so Healing's 2d4+2 stays without a check.
+- **Item type table** (DS:0x5582, 16 bytes a type): +0 the slot, +1 hands, +0xD the classes allowed (and-ed with the
+  character's +0xB0); READY's results (GAME.OVR 0x22585-0x2274C): 1 "Wrong Class", 2 a slot taken.
+
 ## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133), USE of a combat-only wand in camp (check 134), a race-capped fighter at the hall (check 135), REMOVE CURSE on a cursed item (check 136, Combat's fix); DIFFCHECKS 136/136
 
 - **p22c2's wall ahead (original 1, ours 0): fixed** (`ecl_vm.gd` CALL 0xC018). DOSBox from a jump save to 1:18 1,4 W
