@@ -94,6 +94,10 @@ run orig_A_c34_hand_slsp1 0 ./combat34/handreg.sh sl_spec 11111111 "" up 3 1
 run orig_A_c34_hand_scsp1 0 ./combat34/handreg.sh sc_spec 11111111 "" up 2 1
 run orig_A_c34_hand_tukob1 0 env OURS_SEED=1 ./combat34/handreg.sh tu_kob 11111111 up up 1 1:1
 run orig_A_c34_hand_tusp1 0 ./combat34/handreg.sh tu_spec 11111111 "" up 1 1:1
+# Combat Chat 36: Lightning Bolt by hand (BAKSHI, MU 4, 21 bolts memorized) in the net trap: the bolt bounces off the
+# walls (lb1: BAKSHI hit by his own); lb2 ends as the original only with the round played out (GBR_PLAYOUT=1).
+run orig_A_c36_hand_lb1 0 env OURS_SEED=1 ./combat34/handreg.sh lb_kob1 33333333 up up 10 1
+run orig_A_c36_hand_lb2 0 env GBR_PLAYOUT=1 OURS_SEED=1 ./combat34/handreg.sh lb_kob1 44444444 up up 3 1
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
 # Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678
