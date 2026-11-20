@@ -2,7 +2,8 @@
 everyone, the tool gives the casters their orders by hand, guided by docs/playbook.md: Prayer and Bless before
 contact, Hold Person on the enemy magic-users (persons; not on large creatures), Stinking Cloud on bunched enemies away
 from the party, Magic Missile on the magic-users, Sleep on low-level persons; anyone with nothing worth casting goes
-on QUICK (and stays QUICK for the fight).
+on QUICK (and stays QUICK for the fight). Player 31 (the Lead's advice): anyone with nothing to cast attacks by hand
+instead (helpless enemies first: a blow slays them), or GUARDs when nothing is in reach (README "Player 31").
 
 Plan line `tactics on` / `tactics off` (a step). While on, game.py presses Space at the fight's first poll (the
 original hands every QUICK party member back to the player: GAME.OVR 0xBC26, as ours' combat_screen.gd), then each
@@ -42,8 +43,29 @@ def figures(mem):
             break
         r = mem.far(seg, off, 0x120)
         out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
-                    "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1]})
+                    "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r)})
     return out
+
+
+def effects(mem, r):
+    """Player 31: a record's standing effects (types): the far pointer at +0x7F, 9-byte entries (type, minutes u16,
+    power, ?, next far pointer at +5) (ai-business-ideas research/pool-of-radiance-formats.md; README "Player 31")."""
+    out = []
+    off, seg = struct.unpack("<HH", r[0x7F:0x83])
+    while seg and len(out) < 24:
+        a = mem.far(seg, off, 9)
+        out.append(a[0])
+        off, seg = struct.unpack("<HH", a[5:9])
+    return out
+
+
+# the effects that leave a figure helpless (any blow slays it; it strikes nobody): snake charm, paralysis (Hold
+# Person), sleep, helpless (Stinking Cloud) (DS:0x286C; ours' combat_spells.gd HELD)
+HELPLESS = (0x33, 0x34, 0x35, 0x1F)
+
+
+def helpless(f):
+    return f["hp"] > 0 and f["status"] == 0 and any(e in HELPLESS for e in f.get("fx", ()))
 
 
 def aim_list(mem):
@@ -78,6 +100,9 @@ class Tactics:
         if os.environ.get("OP_TACTICS") == "horde":
             # Player 30: a horde of small figures (the kobold king): the area spells first
             self.priority = ("SLEEP", "STINKING CLOUD", "PRAYER", "HOLD PERSON", "BLESS", "MAGIC MISSILE")
+        # Player 31: the Lead's advice: members with nothing to cast attack by hand (helpless enemies first);
+        # OP_MELEE=0 keeps Player 30's QUICK
+        self.melee = os.environ.get("OP_MELEE", "1") != "0"
         self.spells = {}         # member -> the spells seen in their CAST list (kept across fights; refreshed at each look)
         self.reset()
 
@@ -90,6 +115,9 @@ class Tactics:
         self.refused = set()     # (member, spell) refused this turn (not in the list, nowhere to aim)
         self.last_member = None
         self.party_n = 0
+        self.reach = {}          # member -> this turn's attack: "none" (nothing in reach), "done", "hit"
+        self.idle = {}           # member -> turns in a row with nothing in reach
+        self.guard = None        # the member whose DONE asked for GUARD
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -159,8 +187,14 @@ class Tactics:
             return "y", "tactics: ABORT SPELL? YES (no target in reach)"
         if b.startswith("CHOOSE SPELL:") and self.order:
             return self._spell_list(st, p)
+        if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK":
+            return self._aim_attack(st, p)
         if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
             return self._aim(st, p)
+        if b.startswith("GUARD DELAY") and self.guard:
+            self.log("TACTICS %s guards" % self.guard)
+            self.guard = None
+            return "g", "tactics: GUARD"
         if scr["kind"] != "combat":
             return None
         member = scr.get("member", "")
@@ -176,6 +210,7 @@ class Tactics:
             self.log("TACTICS state unreadable: %s" % e)
         if member != self.last_member:
             self.refused = {r for r in self.refused if r[0] != member}
+            self.reach.pop(member, None)
             self.last_member = member
         items = b.split()
         if "CAST" in items:
@@ -184,7 +219,74 @@ class Tactics:
                 self.order = [member, o, 0]
                 self.scan = None
                 return "c", "tactics: %s casts %s" % (member, o)
+        if self.melee and "AIM" in items:
+            return self._fight(member, items, p)
         return "q", "tactics: %s on QUICK (%s)" % (member, "no spell worth casting" if "CAST" in items else "no CAST")
+
+    def _fight(self, member, items, p):
+        """Player 31 (the Lead's advice): a member with nothing to cast attacks by hand: AIM, the aim list scanned for
+        the figures TARGET may take (in reach), then the best: a helpless one first (a blow slays it), then the enemy
+        magic-users, then the weakest. Nothing in reach: DONE (hold the line, let them come) while an enemy is within
+        6 squares, else QUICK (the fight's other figures out of sight: the computer walks to them)."""
+        if self.reach.get(member) == "none":
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            self.idle[member] = self.idle.get(member, 0) + 1
+            self.reach[member] = "done"
+            # (p31b2: DORN went QUICK in round 1 with the ettins 7 squares off, and QUICK stays for the fight)
+            if self.idle[member] <= 8 and "DONE" in items:
+                # DONE opens GUARD DELAY QUIT SPEED EXIT (seen, p31b1): GUARD, the figure strikes the first enemy
+                # that steps next to it
+                self.guard = member
+                return "d", "tactics: %s guards (nothing in reach): DONE" % member
+            return "q", "tactics: %s on QUICK (nothing in reach for %d turns)" % (member, self.idle[member])
+        figs, party, foes = self._sides(p)
+        me = next((f for f in party if f["name"] == member), None)
+        if me is not None and not any(_dist(me, f) <= 2 for f in foes):
+            # (p31b1: a 16-key scan found nothing; an enemy's cell is its corner, so a large one 2 away may touch)
+            self.reach[member] = "none"
+            return self._fight(member, items, p)
+        self.idle[member] = 0
+        self.order = [member, "ATTACK", 0]
+        self.scan = None
+        return "a", "tactics: %s attacks by hand: AIM" % member
+
+    def _aim_attack(self, st, p):
+        lst, at = aim_list(p.g.mem)
+        figs, party, foes = self._sides(p)
+        member = self.order[0]
+        can = "TARGET" in st["bottom"].split()
+        cur = self._aimed(st, lst, at, figs)
+        if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
+            self.scan = {"spell": (member, "ATTACK"), "ok": set(), "steps": 0, "goal": None, "picked": set()}
+        sc = self.scan
+        sc["steps"] += 1
+        if sc["steps"] > 3 * max(len(lst), 4) + 10:
+            self.order = None
+            self.reach[member] = "none"
+            return "e", "tactics: %s's attack aim gave up: EXIT" % member
+        if sc["goal"] is None:
+            if cur is not None and can and cur > self.party_n:
+                sc["ok"].add(cur)
+            if sc["steps"] <= len(lst):
+                return "n", "tactics: attack scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
+            byn = {f["n"]: f for f in foes}
+            ok = [byn[n] for n in sc["ok"] if n in byn]
+            if not ok:
+                self.order = None
+                self.reach[member] = "none"
+                return "e", "tactics: %s: no enemy in reach: EXIT" % member
+            ok.sort(key=lambda f: (not helpless(f), not _is_mage(f), f["hp"]))
+            sc["goal"] = ok[0]["n"]
+            sc["why"] = "helpless" if helpless(ok[0]) else ("a mage" if _is_mage(ok[0]) else "the weakest")
+        if cur == sc["goal"] and can:
+            f = next((f for f in figs if f["n"] == cur), None)
+            self.log("TACTICS %s attacks figure %d %s (%d HP, %s)" % (
+                member, cur, f["name"] if f else "?", f["hp"] if f else -1, sc["why"]))
+            self.order = None
+            self.reach[member] = "hit"
+            return "t", "tactics: %s attacks figure %d (%s)" % (member, cur, sc["why"])
+        return "n", "tactics: to figure %d (at %s)" % (sc["goal"], cur)
 
     def _spell_list(self, st, p):
         member, spell = self.order[0], self.order[1]
@@ -254,6 +356,10 @@ class Tactics:
             if sc["steps"] <= len(lst):
                 return "n", "tactics: aim scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
             ok = [t for t in sc["targets"] if t in sc["ok"] and t not in sc["picked"]]
+            if spell == "HOLD PERSON" and not sc["picked"]:
+                # (p31b2: picks spent on ettins, which Hold Person never holds: the first pick must be a person)
+                persons = {f["n"] for f in foes if not _is_large(f)}
+                ok = [t for t in ok if t in persons]
             if not ok:
                 p.note("tactics", "%s: %s can reach none of its targets" % (member, spell))
                 return "e", "tactics: %s %s: no target in reach: EXIT" % (member, spell)

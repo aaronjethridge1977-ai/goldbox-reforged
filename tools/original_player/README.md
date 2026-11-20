@@ -1315,6 +1315,31 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 31 (2026-11-19): fighters by hand (the Lead's advice); the wall 5 more lost; `valjevo6`'s stall was the timeout
+
+The Lead's answer to Player 30 (Requests, "player (Player 30) → Lead"): fighters by hand too, attacking helpless
+enemies first; casters cast before contact from the back; a corner; every magic-user's level 1 on Sleep for the king.
+- **The original's screens, seen** (lab `p31/probe.sh`: q.sh without the final stop, so `OP_STOPAT` leaves DOSBox up):
+  a fighter's AIM opens on himself (RANGE = 0) and offers **TARGET only for figures in reach** (RANGE = 1 for a melee
+  weapon; NEXT steps through the aim list as for spells); the right panel shows name, HITPOINTS, AC, no status; **DONE
+  opens GUARD DELAY QUIT SPEED EXIT**.
+- **A figure's standing effects** are the far pointer at **record +0x7F** (9-byte entries: type, minutes u16, power,
+  ?, next far pointer at +5; ai-business-ideas research/pool-of-radiance-formats.md "Standing effects"): seen in the
+  wall fight, DORN 5A 61 1A 2F (dwarf), ELWEN 7C (half-elf), LIRA 6B (elf), ARN and BRAM 37 (poisoned). tactics.py
+  `effects()`, `helpless()`: types 0x33 0x34 0x35 0x1F (snake charm, Hold, Sleep, Stinking Cloud's helpless).
+- **tactics.py, fighters by hand** (`OP_MELEE=0` gives Player 30's QUICK back): a member with nothing to cast AIMs, scans
+  the list once for the figures TARGET takes and attacks the best: helpless first, then the enemy magic-users, then the
+  weakest; nothing within 2 squares (a large figure's cell is its corner): DONE, GUARD (up to 8 turns, then QUICK).
+  Hold Person's first pick must be a person (p31b2 spent picks on the ettins, which it never holds).
+- **The wall (2:9 7,6) by hand, fighters too: 5 more lost** (p31b2-b6 from `p26c1_s28b`, `p30/wall2.plan`; p31b1 a
+  tool stop at GUARD's menu, fixed). Best p31b2: 122 of 382 HP dealt, one ettin slain, two blows at helpless ettins;
+  b3-b6 dealt 41-45 each and died in 160-260 s. Seen: **an ettin starts next to the party** (p31a1's placement: 16 at
+  27,10 beside BRAM 28,11), so there is no "before contact"; the casters stand in the front line and lose their begun
+  Stinking Clouds to hits; the six ettins kill the party in about three rounds. Asked the Lead (more levels first).
+- **`valjevo6` in ours: not a missing key.** Its key list has 2638 `wait`s (1319 s of waits alone), so segment.py's
+  1500 s timeout cut ours mid-camp (the log simply ends in CEDRIC's MEMORIZE list, every cure before matching the
+  original's targets and HP). Lab `p31/replays.sh` now takes `OP_SEG_TIMEOUT` from the environment; rerun at 3200 s.
+
 ## Player 30 (2026-11-19): the tactical mode (`tactics on`, tactics.py); the Stojanow wall by hand: 8 of 8 lost; `picks`; segment.py's magicat
 
 The Lead's note (Jeremy's standing goal): beat the shortcut fights for real, the tool giving each member's orders
