@@ -462,6 +462,8 @@ static func setting_value(id: String) -> int:
 		"spellarea": return int(CombatScreen.show_area_on())
 		"quests": return int(QuestScreen.on())
 		"savelist": return int(SaveListScreen.on())
+		"originalbugs": return int(OriginalBugs.on())
+		"recordgame": return int(GameRecorder.enabled())
 	return 0
 
 
@@ -484,6 +486,8 @@ static func change_setting(id: String) -> void:
 		"spellarea": CombatScreen.save_show_area(not CombatScreen.show_area_on())
 		"quests": QuestScreen.save_on(not QuestScreen.on())
 		"savelist": SaveListScreen.save_on(not SaveListScreen.on())
+		"originalbugs": OriginalBugs.save(not OriginalBugs.on())      # main chat 70's switch (Jeremy, 07:40)
+		"recordgame": GameRecorder.save(not GameRecorder.enabled())
 
 
 ## QoL 5 (Q10): LOAD SAVED GAME opens the saved games' list (with the quick save) in place of the letter prompt.
