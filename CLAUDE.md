@@ -27,7 +27,8 @@ Several chats work on this repo at once. Jeremy is the designer and decides; the
   is 50 KB or more: archive answered requests to docs/board-archive.md); `git status` (no game data, no saves).
 - **WIP branches (Methods 8):** after every finished item, push it to your lane's WIP branch
   (`git push origin HEAD:wip/<lane>-<run number>`, a fresh branch each run, so a rebase never needs a force push):
-  an outage loses at most one item. origin/main still takes only gated pushes.
+  an outage loses at most one item; after a rebase the WIP branch refuses the new history: push to a new suffix
+  (`wip/main-70b`), never force. origin/main still takes only gated pushes.
 - **Godot `.uid` files:** commit a new script's or scene's `.uid` together with it.
 - **Ending a chat:** board updated, repos pushed, lab archive saved, a dated entry at the top of ai-business-ideas `plans/chat-log.md`,
   and the next chat's opening post. A chat that ends mid-task leaves the task on the board as open.
