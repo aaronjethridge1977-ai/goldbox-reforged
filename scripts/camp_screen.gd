@@ -421,10 +421,11 @@ func _fix_heal() -> void:
 		var want := mini(m.hp_max - m.hp, _fix_pool)
 		if want <= 0:
 			continue
-		m.hp += want
+		# As a cure spell heals (SpellCaster._heal: GAME.OVR 0x2C647): a member back above 0 HP is up again
+		# (P82, Jeremy: after FIX, full HP but the names still red), and the diseased aren't healed.
+		if not SpellCaster._heal(m, want):
+			continue
 		_fix_pool -= want
-		if m.status == PartyMember.STATUS_DYING:
-			m.status = PartyMember.STATUS_UNCONSCIOUS
 	_fix_pool = 0
 
 
