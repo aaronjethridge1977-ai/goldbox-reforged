@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144); DIFFCHECKS 144/144
+## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145); DIFFCHECKS 145/145
 
 - **Check 143, SELL of a readied item** (main path): check 132's start (3:0's arms and armour shop, tpseed 11111111).
   In the original (DOSBox): VIEW, ITEMS, SELL with ARN's readied Long Sword lit does nothing (no message on the bottom
@@ -184,6 +184,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   0x3F: 3 months). In the original: POOL, HEAL, End, HEAL: CURE DISEASE WILL ONLY COST 1000 GOLD PIECES, YES: both
   effects gone (the other standing effects kept), as ours (`SpecialAffects.cure_disease`). Matched at once, 3 of 3; a
   variant with a standing 0x24 added to ours' start only differs (statediff compares the effects).
+- **Check 145, the camp's ALTER, DROP** (main path): check 142's start (check 130's party at 3:0). In the original:
+  ENCAMP, ALTER, End x2 (CEDRIC), DROP: CEDRIC / WILL BE GONE and DROP FROM PARTY? YES NO; YES: the message area is
+  cleared and the party is five (the slot's save holds five CHRDAT files). Ours the same. Matched at once, 3 of 3; NO
+  instead of YES differs (CEDRIC still in ours).
 
 ## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140), a band REST interrupted that fights (check 141), the camp's ALTER ORDER (check 142; statediff compares the party's order); DIFFCHECKS 142/142
 
