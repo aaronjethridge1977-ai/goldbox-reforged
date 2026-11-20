@@ -172,6 +172,27 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 67: the temple's wound cures, camp JOIN, TRADE to a full member, READY of a two-handed weapon, the inn without money; checks 113-117, DIFFCHECKS 117/117
+
+Coverage checks (the post's standing list), each played in DOSBox; all matched at once (no code change).
+- **Check 113, 3:0 the temple, CURE SERIOUS and CURE CRITICAL WOUNDS** (check 110's start with THRENDER GRONE's
+  platinum = 3000 and HP 1, BROTHER SEAN HP 1): POOL, SEAN, HEAL, End x3, HEAL, YES (2d8+1: draws 20-21), EXIT,
+  THRENDER (End x3 wraps), HEAL, End x4, HEAL, YES (3d8+3: draws 22-24), EXIT, SHARE, EXIT, NO. All 24 draws
+  identical; NO at the second cure differs (11); fails before Combat Chat 30's 60e9ec1 (33).
+- **Check 114, camp JOIN** (check 107's start, LIRA's 10 arrows): HALVE, JOIN (10 readied); HALVE, Down to the
+  unreadied half, JOIN: **10 arrows, not readied: the join keeps the lit stack's readied flag**. The other half lit
+  differs (1); no second JOIN differs (1).
+- **Check 115, TRADE to a member with 16 items** (check 105's TRADE with BRAM's .ITM holding 13 single arrows more,
+  record byte 0xC7 = 16): refused, the sword stays with ARN. BRAM at 15 items differs (2).
+- **Check 116, READY with a two-handed weapon** (ARN with a Short Bow beside his sword and shield): the bow is refused
+  while the sword or the shield is readied; with the bow readied the shield and the sword are refused (no message in
+  either game). One shield unready left out differs (1).
+- **Check 117, 3:0 the inn, STAY with no money** (check 97's start, THRENDER GRONE's coins 0): YOU DON'T HAVE ENOUGH
+  PLATINUM. and the inn's script ends: no second payer, no rest. THRENDER with his money differs (22).
+- **Made-up starts:** an .ITM record's bytes 42-45 (the in-memory link) are 0 in every record we append (the original's
+  own files have them on all but the last). A record read and written in one Python line with `open(p,'wb')` first
+  empties the file (chat 67 lost ARN's items that way before the boot showed it).
+
 ## Chat 66: camp TRADE, DROP and HALVE, a shop's APPRAISE; ENCOUNTER_MENU's choices read; statediff compares whole items and effects; checks 105-112, DIFFCHECKS 112/112
 
 - **Check 112, 3:0 the temple, NEUTRALIZE POISON and CURE DISEASE** (check 110's start with THRENDER's platinum = 3000;

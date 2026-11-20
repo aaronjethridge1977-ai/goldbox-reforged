@@ -111,3 +111,4 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - Stinking Cloud on bunched ettins makes them helpless, and a helpless ettin dies to one blow: two slain in p30d2. QUICK fighters don't always turn on the helpless ones (Player 30, p30d2/e2; *seen in the original*).
 - In a fight's CAST list Home moves the light up and End down; it opens on the last spell, and long lists page with NEXT (Player 30; *seen in the original*).
 - A cleric's Hold Person takes three picks; EXIT from a spell's aim asks ABORT SPELL? (Player 30; *seen in the original*).
+- A two-handed bow can't be readied while a sword or a shield is readied, and with the bow readied neither can: unready both first (camp VIEW ITEMS; no message says why). JOIN keeps the lit stack's readied flag, so light the readied arrows before JOIN (main chat 67, checks 114 and 116; *seen in the original*).

@@ -173,6 +173,14 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 67:** checks 113-117 in `data/c67/chk113..117/` (`data/c67/cd/` links `game` and each); the original's traces
+`data/c67/trace113..117.txt`. **The original's vertical menus take End / Home, not Down / Up** (Down in ours' keys is
+fine in a menu, but on the walking screen Down turns ours' party round: use End in ours' keys where the original's
+menu may already have closed, check 117). **The case-blind lookup test:** `/tmp/c67case/run.sh`-style: a check's keys
+on the game copy with every name lower-cased against the upper-case copy (logs and every file's MD5 the same).
+**Builds:** `tools/build/windows_test.sh <sha> 0.1.6 <builds>/release-0.1.6` and `tools/build/linux_build.sh <sha>
+0.1.6`; the extra Linux smoke on a lower-case copy is the build script's (b) by hand with the names lower-cased.
+
 **Chat 66:** checks 105-112 in `data/c66/chk105..112/` (`data/c66/cd/` links `game` and each); the original's ends and
 traces: `trade/`, `drop/`, `halve/` (orig only), `gem/`, `jewel/`, `raise/`, `cures/` (start, orig, trace.txt). A start
 made by editing check 101's or chat 64's temple start: gems +0x92, jewelry +0x94, platinum +0x90, status +0x10C (6 dead),
