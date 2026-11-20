@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-6 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-7 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -510,6 +510,33 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - A fallen NPC is dropped after the fight and his items go into the treasure, where you can take them back. *seen*
   (Player 11)
 
+## 7. Resting and camping
+
+**How rest works**
+- While the party rests, the game rolls d100 against the area's encounter chance every 5 minutes. *code* (GAME.OVR
+  0x24BC9; Player 3)
+- An interrupted rest keeps only the spells already memorized (section 3). *book* Resting heals only 1 HP a day: real
+  healing is spells and temples. *book* (Manual, Cluebook)
+
+**The healing loop** (*Jeremy*, 2026-11-20)
+1. After a fight, cast the Cure Light Wounds you have.
+2. Rest to memorize more and cast them.
+3. Repeat until everyone is full, then memorize the fighting spells.
+In ours, SETTINGS REST REMEMORIZES saves the menu steps.
+
+**Where to rest**
+- **When a rest is interrupted, go to the inn instead of camping again.** *seen* (Player 14, p14b3)
+- **Some places are only safe to rest at the inn:** camps there were interrupted 4-5 times and members died. *seen*
+  (Players 15, 19, 25; Pool's list is in poolrad.md)
+- **While an alarm holds,** patrols come to camps and wander more: use memorized cures and rest at the inn. *seen*
+  (Players 3, 27; Pool's Valjevo)
+- **In a scripted camp** (an ally's camp, a siege), each rest can bring the next wave. *code* (Player 20; Pool's nomads)
+
+**The inn**
+- An inn charges once per stay; resting there is cheaper than temple cures. *book* (Manual, Cluebook)
+- (Pool) A second visit to New Phlan's inn does nothing until the party steps off its square and back. *code* (ECL
+  0x4A07; Player 12)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
@@ -527,7 +554,6 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 **Level drain, petrification, poison, disease**
 
 **Money and gear**
-- An inn charges once per stay; resting there is cheaper than temple cures. Resting heals only 1 HP a day: real healing is spells and temples (Manual, Cluebook).
 
 ## Party and preparation
 
@@ -545,13 +571,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 ## Resting and camping
 
-- The game rolls d100 against the area's chance every 5 minutes of rest (Player 3; *read in the code*, GAME.OVR 0x24BC9).
 - While an alarm holds (Valjevo), patrols interrupt camps and wander at 17% a step. Camps there were interrupted three times and wiped the party. Use memorized cures and rest at the inn (Player 3, Player 27; *seen in the original*).
 - In some places the only safe rest is the inn: Sokal Keep's 15,1, 4:2, the pyramid's 7:22, the wilderness bands. Camps there were interrupted 4-5 times and members died (Players 15, 19, 25; *seen in the original*).
-- When a rest is interrupted, go to the inn instead of camping again (Player 14, p14b3; *seen in the original*).
-- Rest time to memorize is 4 hours plus 15 minutes for each spell of the member with the most to learn (Player 15; *seen in the original*).
-- A second visit to New Phlan's inn does nothing until the party steps off its square and back (Player 12; *read in the code*, ECL 0x4A07).
-- In a script's camp (the nomads), each rest can bring the next wave (Player 20; *read in the code*).
 
 ## Encounters and parley
 
