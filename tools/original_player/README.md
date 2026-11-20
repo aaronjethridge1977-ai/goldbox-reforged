@@ -1331,9 +1331,10 @@ shortcut wins, ever**.
 - **The take rule** (loot.py, with `OP_RELOAD=1`): magic items, quest items, scrolls, gems and jewellery, missiles
   (arrows, quarrels, darts, bolts) and anything else worth 100 gp or more; the rest stays.
 - **tactics.py:** clerics **TURN** first when undead are on the field (once a fight each); no Sleep, Hold Person or
-  Stinking Cloud at undead. **Seen:** TURN doesn't end the member's turn (the menu comes back without TURN, dice drawn,
-  and she casts); CEDRIC and ELWEN had **no TURN** in three 4:10 fights with skeletons, TURN against a spectre, zombies,
-  mummies, wights (Requests, to Combat). Against 4:10's mummies (trip 6) the turns cleared the way: won whole.
+  Stinking Cloud at undead. **Seen:** CEDRIC and ELWEN had **no TURN** in three 4:10 fights with skeletons, TURN
+  against a spectre, zombies, mummies, wights (Requests, to Combat: the code offers TURN to any cleric until it turns, so
+  fights 1-3 are open in Combat's queue). (Player 32 first read TURN as not ending the turn: wrong, Combat Chat 33: it
+  ends it, GAME.OVR 0x13B39; ELWEN's next menu was her next turn.) Against 4:10's mummies (trip 6) the turns cleared the way: won whole.
 - **The graveyard redo** (`p32/seg26b.plan` = Player 25's with `tactics on`, from `p2start/p25k1_s26t`, `OP_MELEE=0`,
   seeds 3201xxxx): p32a1 reached `s26g5` with no drain (the original's first run lost LIRA's level by `s26g4`), then lost
   BRAM and LIRA at trip 6 (9,11, a wight and three mummies): reload; p32a4 won trip 6 (`s26g6`); trip 7 (8,8: four
