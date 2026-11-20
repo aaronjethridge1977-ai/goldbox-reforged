@@ -17,3 +17,4 @@ p22c5 OP_MAGICAT=1194,6185,15106,21671,32415,40386,47238,53184,58021,62251
 p22c7 OP_MAGICAT=3964,14955
 p22c8 OP_MAGICAT=-,14482,23729
 p29f2 GBR_PLAYOUT=1                              # main chat 70: the shortcut's closing round
+p20a4 OP_MAGICAT=870,8703,13041,16702                # Player 34: identical to 16668 without it (main chat 70's load fix)
