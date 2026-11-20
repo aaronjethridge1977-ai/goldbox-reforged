@@ -44,7 +44,8 @@ def figures(mem):
         r = mem.far(seg, off, 0x120)
         out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
                     "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r),
-                    "cl": r[0x96], "mu": r[0x9B]})   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
+                    "cl": r[0x96], "mu": r[0x9B],
+                    "fp": max(1, min(4, r[0x6C] & 7))})   # Player 35: the footprint (record +0x6C, ours' combat.gd)   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
     return out
 
 
@@ -78,13 +79,29 @@ def _up(f):
     return f["hp"] > 0 and f["status"] == 0
 
 
+# Player 35: a figure's cells from its corner by footprint (ours' combat.gd FOOTPRINT: 1 one cell, 2 two down, 3 two
+# across, 4 a 2x2 block); distance is between the closest pair of cells (p35c2: DORN stopped 2 from an ettin's corner,
+# out of reach)
+FOOTPRINT = {1: ((0, 0),), 2: ((0, 0), (0, 1)), 3: ((0, 0), (1, 0)), 4: ((0, 0), (1, 0), (0, 1), (1, 1))}
+
+
+def cells(f):
+    return [(f["x"] + dx, f["y"] + dy) for dx, dy in FOOTPRINT.get(f.get("fp", 1), ((0, 0),))]
+
+
 def _dist(a, b):
-    return max(abs(a["x"] - b["x"]), abs(a["y"] - b["y"]))
+    return min(max(abs(p[0] - q[0]), abs(p[1] - q[1])) for p in cells(a) for q in cells(b))
 
 
 def _is_mage(f):
     w = f["name"].upper().split()
     return any(m in w for m in MAGES) or any(m in f["name"].upper() for m in ("MAGIC", "MAGE"))
+
+
+def _is_leader(f):
+    """Player 35: an orc leader, a captain, a level-n fighter (the Sokal army's leaders, Stojanow's aides)."""
+    u = f["name"].upper()
+    return any(w in u for w in ("LEADER", "CAPTAIN", "CHIEF", "LVL", "LEVEL", "SERGEANT", "KING"))
 
 
 def _is_large(f):
@@ -119,6 +136,28 @@ def _magic_weapon(mem, member):
     return True
 
 
+def _ranged(mem, member):
+    """Player 35: a readied bow (or crossbow, sling) with its missiles readied: the member can shoot past melee reach."""
+    import loot
+    for (s, o), name, _n, _hp in loot.party(mem):
+        if name == member:
+            r = mem.far(s, o, 0x120)
+            io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
+            names = [loot.item(it)["name"].upper() for _a, it in loot.chain(mem, iseg, io) if it[52]]
+            bow = any(("BOW" in n and "ARROW" not in n) or "SLING" in n for n in names)
+            return bow and any(w in n for n in names for w in loot.MISSILE_WORDS)
+    return False
+
+
+# Player 35 (Jeremy's line rule, 2026-11-20 13:19, playbook): the fighters GUARD only when no enemy can be reached;
+# otherwise they MOVE toward the enemy (the members named in OP_ADVANCE; the casters stay back). The original's MOVE:
+# "MOVE/ATTACK, MOVE LEFT = n", the arrows and Home / PgUp / End / PgDn step (a step into an enemy attacks it), Esc
+# back to the menu (ours' combat_screen.gd, from the lab).
+ADVANCE = [n.strip().upper() for n in os.environ.get("OP_ADVANCE", "ARN,BRAM,DORN").split(",") if n.strip()]
+DIRS = (("up", 0, -1), ("pgup", 1, -1), ("right", 1, 0), ("pgdn", 1, 1), ("down", 0, 1), ("end", -1, 1),
+        ("left", -1, 0), ("home", -1, -1))
+
+
 # Player 33: a camp's Bless (effect 1) or Prayer (49, on its caster) still standing (ours' combat_spells.gd
 # EFFECT_BLESS, EFFECT_PRAYER) is not cast again
 STANDING = {"BLESS": 1, "PRAYER": 49}
@@ -137,8 +176,10 @@ class Tactics:
         # Player 33 (docs/playbook.md "Spell sheet", Combat Chat 33's spell lab, seen in the original): Hold Person
         # holds persons 95% (a held figure dies to one blow) and goes before Magic Missile (level/2 missiles, none at
         # level 1); Slow has no save and halves the attacks of the caster's level in figures nearest the aim point
-        self.priority = ("STINKING CLOUD", "HOLD PERSON", "SLOW", "PRAYER", "MAGIC MISSILE", "BLESS", "SLEEP")
-        self.horde = ("SLEEP", "STINKING CLOUD", "HOLD PERSON", "PRAYER", "SLOW", "BLESS", "MAGIC MISSILE")
+        # Player 35 (Stojanow Plan 1: LIRA's Fireball at magic-user 5): Fireball first, on the biggest bunch
+        self.priority = ("FIREBALL", "STINKING CLOUD", "HOLD PERSON", "SLOW", "PRAYER", "MAGIC MISSILE", "BLESS",
+                         "SLEEP")
+        self.horde = ("SLEEP", "FIREBALL", "STINKING CLOUD", "HOLD PERSON", "PRAYER", "SLOW", "BLESS", "MAGIC MISSILE")
         if os.environ.get("OP_TACTICS") == "horde":
             # Player 30: a horde of small figures (the kobold king): the area spells first
             self.priority = self.horde
@@ -152,6 +193,7 @@ class Tactics:
         """A new fight."""
         self.cast = {}           # spell -> times ordered this fight (Prayer, Bless once)
         self.held = set()        # figures given Hold Person (not tried again)
+        self.slept = {}          # Player 35: figure -> Sleeps aimed at it this fight
         self.slowed = set()      # Player 33: figures inside a Slow's reach (not aimed at again)
         self.order = None        # [member, spell, pages turned] while CAST's list is up
         self.scan = None         # aim: entries with TARGET seen
@@ -164,6 +206,8 @@ class Tactics:
         self.guard = None        # the member whose DONE asked for GUARD
         self.bandage = None      # Player 34: the member whose DONE asked for BANDAGE
         self.turned = set()      # Player 32: members who tried TURN this fight
+        self.move = None         # Player 35: the member walking toward an enemy (MOVE): {member, goal, tries}
+        self.moved = set()       # Player 35: members who have walked this turn (one MOVE a turn)
         self.fx_logged = False
 
     # -- reading -------------------------------------------------------------------------------------------
@@ -216,6 +260,15 @@ class Tactics:
         if spell == "HOLD PERSON":     # the mages first, then other persons (not large creatures)
             return [f["n"] for f in mages if f["n"] not in self.held] + \
                 [f["n"] for f in persons if f["n"] not in self.held and not _is_mage(f)]
+        if spell == "FIREBALL":        # Player 35: the biggest bunch (2 or more), no party member within 2 of it
+            best = []
+            for f in foes:
+                if any(_up(a) and _dist(a, f) <= 2 for a in party) or (me and _dist(me, f) > 9):
+                    continue
+                k = sum(1 for g in foes if _dist(g, f) <= 1)
+                if k >= 2:
+                    best.append((-k, f["n"]))
+            return [n for _, n in sorted(best)]
         if spell == "STINKING CLOUD":  # the biggest bunch with no party member in its area (radius 1)
             best = []
             for f in foes:
@@ -235,11 +288,14 @@ class Tactics:
         if spell == "SLEEP":           # (Player 30, the horde) the biggest bunch of small figures, as Stinking Cloud;
             best = []                  # else any person (the wall's aides)
             for f in persons:
-                if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6):
+                if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6) \
+                        or self.slept.get(f["n"], 0) >= 2:
                     continue
                 k = sum(1 for g in persons if _dist(g, f) <= 1)
                 best.append((-k, f["n"]))
-            return [n for _, n in sorted(best)] or [f["n"] for f in persons if not _is_mage(f)]
+            # Player 35 (p35c3: four Sleeps at one aide, none took): a lone figure at most twice a fight
+            return [n for _, n in sorted(best)] or [f["n"] for f in persons if not _is_mage(f)
+                                                    and self.slept.get(f["n"], 0) < 2]
         return [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))]
 
     def answer(self, scr, st, p):
@@ -252,9 +308,17 @@ class Tactics:
         if b.startswith("CHOOSE SPELL:") and self.order:
             return self._spell_list(st, p)
         if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK":
+            if getattr(self, "far", False):
+                return self._aim_shoot(st, p)
             return self._aim_attack(st, p)
         if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
             return self._aim(st, p)
+        if self.move and ("MOVE LEFT" in b or "MOVE/ATTACK" in b):
+            return self._move_step(st, p)
+        if b.startswith("MOVE/ATTACK"):
+            # Player 35 (p35c2: a MOVE screen the tool didn't open, after LIRA's DONE with a bow): back to the menu
+            self.log("TACTICS a MOVE screen not asked for: Esc")
+            return "esc", "tactics: MOVE not asked for: Esc"
         if self.bandage and "BANDAGE" in b.split() and ("DELAY" in b.split()):
             # Player 34: DONE's menu ([GUARD] DELAY QUIT [BANDAGE] SPEED EXIT; BANDAGE only with someone dying: the
             # original's, as ours' combat_screen.gd): BANDAGE takes the first dying member
@@ -269,6 +333,11 @@ class Tactics:
             self.log("TACTICS %s guards" % self.guard)
             self.guard = None
             return "g", "tactics: GUARD"
+        if self.guard and b.startswith("DELAY"):
+            # Player 35: no GUARD with a missile weapon (ours' combat_screen.gd, from the lab): DELAY
+            self.log("TACTICS %s delays (no GUARD with a bow)" % self.guard)
+            self.guard = None
+            return "d", "tactics: DELAY"
         if scr["kind"] != "combat":
             return None
         member = scr.get("member", "")
@@ -279,7 +348,11 @@ class Tactics:
             self.log("TACTICS state at %s's menu: party %d up %d HP; enemies %d up %d HP (%s)" % (
                 member, sum(1 for f in party if _up(f)), sum(f["hp"] for f in party),
                 len(foes), sum(f["hp"] for f in foes),
-                ", ".join("%d:%s %d" % (f["n"], f["name"][:6], f["hp"]) for f in foes)))
+                ", ".join("%d:%s %d @%d,%d/%d" % (f["n"], f["name"][:6], f["hp"], f["x"], f["y"], f["fp"])
+                          for f in foes)))
+            me = next((f for f in party if f["name"] == member), None)
+            if me:
+                self.log("TACTICS %s at %d,%d/%d" % (member, me["x"], me["y"], me["fp"]))
             if not getattr(self, "fx_logged", False):
                 # Player 33: the party's standing effects at the fight's first menu (a camp's Bless, Prayer...)
                 self.fx_logged = True
@@ -294,6 +367,8 @@ class Tactics:
             for r in [r for r in self.unreach if r[0] == member]:
                 self.unreach[r] -= 1
             self.reach.pop(member, None)
+            self.moved.discard(member)
+            self.move = None            # Player 35: a MOVE that ended the turn (a blow struck by a step)
             self.last_member = member
         items = b.split()
         if "DONE" in items:
@@ -336,6 +411,15 @@ class Tactics:
         if self.reach.get(member) == "none":
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
+            if member.upper() in ADVANCE and "MOVE" in items and me is not None and foes \
+                    and member not in self.moved:
+                # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack
+                goal = min(foes, key=lambda f: (not helpless(f), _dist(me, f)))
+                self.moved.add(member)
+                self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None}
+                self.log("TACTICS %s moves toward figure %d %s (%d squares)" % (member, goal["n"], goal["name"],
+                                                                                 _dist(me, goal)))
+                return "m", "tactics: %s MOVEs toward figure %d" % (member, goal["n"])
             self.idle[member] = self.idle.get(member, 0) + 1
             self.reach[member] = "done"
             # (p31b2: DORN went QUICK in round 1 with the ettins 7 squares off, and QUICK stays for the fight)
@@ -347,7 +431,12 @@ class Tactics:
             return "q", "tactics: %s on QUICK (nothing in reach for %d turns)" % (member, self.idle[member])
         figs, party, foes = self._sides(p)
         me = next((f for f in party if f["name"] == member), None)
-        if me is not None and not any(_dist(me, f) <= 2 for f in foes):
+        try:
+            far = _ranged(p.g.mem, member)
+        except Exception as e:
+            self.log("TACTICS bow unreadable: %s" % e)
+            far = False
+        if me is not None and not far and not any(_dist(me, f) <= 2 for f in foes):
             # (p31b1: a 16-key scan found nothing; an enemy's cell is its corner, so a large one 2 away may touch)
             self.reach[member] = "none"
             return self._fight(member, items, p)
@@ -355,7 +444,62 @@ class Tactics:
         # only by a blow, in _aim_attack)
         self.order = [member, "ATTACK", 0]
         self.scan = None
-        return "a", "tactics: %s attacks by hand: AIM" % member
+        self.far = far
+        return "a", "tactics: %s %s: AIM" % (member, "shoots" if far else "attacks by hand")
+
+    def _move_step(self, st, p):
+        """Player 35: one MOVE key toward the goal figure. In the original's MOVE/ATTACK a step into an enemy attacks
+        it, so next to an enemy's corner cell (the goal's, or any enemy's: walking off would give it a free blow) the
+        step goes into it: the attack. Otherwise the free step that most shortens the distance to the goal's corner
+        (no cell another standing figure holds, nor a direction that left the figure where it was). Stuck, or 16 keys:
+        Esc, back to the menu. (p35c3: stopping "in reach" by the record's footprint and AIMing found nothing.)"""
+        mv = self.move
+        figs, party, foes = self._sides(p)
+        me = next((f for f in party if f["name"] == mv["member"]), None)
+        goal = next((f for f in foes if f["n"] == mv["goal"]), None)
+        mv["tries"] += 1
+        if me is None or not foes:
+            self.move = None
+            return "esc", "tactics: move: no goal left: Esc"
+        pos = (me["x"], me["y"])
+        if mv["last"] and mv["last"][0] == pos:
+            mv["blocked"].add((pos, mv["last"][1]))
+        if mv.get("struck"):
+            self.move = None
+            return "esc", "tactics: move: the blow was struck: Esc"
+        adj = [f for f in foes if max(abs(f["x"] - pos[0]), abs(f["y"] - pos[1])) <= 1]
+        if adj:
+            # the goal if it is next to us, else a helpless one, else the weakest
+            f = next((f for f in adj if goal is not None and f["n"] == goal["n"]), None) or \
+                min(adj, key=lambda f: (not helpless(f), f["hp"]))
+            k = next(k for k, dx, dy in DIRS if (pos[0] + dx, pos[1] + dy) == (f["x"], f["y"]))
+            if (pos, k) not in mv["blocked"]:
+                mv["last"] = (pos, k)
+                mv["struck"] = True
+                self.reach[mv["member"]], self.idle[mv["member"]] = "hit", 0
+                self.log("TACTICS %s attacks figure %d %s (%d HP) by MOVE" % (mv["member"], f["n"], f["name"], f["hp"]))
+                return k, "tactics: %s steps %s into figure %d: the attack" % (mv["member"], k, f["n"])
+        if goal is None or mv["tries"] > 16:
+            self.log("TACTICS %s stops at %d,%d" % (mv["member"], pos[0], pos[1]))
+            self.move = None
+            return "esc", "tactics: move over: Esc"
+        taken = {(f["x"], f["y"]) for f in figs if _up(f) and f is not me}
+        here = max(abs(goal["x"] - pos[0]), abs(goal["y"] - pos[1]))
+        best = None
+        for k, dx, dy in DIRS:
+            q = (pos[0] + dx, pos[1] + dy)
+            if q in taken or (pos, k) in mv["blocked"]:
+                continue
+            d = max(abs(q[0] - goal["x"]), abs(q[1] - goal["y"]))
+            if best is None or d < best[0]:
+                best = (d, k, q)
+        if best is None or best[0] > here:
+            self.log("TACTICS %s can't step nearer figure %d at %d,%d" % (mv["member"], goal["n"], pos[0], pos[1]))
+            self.move = None
+            return "esc", "tactics: move: no step nearer: Esc"
+        mv["last"] = (pos, best[1])
+        return best[1], "tactics: %s steps %s to %d,%d (figure %d at %d,%d)" % (
+            mv["member"], best[1], best[2][0], best[2][1], goal["n"], goal["x"], goal["y"])
 
     def _aim_attack(self, st, p):
         """Player 31: the aim list is sorted by distance (half squares: 2-3 is RANGE 1, in a melee weapon's reach; seen,
@@ -370,7 +514,8 @@ class Tactics:
         can = "TARGET" in st["bottom"].split()
         if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
             byn = {f["n"]: f for f in foes}
-            cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and d <= 3]
+            far = getattr(self, "far", False)
+            cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and (d <= 3 or far)]
             try:
                 plain = not _magic_weapon(mem, member)
             except Exception as e:
@@ -381,7 +526,13 @@ class Tactics:
                 # only from magic (or silver) weapons
                 cand = [c for c in cand if not _is_drainer(c[1])]
             # Player 32: the level drainers next after the helpless (4:10's wights drained three in p32a4)
-            cand.sort(key=lambda c: (not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]), c[1]["hp"]))
+            if far:
+                # Player 35 (Plan 1s, Gold Box Guide 2): a bow shoots the leaders and magic-users first, never a
+                # helpless one out of reach (the fighters take those with a blow), then the weakest
+                cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
+                cand.sort(key=lambda c: (not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
+            else:
+                cand.sort(key=lambda c: (not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]), c[1]["hp"]))
             self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
         sc = self.scan
         sc["steps"] += 1
@@ -404,6 +555,43 @@ class Tactics:
             return "t", "tactics: %s attacks figure %d (%s)" % (member, f["n"], why)
         sc["pos"] = (at + 1) % max(n_ent, 1)
         return "n", "tactics: to figure %d (aim entry %d, at %d)" % (f["n"], i, at)
+
+    def _aim_shoot(self, st, p):
+        """Player 35: a bow's aim (p35c2: with a missile weapon the aim list's count at DS:0x671A doesn't follow NEXT,
+        and DS:0xBEFD isn't set): the right panel's name and HITPOINTS tell the figure aimed at. One round of NEXT
+        notes every enemy TARGET takes (by name and HP), then NEXT to the best: magic-users, leaders, the weakest;
+        a helpless one last (a fighter's blow takes it)."""
+        figs, party, foes = self._sides(p)
+        member = self.order[0]
+        can = "TARGET" in st["bottom"].split()
+        name = st["rows"][1].strip("? ").strip()
+        hp = st["rows"][3].strip("? ").split()
+        hp = int(hp[-1]) if hp and hp[-1].isdigit() else None
+        cur = next((f for f in foes if f["name"] == name and f["hp"] == hp), None)
+        sig = (cur["name"], cur["hp"]) if cur else None
+        sc = self.scan
+        if sc is None or sc.get("spell") != (member, "SHOOT"):
+            sc = self.scan = {"spell": (member, "SHOOT"), "ok": {}, "steps": 0, "goal": None,
+                              "n": max(p.g.mem.u8(0x671A), len(figs))}
+        sc["steps"] += 1
+        if sc["steps"] > 3 * sc["n"] + 10:
+            self.order, self.reach[member] = None, "none"
+            return "e", "tactics: %s: the shot's aim gave up: EXIT" % member
+        if sc["goal"] is None:
+            if cur is not None and can:
+                sc["ok"][sig] = cur
+            if sc["steps"] <= sc["n"]:
+                return "n", "tactics: %s's shot, scan %d of %d (at %s)" % (member, sc["steps"], sc["n"], sig)
+            ok = sorted(sc["ok"].values(), key=lambda f: (helpless(f), not _is_mage(f), not _is_leader(f), f["hp"]))
+            if not ok:
+                self.order, self.reach[member] = None, "none"
+                return "e", "tactics: %s: nothing to shoot: EXIT" % member
+            sc["goal"] = (ok[0]["name"], ok[0]["hp"])
+        if sig == sc["goal"] and can:
+            self.log("TACTICS %s shoots figure %d %s (%d HP)" % (member, cur["n"], cur["name"], cur["hp"]))
+            self.order, self.reach[member], self.idle[member] = None, "hit", 0
+            return "t", "tactics: %s shoots figure %d" % (member, cur["n"])
+        return "n", "tactics: %s's shot: to %s (at %s)" % (member, sc["goal"], sig)
 
     def _aim_attack_next(self, st, p):
         sc = self.scan
@@ -469,10 +657,13 @@ class Tactics:
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]
             self.scan = {"spell": (caster, spell), "ok": set(), "steps": 0, "goal": None, "picked": set(),
-                         "targets": t}
+                         "targets": t, "scan0": 0}
         sc = self.scan
         sc["steps"] += 1
-        if sc["steps"] > 6 * max(len(lst), 4) + 10:
+        # Player 35 (Gold Box Guide 2's diagnosis, Jeremy 13:26): the original puts the aim back on the caster after
+        # each pick, so the scan starts again from there (scan0: the step of the last pick); before, only the figures
+        # seen before the first pick were `ok`, and Hold Person's other two picks were thrown away
+        if sc["steps"] - sc["scan0"] > 3 * max(len(lst), 4) + 10:
             p.note("tactics", "%s: %s aim gave up (%d keys)" % (member, spell, sc["steps"]))
             return "e", "tactics: %s %s: the aim gave up: EXIT" % (member, spell)
         if sc["goal"] is None:
@@ -480,13 +671,17 @@ class Tactics:
                 sc["ok"].add(cur)
             if cur is not None and cur == next((t for t in sc["targets"] if t not in sc["picked"]), None) and can:
                 return self._take(member, spell, cur)
-            if sc["steps"] <= len(lst):
-                return "n", "tactics: aim scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
+            if sc["steps"] - sc["scan0"] <= len(lst):
+                return "n", "tactics: aim scan (%d of %d; at %s)" % (sc["steps"] - sc["scan0"], len(lst), cur)
             ok = [t for t in sc["targets"] if t in sc["ok"] and t not in sc["picked"]]
             if spell == "HOLD PERSON" and not sc["picked"]:
                 # (p31b2: picks spent on ettins, which Hold Person never holds: the first pick must be a person)
                 persons = {f["n"] for f in foes if not _is_large(f)}
                 ok = [t for t in ok if t in persons]
+            if not ok and sc["picked"]:
+                # Player 35: picks taken and nobody else in reach: EXIT ends the aim with what is picked
+                p.note("tactics", "%s: %s: no more targets after %d picks" % (member, spell, len(sc["picked"])))
+                return "e", "tactics: %s %s: no more targets: EXIT" % (member, spell)
             if not ok:
                 p.note("tactics", "%s: %s can reach none of its targets" % (member, spell))
                 self.refused.add((member, spell))
@@ -515,8 +710,11 @@ class Tactics:
         sc = self.scan
         sc["picked"].add(target)
         sc["goal"] = None
+        sc["scan0"], sc["ok"] = sc["steps"], set()      # Player 35: the aim is back on the caster: scan again
         if spell == "HOLD PERSON":
             self.held.add(target)
+        if spell == "SLEEP":
+            self.slept[target] = self.slept.get(target, 0) + 1
         if spell == "SLOW":
             try:
                 figs = {f["n"]: f for f in figures(self._mem)}

@@ -29,6 +29,8 @@
                                  the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
   picks <NAME> <spell>, ...      (Player 30) `prepare` / `heal` memorize these first for the member (known spells, in
                                  order, while their level has a free slot), then the bot's picks in the rest
+  learn <spell>, ...             (Player 35) a magic-user's new spell at training: these first, then LEARN_ORDER
+  drop <NAME> <words>*<n>, ...   (Player 35) several drops in one VIEW (`<words> +0`: a plain one, matched on the plus)
   tactics on|off                 (Player 30) a step: from here the casters get orders by hand in fights (tactics.py:
                                  Prayer, Bless, Hold Person on the mages, Stinking Cloud, Magic Missile, Sleep), the
                                  rest go on QUICK; game.py presses Space at each fight's first poll to take the party back
@@ -287,6 +289,7 @@ class Step:
 # Player 21: main's bot's order of want for a magic-user's new spell at training (bot.gd LEARN_ORDER, by name)
 LEARN_ORDER = ["KNOCK", "MAGIC MISSILE", "SLEEP", "STINKING CLOUD", "INVISIBILITY", "MIRROR IMAGE", "FIREBALL", "HASTE",
                "LIGHTNING BOLT", "HOLD PERSON", "DISPEL MAGIC", "SLOW"]
+LEARN_FIRST = []     # Player 35: a plan's `learn <spell>, <spell>` goes before LEARN_ORDER (Stojanow Plan 1: Fireball)
 
 
 class Search:
@@ -965,7 +968,7 @@ class Plan:
             if not items:
                 raise_stop(p, "seq %s: a spell list with no spells" % name)
             names = [t for _, t in items]
-            want = next((s for s in LEARN_ORDER if s in names), names[0])
+            want = next((s for s in LEARN_FIRST + LEARN_ORDER if s in names), names[0])
             lit = [i for i, (r, _) in enumerate(items) if screens._rowcol(st["im"], r) == screens.WHITE]
             if not lit:
                 raise_stop(p, "seq %s: no spell lit on the spell list" % name)
@@ -1754,8 +1757,9 @@ class Plan:
             if len(lit) != 1:
                 raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
             if lit[0] in hit:
-                if len(op) > 3 and spell in ("BLESS", "PRAYER"):
-                    # (Bless and Prayer take the party, no CAST SPELL ON WHOM: the cast is over)
+                if len(op) > 3 and spell in ("BLESS", "PRAYER", "KNOCK"):
+                    # (Bless and Prayer take the party, no CAST SPELL ON WHOM: the cast is over; Player 35: Knock
+                    # cast in camp to free its slot for Stinking Cloud, the plan's `answer LOSE IT|YES`)
                     h["sub"] = "over"
                     p.note("heal", "%s casts %s in camp" % (P[op[1]][1], spell))
                 return "c", "heal: CAST %s (%s)" % (spell, P[op[1]][1])
@@ -1966,8 +1970,14 @@ def load(path):
             words, to = sp.rsplit("|", 1)
             pl.goals.append(ReadyItems(who, [("U:" + to.strip().upper(), words.strip().upper())]))
         elif cmd == "drop":       # Player 32: `drop <NAME> <item words>` (a spare, unreadied item: gone for good)
+            # Player 35: several at once, `drop <NAME> <words>*<n>, <words>` (the Stojanow audit: movement 3 -> 9+;
+            # "<words> +0" keeps a magic item that shows unidentified without its plus)
             who, _, words = rest.strip().partition(" ")
-            pl.goals.append(ReadyItems(who, [("D", words.strip().upper())]))
+            spec = []
+            for w in words.split(","):
+                w, _, n = w.strip().partition("*")
+                spec += [("D", w.strip().upper())] * (int(n) if n.strip() else 1)
+            pl.goals.append(ReadyItems(who, spec))
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
@@ -1979,6 +1989,8 @@ def load(path):
             w2 = rest.split()
             pl.goals.append(ShortcutWin(area_of(w2[0]), tuple(int(v) for v in w2[1].split(",")),
                                         int(w2[2]) if len(w2) > 2 else 1))
+        elif cmd == "learn":      # Player 35: `learn <spell>, <spell>`: a magic-user's new spell at training
+            LEARN_FIRST[:0] = [x.strip().upper() for x in rest.split(",") if x.strip()]
         elif cmd == "picks":      # Player 30: `picks <NAME> <spell>, <spell>`
             who, _, sp = rest.strip().partition(" ")
             PICK_OVERRIDE[who.strip()] = [x.strip().upper() for x in sp.split(",") if x.strip()]
