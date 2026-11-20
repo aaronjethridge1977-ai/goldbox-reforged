@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133); DIFFCHECKS 133/133
+## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133), USE of a combat-only wand in camp (check 134); DIFFCHECKS 134/134
 
 - **p22c2's wall ahead (original 1, ours 0): fixed** (`ecl_vm.gd` CALL 0xC018). DOSBox from a jump save to 1:18 1,4 W
   (`mksave.py J G 1 18 1 4 W`, `dsread.py 6aad 5` after each key): 0,4 W 1; the step off the west edge 0 (the on-move's
@@ -203,6 +203,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   picked by simulating the dice (the rest draws one d100, interrupted under the rest block's 10: 1); the 8 hours
   pass, then 8:27's rest-interrupted block (0x4A15 = 1, the band's encounter): YOU SURPRISE A GROUP OF GNOLLS, FLEE.
   Matched at once.
+- **Check 134, the camp's USE of a combat-only wand** (main path, 4:10's Wand of Lightning Bolt, ITEM4 list 28):
+  LIRA readies it (one hand with her sword), USE: THAT ITEM / IS A COMBAT-ONLY ITEM... / USE IT?, YES: a charge
+  spent (record byte 60: 3 -> 2), nothing cast. Matched at once.
 - **Racial level limits:** Pool enforces them at the hall (GAME.OVR 0x1C3F7-0x1C501; ours `LevelDrain.race_capped`
   already does); Curse's are in its GAME.OVR 0x24DDE-0x24F5B (playbook Inbox).
 - **match_gate.sh** replays four recordings side by side (`OP_MATCH_JOBS`, default 4).
