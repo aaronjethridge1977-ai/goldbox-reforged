@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 71: 3:14's poison gas trap (check 125), STONE TO FLESH on a member not stoned (check 126), REMOVE CURSE on a cursed item (ready, Combat's fix); the shortcut win's segment 28 replayed; DIFFCHECKS 126/126
+## Chat 71: 3:14's poison gas trap (check 125), STONE TO FLESH on a member not stoned (check 126), a wilderness save loaded and stepped (check 127), REMOVE CURSE on a cursed item (ready, Combat's fix); the shortcut win's segment 28 replayed; DIFFCHECKS 127/127
 
 - **Check 125, 3:14 Kovel Mansion, the poison gas trap** (event 4 at 13,11: the step's dispatch 0x99D6 -> the find-traps
   test 0xB3A2 -> 0x9AA4, `DAMAGE 129, 1, 3, 0, 0`: 0x80 one random member, save bonus 1, kind 0): a jump save
@@ -191,7 +191,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   one, else the first cursed item's byte 54 is cleared ("'S ITEM IS UN-CURSED"). Ours' temple doesn't model curses
   (temple_screen.gd `_needs`): it stops at IS NOT CURSED and the keys part. **A difference on the main path** (3:14's
   sword, 4:2's Cursed Necklace); Combat's file: requested on the board, with `data/c71/remove_curse.patch` (MATCH with
-  it). Joins the list as check 127 once it lands.
+  it). Joins the list once it lands.
+- **Check 127, a save made in the wilderness band loaded and stepped** (Player 10's `p10b1/band` save of the original,
+  view byte 0x3206 = 3, at 24,27 W 00:10, ARN unconscious; slot H -> G by slot.py), tpseed 33333333: Up x3 (north is
+  blocked there: the party only turns N), Left x2 (23,27, 22,27: each step half a day, 12:10 then 00:10), F2. **Matched
+  at once, 3 of 3**; one Left fewer differs (0x49C3, the wilderness x). Lab `data/c71/chk127`.
 - **The shortcut win, segment 28 (p27c2, the Stojanow wall at 2:9 7,6)** replayed in ours with `shortcutwin` after the
   fight's opening key (`segment.py p27c2 begin stojanow --start=p27a1_s28p --tplog --ours-key=46:shortcutwin`, in a
   scratch copy of the Player's lab): **draws identical to 1057** (the shortcut's point, as segment 34's 801); then the
