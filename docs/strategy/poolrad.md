@@ -91,8 +91,10 @@ files); results *seen* unless marked.
 - **The trolls and ogres (0,14):** 2 ogres and 4 trolls; the cluebook's test of the party. *code*
   - Works: two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and
     casts at the trolls from one square back; drop the trolls together and stand on a fallen troll's square so it can't
-    rise; then the ogres. *book* Sleep should take out both ogres. *Jeremy* (who may have been lucky) Combat's spell lab: in the original, Sleep puts an
-    ogre down now and then, never a troll (*seen*, Combat Chat 34); this room's ogres: **unconfirmed** (request).
+    rise; then the ogres. *book* Cast Sleep at the ogres twice: if it fails, little is lost. *Jeremy* (2026-11-20) In the original, on this
+    room: 10 Sleeps (4d4 = 7-13) put 2 ogres down and never a troll, about 1 cast in 5, so two casts give roughly a 1 in 3
+    chance of at least one sleeping ogre (small sample: anywhere from about 1 in 10 to 3 in 4), and a sleeping ogre is
+    slain outright. Keep the party out of the 3x3 (the caster too). *seen* (Combat Chat 34)
   - Results: at level 3, won deathless at the second try (p16e2); from an earlier save, won 2 of 2, both with deaths
     (Player 8).
 
