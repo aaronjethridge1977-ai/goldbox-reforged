@@ -78,6 +78,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
     archers in reach. Fighters: the helpless first (one blow), then the leaders. Back rank: bows at leaders and
     archers (the archers run dry after about 4 rounds, *book*).
   - **Stop rule:** 2 losses in the first 3 tries: more levels first, then come back.
+  - **The detour's loot (Jeremy, Gold Box Guide 3, 17:09):** at Kuto's Well, the hag's rug (7,14, behind the nailed
+    door; a lizardman and 4 giant lizards guard it): **Bracers AC 4 to LIRA** (instead of her chain mail; with BRAM's
+    spare Shield), **Banded Mail +1 to DORN** (in place of ARN's Bracers AC 6); the Quarter Staff +1 to a caster.
+    Norris: poolrad.md section 3, "Kuto's Well".
   - **Results:** (the Player's lines here)
 
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
@@ -246,4 +250,11 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
   Kovel scrolls if a magic-user 4 can cast them (Combat). Simulated: with them about 2 in 3 fights without a drain,
   98% with one at most; with Prayer only, about 1 in 4; bring 2+ Restoration scrolls so a hit costs a scroll, not a reload. Leave the vampire's last fight until
   after (his death stops the tomb's event too).
+  - **Plan 1, revised (Gold Box Guide 3 with Jeremy, 2026-11-20 17:09):** start from the current chain (`p35e2_mopup2`):
+    at `p33f3_mopup1` the vampire, 9,1 and the tomb are all untouched (0x4A41, 0x4A18, 0x4AF8 = 0). **LIRA SCRIBEs Haste**
+    from the Kovel scroll (the game's only Haste) and memorizes it in her one 3rd-level slot; ELWEN takes Haste at MU5.
+    Take the Wand of Lightning Bolt (zombie room, 9,15) and **four or more Restoration scrolls**; camp on 10,1: Haste,
+    Prayer, Bless; round 1 the wand down the line, the bows, every fighter on one spectre. **Expect 1-2 drains and pay
+    each with a scroll at once** (redone simulation: 2 at most in 77-94% of fights, 4 at most in 99%; drain-free only
+    13-29%). Details: poolrad.md section 3.
   - **Results:** (the Player's lines here)

@@ -116,6 +116,23 @@ files); results *seen* unless marked.
 - **Resting at 15,1:** undead interrupted four rests in five; four camps ended with a death. (Player 15)
 - **The huge scorpions (2,11):** won 4 of 4, 3 deathless (Player 9). Memorize Slow Poison first. *book*
 
+**Kuto's Well (8:29)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:09)
+- **Norris the Gray** (event 12; his squares 1,5 5,5 10,3, in the catacombs behind the secret door at 5,8 N: LOOK):
+  the bandits **surround the party**; the menu is SURRENDER (every valuable taken: ROB 1, 100, 100) or FIGHT. Norris
+  (fighter 5, 25 HP), 5 lizardmen (fighter 3, 11 HP, AC 4, THAC0 16), 9 kobold leaders (4 HP): about 116 HP. Winning
+  gives Journal entry 50, the bandits' treasure and the hideout (a rest there is never interrupted). Nothing else
+  depends on it. *code* (ECL8 block 29, MON8CHA)
+- Results at fighter/cleric 3, multis 1: p16c1 met Norris early (LIRA dead), p16c3 three dead, **p16d1 won deathless**
+  at the first try from `s6pre12`. *seen* Not a stuck fight; the risk is the surround (ELWEN and LIRA at 9 HP start
+  beside enemies).
+- Works: cure in camp, Bless, then step onto his squares; round 1 both Sleeps on the thickest clump not touching the
+  party (all of them are small enough), CEDRIC's Hold Person on Norris; the fighters close on Norris, then the
+  lizardmen (the line rule); the casters step behind them. *Jeremy* (Plan 1 of Sokal's detour)
+- **The hag's rug (7,14), behind the nailed door at the well's bottom** (FORCE IT: YES; a lizardman and 4 giant lizards,
+  move 15, guard the door): **Banded Mail +1, Bracers AC 4, Quarter Staff +1** (ITEM8 list 58). Bracers AC 4 to the
+  front-line magic-user (they replace body armour: with a shield one AC better than chain mail, and lighter); Banded
+  Mail +1 to the fighter/thief in the line (his thief skills wait while he wears it). *code* + *Jeremy*
+
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
   more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
@@ -160,19 +177,34 @@ files); results *seen* unless marked.
   never reliable here; they are turned, never destroyed. *code* (the turning table, DS:0x447)
 - **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed
   (every try drained). *seen*
+- **Still open in the Player's run** (Gold Box Guide 3, 2026-11-20): at `p33f3_mopup1`, the save the current chain
+  grew from, 0x4A41 = 0 (the vampire never fought), 0x4A18 = 0 (9,1 not beaten), 0x4AF8 = 0 (the tomb not opened);
+  only the coffin sanctified (0x4A43 = 251). So the plan starts from the current chain (`p35e2_mopup2`, LIRA at MU5
+  with Fireball), not `s26g7c`. *code* (the saves' script memory)
+- **Haste without spending the scroll** (*Jeremy*, 17:03-17:09): the game has **one Haste**, on the Kovel scroll (3:14
+  3,4, list 25: Fireball, Haste, Hold Person). LIRA SCRIBEs it (a magic-user with 3rd-level slots may) and casts it from
+  her book; ELWEN takes Haste as her new spell at magic-user 5. At MU5 LIRA has one 3rd-level slot: Haste for this
+  fight. **Fireball scrolls: four** (Kovel x2, Grishnak's temple in 4:2, Bane's temple's hidden lists); **no Wand of
+  Fireball in Pool**; the nearest thing is the **Wand of Lightning Bolt** in the graveyard's zombie room (9,15), on the
+  way to 9,1. *code* (main's gear map, chat 69)
+- **The simulation redone** (Gold Box Guide 3; a spectre needs 13+ against AC -1, about 40% a swing; the fight lasts
+  about three rounds): with Prayer and Bless only, 3 drains a fight on average; with Haste on the fighters, about 1.7
+  (1.4 with Strength bonuses), **2 drains at most in 77-88% of fights, 4 at most in 99%**; Haste and the Wand of
+  Lightning Bolt in round 1, 2 at most in 90-94%. **A drain-free fight is the exception (13-29%), not the plan:** each
+  2-level hit costs one Restoration scroll at once (the reload rule allows it). Guide 2's "about 2 in 3 without a
+  drain" was too hopeful.
 - **The plan** (Jeremy agreed, 2026-11-20; a simulation of the fight from the party's real numbers, Gold Box Guide 2):
   1. **The audit first:** nothing was owed at Player 33's save (corrected 15:10), but **LIRA is 1,295 from MU5**, which
-     brings Fireball and Haste: earn it first (or use the Kovel scrolls if a magic-user 4 can cast them: Combat);
+     brings Fireball and Haste: earn it first (done: Player 35, Stojanow; Haste by SCRIBE, above);
      movement 6+; every fighter a magic weapon (the Slums' Bows +1 for the archers: a magic bow makes every shot
-     magic); DORN in the Bracers AC 6; **two or more Restoration scrolls** in the packs (the marble chest at 7,6-8
-     gives four), so a hit costs a scroll, not a reload.
-  2. **On 10,1, in camp:** Haste on the four fighters (one magic-user's third-level slot), Prayer, Bless; then step
-     onto 9,1.
-  3. **Round 1:** the other magic-user's Fireball on both spectres; the bows; then every fighter on one spectre at a
-     time, BRAM's sword first. Magic Missiles after the Fireball.
-  - The simulation (20,000 fights, two fighters reaching a spectre each round): as at Player 33's save, about 1 fight
-    in 5 without a drain and 1.4 drains on average; with Prayer, one Fireball and the camp's Haste, about 2 in 3
-    without a drain and almost never two (98% one at most). **Mirror Image doesn't help** (section 4's rule: images take spells, not blows).
+     magic); DORN in the Bracers AC 6; **four or more Restoration scrolls** in the packs (the marble chest at 7,6-8
+     gives four; the zombie room two, the paladin's crypt one), so a hit costs a scroll, not a reload; the Wand of
+     Lightning Bolt from the zombie room.
+  2. **On 10,1, in camp:** LIRA's Haste on the four fighters, Prayer, Bless; then step onto 9,1.
+  3. **Round 1:** the Wand of Lightning Bolt down the line at both spectres (it bounces: mind the party); the bows;
+     then every fighter on one spectre at a time, BRAM's sword first. Each drain: a Restoration scroll at once.
+  - The simulation: see "The simulation redone" above (Guide 2's first figures were too hopeful). **Mirror Image
+    doesn't help** (section 4's rule: images take spells, not blows).
 
 **Stojanow Gate (2:9)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **Take the towers one at a time, by surprise, and the wall fight never comes.** Each tower room opens with the guards
