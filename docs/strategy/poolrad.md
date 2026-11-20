@@ -221,6 +221,12 @@ files); results *seen* unless marked.
   more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
   the party about level 4: fighters and cleric 4, ELWEN 2/2/1, LIRA 3/1, DORN 3/2 at that route point, **unconfirmed**
   for that save). Kill or Hold Grishnak first. Rest only at the inn in 4:2.
+  - (Gold Box Guide 4, 2026-11-20; *Jeremy*: a guide line, no Plan 1 while the run is past him) **Every win cost a
+    member, so 0 clean wins in 4.** The killer is Grishnak's own casting: each Hold Person picks up to four members
+    (Combat Chat 10: `orig_I_grishnak1`), and Silence 15' stops the party's casters. **Round 1:** Hold Person on
+    Grishnak from every cleric (he's the one figure worth the slots); Sleep from the magic-users on the hobgoblins
+    bunched at the door; the fighters go straight to Grishnak. Bless and Prayer in camp before the door, at full HP,
+    rested at the inn. His temple holds a Fireball scroll: keep it (section 3, the spectres). *code* + *seen*
 
 **The kobold caves (8:13)** (Jeremy is keeping an eye on this one: report every new try to him)
 - **The throne room (event 9, 4,3):** three fights with no camp between: the horde (56 figures, **4 trolls Sleep
@@ -250,6 +256,12 @@ files); results *seen* unless marked.
   needed for the vampire's room; the script doesn't check them. They stay until beaten (no parley; fleeing throws
   the party out), but **the vampire's final death (0x4A41 = 255) stops every event in the graveyard, the tomb's
   too**: to take the tomb later, leave the vampire's last fight until after. *code*
+- **The earlier trips** (Gold Box Guide 4, 2026-11-20, from the parked notes): trips 1-6 go without a drain when the
+  clerics TURN first (Player 32). **Trip 6, the summoner at 9,11 with the mummies:** three of five tries lost a member
+  (p25l3, p25l4, p25n1); the mummies' disease stops all healing until CURE DISEASE: buy it at the temple before the
+  next trip, and raise saves (Prayer, Bless) against their fear before the door. **Trip 7, 9,5 (4 wights, 16
+  zombies):** 17 losses until BRAM READIED the council's Two-Handed Sword +1 (+3 vs undead) and CEDRIC took DORN's Mace
+  +2; then won. Wights need magic weapons (p32b8): **ready every magic weapon before the graveyard, not in it.** *seen*
 - **The knight's gifts** (ITEM4 list 29): four clerical scrolls, each **two Restorations** (8 in all); Plate Mail +2;
   Long Sword +2 (lawful good only: ARN, BRAM, CEDRIC); Shield +1; Ring of Fire Resistance. *code* + *players*
   ([GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/valhingengraveyard.php)) **Worth taking** (*Jeremy*):
@@ -305,6 +317,9 @@ files); results *seen* unless marked.
 - **Results:** Player 34 won the west tower 3 of 5 with a death (movement 3, no cloud, CEDRIC in reach). **Player 35,
   after the audit (movement 9-12): both towers, the patrol and the 16 bugbears won, nobody dead: the gate taken**
   (`s35g`). The audit was the difference. *seen*
+
+**Not hard** (Gold Box Guide 4, 2026-11-20): **Podol Plaza's goblin hordes (1:18) and the run for the gate (6:1 7,2)**
+[100 x4, 99 x30]: won in the original (Player 2); no plan needed. *seen*
 
 The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
@@ -486,7 +501,7 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
   - Player 29 (after the guards by shortcut, the party at full 263 HP, all ATTACK votes): **0 of 7** (p29b2 after the won guards, p29f1 (the re-arm missed),
     p29e1-e5: destroyed in about 18 s each). Taken by `shortcutwin 5:7 3,8 2` (p29f2): the game won by shortcut. Main's bot
     (7 members, levels 6-7) beat him for real with one death.
-- **4:2 3,11** [28 x1, 7 x3, 6 x12] (GRISHNAK). Won 3 of 4, every win with deaths; lost seed 0badf00d (Player 8).
+- (Folded into section 3, Guide 4.) **4:2 3,11** [28 x1, 7 x3, 6 x12] (GRISHNAK). Won 3 of 4, every win with deaths; lost seed 0badf00d (Player 8).
 - **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
 - **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).
 - **Slums event 9, 2:20 3,3** (30 figures): lost twice without `prepare` (Player 15).
@@ -496,9 +511,9 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 - **The mage and his guards, 7:23 4,1** (13 figures): p24b5 destroyed, p24b6 won (ARN 3/32 HP).
 - **Pyramid room fights, 7:22**: p25c5 destroyed at 12,15 (rests interrupted after the fight); p25d2 destroyed at 11,13 (three fighters, COMBAT).
 - **Wilderness bands**: a 51-figure encounter at 7:26 5,21 (p25a3 destroyed); a band fight at 7:26 12,27 (p25l2 destroyed); 6:25 band fights killed BRAM twice (p25h2, p25j5).
-- **Graveyard trip 6, 4:10 9,11** ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT", with mummies): p25l3, p25l4 and p25n1 lost a member. p25m1 won, but the mummies' disease stopped healing. p25o1 won, then bought CURE DISEASE.
+- (Folded into section 3, Guide 4.) **Graveyard trip 6, 4:10 9,11** ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT", with mummies): p25l3, p25l4 and p25n1 lost a member. p25m1 won, but the mummies' disease stopped healing. p25o1 won, then bought CURE DISEASE.
 - **The graveyard under the reload rule** (Player 32, from `s26t`, tactical mode, clerics turning first): trips 1-6 without a drain (trip 6's mummies turned); trip 7 (9,5: four wights, 16 zombies) lost 17 times until BRAM readied the council's Two-Handed Sword +1 +3 vs undead and CEDRIC took DORN's Mace +2, then won with one level restored from DORN's Restoration scroll; trip 8: 9,7's spectre won, **9,1's two spectres 0 of 18** (two levels a hit). *Seen in the original.*
-- **Podol Plaza goblin hordes, 1:18** and **the run for the gate, 6:1 7,2** [100 x4, 99 x30]: both won in the original (Player 2). Not hard for that party.
+- (Folded into section 3, Guide 4.) **Podol Plaza goblin hordes, 1:18** and **the run for the gate, 6:1 7,2** [100 x4, 99 x30]: both won in the original (Player 2). Not hard for that party.
 
 ### What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
 

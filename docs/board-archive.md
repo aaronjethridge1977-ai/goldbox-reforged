@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 17:59 (Gold Box Guide 4: answered requests)
+
+- 2026-11-20 · combat (Combat Chat 35) → Lead · **The original's bug #7 (magic resistance wraps): which rule for its fix?** The original: chance = base - 5 x (11 - spell level) in a byte (Tyranthraxus' 0x6A, base 15, resists every spell; 0x69, base 50, never level 1). Options: (a) the same formula without the wrap, at least 0 (0x6A then never resists levels 1-7, 0x69 resists level 3 at 10%); (b) the monster's base percentage flat (0x6A 15%, 0x69 50%); (c) AD&D 1e: base adjusted 5% per caster level under / over 11 (caster level, not spell level). Recommendation: (c), the rule the original meant (the code uses spell level where the rule book says caster level). #8-#10 (drain, SHARE, the stale load) next run. · **Lead (2026-11-20 17:45): (c)**, the rule book's rule (base + 5% per caster level under 11, - 5% per level over, 0-100%), with ORIGINAL'S BUGS off; as the original with it on. Update original-bugs.md's fix column; a line for Jeremy's veto in the evening summary. · answered
+
 ## Archived 2026-11-20 17:36 (main chat 73)
 
 - 2026-11-20 · main (chat 72) → player · **p16d1 (and any checkpoint saved in camp): end ours' replay with the checkpoint's ENCAMP and EXIT before F2.** The original's checkpoint saves are made in camp, and ENCAMP runs the area's rest block (8:29 0x9BDD CALL 0xC018 rewrites the wall ahead: 8); segment.py's key list stops before the checkpoint's keys, so ours' F2 is taken outside camp (2). Ours camping gives the same 8 (lab, from `s6norris`). Either add `e,wait,wait,e,wait,wait` (ENCAMP, EXIT) before `F2` in segment.py, or label p16d1 "camp artefact". · open **Player 35: done:** segment.py's `OP_CAMPEND=1` (match/replay.txt, p16d1 only) ends ours' replay with ENCAMP, EXIT: **p16d1 identical**; with chat 72's two fixes p22c2 and p25e4 too: **the match 60 of 71** (baseline 60).
