@@ -280,7 +280,8 @@ class Tactics:
             # (p31b1: a 16-key scan found nothing; an enemy's cell is its corner, so a large one 2 away may touch)
             self.reach[member] = "none"
             return self._fight(member, items, p)
-        self.idle[member] = 0
+        # (Player 32, p32b3: zombies two squares off but never TARGETable kept the count at 0 for 1400 s: it is reset
+        # only by a blow, in _aim_attack)
         self.order = [member, "ATTACK", 0]
         self.scan = None
         return "a", "tactics: %s attacks by hand: AIM" % member
@@ -319,6 +320,7 @@ class Tactics:
             self.log("TACTICS %s attacks figure %d %s (%d HP, %s)" % (member, f["n"], f["name"], f["hp"], why))
             self.order = None
             self.reach[member] = "hit"
+            self.idle[member] = 0
             return "t", "tactics: %s attacks figure %d (%s)" % (member, f["n"], why)
         sc["pos"] = (at + 1) % max(n_ent, 1)
         return "n", "tactics: to figure %d (aim entry %d, at %d)" % (f["n"], i, at)
