@@ -1,8 +1,8 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-9 are done;
-the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
+treasure are in `docs/strategy/poolrad.md`. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by
+section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 
 ## 0. How to read this guide
 
@@ -642,65 +642,30 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ---
 
-# Not yet folded in (the old playbook, being moved into the sections above)
+## For the lanes
 
-## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
+Tool and method notes behind the guide's lines; players can skip this.
 
+- Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
+- **The spell lab's method** (Combat Chat 33): *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
+- Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
+- **The reload rule in the Player's tools** (Player 32): `OP_RELOAD=1` (plans.py `reload_rule`, read from the record: levels 0x96-0x9D, levels drained 0x74, abilities 0x10-0x15, status 0x10C; key items and temple cures not yet), lab `p32/reload.sh` goes on from the last clean checkpoint (Player 32; *read in the code*).
+- **TURN first in the Player's tactics** (Player 32): - With undead on the field, the clerics TURN first (once a fight each) before casting or fighting (Jeremy, 2026-11-20; tactics.py since Player 32; results to be added as the graveyard redo shows them).
 
-## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
-
-**Combat rules**
-
-**Level drain, petrification, poison, disease**
-
-**Money and gear**
-
-## Party and preparation
-
-
-## In combat
+## Pool-only lines (moving to docs/strategy/poolrad.md in this rewrite)
 
 - Tyranthraxus's fear affects every enemy: levels 0-3 are paralysed and levels 4-5 weakened, whether they save or not (Player 5; *read in the code*, GAME.OVR 0x10705).
-
-## Resting and camping
-
 - While an alarm holds (Valjevo), patrols interrupt camps and wander at 17% a step. Camps there were interrupted three times and wiped the party. Use memorized cures and rest at the inn (Player 3, Player 27; *seen in the original*).
 - In some places the only safe rest is the inn: Sokal Keep's 15,1, 4:2, the pyramid's 7:22, the wilderness bands. Camps there were interrupted 4-5 times and members died (Players 15, 19, 25; *seen in the original*).
-
-## Encounters and parley
-
 - Against a ransom demand, SURRENDER loses coins and items but keeps the rescue. ATTACK, if won, captures the fort (Player 25, ECL 6:1; *read in the code*).
-
-## Movement and scripts
-
-
-## Shops and gear
-
-
-## Added by Player 28
-
 - Valjevo's gate (5:3 12,7/12,8) asks for the password on a bump W from the square, not on the step onto it: the on-move script runs before a step, with the square stood on and the new facing (Player 28, p28a1 probe; *seen in the original*, ECL 5:3 0x9A80 *read in the code*).
 - While an alarm holds in Valjevo (0x4A64), each step off a "safe" square (info bit 64) may draw a patrol; resting on a bit-64 square draws none (ECL 5:4 0x9AB5, 0x9B32; *read in the code*, not tried).
 - Valjevo's barracks giants (5:4 9,1) parley when no alarm holds: HAUGHTY or SLY gives the passwords and no fight (ECL 5:4 0xA38D; *read in the code*, not tried). A won fight there instead stops the four giants of 5,2 (0x4A66 bit 16).
 - Reading Valjevo's records (5:4 14,9) during an alarm draws a patrol half the time; answer NO on later visits, as main's bot (Player 28, p28c3; *seen in the original*).
-
-## Added by Player 29
-
-- Map squares can carry flag bits that a "walk round every event" route treats as events (Valjevo's 32/64 bits): name the real events to avoid instead (Player 29, p29b1; *read in the code*, GEO5 blocks 3-5).
-
-## Added by Player 30
-
-
-## Added by Player 31
-
-
-## Added by Player 32
-
-
-## Added by Combat Chat 32
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
-## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
+## Inbox
 
-- (For the lanes, the spell lab's method) *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
-- Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
+Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
+and where it was learnt. The Lead folds them into the sections daily and clears this list.
+
