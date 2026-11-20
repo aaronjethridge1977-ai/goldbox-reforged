@@ -187,8 +187,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (0x3F4C: 25, 26, 27 -> 2, 3, 4); 26's init's `LOAD_AREA_MAP 5,5,0` doesn't. Ours turned the wilderness on at
   that LOAD_AREA_MAP. Now the view after a load is the save's: 7:17's map at 0,0 W, 26's script running (one step
   north: LARGE NOMAD CAMP ENTER/LEAVE), as the original. The Player's segment p20a4 (`begin nomads`) was 78
-  differences from its first keys; now its draws are identical for the 12069 ours played before segment.py's
-  900 s limit (the full run: the board). **Check 124** (the save as slot G, tpseed 70700001): load,
+  differences from its first keys; now its draws are identical to 16668 of 19860, then the QUICK-caster
+  family (the replay's MAGIC timing: no MAGIC lines in the trace). **Check 124** (the save as slot G, tpseed 70700001): load,
   Right, Up (0,15 N: LARGE NOMAD CAMP, ENTER LEAVE), L (LEAVE: the 3D view stays, 0,15 N), save: MATCH 3 of 3; on
   the code before the fix (3583e43^) and without the L it differs.
 - **The Player's logged shortcut win in ours' replay** (the Lead's Stage 1 item; lab key `shortcutwin`, main.gd):
