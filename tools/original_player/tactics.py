@@ -43,7 +43,8 @@ def figures(mem):
             break
         r = mem.far(seg, off, 0x120)
         out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
-                    "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r)})
+                    "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r),
+                    "cl": r[0x96], "mu": r[0x9B]})   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
     return out
 
 
@@ -118,6 +119,11 @@ def _magic_weapon(mem, member):
     return True
 
 
+# Player 33: a camp's Bless (effect 1) or Prayer (49, on its caster) still standing (ours' combat_spells.gd
+# EFFECT_BLESS, EFFECT_PRAYER) is not cast again
+STANDING = {"BLESS": 1, "PRAYER": 49}
+
+
 def _is_drainer(f):
     return any(m in f["name"].upper() for m in DRAINERS)
 
@@ -128,10 +134,13 @@ class Tactics:
         self.on = False
         # Player 30: v2 (p30a3 lost with Prayer / Bless first: begun spells are lost to a hit before they go off):
         # the enemy's numbers first, the party's bonuses after
-        self.priority = ("STINKING CLOUD", "PRAYER", "MAGIC MISSILE", "HOLD PERSON", "BLESS", "SLEEP")
+        # Player 33 (docs/playbook.md "Spell sheet", Combat Chat 33's spell lab, seen in the original): Hold Person
+        # holds persons 95% (a held figure dies to one blow) and goes before Magic Missile (level/2 missiles, none at
+        # level 1); Slow has no save and halves the attacks of the caster's level in figures nearest the aim point
+        self.priority = ("STINKING CLOUD", "HOLD PERSON", "SLOW", "PRAYER", "MAGIC MISSILE", "BLESS", "SLEEP")
         if os.environ.get("OP_TACTICS") == "horde":
             # Player 30: a horde of small figures (the kobold king): the area spells first
-            self.priority = ("SLEEP", "STINKING CLOUD", "PRAYER", "HOLD PERSON", "BLESS", "MAGIC MISSILE")
+            self.priority = ("SLEEP", "STINKING CLOUD", "HOLD PERSON", "PRAYER", "SLOW", "BLESS", "MAGIC MISSILE")
         # Player 31: the Lead's advice: members with nothing to cast attack by hand (helpless enemies first);
         # OP_MELEE=0 keeps Player 30's QUICK
         self.melee = os.environ.get("OP_MELEE", "1") != "0"
@@ -142,6 +151,7 @@ class Tactics:
         """A new fight."""
         self.cast = {}           # spell -> times ordered this fight (Prayer, Bless once)
         self.held = set()        # figures given Hold Person (not tried again)
+        self.slowed = set()      # Player 33: figures inside a Slow's reach (not aimed at again)
         self.order = None        # [member, spell, pages turned] while CAST's list is up
         self.scan = None         # aim: entries with TARGET seen
         self.refused = set()     # (member, spell) refused this turn (not in the list, nowhere to aim)
@@ -151,6 +161,7 @@ class Tactics:
         self.idle = {}           # member -> turns in a row with nothing in reach
         self.guard = None        # the member whose DONE asked for GUARD
         self.turned = set()      # Player 32: members who tried TURN this fight
+        self.fx_logged = False
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -175,8 +186,12 @@ class Tactics:
                 continue
             if spell in ("PRAYER", "BLESS") and self.cast.get(spell):
                 continue           # once a fight
+            if spell in STANDING and any(STANDING[spell] in f.get("fx", ()) for f in party if _up(f)):
+                continue           # Player 33 (p33c1: Bless cast again after the camp's): already on the party
             if spell == "BLESS" and contact:
                 continue           # before contact
+            if spell == "MAGIC MISSILE" and me.get("mu", 2) < 2:
+                continue           # Player 33 (spell sheet): at magic-user level 1 it fires no missile
             if spell in ("PRAYER", "BLESS") or self.targets(spell, me, party, foes):
                 return spell
         return None
@@ -204,6 +219,9 @@ class Tactics:
                 if k >= 2:
                     best.append((-k, f["n"]))
             return [n for _, n in sorted(best)]
+        if spell == "SLOW":            # Player 33 (spell sheet): no save; the strongest not slowed yet, so its
+            # reach (the caster's level in figures nearest the aim point) takes the big hitters
+            return [f["n"] for f in sorted(foes, key=lambda f: (not _is_large(f), -f["hp"])) if f["n"] not in self.slowed]
         if spell == "MAGIC MISSILE":   # the mages (weakest first), the drainers (Player 32), then the weakest
             dr = [f["n"] for f in sorted(foes, key=lambda f: f["hp"]) if _is_drainer(f) and not _is_mage(f)]
             return [f["n"] for f in mages] + dr + [f["n"] for f in sorted(foes, key=lambda f: f["hp"])
@@ -246,6 +264,11 @@ class Tactics:
                 member, sum(1 for f in party if _up(f)), sum(f["hp"] for f in party),
                 len(foes), sum(f["hp"] for f in foes),
                 ", ".join("%d:%s %d" % (f["n"], f["name"][:6], f["hp"]) for f in foes)))
+            if not getattr(self, "fx_logged", False):
+                # Player 33: the party's standing effects at the fight's first menu (a camp's Bless, Prayer...)
+                self.fx_logged = True
+                self.log("TACTICS party effects: %s" % "; ".join(
+                    "%s %s" % (f["name"], ",".join("%d" % e for e in f.get("fx", ())) or "-") for f in party))
         except Exception as e:
             self.log("TACTICS state unreadable: %s" % e)
         if member != self.last_member:
@@ -396,6 +419,7 @@ class Tactics:
         Scan the list once (NEXT) for the figures TARGET may take, then go to the best and take it; a spell that picks
         several figures (Hold Person: 3, the magic-user's 4) keeps the aim up: the next best, distinct."""
         lst, at = aim_list(p.g.mem)
+        self._mem = p.g.mem
         spell = st["rows"][23].strip("? ").strip()
         spell = spell.split(":", 1)[1].strip() if ":" in spell else spell
         figs, party, foes = self._sides(p)
@@ -460,6 +484,15 @@ class Tactics:
         sc["goal"] = None
         if spell == "HOLD PERSON":
             self.held.add(target)
+        if spell == "SLOW":
+            try:
+                figs = {f["n"]: f for f in figures(self._mem)}
+                me, t = figs.get(self.scan["spell"][0]), figs.get(target)
+                k = max(me["mu"], 1) if me else 1
+                foes = sorted((f for f in figs.values() if f["n"] > self.party_n and _up(f)), key=lambda f: _dist(t, f))
+                self.slowed |= {f["n"] for f in foes[:k]}
+            except Exception:
+                self.slowed.add(target)
         self.log("TACTICS %s's %s at figure %d" % (member, spell, target))
         self.order = None
         return "t", "tactics: %s %s at figure %d" % (member, spell, target)

@@ -562,6 +562,26 @@ class CampDay(Heal):
         return Heal.next(self, p)
 
 
+class CampCast(Heal):
+    """Player 33: `campcast <CASTER> <SPELL>[|<TARGET>]` (the cluebook's pre-buff, Jeremy's note for the graveyard's
+    9,1: camp on the square before a known fight and cast Bless, Prayer, Protection from Evil): ENCAMP, select the
+    caster, MAGIC, CAST, the spell lit, CAST, and CAST SPELL ON WHOM the target (the caster when none is given; Bless
+    and Prayer ask nobody), then leave the camp. No rest. A spell not in memory stops the run (a plan error)."""
+    def __init__(self, caster, spell, target=None):
+        super().__init__(force=True)
+        self.caster, self.spell, self.target = caster.upper(), spell.upper(), (target or "").upper() or None
+
+    def __repr__(self):
+        return "campcast %s %s%s" % (self.caster, self.spell, "|" + self.target if self.target else "")
+
+    def next(self, p):
+        if getattr(p, "heal", None) is None:
+            new_heal(p)
+            p.heal.update(casts=[(self.caster, self.spell, self.target)])
+            return False, "e", "campcast: ENCAMP"
+        return Heal.next(self, p)
+
+
 def new_heal(p):
     p.heal = {"done": False, "phase": "rounds", "round": 0, "cured": 0, "memo_any": False, "op": None,
               "cures": 0, "rests": 0, "days": 0, "interrupts": 0, "fights0": p.fights, "days_memo": False,
@@ -587,7 +607,7 @@ class TripEnd:
 # into every fight from Sokal Keep on with their level-2 and level-3 slots empty; README "Player 27"). Ids by
 # class and level: cleric 1-8, 22-28, 36-44; magic-user 9-21, 29-35, 45-55.
 CLERIC1, MU1 = range(1, 9), range(9, 22)
-SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 15: "MAGIC MISSILE", 21: "SLEEP", 23: "HOLD PERSON",
+SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 6: "PROTECTION FROM EVIL", 15: "MAGIC MISSILE", 21: "SLEEP", 23: "HOLD PERSON",
                26: "SLOW POISON", 31: "KNOCK", 32: "MIRROR IMAGE", 34: "STINKING CLOUD", 42: "PRAYER",
                47: "FIREBALL", 48: "HASTE", 51: "LIGHTNING BOLT"}
 PICKS1 = ((CLERIC1, 0xB2, (3, 3, 1)), (MU1, 0xB5, (21, 15)))
@@ -1609,6 +1629,15 @@ class Plan:
                 h["cured"] += 1
                 return ("cast", c[0]["i"], c[1]["i"])
             return ("rest", 24 * 60)
+        if h.get("casts") is not None:
+            # Player 33: `campcast`: the plan's casts in turn, then leave
+            if not h["casts"]:
+                return ("leave",)
+            who, spell, tgt = h["casts"].pop(0)
+            byname = {m["name"]: m["i"] for m in M}
+            if who not in byname or (tgt and tgt not in byname):
+                raise_stop(p, "campcast: no %s in the party" % (who if who not in byname else tgt))
+            return ("cast", byname[who], byname[tgt or who], spell, tgt is not None)
         if h.get("cure"):
             c = next_cure(M)
             if c:
@@ -1716,16 +1745,21 @@ class Plan:
         if bw[:2] == ["CHOOSE", "SPELL:"] and "CAST" in bw and op[0] == "cast":
             if h.get("sub") == "over":
                 return "e", "heal: EXIT the spells in memory"
+            spell = op[3] if len(op) > 3 else "CURE LIGHT WOUNDS"     # Player 33: `campcast`'s spell
             rows = {r: st["rows"][r].strip("?\\ *") for r in range(4, 23)}
-            hit = [r for r, t in rows.items() if t == "CURE LIGHT WOUNDS"]
+            hit = [r for r, t in rows.items() if t == spell]
             lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
             if not hit:
-                raise_stop(p, "heal: no CURE LIGHT WOUNDS in %s's memory" % P[op[1]][1])
+                raise_stop(p, "heal: no %s in %s's memory" % (spell, P[op[1]][1]))
             if len(lit) != 1:
                 raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
             if lit[0] in hit:
-                return "c", "heal: CAST CURE LIGHT WOUNDS (%s)" % P[op[1]][1]
-            return ("end" if hit[0] > lit[0] else "home"), "heal: light to CURE LIGHT WOUNDS"
+                if len(op) > 3 and spell in ("BLESS", "PRAYER"):
+                    # (Bless and Prayer take the party, no CAST SPELL ON WHOM: the cast is over)
+                    h["sub"] = "over"
+                    p.note("heal", "%s casts %s in camp" % (P[op[1]][1], spell))
+                return "c", "heal: CAST %s (%s)" % (spell, P[op[1]][1])
+            return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % spell
         if "CAST SPELL ON WHOM" in scr["bottom"] and op[0] == "cast":
             t = op[2]
             hl = scr.get("highlight")
@@ -1735,8 +1769,9 @@ class Plan:
                 return ("end" if t > hl else "home"), "heal: target %s" % P[t][1]
             h["sub"] = "over"
             h["cures"] += 1
-            p.note("heal", "%s casts Cure Light Wounds on %s (%d/%d)" % (
-                P[op[1]][1], P[t][1], P[t][3], members(mem)[t]["max"]))
+            p.note("heal", "%s casts %s on %s (%d/%d)" % (
+                P[op[1]][1], op[3].title() if len(op) > 3 else "Cure Light Wounds", P[t][1], P[t][3],
+                members(mem)[t]["max"]))
             return "s", "heal: SELECT %s" % P[t][1]
         if op[0] == "memorize":
             spells = op[2]
@@ -1895,6 +1930,10 @@ def load(path):
             pl.goals.append(Heal())
         elif cmd == "cure":
             pl.goals.append(Heal(force=True, cure=True))
+        elif cmd == "campcast":   # Player 33: `campcast <CASTER> <SPELL>[|<TARGET>]`
+            who, _, sp = rest.strip().partition(" ")
+            sp, _, to = sp.partition("|")
+            pl.goals.append(CampCast(who, sp.strip(), to.strip()))
         elif cmd == "bumps":
             pl.bumps, pl.look = int(rest.split()[0]), "look" in rest.split()
         elif cmd == "norest":
