@@ -75,6 +75,11 @@ func _process(_delta: float) -> void:
 	if show != visible:
 		visible = show
 		queue_redraw()
+	elif show:
+		# The party can grow while the window shows (an NPC joins, a save with 7 or 8 loads): _draw repaints
+		# only when what it shows changed, the party's size included (Combat Chat 32: an 8-member save kept the
+		# 6-member window over members 7 and 8).
+		queue_redraw()
 	if not show:
 		full_open = false
 

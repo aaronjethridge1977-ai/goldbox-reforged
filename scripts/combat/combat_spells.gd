@@ -595,7 +595,10 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				if save(t, 0, 0, m):
-					c.message.emit("%s IS COUGHING" % t.name)
+					# A made save (GAME.OVR 0x2BAA1) adds effect 0x1E, "starts to cough", for a round; its handler
+					# (0xF6C0) says "is coughing" only for a figure casting, clears its spell and makes its AC 2 worse
+					# (10 at most). Not in ours yet beyond the message: unseen in a replay (Combat Chat 32).
+					c.message.emit("%s STARTS TO COUGH" % t.name)
 					continue
 				SpellCaster.add_affect(t, EFFECT_HELPLESS, id, c.roll(1, 4, "nausea") + 1, 0)
 				c.message.emit("%s CHOKES AND GAGS FROM NAUSEA" % t.name)
