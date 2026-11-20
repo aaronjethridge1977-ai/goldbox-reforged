@@ -1353,14 +1353,26 @@ shortcut wins, ever**.
   wight in five rounds, p32b8; tactics.py now spares the drainers for members without a magic weapon), DORN a Long
   Sword +1, LIRA her Cloak +2 and Chain Mail +1, the Restoration scroll to CEDRIC (spare long bows dropped: full packs).
   Trip 7 (four wights and zombies at 9,5) lost 17 times (p32a4, b1-b12, c1-c4: every one a drain), then **won in
-  p32d1** with the gear, fighters by hand and one level restored: **`s26g7`**. Trip 8 (9,6, 9,7, 9,1's spectres):
-  p32d1 stopped on a trap's text read as a menu (screens.py fixed), p32d2 drained.
+  p32d1** with the gear, fighters by hand and one level restored: **`s26g7`**. Trip 8 (9,6's trap, 9,7's spectre,
+  9,1's two spectres; a spectre's hit drains two levels, so the scroll's last Restoration covers none): p32d1 stopped
+  on a trap's text read as a menu (screens.py fixed); p32d2-d7 lost; a checkpoint **`s26g7b`** after 9,7 (a camp SAVE
+  inside 4:10) was reached by p32d8; **9,1 then lost 18 of 18** (p32d9-d26, one to three members drained or dead within
+  a minute or two each). Stopped there: asked of the Lead (Requests). Lab saves `p2start/p32d1_s26g7`,
+  `p32d8_s26g7b`.
 - **Segments 1-17 replayed in ours on today's main** (lab `p32/all.lst`, `p32/replays.txt`; the 54 runs from the start
   save to `s17door`): **segment 1 parts** (p13a1, 18 differences; was 0 on 8c87c86): DORN's TAKE of 3 gold at the arms
   shop is refused in ours (the start save's load word 0, POOL wraps it; the original takes it): Requests, to Combat;
   p13b6 identical to its checkpoint (42279 draws, the 4AFA-4AFF counters only); p14b3 (no trace) parts at a camp REST
   at 2:20 14,10 (the original's rest is interrupted by an encounter, ours rests on to 17:40); p14b6 **0 differences**;
-  p15c5 one electrum between ARN and ELWEN after four SHAREs (no trace).
+  p15c5 one electrum between ARN and ELWEN after four SHAREs (no trace); p15d8 DORN one platinum more; p16a2 (no trace)
+  held at a treasure screen after Sokal Keep's courtyard fight; **p17a7 identical to 5165** (Player 22: 3233), then a
+  QUICK CEDRIC's spell (the original d1 at OVR:160db, ours "picks a spell" d4); **p18b7 at 990** the same family (after
+  "weighs a spell" d7 = 0 the original goes to its target pick, ours picks a spell d5); **p19c2 at 5003** a fleeing goblin
+  guard: the original draws d2 run steps (OVR:0b492), ours gives ARN a blow from behind. Identical (or to their
+  checkpoint, statediff the 4AFA-4AFF counters only): p13b6, p14b6, p15e3, p15f4, p15f14, p15g1, p15g2, p15h6, p16b2,
+  p16c1, p16c3, p16d1, p16e2, p17a2, p18a1, p18a3, p18a4, p18a5, p18b6, p19a3, p19a10, p19b1, p19b2; p17a6 the clock
+  (49C7/49F0). How to read `p32/replays.txt`: "draws differ from N" with ours' count N - 1 is the checkpoint (the
+  trace goes on past it). Not reached this run (stopped at the wrap-up): `p32/rest2.lst`.
 
 ## Player 31 (2026-11-19): fighters by hand (the Lead's advice); the wall 5 more lost; `valjevo6`'s stall was the timeout
 
