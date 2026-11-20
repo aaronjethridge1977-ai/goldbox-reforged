@@ -31,5 +31,5 @@ label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the o
 label p14b3 game: the camp rest at 2:20 14,10: the original's is interrupted by an encounter, ours rests on (no trace; Player 32, again on today's main)
 label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
-label p15d8 replay tool: the original's run carried a leftover slot I (Combat Chat 35: a fresh rerun of the original from p15c5_s3a gives ours' coins, DORN 331 platinum after the SHARE); a rerun with the slot emptied is due
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
+label p15d8 replay tool: the original's run carried a leftover slot (Combat Chat 35: a fresh rerun gives ours' coins, DORN 331 platinum after the SHARE); Player 35's clean rerun pending (p35i1)

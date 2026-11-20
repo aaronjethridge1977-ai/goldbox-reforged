@@ -1315,6 +1315,42 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 35 (2026-11-20): the match 60 of 71; Stojanow done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; Sokal Plan 1; restore() empties slot I
+
+**The Stage 1 match:** main chat 72's two fixes (the wall ahead in an arrival's init, 0x6DC8's fled monsters) and
+segment.py's **`OP_CAMPEND=1`** (match/replay.txt, p16d1 only: the original's checkpoint save is made in camp, so ours
+ENCAMPs and EXITs before F2) make p16d1, p22c2 and p25e4 identical: **60 of 71** (baseline 60). **Run `check_godot.sh
+<worktree>` in the lab before any replay**: match.py replays the lab's `proj` (the first run of this chat replayed
+Player 34's build). Combat Chat 35: **`watchdog.py restore()` left slot I's old files and the original loaded them**
+(p22c3's ARN and p25j10's BRAM POISONED, p15d8's DORN coin): restore() now empties the slot first; those three
+labelled `replay tool`; p22c8's label dropped (Combat's ROB fix).
+
+**Stojanow Plan 1** (Gold Box Guide 2, Jeremy 15:16; `p35/audit2.plan`, `spells.plan`, `west.plan`, `east.plan`,
+`gate.plan`, `seg29.plan`): **the audit was the difference**: five of six moved 3 (seven spare Long Bows a fighter,
+spare Chain Mail, platinum). Drops (`drop <NAME> <words>*<n>, ...`; `<words> +0` a plain one), the trades (TRADE to a
+member with 16 items fails silently: drop first), Bracers to DORN, Shield +1 to CEDRIC, Chain Mail +1 to ELWEN, LIRA's
+bow (both hands: the Brass Mirror unreadied), Knock cast away in camp (LOSE IT? YES) for Stinking Cloud. Then: the
+west tower room won at once (p35b1), the east garrison at the stairs (p35c4, after one loss), the patrol and the
+16 bugbears (p35d3: `s35g`), a loss to the third patrol on the old explore walk (don't wander under the alarm), town
+(p35e2: LIRA MU5 learns FIREBALL: `learn FIREBALL`, the list paged with NEXT): **`mopup2`, no shortcut**.
+
+**tactics.py:** (1) **Hold Person rescans after every pick** (the guide's diagnosis: the aim goes back to the caster;
+before, only figures seen before the first pick were candidates); picks taken and nothing left: EXIT keeps them.
+(2) **MOVE (Jeremy's line rule):** members in `OP_ADVANCE` (default ARN, BRAM, DORN; plan step `advance <names>|none`)
+walk toward the nearest enemy (helpless first, within 8 squares, 8 idle turns at most) when nothing is in reach, and
+**attack by stepping into the enemy's square** (the original's MOVE/ATTACK); figures' footprints from record +0x6C.
+(3) **Bows:** a member with a readied bow and arrows shoots past melee reach; the aim is read from the right panel
+(name and HP: with a missile weapon DS:0x671A doesn't follow NEXT); magic-users and leaders first; the second arrow
+of the round; DELAY instead of GUARD (no GUARD with a missile weapon). (4) Fireball (the biggest bunch, nobody of
+ours within 2). (5) Sleep at one lone figure twice at most. (6) A MOVE screen not asked for: Esc.
+
+**Sokal Keep Plan 1** (`p35/sokal_p1.plan`, `sokal_direct.plan`, from Player 34's `p15h6_s6t`): the audit at the inn
+(`s9a`: ELWEN and LIRA from movement 3 to 9 and 12, LIRA's Chain Mail +1 worn, DORN's Bracers, ELWEN's Shield +1, LIRA's
+Short Bow +1 with BRAM's 20 Arrows +1). The level detour by Kuto's Well (Player 16's route) lost twice: the old route
+never rests in the well, `s6well`/`s6pre12` hold an unconscious DORN and no spells, and Norris's band comes at 1,5.
+Then straight to the door (the Lead's "try at level 3"): the rests at 8,14 and 9,5 drew undead five times (tool stops).
+See stuck-fights.md section 1 for the tries.
+
 ## Player 34 (2026-11-20): the Stage 1 match fresh, 57 of 71 identical; NOT RUN; replay settings; Sokal's event 9 and Stojanow's west tower by hand, 5 of 5 lost each; stuck-fights.md
 
 **The Stage 1 match** (on origin/main a8c6d64; d772b5c has the same scripts/ and content/): `match.py run -j 4` over all
