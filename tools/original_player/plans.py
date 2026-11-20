@@ -441,6 +441,11 @@ class ReadyItems(ReadyAll):
             return False, ("end" if sel is None or self.j > sel else "home"), "ready: select %s" % self.who
         p.readying, p.ready_tried, p.ready_over = self.j, set(), False
         p.ready_spec = list(self.spec)
+        for want, words in self.spec:
+            if isinstance(want, str) and want.startswith("T:"):   # Player 32: TRADE WITH WHOM? the receiver
+                p.plan.answers.insert(0, ("TRADE WITH WHOM", want[2:], "trade"))
+            elif want == "D":                                     # DROP IT? YES (ours' sheet: NO lit)
+                p.plan.answers.insert(0, ("DROP IT", "YES", "drop"))
         return False, "v", "ready: VIEW %s" % self.who
 
 
@@ -966,6 +971,20 @@ class Plan:
                     todo = []
                     while spec and not todo:
                         want, words = spec[0]
+                        if isinstance(want, str):     # ("T:<TO>" / "D", words): TRADE / DROP the first NO row
+                            hit = [r for r, (y, n) in sorted(rows.items()) if words in n.upper() and y == "NO"]
+                            if not hit:
+                                p.note("ready", "nothing to %s for %s" % ("drop" if want == "D" else "trade", words))
+                                spec.pop(0)
+                                continue
+                            if len(lit) == 1 and lit[0] == hit[0]:
+                                spec.pop(0)
+                                if want == "D":
+                                    return "d", "drop: DROP %s" % rows[hit[0]][1]
+                                return "t", "trade: TRADE %s" % rows[hit[0]][1]
+                            if len(lit) != 1:
+                                raise_stop(p, "trade: no single lit item (rows %s)" % lit)
+                            return ("end" if hit[0] > lit[0] else "home"), "trade: light to %s" % rows[hit[0]][1]
                         hit = [r for r, (y, n) in sorted(rows.items()) if words in n.upper()
                                and (y == "YES") != want and (r, want) not in p.ready_tried]
                         if hit:
@@ -1825,6 +1844,13 @@ def load(path):
             who, _, sp = rest.strip().partition(" ")
             pl.goals.append(ReadyItems(who, [(x.strip()[0] == "+", x.strip()[1:].strip().upper())
                                              for x in sp.split(",") if x.strip()[:1] in "+-" and x.strip()]))
+        elif cmd == "trade":      # Player 32: `trade <FROM> <item words>|<TO>` (the item unreadied first)
+            who, _, sp = rest.strip().partition(" ")
+            words, to = sp.rsplit("|", 1)
+            pl.goals.append(ReadyItems(who, [("T:" + to.strip().upper(), words.strip().upper())]))
+        elif cmd == "drop":       # Player 32: `drop <NAME> <item words>` (a spare, unreadied item: gone for good)
+            who, _, words = rest.strip().partition(" ")
+            pl.goals.append(ReadyItems(who, [("D", words.strip().upper())]))
         elif cmd == "readyall":
             pl.goals.append(ReadyAll())
         elif cmd == "exit":
