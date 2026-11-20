@@ -1348,6 +1348,28 @@ from the playbook instead of QUICK; after five losses in a row, ask the Lead.
   in e2/e3 went off but the QUICK fighters didn't slay the helpless ettins; the six ettins (300 HP, two attacks each)
   outlast the party (~205 HP) by rounds. Asked the Lead (Requests, "player (Player 30) → Lead").
 
+- **The kobold king's throne room (8:13 4,3), tactical** (`p30/king.plan`, `OP_TACTICS=horde`: Sleep and Stinking
+  Cloud on the biggest bunch first): the door save `p28g1_s17door` has the casters' spells spent on the way (ELWEN
+  and LIRA Knock only, CEDRIC Slow Poison only: every throne-room try so far was fought so); **a camp at the door
+  draws KOBOLDS APPEAR AND BOMBARD YOU WITH ROCKS** (p30g1: why the plan's rest is the inn). So from the inn (`s17a`,
+  `p30/king2.plan`, `picks` ELWEN and LIRA Sleep and Stinking Cloud) with **MAGIC OFF on the way** (`OP_MAGIC=0`, lab
+  `p30/tries0.sh`) the casters reach the throne room with their spells: **p30h3 lost** (two Sleeps and the Hold Persons
+  went off, the party whole for ~2 minutes, destroyed at ~1030 s with 37 of 56 standing); p30h1, h2 ended on a tool
+  loop (a Hold Person pick of a figure already picked: the original keeps the aim up; now its spare picks go to other
+  enemies in reach). Each try is ~17 minutes (the town trip and the way in).
+- **The Stage 1 match, segments 17-34's final runs replayed in ours** (lab `p30/replays.sh`, `p30/replays.txt`,
+  `p30/<run>.cmpdraws.txt`, on 24d141f): **identical draws** for p23b1 (`band1`, 26013 draws), p24a4 (`pyramid1`),
+  p25b1 (`pyramid2`), p25d3 (`pyramid3`), p25f1 (`buccaneers0`), p25g3 (`heir`), p25q5 (`graveyard`), p28a2
+  (`valjevo3`), p28i3 (`valjevo5`); their statediffs only the counters 4AFA-4AFF and the clock word 49F0 (or 0).
+  cmpdraws' "end of fight" there is the original's trace without end markers, and its "positions" the original's
+  extra position records (no draw between; Combat Chat 19's note). **Five part** (Requests, to Combat): p24b6 (`s20m`)
+  at 1838 of 3356, p25e4 (`lizard`) at 2259 of 16975, p25j10 (`zhentil`) at 4108 of 25450, p26a1 (`mopup1`) at 3932
+  of 23832, p27d3 (`mopup2`) at 57 (the tavern brawl). Segment 17 (the kobold king) has no final run (deferred);
+  segments 28 (p27c2) and 34 (p29f2) end by logged shortcut, which ours can't replay (the guards' fight p29d1 matches
+  all 2819 draws up to it). **p29a2 (`valjevo6`): identical to draw 3022 of 3024**, then ours
+  stalls in the last camp's cures (OVR:280a2 d8s) until segment.py's 1500 s timeout, so its statediff is void: the
+  replay's camp keys are the likely cause (the Player's own, open for Player 31).
+
 ## Player 29 (2026-11-19): segments 32 to `valjevo5` and 33 to `valjevo6`; the take loop skips overloaded members
 
 Lead's answer to "player (Player 28) -> design": (a), 5:4 9,1 (the four fire giants) and the west of 5:4 deferred; for

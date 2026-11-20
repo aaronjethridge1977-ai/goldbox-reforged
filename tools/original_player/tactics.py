@@ -18,7 +18,7 @@ The original's screens (seen in DOSBox, Player 30, the Stojanow wall from `s28p`
   figures   the fight's figure n (1-based) is the record at the far pointer DS:0x65B9 + 4n (name +0, HP +0x11B, status
             +0x10C); its cell is DS:0x5F2B + 4(n - 1) (x, y); the party comes first
 """
-import struct
+import os, struct
 
 MAGES = ("MU", "MAGE", "MAGIC-USER", "MAGIC USER", "WIZARD", "SHAMAN", "CLERIC", "PRIEST")
 LARGE = ("ETTIN", "GIANT", "OGRE", "TROLL", "DRAGON", "HILL GIANT", "FIRE GIANT", "BASILISK", "BULETTE", "OWLBEAR",
@@ -75,6 +75,9 @@ class Tactics:
         # Player 30: v2 (p30a3 lost with Prayer / Bless first: begun spells are lost to a hit before they go off):
         # the enemy's numbers first, the party's bonuses after
         self.priority = ("STINKING CLOUD", "PRAYER", "MAGIC MISSILE", "HOLD PERSON", "BLESS", "SLEEP")
+        if os.environ.get("OP_TACTICS") == "horde":
+            # Player 30: a horde of small figures (the kobold king): the area spells first
+            self.priority = ("SLEEP", "STINKING CLOUD", "PRAYER", "HOLD PERSON", "BLESS", "MAGIC MISSILE")
         self.spells = {}         # member -> the spells seen in their CAST list (kept across fights; refreshed at each look)
         self.reset()
 
@@ -137,8 +140,14 @@ class Tactics:
             return [n for _, n in sorted(best)]
         if spell == "MAGIC MISSILE":   # the mages (weakest first), then the weakest
             return [f["n"] for f in mages] + [f["n"] for f in sorted(foes, key=lambda f: f["hp"]) if not _is_mage(f)]
-        if spell == "SLEEP":
-            return [f["n"] for f in persons if not _is_mage(f)]
+        if spell == "SLEEP":           # (Player 30, the horde) the biggest bunch of small figures, as Stinking Cloud;
+            best = []                  # else any person (the wall's aides)
+            for f in persons:
+                if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6):
+                    continue
+                k = sum(1 for g in persons if _dist(g, f) <= 1)
+                best.append((-k, f["n"]))
+            return [n for _, n in sorted(best)] or [f["n"] for f in persons if not _is_mage(f)]
         return [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))]
 
     def answer(self, scr, st, p):
@@ -226,7 +235,9 @@ class Tactics:
             if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
                 t = [caster] + [f["n"] for f in party if f["n"] != caster]
             near = [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))] if me else [f["n"] for f in foes]
-            if spell not in ("PRAYER", "BLESS", "HOLD PERSON"):
+            if spell not in ("PRAYER", "BLESS"):
+                # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
+                # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]
             self.scan = {"spell": (caster, spell), "ok": set(), "steps": 0, "goal": None, "picked": set(),
                          "targets": t}
@@ -243,10 +254,6 @@ class Tactics:
             if sc["steps"] <= len(lst):
                 return "n", "tactics: aim scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
             ok = [t for t in sc["targets"] if t in sc["ok"] and t not in sc["picked"]]
-            if not ok and sc["picked"]:
-                # a spell that picks several figures with no new one in reach: a figure picked again counts once
-                # (GAME.OVR 0x14B3C, "Already been targeted" for the player; ours' combat_spells.gd notes)
-                ok = [t for t in sc["targets"] if t in sc["ok"]]
             if not ok:
                 p.note("tactics", "%s: %s can reach none of its targets" % (member, spell))
                 return "e", "tactics: %s %s: no target in reach: EXIT" % (member, spell)

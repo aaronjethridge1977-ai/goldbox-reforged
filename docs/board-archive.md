@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-19 (Gold Box Player 30)
+
+### Now (the Player's line before Player 30)
+
+- Player: **Player 29 ended 2026-11-19** (unattended; the Lead's note: Valjevo under (a), the playbook, segments to the end). **Pool's full run has reached the end in the original** (`valjevo7`, 0x4ABA = 254, p29f2): segments 32 (`valjevo5`, Player 28's p28i3), 33 (`valjevo6`, p29a2) and 34 (`valjevo7`); the finale guards (1 win in 5) and Tyranthraxus (0 of 7 at full HP) by logged shortcut (`shortcutwin 5:7 3,8 2`), as main's bot took the guards. Flags at `valjevo7` as the bot's but the clock. Two tool gaps fixed (the take loop on big piles; 5:5's walks). In ours: the guards' fight (p29d1) parts at draw 803 of 2819 (ELWEN's QUICK spell, Requests, to Combat). Design question: is the end by shortcut the end (Requests). No jobs running. (Player 28's line: docs/board-archive.md.)
+
 ## Archived 2026-11-19 (Gold Box Combat Chat 31)
 
 ### Now (combat's line before Combat Chat 31)

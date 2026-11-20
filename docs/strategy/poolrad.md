@@ -68,6 +68,7 @@ early fights. Levels are given where the README states them. General tactics are
 - **Kobold king's throne room, 8:13 4,3 (event 9)**.
   - Three fights in a row with no camp between: the horde (LOAD_MON 31 x4, 0 x35, 1 x11), the ballista (120 x5, 0 x45, 1 x8), then the envoys.
   - Player 23: 5 of 5 lost in the first fight, the horde (56 figures; 16-23 still standing at the wipe). Party at the door: ARN 32, BRAM 52, CEDRIC 30, ELWEN 28, LIRA 22, DORN 29 HP.
+  - Player 30: every earlier try reached the door with the casters' spells spent on the way (four fights). A camp at the door draws KOBOLDS APPEAR AND BOMBARD YOU WITH ROCKS (p30g1). From the inn with MAGIC OFF on the way, the casters keep their spells: p30h3 by hand (Sleep and Stinking Cloud picks) still lost, 37 of 56 standing (*seen in the original*).
   - Earlier: destroyed on every seed from c24f (Player 2), c32a (Player 7) and c34d (Player 9). Main's bot wiped there seven times.
   - Deferred with events 20 and 11. The level-2 spell gap applied here too.
   - Retry with the fixed tool (Player 28: spare gear sold, levels 1-3 memorized at the inn: CEDRIC Hold Person x4, Prayer x2,
