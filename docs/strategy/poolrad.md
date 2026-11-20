@@ -2,7 +2,7 @@
 
 Pool of Radiance's route, hard fights, Pool-only rules and treasure, for players. General tactics are in the Gold Box
 Players' Guide (`docs/playbook.md`); its tags (*seen*, *code*, *book*, *players*, *Jeremy*, **unconfirmed**) apply
-here. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by section: sections 1-2 are done; the old text
+here. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by section: sections 1-2 are done, section 3 in part; the old text
 below "Not yet folded in" is still in force until its lines move up.
 
 ## 1. The party
@@ -72,6 +72,60 @@ them: **unconfirmed**.
     mummies; the tower door (15,6): LEAVE (section 3).
 14. **Stojanow Gate:** buy the merchant's wagon by day (section 3).
 15. **Valjevo Castle:** section 3 and section 4's rules.
+
+## 3. Hard fights
+
+First pass (2026-11-20): Jeremy reviewed the Slums, Sokal Keep, the Textile House and the throne room; the rest is
+parked until he circles back. Enemies are the game's own (fight scripts: docs/cover-fights.md; names: the MON*CHA.DAX
+files); results *seen* unless marked.
+
+**The Slums (2:20)**
+- **The southern streets (6,14):** a wandering encounter of 24, either 4 goblin leaders, a bugbear and 19 goblin
+  guards, or 4 orc leaders, a bugbear and 19 orcs. *code* It destroyed two level-1 parties (p14b3, p14b4) and killed a
+  member in another (p15c3). **Two Sleeps should cut it down** (*Jeremy*): Sleep's 4d4 hit dice cover goblins and orcs
+  (1 each), but its 3x3 holds at most 9 figures, so bunch them first (a corner or a doorway), then Sleep.
+- **Event 9 (3,3):** 4 orc leaders and 20 orcs (24 in one load; the Player counted 30: perhaps a second wave). *code* +
+  *seen* Lost twice at level 1 by a party that had spent its Sleeps on the way (p15c1, c2). Two fresh Sleeps should do
+  much of the work. *Jeremy*
+- **The trolls and ogres (0,14):** 2 ogres and 4 trolls; the cluebook's test of the party. *code*
+  - Works: two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and
+    casts at the trolls from one square back; drop the trolls together and stand on a fallen troll's square so it can't
+    rise; then the ogres. *book* Sleep should take out both ogres. *Jeremy* Whether it does in the original:
+    **unconfirmed** (request to Combat's spell lab).
+  - Results: at level 3, won deathless at the second try (p16e2); from an earlier save, won 2 of 2, both with deaths
+    (Player 8).
+
+**Sokal Keep (4:21)**
+- **The army (event 9, 7,4):** 31 orcs, 4 orc leaders, 15 hobgoblins. *code*
+  - Works: go in fully rested; enter by a **southern door** to form a short straight line with secure flanks; Sleep and
+    Hold Person on the archers and the front rank, a wall of helpless enemies; their archers run out of arrows after
+    about 4 rounds. *book* One player held the doorway with fighters on Guard, shot the orc leaders first, and used Hold
+    Person and Sleep to narrow the front. *players* ([Demetrios1453, ENWorld](https://www.enworld.org/goto/post?id=9284429))
+  - Results: at **level 2**, 10 tries, 8 wipes, 2 wins each with a death (the early tries with MAGIC OFF and no level-2
+    spells); at **level 3**, 2 deathless wins in 8. (Players 15, 16, 27)
+  - Open to experiment (*Jeremy*): the doorway tactic by hand (request to the Player).
+- **Ferran Martinez** (the spectre; 2 levels a hit): never melee him. Parley, say LUX, tell the truth (he shows the
+  hidden treasure). *book*
+- **Resting at 15,1:** undead interrupted four rests in five; four camps ended with a death. (Player 15)
+- **The huge scorpions (2,11):** won 4 of 4, 3 deathless (Player 9). Memorize Slow Poison first. *book*
+
+**Cadorna's Textile House (4:2)**
+- **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
+  more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
+  the party about level 4: fighters and cleric 4, ELWEN 2/2/1, LIRA 3/1, DORN 3/2 at that route point, **unconfirmed**
+  for that save). Kill or Hold Grishnak first. Rest only at the inn in 4:2.
+
+**The kobold caves (8:13)** (Jeremy is keeping an eye on this one: report every new try to him)
+- **The throne room (event 9, 4,3):** three fights with no camp between: the horde (56 figures, **4 trolls Sleep
+  doesn't touch**), the ballista, the envoys. *code* + *seen*
+  - Works: enter by the large wyvern cave and rest there; free Princess Fatima (she joins and fights); tell the efreeti
+    the truth (he helps in a later fight); between waves, Continue Combat for a round or two to heal. *book*
+  - Failed: every try (Players 2, 7, 9, 23, 28, 30, 31; main's bot seven times). Sleep and blows at sleeping kobolds
+    cleared 15-35 kobolds, then the trolls finished the party; walking in cost HP and spells (123-193 of ~197 HP at the
+    door); a camp at the door draws kobolds bombarding the party with rocks. The cluebook route (wyvern cave, Fatima,
+    the efreeti) is untried.
+
+The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
 ---
 
