@@ -40,7 +40,12 @@ def _vmenu_over_walking(rows, im):
     among rows 18-22 at least two items, exactly one of them white and the rest green."""
     if not rows[17].strip("? \\") or _rowcol(im, 17) == WHITE:
         return False
-    cols = [_rowcol(im, r) for r in range(18, 23) if rows[r].strip("? \\")]
+    rs = [r for r in range(18, 23) if rows[r].strip("? \\")]
+    cols = [_rowcol(im, r) for r in rs]
+    # Player 32 (p32d1, 4:10 9,6: a trap's text in green, then "BRAM IS HIT FOR 4 POINTS OF DAMAGE." in white): a
+    # sentence is not a menu item
+    if any(rows[r].strip("? \\").endswith(".") for r, c in zip(rs, cols) if c == WHITE):
+        return False
     return len(cols) >= 2 and cols.count(WHITE) == 1 and all(c in (WHITE, GREEN) for c in cols)
 
 
