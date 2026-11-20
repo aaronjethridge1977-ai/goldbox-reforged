@@ -32,7 +32,7 @@ Files not listed: whoever needs them asks here first.
 - **No shortcut wins ever** (strategy track's goal, not Stage 1): a stuck Player (five losses, or unsure) asks the Lead on the board; the Lead answers from the playbook or asks Jeremy.
 - **Reload rule** (bot and Player): reload on a wipe, death, level drain (unless a Restoration scroll covers it at once), permanent ability loss, a key item lost, petrification without an affordable temple cure, or anything costing a human an hour without gain.
 - **Take rule** (bot and Player): magic items, gems, jewellery, coins worth their weight, missiles to use, anything else >= 100 GP; never sell Restoration scrolls; buy ammunition only when out; darts for magic-users.
-- **Tactics:** docs/playbook.md ("From Jeremy" first) and docs/strategy/poolrad.md (the cluebook's approaches, the magic-gear map); every lane adds a line when it learns something. TURN once per cleric per fight, round 1.
+- **Tactics:** docs/playbook.md and docs/strategy/poolrad.md. **Gold Box Guide 1 (claude.ai) is rewriting both into a players' guide: until it ends, lanes don't edit them; post each new lesson here under Requests as one line "→ guide" with its source** (*seen in the original* / *read in the code*); the guide chat folds them in. Afterwards: add to each file's Inbox section; the Lead folds it in daily. TURN once per cleric per fight, round 1.
 - **Original's bugs:** listed in docs/original-bugs.md; fixed by default in play (SETTINGS ORIGINAL'S BUGS turns them on); checks and replays run with them on.
 - **Push:** docs/board.md stays under 50 KB (a push check); archive answered requests to docs/board-archive.md; each lane pushes finished items to its WIP branch (Methods 8).
 
