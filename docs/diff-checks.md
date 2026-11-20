@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147); DIFFCHECKS 147/147
+## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 
 - **Check 143, SELL of a readied item** (main path): check 132's start (3:0's arms and armour shop, tpseed 11111111).
   In the original (DOSBox): VIEW, ITEMS, SELL with ARN's readied Long Sword lit does nothing (no message on the bottom
@@ -195,6 +195,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Glaive-Guisarme (10 gp) twice: the first bought (1 platinum left), the second refused (GAME.OVR 0x712C, "Not enough
   Money." through the message routine; not caught on screen by any grab). Matched at once; the Glaive (6 gp, both
   bought) differs.
+- **Check 148, the temple's CURE LIGHT WOUNDS on a diseased member** (main path): check 144's start with THRENDER
+  GRONE at 3 HP. The original: CURE LIGHT WOUNDS WILL ONLY COST 100 GOLD PIECES, YES, THRENDER GRONE IS CURED., the
+  gold taken, HP still 3 and the disease kept, as ours (`temple_screen.gd`: the wound cures skip the diseased).
+  Matched at once; without the disease it differs (ours heals him to 7).
 
 ## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140), a band REST interrupted that fights (check 141), the camp's ALTER ORDER (check 142; statediff compares the party's order); DIFFCHECKS 142/142
 
