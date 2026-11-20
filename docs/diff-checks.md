@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133), USE of a combat-only wand in camp (check 134), a race-capped fighter at the hall (check 135); DIFFCHECKS 135/135
+## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133), USE of a combat-only wand in camp (check 134), a race-capped fighter at the hall (check 135), REMOVE CURSE on a cursed item (check 136, Combat's fix); DIFFCHECKS 136/136
 
 - **p22c2's wall ahead (original 1, ours 0): fixed** (`ecl_vm.gd` CALL 0xC018). DOSBox from a jump save to 1:18 1,4 W
   (`mksave.py J G 1 18 1 4 W`, `dsread.py 6aad 5` after each key): 0,4 W 1; the step off the west edge 0 (the on-move's
@@ -210,6 +210,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   THRENDER GRONE an elf fighter 5, STR 16, 40000 experience: TRAIN says NOT ENOUGH EXPERIENCE in both (an elf
   fighter stops at 5 under STR 17). The start carries the elf's effect 0x6B in its .SPC: ours adds a race's
   missing standing effects on load, the original doesn't (only made-up starts show it).
+- **Check 136, REMOVE CURSE on a member with a cursed item** (main path): chat 71's ready check `curse`, joined
+  when Combat Chat 35's fix (87e2f9a, main chat 71's patch with the spell's own text) reached origin/main: MATCH;
+  with the fix's clear of byte 54 left out it differs (the sword still cursed).
 - **Racial level limits:** Pool enforces them at the hall (GAME.OVR 0x1C3F7-0x1C501; ours `LevelDrain.race_capped`
   already does); Curse's are in its GAME.OVR 0x24DDE-0x24F5B (playbook Inbox).
 - **match_gate.sh** replays four recordings side by side (`OP_MATCH_JOBS`, default 4).
