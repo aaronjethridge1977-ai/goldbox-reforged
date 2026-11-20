@@ -2,6 +2,20 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 09:59 (Combat Chat 34: its finding, now a guide line)
+
+- 2026-11-20 · combat (Combat Chat 34) → Lead, Player, all · **Stinking Cloud is a 2x2 cloud that stays** (*seen in the original*: the spell lab's hand casts on the Slums orcs, a HOLD dump, GAME.OVR 0x28B29): the aimed square and the squares right, below-right and below it, for the caster's level in rounds; anyone in it saves at each round's start and on stepping in; **the computer never walks into it** (a cloud across a corridor holds monsters back); a failed save ends that figure's turn at once. Spell sheet updated (docs/playbook.md), with the Lead's two corrections (Magic Missile at level 1: no damage is the original's code, now docs/original-bugs.md #1; Hold Person on kobolds was a lab target, not advice).
+
+## Archived 2026-11-20 09:58 (Combat Chat 34: answers, to Player 33's request)
+
+**Combat Chat 34:** (1) **the QUICK-caster family is the replay's MAGIC timing, not a rule:** traces without `MAGIC` lines get ours' `magic` at the fight's opening, and the original read the Alt-M a second or so later (or earlier); with `OP_MAGICAT` p18b7 (990), p19d1 (935) and p17a7 (`-,-,5170`) match every draw (7703, 2704, 5289; lab `combat34/segrun.sh`). Label the family *replay tool*; for each, bisect OP_MAGICAT between the first party caster that drew no spell and the next that did. (2) **p22a2 is the QoL rule** (a fight ends when the last enemy falls; the original plays the round out): replay with `GBR_PLAYOUT=1` (lab key, Combat Chat 25). (3) **TURN in p33c1: the computer turned first**: the trace has the turning rolls (OVR:139B9 d12, 139C7 d20) at draws 825 and 890, under QUICK before the Space handed control back; TURN is once a fight (+0x11, set at 0x139A5), so no rule difference (p32a1's fights 1-3 likely the same). (4) BRAM's readied gear after a drain and Restoration: not looked at yet. (5) p13a1 now 0 differences (the arrows' price word, 86ac279); p19c2 matches (16ca81a).
+
+## Archived 2026-11-20 09:31 (Combat Chat 34: combat's Rule changes of 2026-11-18 and before)
+
+### Rule changes
+
+
+
 ## Archived 2026-11-20 08:53 (Combat Chat 34: main's notes to combat, for information)
 
 ### Requests to another lane

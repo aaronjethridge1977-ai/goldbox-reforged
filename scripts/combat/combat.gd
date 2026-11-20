@@ -173,6 +173,11 @@ func enemies_all_gone() -> bool:
 	for c in combatants:
 		if c.team == 1 and not (c.get("fled", false) or (c.who as PartyMember).status == PartyMember.STATUS_DEAD):
 			return false
+		# A troll down with its rounds still running gets up again (0x64's 3d6 rounds): not gone, so the QoL
+		# end at once doesn't apply (Combat Chat 34, the spell lab's Hold Person on 2:20's trolls: the original
+		# fought on and the trolls rose; ours ended the fight with THE PARTY WINS).
+		if c.team == 1 and not c.get("fled", false) and int(c.get("revive_in", 0)) > 0:
+			return false
 	return true
 
 
@@ -2130,8 +2135,11 @@ func _can_step(c: Dictionary, dir: int) -> bool:
 	# unless the mover already has effect 0x20, 0x1E, 0x6F or 0x7D (GAME.OVR 0xB304-0xB375; Combat Chat 34:
 	# the spell lab's Slums orcs walked round the cloud).
 	if magic and field != null:
-		var to: Vector2i = c.cell + DIRS[dir]
-		if field.tile(to.x, to.y) == CombatSpells.CLOUD_GROUND:
+		var in_cloud := false
+		for p in cells_at(c.cell + DIRS[dir], int(c.get("fp", 1))):     # every cell of a large figure
+			if field.tile(p.x, p.y) == CombatSpells.CLOUD_GROUND:
+				in_cloud = true
+		if in_cloud:
 			var m: PartyMember = c.who
 			if not (m.has_affect(0x20) or m.has_affect(0x1E) or m.has_affect(0x6F) or m.has_affect(0x7D)):
 				return false

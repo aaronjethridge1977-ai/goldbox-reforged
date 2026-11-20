@@ -345,16 +345,26 @@ func cloud_round() -> void:
 ## The clouds' clocks (the caster's effect 0x28): a cloud whose time is up gives its ground back.
 func _cloud_time() -> void:
 	var keep: Array = []
+	var gone: Array = []
 	for cl in clouds:
 		cl.rounds = int(cl.rounds) - 1
 		if int(cl.rounds) > 0:
 			keep.append(cl)
-			continue
+		else:
+			gone.append(cl)
+	clouds = keep
+	for cl in gone:
 		for k in (cl.cells as Array).size():
 			var p: Vector2i = cl.cells[k]
-			if c.field.tile(p.x, p.y) == CLOUD_GROUND:
+			# A cell another cloud still covers stays cloud (Combat Chat 34, the spell lab's Stinking Cloud on 2:20's
+			# trolls, cast three rounds running on the same squares: the original's ogre and troll saved again at
+			# each round's start; ours gave the ground back when the first cloud ran out).
+			var still := false
+			for o in clouds:
+				if p in (o.cells as Array):
+					still = true
+			if not still and c.field.tile(p.x, p.y) == CLOUD_GROUND:
 				c.field.cells[p.y * Battlefield.WIDTH + p.x] = int(cl.under[k])
-	clouds = keep
 
 
 ## Saving throw for `m` against save type `kind` (0..4), with `bonus`; `caster` for

@@ -84,6 +84,16 @@ run orig_A_c34_hand_fb1 0 env OURS_SEED=1 ./combat34/handreg.sh fb_kob1 33333333
 run orig_A_c34_hand_sco1 0 ./combat34/handreg.sh sc_orc1 12345678 up,up enter 2 1
 run orig_A_c34_hand_sco2 0 ./combat34/handreg.sh sc_orc1 22222222 up,up enter 2 1
 run orig_A_c34_hand_hpo1 0 ./combat34/handreg.sh hp_orc1 12345678 up,up enter 1 3
+# Combat Chat 34, the spell lab's second part (combat34/batch5.sh): 2:20's ogres and trolls (Hold Person, Sleep, Stinking
+# Cloud), 4:10's spectres (the same), TURN on the net trap's kobolds (cleric 1) and on the spectres (cleric 5).
+run orig_A_c34_hand_hptr1 0 env OURS_SEED=1 ./combat34/handreg.sh hp_troll 11111111 up up,enter 1 3
+run orig_A_c34_hand_sltr1 0 env OURS_SEED=1 ./combat34/handreg.sh sl_troll 11111111 up up,enter 3 1
+run orig_A_c34_hand_sctr1 0 env OURS_SEED=1 ./combat34/handreg.sh sc_troll 11111111 up up,enter 2 1
+run orig_A_c34_hand_hpsp1 0 ./combat34/handreg.sh hp_spec 11111111 "" up 1 3
+run orig_A_c34_hand_slsp1 0 ./combat34/handreg.sh sl_spec 11111111 "" up 3 1
+run orig_A_c34_hand_scsp1 0 ./combat34/handreg.sh sc_spec 11111111 "" up 2 1
+run orig_A_c34_hand_tukob1 0 env OURS_SEED=1 ./combat34/handreg.sh tu_kob 11111111 up up 1 1:1
+run orig_A_c34_hand_tusp1 0 ./combat34/handreg.sh tu_spec 11111111 "" up 1 1:1
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
 # Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678
