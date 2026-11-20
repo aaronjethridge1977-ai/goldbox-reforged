@@ -141,7 +141,7 @@ func _dax(file_name: String) -> DaxFile:
 	var key := "dax:" + file_name
 	if not _cache.has(key):
 		var path := _game_path.path_join(file_name)
-		_cache[key] = DaxFile.open(path) if FileAccess.file_exists(path) else null
+		_cache[key] = DaxFile.open(path) if GameData.exists(path) else null
 	return _cache[key]
 
 

@@ -28,7 +28,7 @@ static func shared(game_path: String) -> ItemNames:
 
 static func load_from(game_path: String) -> ItemNames:
 	var n := ItemNames.new()
-	var exe := FileAccess.get_file_as_bytes(game_path.path_join("START.EXE"))
+	var exe := GameData.read_bytes(game_path.path_join("START.EXE"))
 	var image := Exepack.unpack(exe)
 	if image.is_empty():
 		return n

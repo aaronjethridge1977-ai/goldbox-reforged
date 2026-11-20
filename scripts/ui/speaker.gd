@@ -119,9 +119,9 @@ static func _driver_segment() -> PackedByteArray:
 		return _segment
 	_looked = true
 	var path: String = CharacterSheet.game_path
-	if path == "" or not FileAccess.file_exists(path.path_join("START.EXE")):
+	if path == "" or not GameData.exists(path.path_join("START.EXE")):
 		return _segment
-	var image := Exepack.unpack(FileAccess.get_file_as_bytes(path.path_join("START.EXE")))
+	var image := Exepack.unpack(GameData.read_bytes(path.path_join("START.EXE")))
 	var sig := PackedByteArray([0x84, 0x8E, 0x84, 0x86, 0xF7, 0x7E, 0xD7, 0x77])
 	var at := ItemNames._find(image, sig)
 	if at < NOTES:

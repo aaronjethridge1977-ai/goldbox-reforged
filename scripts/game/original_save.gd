@@ -117,13 +117,14 @@ static func _write_character(stem: String, m: PartyMember) -> bool:
 static func _put_or_remove(path: String, data: PackedByteArray) -> bool:
 	if not data.is_empty():
 		return _put(path, data)
+	path = GameData.real_path(path)
 	if FileAccess.file_exists(path):
 		return DirAccess.remove_absolute(path) == OK
 	return true
 
 
 static func _put(path: String, data: PackedByteArray) -> bool:
-	var f := FileAccess.open(path, FileAccess.WRITE)
+	var f := FileAccess.open(GameData.real_path(path), FileAccess.WRITE)
 	if f == null:
 		return false
 	f.store_buffer(data)

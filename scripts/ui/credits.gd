@@ -17,7 +17,7 @@ extends RefCounted
 ## (interior x1, y1, x2, y2, then two zeros), three draw a string (column, row, colour). The
 ## routine ends with MOV SP,BP / POP BP (89 EC 5D).
 static func original_layout(game_path: String) -> Dictionary:
-	var d := FileAccess.get_file_as_bytes(game_path.path_join("GAME.OVR"))
+	var d := GameData.read_bytes(game_path.path_join("GAME.OVR"))
 	if d.is_empty():
 		return {}
 	var mark := "scenario created by:".to_ascii_buffer()

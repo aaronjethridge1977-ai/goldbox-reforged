@@ -47,7 +47,7 @@ static func shared(game_path: String) -> OverlandMap:
 
 static func load_from(game_path: String) -> OverlandMap:
 	var o := OverlandMap.new()
-	var exe := FileAccess.get_file_as_bytes(game_path.path_join("START.EXE"))
+	var exe := GameData.read_bytes(game_path.path_join("START.EXE"))
 	var image := Exepack.unpack(exe)
 	if image.is_empty():
 		return null

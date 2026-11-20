@@ -1629,7 +1629,7 @@ func _wall_slots_reset() -> void:
 ## (a length byte and 40 bytes each).
 func load_original_save(letter: String) -> bool:
 	var path := _game_path.path_join("SAVGAM%s.DAT" % letter.to_upper())
-	var s := FileAccess.get_file_as_bytes(path)
+	var s := GameData.read_bytes(path)
 	_menu_was_wild = false
 	if s.size() < 0x3300:
 		_status.text = "No saved game %s." % letter.to_upper()
@@ -3001,7 +3001,7 @@ func _all_monsters() -> Array[PartyMember]:
 	var out: Array[PartyMember] = []
 	for n in range(1, 9):
 		var path := _game_path.path_join("MON%dCHA.DAX" % n)
-		if not FileAccess.file_exists(path):
+		if not GameData.exists(path):
 			continue
 		var dax := DaxFile.open(path)
 		for id in dax.ids():

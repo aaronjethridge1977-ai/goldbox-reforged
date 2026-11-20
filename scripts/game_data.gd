@@ -22,10 +22,41 @@ static func find_game_path() -> String:
 
 
 static func is_valid_game_path(path: String) -> bool:
-	return path != "" and FileAccess.file_exists(path.path_join(MARKER_FILE))
+	return path != "" and exists(path.path_join(MARKER_FILE))
 
 
-## Lists the data files in the game folder, sorted by name.
+## The game's files are looked up without regard to case (Lead, 2026-11-19, chat 67): a Linux
+## player's copy may hold lower-case names (taken from disks, some installers), and Linux file
+## systems tell GEO1.DAX from geo1.dax. `path` as written when that file is there; otherwise the
+## file in the same folder whose name differs only in case; otherwise `path` unchanged (so a new
+## file is made with the name ours gives it, and a missing one stays missing). On Windows and Mac
+## the first test answers. Saving over a save keeps the name the file already has.
+static func real_path(path: String) -> String:
+	if path == "" or FileAccess.file_exists(path):
+		return path
+	var dir_path := path.get_base_dir()
+	var want := path.get_file().to_upper()
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return path
+	for f in dir.get_files():
+		if f.to_upper() == want:
+			return dir_path.path_join(f)
+	return path
+
+
+## FileAccess.file_exists, blind to the name's case (real_path).
+static func exists(path: String) -> bool:
+	return FileAccess.file_exists(real_path(path))
+
+
+## FileAccess.get_file_as_bytes, blind to the name's case (real_path).
+static func read_bytes(path: String) -> PackedByteArray:
+	return FileAccess.get_file_as_bytes(real_path(path))
+
+
+## Lists the data files in the game folder, sorted by name, in upper case (the names the engine
+## asks for; real_path finds a file whose name is in lower case).
 static func list_files(path: String, extension: String = "") -> PackedStringArray:
 	var result := PackedStringArray()
 	var dir := DirAccess.open(path)
@@ -33,7 +64,7 @@ static func list_files(path: String, extension: String = "") -> PackedStringArra
 		return result
 	for file_name in dir.get_files():
 		if extension == "" or file_name.get_extension().to_upper() == extension.to_upper():
-			result.append(file_name)
+			result.append(file_name.to_upper())
 	result.sort()
 	return result
 

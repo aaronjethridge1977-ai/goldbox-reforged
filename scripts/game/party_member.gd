@@ -118,6 +118,8 @@ var load_word := 0
 
 
 static func load_files(sav_path: String, itm_path: String) -> PartyMember:
+	sav_path = GameData.real_path(sav_path)
+	itm_path = GameData.real_path(itm_path)
 	var d := FileAccess.get_file_as_bytes(sav_path)
 	if d.size() < 285:
 		return null
@@ -131,7 +133,7 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 		# for an NPC, 0 a player character; a monster record's experience value is the same byte). An original's
 		# save loaded without it made DIRTEN a player character (the finale's vote asked him).
 		m.npc = d[0xB8]
-	var spc_path := sav_path.get_basename() + ".SPC"
+	var spc_path := GameData.real_path(sav_path.get_basename() + ".SPC")
 	if m != null and FileAccess.file_exists(spc_path):
 		SpecialAffects.add_records(m, FileAccess.get_file_as_bytes(spc_path))
 	return m
@@ -162,7 +164,7 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 		return null
 	var item_data := PackedByteArray()
 	var itm_path := game_path.path_join("MON%dITM.DAX" % file_no)
-	if FileAccess.file_exists(itm_path):
+	if GameData.exists(itm_path):
 		var itm := DaxFile.open(itm_path)
 		if itm and itm.blocks.has(id):
 			item_data = itm.blocks[id]
@@ -189,7 +191,7 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 		m.is_monster = true
 		m.affects.clear()
 		var spc_path := game_path.path_join("MON%dSPC.DAX" % file_no)
-		var spc := DaxFile.open(spc_path) if FileAccess.file_exists(spc_path) else null
+		var spc := DaxFile.open(spc_path) if GameData.exists(spc_path) else null
 		if spc and spc.blocks.has(id):
 			SpecialAffects.add_records(m, spc.blocks[id])
 		var names := ItemNames.shared(game_path)

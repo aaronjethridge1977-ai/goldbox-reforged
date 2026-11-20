@@ -67,7 +67,7 @@ static func set_label(game_path: String, slot: String, label: String, quick_path
 ## One of the original's saved games.
 static func read_game(game_path: String, letter: String) -> Dictionary:
 	letter = letter.to_upper()
-	var path := game_path.path_join("SAVGAM%s.DAT" % letter)
+	var path := GameData.real_path(game_path.path_join("SAVGAM%s.DAT" % letter))
 	var e := {"kind": "game", "slot": letter, "path": path, "exists": FileAccess.file_exists(path)}
 	if not e.exists:
 		return e
@@ -96,7 +96,7 @@ static func read_game(game_path: String, letter: String) -> Dictionary:
 		if n <= 0 or n > 12:
 			continue
 		var stem := game_path.path_join(s.slice(o + 1, o + 1 + n).get_string_from_ascii())
-		var rec := FileAccess.get_file_as_bytes(stem + ".SAV")
+		var rec := GameData.read_bytes(stem + ".SAV")
 		if rec.size() >= 285:     # a name whose file is gone: the load skips it too
 			party.append(_member(rec))
 	e.party = party

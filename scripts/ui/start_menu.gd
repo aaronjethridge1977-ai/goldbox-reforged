@@ -76,7 +76,7 @@ func open(path: String, quick: bool) -> void:
 	_title_pic = _title_block(dax, 2)
 	_saves.clear()
 	for c in "ABCDEFGHIJ":
-		if FileAccess.file_exists(game_path.path_join("SAVGAM%s.DAT" % c)):
+		if GameData.exists(game_path.path_join("SAVGAM%s.DAT" % c)):
 			_saves.append(c)
 	_title.visible = true
 	_screen.visible = false

@@ -103,7 +103,7 @@ static func source_of(path: String) -> String:
 
 ## The version GAME.OVR's credits name ("1.3"), or "" if none is found.
 static func version_of(path: String) -> String:
-	var d := FileAccess.get_file_as_bytes(path.path_join("GAME.OVR"))
+	var d := GameData.read_bytes(path.path_join("GAME.OVR"))
 	var key := "version ".to_ascii_buffer()
 	for i in mini(d.size() - key.size(), 8192):
 		var hit := true
@@ -145,4 +145,5 @@ static func about_lines(info: Dictionary) -> PackedStringArray:
 
 
 static func _md5(file: String) -> String:
+	file = GameData.real_path(file)
 	return FileAccess.get_md5(file) if FileAccess.file_exists(file) else "--------"

@@ -20,7 +20,7 @@ static func path(game_path: String, letter: String) -> String:
 
 
 static func _savgam(game_path: String, letter: String) -> String:
-	return game_path.path_join("SAVGAM%s.DAT" % letter.to_upper())
+	return GameData.real_path(game_path.path_join("SAVGAM%s.DAT" % letter.to_upper()))
 
 
 ## Writes the companion for the save just written in that slot. `qol`: key -> value.

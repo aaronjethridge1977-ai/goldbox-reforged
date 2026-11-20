@@ -46,7 +46,7 @@ var records: Array[PackedByteArray] = []
 
 
 static func load_file(game_path: String) -> ItemTypes:
-	var data := FileAccess.get_file_as_bytes(game_path.path_join("ITEMS"))
+	var data := GameData.read_bytes(game_path.path_join("ITEMS"))
 	var t := ItemTypes.new()
 	for p in range(2, data.size() - 15, 16):
 		t.records.append(data.slice(p, p + 16))

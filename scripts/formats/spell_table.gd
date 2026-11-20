@@ -55,7 +55,7 @@ static func load_from(game_path: String) -> SpellTable:
 	var t := SpellTable.new()
 	t.names.append("")
 	t.entries.append(PackedByteArray())
-	var image := Exepack.unpack(FileAccess.get_file_as_bytes(game_path.path_join("START.EXE")))
+	var image := Exepack.unpack(GameData.read_bytes(game_path.path_join("START.EXE")))
 	if image.is_empty():
 		return t
 	var at := ItemNames._find(image, "\u0005Bless".to_ascii_buffer())

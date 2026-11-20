@@ -20,7 +20,7 @@ var path: String = ""
 
 
 static func open(file_path: String) -> DaxFile:
-	var data := FileAccess.get_file_as_bytes(file_path)
+	var data := GameData.read_bytes(file_path)
 	if data.is_empty():
 		push_error("DaxFile: cannot read %s" % file_path)
 		return null

@@ -61,7 +61,7 @@ static func shared(game_path: String) -> CreationRules:
 
 
 func _load(game_path: String) -> void:
-	var image := Exepack.unpack(FileAccess.get_file_as_bytes(game_path.path_join("START.EXE")))
+	var image := Exepack.unpack(GameData.read_bytes(game_path.path_join("START.EXE")))
 	if image.is_empty():
 		return
 	var at := ItemNames._find(image, PackedByteArray([7]) + "Monster".to_ascii_buffer() + PackedByteArray([0, 0, 5]) + "Dwarf".to_ascii_buffer())
