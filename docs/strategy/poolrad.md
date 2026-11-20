@@ -112,6 +112,7 @@ early fights. Levels are given where the README states them. General tactics are
 - **Pyramid room fights, 7:22**: p25c5 destroyed at 12,15 (rests interrupted after the fight); p25d2 destroyed at 11,13 (three fighters, COMBAT).
 - **Wilderness bands**: a 51-figure encounter at 7:26 5,21 (p25a3 destroyed); a band fight at 7:26 12,27 (p25l2 destroyed); 6:25 band fights killed BRAM twice (p25h2, p25j5).
 - **Graveyard trip 6, 4:10 9,11** ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT", with mummies): p25l3, p25l4 and p25n1 lost a member. p25m1 won, but the mummies' disease stopped healing. p25o1 won, then bought CURE DISEASE.
+- **The graveyard under the reload rule** (Player 32, from `s26t`, tactical mode, clerics turning first): trips 1-6 without a drain (trip 6's mummies turned); trip 7 (9,5: four wights, 16 zombies) lost 17 times until BRAM readied the council's Two-Handed Sword +1 +3 vs undead and CEDRIC took DORN's Mace +2, then won with one level restored from DORN's Restoration scroll; trip 8: 9,7's spectre won, **9,1's two spectres 0 of 18** (two levels a hit). *Seen in the original.*
 - **Podol Plaza goblin hordes, 1:18** and **the run for the gate, 6:1 7,2** [100 x4, 99 x30]: both won in the original (Player 2). Not hard for that party.
 
 ## What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
