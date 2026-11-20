@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-8 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-9 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -584,19 +584,72 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 - **On a wilderness band** each arrow moves the party one square without turning; a square it can't enter leaves it
   where it is. *seen* (Player 10)
 
+## 9. Town
+
+**Training**
+- Train as soon as anyone qualifies (section 4); **clerics train first:** their extra healing makes earning the next
+  fees easier. *Jeremy*
+- **Training costs 1000 GP worth of the trainee's own coins** (any coins, platinum included), and only conscious
+  members train. *code* (party_member.gd, the original's "TRAINING COSTS 1000 GP." and "WE ONLY TRAIN CONSCIOUS
+  PEOPLE") + *Jeremy* Before training, sell what's needed (APPRAISE, then SELL; APPRAISE also offers KEEP, which takes a
+  jewel off the coin count), POOL the party's money, then SHARE so that each trainee holds the fee. *seen* (Player 15;
+  main chat 66)
+- The fee comes out of the member's coins, and change was seen given in gold, not platinum. *seen* (Player 3)
+- A multi-class trains in the hall's class when that class is ready, even if a slower class isn't. *seen* (Player 3)
+- Hit points gained at training: one roll of the hit die (Player 3, *code*) or the better of two (our engine's notes
+  from the original's rules), split across the classes, plus the Constitution bonus: **unconfirmed** which (request).
+- (Pool) The training hall's caps: fighter 8, thief 9, cleric and magic-user 6 (section 1). *book*
+
+**Money and savings**
+- **Don't oversell:** sell only what pays for this trip's training and needs. *Jeremy*
+- There's no bank: keep value light. Gems and jewellery, kept unsold (APPRAISE, KEEP), are the lightest store of value;
+  coins all weigh the same each, so carry platinum (1 = 5 gold) rather than gold; useful magic (potions, scrolls,
+  wands) is worth keeping. Convert gems when the next training comes due. *Jeremy* + *book* (Manual) Whether a shop
+  changes gold into platinum: **unconfirmed** (request).
+
+**Shops**
+- **Sell spare gear on every town trip** (section 2). *seen* (Player 27)
+- **Unready an item before selling it:** SELL does nothing to a readied item, with no message. The price comes in the
+  largest coins (7 GP as 1 platinum and 2 gold). *seen* (main chat 65, check 101)
+- A seller too loaded to carry the coins gets what fits; the rest goes on the shop's pile ("OVERLOADED. MONEY WILL BE
+  PUT IN POOL."). *code* (GAME.OVR 0x22E47; Combat Chat 32)
+- **Coins POOLed in a shop stay in the shop;** leaving asks whether to go back for the money. *seen* (Player 12)
+- **Buy plenty of darts for the magic-users on every trip;** other ammunition only when you run out (section 2). *Jeremy*
+- The first item list in a shop can open one item down, with the highlight kept from an earlier menu: check what's lit
+  before BUY or SELL. *seen* (Player 2)
+
+**Temples** (Pool; *code*, GAME.OVR 0x4819-0x4EEB, Combat Chat 32; the same prices at every temple: *seen*, Player 3)
+
+| Cure | GP |
+|---|---|
+| Cure Light Wounds | 100 |
+| Cure Serious Wounds | 350 |
+| Cure Critical Wounds | 600 |
+| Cure Blindness | 1000 |
+| Cure Disease | 1000 |
+| Neutralize Poison | 1000 |
+| Stone to Flesh | 2000 |
+| Remove Curse | 3500 |
+| Raise Dead | 5500 |
+
+- **Never pay a temple for healing your clerics can do for free, unless death is on the line.** *Jeremy*
+- No Restoration: drained levels come back only from scrolls (section 6). Neutralize Poison is charged even for a member
+  who doesn't need it; Cure Disease asks first. *seen* (Player 25)
+
+**Hours**
+- (Pool) The shops, City Hall and the training halls lock from hour 14: rest at the inn until midnight first. *seen*
+  (Player 15, p15d1)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
 
 ## From Jeremy (a human player's experience; apply as rules, confirm details in the original)
 
-- **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
 
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
 
 **Combat rules**
-- If the whole party flees, every unconscious or dead member is lost for good: bandage the dying, or reload; never flee and leave bodies (Manual).
-- Fleeing the map works only if the party's movement is at least the fastest enemy's: unready heavy armour to raise it; retreat early (Manual, Cluebook).
 
 **Level drain, petrification, poison, disease**
 
@@ -604,13 +657,6 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ## Party and preparation
 
-- A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
-- The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
-- Sell gems and jewellery (APPRAISE, then SELL; a shop's APPRAISE also offers KEEP, which takes a jewel off the coin count: main chat 66), then POOL and SHARE so that each trainee has the fee (Player 15, main chat 66; *seen in the original*).
-- To sell an item, unready it first: SELL (under VIEW, ITEMS in a shop) does nothing to a readied item, with no message. The price comes in the largest coins (7 gp paid as 1 platinum and 2 gold) (main chat 65, check 101; *seen in the original*).
-- The party fell behind main's bot in levels. One possible cause is a trainee without 1000 gold of their own (Player 21; unconfirmed, *seen in the original*).
-- Town shops, City Hall and the training halls lock from hour 14. Rest at the inn until midnight first (Player 15, p15d1; *seen in the original*).
-- Hit points gained at training come from the game's dice: one roll of the hit die, split across classes, plus the CON bonus (Player 3; *read in the code*).
 
 ## In combat
 
@@ -630,11 +676,6 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ## Shops and gear
 
-- Sell spare gear on every town trip. Sixteen items each gave encumbrance 4085 and MOVEMENT 3 in fights, and loot had to be left behind (Player 27; *seen in the original*).
-- Coins POOLed in a shop stay in the shop. Leaving asks whether to go back for the money (Player 12; *seen in the original*).
-- Temple prices are the same at every temple, for example CURE DISEASE 1000, RAISE DEAD 5500, REMOVE CURSE 3500 (Player 3; *seen in the original*).
-- NEUTRALIZE POISON is charged even for a member who doesn't need it; CURE DISEASE asks first (Player 25; *seen in the original*).
-- The first item list in a shop can open one item down, with the highlight kept from an earlier menu (Player 2; *seen in the original*).
 
 ## Added by Player 28
 
@@ -657,7 +698,6 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 
 ## Added by Combat Chat 32
-- The temples sell nine cures, all through one routine: Cure Blindness 1000, Cure Disease 1000, Cure Light Wounds 100, Cure Serious Wounds 350, Cure Critical Wounds 600, Neutralize Poison 1000, Raise Dead 5500, Remove Curse 3500, Stone to Flesh 2000 gold; no Restoration and no Dispel Magic, so a drained level comes back only by a Restoration scroll (GAME.OVR 0x4819-0x4EEB) (Combat Chat 32; *read in the code*; the temple screens *seen in the original* in chat 10).
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
 ## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
