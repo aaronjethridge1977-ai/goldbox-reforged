@@ -335,7 +335,7 @@ func _choose() -> void:
 
 ## Accepts the game's folder or the POOLRAD folder inside it.
 static func resolve(path: String) -> String:
-	for p in [path, path.path_join("POOLRAD"), path.path_join("Pool of Radiance/POOLRAD")]:
+	for p in [path, path.path_join("POOLRAD"), path.path_join("poolrad"), path.path_join("Pool of Radiance/POOLRAD")]:
 		if GameData.is_valid_game_path(p):
 			return p
 	return ""

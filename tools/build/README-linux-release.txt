@@ -10,12 +10,6 @@ GETTING STARTED
  5. At the title press a key; LOAD SAVED GAME (your original saves work) or NEW GAME.
  The next start finds the folder by itself; F2 quick saves, and CONTINUE picks it up.
 
-UPPER-CASE FILE NAMES
-The game's files must have upper-case names, as on the original disks and in the GOG and
-Steam copies (GEO1.DAX, START.EXE, GAME.OVR). If yours were copied with lower-case names
-(geo1.dax), rename them inside the game folder first, for example:
-    for f in *; do [ "$f" = "${f^^}" ] || mv -n -- "$f" "${f^^}"; done
-
 TESTERS WANTED
 Please report what you find (and what looks different from the original) on the project's
 GitHub page: https://github.com/aaronjethridge1977-ai/goldbox-reforged/issues
