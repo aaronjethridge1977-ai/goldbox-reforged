@@ -1,22 +1,18 @@
 # Gold Box Reforged
 
-## Download (Windows)
+## Download
 
-**[Download Gold Box Reforged 0.1.5 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.5/goldbox-reforged-0.1.5-windows.zip)** · [all releases](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/latest)
-
+**Windows:** **[Download Gold Box Reforged 0.1.6 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.6/goldbox-reforged-0.1.6-windows.zip)**
 1. Unzip it (right-click, Extract All).
 2. Run `GoldBoxReforged.exe` (the build is unsigned, so Windows may warn: More info, Run anyway).
-3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`). **Bring your own copy:** GOG, Steam or the original disks.
+3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`).
 
-<!-- Linux, ready for the release that carries it (main chat 66): change the heading above to "## Download" and
-uncomment these lines, with the version in both places.
-**[Download Gold Box Reforged 0.1.5 for Linux (tar.gz)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.5/goldbox-reforged-0.1.5-linux.tar.gz)** (64-bit x86)
-
-1. Extract it (`tar xzf goldbox-reforged-0.1.5-linux.tar.gz`).
+**Linux:** **[Download Gold Box Reforged 0.1.6 for Linux (tar.gz)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.6/goldbox-reforged-0.1.6-linux.tar.gz)** (64-bit x86)
+1. Extract it (`tar xzf goldbox-reforged-0.1.6-linux.tar.gz`).
 2. Run `./GoldBoxReforged.x86_64`.
-3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`; the game's file names in upper case, as on the disks).
--->
+3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`; upper- or lower-case file names both work).
 
+**Bring your own copy:** GOG, Steam or the original disks. [All releases](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/latest)
 
 Found a problem? [Report it](https://github.com/aaronjethridge1977-ai/goldbox-reforged/issues/new/choose) and say where your copy came from (see [Reporting a problem](#reporting-a-problem)).
 
