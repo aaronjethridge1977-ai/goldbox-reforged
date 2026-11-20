@@ -156,6 +156,7 @@ class Tactics:
         self.order = None        # [member, spell, pages turned] while CAST's list is up
         self.scan = None         # aim: entries with TARGET seen
         self.refused = set()     # (member, spell) refused this turn (not in the list, nowhere to aim)
+        self.unreach = {}        # Player 34: (member, spell) -> the member's turns left to skip it (nowhere to aim)
         self.last_member = None
         self.party_n = 0
         self.reach = {}          # member -> this turn's attack: "none" (nothing in reach), "done", "hit"
@@ -287,7 +288,11 @@ class Tactics:
         except Exception as e:
             self.log("TACTICS state unreadable: %s" % e)
         if member != self.last_member:
-            self.refused = {r for r in self.refused if r[0] != member}
+            # Player 34 (p34e1-e5: ELWEN and CEDRIC began an unreachable Hold Person every turn, then ABORT): a spell
+            # with nowhere to aim stays refused for the member's next two turns, not only this one
+            self.refused = {r for r in self.refused if r[0] != member or self.unreach.get(r, 0) > 0}
+            for r in [r for r in self.unreach if r[0] == member]:
+                self.unreach[r] -= 1
             self.reach.pop(member, None)
             self.last_member = member
         items = b.split()
@@ -484,6 +489,8 @@ class Tactics:
                 ok = [t for t in ok if t in persons]
             if not ok:
                 p.note("tactics", "%s: %s can reach none of its targets" % (member, spell))
+                self.refused.add((member, spell))
+                self.unreach[(member, spell)] = 2
                 return "e", "tactics: %s %s: no target in reach: EXIT" % (member, spell)
             sc["goal"] = ok[0]
         if cur == sc["goal"] and can:
