@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-7 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-8 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -537,6 +537,53 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 - (Pool) A second visit to New Phlan's inn does nothing until the party steps off its square and back. *code* (ECL
   0x4A07; Player 12)
 
+## 8. Exploring
+
+**Encounters and parley**
+- **FLEE at "THEY RUSH TOWARD YOU" doesn't avoid the fight:** five FLEEs out of five went straight into it. *seen*
+  (Player 26, Stojanow report)
+- **The same encounter can come with or without a parley:** a reaction roll can give COMBAT WAIT FLEE ADVANCE where a
+  friendlier roll gives PARLAY. *seen* (Players 7, 24)
+- **Watch the default:** a menu whose default is COMBAT can kill a friendly NPC (a trader); choose PARLAY to deal with
+  him. *seen* (Player 26, p26b5)
+- **How to parley:** Abusive with nasty intelligent groups, Nice with neutral ones; let a high-Charisma member speak.
+  *book* (Cluebook)
+- **SURRENDER isn't always the end:** against a ransom demand it costs coins and items but keeps the rescue. *code*
+  (Player 25; Pool's example in poolrad.md)
+- Some fights can be put off with LEAVE (section 4).
+
+**Traps**
+- **If the loot is worth the risk, clear the trap;** otherwise AVOID TRAP, which keeps the party safe but leaves the
+  loot. *Jeremy* + *seen* (Player 22) AVOID followed by EXAMINE rolls the trap again; once it went off. *seen*
+  (Player 22)
+- Finding a trap rolls against the party's *best* value, not the average: the best finder counts. *code* (ECL 3:14;
+  Player 22) The cleric's Find Traps (camp) before a known trapped area (section 3).
+
+**Locks**
+- **PICK once with the best thief, then BREAK or BASH.** At a locked door every member rolls a d100 to pick. *seen*
+  (Players 14, 22)
+- **With nobody knowing Knock:** PICK, then BASH. After a failed PICK and BASH, a door offers only KNOCK on later
+  bumps: have Knock memorized before coming back. *seen* (Players 17, 21)
+
+**Secret doors and hidden treasure**
+- **Search where you know things are:** the game gives human players clues (the text, the Journal, the cluebook).
+  *Jeremy* Pool's known places: poolrad.md's gear map.
+- A secret door may not be found by walking into it (a bump just runs the square's script again): **LOOK** found it at
+  once. *seen* (Player 16)
+- On a secret-door square each member rolls to find it, 1 in 5 (2 in 5 for elves and half-elves); **SEARCH** raises
+  the chance and also finds trap doors with loot. *code* (ECL 7:22, 1:24; Players 21, 25)
+
+**Scripted squares**
+- **If a square's script turns the party back, don't keep stepping:** each try rolls the area's encounters, and one
+  party fought on until it was destroyed. *seen* (Player 14, p13b6)
+- **Read the text box, not only the bottom row:** a question can appear as a vertical menu drawn over the walking menu.
+  *seen* (Player 28)
+- **Some questions come only on a bump** (stepping from the square while facing a way), not on stepping onto it: on a
+  square that should ask something, bump each way. *code* + *seen* (Player 28; Pool's example: Valjevo's gate)
+- **Exits and boats move the party:** step onto them deliberately. *seen* (Players 15, 22)
+- **On a wilderness band** each arrow moves the party one square without turning; a square it can't enter leaves it
+  where it is. *seen* (Player 10)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
@@ -576,24 +623,10 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ## Encounters and parley
 
-- FLEE at "THEY RUSH TOWARD YOU" does not avoid the fight. Five FLEEs out of five went straight into it (Player 26, Stojanow REPORT; *seen in the original*).
-- A reaction roll can give COMBAT WAIT FLEE ADVANCE where a friendlier roll gives PARLAY, so the same encounter can come with or without a parley (Player 24, Player 7; *seen in the original*).
-- A menu whose default is COMBAT can kill a friendly NPC (the trader). Choose PARLAY to deal with him (Player 26, p26b5; *seen in the original*).
 - Against a ransom demand, SURRENDER loses coins and items but keeps the rescue. ATTACK, if won, captures the fort (Player 25, ECL 6:1; *read in the code*).
-- For traps, AVOID TRAP keeps the party safe but leaves the loot. AVOID followed by EXAMINE rolls the trap again; once it went off (Player 22; *seen in the original*).
-- To find a trap, the game rolls RANDOM 99 against the party's best value, not the average (Player 22, ECL 3:14; *read in the code*).
-- For locks, PICK once with the best thief, then BREAK or BASH. At a locked door every member rolls a d100 to pick (Player 22, Player 14; *seen in the original*).
 
 ## Movement and scripts
 
-- A secret door may not be found by walking into it; a bump just runs the square's script again. LOOK found it at once (Player 16; *seen in the original*).
-- On a secret-door square each member rolls to find it, 1 in 5 (2 in 5 for elves and half-elves). SEARCH raises the chance (Player 25, ECL 7:22; *read in the code*).
-- SEARCH on also finds trap doors with loot. Each member rolls against the search value (Player 21, ECL 1:24; *read in the code*).
-- If a square's script turns the party back, don't keep stepping. Each try rolls the area's encounters, and one party fought on until it was destroyed (Player 14, p13b6; *seen in the original*).
-- A question can appear as a vertical menu drawn over the walking menu; it is easy to miss (Player 28; *seen in the original*).
-- Some questions are asked only when the party bumps from a square while facing that way, not when it steps onto the square (Player 28, ECL 5:3 on-move; *read in the code*).
-- On a wilderness band each arrow moves the party one square without turning; a square it can't enter leaves it where it is (Player 10; *seen in the original*).
-- Walking onto a square whose script moves the party ends in another area. Step onto boats and exits deliberately (Players 15, 22; *seen in the original*).
 
 ## Shops and gear
 
@@ -605,7 +638,6 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ## Added by Player 28
 
-- A step script's vertical menu can be drawn over the walking menu, whose row stays on screen (Valjevo's gate): read the text box, not only the bottom row (Player 28, p27k3's stop screen; *seen in the original*).
 - Valjevo's gate (5:3 12,7/12,8) asks for the password on a bump W from the square, not on the step onto it: the on-move script runs before a step, with the square stood on and the new facing (Player 28, p28a1 probe; *seen in the original*, ECL 5:3 0x9A80 *read in the code*).
 - While an alarm holds in Valjevo (0x4A64), each step off a "safe" square (info bit 64) may draw a patrol; resting on a bit-64 square draws none (ECL 5:4 0x9AB5, 0x9B32; *read in the code*, not tried).
 - Valjevo's barracks giants (5:4 9,1) parley when no alarm holds: HAUGHTY or SLY gives the passwords and no fight (ECL 5:4 0xA38D; *read in the code*, not tried). A won fight there instead stops the four giants of 5,2 (0x4A66 bit 16).
@@ -630,6 +662,5 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 
 ## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
 
-- With nobody knowing Knock, try PICK and then BASH. After a failed PICK and BASH, a door offers only KNOCK on later bumps (Player 17, Player 21; *seen in the original*).
 - (For the lanes, the spell lab's method) *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
 - Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
