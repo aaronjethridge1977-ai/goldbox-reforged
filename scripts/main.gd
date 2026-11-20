@@ -1504,6 +1504,8 @@ func _quick_save() -> void:
 		members.append({"name": m.name, "record": m.to_record(), "money": m.money, "items": items, "hp": m.hp,
 			"experience": m.experience, "status": m.status, "memorized": m.memorized,
 			"spell_book": m.spell_book, "affects": m.affects, "npc": m.npc, "quick_order": m.quick_order})
+		if m.has_meta(LevelDrain.DRAINED_META) and not (m.get_meta(LevelDrain.DRAINED_META) as Array).is_empty():
+			members[-1]["drained"] = m.get_meta(LevelDrain.DRAINED_META)     # bug #8's fix (Combat Chat 36)
 	cfg.set_value("party", "members", members)
 	var roster := []
 	for m in _party_menu.roster:
@@ -1920,6 +1922,10 @@ func _quick_load() -> void:
 		_party[i].status = saved.get("status", _party[i].status)
 		_party[i].npc = saved.get("npc", 0)
 		_party[i].quick_order = int(saved.get("quick_order", 0))
+		if saved.has("drained"):
+			_party[i].set_meta(LevelDrain.DRAINED_META, Array(saved.drained))
+		elif _party[i].has_meta(LevelDrain.DRAINED_META):
+			_party[i].remove_meta(LevelDrain.DRAINED_META)
 		if saved.has("memorized"):
 			var mem: Array[int] = []
 			for v in saved.memorized:
