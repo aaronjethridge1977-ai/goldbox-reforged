@@ -524,6 +524,23 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n == "autowin":                # autowin: the next scripted fight is won at once (dev)
 			_combat.dev_auto_win = true
 			continue
+		elif n == "shortcutwin":            # shortcutwin: the Player's logged shortcut win in the open fight (chat 70)
+			# As tools/original_player game.py _shortcut_win does in the original at the fight's first poll:
+			# every monster HP 0 (+0x11B), status dead (+0x10C), out of the fight (+0x10D 0: ours' `down`),
+			# no blows or spells left; the fight then goes on by its own rules (no `decided`).
+			while _battle_begins:
+				await get_tree().process_frame
+			if _combat._combat != null:
+				for c in _combat._combat.combatants:
+					if c.team == 1:
+						c.who.hp = 0
+						c.who.status = PartyMember.STATUS_DEAD
+						c.down = true
+						c.init = 0
+						c.attacks = 0
+						c.pending = {}
+				print("   SHORTCUT win: %d monsters HP 0, dead" % _combat._combat.combatants.filter(func(c): return c.team == 1).size())
+			continue
 		elif n == "cells":                  # cells: where everyone stands in the fight on screen
 			print("   distance %d, party square %d,%d facing %d" % [_combat._distance, _combat._px, _combat._py, _combat._facing])
 			for k in 3:
