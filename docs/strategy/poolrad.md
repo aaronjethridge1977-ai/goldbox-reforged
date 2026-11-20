@@ -1,49 +1,81 @@
 # Pool of Radiance strategy
 
-The original's full run as the Player lane played it, segment by segment along main's bot's route (c34d's
-checkpoints). Party: ARN (F), BRAM (F), CEDRIC (C), ELWEN (C/F/MU), LIRA (F/MU), DORN (F/T); DIRTEN (NPC) in the
-early fights. Levels are given where the README states them. General tactics are in `docs/playbook.md`.
+Pool of Radiance's route, hard fights, Pool-only rules and treasure, for players. General tactics are in the Gold Box
+Players' Guide (`docs/playbook.md`); its tags (*seen*, *code*, *book*, *players*, *Jeremy*, **unconfirmed**) apply
+here. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by section: sections 1-2 are done; the old text
+below "Not yet folded in" is still in force until its lines move up.
 
-## Route by segment
+## 1. The party
 
-| Seg | From -> to | Area | What happens | Party level at the end |
-|---|---|---|---|---|
-| 1 | start -> `shopped` | New Phlan 3:0 | The shop, `readyall`, the inn, memorize. | 1 |
-| 2 | `shopped` -> `slums` | Slums 2:20 | The bot's events; heal after each. One stretch on the southern streets (6,14) destroyed one party. An inn trip. | 1 |
-| 3 | `slums` -> `slums2` | 2:20, New Phlan | Tour; town trip (sell gems, pool, share, the halls); back to 15,12. | ARN 2, BRAM 2, CEDRIC 2, DORN 1/2 |
-| 4 | `slums2` -> `sokal0` | 3:0, Sokal Keep 4:21 | Ohlo (GIVE the potion), the harbor master, the boat from the pier's end. | as above (CEDRIC 2; the bot's 3) |
-| 5 | `sokal0` -> `s5b` | Sokal Keep 4:21 | All events except 9, 11 and 12 (left for later). Event 1: TALK, NICE. Pale form: PARLAY. | |
-| 6a | `s5b` -> `s6t` | 3:0 | Boat back; the temple of Tyr (HEALING YES, EXIT); inn; clerk; sale; halls. | ARN 3, BRAM 3, CEDRIC 3 |
-| 5r | `s6t` -> `sokal` | 4:21 | The deferred event 9, then 7,6 and 7,10 (word `LUX`; TELL). | 3 |
-| 6b | `sokal` -> `s6k` (`kuto`) | Kuto's Well 8:29 | CLIMB DOWN NO, NAILED SHUT YES; catacombs (LOOK for the secret door at 5,8 N); Norris the Gray: FIGHT. | ARN 37 HP, BRAM 34, CEDRIC 25 |
-| 7 | `kuto` -> `slums3` | 2:20 | Tour; the trolls and ogres at 0,14 (event 20) last. | ARN, BRAM, CEDRIC 3; ELWEN 1/1/1; LIRA 1/1; DORN 1/2 |
-| 8 | `slums3` -> `library` | 3:0, Library 2:15 | Training; Brass Mirrors (only LIRA could ready one); 20 library events; the mad man and the basilisk: COMBAT. | ELWEN, LIRA, DORN +1 |
-| 9 | `library` -> `podol` | 3:0, Podol 1:18 | City Hall clerk: from 4,5 step **east**, not north. Rewards and Cadorna's Textile commission; Podol: DISGUISE, the auction, the buccaneer duel (ARN). | ARN, BRAM, CEDRIC 4; ELWEN 2/2/1; LIRA 3/1; DORN 3/2 |
-| 10 | `podol` -> `textile` | Textile House 4:2 | Five trips by band and boat; the graveyard commission (Two-Handed Sword +1 for BRAM). In 4:2 use cures only and rest at the inn. Chained man: FREE x3, then LEAVE. | |
-| 11 | `textile` -> `nomads` | Nomad camp 7:17 | Feast, lodging, `campday 4` (STAY, kobold waves, DESTROY), the shaman's reward; two town trips. | |
-| 12 | `nomads` -> `bane` | 1:24 (map 1:31) | Two trips: goblin slaves KILL; hay beds SEARCH. The trap door at 10,9 needs a find roll. | |
-| 13 | `bane` -> `library2` | 2:15 | Training (ELWEN, LIRA, DORN to 5000 XP); the library again with `search on` and revisits. Nobody knows Knock: PICK, then BASH. | MUs still low |
-| 14 | `library2` -> `kovel` | Kovel Mansion 3:14 | Four trips. Spectre on the way out drains ARN to 2. Traps: AVOID. Locks: PICK once, then BREAK. | ARN 2 |
-| 15 | `kovel` -> `band3` | 3:0, band 8:27 | Town trip, then the step east off 15,20. | ARN 3 |
-| 16 | `band3` -> `kobold_caves` | Kobold caves 8:13 | Five trips. The throne room (event 9, 4,3) is walked round; events 24, 10 and 20 are behind it. | |
-| 17 | `kobold_caves` -> `kobold_king` | 8:13 | **Deferred**: the throne room lost five of five (see below). | ELWEN MU 4 |
-| 18 | `kobold_king` -> `band1` | 3:0, band 6:25 | Town; 7:26 2,20, then step W onto 6:25. | |
-| 19 | `band1` -> `pyramid1` | band 7:26, pyramid 7:22/7:23 | Round the poisoned river's west side to the rowboat at 6,14; ENTER; the rocks flash into 7:23. | |
-| 20 | `pyramid1` -> `s20m` -> `pyramid2` | 7:23, 7:22 | Lizard men at 3,13 (fought); password NOKNOK; fountain MOVE QUICKLY AWAY; the mage at 4,1; dial on BLUE; RECOVER (river clean). | ARN 3, 32 HP |
-| 21 | `pyramid2` -> `pyramid3` | 7:22 | MOVE ON at the rocks without throwing; the priest: COMBAT. Use cures only in 7:22. | |
-| 22 | `pyramid3` -> `lizard` | 7:23, Ruined castle 8:16 | River reward; anti-magic shell in 8:16 (heal by rests); giant lizards, lizard men. | all trained; ARN 46 HP |
-| 23 | `lizard` -> `buccaneers0` | 8:27, 6:25, 6:1 | The clerk opens the Buccaneers' base (Bivant); displacer beasts FLEE. | |
-| 24 | `buccaneers0` -> `heir` | Buccaneers' base 6:1 | PUNCH MERCHANT, RELEASE ANIMALS, the pen gate (PICK, BASH), GET HIM. | |
-| 25 | `heir` -> `zhentil` | 6:1, 6:25, Zhentil keep 6:28 | The heir's escape (waves; the captain: SURRENDER); Cadorna's packet; envoys YES; the dinner. 6:28: no camp. | |
-| 26 | `zhentil` -> `graveyard` | Valhingen Graveyard 4:10 | Urslingen; nine trips; CURE DISEASE at Tyr after the mummies; the tower door (15,6): LEAVE. | ARN drained to 21 HP max |
-| 27 | `graveyard` -> `mopup1` | 2:20, 4:2, 7:26, 7:17 | Town (training), mop-up walk, two band fights. | ARN 3, ELWEN 5, LIRA 3/3, DORN 3/4 |
-| 28 | `mopup1` -> `stojanow` | Stojanow Gate 2:9 | `restuntil 8`, the trader (PARLAY, the wagon for 250), the toll, 16 bugbears at 7,10; then **the wall fight at 7,6** (see below), taken by `shortcutwin`. | ARN 3, BRAM 5, CEDRIC 6, ELWEN 5/4/4, LIRA 3/3, DORN 3/4 (at `s28b`) |
-| 29 | `stojanow` -> `mopup2` | 3:0 | Sell spare gear (50 items); the gate's reward; Urslingen; halls. | ARN 4, ELWEN 5/5/4, LIRA 4/3, DORN 4/4 |
-| 30 | `mopup2` -> `valjevo3` | Valjevo Castle 5:3 -> 5:5 | Giants arming at 7,14 (8 hill giants won); training trip; RELEASE the prisoner; at 12,7 facing W bump W: password, GIVE, `RHODIA`. Camps at 12,12 were wiped: use cures only. | ARN 5, BRAM 6, LIRA 4/4, DORN 4/5 (at `s30t`) |
-| 31 | `valjevo3` -> `valjevo4` (open) | 3:0, Valjevo 5:4 | Town trip (`s31t`), 5:4 by 5:3 12,0 N (`s31in`): the scribes and officers at 14,12 (won), the records at 14,9 (YES once, a patrol; NO later), KILL THE OVERSEER at 14,5, the armory 14,2 (`s31c`); a town trip (`s31e`); the fire giants at 9,1 lost 11 of 12 (see below). | as `s31t`: ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
-| 32 | `valjevo4` -> `valjevo5` | Valjevo 5:4 -> 5:5 -> 5:3 | Under the Lead's (a): 9,1 and the west of 5:4 deferred; out by 12,15 S, the gate (bump W, GIVE, `RHODIA`), 5:5 8,0, back to 5:3 13,7 (p28i3). | as `s31e` |
-| 33 | `valjevo5` -> `valjevo6` | 3:0, Valjevo 5:6 | Town trip (`s33t`); 5:6 by 2:9 4,0 N: the smithy 0,14 (a smith and three fire giants, won on QUICK; a 40-item pile), the laundry 12,13 (NICE, the disguise YES, TIE), Bane's temple 1,2 (LEAVE: the fight, won), the altar 1,0 (NO, NO) (p29a2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
-| 34 | `valjevo6` -> `valjevo7` (**the end**) | 3:0, 5:5, Valjevo Castle 5:7 | Town trip (`s34t`); 5:3 by 5:6 15,12 E, the gate into 5:5 11,7; 5:5's maps 5 -> 4 -> 3 (4,0 N, 0,11 W, 15,10 11,10 11,14 12,14 12,15; walks need explicit `avoid` lists: the 32/64 bits count as events), the stairs E from 13,15 to 5:7 5,7 (GO DOWN: NO), LOOK (the secret door N), 5,6 N up (YES), 4,4 4,5 4,6 3,6, S down (YES): the hall at 3,8. The guards and Tyranthraxus by logged shortcut (see below); 0x4ABA = 254, the party at 3:0 0,4 (p29f2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/5, LIRA 4/4, DORN 4/5 |
+- **The guide's example party** (Jeremy, 2026-11-20): human fighter, dwarf fighter/thief, two human clerics, elf
+  fighter/magic-user, human magic-user (guide section 1).
+- **The comparison party** the Player lane uses for the Stage 1 match: ARN (fighter), BRAM (fighter), CEDRIC (cleric),
+  ELWEN (cleric/fighter/magic-user), LIRA (fighter/magic-user), DORN (fighter/thief); the NPC DIRTEN in early fights.
+  Its levels below are what it had, not what we recommend.
+- **The cluebook's one marker:** a party that can clear the Slums' troll-and-ogre room can handle the rest. *book*
+- **Races:** humans can't multi-class in Pool, so let humans be the single-class characters and demi-humans the
+  multi-classes; a half-elf cleric stops at level 5. *book* (Cluebook, Manual) + *Jeremy*
+
+## 2. The route
+
+The walkthroughs agree on the shape: New Phlan and the Slums first, then the council's commissions, the graveyard late,
+Stojanow Gate and Valjevo Castle last. *players* ([GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/gameplaytips.php))
+The game isn't a straight line: take what you can and come back (guide section 4).
+
+**Levels** are the ones the comparison party had in the original, with what happened: *seen*, not yet recommendations
+(Jeremy, 2026-11-20: a place to start; the Player gives feedback). The fight rating and players' numbers will refine
+them: **unconfirmed**.
+
+| # | Stretch | Area | Levels the party had (outcome) |
+|---|---|---|---|
+| 1 | New Phlan: shop, inn, memorize | 3:0 | 1 |
+| 2 | The Slums (the trolls and ogres at 0,14 last) | 2:20 | 1-2 (a 20-figure street fight destroyed level-1 parties); trolls and ogres at 3, won deathless |
+| 3 | Sokal Keep by boat | 4:21 | 2: the big battle lost 8 of 10; 3: 2 deathless wins in 8 |
+| 4 | Kuto's Well (Norris the Gray) | 8:29 | 3: won deathless at the first try |
+| 5 | Mendor's Library | 2:15 | 3-4 |
+| 6 | City Hall; Podol Plaza | 3:8, 1:18 | fighters and cleric 4 |
+| 7 | Cadorna's Textile House | 4:2 | about 4: Grishnak won 3 of 4, every win with deaths |
+| 8 | The nomads; the Temple of Bane | 7:17, 1:24 | about 4 |
+| 9 | Kovel Mansion | 3:14 | ARN drained to 2 by a spectre |
+| 10 | The kobold caves | 8:13 | 3-5: the throne room lost every try (deferred) |
+| 11 | Sorcerer's Island, the pyramid, the ruined castle | 7:22, 7:23, 8:16 | 3-5 |
+| 12 | The Buccaneers' base; the Zhentil outpost | 6:1, 6:28 | 4-5 |
+| 13 | Valhingen Graveyard | 4:10 | 3-6: the wights won only with magic weapons; two spectres 0 of 18 |
+| 14 | Stojanow Gate | 2:9 | 3-6: the wall fight lost every try (main's bot table expects 7) |
+| 15 | Valjevo Castle and Tyranthraxus | 5:3-5:7 | 4-6: the guards won 1 of 5; Tyranthraxus 0 of 7 (taken by shortcut) |
+
+**Notes by stretch** (*seen* unless marked; the hard fights are in section 3)
+1. **New Phlan:** buy, ready everything, rest at the inn, memorize.
+2. **The Slums:** heal after each event; avoid the southern streets (6,14) at level 1; an inn trip between visits; the
+   trolls and ogres last (section 3).
+3. **Sokal Keep:** GIVE Ohlo the potion, see the harbor master, take the boat from the pier's end. Event 1: TALK, NICE.
+   The pale form: PARLAY. Ferran Martinez: parley, say LUX, tell the truth (*book*). The big battle (event 9) can wait
+   until level 3 (section 3).
+4. **Kuto's Well:** CLIMB DOWN NO, NAILED SHUT YES; in the catacombs LOOK for the secret door (5,8 N); Norris: FIGHT.
+5. **Mendor's Library:** only a member with a free hand can ready a brass mirror; the basilisk: COMBAT, raise saves,
+   kill it before it gazes (*book*); the library spectre attacks if you took books (*book*).
+6. **City Hall, Podol:** the clerk: from 4,5 step east, not north. Podol: DISGUISE, the auction, the buccaneer duel.
+7. **Textile House:** five trips by band and boat; the graveyard commission brings the council's Two-Handed Sword +1
+   (+3 vs undead) and 4 Restoration scrolls; in 4:2 use cures only and rest at the inn; the chained man: FREE x3, then
+   LEAVE.
+8. **Nomads, Bane:** the feast, lodging, the kobold waves (STAY, DESTROY), the shaman's reward. Bane: goblin slaves
+   KILL; hay beds SEARCH; the trap door at 10,9 needs a find roll.
+9. **Kovel Mansion:** traps AVOID (or clear them if the loot is worth it); locks PICK once, then BREAK.
+10. **The kobold caves:** enter by the large wyvern cave and rest there; free Princess Fatima (she joins); tell the
+    efreeti the truth (*book*). The throne room: section 3.
+11. **Sorcerer's Island and the pyramid:** round the poisoned river's west side to the rowboat (6,14); password NOKNOK;
+    the fountain: MOVE QUICKLY AWAY; the dial on BLUE; MOVE ON at the rocks; cures only in 7:22; the ruined castle is
+    anti-magic (heal by resting). Parley Nice with the caged lizard men (*book*).
+12. **Buccaneers, Zhentil:** PUNCH MERCHANT, RELEASE ANIMALS, the pen gate (PICK, BASH), GET HIM; the captain:
+    SURRENDER; envoys YES; no camp in 6:28.
+13. **The graveyard:** not before the council's sword and the Restoration scrolls; nine trips; CURE DISEASE after the
+    mummies; the tower door (15,6): LEAVE (section 3).
+14. **Stojanow Gate:** buy the merchant's wagon by day (section 3).
+15. **Valjevo Castle:** section 3 and section 4's rules.
+
+---
+
+# Not yet folded in (the old strategy file, being moved into the sections above)
 
 ## Hard fights
 
@@ -165,3 +197,46 @@ Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX
 | 8:29 Kuto's Well | Norris the Gray; under the rug (7,14) | Long Sword +1; **Banded Mail +1, Quarter Staff +1, Bracers AC 4** | staff MU/C/F/D/P |
 
 Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (0,2 the wyvern's, one; 2,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
+
+## For the lanes
+
+### The Player's route by segment (main's bot's route, c34d's checkpoints)
+
+| Seg | From -> to | Area | What happens | Party level at the end |
+|---|---|---|---|---|
+| 1 | start -> `shopped` | New Phlan 3:0 | The shop, `readyall`, the inn, memorize. | 1 |
+| 2 | `shopped` -> `slums` | Slums 2:20 | The bot's events; heal after each. One stretch on the southern streets (6,14) destroyed one party. An inn trip. | 1 |
+| 3 | `slums` -> `slums2` | 2:20, New Phlan | Tour; town trip (sell gems, pool, share, the halls); back to 15,12. | ARN 2, BRAM 2, CEDRIC 2, DORN 1/2 |
+| 4 | `slums2` -> `sokal0` | 3:0, Sokal Keep 4:21 | Ohlo (GIVE the potion), the harbor master, the boat from the pier's end. | as above (CEDRIC 2; the bot's 3) |
+| 5 | `sokal0` -> `s5b` | Sokal Keep 4:21 | All events except 9, 11 and 12 (left for later). Event 1: TALK, NICE. Pale form: PARLAY. | |
+| 6a | `s5b` -> `s6t` | 3:0 | Boat back; the temple of Tyr (HEALING YES, EXIT); inn; clerk; sale; halls. | ARN 3, BRAM 3, CEDRIC 3 |
+| 5r | `s6t` -> `sokal` | 4:21 | The deferred event 9, then 7,6 and 7,10 (word `LUX`; TELL). | 3 |
+| 6b | `sokal` -> `s6k` (`kuto`) | Kuto's Well 8:29 | CLIMB DOWN NO, NAILED SHUT YES; catacombs (LOOK for the secret door at 5,8 N); Norris the Gray: FIGHT. | ARN 37 HP, BRAM 34, CEDRIC 25 |
+| 7 | `kuto` -> `slums3` | 2:20 | Tour; the trolls and ogres at 0,14 (event 20) last. | ARN, BRAM, CEDRIC 3; ELWEN 1/1/1; LIRA 1/1; DORN 1/2 |
+| 8 | `slums3` -> `library` | 3:0, Library 2:15 | Training; Brass Mirrors (only LIRA could ready one); 20 library events; the mad man and the basilisk: COMBAT. | ELWEN, LIRA, DORN +1 |
+| 9 | `library` -> `podol` | 3:0, Podol 1:18 | City Hall clerk: from 4,5 step **east**, not north. Rewards and Cadorna's Textile commission; Podol: DISGUISE, the auction, the buccaneer duel (ARN). | ARN, BRAM, CEDRIC 4; ELWEN 2/2/1; LIRA 3/1; DORN 3/2 |
+| 10 | `podol` -> `textile` | Textile House 4:2 | Five trips by band and boat; the graveyard commission (Two-Handed Sword +1 for BRAM). In 4:2 use cures only and rest at the inn. Chained man: FREE x3, then LEAVE. | |
+| 11 | `textile` -> `nomads` | Nomad camp 7:17 | Feast, lodging, `campday 4` (STAY, kobold waves, DESTROY), the shaman's reward; two town trips. | |
+| 12 | `nomads` -> `bane` | 1:24 (map 1:31) | Two trips: goblin slaves KILL; hay beds SEARCH. The trap door at 10,9 needs a find roll. | |
+| 13 | `bane` -> `library2` | 2:15 | Training (ELWEN, LIRA, DORN to 5000 XP); the library again with `search on` and revisits. Nobody knows Knock: PICK, then BASH. | MUs still low |
+| 14 | `library2` -> `kovel` | Kovel Mansion 3:14 | Four trips. Spectre on the way out drains ARN to 2. Traps: AVOID. Locks: PICK once, then BREAK. | ARN 2 |
+| 15 | `kovel` -> `band3` | 3:0, band 8:27 | Town trip, then the step east off 15,20. | ARN 3 |
+| 16 | `band3` -> `kobold_caves` | Kobold caves 8:13 | Five trips. The throne room (event 9, 4,3) is walked round; events 24, 10 and 20 are behind it. | |
+| 17 | `kobold_caves` -> `kobold_king` | 8:13 | **Deferred**: the throne room lost five of five (see below). | ELWEN MU 4 |
+| 18 | `kobold_king` -> `band1` | 3:0, band 6:25 | Town; 7:26 2,20, then step W onto 6:25. | |
+| 19 | `band1` -> `pyramid1` | band 7:26, pyramid 7:22/7:23 | Round the poisoned river's west side to the rowboat at 6,14; ENTER; the rocks flash into 7:23. | |
+| 20 | `pyramid1` -> `s20m` -> `pyramid2` | 7:23, 7:22 | Lizard men at 3,13 (fought); password NOKNOK; fountain MOVE QUICKLY AWAY; the mage at 4,1; dial on BLUE; RECOVER (river clean). | ARN 3, 32 HP |
+| 21 | `pyramid2` -> `pyramid3` | 7:22 | MOVE ON at the rocks without throwing; the priest: COMBAT. Use cures only in 7:22. | |
+| 22 | `pyramid3` -> `lizard` | 7:23, Ruined castle 8:16 | River reward; anti-magic shell in 8:16 (heal by rests); giant lizards, lizard men. | all trained; ARN 46 HP |
+| 23 | `lizard` -> `buccaneers0` | 8:27, 6:25, 6:1 | The clerk opens the Buccaneers' base (Bivant); displacer beasts FLEE. | |
+| 24 | `buccaneers0` -> `heir` | Buccaneers' base 6:1 | PUNCH MERCHANT, RELEASE ANIMALS, the pen gate (PICK, BASH), GET HIM. | |
+| 25 | `heir` -> `zhentil` | 6:1, 6:25, Zhentil keep 6:28 | The heir's escape (waves; the captain: SURRENDER); Cadorna's packet; envoys YES; the dinner. 6:28: no camp. | |
+| 26 | `zhentil` -> `graveyard` | Valhingen Graveyard 4:10 | Urslingen; nine trips; CURE DISEASE at Tyr after the mummies; the tower door (15,6): LEAVE. | ARN drained to 21 HP max |
+| 27 | `graveyard` -> `mopup1` | 2:20, 4:2, 7:26, 7:17 | Town (training), mop-up walk, two band fights. | ARN 3, ELWEN 5, LIRA 3/3, DORN 3/4 |
+| 28 | `mopup1` -> `stojanow` | Stojanow Gate 2:9 | `restuntil 8`, the trader (PARLAY, the wagon for 250), the toll, 16 bugbears at 7,10; then **the wall fight at 7,6** (see below), taken by `shortcutwin`. | ARN 3, BRAM 5, CEDRIC 6, ELWEN 5/4/4, LIRA 3/3, DORN 3/4 (at `s28b`) |
+| 29 | `stojanow` -> `mopup2` | 3:0 | Sell spare gear (50 items); the gate's reward; Urslingen; halls. | ARN 4, ELWEN 5/5/4, LIRA 4/3, DORN 4/4 |
+| 30 | `mopup2` -> `valjevo3` | Valjevo Castle 5:3 -> 5:5 | Giants arming at 7,14 (8 hill giants won); training trip; RELEASE the prisoner; at 12,7 facing W bump W: password, GIVE, `RHODIA`. Camps at 12,12 were wiped: use cures only. | ARN 5, BRAM 6, LIRA 4/4, DORN 4/5 (at `s30t`) |
+| 31 | `valjevo3` -> `valjevo4` (open) | 3:0, Valjevo 5:4 | Town trip (`s31t`), 5:4 by 5:3 12,0 N (`s31in`): the scribes and officers at 14,12 (won), the records at 14,9 (YES once, a patrol; NO later), KILL THE OVERSEER at 14,5, the armory 14,2 (`s31c`); a town trip (`s31e`); the fire giants at 9,1 lost 11 of 12 (see below). | as `s31t`: ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
+| 32 | `valjevo4` -> `valjevo5` | Valjevo 5:4 -> 5:5 -> 5:3 | Under the Lead's (a): 9,1 and the west of 5:4 deferred; out by 12,15 S, the gate (bump W, GIVE, `RHODIA`), 5:5 8,0, back to 5:3 13,7 (p28i3). | as `s31e` |
+| 33 | `valjevo5` -> `valjevo6` | 3:0, Valjevo 5:6 | Town trip (`s33t`); 5:6 by 2:9 4,0 N: the smithy 0,14 (a smith and three fire giants, won on QUICK; a 40-item pile), the laundry 12,13 (NICE, the disguise YES, TIE), Bane's temple 1,2 (LEAVE: the fight, won), the altar 1,0 (NO, NO) (p29a2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
+| 34 | `valjevo6` -> `valjevo7` (**the end**) | 3:0, 5:5, Valjevo Castle 5:7 | Town trip (`s34t`); 5:3 by 5:6 15,12 E, the gate into 5:5 11,7; 5:5's maps 5 -> 4 -> 3 (4,0 N, 0,11 W, 15,10 11,10 11,14 12,14 12,15; walks need explicit `avoid` lists: the 32/64 bits count as events), the stairs E from 13,15 to 5:7 5,7 (GO DOWN: NO), LOOK (the secret door N), 5,6 N up (YES), 4,4 4,5 4,6 3,6, S down (YES): the hall at 3,8. The guards and Tyranthraxus by logged shortcut (see below); 0x4ABA = 254, the party at 3:0 0,4 (p29f2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/5, LIRA 4/4, DORN 4/5 |
