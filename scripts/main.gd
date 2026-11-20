@@ -2964,7 +2964,15 @@ func _on_event_fight_finished(result: int) -> void:
 	# fight holds), all destroyed: after the script's SUBTRACT [6DC8], [4A01] and ADD [6DC8], [4A39]
 	# the original's save had 0x4A01 = 42 and 0x4A39 = 63. Ours had left it 0, so the graveyard's
 	# kill counters (and 2:20's, 8:16's) never grew.
-	_vm.write_byte(EclVM.DEFEATED, mini(_combat.defeated().size(), 255))
+	# Chat 72: the original counts every monster figure it takes off the list that is out of the fight
+	# (record +0x10D not 1), so one that got away off the field counts too (p25e4: 8:16's lizard men, 20
+	# and 4 giant lizards, two of them got away: 0x6DC8 24, then 0x4A5D 20 and 0x4A5F 4 in the original's
+	# save; ours counted 22). Spoils still go by defeated() (no experience for those that got away).
+	var off := _combat.defeated().size()
+	for c in _combat._combatants:
+		if c.team == 1 and c.get("fled", false) and c.has("away_round"):
+			off += 1
+	_vm.write_byte(EclVM.DEFEATED, mini(off, 255))
 	if result == 2 and _duelist != null:
 		# A lost duel isn't a lost fight (chat 64, DOSBox, 1:18's buccaneer, CALL 0x8001, check 96): the
 		# members set aside are still standing, so the fight ends as any other: "YOU HAVE LOST THE DUEL.

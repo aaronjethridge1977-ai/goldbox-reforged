@@ -272,8 +272,12 @@ func clear_output() -> void:
 	error = ""
 
 
+var running_entry := -1    # the entry point start() last ran (4: the init)
+
+
 ## Runs an entry point to completion or until a menu.
 func start(entry: int) -> State:
+	running_entry = entry
 	pc = entry_offset(entry)
 	stack.clear()
 	if pc < 0:
@@ -1058,9 +1062,14 @@ func _exec(ins: Dictionary) -> void:
 						if square_info.is_valid():
 							write_byte(SQUARE_INFO, int(square_info.call(nx, ny)))
 						write_byte(WALL_AHEAD, int(wall_info.call(nx, ny, d)))
-				0xC018 when not on_overland and wall_info.is_valid():
+				0xC018 when (not on_overland or running_entry == 4) and wall_info.is_valid():
 					# In a 3D area (DS 0x49FA = 1) the original's 0xC018 reads the wall ahead
-					# again (GAME.OVR 0x3AFA-0x3B12; chat 61); nothing else.
+					# again (GAME.OVR 0x3AFA-0x3B12; chat 61); nothing else. An arrival runs
+					# the new block's init with 0x49FA = 1 whatever the area (GAME.OVR 0x3F2E;
+					# the view's kind is set after it, 0x3F4C-0x3F94), so a band's or the
+					# wilderness's init reads it too: on the 3D map still in memory, at the
+					# square and facing last written (chat 72, DOSBox: 1:18 0,4 W off the edge,
+					# the wilderness, into 8:27's band: 1, 1:18's wall at 15,4 E; p22c2).
 					write_byte(WALL_AHEAD, int(wall_info.call(read_byte(PARTY_X) & 15,
 						read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3)))
 				0xC01B, 0xC018:

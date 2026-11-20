@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131); DIFFCHECKS 131/131
+
+- **p22c2's wall ahead (original 1, ours 0): fixed** (`ecl_vm.gd` CALL 0xC018). DOSBox from a jump save to 1:18 1,4 W
+  (`mksave.py J G 1 18 1 4 W`, `dsread.py 6aad 5` after each key): 0,4 W 1; the step off the west edge 0 (the on-move's
+  CALL 0xC01E at the wrapped 15,4); the wilderness leaves it; the step into 8:27's band writes **1** = 1:18's wall at
+  15,4 facing E. The arrival (GAME.OVR 0x3EFA) sets 0x49FA = 1 (0x3F2E) before it runs the new block's init and sets
+  the band's / wilderness's kind (0x3F4C-0x3F94) after, so the band init's CALL 0xC018 (8:27 0xAACF, 0xAAF3, 0xAB14)
+  takes the 3D branch (0x3AFA-0x3B12) on the geo still in memory at 0x6AAD-0x6AAF. Ours now reads it in any init.
+- **p16d1's wall ahead (original 8, ours 2): a replay artefact, no change.** DOSBox from p16d1's `s6norris`: 2 after
+  the climb up and NO; **ENCAMP writes 8**: the camp runs the area's rest block (8:29 0x9BDD: CALL 0xC018 in the plaza's
+  map 29 at 7,7 N). The original's checkpoint is saved in camp; the segment's replay stops before the checkpoint's
+  ENCAMP, so ours' F2 is taken outside camp. Ours does the same when it camps (from `s6norris` with ENCAMP, SAVE,
+  EXIT: statediff 0 for the wall ahead). Asked of the Player: end the replay with the checkpoint's ENCAMP and EXIT.
+- **p25e4's 0x4A5F (original 8, ours 6): fixed** (`main.gd`, ECL 0x6DC8 after a fight). 8:16 0x99D0 adds the fight's
+  0x6DC8 to 0x4A5D (lizard men, capped) and 0x4A5F (giant lizards). The first fight (20 lizard men, 4 giant lizards,
+  two got away): the original 24 (0x4A5D 20, 0x4A5F 4 at `s22d`), ours 22. GAME.OVR 0x672A counts every monster figure
+  taken off the list that is out of the fight (record +0x10D not 1), those that got away too; ours counted only the
+  ones put down. Spoils still go by `defeated()`. Both replays now identical (p25e4 0 differences; p22c2 only the
+  ignored 4AFx). DIFFCHECKS 129/129 with both changes, then 131/131.
+- **Check 130, the camp's USE of a clerical scroll** (main path): chat 71's open question answered in GAME.OVR: USE
+  needs the item readied (0x222F4 "Must be Readied"), a scroll's type (62) takes **both hands** (DS:0x5582 table,
+  hands byte 2; READY 0x225AC: "Your hands are full!"), so CEDRIC must unready mace and shield first; then USE opens
+  "CEDRIC'S SPELLS ON SCROLL", CAST, the target, one d8. Ours already did this (Combat Chat 5). Matched at once.
+- **Check 131, a cursed item readied** (main path, 3:14's Broad Sword -2): READY refused (IT'S CURSED, 0x22547),
+  DROP refused (MUST BE UNREADIED), another weapon refused (ALREADY USING BROAD SWORD). Matched at once.
+- **Racial level limits:** Pool enforces them at the hall (GAME.OVR 0x1C3F7-0x1C501; ours `LevelDrain.race_capped`
+  already does); Curse's are in its GAME.OVR 0x24DDE-0x24F5B (playbook Inbox).
+- **match_gate.sh** replays four recordings side by side (`OP_MATCH_JOBS`, default 4).
+
 ## Chat 71: 3:14's poison gas trap (check 125), STONE TO FLESH on a member not stoned (check 126), a wilderness save loaded and stepped (check 127), a shop's BUY over the load and at it (checks 128-129), REMOVE CURSE on a cursed item (ready, Combat's fix); the shortcut win's segment 28 replayed; DIFFCHECKS 129/129
 
 - **Check 125, 3:14 Kovel Mansion, the poison gas trap** (event 4 at 13,11: the step's dispatch 0x99D6 -> the find-traps
