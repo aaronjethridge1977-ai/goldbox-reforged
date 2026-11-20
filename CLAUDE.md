@@ -23,7 +23,11 @@ Several chats work on this repo at once. Jeremy is the designer and decides; the
   or `content/`, `~/gbr/checks/diffcheck.sh <your repo or worktree>` (the ten differential checks, ~1 minute; it must
   exit 0: any check failing that isn't in `~/gbr/checks/known_failures.txt`, or any `INVALID`, blocks the push until
   fixed, or the difference is explained on the board to design for Jeremy to accept; see `~/gbr/checks/README.md`); after any change to
-  `scripts/dev/bot.gd`, `refcheck.sh` (3:11 and 5:5 must not drop); `git status` (no game data, no saves).
+  `scripts/dev/bot.gd`, `refcheck.sh` (3:11 and 5:5 must not drop); `tools/check_board.sh` (fails when docs/board.md
+  is 50 KB or more: archive answered requests to docs/board-archive.md); `git status` (no game data, no saves).
+- **WIP branches (Methods 8):** after every finished item, push it to your lane's WIP branch
+  (`git push origin HEAD:wip/<lane>-<run number>`, a fresh branch each run, so a rebase never needs a force push):
+  an outage loses at most one item. origin/main still takes only gated pushes.
 - **Godot `.uid` files:** commit a new script's or scene's `.uid` together with it.
 - **Ending a chat:** board updated, repos pushed, lab archive saved, a dated entry at the top of ai-business-ideas `plans/chat-log.md`,
   and the next chat's opening post. A chat that ends mid-task leaves the task on the board as open.
