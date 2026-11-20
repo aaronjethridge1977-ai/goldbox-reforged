@@ -181,6 +181,41 @@ files); results *seen* unless marked.
 - Results (all with COMBAT, the route's old rule): p25a3 destroyed by 51 kobolds at 7:26 5,21, p25l2 destroyed at 7:26
   12,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen*
 
+**Valjevo Castle (5:3-5:5)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
+- **The barracks giants (5:4 9,1):** 4 fire giants (59 HP, AC 3, THAC0 9, 3,644 experience each: 14,576), immune to
+  fire (*book*); Hold Person doesn't take giants. **With no alarm ringing, PARLAY HAUGHTY or SLY** gets the passwords
+  (today's and the gate's) with no fight; NICE or MEEK: "get lost" (LEAVE, or STAY and fight); ABUSIVE fights. With
+  the alarm on they attack on sight. A won fight sets 0x4A66 bit 16 (the four of 5,2 stay away) and a SEARCH of the
+  room finds the passwords. *code* (ECL5 block 4, MON5CHA) Results: 1 deathless win in 12 (Player 28). *seen*
+  - **Talk or fight, decided at the audit before Valjevo** (*Jeremy*): fight only if a member is short of a level the
+    finale needs (CEDRIC is capped at cleric 6: his share is lost); then the graveyard's **Wand of Lightning Bolt**
+    (12 in its plus field, most likely charges: **unconfirmed**; 6d6 down a line, it bounces), Stinking Cloud, Haste,
+    rested. Otherwise HAUGHTY or SLY, and the charges are kept for the guards.
+- Patrols and camps as the cluebook says (MEEK + HARASH, or HAUGHTY / ABUSIVE + TYRANTHRAXUS; the safe rest rooms during
+  an alarm). *book*
+
+**The finale (5:7)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
+- **Genheeris** (the robed man at the desk, 2,5): agree to his deal and he **joins** (a 7th-level magic-user, 22 HP,
+  carrying a **Wand of Lightning**, 10 in its plus field), unless the party already has 8. *code* (ECL5 block 7, NPC_ADD 88)
+- **The 12 guards (3,8):** 8th-level fighters (87 HP each, about 1,044 in all; 1,370 experience each); no PARLAY;
+  **FLEE gets away** with the party's slowest at movement 9 (to 3,6; come back later). They are human: **Hold Person and
+  Stinking Cloud take them**, and a held guard dies to one blow (a fighter 8 fails the save about 60%; a cast picks up to
+  three, about 1.8 held; CEDRIC's and ELWEN's 2nd-level slots and the magic-user Hold Person, about 6 casts, hold about
+  10 of 12); the wands and the clouds for the rest; Fireball hardly matters against 87 HP. *code* + *Jeremy*
+- **Tyranthraxus follows at once, no camp between** (80 HP, AC 0, THAC0 5, two attacks, a lightning breath, fear). In
+  the original he resists every spell (the original's bug #7): only blows count. So **Haste, Prayer and Bless are cast
+  in the guards' last rounds**, once most are held, to be fresh for him (Haste lasts 3 + level rounds: cast in camp
+  before the guards it may run out; whether a spell's effect carries from one fight into the next: **unconfirmed**,
+  asked of Combat). **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY them in his fight
+  (READY in a fight is free; **unconfirmed** for rings and for two rings a member, asked of Combat). **The vote:**
+  everyone ATTACK (a JOIN vote makes that member his, as do evil-aligned NPCs; Genheeris doesn't vote). *code*
+- **Rings of Protection before the finale** (main's gear map): the Slums' hobgoblins' valuables (+1, 2:20 0,2-0,3); the
+  east tower's level 6 magic-user at Stojanow (+2, 2:9 11,7); the graveyard's level 6 magic-user (+2, 4:10 8,9);
+  the false Tyranthraxus in 5:5 (+3, 3,1; only if fought: the cluebook parleys past him). The city watch's (3:0) and City Hall's (3:8) +3s come only from fighting
+  the city. *code*
+- Results: guards 1 win in 5 at levels 4-6 (Player 29), Tyranthraxus 0 of 7 after them; main's bot (7 members,
+  levels 6-7) beat him with one death. *seen*
+
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
   more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
