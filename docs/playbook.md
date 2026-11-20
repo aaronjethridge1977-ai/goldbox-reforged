@@ -118,3 +118,8 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 
 - DONE in a fight opens GUARD DELAY QUIT SPEED EXIT; a melee AIM offers TARGET only for figures within RANGE 1, and the aim
   list runs nearest first, so a fighter's choice is among its first entries (Player 31, p31a2/p31b1; *seen in the original*).
+
+## Added by Player 32
+
+- **The reload rule** (Jeremy, 2026-11-20): reload the last checkpoint on a wipe, a member dead, a level drained, a permanent ability loss, a key item lost or petrification, unless a temple cures it at a price the party can pay and reach; and on anything that would cost a human player about an hour without an obvious gain. A drained member with a Restoration scroll in the packs: use it at once and go on. In the Player's tools: `OP_RELOAD=1` (plans.py `reload_rule`, read from the record: levels 0x96-0x9D, levels drained 0x74, abilities 0x10-0x15, status 0x10C; key items and temple cures not yet), lab `p32/reload.sh` goes on from the last clean checkpoint (Player 32; *read in the code*).
+- With undead on the field, the clerics TURN first (once a fight each) before casting or fighting (Jeremy, 2026-11-20; tactics.py since Player 32; results to be added as the graveyard redo shows them).
