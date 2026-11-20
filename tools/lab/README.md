@@ -173,6 +173,16 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 68:** checks 118-120 in `data/c68/chk118..120/` (`data/c68/cd/` links `game`, each, and `blind`, the ready
+CURE BLINDNESS check for Combat in `data/c68/chkblind`; its tested fix `data/c68/temple_blind.diff`). **Ours' keys
+after a won fight with treasure:** `fightend`, Enter (the fight's last line), Enter (THE PARTY HAS WON / experience: the
+treasure screen's results mode), then E (EXIT), N (the treasure-left question). **Whole-file GAME.OVR disassembly**
+for a grep: `/tmp/c60bin/ndisasm -b16 -o 0 game/GAME.OVR > /tmp/x.txt` (the lab wrapper needs `-o`); a near `call`
+in that listing crosses a 64K wrap wrongly (0x10230's `call 0x1ecb3` is 0xECB3: `ovr.py dis` the lower address
+when the target isn't a `push bp`). **Effect records in memory:** 0x2BD3C adds one (type +0, minutes +1, power +3,
++4 the flag that makes removal (0x2AF10) run the type's handler 0x2AEEA). The original's shop BUY at 16 items and
+DROP / HALVE on a readied item show no message in a grab 0.3 s after the key.
+
 **Chat 67:** checks 113-117 in `data/c67/chk113..117/` (`data/c67/cd/` links `game` and each); the original's traces
 `data/c67/trace113..117.txt`. **The original's vertical menus take End / Home, not Down / Up** (Down in ours' keys is
 fine in a menu, but on the walking screen Down turns ours' party round: use End in ours' keys where the original's

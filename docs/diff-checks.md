@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 68: the tavern brawl, DROP and HALVE on a readied item, BUY at 16 items; CURE BLINDNESS ready for Combat; the game's poison death read; checks 118-120, DIFFCHECKS 120/120
+
+- **Check 118, 3:0 New Phlan's tavern brawl** (ECL 3:0 0xA696; check 93's start, tpseed 62620001, GRAB; 46 drunks
+  against the party and 13 patrons on its side): the whole party on QUICK, won (114 experience each), Enter x2, EXIT,
+  NO (THERE IS STILL TREASURE LEFT), THE CITY WATCH CHARGES IN: RUN (3,11 W), save. The original's end and trace from
+  chat 63 (6402 draws; ours identical since Combat Chat 32's 1e269a3). Three runs MATCH; tpseed 62620002 differs (44);
+  1e269a3^ differs (16: ours lost the brawl).
+- **Check 119, camp DROP and HALVE on a readied item** (check 106's start): DROP on ARN's readied long sword does
+  nothing (no YES NO, no message), HALVE does nothing; READY off, HALVE on the single sword: nothing (**a stack of 1
+  isn't split**). Matched at once; READY off before DROP, then YES, differs (1).
+- **Check 120, the arms and armour shop, BUY at 16 items** (check 98's start with DORN holding 16 items: check 115's
+  13 single arrows appended, 0xC7 = 16): BUY on the hand axe twice: refused, nothing paid, no message seen in the
+  original (ours flashes OVERLOADED). Matched at once; DORN at 15 items differs (2).
+- **Ready for Combat: CURE BLINDNESS on a blinded member** (lab `data/c68/chkblind`, `cd/blind`; check 113's start with
+  effect 0x21 appended to BROTHER SEAN's `.SPC`): the original tests 0x21 (GAME.OVR 0x47D9), asks 1000 gp and removes
+  the first 0x21 (0x4834 -> 0x2AF10). Ours' temple says IS NOT BLIND and stays on its screen (DIFFERS 41). A tested
+  fix for `temple_screen.gd` (`_needs` and `_pay`, 10 lines) is in the lab (`data/c68/temple_blind.diff`): three
+  runs MATCH with it; SEAN not blind then differs (41). It joins the gate as a numbered check when Combat lands it.
+- **The game's own poison death** (read in the code; the standing list's open question from check 112): the poison
+  routine (GAME.OVR 0x101A0) adds 0x37 through 0x2BD3C with minutes 0, **power (+3) 0xFF**, +4 0, then the kill
+  routine 0xECB3 sets status 6, +0x10D 0, HP 0 and sends the death event (0xD) through 0x2B1E4. NEUTRALIZE POISON
+  (0x4CC9) removes 0x37, 0x16 and 0x0F only and never touches status or HP; 0x37's handler (0xFFB7) is empty. So
+  check 112's made-up state is the game's own, and a member dead of poison stays dead after the temple's cure in
+  the original; chat 31's THRENDER stood at HP 1 because Slow Poison had stood him up before the temple. **Ours
+  writes the poison effect with value 0** (`combat.gd`'s poison hit; the lab hook too): a save-file difference only
+  (to Combat on the board).
+
 ## Chat 67: the temple's wound cures, camp JOIN, TRADE to a full member, READY of a two-handed weapon, the inn without money; checks 113-117, DIFFCHECKS 117/117
 
 Coverage checks (the post's standing list), each played in DOSBox; all matched at once (no code change).

@@ -11,6 +11,7 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - Fill every spell level before a hard fight, not just level 1. Until Player 27 the tool memorized only level-1 spells, so its casters fought from Sokal Keep onwards with level-2 and level-3 slots empty (Player 27, Stojanow REPORT; *seen in the original*).
 - Camp and memorize before each event. Without it the party reached a 30-figure fight with its Sleep spells used up and lost (Player 15, p15c1/p15c2; *seen in the original*).
 - Keep one Slow Poison in the party, in the first free cleric level-2 slot (Player 27, main's bot's picks; *read in the code*).
+- A member killed by poison stays dead after a temple's NEUTRALIZE POISON (it only removes the poison): cast Slow Poison first (HP 1, standing), then neutralize (main chat 68, GAME.OVR 0x4CC9; *read in the code*).
 - Train as soon as a member qualifies. At TRAIN the game cuts experience to "the level after next, less 1", so experience above that is lost (Player 3; *seen in the original*).
 - A multi-class member trains the hall's class when that class is ready, even if a slower class is not (Player 3; *seen in the original*).
 - The training fee comes out of the member's gold coins, and change is given in gold, not platinum (Player 3; *seen in the original*).
