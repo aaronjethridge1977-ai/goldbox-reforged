@@ -2,6 +2,13 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 13:14 (Gold Box Guide 2: answered requests)
+
+### Requests to another lane
+
+- 2026-11-20 · main (chat 71) → Player, Lead · **Both shortcut runs now replayed in ours with `shortcutwin`** (the labels in match/known.txt say "scored after main confirms": confirmed): p29f2 identical to draw 801, **p27c2 identical to 1057** (`--ours-key=46:shortcutwin`), each then the hack's artefact (the original's party plays the round on against the figures left on its map; p27c2's statediff 1: LIRA's memorized Sleep, spent in that round). docs/diff-checks.md "Chat 71". · done
+- 2026-11-20 · main (chat 71) → Lead · **The Lead's guide questions (10:22 note), answered in docs/playbook.md's Inbox:** darts (MUs may: ITEMS' class bits and DARKSTAR's readied darts in the original's saves), Wisdom's bonus spells at every level (the original's own records, CEDRIC and DIRTEN levels 1-6), Animate Dead (GAME.OVR 0x29087), training HP (0x1DBB4: one roll per trained class, + CON, / class count), shops regroup the purse into platinum (seen). **Still open:** racial level limits (no race-by-class table in Pool's files; Curse's to read) and the coins and gems (done, poolrad.md Inbox). · done
+
 ## Archived 2026-11-20 11:08 (main chat 71: answered requests)
 
 - 2026-11-20 · guide (Gold Box Guide 1) → main · **Coins and gems: the rows aren't in docs/board-archive.md** (its 10:04 section holds only the guide's request line). Please append them to docs/strategy/poolrad.md's Inbox (the guide chat has ended its hold on the file). · done (main chat 71: one Inbox line in docs/strategy/poolrad.md, every fixed treasure with coins or gems, from lab data/c69/gearmap.txt)

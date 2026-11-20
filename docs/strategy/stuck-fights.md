@@ -91,6 +91,47 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   same fight draw for draw to 16203 (p23a4).
 - **Read (Players 23, 31):** level: the party was at F3-5 with a drained ARN; the four trolls. Asked the Lead (more
   levels first). Every new try is reported on the board (Jeremy).
+- **Analysis (Gold Box Guide 2, 2026-11-20 13:12; from ECL8 block 13, MON8CHA, the saves and logs above):**
+  - **The enemy:** wave 1: 4 TROLL (36 HP, AC 4, THAC0 13, two attacks, move 12, morale 255), 35 KOBOLD (3 HP, AC 7,
+    THAC0 21), 11 KOBOLD LEADER (4 HP, THAC0 19). Then (0xA15C) a ballista volley (DAMAGE) and wave 2: 5 WILD BOAR
+    (18 HP, AC 7, move 15), 45 kobolds, 8 leaders. Wave 3 (0xA272): 2 trolls, 2 boars, 8 kobolds, 2 ENVOY (F6/MU6,
+    45 HP, AC 2). The king's quarters (7,2) later: 3 trolls, 3 boars, 20 kobolds, 4 leaders. *code*
+  - **Hit chances against the party** (ACs at `s17door`): BRAM -2, ARN -1, CEDRIC -1, ELWEN 0, LIRA 1, DORN 4. A troll
+    hits 30-45% (DORN 60%); kobolds only on a 20 (DORN 20%, leaders 25%). The trolls do the killing. *code*
+  - **Why lost:** (1) the trolls were left standing: at each wipe they had 25-36 HP each (p31c7: 27, 25, 36, 36); the
+    blows went to "the weakest" (kobolds). (2) Spells unused: p31c7 cast 2 of its 10 Sleeps, 0 of 4 Stinking Clouds,
+    and 6 Hold Persons that "can reach none of its targets" (trolls aren't persons). (3) The audit failed (guide
+    section 4): **7 class levels owed at `s17a`** (ARN F4; ELWEN C4, F4, MU4; LIRA F4, MU4; DORN F4; Player 23 trained
+    ELWEN's C4; Player 31's training visits didn't raise ARN's, LIRA's or DORN's HP); BRAM's Two-Handed Sword +1 +3 vs
+    undead carried, Flail readied; LIRA's cloak (effect 0x59: Cloak of Displacement) unreadied; a magic-user scroll
+    (Shocking Grasp, **Stinking Cloud**, Detect Magic) unread in BRAM's pack; arrows readied with no bow; movement 3
+    for all six at `s17door` (dozens of junk bows and mail; Player 31 sold junk first, its movement unknown).
+    (4) **Princess Fatima never met:** her cell (event 0xA720, a side room west of the throne) offers to join (YES):
+    PRINCESS FATIMA, F4, 33 HP, AC 10, move 12. *code*
+  - **Players:** one won with two Fireballs (a scroll and a wand), Fatima in the party, entering so only one flank was
+    open *players* ([Demetrios1453, ENWorld](https://www.enworld.org/goto/post?id=9305676)); "save at least one
+    fireball for each of the first two waves" *players*
+    ([GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/koboldcave.php)). This party has no Fireball
+    (scrolls at 3:14 and 4:2: Jeremy, 13:07: try without first).
+  - **Not in the plan (Jeremy, 13:07):** SURRENDER after a fled wave keeps the waves won (0x4A8D) and leads to the
+    prison and Fatima, at the cost of ROB 1, 25 (coins and each item 25%), everything the second time. *code*
+- **Plan 1 (Jeremy approved 2026-11-20 13:10; Gold Box Guide 2):**
+  - **Before (the audit):** train every owed level and **check each on the character sheet** before leaving town;
+    BRAM readies the Two-Handed Sword (shield off: AC -1); LIRA readies the cloak; the Stinking Cloud scroll to LIRA or
+    ELWEN; LIRA, ELWEN and DORN each keep a long bow and arrows readied (DORN is the back rank: AC 4); junk sold and
+    coins spent down to **movement 6+ for all**; inn: magic-users' level 1 all Sleep, level 2 all Stinking Cloud;
+    CEDRIC Bless, Prayer and cures, no Hold Person. Trip in with MAGIC OFF (Players 30-31); **free Fatima (YES)**
+    before the throne and give her a spare Chain Mail and Shield. Save at the door.
+  - **Wave 1:** round 1, before anyone is engaged: CEDRIC Bless (it begins casting and goes off on his next turn; a hit
+    spoils it); LIRA and ELWEN Stinking Cloud on the trolls, the party outside the 2x2 (about half the trolls fail:
+    helpless d4+1 rounds). Fighters (BRAM, ARN, Fatima, ELWEN) on the trolls only, the helpless ones first, three on one,
+    and **stand on a fallen troll's square** (*book*: it can't rise). Bows at the trolls. Sleep only on kobold clumps
+    that reach the casters, aimed two squares off. Kobolds last.
+  - **Waves 2-3:** the remaining Sleeps and Clouds at the boars and the envoys (casters: Stinking Cloud, not Sleep);
+    cures between hits on whoever is lowest. A death or wipe: reload (the reload rule).
+  - **The tool** (Player): the plan needs melee targets by type (trolls first, the helpless first), bows at range,
+    and a step onto a fallen troll's square; where the tool can't, say so on the board.
+  - **Results:** (the Player's lines here)
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
