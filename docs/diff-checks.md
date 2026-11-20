@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139); DIFFCHECKS 139/139
+## Chat 73: the camp's USE of a Potion of Giant Strength (check 137), TRADE of a readied cursed item (check 138), REMOVE CURSE with effect 0x24 and a cursed item (check 139), a half-elf cleric at the hall (check 140); DIFFCHECKS 140/140
 
 - **Check 137, the camp's USE of a potion** (main path): check 130's start with ARN given a Potion of Giant Strength
   (the record from check 100's start: type 84, byte 61 = 82, the item spell 59; ARN's item count +0xC7 3 -> 4). In the
@@ -189,6 +189,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   136's start with THRENDER GRONE's .SPC given a standing 0x24 record; HEAL, REMOVE CURSE, 3500 gp, YES: the original
   lifts the effect and leaves the readied Broad Sword -2 cursed (one curse a cure, the effect first: GAME.OVR 0x4DB6),
   as Combat Chat 35's fix does. Matched at once; without the effect it differs (the sword uncursed).
+- **Check 140, a half-elf cleric 5 at the clerics' hall** (main path): check 135's start remade (THRENDER GRONE a half-elf
+  cleric 5, 40000 experience); 3:11's clerics' room is 5,0 (through 6,0's west door; the magic-users' 7,0, east):
+  YES, TRAIN: NOT ENOUGH EXPERIENCE (Pool's half-elf cleric cap, GAME.OVR 0x1C3F7-0x1C501, ours' race_capped).
+  Matched at once; as a cleric 4 it trains (differs).
 - **Item type table** (DS:0x5582, 16 bytes a type): +0 the slot, +1 hands, +0xD the classes allowed (and-ed with the
   character's +0xB0); READY's results (GAME.OVR 0x22585-0x2274C): 1 "Wrong Class", 2 a slot taken.
 
