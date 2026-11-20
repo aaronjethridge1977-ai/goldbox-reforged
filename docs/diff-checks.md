@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131); DIFFCHECKS 131/131
+## Chat 72: Player 34's three state differences (the wall ahead twice, 0x4A5F) explained and two fixed; the camp's USE of a clerical scroll (check 130); a cursed item readied (check 131), SELL of a cursed item (check 132), a REST interrupted in a wilderness band (check 133); DIFFCHECKS 133/133
 
 - **p22c2's wall ahead (original 1, ours 0): fixed** (`ecl_vm.gd` CALL 0xC018). DOSBox from a jump save to 1:18 1,4 W
   (`mksave.py J G 1 18 1 4 W`, `dsread.py 6aad 5` after each key): 0,4 W 1; the step off the west edge 0 (the on-move's
@@ -197,6 +197,12 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   "CEDRIC'S SPELLS ON SCROLL", CAST, the target, one d8. Ours already did this (Combat Chat 5). Matched at once.
 - **Check 131, a cursed item readied** (main path, 3:14's Broad Sword -2): READY refused (IT'S CURSED, 0x22547),
   DROP refused (MUST BE UNREADIED), another weapon refused (ALREADY USING BROAD SWORD). Matched at once.
+- **Check 132, a SELL of a cursed item** (main path): check 98's start, ARN given the Broad Sword -2 unreadied: the
+  arms shop offers 0 gold (its value is 0), YES, the sword gone. Matched at once.
+- **Check 133, a camp REST interrupted in a wilderness band** (main path): check 31's start in 8:27, tpseed 35353535
+  picked by simulating the dice (the rest draws one d100, interrupted under the rest block's 10: 1); the 8 hours
+  pass, then 8:27's rest-interrupted block (0x4A15 = 1, the band's encounter): YOU SURPRISE A GROUP OF GNOLLS, FLEE.
+  Matched at once.
 - **Racial level limits:** Pool enforces them at the hall (GAME.OVR 0x1C3F7-0x1C501; ours `LevelDrain.race_capped`
   already does); Curse's are in its GAME.OVR 0x24DDE-0x24F5B (playbook Inbox).
 - **match_gate.sh** replays four recordings side by side (`OP_MATCH_JOBS`, default 4).
