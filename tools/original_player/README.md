@@ -1344,6 +1344,15 @@ enemies first; casters cast before contact from the back; a corner; every magic-
   original's targets and HP). Lab `p31/replays.sh` now takes `OP_SEG_TIMEOUT` from the environment; **rerun at 3200 s (1521 s): all 3024 draws
   identical, statediff 0 differences** (`p31/p29a2.cmpdraws.txt`; its "positions" and "end of fight" as README
   "Player 30" reads them). So segments 18-33 in ours: 11 identical, 5 part (Requests, to Combat).
+- **The kobold king by hand: 5 of 5 lost** (p31c1, c3, c4, c6, c7 from `p23a2_s17a`, lab `p31/king3.plan`: Player 30's
+  king2 with `picks` of Sleep for every magic-user's level 1; `OP_MAGIC=0 OP_TACTICS=horde`; p31c2 a tool stop, the
+  aim fix above; p31c5 destroyed on the way at 7:26 11,27). At the throne room the party had 123-193 HP; 18-34 of
+  the 56 slain (best c7), two to eight blows each at sleeping kobolds; **the horde holds four TROLLs** (36 HP; Sleep
+  doesn't take them) that finish the party. The clerics' `picks` of cures never applied: their level-1 slots were
+  already full from the save (`picks` fill free slots only). Asked the Lead again (more levels first).
+- **Combat's five, rerun on dce19fd** (lab `p31/r5.lst`, `p31/replays.txt`): p25e4 now identical to 5615 (new at
+  5616: a QUICK ELWEN's spell pick d6 against ours' d5); p24b6 1838, p25j10 4108, p26a1 3932, p27d3 57 as before
+  (p27d3 on the build with Combat Chat 32's brawl fix). Under the request, to Combat.
 
 ## Player 30 (2026-11-19): the tactical mode (`tactics on`, tactics.py); the Stojanow wall by hand: 8 of 8 lost; `picks`; segment.py's magicat
 

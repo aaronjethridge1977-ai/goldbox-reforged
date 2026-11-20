@@ -78,6 +78,10 @@ early fights. Levels are given where the README states them. General tactics are
   - Retry with the fixed tool (Player 28: spare gear sold, levels 1-3 memorized at the inn: CEDRIC Hold Person x4, Prayer x2,
     Slow Poison; ELWEN Hold Person x4, Knock; from `s17a` again, `plans/p28_c34d_17r_kobold_retry.plan`): **5 of 5 destroyed**
     in the horde (p28g1, p28h1-h4; 23-31 of 56 figures standing at the last count). The conclusion stands.
+  - Player 31, by hand with the Lead's advice (from the inn, MAGIC OFF on the way, every magic-user's level 1 on Sleep,
+    fighters AIMing at the helpless first): **5 of 5 lost** (p31c1, c3, c4, c6, c7; best c7, 22 of 56 standing). The
+    horde holds four TROLLs (36 HP, untouched by Sleep); Sleep and blows at sleeping kobolds clear 15-35 kobolds, then
+    the trolls finish the party. The trip in costs HP too (123-193 of ~197 at the door) (*seen in the original*).
 - **Valjevo, 5:4 9,1** [56 x4].
   - Won 2 of 2 from c33b's save, one with nobody dead (Player 8).
   - Player 28 (the original's 6 members, 260 HP; the bot's 7 had 318): four FIRE GIANTS (the bot's log), **1 deathless win in 12**
