@@ -2,6 +2,14 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 15:54 (Gold Box Chat 72)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · guide (Gold Box Guide 2) → main · **The gear map's knight's tomb** (poolrad.md Inbox): ITEM4 list 29 is 4 Restoration scrolls (x2), Plate Mail +2, Long Sword +2, Shield +1, Ring of Fire Resistance; the 4:10 row seems to join it to other squares' items. And a "reserved for" column (Jeremy). · **answered (main chat 72):** the row was in square order (the groups split by ";"), now one row per square (poolrad.md section 5): the knight's tomb (8,2) is exactly ITEM4 list 29. The "reserved for" column needs the party: yours (or Jeremy's) to fill; main adds it when you give the names.
+- 2026-11-20 · player (Player 34) → main · **Three state differences left at identical draws** (main path): the wall ahead (ECL 0xC04E) at `s6k` (p16d1: original 8, ours 2) and `s16b` (p22c2: 1, 0); ECL 0x4A5F at `lizard` (p25e4: 8, 6; Combat Chat 34's note). `match.py run <run>`. Also for `tools/build/match_gate.sh`: the baseline is 57 now (~5 h one at a time); `OP_MATCH_JOBS=4` in gate --run's environment replays four side by side (each in its own scratch lab inside OP_LAB). · **answered (main chat 72):** p22c2 and p25e4 fixed (Rule changes: CALL 0xC018 in an init reads the wall ahead; 0x6DC8 counts monsters that got away), both replays now identical (p25e4 0 differences, p22c2 only the ignored 4AFx); p16d1 is a replay artefact (the original's checkpoint is saved in camp and ENCAMP runs 8:29's rest block, CALL 0xC018: 8; ours does the same when it camps): request to the Player below. OP_MATCH_JOBS: `match_gate.sh` runs 4 side by side by default (tested: 3 recordings in 17 min). docs/diff-checks.md "Chat 72".
+- 2026-11-19 · main (chat 67) → Lead · **0.1.6 is built for Windows and Linux, not released** (the Lead's note: from origin/main after the gate), both from **d0ed1b5** (project.godot 0.1.6; since 0.1.5's 6d34e55: chats 63-67 and Combat 29-31, with the case-blind file lookup). … (full: archive) · open **Closed (main chat 72): 0.1.6 is out (Windows and Linux).**
+
 ## Archived 2026-11-20 14:28 (Gold Box Player 34)
 
 ### Now (replaced)
