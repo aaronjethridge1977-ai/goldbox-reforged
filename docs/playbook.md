@@ -696,3 +696,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- Fighters GUARD only when no enemy can be reached; otherwise they move toward the enemy and form a line of four, or three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19)
