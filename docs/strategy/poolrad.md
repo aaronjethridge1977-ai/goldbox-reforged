@@ -2,8 +2,9 @@
 
 Pool of Radiance's route, hard fights, Pool-only rules and treasure, for players. General tactics are in the Gold Box
 Players' Guide (`docs/playbook.md`); its tags (*seen*, *code*, *book*, *players*, *Jeremy*, **unconfirmed**) apply
-here. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by section: sections 1-2 are done, section 3 in part; the old text
-below "Not yet folded in" is still in force until its lines move up.
+here. Rewritten by Gold Box Guide 1 (2026-11-20) with Jeremy, section by section: sections 1-6 are done (section 3 in
+part; the rest of the old hard-fight notes are parked below for review). New lessons go in the Inbox at the end; the
+Lead folds them in daily.
 
 ## 1. The party
 
@@ -90,8 +91,8 @@ files); results *seen* unless marked.
 - **The trolls and ogres (0,14):** 2 ogres and 4 trolls; the cluebook's test of the party. *code*
   - Works: two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and
     casts at the trolls from one square back; drop the trolls together and stand on a fallen troll's square so it can't
-    rise; then the ogres. *book* Sleep should take out both ogres. *Jeremy* Whether it does in the original:
-    **unconfirmed** (request to Combat's spell lab).
+    rise; then the ogres. *book* Sleep should take out both ogres. *Jeremy* (who may have been lucky) Combat's spell lab: in the original, Sleep puts an
+    ogre down now and then, never a troll (*seen*, Combat Chat 34); this room's ogres: **unconfirmed** (request).
   - Results: at level 3, won deathless at the second try (p16e2); from an earlier save, won 2 of 2, both with deaths
     (Player 8).
 
@@ -103,7 +104,8 @@ files); results *seen* unless marked.
     Person and Sleep to narrow the front. *players* ([Demetrios1453, ENWorld](https://www.enworld.org/goto/post?id=9284429))
   - Results: at **level 2**, 10 tries, 8 wipes, 2 wins each with a death (the early tries with MAGIC OFF and no level-2
     spells); at **level 3**, 2 deathless wins in 8. (Players 15, 16, 27)
-  - Open to experiment (*Jeremy*): the doorway tactic by hand (request to the Player).
+  - At level 2 the example party carries 4 Sleeps (two magic-users with 2 each); the comparison party carried fewer.
+    *Jeremy* Open to experiment: the doorway tactic by hand (request to the Player).
 - **Ferran Martinez** (the spectre; 2 levels a hit): never melee him. Parley, say LUX, tell the truth (he shows the
   hidden treasure). *book*
 - **Resting at 15,1:** undead interrupted four rests in five; four camps ended with a death. (Player 15)
@@ -127,11 +129,96 @@ files); results *seen* unless marked.
 
 The other hard fights are still in "Not yet folded in" below, to be reviewed with Jeremy.
 
+## 4. Pool-only rules
+
+(Jeremy, 2026-11-20: a starting point.)
+
+**Resting**
+- **Rest only at the inn** in these places, where camps were interrupted 4-5 times and members died: Sokal Keep's 15,1;
+  the Textile House (4:2); the pyramid (7:22); the wilderness bands. *seen* (Players 15, 19, 25)
+- **The ruined castle (8:16) is anti-magic:** CAST does nothing there, even in camp. Leave and rest at the inn rather
+  than camping inside: one party camped 54 days there to bring a member up from 0 HP. *Jeremy* + *seen* (Player 25,
+  8:16)
+
+**Valjevo Castle**
+- **The alarm:** while it holds, patrols interrupt camps and wander at 17% a step; camps were interrupted three times
+  and wiped the party. Use memorized cures and rest at the inn. *seen* (Players 3, 27)
+- Under the alarm, each step off a "safe" square (info bit 64) may draw a patrol; resting on one draws none. *code*
+  (ECL 5:4 0x9AB5, 0x9B32; untried) Safe rests during an alarm: the smokehouse, the officers' quarters, the armoury,
+  the old building, the maze towers. *book*
+- **The gate (5:3 12,7/12,8):** the password is asked on a **bump west** from 12,7, not on stepping onto it (the
+  on-move script runs before a step, with the new facing); the word is RHODIA (from the captured Cadorna or the gnoll
+  overseer). *seen* + *code* (Player 28, p28a1; ECL 5:3 0x9A80) + *book*
+- Disguises at the laundry: parley Nice. Patrols: Meek and HARASH, or Haughty / Abusive and TYRANTHRAXUS. *book*
+- **The barracks' fire giants (5:4 9,1):** with no alarm they parley: HAUGHTY or SLY gives the passwords and no fight
+  (*code*, ECL 5:4 0xA38D, untried); they can be conned or caught asleep by day (*book*). A won fight there keeps the
+  four giants of 5,2 away (0x4A66 bit 16; *code*).
+- **The records (5:4 14,9):** reading them during an alarm draws a patrol half the time; answer NO on later visits.
+  *seen* (Player 28, p28c3)
+- Stay out of the Bane chapel's coins and swords. *book*
+- **The finale:** parley past the false Tyranthraxus (Meek / Nice); avoid the medusa room and the upstairs trap door
+  (stone); rest anywhere upstairs before. *book*
+- **Tyranthraxus's fear:** party members of levels 0-3 are paralysed and 4-5 weakened, whether they save or not.
+  *code* (GAME.OVR 0x10705; Player 5)
+
+**Elsewhere**
+- **The Buccaneers' ransom (6:1):** SURRENDER costs coins and items but keeps the rescue; ATTACK, if won, captures the
+  fort. *code* (Player 25, ECL 6:1)
+- **The graveyard's wights** take no harm from plain weapons (a plain mace left one untouched for five rounds): bring
+  the council's Two-Handed Sword +1 (+3 vs undead) and every magic weapon (DORN's Mace +2 to the cleric). *seen*
+  (Player 32, p32b8, p32d1)
+- The silver dragon: talk, never attack. Sorcerer's Island: NOKNOK at the level-3 door; break the pump once and leave;
+  parley Nice with the caged lizard men (SAVIOR, the friend word for the Lizard Man Keep). *book*
+- New Phlan's city watch (12 7th-level clerics...) and City Hall's guards fight only a party that attacks the town:
+  never attack it. *code* (the gear map's data)
+
+## 5. The magic-gear map
+
+(main chat 69; read in the game's data, not from memory; *code*. Coins and gems: requested of main, 2026-11-20.)
+
+Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX` list) and every item a monster carries (`MON<n>ITM.DAX`: a beaten monster's items all go on the treasure pile, each monster of a group with its own set). Made by `tools/lab/gearmap.gd` (dumps the lists) and `tools/lab/gearmap.py` (joins them with the areas' ECL listings; lab `data/c69/gearmap.txt` is the full output with addresses, coins and the plain items). **Squares** come from the search script's dispatch (the square's event number, through the script's byte table where it has one); "squares not traced" where the code is shared or reached from another event. **Who** is the item type's class byte (ITEMS byte 13; START.EXE DS:0x05D6: magic-user 1, cleric 2, thief 4, fighter 8, druid 16, paladin 64); "any" = every class. Plain items under 100 gp and the shops' stock are left out. Scroll spells are the record's bytes 60-62.
+
+**What the classes may use, from the same bytes (matters for the missile rules above; to confirm in DOSBox, ours' READY and fights use the same test):** **thieves can't use bows or crossbows** (every bow and arrow: fighter / paladin; the light crossbow and quarrels: fighter / paladin): a thief's missiles are **darts and the sling**; **clerics can't use slings or darts** (the sling: thief / fighter / druid / paladin): a cleric has no missile weapon at all, so the cleric's place is the front line; **magic-users: darts, dagger, quarter staff**. Arrows +1 and the Sling of Seeking +2 are the only magic ammunition / launcher beyond the bows.
+
+**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Never sell them.**
+
+| Area | Where (squares; how) | Magic and valuables | Who uses it |
+|---|---|---|---|
+| 1:18 Podol Plaza | the arena's fighters (4,8; the duel / the gathering) | Chain Mail +1, Long Sword +1 (each 4th-level fighter) | C/F/P; T/F/P |
+| 1:24 Temple of Bane | the hidden treasures (squares not traced: the rubble's tapestry, two trap doors, three trap doors behind the blind orc's welcome; lists 4, 6, 8, 9, 17) | Tapestry 250 gp; Ring of Feather Falling, Potion Extra Healing, cleric scroll (Animate Dead, Cure Blindness); MU scroll (Fireball, Ray of Enfeeblement, Stinking Cloud), 2 cleric scrolls (Snake Charm, Silence, Bless / Animate Dead, Cause Disease, Prayer); Dust of Disappearance, **Wand of Magic Missiles**, Potions of Speed, Healing, Giant Strength, 7 Gold Statuettes; Short Sword, Spear, Scimitar, Morning Star, Mace, Hammer, Dagger, Hand Axe, all +1 | wand any; scrolls by class |
+| 1:24 | the half-orc leader's orcs (after the treasure) | Mace +1 | C/F/P |
+| 2:9 Stojanow Gate | the 6th-level fighter (the gate's opening fight); the level 6 MU (11,7) and the two behind the wall (7,6 8,6) | Long Sword +1; **Ring of Protection +2 each** (3 in all) | any |
+| 2:15 Mendor's Library | after the basilisk; the jar under the floorboards (8,11); the study's book (13,13) | Potion of Giant Strength, Potion of Healing, **Cloak of Displacement**, Restoration scroll; 3 Potions Extra Healing; **Manual of Bodily Health** (+1 CON) | Giant Strength F; rest any |
+| 2:20 Slums | orc (11-13,0-1); goblin leader (9-10,0-1); level 3 MU (11-13,9-10); stable's leather bag (5,2 6,2); **kobold leader (7-8,0-1)**; orc leaders (2,3 3,3); hobgoblins' valuables (0,2 0,3); storage room (0,0); floorboard chest (4-5,9-11) | cleric scroll (Cure Light x2); Leather Armor +1; **Wand of Magic Missiles**; Short Bow +1 + 20 Arrows +1 (twice: the bag and the storage room); **Bracers AC 6**; Flail +1, Chain Mail +1, Broad Sword +1 x3; **Ring of Protection +1**, Short Bow +1; Shield +1, MU scroll (Magic Missile) | bows F/P; bracers, ring any |
+| 3:8 City Hall | the graveyard commission ("I HAVE BEEN AUTHORIZED TO GIVE YOU AN ENCHANTED WEAPON"); Bivant's reward for the child (the same list 51) | **Two-Handed Sword +1, +3 vs undead**, 4 Restoration scrolls | sword F/P |
+| 3:14 Kovel Mansion | the loot pile, the rugs, the scroll cases, the weapons pile (squares not traced; the weapons pile has a gas trap and thieves) | Short Sword +2, **Leather Armor +4**; 2 Fine Tapestries (5000 gp, 800 wt) beside 26 plain ones; MU scrolls (**Fireball, Haste, Hold Person**; Blink, Ray of Enfeeblement, Slow; Fireball, Detect Invisibility, Reduce; Blink, Burning Hands, Mirror Image), cleric scrolls (Hold Person, Cure Blindness, Bestow Curse; Prayer, Remove Curse, Animate Dead); 2 Daggers +1, Hammer +1, Morning Star +1, Scimitar +1, Short Sword +1, **Shield +2**, Chain Mail +1, **Broad Sword -2 cursed** | leather +4 C/T/F/D/P |
+| 4:2 Textile House | Grishnak's temple (3,11 2,12); Cadorna's iron box (12,14; Restal's guild duplicates the seal at 1,3) | **Cursed Necklace**, Brass Key (a story item), Potion of Healing, 2 MU scrolls (Fireball, Detect Invisibility, Reduce; Blink, Burning Hands, Mirror Image); **Gauntlets of Ogre Power**, Jewelled Dragon Statuette, Jewel Studded Bowl, Gold Banded Wand (100 gp, not magic) | any |
+| 4:10 Graveyard | marble chest (7,6-8); the zombie room (9,15); the paladin's crypt (15,8); the knight's tomb (8,2); the evil MU who joins (8,9); the vampire's trove (14,0) | 4 Restoration; Potion of Healing, **Wand of Lightning Bolt**, 2 Restoration; MU scroll (Slow, Hold Person, Invisibility 10'), Potion Extra Healing, **Hammer +3**, **Sling of Seeking +2**, Restoration; **Plate Mail +2, Long Sword +2, Ring of Fire Resistance, Shield +1**, 4 Restoration; **Ring of Protection +2**; **Wand of Magic Missiles**, 3 Potions of Healing, 5 cleric scrolls (one 1800 gp), Shield +1 | wand of lightning MU; hammer C/F/D/P |
+| 4:21 Sokal Keep | the smithy (15,6); the armoury's stands (12,0) | Hammer +1; Shield +1, Long Sword +1, Chain Mail +1, **Mace +2** | mace C/F/P |
+| 5:3 Valjevo outer | the officers (3,7 3,8 / 5,1 / 5,2-4); a loose stone (0,2); the well (squares not traced: "TRY AGAIN?") | Long Sword +1 (each); Potion of Speed; **Long Sword +2 Flame Tongue** | T/F/P |
+| 5:4 Valjevo north | officers (10-11,4-5; 5,1; 5,2-3); the armoury (14-15,2-3: plain plate and bow); the two envoys (14-15,12-15) | Long Sword +1; **Javelin of Lightning, Two-Handed Sword +2, Chain Mail +1** (each of two); Two-Handed Sword +2 each envoy | F/P |
+| 5:5 inner castle | Al-Hyam Dazid (squares not traced); **Tyranthraxus (3,1)** | **Wand of Lightning, Ring of Fire Resistance, Bracers AC 3**; Gauntlets of Ogre Power, **Ring of Protection +3, Long Sword +5** | |
+| 5:6 temple side | the 4th-level fighter (0-3,14-15); the level 5 cleric (1,2); behind the altar (1,0) | Chain Mail +1, Long Sword +1; **Necklace of Missiles, Mace +3, Plate Mail +1**; **2 Long Swords +3** | mace C/F/P |
+| 5:7 Inner Tower | Genheeris (2,5); the guards (3,8) | **Wand of Lightning**; Ring of Protection +3, Two-Handed Sword +2, Plate Mail +2 (each of 12 8th-level fighters) | |
+| 6:1 Buccaneers' Base | the captains (6-8,6-9 area; 7,12) and their men | **Shield +2, Long Sword +4, Plate Mail +3** (each captain); Chain Mail +1, Long Sword +1 (each 4th-level fighter); the Pass (2,11, bought) | |
+| 6:28 Zhentil Outpost | the dwarf's attack (4,1) | Gauntlets of Ogre Power, Chain Mail +1, Long Sword +1; Al-Hyam Dazid again; the commandant: 3 Potions Extra Healing, Ring of Fire Resistance, Shield +1, **Plate Mail +2, Javelin of Lightning, Long Sword +2** | |
+| 7:17 Nomad Camp | Hassad and the shaman (the kobold war: 9,12 and the camp's squares); the reward (9,12) | Long Sword +2, Shield +1, Scale Mail +2 (Hassad); **Wand of Magic Missiles, Bracers AC 2, Dagger +2** (the shaman); **Two-Handed Sword +2, Wand of Magic Missiles** (the reward) | |
+| 7:23 Yarash's Pyramid | Yarash (4,1) | Potion of Speed, **Wand of Paralyzation**, 2 Potions of Healing, **Bracers AC 4** | wand MU |
+| 8:13 Kobold Caves | the efreeti bottle (12,0); the kobolds' wealth (13,1) | **Efreeti Bottle** (tell the truth); 2 MU scrolls (Charm Person, Protection from Evil, Strength; Friends, Invisibility, Protection from Normal Missiles), coins | |
+| 8:16 Ruined Castle | the caches (5,12 6,6 9,6 and others; lists 31, 32) | Shield +2; Long Sword +1 | |
+| 8:29 Kuto's Well | Norris the Gray; under the rug (7,14) | Long Sword +1; **Banded Mail +1, Quarter Staff +1, Bracers AC 4** | staff MU/C/F/D/P |
+
+Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (0,2 the wyvern's, one; 2,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
+
+## 6. The Journal's false entries
+
+- The Adventurer's Journal has false entries (e.g. 5, 43, 44, 54; tavern tale 11); the Kovel orc jail clue is false. *book* (Cluebook)
+
 ---
 
-# Not yet folded in (the old strategy file, being moved into the sections above)
+## Parked for review with Jeremy (the old hard-fight and cluebook notes)
 
-## Hard fights
+### Hard fights (old notes)
 
 - **Stojanow Gate, 2:9 7,6** ("A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE WALL", ECL 0xB081). Six ettins (10 HD, 50 HP each, AC 3, THAC0 10, two attacks 2d8 and 3d6, move 12), two level-6 MUs (23 HP, Magic Missile 3d4+3 that never misses, Mirror Image) and two fighter-3 aides (18 HP). 382 HP in total against the party's ~205 at levels 3-6.
   - Player 26: 6 of 6 lost (p26d2 with COMBAT; p26e1-e5 with FLEE, which still starts the fight).
@@ -201,7 +288,7 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 - **The graveyard under the reload rule** (Player 32, from `s26t`, tactical mode, clerics turning first): trips 1-6 without a drain (trip 6's mummies turned); trip 7 (9,5: four wights, 16 zombies) lost 17 times until BRAM readied the council's Two-Handed Sword +1 +3 vs undead and CEDRIC took DORN's Mace +2, then won with one level restored from DORN's Restoration scroll; trip 8: 9,7's spectre won, **9,1's two spectres 0 of 18** (two levels a hit). *Seen in the original.*
 - **Podol Plaza goblin hordes, 1:18** and **the run for the gate, 6:1 7,2** [100 x4, 99 x30]: both won in the original (Player 2). Not hard for that party.
 
-## What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
+### What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
 
 The cluebook gives no area order or expected levels; its only marker: if the party can clear the Slums' troll-and-ogre room, it can handle the rest. Our full run follows main's bot's route for the comparison; **the strategy track and the no-shortcut wins should use these approaches** (they change how a fight is met, not the rules).
 
@@ -214,43 +301,6 @@ The cluebook gives no area order or expected levels; its only marker: if the par
 - **The finale:** parley past the false Tyranthraxus (Meek / Nice). Avoid the medusa room and the upstairs trap door (stone). In the waiting room parley Nice; in his office **Denheeris joins if you promise to attack Tyranthraxus at once** (go straight to the lair). Rest anywhere upstairs before; **cast every preparatory spell before entering**, then kill him and the guards; Resist Fire likely helps (fire-themed).
 - **Elsewhere:** the library basilisk: raise saves, kill it before it gazes; the library spectre attacks if you took books. The silver dragon: talk, never attack. Sorcerer's Island: NOKNOK at the level-3 door; break the pump once and leave; parley Nice with the caged lizard men (SAVIOR, the friend word for the Lizard Man Keep). Wilderness: parley Abusive with nasty intelligent groups, Nice with neutral ones, high-Charisma spokesman.
 - **Known treasure (rooms, not item lists):** the Slums kobolds' bracers (armour that doesn't slow); Ohlo's reward; Sokal's armoury secret room (NW corner behind the illusionary NE wall); Kuto's hag (under the rug); the library chambers; the Pit buccaneer's magic items; Bane's 3 hidden treasures; Kovel 8 and 12; the wyvern's nest and kobold trove; Yarash's desk and 3 rooms (the dial: Copper, Silver, Gold); the graveyard's giant skeleton, ju-ju zombie and knight's tomb; Valjevo's officers' quarters and well. The exact item list: main's magic-gear map (from the game data).
-- **The Journal has false entries** (e.g. 5, 43, 44, 54; tavern tale 11); the Kovel orc jail clue is false.
-
-## The magic-gear map (main chat 69; read in the game's data, not from memory)
-
-Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX` list) and every item a monster carries (`MON<n>ITM.DAX`: a beaten monster's items all go on the treasure pile, each monster of a group with its own set). Made by `tools/lab/gearmap.gd` (dumps the lists) and `tools/lab/gearmap.py` (joins them with the areas' ECL listings; lab `data/c69/gearmap.txt` is the full output with addresses, coins and the plain items). **Squares** come from the search script's dispatch (the square's event number, through the script's byte table where it has one); "squares not traced" where the code is shared or reached from another event. **Who** is the item type's class byte (ITEMS byte 13; START.EXE DS:0x05D6: magic-user 1, cleric 2, thief 4, fighter 8, druid 16, paladin 64); "any" = every class. Plain items under 100 gp and the shops' stock are left out. Scroll spells are the record's bytes 60-62.
-
-**What the classes may use, from the same bytes (matters for the missile rules above; to confirm in DOSBox, ours' READY and fights use the same test):** **thieves can't use bows or crossbows** (every bow and arrow: fighter / paladin; the light crossbow and quarrels: fighter / paladin): a thief's missiles are **darts and the sling**; **clerics can't use slings or darts** (the sling: thief / fighter / druid / paladin): a cleric has no missile weapon at all, so the cleric's place is the front line; **magic-users: darts, dagger, quarter staff**. Arrows +1 and the Sling of Seeking +2 are the only magic ammunition / launcher beyond the bows.
-
-**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Never sell them.**
-
-| Area | Where (squares; how) | Magic and valuables | Who uses it |
-|---|---|---|---|
-| 1:18 Podol Plaza | the arena's fighters (4,8; the duel / the gathering) | Chain Mail +1, Long Sword +1 (each 4th-level fighter) | C/F/P; T/F/P |
-| 1:24 Temple of Bane | the hidden treasures (squares not traced: the rubble's tapestry, two trap doors, three trap doors behind the blind orc's welcome; lists 4, 6, 8, 9, 17) | Tapestry 250 gp; Ring of Feather Falling, Potion Extra Healing, cleric scroll (Animate Dead, Cure Blindness); MU scroll (Fireball, Ray of Enfeeblement, Stinking Cloud), 2 cleric scrolls (Snake Charm, Silence, Bless / Animate Dead, Cause Disease, Prayer); Dust of Disappearance, **Wand of Magic Missiles**, Potions of Speed, Healing, Giant Strength, 7 Gold Statuettes; Short Sword, Spear, Scimitar, Morning Star, Mace, Hammer, Dagger, Hand Axe, all +1 | wand any; scrolls by class |
-| 1:24 | the half-orc leader's orcs (after the treasure) | Mace +1 | C/F/P |
-| 2:9 Stojanow Gate | the 6th-level fighter (the gate's opening fight); the level 6 MU (11,7) and the two behind the wall (7,6 8,6) | Long Sword +1; **Ring of Protection +2 each** (3 in all) | any |
-| 2:15 Mendor's Library | after the basilisk; the jar under the floorboards (8,11); the study's book (13,13) | Potion of Giant Strength, Potion of Healing, **Cloak of Displacement**, Restoration scroll; 3 Potions Extra Healing; **Manual of Bodily Health** (+1 CON) | Giant Strength F; rest any |
-| 2:20 Slums | orc (11-13,0-1); goblin leader (9-10,0-1); level 3 MU (11-13,9-10); stable's leather bag (5,2 6,2); **kobold leader (7-8,0-1)**; orc leaders (2,3 3,3); hobgoblins' valuables (0,2 0,3); storage room (0,0); floorboard chest (4-5,9-11) | cleric scroll (Cure Light x2); Leather Armor +1; **Wand of Magic Missiles**; Short Bow +1 + 20 Arrows +1 (twice: the bag and the storage room); **Bracers AC 6**; Flail +1, Chain Mail +1, Broad Sword +1 x3; **Ring of Protection +1**, Short Bow +1; Shield +1, MU scroll (Magic Missile) | bows F/P; bracers, ring any |
-| 3:8 City Hall | the graveyard commission ("I HAVE BEEN AUTHORIZED TO GIVE YOU AN ENCHANTED WEAPON"); Bivant's reward for the child (the same list 51) | **Two-Handed Sword +1, +3 vs undead**, 4 Restoration scrolls | sword F/P |
-| 3:14 Kovel Mansion | the loot pile, the rugs, the scroll cases, the weapons pile (squares not traced; the weapons pile has a gas trap and thieves) | Short Sword +2, **Leather Armor +4**; 2 Fine Tapestries (5000 gp, 800 wt) beside 26 plain ones; MU scrolls (**Fireball, Haste, Hold Person**; Blink, Ray of Enfeeblement, Slow; Fireball, Detect Invisibility, Reduce; Blink, Burning Hands, Mirror Image), cleric scrolls (Hold Person, Cure Blindness, Bestow Curse; Prayer, Remove Curse, Animate Dead); 2 Daggers +1, Hammer +1, Morning Star +1, Scimitar +1, Short Sword +1, **Shield +2**, Chain Mail +1, **Broad Sword -2 cursed** | leather +4 C/T/F/D/P |
-| 4:2 Textile House | Grishnak's temple (3,11 2,12); Cadorna's iron box (12,14; Restal's guild duplicates the seal at 1,3) | **Cursed Necklace**, Brass Key (a story item), Potion of Healing, 2 MU scrolls (Fireball, Detect Invisibility, Reduce; Blink, Burning Hands, Mirror Image); **Gauntlets of Ogre Power**, Jewelled Dragon Statuette, Jewel Studded Bowl, Gold Banded Wand (100 gp, not magic) | any |
-| 4:10 Graveyard | marble chest (7,6-8); the zombie room (9,15); the paladin's crypt (15,8); the knight's tomb (8,2); the evil MU who joins (8,9); the vampire's trove (14,0) | 4 Restoration; Potion of Healing, **Wand of Lightning Bolt**, 2 Restoration; MU scroll (Slow, Hold Person, Invisibility 10'), Potion Extra Healing, **Hammer +3**, **Sling of Seeking +2**, Restoration; **Plate Mail +2, Long Sword +2, Ring of Fire Resistance, Shield +1**, 4 Restoration; **Ring of Protection +2**; **Wand of Magic Missiles**, 3 Potions of Healing, 5 cleric scrolls (one 1800 gp), Shield +1 | wand of lightning MU; hammer C/F/D/P |
-| 4:21 Sokal Keep | the smithy (15,6); the armoury's stands (12,0) | Hammer +1; Shield +1, Long Sword +1, Chain Mail +1, **Mace +2** | mace C/F/P |
-| 5:3 Valjevo outer | the officers (3,7 3,8 / 5,1 / 5,2-4); a loose stone (0,2); the well (squares not traced: "TRY AGAIN?") | Long Sword +1 (each); Potion of Speed; **Long Sword +2 Flame Tongue** | T/F/P |
-| 5:4 Valjevo north | officers (10-11,4-5; 5,1; 5,2-3); the armoury (14-15,2-3: plain plate and bow); the two envoys (14-15,12-15) | Long Sword +1; **Javelin of Lightning, Two-Handed Sword +2, Chain Mail +1** (each of two); Two-Handed Sword +2 each envoy | F/P |
-| 5:5 inner castle | Al-Hyam Dazid (squares not traced); **Tyranthraxus (3,1)** | **Wand of Lightning, Ring of Fire Resistance, Bracers AC 3**; Gauntlets of Ogre Power, **Ring of Protection +3, Long Sword +5** | |
-| 5:6 temple side | the 4th-level fighter (0-3,14-15); the level 5 cleric (1,2); behind the altar (1,0) | Chain Mail +1, Long Sword +1; **Necklace of Missiles, Mace +3, Plate Mail +1**; **2 Long Swords +3** | mace C/F/P |
-| 5:7 Inner Tower | Genheeris (2,5); the guards (3,8) | **Wand of Lightning**; Ring of Protection +3, Two-Handed Sword +2, Plate Mail +2 (each of 12 8th-level fighters) | |
-| 6:1 Buccaneers' Base | the captains (6-8,6-9 area; 7,12) and their men | **Shield +2, Long Sword +4, Plate Mail +3** (each captain); Chain Mail +1, Long Sword +1 (each 4th-level fighter); the Pass (2,11, bought) | |
-| 6:28 Zhentil Outpost | the dwarf's attack (4,1) | Gauntlets of Ogre Power, Chain Mail +1, Long Sword +1; Al-Hyam Dazid again; the commandant: 3 Potions Extra Healing, Ring of Fire Resistance, Shield +1, **Plate Mail +2, Javelin of Lightning, Long Sword +2** | |
-| 7:17 Nomad Camp | Hassad and the shaman (the kobold war: 9,12 and the camp's squares); the reward (9,12) | Long Sword +2, Shield +1, Scale Mail +2 (Hassad); **Wand of Magic Missiles, Bracers AC 2, Dagger +2** (the shaman); **Two-Handed Sword +2, Wand of Magic Missiles** (the reward) | |
-| 7:23 Yarash's Pyramid | Yarash (4,1) | Potion of Speed, **Wand of Paralyzation**, 2 Potions of Healing, **Bracers AC 4** | wand MU |
-| 8:13 Kobold Caves | the efreeti bottle (12,0); the kobolds' wealth (13,1) | **Efreeti Bottle** (tell the truth); 2 MU scrolls (Charm Person, Protection from Evil, Strength; Friends, Invisibility, Protection from Normal Missiles), coins | |
-| 8:16 Ruined Castle | the caches (5,12 6,6 9,6 and others; lists 31, 32) | Shield +2; Long Sword +1 | |
-| 8:29 Kuto's Well | Norris the Gray; under the rug (7,14) | Long Sword +1; **Banded Mail +1, Quarter Staff +1, Bracers AC 4** | staff MU/C/F/D/P |
-
-Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (0,2 the wyvern's, one; 2,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
 
 ## For the lanes
 
@@ -294,3 +344,8 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 | 32 | `valjevo4` -> `valjevo5` | Valjevo 5:4 -> 5:5 -> 5:3 | Under the Lead's (a): 9,1 and the west of 5:4 deferred; out by 12,15 S, the gate (bump W, GIVE, `RHODIA`), 5:5 8,0, back to 5:3 13,7 (p28i3). | as `s31e` |
 | 33 | `valjevo5` -> `valjevo6` | 3:0, Valjevo 5:6 | Town trip (`s33t`); 5:6 by 2:9 4,0 N: the smithy 0,14 (a smith and three fire giants, won on QUICK; a 40-item pile), the laundry 12,13 (NICE, the disguise YES, TIE), Bane's temple 1,2 (LEAVE: the fight, won), the altar 1,0 (NO, NO) (p29a2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/4, LIRA 4/4, DORN 4/5 |
 | 34 | `valjevo6` -> `valjevo7` (**the end**) | 3:0, 5:5, Valjevo Castle 5:7 | Town trip (`s34t`); 5:3 by 5:6 15,12 E, the gate into 5:5 11,7; 5:5's maps 5 -> 4 -> 3 (4,0 N, 0,11 W, 15,10 11,10 11,14 12,14 12,15; walks need explicit `avoid` lists: the 32/64 bits count as events), the stairs E from 13,15 to 5:7 5,7 (GO DOWN: NO), LOOK (the secret door N), 5,6 N up (YES), 4,4 4,5 4,6 3,6, S down (YES): the hall at 3,8. The guards and Tyranthraxus by logged shortcut (see below); 0x4ABA = 254, the party at 3:0 0,4 (p29f2). | ARN 5, BRAM 6, CEDRIC 6, ELWEN 5/5/5, LIRA 4/4, DORN 4/5 |
+
+## Inbox
+
+Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
+and where it was learnt. The Lead folds them into the sections daily and clears this list.

@@ -234,6 +234,7 @@ the spell's class)
   the Slums' ogres. It sleeps 4d4 hit dice of creatures (about 10 a cast; kobolds and orcs cost 1 each), so everything in
   the 3x3 sleeps, **the caster too**: aim it two squares off (a lone caster aiming at the next square put the party to
   sleep and it was destroyed). Not big monsters (ettins) or a level-6 magic-user (*seen*, Stojanow); short range (*book*).
+  An ogre goes down now and then, a troll or a spectre never. *seen* (Combat Chat 34)
 - **Stinking Cloud** (magic-user 2; at once; range 3). *Jeremy:* very good for taking out casters and making fights
   easier.
   - **The cloud is 2x2:** the aimed square and the squares right, below and below-right. With enemies to your right or
@@ -245,12 +246,14 @@ the spell's class)
     walks into it**, so a cloud across a corridor holds monsters back. *seen* (Combat Chat 34)
   - Kobolds resist 25% of the time; orcs need about 13-16. Bunched ettins in a cloud died to single blows. *seen*
     (Player 30, p30d2)
+  - On ogres and trolls it works about half the time (23 saves, 10 made); spectres ignore it. *seen* (Combat Chat 34)
 - **Hold Person** (cleric 2, next turn, 3 picks; magic-user 3, next turn, 4 picks; save vs spell; man-sized only).
   *Jeremy:* great for taking out annoying enemies with poorer saves. The cleric's lasts 4 + 1/level rounds, the
   magic-user's 2/level. A held figure is slain by any blow and loses its guard and any spell it was casting. Use it on
   enemy casters (they are persons). **By hand:** after each TARGET the aim starts again on the caster, so press NEXT to
   the next figure; a figure picked twice costs no pick; EXIT uses up a pick; when the picks run out the spell goes off on
-  those taken. *seen* (Combat Chat 34)
+  those taken. *seen* (Combat Chat 34) It never held trolls (7 casts) or spectres (8): they aren't persons. *seen*
+  (Combat Chat 34)
 - **Magic Missile** (magic-user 1; at once). *Jeremy:* the first-level spell once Sleep no longer serves. Never misses
   (no roll, no save), ignores most resistances (good on undead), interrupts enemy casting; Shield cancels it. *book*
   **In the original Pool a level-1 magic-user's does nothing** (level / 2 missiles, rounded down: *code*, GAME.OVR
@@ -299,6 +302,8 @@ arena):
 
 **Turning undead**
 - **TURN every time undead appear, once per cleric per fight, in round 1, before casting or fighting.** *Jeremy*
+  TURN with no undead in the fight does NOTHING and spends that fight's TURN. A level-5 cleric turned two spectres.
+  *seen* (Combat Chat 34)
 - QUICK clerics (and paladins from level 3) turn by themselves once a fight, at their first turn with undead in sight.
   *code* (GAME.OVR 0xADC3) + *seen* (the graveyard, Combat Chat 5)
 - The lowest cleric level that can turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric
@@ -651,18 +656,6 @@ Tool and method notes behind the guide's lines; players can skip this.
 - Not yet measured: large monsters (ogres, trolls), undead, and bigger samples on orcs (a bigger orc band than the Slums' four).
 - **The reload rule in the Player's tools** (Player 32): `OP_RELOAD=1` (plans.py `reload_rule`, read from the record: levels 0x96-0x9D, levels drained 0x74, abilities 0x10-0x15, status 0x10C; key items and temple cures not yet), lab `p32/reload.sh` goes on from the last clean checkpoint (Player 32; *read in the code*).
 - **TURN first in the Player's tactics** (Player 32): - With undead on the field, the clerics TURN first (once a fight each) before casting or fighting (Jeremy, 2026-11-20; tactics.py since Player 32; results to be added as the graveyard redo shows them).
-
-## Pool-only lines (moving to docs/strategy/poolrad.md in this rewrite)
-
-- Tyranthraxus's fear affects every enemy: levels 0-3 are paralysed and levels 4-5 weakened, whether they save or not (Player 5; *read in the code*, GAME.OVR 0x10705).
-- While an alarm holds (Valjevo), patrols interrupt camps and wander at 17% a step. Camps there were interrupted three times and wiped the party. Use memorized cures and rest at the inn (Player 3, Player 27; *seen in the original*).
-- In some places the only safe rest is the inn: Sokal Keep's 15,1, 4:2, the pyramid's 7:22, the wilderness bands. Camps there were interrupted 4-5 times and members died (Players 15, 19, 25; *seen in the original*).
-- Against a ransom demand, SURRENDER loses coins and items but keeps the rescue. ATTACK, if won, captures the fort (Player 25, ECL 6:1; *read in the code*).
-- Valjevo's gate (5:3 12,7/12,8) asks for the password on a bump W from the square, not on the step onto it: the on-move script runs before a step, with the square stood on and the new facing (Player 28, p28a1 probe; *seen in the original*, ECL 5:3 0x9A80 *read in the code*).
-- While an alarm holds in Valjevo (0x4A64), each step off a "safe" square (info bit 64) may draw a patrol; resting on a bit-64 square draws none (ECL 5:4 0x9AB5, 0x9B32; *read in the code*, not tried).
-- Valjevo's barracks giants (5:4 9,1) parley when no alarm holds: HAUGHTY or SLY gives the passwords and no fight (ECL 5:4 0xA38D; *read in the code*, not tried). A won fight there instead stops the four giants of 5,2 (0x4A66 bit 16).
-- Reading Valjevo's records (5:4 14,9) during an alarm draws a patrol half the time; answer NO on later visits, as main's bot (Player 28, p28c3; *seen in the original*).
-- Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
 ## Inbox
 
