@@ -406,6 +406,10 @@ func _view() -> void:
 
 
 func _after_view() -> void:
+	# A SELL whose seller was overloaded left platinum on the pile (CharacterSheet._sell_pay).
+	if sheet != null and sheet.shop_pile_platinum > 0:
+		pile[4] += sheet.shop_pile_platinum
+		sheet.shop_pile_platinum = 0
 	if visible:
 		_refresh()
 

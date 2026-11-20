@@ -95,6 +95,8 @@ var _scroll_target: PartyMember = null
 var _said: Array = []          # the scroll spell's result lines still to show ([name, words])
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
+## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
+var shop_pile_platinum := 0
 var camp_look := false   # opened from the camp: CAST SPELL ON WHOM shows the camp's picture
 var portrait := false    # opened from the party menu: the portrait shows
 ## In a fight (lab, chat 11): VIEW offers ITEMS DROP EXIT (DROP lit: VIEW's place), the item
@@ -130,6 +132,7 @@ func _init() -> void:
 func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool = false,
 		pick: int = 0, with_portrait: bool = false) -> void:
 	in_shop = shop
+	shop_pile_platinum = 0
 	portrait = with_portrait
 	camp_look = false
 	_people = people
@@ -925,6 +928,29 @@ static func _sale_price(it: GameItem) -> int:
 	return it.price / 2
 
 
+## The shop pays for a sold item (GAME.OVR 0x22E47-0x22EE6, after the item is gone and before the record is
+## worked out again): price / 5 platinum and price % 5 gold. When the coins don't fit the cached load
+## word (0x24CDD), only the room left (ceiling - word, a 16-bit word) in platinum goes to the seller and the
+## rest of the platinum on the shop's pile (DS:0x6804); the gold is his either way; the word isn't raised.
+## Returns the message (Combat Chat 32: Player 30's p27d3, ARN's sales at 3:0 13,8 left money on the pile).
+func _sell_pay(m: PartyMember, price: int) -> String:
+	var plat := price / 5
+	var gold := price % 5
+	var said := "SOLD!"
+	if not m.can_take_coins(plat + gold):
+		said = "OVERLOADED.  MONEY WILL BE PUT IN POOL."
+		var room := ((m.max_load() & 0xFFFF) - m.load_word) & 0xFFFF
+		if room <= plat:
+			m.money[4] += room
+			shop_pile_platinum += plat - room
+		else:
+			m.money[4] += plat
+	else:
+		m.money[4] += plat
+	m.money[3] += gold
+	return said
+
+
 func _halve(m: PartyMember, it: GameItem) -> String:
 	var half := it.count / 2
 	if half <= 0:
@@ -1187,7 +1213,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					m.items.erase(it)
 				elif _pending == "sell" and it != null:
 					m.items.erase(it)
-					m.receive_gold(_sale_price(it))
+					_say(_sell_pay(m, _sale_price(it)))
 				elif _pending == "id" and it != null:
 					# Lab: paid from all the coins (1000 gold, 2 platinum, 144 silver -> 163
 					# platinum, 2 gold); with too little, NOT ENOUGH MONEY.
