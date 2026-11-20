@@ -437,10 +437,11 @@ func prayer(m: PartyMember) -> int:
 ## Whether `t` throws off Sleep, Charm, Hold or poison (SpecialAffects.blocks).
 func resists(t: PartyMember, type: int) -> bool:
 	return SpecialAffects.blocks(t, type, func(): return c.roll(1, 100, "%s resists" % t.name),
-			table.level(_resolving) if _resolving > 0 else 0)
+			table.level(_resolving) if _resolving > 0 else 0, _resolving_caster)
 
 
 var _resolving := 0     # the spell going off (the original's DS:0x681B), for magic resistance
+var _resolving_caster := -1     # its caster's level (the original's bug #7's fix: the rule book's rule)
 
 
 # --- Choosing and aiming ------------------------------------------------------------------
@@ -633,8 +634,10 @@ var _cast_cell := Vector2i.ZERO      # the aim point of the spell being resolved
 
 func _resolve(i: int, id: int, targets: Array[int]) -> void:
 	_resolving = id
+	_resolving_caster = (c.combatants[i].who as PartyMember).caster_level(table, id)
 	_resolve_spell(i, id, targets)
 	_resolving = 0
+	_resolving_caster = -1
 
 
 func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
@@ -938,7 +941,7 @@ func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 		dmg = 0                 # juju zombies ignore Magic Missile
 	# Magic resistance against magic damage (DS:0x6819 bit 8; category 6, after the elements).
 	if dmg > 0 and (kind & SpecialAffects.MAGIC) and SpecialAffects.magic_resists(t, table.level(id),
-			func(): return c.roll(1, 100, "%s resists" % t.name)):
+			func(): return c.roll(1, 100, "%s resists" % t.name), _resolving_caster):
 		dmg = 0
 	if image_takes_it(t, id):
 		return                  # the damage routine prints nothing for 0 damage (0x2C26A)
