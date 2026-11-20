@@ -24,7 +24,6 @@ label p20a4 game: draws identical to 16668 since main chat 70's load fix; then t
 label p18a4 game: the QUICK-caster family (5460)
 label p22c5 game: the QUICK-caster family (1163)
 label p22c7 game: the QUICK-caster family (3836)
-label p25e4 game: draws identical to the end (16975, Combat Chat 34); statediff 1: ECL memory 0x4A5F original 8, ours 6 (a script counter after the lizard men: Player 34 -> main)
 label p24b6 game: the mage YARASH with no spell found ends his turn in the original, moves in ours (Player 30's request, to combat)
 label p25j10 game: draw 22969 is the trace's damaged entry beside a lost draw (Combat Chat 32; draws identical to it); statediff 1: BRAM's affect 0x37 (POISONED, power 0xFF) in the original's save, not in ours (as p22c3's ARN: Player 34 -> combat)
 label p26a1 game: one NOMAD figure more in ours' initiative (Player 30's request, to combat)
@@ -35,5 +34,3 @@ label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp wit
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
 label p15d8 game: DORN one platinum more after SHARE (no trace)
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
-label p16d1 game: only the wall ahead (ECL 0xC04E) original 8, ours 2 (Player 34 -> main)
-label p22c2 game: only the wall ahead (ECL 0xC04E) original 1, ours 0 (Player 34 -> main)

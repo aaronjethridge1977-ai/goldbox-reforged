@@ -154,8 +154,12 @@ from `p34c1_s28g`, seeds 34050001-05, campcast Prayer before the stairs: **5 of 
     - **No way out before the gate:** from inside the wall (8,5) the only road out is the gate's bugbears (7,10), so
       step 3's town trip (LIRA's MU5, owed since the west tower: 22,606 of 22,501) comes after the bugbears.
     - **The patrol doesn't parley here:** a 6th-level fighter and five hill giants at 5,5, "THEY ADVANCE, WEAPONS
-      READY", menu COMBAT WAIT FLEE ADVANCE (no PARLAY). p35d3 (35040003, run capped by the Player's timeout in the
-      camp after): **won the patrol, then the 16 bugbears** (they came out to 8,7), nobody dead (BRAM unconscious).
+      READY", menu COMBAT WAIT FLEE ADVANCE (no PARLAY). p35d3 (35040003; the first two runs of it were cut short by
+      the Player's timeout and a tool stop, LIRA's second arrow): **won the patrol, then the 16 bugbears** (they came
+      out to 8,7), nobody dead (BRAM unconscious): **`s35g`, the gate taken: Stojanow's stuck fights are through.**
+      Then the old plan's closing explore walk (6,10, 2,12, 4,14, 4,5) under the gate's alarm: a second patrol at 7,5
+      won, **a third at 5,5: party destroyed** (CEDRIC last; reload). Read: tactics: don't wander while the alarm
+      rings (patrols at 17% a step, poolrad.md); from `s35g` the party goes straight out of the gate to town.
 
 ## 3. The kobold king's throne room (8:13 4,3, event 9)
 
