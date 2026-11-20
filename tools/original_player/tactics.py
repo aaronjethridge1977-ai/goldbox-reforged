@@ -98,6 +98,13 @@ def _is_undead(f):
     return any(m in f["name"].upper() for m in UNDEAD)
 
 
+DRAINERS = ("WIGHT", "WRAITH", "SPECTRE", "VAMPIRE")
+
+
+def _is_drainer(f):
+    return any(m in f["name"].upper() for m in DRAINERS)
+
+
 class Tactics:
     def __init__(self, log):
         self.log = log
@@ -180,8 +187,10 @@ class Tactics:
                 if k >= 2:
                     best.append((-k, f["n"]))
             return [n for _, n in sorted(best)]
-        if spell == "MAGIC MISSILE":   # the mages (weakest first), then the weakest
-            return [f["n"] for f in mages] + [f["n"] for f in sorted(foes, key=lambda f: f["hp"]) if not _is_mage(f)]
+        if spell == "MAGIC MISSILE":   # the mages (weakest first), the drainers (Player 32), then the weakest
+            dr = [f["n"] for f in sorted(foes, key=lambda f: f["hp"]) if _is_drainer(f) and not _is_mage(f)]
+            return [f["n"] for f in mages] + dr + [f["n"] for f in sorted(foes, key=lambda f: f["hp"])
+                                                    if not _is_mage(f) and f["n"] not in dr]
         if spell == "SLEEP":           # (Player 30, the horde) the biggest bunch of small figures, as Stinking Cloud;
             best = []                  # else any person (the wall's aides)
             for f in persons:
@@ -290,7 +299,8 @@ class Tactics:
         if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
             byn = {f["n"]: f for f in foes}
             cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and d <= 3]
-            cand.sort(key=lambda c: (not helpless(c[1]), not _is_mage(c[1]), c[1]["hp"]))
+            # Player 32: the level drainers next after the helpless (4:10's wights drained three in p32a4)
+            cand.sort(key=lambda c: (not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]), c[1]["hp"]))
             self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
         sc = self.scan
         sc["steps"] += 1
@@ -304,7 +314,8 @@ class Tactics:
             if not can:
                 sc["cand"].pop(0)
                 return self._aim_attack_next(st, p)
-            why = "helpless" if helpless(f) else ("a mage" if _is_mage(f) else "the weakest")
+            why = "helpless" if helpless(f) else ("a drainer" if _is_drainer(f) else (
+                "a mage" if _is_mage(f) else "the weakest"))
             self.log("TACTICS %s attacks figure %d %s (%d HP, %s)" % (member, f["n"], f["name"], f["hp"], why))
             self.order = None
             self.reach[member] = "hit"

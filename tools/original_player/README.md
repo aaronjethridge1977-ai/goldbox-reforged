@@ -1315,6 +1315,36 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 32 (2026-11-20): the reload rule; the graveyard redo; segments 1-17 replayed in ours on today's main
+
+The Lead's answer to Player 31: keep the logged shortcuts for the match, the no-shortcut wins as standing work; then
+during the run Jeremy's notes (board, playbook "From Jeremy"): **the reload rule**, **redo the original's full run from
+before the graveyard (4:10) with it**, **TURN UNDEAD first**, the take rule, missiles from the back rank, **no more
+shortcut wins, ever**.
+- **The reload rule in the tools** (`OP_RELOAD=1`, plans.py `rule_state` / `reload_rule`, checked at every walking
+  screen against the last checkpoint, or the run's start): a member dead (6), stoned (7), gone (8) or missing, a level
+  drained (record 0x74 up or the class levels 0x96-0x9D down), INT/WIS/DEX/CON/CHA (0x11-0x15) down: the run stops with
+  `RELOAD: ...`. STR is left out (a Strength spell's end). Not yet: key items, a temple's cure at a price, a Restoration
+  scroll used at once (none in the packs here). Lab **`p32/reload.sh <prefix> <first> <last> <p2start> <plan> <after>
+  <goal>`**: each try goes on from the last checkpoint any try reached (copied to `p2start/<run>_<cp>`); a plan's
+  `tactics on` must follow every checkpoint (a resumed try skips the goals before its checkpoint: p32a2 fought on QUICK).
+- **The take rule** (loot.py, with `OP_RELOAD=1`): magic items, quest items, scrolls, gems and jewellery, missiles
+  (arrows, quarrels, darts, bolts) and anything else worth 100 gp or more; the rest stays.
+- **tactics.py:** clerics **TURN** first when undead are on the field (once a fight each); no Sleep, Hold Person or
+  Stinking Cloud at undead. **Seen:** TURN doesn't end the member's turn (the menu comes back without TURN, dice drawn,
+  and she casts); CEDRIC and ELWEN had **no TURN** in three 4:10 fights with skeletons, TURN against a spectre, zombies,
+  mummies, wights (Requests, to Combat). Against 4:10's mummies (trip 6) the turns cleared the way: won whole.
+- **The graveyard redo** (`p32/seg26b.plan` = Player 25's with `tactics on`, from `p2start/p25k1_s26t`, `OP_MELEE=0`,
+  seeds 3201xxxx): p32a1 reached `s26g5` with no drain (the original's first run lost LIRA's level by `s26g4`), then lost
+  BRAM and LIRA at trip 6 (9,11, a wight and three mummies): reload; p32a4 won trip 6 (`s26g6`); trip 7 (8,8: four
+  wights and 16 zombies) drained ARN, BRAM and CEDRIC (6 -> 2): reload.
+- **Segments 1-17 replayed in ours on today's main** (lab `p32/all.lst`, `p32/replays.txt`; the 54 runs from the start
+  save to `s17door`): **segment 1 parts** (p13a1, 18 differences; was 0 on 8c87c86): DORN's TAKE of 3 gold at the arms
+  shop is refused in ours (the start save's load word 0, POOL wraps it; the original takes it): Requests, to Combat;
+  p13b6 identical to its checkpoint (42279 draws, the 4AFA-4AFF counters only); p14b3 (no trace) parts at a camp REST
+  at 2:20 14,10 (the original's rest is interrupted by an encounter, ours rests on to 17:40); p14b6 **0 differences**;
+  p15c5 one electrum between ARN and ELWEN after four SHAREs (no trace).
+
 ## Player 31 (2026-11-19): fighters by hand (the Lead's advice); the wall 5 more lost; `valjevo6`'s stall was the timeout
 
 The Lead's answer to Player 30 (Requests, "player (Player 30) → Lead"): fighters by hand too, attacking helpless
