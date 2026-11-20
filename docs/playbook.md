@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-1 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-2 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -95,6 +95,66 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 (half-elf cleric/fighters, elf fighter/magic-users) is stronger early in Pool but stops early (a half-elf cleric at 5:
 *players*, [GameBanshee](https://www.gamebanshee.com/poolofradiance/races.php); **unconfirmed** in the game).
 
+## 2. Gear
+
+**Hands and readying**
+- Each member holds two things in hand: sword plus shield plus bow doesn't work. *book* (Manual)
+- A bow takes both hands: it can't be readied while a sword or shield is readied, and with the bow readied neither can.
+  Unready both first (camp: VIEW, ITEMS); no message says why it's refused. *seen* (main chat 67, check 114)
+- Ready the arrows as well as the bow. When joining stacks of arrows (JOIN), highlight the readied stack first: the
+  joined stack keeps the highlighted stack's readied flag. *seen* (main chat 67, check 116)
+- **Re-equip on the battlefield when the fight changes:** VIEW, ITEMS, READY works in combat; TRADE doesn't. *book*
+  (Pool Manual) Whether readying uses the turn: **unconfirmed** (request to Combat).
+- **Choose weapons by expected damage:** the damage it deals and the chance to hit with it, together. *Jeremy*
+- **Use a magic weapon when it's better, or when the enemy needs one.** *Jeremy*
+- Fighters swap between their best-AC set and their most-damage set to suit the coming fight (section 4). *Jeremy*
+
+**Who uses what** (Pool; *code*, ITEMS class mask, START.EXE DS:0x5D6, Combat Chat 32; a multi-class may use what any
+of its classes may)
+
+| Weapon | Shots a round | Range (squares) | Who |
+|---|---|---|---|
+| Bows | 2 | 16-22 | fighters only |
+| Light crossbow (quarrels) | 1 | 19 | fighters only |
+| Sling | 1 | 21 | fighters and thieves |
+| Darts | 3 | 6 | fighters, thieves; magic-users **unconfirmed** (the manual says dagger or staff only) |
+
+Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings and thieves short bows (section 1).
+
+**What to keep** (the take rule; *Jeremy*, 2026-11-20)
+- Take magic items, gems and jewellery, coins worth their weight, and anything else worth at least 100 GP. Leave the
+  junk; never carry it back to town.
+- Keep the arrows, quarrels and darts found in treasure; buy ammunition only when you run out. Darts are the exception:
+  scarce as loot, so buy plenty for the magic-users on every town trip (section 9).
+- Never sell Restoration scrolls.
+- Keep gems and jewellery as items rather than cash: they weigh far less than coins. *book* (Manual)
+- Monsters' ordinary weapons and armour don't appear as loot; leftover missiles are stacked. *book* (Manual)
+
+**Weight and movement**
+- **Keep everyone as mobile as possible: movement 6 is the floor.** *Jeremy* Weight slows a member: sixteen items each
+  meant movement 3 in fights, and loot had to be left behind; so sell spare gear on every town trip (section 9). *seen*
+  (Player 27)
+- A member carries 16 items at most. A 17th item, or one over the weight limit, is refused with no message. *seen*
+  (Player 10)
+
+**Ammunition**
+- Save magic ammunition (Arrows +1 and the like) for very hard fights; a magic bow can be used any time. *Jeremy*
+
+**Magic items and scrolls**
+- Unidentified magic items show without their plus in the item list: identify them before a hard fight (section 4).
+  *seen* (Player 32)
+- To read a clerical scroll: VIEW, ITEMS, READY it (both hands free: weapon and shield off), then USE, CAST, and pick
+  the target. USE does nothing on a scroll that isn't readied. *seen* (Player 32, p32s1-s4)
+- Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first. *book* (Manual)
+- Only a readied mirror turns a basilisk's gaze back, and it needs a free hand: READY refuses it when the hands are full.
+  *code* (GAME.OVR 0x10908) + *seen* (Player 17)
+
+**Undead**
+- **Some undead need a magic weapon and some don't;** skeletons and zombies, for example, fall to plain weapons.
+  *Jeremy* Where they do need one, give every front-liner a magic weapon before the fight, trading them round the party.
+  In Pool, wights need one: a plain mace left a wight untouched for five rounds. *seen* (Player 32, p32b8) Which undead
+  need one in each game: **unconfirmed** (request to Combat).
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
@@ -105,8 +165,6 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - **Level drain is never accepted:** reload, unless a Restoration scroll is in the packs (use it at once; a second drain before restoring breaks the character). Temples don't cure drain (a GOG forum thread; to be confirmed in the code) (Jeremy, 2026-11-20).
 - **Reload on anything that would cost a human an hour without an obvious gain** (a death, a drain, permanent ability loss, a key item lost, petrification without an affordable cure, a wipe) (Jeremy, 2026-11-20).
 - **Use TURN UNDEAD every time undead appear;** consider two clerics (Jeremy, 2026-11-20).
-- **Loot to use, not junk:** take magic items, gems and jewellery, coins worth their weight, and anything else worth at least 100 GP; leave the rest (Jeremy, 2026-11-20).
-- **Loot projectiles to use:** keep the arrows, quarrels and darts found in treasure; buy them only when the party runs out (Jeremy, 2026-11-20).
 - **Magic-users carry darts** for rounds without a spell worth casting; darts are scarce as loot, so **buy plenty on every town trip**, and don't spend them in fights that don't matter (Jeremy, 2026-11-20).
 
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
@@ -135,7 +193,6 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Haste doubles attacks and movement; Slow halves an enemy group's; Silence 15' stops enemy casters (Manual).
 - QUICK: casters skip area spells when an ally is in the area, so give QUICK casters Magic Missile, Hold Person and Stinking Cloud; QUICK members always use readied magic items, and shoot readied bows when no enemy is adjacent; QUICK suits weak hordes, not boss fights (Manual, Cluebook).
 - Memorizing: 4 hours of rest then 15 minutes per spell level; an interrupted rest keeps only the spells finished, in the order picked (Manual).
-- Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first (Manual).
 
 **Turning undead (Journal tables)**
 - Minimum cleric level to turn: wights 1, wraiths 3, mummies 4, spectres 5, vampires 6; a level-6 cleric destroys skeletons and zombies outright (Adventurer's Journal, Cluebook).
@@ -145,10 +202,7 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Slow Poison keeps a poisoned member alive until a temple; a mummy's touch brings disease (Cluebook, Journal).
 
 **Money and gear**
-- Gems and jewellery weigh far less than coins: keep them as items rather than cash (Manual).
-- Monsters' ordinary weapons and armour don't appear as loot; leftover missiles are stacked (Manual).
 - An inn charges once per stay; resting there is cheaper than temple cures. Resting heals only 1 HP a day: real healing is spells and temples (Manual, Cluebook).
-- Each member holds two things in hand: sword plus shield plus bow doesn't work (Manual).
 
 ## Party and preparation
 
@@ -191,7 +245,6 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Tyranthraxus's fear affects every enemy: levels 0-3 are paralysed and levels 4-5 weakened, whether they save or not (Player 5; *read in the code*, GAME.OVR 0x10705).
 - Spectres and wights drain levels and can leave a member "DEAD FOREVER". Two of c32a's losses were this (Player 7, Player 22; *seen in the original*).
 - A mummy's disease stops all healing until CURE DISEASE at a temple. It killed a member during day rests (Player 25; *seen in the original*).
-- Only a readied mirror turns a basilisk's gaze back, and it needs a free hand. READY refused it to members whose hands were full (Player 17; *read in the code*, GAME.OVR 0x10908, and *seen in the original*).
 
 ## Resting and camping
 
@@ -228,7 +281,6 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 ## Shops and gear
 
 - Sell spare gear on every town trip. Sixteen items each gave encumbrance 4085 and MOVEMENT 3 in fights, and loot had to be left behind (Player 27; *seen in the original*).
-- A member can hold 16 items at most. A 17th item, or one over the load, is refused with no message (Player 10; *seen in the original*).
 - The selected member is the one who takes loot; End and Home change who that is, and the highlight on screen doesn't show it (Player 10; *read in the code*, DS:0x5D92).
 - Coins POOLed in a shop stay in the shop. Leaving asks whether to go back for the money (Player 12; *seen in the original*).
 - Temple prices are the same at every temple, for example CURE DISEASE 1000, RAISE DEAD 5500, REMOVE CURSE 3500 (Player 3; *seen in the original*).
@@ -256,7 +308,6 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Stinking Cloud on bunched ettins makes them helpless, and a helpless ettin dies to one blow: two slain in p30d2. QUICK fighters don't always turn on the helpless ones (Player 30, p30d2/e2; *seen in the original*). Only a failed save vs poison does it: helpless for d4+1 rounds ("chokes and gags from nausea"); a made save only "starts to cough": for a round its AC is 2 worse and its casting state is cleared (a spell being cast, as read), but it is not helpless, whatever the manual says (GAME.OVR 0x2BA88, effect 0x1E's handler 0xF6C0; Combat Chat 32, *read in the code*).
 - In a fight's CAST list Home moves the light up and End down; it opens on the last spell, and long lists page with NEXT (Player 30; *seen in the original*).
 - A cleric's Hold Person takes three picks; EXIT from a spell's aim asks ABORT SPELL? (Player 30; *seen in the original*).
-- A two-handed bow can't be readied while a sword or a shield is readied, and with the bow readied neither can: unready both first (camp VIEW ITEMS; no message says why). JOIN keeps the lit stack's readied flag, so light the readied arrows before JOIN (main chat 67, checks 114 and 116; *seen in the original*).
 
 ## Added by Player 31
 
@@ -274,10 +325,8 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Turning (d20 against GAME.OVR's table): a wight needs 20 / 19 / 16 / 10 / 7 / 4 at cleric levels 1-6; a spectre can't be turned below level 5 and needs 20 / 16 / 13 / 10 at levels 5-8: against spectres, fight with magic weapons (Combat Chat 32; *read in the code*).
 - The temples sell nine cures, all through one routine: Cure Blindness 1000, Cure Disease 1000, Cure Light Wounds 100, Cure Serious Wounds 350, Cure Critical Wounds 600, Neutralize Poison 1000, Raise Dead 5500, Remove Curse 3500, Stone to Flesh 2000 gold; no Restoration and no Dispel Magic, so a drained level comes back only by a Restoration scroll (GAME.OVR 0x4819-0x4EEB) (Combat Chat 32; *read in the code*; the temple screens *seen in the original* in chat 10).
 - Restore a drained character before it is drained again: each Restoration gives back one level, to the class whose next level costs the least (not the drained one) and the average HP drained; a multi-class drained twice can come back with a level moved to another class (an elf fighter/magic-user 3/2 drained twice came back as magic-user 3, one level still drained) (Combat Chat 5 / 32; *seen in the original*; ours does the same).
-- Who may shoot what (ITEMS' class mask against the record's class bits, START.EXE DS:0x5D6; a multi-class may use what any of its classes may): bows (two shots a round, both hands, range 16-22 squares) only fighters (and paladins), so a fighter/thief or fighter/magic-user can, a cleric, magic-user or thief alone can't; the light crossbow (quarrels, one shot a round, range 19) fighters; the sling (one shot a round, one hand, 1d4+1, range 21) fighters and thieves, not clerics or magic-users; darts (three a round, range 6) fighters, thieves and magic-users (Combat Chat 32; *read in the code*: the ITEMS file).
 - Shooting into a melee costs nothing and never hits a friend; what stops a shot is an enemy next to the shooter (only axes and spears, which also strike in melee, are used then) and range: beyond a third of the weapon's range the target's AC counts 2 better, beyond two thirds 5 (Combat Chat 32; *read in the code*, the range penalty *seen in the original* in side chat 2).
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
-- A clerical scroll is read from VIEW, ITEMS: READY it first (both hands free: weapon and shield off), then USE, CAST, CAST SPELL ON WHOM; USE on a scroll not readied does nothing. Unidentified magic items show without their plus in the item list (Player 32, p32s1-s4; *seen in the original*).
 
 ## Spell sheet (Combat Chat 33, the spell lab)
 *Seen in the original* unless marked: controlled fights in DOSBox, lab saves with one caster (BAKSHI, a half-elf cleric 1 / fighter 1 / magic-user 1) holding 21 copies of one spell; the computer-cast fights (QUICK, MAGIC on) matched ours draw for draw (9 fights, now in regress.sh), so ours' labelled log is the original's fight; Stinking Cloud cast by hand (combat33/handcast.py). Durations are rounds; "level" is the caster's level in the spell's class. Target type so far: kobolds (the kobold caves' net trap, 20 kobolds) and the Slums orcs; large monsters and undead come next. **Since Combat Chat 34 the hand-cast fights replay in ours** (the lab key `handcast=`): seven fights, six match the original draw for draw.
