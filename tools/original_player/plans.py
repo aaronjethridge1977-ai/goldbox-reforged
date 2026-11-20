@@ -969,10 +969,27 @@ class Plan:
                 spec = getattr(p, "ready_spec", None)
                 if spec is not None:      # Player 32: `ready`: the listed toggles only, in order
                     todo = []
+                    # an unidentified item shows without its plus (p32b12: MACE for the Mace +2): the rows follow
+                    # the member's item list (record +0xC8), so "<words> +<n>" is matched on the record's plus
+                    try:
+                        (ms, mo) = loot.party(p.g.mem)[p.readying][0]
+                        mr = p.g.mem.far(ms, mo, 0x120)
+                        io, iseg = struct.unpack_from("<HH", mr, loot.ITEMS_AT)
+                        pluses = [loot.item(it)["plus"] for _a, it in loot.chain(p.g.mem, iseg, io)]
+                    except Exception:
+                        pluses = []
+                    order = sorted(rows)
+
+                    def holds(r, n, words):
+                        m = re.match(r"(.*?)\s*\+(\d+)$", words)
+                        if not m:
+                            return words in n.upper()
+                        i = order.index(r)
+                        return m.group(1) in n.upper() and i < len(pluses) and pluses[i] == int(m.group(2))
                     while spec and not todo:
                         want, words = spec[0]
                         if isinstance(want, str):     # ("T:<TO>" / "D", words): TRADE / DROP the first NO row
-                            hit = [r for r, (y, n) in sorted(rows.items()) if words in n.upper() and y == "NO"]
+                            hit = [r for r, (y, n) in sorted(rows.items()) if holds(r, n, words) and y == "NO"]
                             if not hit:
                                 p.note("ready", "nothing to %s for %s" % ("drop" if want == "D" else "trade", words))
                                 spec.pop(0)
@@ -985,7 +1002,7 @@ class Plan:
                             if len(lit) != 1:
                                 raise_stop(p, "trade: no single lit item (rows %s)" % lit)
                             return ("end" if hit[0] > lit[0] else "home"), "trade: light to %s" % rows[hit[0]][1]
-                        hit = [r for r, (y, n) in sorted(rows.items()) if words in n.upper()
+                        hit = [r for r, (y, n) in sorted(rows.items()) if holds(r, n, words)
                                and (y == "YES") != want and (r, want) not in p.ready_tried]
                         if hit:
                             todo = [hit[0]]
