@@ -2,7 +2,7 @@
 
 ## Download (Windows)
 
-**[Download Gold Box Reforged 0.1.4 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.4/goldbox-reforged-0.1.4-windows.zip)** · [all releases](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/latest)
+**[Download Gold Box Reforged 0.1.5 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.5/goldbox-reforged-0.1.5-windows.zip)** · [all releases](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/latest)
 
 1. Unzip it (right-click, Extract All).
 2. Run `GoldBoxReforged.exe` (the build is unsigned, so Windows may warn: More info, Run anyway).
