@@ -161,6 +161,7 @@ class Tactics:
         self.reach = {}          # member -> this turn's attack: "none" (nothing in reach), "done", "hit"
         self.idle = {}           # member -> turns in a row with nothing in reach
         self.guard = None        # the member whose DONE asked for GUARD
+        self.bandage = None      # Player 34: the member whose DONE asked for BANDAGE
         self.turned = set()      # Player 32: members who tried TURN this fight
         self.fx_logged = False
 
@@ -253,6 +254,16 @@ class Tactics:
             return self._aim_attack(st, p)
         if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
             return self._aim(st, p)
+        if self.bandage and "BANDAGE" in b.split() and ("DELAY" in b.split()):
+            # Player 34: DONE's menu ([GUARD] DELAY QUIT [BANDAGE] SPEED EXIT; BANDAGE only with someone dying: the
+            # original's, as ours' combat_screen.gd): BANDAGE takes the first dying member
+            self.log("TACTICS %s bandages %s" % (self.bandage, self.dying_name))
+            self.bandage = None
+            return "b", "tactics: BANDAGE"
+        if self.bandage and "DELAY" in b.split():
+            self.log("TACTICS %s: no BANDAGE in DONE's menu (%s)" % (self.bandage, b))
+            self.bandage = None
+            return "e", "tactics: no BANDAGE: EXIT"
         if b.startswith("GUARD DELAY") and self.guard:
             self.log("TACTICS %s guards" % self.guard)
             self.guard = None
@@ -280,6 +291,17 @@ class Tactics:
             self.reach.pop(member, None)
             self.last_member = member
         items = b.split()
+        if "DONE" in items:
+            # Player 34 (p34e1, p34e2: CEDRIC knocked down in Stojanow's west tower bled to death while the fight went
+            # on another minute; docs/playbook.md "The dying": bandage the dying at once): a party member dying
+            # (status 5) -> this member's turn is DONE, BANDAGE
+            try:
+                dying = [f for f in self._sides(p)[1] if f["status"] == 5]
+            except Exception:
+                dying = []
+            if dying:
+                self.bandage, self.dying_name = member, dying[0]["name"]
+                return "d", "tactics: %s will bandage %s: DONE" % (member, dying[0]["name"])
         if "TURN" in items and member not in self.turned:
             # Player 32 (Jeremy, 2026-11-20 01:10): whenever undead are on the field, the clerics turn first (once a
             # fight each)
