@@ -127,6 +127,7 @@ func quest_view() -> Array[Dictionary]:
 
 func _ready() -> void:
 	DisplayMode.apply(get_tree())          # full screen if chosen (side lane, scripts/ui/display_mode.gd)
+	GameRecorder.attach(get_tree())        # RECORD MY GAME's listener (off unless SETTINGS turns it on)
 	# The quest tracker's offers that set no flag: the VM records them when shown (Q11, chat 39).
 	_quest_log = QuestLog.load_file()
 	for k in _quest_log.shown_keys():
@@ -442,7 +443,16 @@ func _record_start(kind: String, letter: String = "") -> void:
 			files[c.get_file()] = c
 	elif kind == "quick":
 		files["quick.cfg"] = _save_path()
-	var n := GameRecorder.begin(kind, letter, files)
+	# A slot load keeps the script memory outside the save's image (main chat 73): the replay starts from a quick
+	# save, so the header says what was there before the load (none: a fresh start; else a copy).
+	var vm := {}
+	if kind == "slot":
+		vm["vm_fresh"] = _vm.mem.count(0) == _vm.mem.size() and _vm.hi.is_empty()
+		if not vm["vm_fresh"]:
+			vm["vm_mem"] = Marshalls.raw_to_base64(_vm.mem.compress(FileAccess.COMPRESSION_GZIP))
+			vm["vm_size"] = _vm.mem.size()
+			vm["vm_hi"] = var_to_str(_vm.hi)
+	var n := GameRecorder.begin(kind, letter, files, vm)
 	if n >= 0:
 		_seed_all(n)
 
@@ -589,6 +599,18 @@ func _replay_keys(names: PackedStringArray) -> void:
 		elif n.begins_with("answers="):     # answers=a;b;c: letters the tour gives to script menus
 			_tour_answers = Array(n.trim_prefix("answers=").split(";"))
 			continue
+		elif n.begins_with("vm="):          # vm=<file>: the script memory before a RECORD MY GAME slot load (main chat 73)
+			var vf := n.trim_prefix("vm=")
+			if vf == "fresh":
+				_vm.mem.fill(0)
+				_vm.hi.clear()
+			else:
+				var cf := ConfigFile.new()
+				cf.load(vf)
+				var raw := Marshalls.base64_to_raw(str(cf.get_value("vm", "mem", "")))
+				_vm.mem = raw.decompress(int(cf.get_value("vm", "size", 0)), FileAccess.COMPRESSION_GZIP)
+				_vm.hi = str_to_var(str(cf.get_value("vm", "hi", "{}")))
+			continue
 		elif n.begins_with("load="):        # load=<letter> loads the original's SAVGAM<letter>.DAT
 			load_original_save(n.trim_prefix("load="))
 		elif n.begins_with("say="):         # say=<text> answers INPUT_STRING / INPUT_NUMBER
@@ -642,8 +664,25 @@ func _replay_keys(names: PackedStringArray) -> void:
 					str(m.raw.slice(0x96, 0x9E)), m.experience, m.hp, m.hp_max, m.hp_rolled, 60 - m.base_thac0_60,
 					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1), m.items.size()])
 			continue
+		elif n.begins_with("click"):        # click<n>: mouse button n (1 if none) off any menu (a RECORD MY GAME click no screen made keys)
+			var mb := InputEventMouseButton.new()
+			mb.button_index = (int(n.trim_prefix("click")) if n.length() > 5 else 1) as MouseButton
+			mb.position = Vector2(-4000, -4000)
+			mb.global_position = mb.position
+			mb.pressed = true
+			Input.parse_input_event(mb)
+			var mb_up := mb.duplicate()
+			mb_up.pressed = false
+			Input.parse_input_event(mb_up)
 		else:
 			var ev := InputEventKey.new()
+			# Modifiers (a RECORD MY GAME replay, main chat 73): alt+m is Alt-M (the fight's MAGIC ON / OFF).
+			while n.length() > 1 and (n.begins_with("alt+") or n.begins_with("shift+") or n.begins_with("ctrl+")):
+				var mod := n.get_slice("+", 0)
+				n = n.substr(mod.length() + 1)
+				ev.alt_pressed = ev.alt_pressed or mod == "alt"
+				ev.shift_pressed = ev.shift_pressed or mod == "shift"
+				ev.ctrl_pressed = ev.ctrl_pressed or mod == "ctrl"
 			var key_name: String = {"enter": "Enter", "esc": "Escape", "home": "Home", "end": "End", "pgup": "PageUp", "pgdn": "PageDown",
 				"up": "Up", "down": "Down", "left": "Left", "right": "Right"}.get(n, n.to_upper())
 			ev.keycode = OS.find_keycode_from_string(key_name)
@@ -976,8 +1015,6 @@ func _state_line() -> String:
 
 ## Alt+Enter / F11 switch full screen on any screen (side lane, DisplayMode).
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		GameRecorder.key(event)     # RECORD MY GAME (off unless SETTINGS turns it on)
 	if DisplayMode.handle_key(get_tree(), event):
 		get_viewport().set_input_as_handled()
 		return

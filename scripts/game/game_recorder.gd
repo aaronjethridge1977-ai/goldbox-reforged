@@ -6,8 +6,11 @@ extends RefCounted
 ## switches, then every key pressed with its time. Written to `user://recordings/<date>-<time>.gbrrec`
 ## (Windows: %APPDATA%\Godot\app_userdata\Gold Box Reforged\recordings\; Linux:
 ## ~/.local/share/godot/app_userdata/Gold Box Reforged/recordings/). JSON, a line each: the header first, then
-## {"t": ms since the start, "k": key name, "m": "shift+alt+ctrl" modifiers if any}. Keys only: mouse clicks
-## are not recorded yet. tools/lab/replay_recording.py turns a file into ours' --keys replay.
+## {"t": ms since the start, "k": key name, "m": "shift+alt+ctrl" modifiers if any}. The mouse (main chat 73):
+## a click a screen turns into keys (a menu word, a list line, the view, the fight's field, the wheel, the right
+## button) is recorded as those keys; a click no screen takes as keys (the GUI leaves it unhandled: PRESS ENTER,
+## a message ended by any key) is {"t", "c": mouse button index}. tools/lab/replay_recording.py turns a file into
+## ours' --keys replay (a "c" line is `click<n>`, main.gd's replay presses that button off any menu).
 ## Never in a lab run (OriginalBugs.lab_run: the replays would record themselves).
 
 const KEY := "record_game"
@@ -15,6 +18,30 @@ const DIR := "user://recordings"
 
 static var _file: FileAccess = null
 static var _t0 := 0
+static var _tap: Node = null
+
+
+## Main chat 73: the recorder listens from a node of its own, the root's last child, so its _input comes first
+## (Godot calls _input from the last node up): a key a screen takes in its own _input (the quest log) is recorded
+## too, and its _unhandled_input sees the clicks no screen made into keys. Called from main's _ready (and again
+## after F3's scene reload, which adds main after it).
+static func attach(tree: SceneTree) -> void:
+	if _tap == null or not is_instance_valid(_tap):
+		_tap = Tap.new()
+		_tap.name = "GameRecorderTap"
+		tree.root.add_child.call_deferred(_tap)
+	elif _tap.is_inside_tree():
+		_tap.get_parent().move_child.call_deferred(_tap, -1)
+
+
+class Tap extends Node:
+	func _input(event: InputEvent) -> void:
+		if event is InputEventKey:
+			GameRecorder.key(event)
+
+	func _unhandled_input(event: InputEvent) -> void:
+		if event is InputEventMouseButton:
+			GameRecorder.click(event)
 
 
 static func enabled() -> bool:
@@ -35,8 +62,9 @@ static func save(value: bool) -> void:
 
 ## A new session: `kind` "slot" (the original's save `letter`), "quick" (ours' quick save) or "new" (a new
 ## game); `files` the starting save's files (name -> path). Returns the seed the caller must seed every
-## generator with before loading, or -1 when not recording.
-static func begin(kind: String, letter: String, files: Dictionary) -> int:
+## generator with before loading, or -1 when not recording. `extra` goes into the header (a slot load's script
+## memory before the load: main.gd's _record_start).
+static func begin(kind: String, letter: String, files: Dictionary, extra: Dictionary = {}) -> int:
 	stop()
 	if not enabled():
 		return -1
@@ -60,13 +88,13 @@ static func begin(kind: String, letter: String, files: Dictionary) -> int:
 			qol[k] = cf.get_value("qol", k)
 	_file.store_line(JSON.stringify({"format": 1, "build": str(ProjectSettings.get_setting("application/config/version", "")),
 		"date": Time.get_datetime_string_from_system(), "seed": seed_value, "start": kind, "letter": letter,
-		"files": saved, "qol": qol}))
+		"files": saved, "qol": qol}.merged(extra)))
 	_file.flush()
 	_t0 = Time.get_ticks_msec()
 	return seed_value
 
 
-## Each key pressed (main.gd's _input).
+## Each key pressed (the Tap's _input), the keys a click makes included.
 static func key(ev: InputEventKey) -> void:
 	if _file == null or not ev.pressed or ev.echo:
 		return
@@ -81,6 +109,14 @@ static func key(ev: InputEventKey) -> void:
 	if not mods.is_empty():
 		line["m"] = "+".join(mods)
 	_file.store_line(JSON.stringify(line))
+	_file.flush()
+
+
+## A mouse button press no screen took as keys (the Tap's _unhandled_input).
+static func click(ev: InputEventMouseButton) -> void:
+	if _file == null or not ev.pressed:
+		return
+	_file.store_line(JSON.stringify({"t": Time.get_ticks_msec() - _t0, "c": int(ev.button_index)}))
 	_file.flush()
 
 
