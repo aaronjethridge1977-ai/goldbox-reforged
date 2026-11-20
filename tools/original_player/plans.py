@@ -430,6 +430,8 @@ class ReadyItems(ReadyAll):
             if not p.ready_over:
                 raise_stop(p, "ready: back on the walking screen with %s not done" % self.who)
             p.readying, p.ready_spec = None, None
+            # the step's own answers go with it (a stale CHOOSE SPELL: CAST would answer later camps)
+            p.plan.answers[:] = [a for a in p.plan.answers if a[2] not in ("use", "trade", "drop")]
             return True, None, ""
         js = [i for i, m in enumerate(P) if m[1].upper() == self.who]
         if not js:
@@ -446,6 +448,9 @@ class ReadyItems(ReadyAll):
                 p.plan.answers.insert(0, ("TRADE WITH WHOM", want[2:], "trade"))
             elif want == "D":                                     # DROP IT? YES (ours' sheet: NO lit)
                 p.plan.answers.insert(0, ("DROP IT", "YES", "drop"))
+            elif isinstance(want, str) and want.startswith("U:"):  # a scroll: its lit spell CAST, then ON WHOM
+                p.plan.answers.insert(0, ("SPELL ON WHOM", want[2:], "use"))
+                p.plan.answers.insert(0, ("CHOOSE SPELL:", "CAST", "use"))
         return False, "v", "ready: VIEW %s" % self.who
 
 
@@ -647,9 +652,58 @@ def reload_rule(p):
         if s["lev"] > b["lev"]:
             b["lev"] = s["lev"]          # trained since: the new levels are the ones to keep
             b["abil"] = s["abil"]
+    if why and RESTORER and not getattr(p, "restoring", False) and all(" drained (" in w for w in why):
+        # Player 32 (Jeremy: a drain with a Restoration scroll in the packs = use it at once and go on): one
+        # Restoration a level drained, read by RESTORER (a cleric) from a clerical scroll (seen, p32s4: the scroll
+        # readied with both hands free, USE, CHOOSE SPELL: CAST, CAST SPELL ON WHOM, SELECT)
+        lost = []
+        for n, b in base.items():
+            s = now.get(n)
+            if s is not None and s["lev"] < b["lev"]:
+                lost += [n] * (b["lev"] - s["lev"])
+        have = restorations(p)
+        if lost and len(lost) <= have and RESTORER in now and now[RESTORER]["status"] == 0:
+            p.note("rule", "drained %s: %d Restoration(s) of %d from the scroll, by %s" % (
+                ", ".join(lost), len(lost), have, RESTORER))
+            gs = [ReadyItems(RESTORER, [(False, "MACE"), (False, "SHIELD"), (True, "CLERICAL SCROLL")])]
+            gs += [ReadyItems(RESTORER, [("U:" + n, "CLERICAL SCROLL")]) for n in lost]
+            gs += [ReadyItems(RESTORER, [(False, "CLERICAL SCROLL"), (True, RESTORER_WEAPON), (True, "SHIELD")]),
+                   RestoreDone()]
+            p.plan.goals[p.goal:p.goal] = gs
+            p.restoring = True
+            return
+    if why and getattr(p, "restoring", False) and all(" drained (" in w for w in why):
+        return                           # the Restorations under way
     if why:
         p.note("loss", "the reload rule: " + "; ".join(why))
         raise_stop(p, "RELOAD: %s (Jeremy's reload rule: reload from the last checkpoint)" % "; ".join(why))
+
+
+RESTORER = os.environ.get("OP_RESTORER", "")            # Player 32: the cleric who reads the Restoration scroll
+RESTORER_WEAPON = os.environ.get("OP_RESTORER_WEAPON", "MACE +2")
+
+
+def restorations(p):
+    """Restoration spells (56) on clerical scrolls (item bytes 60, 61) in the party's packs."""
+    k = 0
+    for (s_, o), _name, _n, _hp in loot.party(p.g.mem):
+        r = p.g.mem.far(s_, o, 0x120)
+        io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
+        for _a, it in loot.chain(p.g.mem, iseg, io):
+            if "SCROLL" in loot.item(it)["name"].upper():
+                k += (it[60] == 56) + (it[61] == 56)
+    return k
+
+
+class RestoreDone:
+    """Player 32: the Restorations done: the rule checks the party again from here."""
+    def __repr__(self):
+        return "restore done"
+
+    def next(self, p):
+        p.restoring = False
+        p.note("rule", "restored: %s" % "; ".join("%s L%d" % (n, s_["lev"]) for n, s_ in rule_state(p).items()))
+        return True, None, ""
 
 
 def party_hp(mem):
@@ -989,7 +1043,8 @@ class Plan:
                     while spec and not todo:
                         want, words = spec[0]
                         if isinstance(want, str):     # ("T:<TO>" / "D", words): TRADE / DROP the first NO row
-                            hit = [r for r, (y, n) in sorted(rows.items()) if holds(r, n, words) and y == "NO"]
+                            hit = [r for r, (y, n) in sorted(rows.items()) if holds(r, n, words)
+                                   and (y == "NO" or want.startswith("U:"))]
                             if not hit:
                                 p.note("ready", "nothing to %s for %s" % ("drop" if want == "D" else "trade", words))
                                 spec.pop(0)
@@ -998,6 +1053,8 @@ class Plan:
                                 spec.pop(0)
                                 if want == "D":
                                     return "d", "drop: DROP %s" % rows[hit[0]][1]
+                                if want.startswith("U:"):
+                                    return "u", "use: USE %s" % rows[hit[0]][1]
                                 return "t", "trade: TRADE %s" % rows[hit[0]][1]
                             if len(lit) != 1:
                                 raise_stop(p, "trade: no single lit item (rows %s)" % lit)
@@ -1865,6 +1922,10 @@ def load(path):
             who, _, sp = rest.strip().partition(" ")
             words, to = sp.rsplit("|", 1)
             pl.goals.append(ReadyItems(who, [("T:" + to.strip().upper(), words.strip().upper())]))
+        elif cmd == "use":        # Player 32: `use <NAME> <item words>|<TARGET>` (a scroll's lit spell on TARGET)
+            who, _, sp = rest.strip().partition(" ")
+            words, to = sp.rsplit("|", 1)
+            pl.goals.append(ReadyItems(who, [("U:" + to.strip().upper(), words.strip().upper())]))
         elif cmd == "drop":       # Player 32: `drop <NAME> <item words>` (a spare, unreadied item: gone for good)
             who, _, words = rest.strip().partition(" ")
             pl.goals.append(ReadyItems(who, [("D", words.strip().upper())]))
