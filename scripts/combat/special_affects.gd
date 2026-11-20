@@ -81,7 +81,7 @@ extends RefCounted
 ##   0x68          (thri-kreen) avoids 60% of missiles ("AVOIDS IT")
 ##   0x71          (efreeti) fire: one less a die
 ##   0x69, 0x6A    magic resistance (magic_resists; Combat Chat 4: the byte wraps, so 0x6A
-##                 resists every Pool spell).
+##                 resists every Pool spell; the original's bug #7, fixed with ORIGINAL'S BUGS off).
 ## Categories (when each type runs) are the lists of the dispatcher at GAME.OVR 0x2B1E4.
 
 const POISONED := 0x37
@@ -180,8 +180,9 @@ static func save_bonus(m: PartyMember, kind: int) -> int:
 ## half-elf draws its d100 whatever the effect (handlers 0x115ED, 0x11A3F), and only Sleep or
 ## Charm is thrown off by it (lab, Combat Chat 2: Bakshi, a half-elf, drew one after a
 ## wand's paralysis in 7:23).
-static func blocks(m: PartyMember, type: int, roll_d100: Callable, spell_level: int = 0) -> bool:
-	if magic_resists(m, spell_level, roll_d100):
+static func blocks(m: PartyMember, type: int, roll_d100: Callable, spell_level: int = 0,
+		caster_level: int = -1) -> bool:
+	if magic_resists(m, spell_level, roll_d100, caster_level):
 		return true
 	var mind := type == SLEEP or type == CHARM
 	if mind and (m.has_affect(0x6C) or m.has_affect(0x7D)):
@@ -203,10 +204,18 @@ static func blocks(m: PartyMember, type: int, roll_d100: Callable, spell_level: 
 ## resists (0xEC5B clears the effect being added, DS:0x6817). So 0x6A (Tyranthraxus) resists
 ## every spell of levels 1-7 and every effect with no spell behind it (level 0: 216), each time
 ## with a draw; 0x69 resists level 1 never (but draws), level 2 5%, level 3 10%.
-static func magic_resists(m: PartyMember, spell_level: int, roll_d100: Callable) -> bool:
+## The original's bug #7 (docs/original-bugs.md), fixed with ORIGINAL'S BUGS off (the Lead's rule (c),
+## Combat Chat 36): the rule book's resistance, the base + 5% for each caster level under 11, - 5% for
+## each over, 0-100%; an effect with no caster (`caster_level` < 1: a blow's paralysis, a bounced
+## breath) as against an 11th-level caster, the base.
+static func magic_resists(m: PartyMember, spell_level: int, roll_d100: Callable,
+		caster_level: int = -1) -> bool:
 	for pair in [[0x69, 50], [0x6A, 15]]:
 		if m.has_affect(pair[0]):
 			var chance: int = (int(pair[1]) - 5 * (11 - spell_level)) & 0xFF
+			if not OriginalBugs.on():
+				var lvl := caster_level if caster_level >= 1 else 11
+				chance = clampi(int(pair[1]) + 5 * (11 - lvl), 0, 100)
 			if int(roll_d100.call()) <= chance:
 				return true
 	return false
