@@ -252,41 +252,49 @@ class Tactics:
         return "a", "tactics: %s attacks by hand: AIM" % member
 
     def _aim_attack(self, st, p):
-        lst, at = aim_list(p.g.mem)
+        """Player 31: the aim list is sorted by distance (half squares: 2-3 is RANGE 1, in a melee weapon's reach; seen,
+        p31a2), so only its first entries can be TARGETed: pick the best of the enemies there and step NEXT straight to
+        it (p31c1: a scan of all 55 entries took ~28 s a turn). A weapon's aim doesn't set DS:0xBEFD (p31c2), so the
+        place is counted: the aim opens on the member's own entry 0 and NEXT steps one entry on (seen, p31a2)."""
+        mem = p.g.mem
+        n_ent = mem.u8(0x671A)
+        ent = [(mem.u8(0x671B + 3 * i), mem.u8(0x671C + 3 * i)) for i in range(n_ent)]
         figs, party, foes = self._sides(p)
         member = self.order[0]
         can = "TARGET" in st["bottom"].split()
-        cur = self._aimed(st, lst, at, figs)
         if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
-            self.scan = {"spell": (member, "ATTACK"), "ok": set(), "steps": 0, "goal": None, "picked": set()}
+            byn = {f["n"]: f for f in foes}
+            cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and d <= 3]
+            cand.sort(key=lambda c: (not helpless(c[1]), not _is_mage(c[1]), c[1]["hp"]))
+            self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
         sc = self.scan
         sc["steps"] += 1
-        if sc["steps"] > 3 * max(len(lst), 4) + 10:
+        at = sc["pos"]
+        if not sc["cand"] or sc["steps"] > n_ent + 12:
             self.order = None
             self.reach[member] = "none"
-            return "e", "tactics: %s's attack aim gave up: EXIT" % member
-        if sc["goal"] is None:
-            if cur is not None and can and cur > self.party_n:
-                sc["ok"].add(cur)
-            if sc["steps"] <= len(lst):
-                return "n", "tactics: attack scan (%d of %d; at %s)" % (sc["steps"], len(lst), cur)
-            byn = {f["n"]: f for f in foes}
-            ok = [byn[n] for n in sc["ok"] if n in byn]
-            if not ok:
-                self.order = None
-                self.reach[member] = "none"
-                return "e", "tactics: %s: no enemy in reach: EXIT" % member
-            ok.sort(key=lambda f: (not helpless(f), not _is_mage(f), f["hp"]))
-            sc["goal"] = ok[0]["n"]
-            sc["why"] = "helpless" if helpless(ok[0]) else ("a mage" if _is_mage(ok[0]) else "the weakest")
-        if cur == sc["goal"] and can:
-            f = next((f for f in figs if f["n"] == cur), None)
-            self.log("TACTICS %s attacks figure %d %s (%d HP, %s)" % (
-                member, cur, f["name"] if f else "?", f["hp"] if f else -1, sc["why"]))
+            return "e", "tactics: %s: no enemy in reach: EXIT" % member
+        i, f = sc["cand"][0]
+        if at == i:
+            if not can:
+                sc["cand"].pop(0)
+                return self._aim_attack_next(st, p)
+            why = "helpless" if helpless(f) else ("a mage" if _is_mage(f) else "the weakest")
+            self.log("TACTICS %s attacks figure %d %s (%d HP, %s)" % (member, f["n"], f["name"], f["hp"], why))
             self.order = None
             self.reach[member] = "hit"
-            return "t", "tactics: %s attacks figure %d (%s)" % (member, cur, sc["why"])
-        return "n", "tactics: to figure %d (at %s)" % (sc["goal"], cur)
+            return "t", "tactics: %s attacks figure %d (%s)" % (member, f["n"], why)
+        sc["pos"] = (at + 1) % max(n_ent, 1)
+        return "n", "tactics: to figure %d (aim entry %d, at %d)" % (f["n"], i, at)
+
+    def _aim_attack_next(self, st, p):
+        sc = self.scan
+        if not sc["cand"]:
+            self.order = None
+            self.reach[self.scan["spell"][0]] = "none"
+            return "e", "tactics: no enemy TARGET takes: EXIT"
+        sc["pos"] = (sc["pos"] + 1) % max(p.g.mem.u8(0x671A), 1)
+        return "n", "tactics: to figure %d (the last one out of reach)" % sc["cand"][0][1]["n"]
 
     def _spell_list(self, st, p):
         member, spell = self.order[0], self.order[1]

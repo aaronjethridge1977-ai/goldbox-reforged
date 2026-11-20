@@ -112,3 +112,8 @@ ECL disassembly). Pool-specific routes are in `docs/strategy/poolrad.md`.
 - In a fight's CAST list Home moves the light up and End down; it opens on the last spell, and long lists page with NEXT (Player 30; *seen in the original*).
 - A cleric's Hold Person takes three picks; EXIT from a spell's aim asks ABORT SPELL? (Player 30; *seen in the original*).
 - A two-handed bow can't be readied while a sword or a shield is readied, and with the bow readied neither can: unready both first (camp VIEW ITEMS; no message says why). JOIN keeps the lit stack's readied flag, so light the readied arrows before JOIN (main chat 67, checks 114 and 116; *seen in the original*).
+
+## Added by Player 31
+
+- DONE in a fight opens GUARD DELAY QUIT SPEED EXIT; a melee AIM offers TARGET only for figures within RANGE 1, and the aim
+  list runs nearest first, so a fighter's choice is among its first entries (Player 31, p31a2/p31b1; *seen in the original*).

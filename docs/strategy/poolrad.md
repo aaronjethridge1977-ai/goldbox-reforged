@@ -54,6 +54,10 @@ early fights. Levels are given where the README states them. General tactics are
   - The whole party moved only 3 (16 items each).
   - Main's bot (7 members, ARN 6) also lost twice in ours. The bot's table expects level 7 here.
   - Earlier parties from c27a, c32a and c34d were destroyed there too (Players 3, 7, 9).
+  - Player 31, the Lead's advice by hand (fighters AIM the helpless first, else GUARD; casters as Player 30): 5 more lost
+    (p31b2-b6), best 122 of 382 HP. One ettin starts next to the party (p31a1: at 27,10 beside BRAM at 28,11), so
+    there is no "cast before contact" here; the casters stand in the line and lose their begun Stinking Clouds
+    to hits; the party lasts about three rounds. More levels first (*seen in the original*).
   - The gate was passed by `shortcutwin` (Player 27, p27c2).
   - The report suggests (untried): more levels first; cast by hand (Stinking Cloud while the ettins are bunched, Prayer and Bless before contact, Hold Person on the mages); sell gear; position the line.
   - Player 30, the tactical mode (casts by hand, fighters on QUICK): 8 of 8 lost (p30a3-p30e3, from `s28p` and from `s28b` with three Stinking Clouds memorized). Best p30d2: 139 of 382 HP dealt, two ettins slain while helpless in a Stinking Cloud. Hold Person and Prayer begun in melee never went off (*seen in the original*).

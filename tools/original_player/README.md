@@ -1331,6 +1331,9 @@ enemies first; casters cast before contact from the back; a corner; every magic-
   the list once for the figures TARGET takes and attacks the best: helpless first, then the enemy magic-users, then the
   weakest; nothing within 2 squares (a large figure's cell is its corner): DONE, GUARD (up to 8 turns, then QUICK).
   Hold Person's first pick must be a person (p31b2 spent picks on the ettins, which it never holds).
+  **The aim list runs nearest first** (distance in half squares; 2-3 is RANGE 1), so the tool picks among those
+  entries and steps NEXT straight to its choice, counting (a weapon's aim leaves DS:0xBEFD alone, p31c2; a full scan of
+  the throne room's 55 entries took ~28 s a turn, p31c1).
 - **The wall (2:9 7,6) by hand, fighters too: 5 more lost** (p31b2-b6 from `p26c1_s28b`, `p30/wall2.plan`; p31b1 a
   tool stop at GUARD's menu, fixed). Best p31b2: 122 of 382 HP dealt, one ettin slain, two blows at helpless ettins;
   b3-b6 dealt 41-45 each and died in 160-260 s. Seen: **an ettin starts next to the party** (p31a1's placement: 16 at
@@ -1338,7 +1341,9 @@ enemies first; casters cast before contact from the back; a corner; every magic-
   Stinking Clouds to hits; the six ettins kill the party in about three rounds. Asked the Lead (more levels first).
 - **`valjevo6` in ours: not a missing key.** Its key list has 2638 `wait`s (1319 s of waits alone), so segment.py's
   1500 s timeout cut ours mid-camp (the log simply ends in CEDRIC's MEMORIZE list, every cure before matching the
-  original's targets and HP). Lab `p31/replays.sh` now takes `OP_SEG_TIMEOUT` from the environment; rerun at 3200 s.
+  original's targets and HP). Lab `p31/replays.sh` now takes `OP_SEG_TIMEOUT` from the environment; **rerun at 3200 s (1521 s): all 3024 draws
+  identical, statediff 0 differences** (`p31/p29a2.cmpdraws.txt`; its "positions" and "end of fight" as README
+  "Player 30" reads them). So segments 18-33 in ours: 11 identical, 5 part (Requests, to Combat).
 
 ## Player 30 (2026-11-19): the tactical mode (`tactics on`, tactics.py); the Stojanow wall by hand: 8 of 8 lost; `picks`; segment.py's magicat
 
