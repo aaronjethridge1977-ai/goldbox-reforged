@@ -134,6 +134,7 @@ func run(plan_path: String) -> void:
 			_pc = at
 			_checkpoint = name
 			_checkpoint_pc = at
+			_note_drains()
 			print("== resuming at checkpoint %s (plan line %d)" % [name, at + 1])
 			await _load(name)
 	while _pc < lines.size():
@@ -229,7 +230,33 @@ func _died() -> String:
 	for m in main._party:
 		if m.status >= PartyMember.STATUS_DEAD:
 			return m.name
+	# Chat 69, Jeremy's reload rule (2026-11-20): a level drained since the last checkpoint is
+	# restored at once from a Restoration scroll in the packs (a second drain before restoring
+	# breaks the character); with none, it counts as a death: back to the checkpoint.
+	if _drained_since() != null:
+		_restore_drained()
+		var still: Variant = _drained_since()
+		if still != null:
+			return "%s (drained)" % (still as PartyMember).name
 	return ""
+
+
+## Levels drained (record 0x74) at the last checkpoint or load, by name: only a new drain reloads.
+var _drain_base := {}
+
+
+func _note_drains() -> void:
+	_drain_base.clear()
+	for m in main._party:
+		_drain_base[m.name] = int(m.raw[0x74]) if m.raw.size() > 0x74 else 0
+
+
+func _drained_since() -> Variant:
+	for m in main._party:
+		if m.npc < 128 and m.status == PartyMember.STATUS_OKAY and m.raw.size() > 0x74 \
+				and int(m.raw[0x74]) > int(_drain_base.get(m.name, 0)):
+			return m
+	return null
 
 
 ## Chat 31 (Jeremy, poison question (b), 2026-11-15): the death rule is there to keep constitution
@@ -621,6 +648,7 @@ func _do(line: String) -> void:
 		"checkpoint":
 			_checkpoint = w[1]
 			_checkpoint_pc = _pc
+			_note_drains()
 			_retries = 0
 			_losses.clear()
 			main._quick_save()
@@ -2159,6 +2187,7 @@ func _explore_pass(skip: Array) -> Dictionary:
 			# the main loop goes back to the last checkpoint instead (Methods 4).
 			_checkpoint = "explore"
 			_checkpoint_pc = _pc - 1
+			_note_drains()
 			# Chat 34: an event done for the first time is progress, so the reloads count afresh
 			# from here (c34a's eight tries ran out across the whole of the kobold caves, several
 			# events apart). Once an event: an event done again after a reload isn't progress
@@ -2931,11 +2960,19 @@ const LOOT_WORDS := ["SCROLL", "POTION", "WAND", "RING", "NECKLACE", "BRACERS", 
 	"DUST", "JAVELIN", "MANUAL", "GEM", "JEWEL", "HOLY", "MIRROR", "BOOK", "TOME", "MAP", "STAFF OF", "ROD", "KEY"]
 
 
+## Chat 69, Jeremy's take rule (2026-11-20, bot and Player alike): magic and the things a player
+## keeps (`_keeper`), ammunition and darts to use (never bought while looted ones last), and
+## anything else worth 100 gold or more; the rest stays. (Was: any plain gear worth 20, sold for
+## training.) Still nothing over 400 coins' weight a piece (26 huge tapestries, 800 each).
+const DARTS := 9    # ITEMS type 9 (magic-users, thieves, fighters, druids, paladins: ITEMS byte 13)
+
+
 static func _worth_taking(it: GameItem) -> bool:
 	if _keeper(it):
 		return true
-	# Plain gear the shop pays for (half its price): training is 1000 gold a level.
-	return it.price >= 20 and it.weight <= 400
+	if it.type in [ItemTypes.TYPE_ARROW, ItemTypes.TYPE_QUARREL, DARTS]:
+		return true
+	return it.price >= 100 and it.weight <= 400
 
 
 ## A bow, sling, thrown weapon or ammunition its carrier can use: the archer's kit, never
@@ -3392,6 +3429,7 @@ func _load(name: String) -> void:
 		main._start_menu.visible = false
 	main._quick_load()
 	await _settle()
+	_note_drains()
 
 
 # --- M6 dev shortcuts (DevShortcuts; logged, debug builds only) ---------------------------

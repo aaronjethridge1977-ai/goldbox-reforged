@@ -172,6 +172,24 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 69: 5:5's poisonous hedge; the square left behind after a script moves the party; REMOVE CURSE on a member who isn't cursed; checks 121-122, DIFFCHECKS 122/122
+
+- **Check 121, 5:5's poisonous hedge** (ECL 5:5 0x9B4B: CUT THROUGH, `DAMAGE 128, 1, 1, 200, 0`, then CALL 0xC01E;
+  check 28's start at 11,7 W, tpseed 22222222): Right, Up (11,6), Up into the hedge, YES: SOMEONE IS PRICKED, **ARN
+  fails the save: 200 damage, ARN DIES** (status 6, HP 0), Enter, the party is through at 11,5; save. (Seeds 11111111:
+  the save made, nobody hurt; 33333333: LIRA dies.) **Found a difference: 0x49F1, the original 5, ours 6.** After a
+  step's on-move the original writes the party's square (GAME.OVR 0x41B9: DS:0x6AAD / 0x6AAE) to 0x49F0 / 0x49F1;
+  ours wrote the square of the attempt, which is the same square unless the script moved the party (the hedge's
+  CALL 0xC01E, 5:7's stairs). Fixed in `main.gd` `_after_vm` (the VM's party square after the on-move). Three runs
+  MATCH; NO instead of YES differs (5); the code before the fix differs (1).
+
+- **Check 122, 3:0 the temple, REMOVE CURSE on a member who isn't cursed** (check 112's start; the walk, YES, POOL,
+  THRENDER GRONE, HEAL, End x7, HEAL): **THRENDER GRONE / IS NOT CURSED. / CAST CURE ANYWAY: YES NO**, YES: REMOVE
+  CURSE WILL ONLY COST 3500 GOLD PIECES., PAY FOR CURE YES: paid, no text after (the list back with an empty box);
+  EXIT, SHARE, EXIT, NO, save. Matched at once (ours' `_needs` has no curses yet, which is right for a member with
+  none). Three runs MATCH; NO at CAST CURE ANYWAY differs (20). The cure on a cursed member (a cursed item readied)
+  is not checked.
+
 ## Chat 68: the tavern brawl, DROP and HALVE on a readied item, BUY at 16 items; CURE BLINDNESS ready for Combat; the game's poison death read; checks 118-120, DIFFCHECKS 120/120
 
 - **Check 118, 3:0 New Phlan's tavern brawl** (ECL 3:0 0xA696; check 93's start, tpseed 62620001, GRAB; 46 drunks

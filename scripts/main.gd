@@ -2514,9 +2514,15 @@ func _after_vm() -> void:
 	if _pending_move >= 0 and _vm.state == EclVM.State.DONE:
 		# The step's on-move is done without leaving the area: the square of the attempt is
 		# the previous square (GAME.OVR 0x41B9; see _try_move's note).
+		# Chat 69 (check 121, 5:5's hedge): it is the square the party stands on once the on-move
+		# is done (GAME.OVR 0x41B9 writes DS:0x6AAD/0x6AAE, the party's square): a script that
+		# moved the party (CALL 0xC01E through the hedge) leaves the new square, not the attempt's.
 		if _step_from.x >= 0 and not (_step_off_map and _vm.on_overland):
-			_vm.write_byte(EclVM.PREVIOUS_X, _step_from.x)
-			_vm.write_byte(EclVM.PREVIOUS_Y, _step_from.y)
+			var at := _step_from
+			if not _vm.on_overland:
+				at = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
+			_vm.write_byte(EclVM.PREVIOUS_X, at.x)
+			_vm.write_byte(EclVM.PREVIOUS_Y, at.y)
 		_finish_move(_pending_move)
 	elif _arrival_pending and _vm.state == EclVM.State.DONE:
 		# The arrival's init has ended after stopping for the player (see _enter_script).

@@ -173,6 +173,17 @@ directory is this lab). `ours.sh` takes `PROJ=<built copy>` (a second build, e.g
 another slot (the Player's are slot I). Checks driver with its own output folder: `data/c29/run1.sh <n> <area> <dir>`
 (chat 26's `run.sh` globbed old logs too: give it the ten areas, not `data/c25/checks/*`).
 
+**Chat 69:** **the magic-gear map:** `tools/lab/gearmap.gd` (`godot --headless --path <proj with tools/lab> -s
+res://tools/lab/gearmap.gd -- <game>` > `data/c69/gear.tsv`: every ITEM*.DAX / MON*ITM.DAX item with type, plus, price,
+class byte and a scroll's spells; MON*CHA names; each GEO square's info byte) and `tools/lab/gearmap.py <gear.tsv>
+data/c62 [all]` (needs `game/ECL<f>.DAX`; joins each TREASURE and each LOAD_MON with the area's search dispatch:
+direct, a `[9800]` loop, or a byte table `COPY_MEM [T], [event], [var]`, ECL address A at block byte A - 0x9900 + 2;
+ON_GOTO is 0-based) > `data/c69/gearmap.txt`; the summary is in docs/strategy/poolrad.md. **Check 121** in
+`data/c69/chk121/` (`data/c69/cd/` links `game` and 121; the original's trace `data/c69/hedge/trace121.txt`): 5:5's hedge
+from check 28's start (already in 5:5 at 11,7 W). **A start's seed for a save-or-die:** try a few `seed.py set` values
+with the same keys (boot, seed, keys, dump the HP column) and keep one where the save fails. **refcheck** restarted after
+any later change to main.gd (it copies the source at its start).
+
 **Chat 68:** checks 118-120 in `data/c68/chk118..120/` (`data/c68/cd/` links `game`, each, and `blind`, the ready
 CURE BLINDNESS check for Combat in `data/c68/chkblind`; its tested fix `data/c68/temple_blind.diff`). **Ours' keys
 after a won fight with treasure:** `fightend`, Enter (the fight's last line), Enter (THE PARTY HAS WON / experience: the

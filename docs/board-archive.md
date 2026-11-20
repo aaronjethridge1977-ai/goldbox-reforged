@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 (Gold Box Chat 69)
+
+### Now (main's line before chat 69)
+
+- Main: **chat 68 ended 2026-11-20** (unattended; the Lead's note: the post's tasks in order, no build). **(1) The tavern brawl is check 118** (check 93's start, tpseed 62620001, GRAB, won, the treasure left, RUN from the watch; the original's end from chat 63; ours identical since Combat Chat 32). **(2) Coverage checks, both matched at once: 119 camp DROP and HALVE on a readied item (refused, no message) and HALVE of a stack of 1 (nothing); 120 a shop's BUY with a member at 16 items (refused, nothing paid).** DIFFCHECKS 120/120. **(3) CURE BLINDNESS on a blinded member: the original cures 0x21 (1000 gp), ours says IS NOT BLIND**: a ready check and a tested 10-line fix for Combat (Requests). **(4) The game's poison death read** (GAME.OVR 0x101A0 / 0xECB3): status 6, HP 0, 0x37 with power 0xFF; NEUTRALIZE POISON leaves it dead in the original too, so check 112's start is the game's own state (chat 31's HP 1 was Slow Poison's); ours writes the 0x37 with value 0 (to Combat). No difference from the original needed a code change in main's files. No jobs running; DOSBox stopped, lab slot J put back.
+
 ## Archived 2026-11-20 (Combat Chat 33)
 
 ### Now (Combat's line before Combat Chat 33)
