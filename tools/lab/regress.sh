@@ -63,6 +63,26 @@ run orig_A_spectre 1 bash -c "./savein.sh spectre && KW=4 ./cmpfight2.sh A 11111
 run orig_A_mu 1 bash -c "./savein.sh mu && KW=4 ./cmpfight2.sh A 11111111 '' up,wait=4,enter,wait=3,enter,wait=3,s $WHAT"   # Combat Chat 6: 4:10's LEVEL 6 MU ("THEN DIE YOU SCUM", 8,9; start combat6/saves/mu: the spectre's party, 0x4A42 = 3), 952 draws; he casts Magic Missile (his Fireball plan fails beside the party)
 run orig_A_troll 1 bash -c "./savein.sh troll && KW=4 OURS_SEED=1 ./cmpfight2.sh A 11111111 up 'up,wait=6,enter' $WHAT"   # Combat Chat 7: 2:20 0,14's two ogres and four trolls (start combat5/saves/troll, 2:20 0,15 N, lab only; the event's random treasure first: main's chat 28), 2561 draws; OURS_SEED=1: ours' own generator seeded for the step before the dice (a random encounter there came and went run to run)
 run orig_A_mu29 1 bash -c "./savein.sh mu29 && KW=4 OSECS=1700 OPOST=up,enter,wait,c ./cmpfight2.sh A 11111111 up 'up,wait=4,enter,wait=3,c' $WHAT"   # Combat Chat 7: 2:9 event 13 at 7,6, two LEVEL 6 MUs, two aides, six ettins (start combat6/saves/mu29, lab only), 6973 draws; recorded again with OSECS=1700 (the fight is long)
+# Combat Chat 33, the spell lab: one caster (BAKSHI) with 21 copies of one spell, everyone else's memory empty, game speed 0
+# (fixtures combat33/saves/<name>, lab only: combat33/mkfix.py C|E <name> clear mem2=<id>x21 speed=0), MAGIC on, QUICK.
+run orig_A_c33_hp_kob 1 bash -c "./combat33/fixin.sh hp_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_mhp_kob 1 bash -c "./combat33/fixin.sh mhp_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_mm_kob 1 bash -c "./combat33/fixin.sh mm_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_slow_kob 1 bash -c "./combat33/fixin.sh slow_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_bless_kob 1 bash -c "./combat33/fixin.sh bless_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_prayer_kob 1 bash -c "./combat33/fixin.sh prayer_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_haste_kob 1 bash -c "./combat33/fixin.sh haste_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_pfe_kob 1 bash -c "./combat33/fixin.sh pfe_kob && KW=8 OURS_SEED=1 ./cmpfight2.sh A 11111111 up up $WHAT"
+run orig_A_c33_hp_orc 1 bash -c "./combat33/fixin.sh hp_orc && KW=8 ./cmpfight2.sh A 12345678 up,up enter $WHAT"
+# Combat Chat 34: the spell lab's hand-cast fights (Combat Chat 33's handcast.py in the original), replayed in ours by the
+# handcast= lab key (combat34/handreg.sh, draws only): Sleep x2 and Fireball on the net trap, Stinking Cloud x2 and Hold
+# Person (three picks) on the Slums orcs. The fixtures are lab-only (combat33/saves, mkfix.py recipes in combat33/README).
+run orig_A_c34_hand_sl22 0 env OURS_SEED=1 ./combat34/handreg.sh sl_kob1 22222222 up up 12 1
+run orig_A_c34_hand_sl1 0 env OURS_SEED=1 ./combat34/handreg.sh sl_kob1 22222222 up up 6 1
+run orig_A_c34_hand_fb1 0 env OURS_SEED=1 ./combat34/handreg.sh fb_kob1 33333333 up up 10 1
+run orig_A_c34_hand_sco1 0 ./combat34/handreg.sh sc_orc1 12345678 up,up enter 2 1
+run orig_A_c34_hand_sco2 0 ./combat34/handreg.sh sc_orc1 22222222 up,up enter 2 1
+run orig_A_c34_hand_hpo1 0 ./combat34/handreg.sh hp_orc1 12345678 up,up enter 1 3
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
 # Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678

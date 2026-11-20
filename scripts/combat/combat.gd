@@ -194,6 +194,8 @@ func _end_round() -> void:
 	# the original's troll 21 HP at draw 2972 where ours' had 24.)
 	_count_enemy_health()
 	_regenerate()
+	if magic:
+		magic.cloud_round()      # each figure in a Stinking Cloud saves (GAME.OVR 0xA0CE, after category 0x13)
 
 
 func start_round() -> void:
@@ -1186,6 +1188,8 @@ func step(dir: int) -> String:
 		c.moves = 0
 		c.attacks = 0
 		return "fell"
+	if magic:
+		magic.cloud_save(active)     # a step into a Stinking Cloud (GAME.OVR 0xA4ED, 0xB6E2)
 	return "moved"
 
 
@@ -1463,7 +1467,7 @@ func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 			# Combat Chat 10, Player 9's 4:21 2,11, LIRA's elven d100 is not drawn).
 			if not _save(tm, 0, int(SpecialAffects.POISON_BONUS[type])):
 				message.emit("%s IS POISONED" % tm.name)
-				SpellCaster.add_affect(tm, SpecialAffects.POISONED, 0, 0, 0)
+				SpellCaster.add_affect(tm, SpecialAffects.POISONED, 0, 0, 0xFF)   # power 0xFF (GAME.OVR 0x10204; main chat 68)
 				tm.hp = 0
 				tm.status = PartyMember.STATUS_DEAD
 				t.down = true
@@ -2118,6 +2122,15 @@ func _can_step(c: Dictionary, dir: int) -> bool:
 	# cost (2, or 3 diagonally); the original's computer does spend its last half-moves (lab:
 	# Phineas used all 20 of his).
 	var cost := 3 if dir % 2 == 1 else 2
+	# Into a Stinking Cloud (ground 0x1E) the step costs the moves left + 1, so the computer never takes it,
+	# unless the mover already has effect 0x20, 0x1E, 0x6F or 0x7D (GAME.OVR 0xB304-0xB375; Combat Chat 34:
+	# the spell lab's Slums orcs walked round the cloud).
+	if magic and field != null:
+		var to: Vector2i = c.cell + DIRS[dir]
+		if field.tile(to.x, to.y) == CombatSpells.CLOUD_GROUND:
+			var m: PartyMember = c.who
+			if not (m.has_affect(0x20) or m.has_affect(0x1E) or m.has_affect(0x6F) or m.has_affect(0x7D)):
+				return false
 	return cost <= c.moves
 
 

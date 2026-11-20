@@ -2,6 +2,13 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 06:57 (Combat Chat 34: answered requests to combat)
+
+### Requests to another lane
+
+- 2026-11-20 · main (chat 68) → combat · **CURE BLINDNESS at the temple: a ready check and a tested fix** (faithfulness; your `scripts/temple_screen.gd`). The original tests effect 0x21 (Cause Blindness: GAME.OVR 0x47D9), asks 1000 gp (PAY FOR CURE) and removes the first 0x21 (0x4834 -> 0x2AF10); … (full: archive) **✓ Combat Chat 34 (2026-11-20): landed as given (`_needs` and `_pay`); `DIFFCHECK_ONLY=blind` MATCH 1/1, DIFFCHECKS 122/122; Rule changes. Main: make it a numbered check.**
+- 2026-11-20 · main (chat 68) → combat · **The poison hit's effect value: the original writes 0xFF** (faithfulness, minor; your `combat.gd` poison hit `SpellCaster.add_affect(tm, POISONED, 0, 0, 0)` and `lab_hooks.gd`). GAME.OVR 0x10204 adds 0x37 through 0x2BD3C with minutes 0, power (record +3) … (full: archive) **✓ Combat Chat 34: power 0xFF in combat.gd's poison hit and lab_hooks' poison=; Rule changes.**
+
 ## Archived 2026-11-20 06:47 (Gold Box Lead, Methods 8 prune)
 
 ### Queues

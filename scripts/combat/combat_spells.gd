@@ -246,6 +246,115 @@ func tick() -> void:
 	for e in c.combatants:
 		people.append(e.who)
 	SpellCaster.pass_time(people, 1)
+	_cloud_time()
+
+
+# --- Stinking Cloud's cloud ---------------------------------------------------------------
+# (Combat Chat 34; GAME.OVR 0x28B29, read in the code, the area seen in the spell lab: the hand-cast Stinking
+# Cloud on the Slums orcs, replayed in ours, took one save where ours took two, a HOLD dump at the save.)
+# The spell lays a cloud on four cells: the aim point and the steps E, SE and S of it (DS:0x290E: directions
+# 8, 2, 3, 4), each cell whose ground can be walked (DS:0x2744 cost under 0xFF); their ground becomes 0x1E
+# (picture 38) and the old ground is kept. Its clock is an effect 0x28 on the caster lasting the caster's level
+# in rounds (0x2BD3C); when it runs out the ground comes back. A figure standing in the cloud saves vs poison
+# (0x2B9D1) when the cloud is laid (the four cells in that order), at each round's start (0xA0CE, figure by
+# figure, after category 0x13) and after each step into it (0xA4ED, 0xB6E2), unless it already has effect 0x1E,
+# 0x1F, 0x20, 0x6F or 0x7D: failed, nausea (0x1F) d4+1 rounds; made, effect 0x1E, the cough.
+const CLOUD_STEPS: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1)]
+const CLOUD_GROUND := 38          # ground 0x1E's picture
+const CLOUD_SPARED := [0x1E, 0x1F, 0x20, 0x6F, 0x7D]
+var clouds: Array = []            # {cells: Array[Vector2i], under: Array[int], rounds: int}
+
+
+func _lay_cloud(i: int, cell: Vector2i, lvl: int) -> void:
+	var cl := {"cells": [] as Array[Vector2i], "under": [], "rounds": maxi(lvl, 1)}
+	var who: Array[int] = []
+	for d in CLOUD_STEPS:
+		var p: Vector2i = cell + d
+		if c.field == null or not c.field.in_bounds(p.x, p.y):
+			continue
+		var t: int = c.field.tile(p.x, p.y)
+		if t == CLOUD_GROUND:
+			# Already under a cloud (0x28CDB): the ground kept is the older cloud's.
+			for o in clouds:
+				var k: int = (o.cells as Array).find(p)
+				if k >= 0:
+					t = int(o.under[k])
+		elif not c.field.walkable(p.x, p.y) and t != 39:
+			continue
+		cl.cells.append(p)
+		cl.under.append(t)
+		var j := c.occupant(p)
+		if j >= 0 and not j in who:
+			who.append(j)
+	for p in cl.cells:
+		c.field.cells[p.y * Battlefield.WIDTH + p.x] = CLOUD_GROUND
+	if not (cl.cells as Array).is_empty():
+		clouds.append(cl)
+	for j in who:
+		cloud_save(j, c.combatants[i].who)
+
+
+## A figure in the cloud saves (GAME.OVR 0x2B9D1), unless already coughing or sick. `by`: the figure whose
+## turn it is (Protection from Evil against an evil caster).
+func cloud_save(j: int, by: PartyMember = null) -> void:
+	var e: Dictionary = c.combatants[j]
+	if e.down:
+		return
+	var t: PartyMember = e.who
+	var inside := false
+	for p in c.cells(e):
+		if c.field != null and c.field.tile(p.x, p.y) == CLOUD_GROUND:
+			inside = true
+	if not inside:
+		return
+	for fx in CLOUD_SPARED:
+		if t.has_affect(fx):
+			return
+	# Either effect goes on through the add-effect routine (0x2C540: the resistances, an elf's or half-elf's d100;
+	# Combat Chat 34, the spell lab's sco2: BAKSHI in his own cloud), then its handler runs at once (0x2AEEA).
+	if save(t, 0, 0, by):
+		# A made save (GAME.OVR 0x2BAA1) adds effect 0x1E, "starts to cough", for a round: see cough() (Combat
+		# Chat 33; the message seen in the original).
+		c.message.emit("%s STARTS TO COUGH" % t.name)
+		if resists(t, -1):
+			return
+		SpellCaster.add_affect(t, EFFECT_COUGH, 34, 1, 0)
+		cough(j)
+		return
+	var sick := c.roll(1, 4, "nausea") + 1
+	c.message.emit("%s CHOKES AND GAGS FROM NAUSEA" % t.name)
+	if resists(t, -1):
+		return
+	SpellCaster.add_affect(t, EFFECT_HELPLESS, 34, sick, 0)
+	# ... and runs the effect's handler at once (0x2BB30: 0x2AEEA with 0x1F), the held figure's turn end
+	# (0xFF9A -> 0xBA:0x2637): guard and spell gone, and no turn left this round (Combat Chat 34: the Slums
+	# orc made sick by the cloud was not picked again that round in the original; ours gave it its turn).
+	e.guarding = false
+	e.pending = {}
+	e.init = 0
+
+
+## Each round's start: every figure standing in a cloud saves (0xA0CE).
+func cloud_round() -> void:
+	if clouds.is_empty():
+		return
+	for j in c.combatants.size():
+		cloud_save(j)
+
+
+## The clouds' clocks (the caster's effect 0x28): a cloud whose time is up gives its ground back.
+func _cloud_time() -> void:
+	var keep: Array = []
+	for cl in clouds:
+		cl.rounds = int(cl.rounds) - 1
+		if int(cl.rounds) > 0:
+			keep.append(cl)
+			continue
+		for k in (cl.cells as Array).size():
+			var p: Vector2i = cl.cells[k]
+			if c.field.tile(p.x, p.y) == CLOUD_GROUND:
+				c.field.cells[p.y * Battlefield.WIDTH + p.x] = int(cl.under[k])
+	clouds = keep
 
 
 ## Saving throw for `m` against save type `kind` (0..4), with `bonus`; `caster` for
@@ -490,7 +599,11 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 	if targets.size() > 0 and id != LIGHTNING:
 		me.dir = c.dir_between(me, c.combatants[targets[0]]) if targets[0] != i else me.dir
 	spell_cast.emit(i, id, cell, targets)
+	_cast_cell = cell
 	_resolve(i, id, targets)
+
+
+var _cast_cell := Vector2i.ZERO      # the aim point of the spell being resolved
 
 
 func _resolve(i: int, id: int, targets: Array[int]) -> void:
@@ -609,18 +722,8 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 					continue
 				SpellCaster.add_affect(t, EFFECT_SLEEP, id, dur, lvl)
 				c.message.emit("%s FALLS ASLEEP" % t.name)
-		34:         # Stinking Cloud: a failed save against poison leaves one helpless
-			for j in targets:
-				var t: PartyMember = c.combatants[j].who
-				if save(t, 0, 0, m):
-					# A made save (GAME.OVR 0x2BAA1) adds effect 0x1E, "starts to cough", for a round, and runs its
-					# handler at once (0x2AEEA): see cough() (Combat Chat 33; the message seen in the original).
-					SpellCaster.add_affect(t, EFFECT_COUGH, id, 1, 0)
-					c.message.emit("%s STARTS TO COUGH" % t.name)
-					cough(j)
-					continue
-				SpellCaster.add_affect(t, EFFECT_HELPLESS, id, c.roll(1, 4, "nausea") + 1, 0)
-				c.message.emit("%s CHOKES AND GAGS FROM NAUSEA" % t.name)
+		34:         # Stinking Cloud: the cloud on four cells from the aim point, not the targets' area (see _lay_cloud)
+			_lay_cloud(i, _cast_cell, lvl)
 		32:         # Mirror Image: d4 images
 			SpellCaster.add_affect(m, EFFECT_MIRROR, id, dur, c.roll(1, 4, "images") << 4)
 			c.message.emit("%s IS DUPLICATED" % m.name)

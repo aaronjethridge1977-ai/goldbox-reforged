@@ -107,6 +107,18 @@ if ustart and not DRAWS_ONLY:
                 i += 1
         it = iter(ours)
         sub = all(c in it for c in orig)
+        if not sub or orig[-1:] != ours[-1:]:
+            # Combat Chat 19 (Player 16's p16e2, the Slums' trolls): a tried step shows as a, b, a even where ours
+            # made a -> b at another time in the fight; collapse every such there-and-back and check again.
+            o2 = list(orig); i = 1
+            while i + 1 < len(o2):
+                if o2[i - 1] == o2[i + 1]:
+                    del o2[i:i + 2]
+                else:
+                    i += 1
+            it = iter(ours)
+            if o2 and all(c in it for c in o2) and o2[-1] == ours[-1]:
+                orig, sub = o2, True
         if not orig or not sub or orig[-1] != ours[-1]:
             bad.append("%d: orig %s | ours %s" % (k, " ".join(orig), " ".join(ours)))
     if bad:

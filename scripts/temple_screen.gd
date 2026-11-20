@@ -45,6 +45,7 @@ const MENU := ["HEAL", "VIEW", "POOL", "APPRAISE", "EXIT"]
 const POOL_MENU := ["HEAL", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
 const LIST_MENU := ["HEAL", "EXIT"]
 const YES_NO := ["YES", "NO"]
+const BLIND := 0x21     # Cause Blindness's effect (GAME.OVR 0x47D9 tests it, 0x4834 removes it)
 
 var _party: Array[PartyMember] = []
 var _who := 0
@@ -219,7 +220,9 @@ func _needs(m: PartyMember, i: int) -> bool:
 			return m.status == SpecialAffects.STONED
 		"NEUTRALIZE POISON":
 			return m.has_affect(SpellCaster.POISONED)
-	return false   # blindness, curses: not modelled yet
+		"CURE BLINDNESS":
+			return m.has_affect(BLIND)
+	return false   # curses: not modelled yet
 
 
 func _pay() -> void:
@@ -262,6 +265,12 @@ func _pay() -> void:
 			if m.status == SpecialAffects.STONED:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
+		"CURE BLINDNESS":
+			# GAME.OVR 0x482C: the first effect 0x21 goes (0x2AF10).
+			for b in m.affects:
+				if int(b.effect) == BLIND:
+					m.affects.erase(b)
+					break
 		"NEUTRALIZE POISON":
 			for b in m.affects.duplicate():
 				if int(b.effect) in [SpellCaster.POISONED, SpellCaster.SLOWED_POISON, SpellCaster.POISON_TICK]:

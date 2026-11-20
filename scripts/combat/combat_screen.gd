@@ -44,6 +44,7 @@ var _spell_index := 0
 var _spell_id := 0
 var _spell_cell := Vector2i.ZERO
 var _spell_picks: Array[int] = []
+var _picks_left := 0          # the aim's picks still to make (GAME.OVR 0x14AD1's count)
 var _view := Vector2i.ZERO       # top-left cell of the 7x7 window
 var _facing := 0
 var _morale_base := 99      # the encounter's morale (from the script)
@@ -1334,14 +1335,12 @@ func _start_aim(purpose: String = "attack") -> void:
 		if j != me and not _combatants[j].get("down", false):
 			others.append(j)
 	var offensive := purpose == "attack" or _combat.magic.table.field(_spell_id, 14) != 0
-	others.sort_custom(func(a, b):
-		var ra := _combat.range_of(_combatants[me], _combatants[a])
-		var rb := _combat.range_of(_combatants[me], _combatants[b])
-		if ra != rb:
-			return ra < rb
-		var fa: int = 0 if (_combatants[a].team != _combatants[me].team) == offensive else 1
-		var fb: int = 0 if (_combatants[b].team != _combatants[me].team) == offensive else 1
-		return fa < fb)
+	# The list NEXT walks is 0x3045B's from the aimer (GAME.OVR 0x15AE1, range 0xFF): the figures in sight,
+	# nearest first in half-moves (a diagonal step 3, a straight one 2), ties by direction, the aimer sorted in
+	# (Combat._by_distance). Ours sorted by range in steps, enemies first, and so walked a different figure
+	# (Combat Chat 34: the spell lab's hand-cast Sleep, replayed in ours, aimed 12 deep at another kobold).
+	others.assign(others.filter(func(j): return _combat.clear_line(_combatants[me], _combatants[j]).y == 1))
+	_combat._by_distance(_combatants[me], others)
 	_aim_list.append_array(others)
 	_aiming = true
 	_cmode = "aim"
@@ -1369,10 +1368,13 @@ func _start_aim(purpose: String = "attack") -> void:
 
 
 const SKIP_PARTY_KEY := "aim_skips_party"
+static var lab_original_aim := false   # lab (handcast=): the original's aim cycle whatever SETTINGS says
 
 
 ## SETTINGS: TARGETING SKIPS PARTY, ON (an addition, on unless turned off) or OFF (the original).
 static func skip_party_on() -> bool:
+	if lab_original_aim:
+		return false
 	var cf := ConfigFile.new()
 	if cf.load(GameData.SETTINGS_PATH) != OK:
 		return true
@@ -1547,7 +1549,19 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 				_refresh()
 				return
 			if _aim_for == "spell":
-				# The original in a fight (GAME.OVR 0x27EF2): "ABORT SPELL?" YES / NO.
+				# EXIT uses up one pick (GAME.OVR 0x14BD1); with picks left the aim starts over, with none the spell
+				# goes off on the figures picked, and with none picked the original asks (0x27EF2) "ABORT SPELL?".
+				# The aim's answer, none, is the caster's target now (0x1465B; Combat Chat 34, hpo1: BAKSHI's
+				# QUICK turn after two EXITs picked a new target with d4).
+				_combatants[_combat.active].target = -1
+				_picks_left -= 1
+				if _picks_left > 0:
+					_restart_pick_aim()
+					return
+				if not _spell_picks.is_empty():
+					_finish_cast()
+					return
+				_picks_left = 1
 				_asking_abort = true
 				_refresh()
 				return
@@ -1813,6 +1827,7 @@ func _begin_spell(id: int, item: GameItem) -> void:
 	_spell_id = id
 	_use_item = item
 	_spell_picks = []
+	_picks_left = _combat.magic.max_picks(id) if _combat.magic.aim_kind(id) == "pick" else 1
 	var self_spell := _combat.magic.aim_kind(_spell_id) == "self"
 	if self_spell and item != null:
 		_spell_cell = _combatants[_combat.active].cell
@@ -1854,6 +1869,11 @@ func _spell_target() -> void:
 	if why != "":
 		_say(why)
 		return
+	# The figure aimed at becomes the caster's target (GAME.OVR 0x14611's own-hand branch: 0x15D53's pick written
+	# to the combat block's +0xA), the one its next QUICK turn keeps (Combat Chat 34: the spell lab's hand-cast
+	# Sleep replayed in ours; BAKSHI's QUICK kept the sleeping kobold he had aimed at, d6 for who to hit among
+	# the six beside him, where ours picked a new target with d19).
+	_combatants[me].target = _combat.occupant(_aim_cell)
 	if _combat.magic.aim_kind(_spell_id) == "area":
 		_finish_cast()
 		return
@@ -1863,11 +1883,26 @@ func _spell_target() -> void:
 	if who < 0:
 		_say("NO TARGET THERE")
 	elif who in _spell_picks:
+		# A figure picked again costs no pick (GAME.OVR 0x14B79, "Already been targeted"); the aim starts over.
 		_say("ALREADY BEEN TARGETED")
+		_restart_pick_aim()
 	else:
 		_spell_picks.append(who)
-		if _spell_picks.size() >= _combat.magic.max_picks(_spell_id):
+		_picks_left -= 1
+		if _picks_left <= 0:
 			_finish_cast()
+		else:
+			_restart_pick_aim()
+
+
+## The next pick of a spell with several (GAME.OVR 0x14AD1 calls the aim 0x14611 -> 0x15D53 once a pick): the aim
+## starts again on the first of the list, the caster (Combat Chat 34, the spell lab's Hold Person by hand on the
+## Slums orcs: after each TARGET the panel showed BAKSHI again, NEXT the same orc; ours walked on from the pick).
+func _restart_pick_aim() -> void:
+	if _aim_list.is_empty():
+		return
+	_aim_index = 0
+	_show_aim()
 
 
 ## YES at ABORT SPELL? (GAME.OVR 0x27F19): "SPELL ABORTED", the spell is forgotten as if

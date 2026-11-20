@@ -203,6 +203,20 @@ def holddump(r, base):
     nn = rd(ds + 0x671A, 1)[0]
     nl = rd(ds + 0x671B, 3 * min(nn, 80))
     print("HOLD picklist %d %s" % (nn, " ".join("%d:%d:%d" % tuple(nl[3 * i:3 * i + 3]) for i in range(min(nn, 80)))), flush=True)
+    if os.environ.get("HOLDTARGETS"):
+        # Combat Chat 34: a spell's target list (DS:0x6C94 count, far pointers from 0x6C95; GAME.OVR 0x14A64) and
+        # the aim point (0x6DB9, 0x6DBA).
+        tn = rd(ds + 0x6C94, 1)[0]
+        tl = []
+        for k in range(1, min(tn, 40) + 1):
+            to, ts = struct.unpack("<HH", rd(ds + 0x6C91 + 4 * k, 4))
+            tl.append(str(recs.get((ts, to), "?")))
+        ax, ay = rd(ds + 0x6DB9, 2)
+        print("HOLD targets %d [%s] aim %d,%d" % (tn, " ".join(tl), ax, ay), flush=True)
+    for spec in os.environ.get("HOLDDS", "").split(";"):
+        if spec:       # HOLDDS=<hex offset>,<count>[;...] (Combat Chat 34): raw DS bytes
+            o, n = (int(v, 16) for v in spec.split(","))
+            print("HOLD ds+%x %s" % (o, rd(ds + o, n).hex(" ")), flush=True)
     nf = rd(ds + 0x6715, 1)[0]
     for k in range(1, nf + 1):
         e = rd(ds + 0x66D6 + 7 * k, 7)
@@ -210,6 +224,38 @@ def holddump(r, base):
         st = rd(base + fs * 16 + fo + 0x10C, 1)[0] if fs else -1
         print("HOLD fallen %2d fig %-2s at %d,%d covered %02x status %d" % (k, recs.get((fs, fo), "-" if not fs else "?"),
               e[4], e[5], e[6], st), flush=True)
+
+
+def holdwalk(r, base, locate):
+    """HOLDWALK=1 (Combat Chat 27): with the overlay manager rewriting returns, HOLDSTACK can miss the chain.
+    Scans guest RAM for word pairs (ip, cs) whose 5 bytes before cs:ip are a far call (9A) or an indirect
+    far call (FF 1E / FF 9D, 4 bytes), and prints the dense runs (4 or more within 0x80 bytes): the stack."""
+    rd = lambda a, n: (r.m.seek(a), r.m.read(n))[1]
+    ram = rd(base, 0xA0000)
+    hits = []
+    for at in range(0x400, 0xA0000 - 4, 2):
+        ip, cs = struct.unpack_from("<HH", ram, at)
+        if not (0x0800 <= cs < 0x9000) or ip < 5:
+            continue
+        a = cs * 16 + ip
+        if a >= 0xA0000:
+            continue
+        if ram[a - 5] == 0x9A or (ram[a - 4] == 0xFF and ram[a - 3] in (0x1E, 0x9D)):
+            hits.append((at, cs, ip))
+    rng = os.environ["HOLDWALK"]
+    if "-" in rng:      # HOLDWALK=<lo>-<hi> (hex): every hit in that range, one line
+        lo, hi = (int(v, 16) for v in rng.split("-"))
+        print("HOLDWALK %s: %s" % (rng, " | ".join("%05x %04x:%04x %s" % (x[0], x[1], x[2], locate(x[1], x[2]))
+                                                    for x in hits if lo <= x[0] < hi)), flush=True)
+        return
+    run = []
+    for h in hits + [(1 << 30, 0, 0)]:
+        if run and h[0] - run[-1][0] > 0x80:
+            if len(run) >= 4:
+                print("HOLDWALK run %05x-%05x: %s" % (run[0][0], run[-1][0], " | ".join(
+                    "+%x %04x:%04x %s" % (x[0] - run[0][0], x[1], x[2], locate(x[1], x[2])) for x in run[:40])), flush=True)
+            run = []
+        run.append(h)
 
 
 def holdstack(r, base, locate):
@@ -227,12 +273,18 @@ def holdstack(r, base, locate):
         import ovr as _ovr
         uip = int(spec, 16) - _ovr.unit_of(int(spec, 16))
         at = -1
+        ncand = 0
         while True:
             at = ram.find(struct.pack("<H", uip), at + 1)
             if at < 0 or at >= len(ram) - 100:
                 break
             wip, wcs = struct.unpack_from("<HH", ram, at)
-            if not (0x0800 <= wcs < 0x9000) or not locate(wcs, wip).startswith(want):
+            if not (0x0800 <= wcs < 0x9000):
+                continue
+            ncand += 1
+            if os.environ.get("HOLDSTACKDBG") and ncand < 40:   # Combat Chat 27
+                print("HOLDSTACK cand %05x %04x:%04x %s" % (at, wcs, wip, locate(wcs, wip)), flush=True)
+            if not locate(wcs, wip).startswith(want):
                 continue
             words = struct.unpack_from("<48H", ram, at)
             out = []
@@ -291,6 +343,15 @@ if __name__ == "__main__":
         # than n - 8, so the stub waits there), print the fight state (holddump), then go on.
         # Several: HOLD=4818,4819.
         holds = sorted(int(h) for h in os.environ.get("HOLD", "").split(",") if h)
+        # Combat Chat 32: POKE=<draw>:<DS hex offset>=<byte>,... writes a byte of the game's data segment while
+        # held before that draw (e.g. POKE=756:6e30=1: MAGIC ON where a Player trace's Alt-M landed, which a
+        # rerun's real-time Alt-M doesn't reproduce). The draw becomes a HOLD too.
+        pokes = {}
+        for item in (x for x in os.environ.get("POKE", "").split(",") if x):
+            d, rest = item.split(":")
+            off, val = rest.split("=")
+            pokes.setdefault(int(d), []).append((int(off, 16), int(val)))
+        holds = sorted(set(holds) | set(pokes))
         held_pb, held_t = None, 0
         while time.time() - t0 < secs:
             r.m.seek(pos_addr); pb = r.m.read(4 * NPOS)
@@ -300,14 +361,20 @@ if __name__ == "__main__":
                 # `hold`. Dump when nothing has moved for 3 s (it is still walking before that).
                 if pb != held_pb:
                     held_pb, held_t = pb, time.time()
-                elif time.time() - held_t > 3:
+                elif time.time() - held_t > float(os.environ.get("HOLDWAIT", "3")):   # Combat Chat 27: HOLDWAIT=<s>
                     holddump(r, base)
+                    for off, val in pokes.get(hold, []):
+                        r.m.seek(r.psp + 0x100 + 0xC7C * 16 + off)
+                        r.m.write(bytes([val]))
+                        print("POKE at draw %d: DS:%04x = %d" % (hold, off, val), flush=True)
                     if os.environ.get("HOLDPROBE"):     # Combat Chat 11: combat11/probe.py
                         sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "combat11"))
                         import probe
                         probe.step(r, base)
                     if os.environ.get("HOLDSTACK"):
                         holdstack(r, base, locate)
+                    if os.environ.get("HOLDWALK"):      # Combat Chat 27: every far return after a far call
+                        holdwalk(r, base, locate)
                     holds.pop(0); held_pb = None
                     hold = holds[0] if holds else 0
             for e in r.new(hold - 8 if hold else None):

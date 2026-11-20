@@ -3,7 +3,7 @@ class_name LabHooks
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who", "temple", "ending"]
-const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison="]
+const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast="]
 
 
 ## Whether `n` is one of these keys.
@@ -92,7 +92,7 @@ static func handle(main: Node, n: String) -> bool:
 		main._temple.open(main._party)
 	elif n.begins_with("poison="):      # poison=<member>: poisoned as a fight's failed save leaves one (dead, 0x37)
 		var m: PartyMember = main._party[int(n.trim_prefix("poison="))]
-		SpellCaster.add_affect(m, SpecialAffects.POISONED, 0, 0, 0)
+		SpellCaster.add_affect(m, SpecialAffects.POISONED, 0, 0, 0xFF)
 		m.hp = 0
 		m.status = PartyMember.STATUS_DEAD
 		# In an open fight, its copy of the member falls there too (Combat Chat 4: Slow Poison
@@ -101,7 +101,7 @@ static func handle(main: Node, n: String) -> bool:
 			for j in combat._combat.combatants.size():
 				var c: Dictionary = combat._combat.combatants[j]
 				if c.team == 0 and not c.down and c.who.name == m.name:
-					SpellCaster.add_affect(c.who, SpecialAffects.POISONED, 0, 0, 0)
+					SpellCaster.add_affect(c.who, SpecialAffects.POISONED, 0, 0, 0xFF)
 					c.who.hp = 0
 					c.who.status = PartyMember.STATUS_DEAD
 					c.down = true
@@ -126,4 +126,111 @@ static func handle(main: Node, n: String) -> bool:
 		else:
 			print("   OUTCOME none (result %d)" % combat._result)
 		return true
+	elif n.begins_with("handcast="):    # handcast=<aimskip>:<picks>: the lab's handcast.py in ours (Combat Chat 34)
+		await _handcast(main, n.trim_prefix("handcast="))
+		return true
 	return false
+
+
+## handcast=<aimskip>:<picks>[:1]: plays the open fight as the lab's combat33/handcast.py plays the original's, for
+## a lone caster: at the member's menu CAST (else QUICK, and QUICK for good once taken), the spell list's lit
+## spell, NEXT <aimskip> times then TARGET (several picks: NEXT and TARGET again up to <picks>, then EXIT),
+## ABORT SPELL? YES, CONTINUE BATTLE NO; with :1, TURN first while the menu offers it. Each key is printed (HAND KEY), so the two games' key lists compare.
+static func _handcast(main: Node, arg: String) -> void:
+	var a := arg.split(":")
+	var aim_skip := int(a[0]) if a.size() > 0 and a[0] != "" else 1
+	var picks_max := int(a[1]) if a.size() > 1 else 1
+	var turn_first := a.size() > 2 and a[2] == "1"     # handcast.py's TURNFIRST: TURN while the menu offers it
+	var cs = main._combat
+	CombatScreen.lab_original_aim = true     # the original's AIM cycle (TARGETING SKIPS PARTY off)
+	var aim_n := 0
+	var picks := 0
+	var quick := false
+	var seen := false
+	var last := ""
+	var steady := 0
+	var t_end := Time.get_ticks_msec() + 1800000
+	while Time.get_ticks_msec() < t_end:
+		await main.get_tree().process_frame
+		if not cs.visible or cs._combat == null:
+			if seen:
+				break
+			continue
+		if cs._result != 0 and not cs._asking_continue:
+			break
+		var st := ""
+		var sheet = cs._sheet
+		if cs._asking_continue:
+			st = "continue"
+		elif cs._asking_abort:
+			st = "abort"
+		elif sheet != null and sheet.visible and sheet._mode == "cast":
+			st = "choose"
+		elif cs._flash != "" or cs._row24_msg != "":
+			st = ""             # a message on row 24 (handcast.py waits for the menu to come back)
+		elif cs._cmode == "aim" and cs._aim_for == "spell":
+			st = "aim:" + ",".join(cs._bottom_menu())
+		elif cs._cmode == "menu" and cs._combat.active >= 0 and not cs._combatants[cs._combat.active].get("quick", false) \
+				and not cs._announcing and cs._flash == "" and cs._row24_msg == "" and not main._busy:
+			st = "menu:" + ",".join(cs._bottom_menu())
+		steady = steady + 1 if st == last else 0
+		last = st
+		if st == "" or steady < 3:
+			continue
+		var k := ""
+		var why := ""
+		if st == "continue":
+			if seen:
+				k = "n"
+				why = "continue battle: no"
+		elif st == "abort":
+			k = "y"
+			why = "abort spell"
+		elif st == "choose":
+			k = "c"
+			why = "cast the lit spell"
+			aim_n = 0
+			picks = 0
+		elif st.begins_with("aim:"):
+			if "TARGET" in st.split(":")[1].split(",") and aim_n >= aim_skip:
+				k = "t"
+				var tj: int = cs._aim_list[cs._aim_index] if cs._aim_index < cs._aim_list.size() else -1
+				why = "target %s %s" % [cs._combatants[tj].who.name if tj >= 0 else "-", str(cs._combatants[tj].cell) if tj >= 0 else ""]
+				picks += 1
+				aim_n = 0
+			elif picks >= picks_max or aim_n > 40:
+				k = "e"
+				why = "aim exit"
+				aim_n = 0
+			else:
+				k = "n"
+				why = "aim next"
+				aim_n += 1
+		elif st.begins_with("menu:"):
+			seen = true
+			if turn_first and "TURN" in st.split(":")[1].split(",") and not quick:
+				k = "t"
+				why = "TURN"
+			elif "CAST" in st.split(":")[1].split(",") and not quick:
+				k = "c"
+				why = "CAST"
+				picks = 0
+				aim_n = 0
+			else:
+				k = "q"
+				why = "QUICK"
+				quick = true
+		if k == "":
+			continue
+		if k == "t":     # the aim list as NEXT walks it (figure, cell, H = helpless)
+			var al := PackedStringArray()
+			for x in mini(cs._aim_list.size(), aim_skip + 3):
+				var fc: Dictionary = cs._combatants[cs._aim_list[x]]
+				al.append("%d:%s%s" % [cs._aim_list[x], str(fc.cell), "H" if CombatSpells.held(fc.who) else ""])
+			print("   HAND AIMLIST " + " ".join(al))
+		print("   HAND KEY %s (%s)" % [k, why])
+		await main._press(k)
+		last = ""
+		steady = 0
+		if st == "continue":
+			break
