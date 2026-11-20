@@ -1338,6 +1338,23 @@ shortcut wins, ever**.
   seeds 3201xxxx): p32a1 reached `s26g5` with no drain (the original's first run lost LIRA's level by `s26g4`), then lost
   BRAM and LIRA at trip 6 (9,11, a wight and three mummies): reload; p32a4 won trip 6 (`s26g6`); trip 7 (8,8: four
   wights and 16 zombies) drained ARN, BRAM and CEDRIC (6 -> 2): reload.
+- **Gear steps for the plans** (plans.py, on readyall's screens): **`ready <NAME> -<item>, +<item>`** (READY toggles
+  in order), **`trade <FROM> <item>|<TO>`** (TRADE, "TRADE WITH WHOM?" SELECT), **`drop <NAME> <item>`** (DROP IT? YES),
+  **`use <NAME> <item>|<TARGET>`** (a scroll: CHOOSE SPELL: CAST, "CAST SPELL ON WHOM" SELECT). `<item> +<n>` is matched
+  on the record's plus: **an unidentified item shows without it** (p32b12: MACE for DORN's Mace +2, CHAIN MAIL for
+  LIRA's Chain Mail +1). **Seen in the original:** a clerical scroll is USEd from the walking screen's VIEW once it is
+  READY (both hands free: weapon and shield unreadied first; USE on an unreadied scroll does nothing, p32s1); the
+  scroll then reads "WITH 1 SPELL" (p32s4).
+- **The rule's exception, a Restoration scroll** (`OP_RESTORER=<cleric>`): a drain the scroll's Restorations cover
+  (one a level) is restored at once by that cleric (weapon and shield off, the scroll on, one USE a level, then
+  `OP_RESTORER_WEAPON` and the shield back on) and the run goes on; p32d1: BRAM drained a level at trip 7, restored to 6.
+- **The graveyard redo's gear** (`p32/seg26b.plan` after `s26g6`): BRAM readies the council's Two-Handed Sword +1 +3
+  vs undead (he had fought with a Flail +1 and a shield), CEDRIC takes DORN's Mace +2 (a plain mace did nothing to a
+  wight in five rounds, p32b8; tactics.py now spares the drainers for members without a magic weapon), DORN a Long
+  Sword +1, LIRA her Cloak +2 and Chain Mail +1, the Restoration scroll to CEDRIC (spare long bows dropped: full packs).
+  Trip 7 (four wights and zombies at 9,5) lost 17 times (p32a4, b1-b12, c1-c4: every one a drain), then **won in
+  p32d1** with the gear, fighters by hand and one level restored: **`s26g7`**. Trip 8 (9,6, 9,7, 9,1's spectres):
+  p32d1 stopped on a trap's text read as a menu (screens.py fixed), p32d2 drained.
 - **Segments 1-17 replayed in ours on today's main** (lab `p32/all.lst`, `p32/replays.txt`; the 54 runs from the start
   save to `s17door`): **segment 1 parts** (p13a1, 18 differences; was 0 on 8c87c86): DORN's TAKE of 3 gold at the arms
   shop is refused in ours (the start save's load word 0, POOL wraps it; the original takes it): Requests, to Combat;
