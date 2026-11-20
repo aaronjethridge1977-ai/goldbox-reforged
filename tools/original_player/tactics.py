@@ -99,6 +99,23 @@ def _is_undead(f):
 
 
 DRAINERS = ("WIGHT", "WRAITH", "SPECTRE", "VAMPIRE")
+WEAPON_WORDS = ("SWORD", "MACE", "FLAIL", "AXE", "HAMMER", "SPEAR", "DAGGER", "STAFF", "SCIMITAR", "MORNING STAR",
+                "HALBERD", "TRIDENT", "CLUB", "PICK", "LANCE")
+
+
+def _magic_weapon(mem, member):
+    """Player 32: a readied weapon with a plus (the member's item list at record +0xC8, loot.py)."""
+    import loot
+    for (s, o), name, _n, _hp in loot.party(mem):
+        if name == member:
+            r = mem.far(s, o, 0x120)
+            io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
+            for _a, it in loot.chain(mem, iseg, io):
+                i = loot.item(it)
+                if it[52] and i["plus"] > 0 and any(w in i["name"].upper() for w in WEAPON_WORDS):
+                    return True
+            return False
+    return True
 
 
 def _is_drainer(f):
@@ -300,6 +317,15 @@ class Tactics:
         if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
             byn = {f["n"]: f for f in foes}
             cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and d <= 3]
+            try:
+                plain = not _magic_weapon(mem, member)
+            except Exception as e:
+                self.log("TACTICS weapon unreadable: %s" % e)
+                plain = False
+            if plain:
+                # Player 32 (p32b8: CEDRIC's plain mace on a wight, 23 HP for five rounds): the drainers take harm
+                # only from magic (or silver) weapons
+                cand = [c for c in cand if not _is_drainer(c[1])]
             # Player 32: the level drainers next after the helpless (4:10's wights drained three in p32a4)
             cand.sort(key=lambda c: (not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]), c[1]["hp"]))
             self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
