@@ -155,6 +155,32 @@ files); results *seen* unless marked.
   - Results: p25c5 destroyed at 12,15 (a fight, then rests interrupted), p25d2 destroyed at 11,13 (COMBAT on a waving
     band of three fighters); ARN drained to fighter 3. *seen*
 
+**The wilderness bands (6:25, 7:26, 8:27)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:26)
+- **How a band comes:** 1 step in 19 (rests too). Its size is the party's strength (PARTY_STRENGTH) over the kind's
+  weight (kobolds 1; gnolls, stirges, bandits, soldiers, thieves 2; lizard men 3; boars, centaurs, quicklings, giant
+  lizards, hippogriffs 4; displacers, tigers, phase spiders 6; driders, trolls, minotaurs 7; ankhegs, snakes, wyverns 8;
+  mantises, thri-kreen 10), then a third (1 in 5), a half (3 in 5) or all of it (1 in 5), at most 56: a stronger party
+  meets bigger bands (p25a3's 51 kobolds at 7:26 5,21). *code* (ECL6 block 25, ECL7 26, ECL8 27)
+- **The menu:** spotted, FLEE gets away when the party's slowest has the kind's movement (kobolds, lizard men, soldiers
+  6; gnolls, bandits, buccaneers 9; driders, trolls, minotaurs, tigers, mantises, ankhegs, thieves 12; boars, displacers,
+  giant lizards, snakes 15; stirges, centaurs, hippogriffs, thri-kreen 18; wyverns 24; phase spiders 31; quicklings
+  never). **PARLAY:** the manner's value + d30 + the lit member's Charisma bonus (16: 50, 17: 55, 18: 60) must reach
+  100: **6:25 NICE (50), 7:26 ABUSIVE (60)**, both sure with Charisma 16+; **8:27 ABUSIVE (30)**, about 2 in 3 with
+  Charisma 18. Beasts never talk; nomads, merchants and centaurs greet and leave. Surprised by them: no FLEE (fight or
+  talk); the party surprises them: WAIT and they go. *code*
+- **What they're worth:** no magic items (plain gear of 50 gp or less, a few coins); experience per figure (the fight's
+  total is split among the six): 6:25 quicklings 221, boars 157, **giant mantis 2,120**, tigers 453, **thri-kreen
+  1,064** (3 gems each), ankhegs 430, soldiers 46, thieves 14 (their leader 449), buccaneers 14, snakes 260; 7:26
+  kobolds 8, **displacer beasts 715**, **driders 1,163** (7 platinum, 3 gems each; a gem on the pile is 250 more),
+  stirges 46, lizard men 98, bandits 16; 8:27 kobolds 8, gnolls 48, lizard men 98, giant lizards 124, hippogriffs 132,
+  **wyverns 1,345**, **trolls 813**, phase spiders 910, **minotaurs 664**. *code* (MON6-8CHA, MON6-8ITM)
+- **The rule** (*Jeremy*, 17:26): talk to (or flee) the cheap humanoid bands (kobolds, gnolls, lizard men, bandits,
+  soldiers, thieves, buccaneers): a few hundred experience and junk. **Fight the rich kinds** (driders, trolls,
+  minotaurs, thri-kreen, and the beasts that can't be talked to) when the party is rested with its spells; flee them
+  when it isn't and movement allows. The spokesman: the member with the best Charisma, lit before PARLAY.
+- Results (all with COMBAT, the route's old rule): p25a3 destroyed by 51 kobolds at 7:26 5,21, p25l2 destroyed at 7:26
+  12,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen*
+
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
   more), 3 hobgoblin leaders, 12 hobgoblins. *code* Won 3 of 4, every win with deaths (Player 8, from main's bot's save;
