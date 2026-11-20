@@ -1,7 +1,7 @@
 # Gold Box Players' Guide
 
 Tactics for SSI's Gold Box games, in the order you meet them as you play. Pool of Radiance's route, hard fights and
-treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-4 are done;
+treasure are in `docs/strategy/poolrad.md`. Being rewritten by Gold Box Guide 1 (2026-11-20): sections 0-5 are done;
 the old playbook below "Not yet folded in" is still in force until its lines move into the sections.
 
 ## 0. How to read this guide
@@ -403,6 +403,68 @@ round is a minute; "a level" is the caster's level)
 **The game isn't a straight line.** Knock out what you can, move forward, and come back to what's too hard. *Jeremy*
 Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23)
 
+## 5. In a fight
+
+**The line**
+- **Four in front to protect the back; one shooting from the back; the magic-user held in reserve.** *Jeremy*
+- Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps.
+  Spread out against breath weapons and area spells. *book* (Cluebook)
+- Keep archers and dart-throwers out of reach: a missile can't be fired with an enemy adjacent. *book* (Manual)
+
+**Never give the enemy free attacks** (*Jeremy*)
+- Stepping away from or past an adjacent enemy gives it a free blow at your back: never walk weak or wounded members
+  past enemies. *book* (Manual)
+- The enemy gets that blow only if its turn this round is still to come, or it hasn't struck yet, or you step past its
+  front: step away just after it has acted. *code* (GAME.OVR 0x132F8; Combat Chat 34)
+
+**Attacking**
+- **Gang up:** the first two attackers strike a defender's front; the third and later strike its rear, at a much worse
+  AC. Put three or four on the dangerous enemy. *book* (Manual)
+- **Kill the casters first:** enemy mages' Magic Missiles finish wounded members; Hold Person or Stinking Cloud them
+  (section 3). *seen* (Stojanow report)
+- **Finish the helpless before they can act.** A sleeping or held enemy dies to any one blow, so you can keep killing
+  the others until just before it wakes, then finish it. *Jeremy* + *book* + *seen* (Player 30) How long they stay
+  helpless: Sleep 5 rounds a caster level; Hold Person 4 + 1 a level (cleric) or 2 a level (magic-user); Stinking
+  Cloud's nausea d4+1 rounds. *code* (START.EXE spell table; GAME.OVR 0xF6C0)
+- **Backstab** (section 1): a fighter attacks first, then the thief attacks from the square directly opposite (Delay
+  until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8. *book* (Manual, Cluebook)
+- A melee AIM offers only figures next to you, and the aim list runs nearest first. *seen* (Player 31, p31a2/p31b1)
+
+**Missiles**
+- Bows shoot twice a round; extra shots go to the first target, then to another if it dies. *book* (Manual)
+- Shooting into a melee costs nothing and never hits a friend. Beyond a third of the weapon's range the target's AC
+  counts 2 better, beyond two thirds 5. With an enemy adjacent only axes and spears (which also strike in melee) can be
+  thrown. *code* (Combat Chat 32) + *seen* (side chat 2)
+
+**Turns**
+- Initiative is Dexterity plus a random number: high-Dex members act first. *book* (Manual)
+- Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act
+  after the melee settles. *book* (Manual)
+- DONE in a fight opens GUARD DELAY QUIT SPEED EXIT. *seen* (Player 31)
+- QUICK fighters guard when no enemy is in reach, so the first round can be lost while monsters close in. *seen*
+  (Stojanow report)
+- Space during a QUICK member's turn hands every QUICK member back to you; each gets its menu at its next turn. *seen*
+  (Player 30, p30a1)
+
+**Healing in the fight**
+- Keep members conscious: a member who drops may lose the fight's experience (**unconfirmed**), and too big a gap sinks
+  a run (section 3). Bandage the dying (section 6). *Jeremy*
+
+**Undead and drainers**
+- TURN first (section 3). Wights, wraiths, spectres and vampires drain levels, and a drained member can end "DEAD
+  FOREVER". *book* (Cluebook) + *seen* (Players 7, 22) Protection from Evil doesn't stop it. *code* Bring magic
+  weapons where they're needed (section 2); a spectre can't be turned below cleric level 5 (section 3).
+
+**Enemies**
+- Some monsters never run (morale 255). *code* (MON2CHA.DAX; Stojanow report)
+- Some fights' monsters have fixed hit points, so every try faces the same total. *seen* (Stojanow report)
+
+**Fleeing**
+- Fleeing the map works only for a member whose movement is at least the fastest enemy's: unready heavy armour to raise
+  it, and retreat early. *book* (Manual, Cluebook)
+- If the whole party flees, every unconscious or dead member is lost for good. Never flee and leave bodies: bandage the
+  dying, or reload. *book* (Manual)
+
 ---
 
 # Not yet folded in (the old playbook, being moved into the sections above)
@@ -416,16 +478,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 ## From the game's own manual, reference card and cluebook (GOG PDFs; paraphrased, page refs in the Lead's notes)
 
 **Combat rules**
-- Stepping away from or past an adjacent enemy gives it a free attack at your back: never walk weak or wounded members past enemies (Manual).
-- The first two attackers strike a defender's front; the third and later strike its rear, at a much worse AC: gang up three or four on the dangerous enemy (Manual).
-- Backstab: a fighter attacks first, the thief attacks from the square directly opposite (Delay until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8 (Manual, Cluebook).
-- Missiles can't be fired while an enemy is adjacent: keep archers and dart-throwers unengaged (marching order, Guard) (Manual).
-- Bows shoot twice a round; extra attacks go to the first target, then to another if it dies (Manual).
 - If the whole party flees, every unconscious or dead member is lost for good: bandage the dying, or reload; never flee and leave bodies (Manual).
 - Fleeing the map works only if the party's movement is at least the fastest enemy's: unready heavy armour to raise it; retreat early (Manual, Cluebook).
-- Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act after the melee settles (Manual).
-- Initiative is Dex plus a random number: high-Dex members act first (Manual).
-- Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps; spread out against breath and area spells (Cluebook).
 
 **Level drain, petrification, poison, disease**
 - Drainers: wights, wraiths, spectres (Ferran Martinez drains 2 levels a hit), vampires. A Restoration scroll restores one level. Temples don't cure drain; they do cure petrification (stone to flesh), poison (Neutralize) and disease (Cluebook).
@@ -450,12 +504,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - Death rule: a win with a member dead counts as a loss, so reload. Several "wins" in the original were losses by this rule (Players 7, 8, 13; *seen in the original*).
 - 0 HP with status 4 (UNCONSCIOUS) is not a death; status 6 (DEAD) is (Player 8, correction to Player 7; *seen in the original*).
 - Reload with another seed. The same seed and the same keys can replay the same dice and the same loss (Player 14, p14b3/p14b4; *seen in the original*).
-- QUICK fighters guard when no enemy is in reach, so the first round can be lost while monsters close in (Stojanow REPORT; *seen in the original*).
-- Monster morale 255 means the monsters never run (Stojanow REPORT, MON2CHA.DAX; *read in the code*).
-- Monster hit points can be fixed, the record's own value with no roll, so every try faces the same total (Stojanow REPORT; *seen in the original*).
 - A fallen NPC (DIRTEN) is dropped after the fight and his items go into the treasure, where the party can take them back (Player 11; *seen in the original*).
 - Tyranthraxus's fear affects every enemy: levels 0-3 are paralysed and levels 4-5 weakened, whether they save or not (Player 5; *read in the code*, GAME.OVR 0x10705).
-- Spectres and wights drain levels and can leave a member "DEAD FOREVER". Two of c32a's losses were this (Player 7, Player 22; *seen in the original*).
 - A mummy's disease stops all healing until CURE DISEASE at a temple. It killed a member during day rests (Player 25; *seen in the original*).
 
 ## Resting and camping
@@ -513,12 +563,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 ## Added by Player 30
 
-- Space during a QUICK member's turn hands every QUICK party member back to the player; the menu returns at each one's next turn (Player 30, p30a1; *seen in the original*).
 
 ## Added by Player 31
 
-- DONE in a fight opens GUARD DELAY QUIT SPEED EXIT; a melee AIM offers TARGET only for figures within RANGE 1, and the aim
-  list runs nearest first, so a fighter's choice is among its first entries (Player 31, p31a2/p31b1; *seen in the original*).
 
 ## Added by Player 32
 
@@ -527,7 +574,6 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 ## Added by Combat Chat 32
 - The temples sell nine cures, all through one routine: Cure Blindness 1000, Cure Disease 1000, Cure Light Wounds 100, Cure Serious Wounds 350, Cure Critical Wounds 600, Neutralize Poison 1000, Raise Dead 5500, Remove Curse 3500, Stone to Flesh 2000 gold; no Restoration and no Dispel Magic, so a drained level comes back only by a Restoration scroll (GAME.OVR 0x4819-0x4EEB) (Combat Chat 32; *read in the code*; the temple screens *seen in the original* in chat 10).
 - Restore a drained character before it is drained again: each Restoration gives back one level, to the class whose next level costs the least (not the drained one) and the average HP drained; a multi-class drained twice can come back with a level moved to another class (an elf fighter/magic-user 3/2 drained twice came back as magic-user 3, one level still drained) (Combat Chat 5 / 32; *seen in the original*; ours does the same).
-- Shooting into a melee costs nothing and never hits a friend; what stops a shot is an enemy next to the shooter (only axes and spears, which also strike in melee, are used then) and range: beyond a third of the weapon's range the target's AC counts 2 better, beyond two thirds 5 (Combat Chat 32; *read in the code*, the range penalty *seen in the original* in side chat 2).
 - Wights take no harm from a plain weapon: CEDRIC's mace left a wight at 23 HP through five rounds (p32b8). Before the graveyard, give every front-liner a magic weapon (trade them round: DORN's Mace +2 to the cleric) and ready the council's Two-Handed Sword +1 +3 vs undead; with that gear the 4:10 9,5 wights fell with one drain, restored from a scroll (p32d1) after 17 losses without it (Player 32; *seen in the original*).
 
 ## Moved here while folding section 3 (for sections 4, 8 and the lanes appendix)
