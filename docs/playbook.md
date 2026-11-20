@@ -662,3 +662,12 @@ Tool and method notes behind the guide's lines; players can skip this.
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
+
+- *code* (Combat Chat 34): **Sleep and charm by race**: an elf throws them off 90% of the time (effect 0x6B), a half-elf 30% (0x7C); an elf or half-elf rolls that d100 for every effect put on it, but only Sleep and charm can be thrown off (SpecialAffects.blocks; *seen* for the half-elf, Combat Chat 33).
+- *code* (Combat Chat 34): **Casting delays**: a spell whose casting time (spell table byte 12) is 3 or more rounds' worth BEGINS CASTING and goes off at the caster's next turn; any wound before then spoils it (LOST A SPELL, the caster keeps it memorized). Bless (10) and Cure Blindness (10) wait; Hold Person (5) waits one; delays under 3 cast at once (GAME.OVR 0x14C0F).
+- *code* (Combat Chat 34): **Undead and weapons in Pool**: wights are hurt only by magic or silver weapons, wraiths take full damage from magic, half from silver, none from others; a mummy takes half from magic weapons; monsters flagged 0x77 only by magic weapons. Any plus counts: no "+2 or better" rule appears in the code (special_affects.gd, GAME.OVR category 5).
+- *code* (Combat Chat 34): **No experience for the downed**: a fight's experience is divided by the members still standing and given only to them, so an unconscious or dying member at the fight's end gets none (GAME.OVR 0x58A0, 0x58D3).
+- *code* (Combat Chat 34; main chat 26's lab): **Raise Dead costs 1 Constitution** (and, at CON 14 and up, the hit points that came from the old Constitution bonus).
+- *seen* (Combat Chat 34, the spell lab on 2:20 0,14): **Sleep takes the ogres now and then, the trolls never**: 10 casts (4d4 = 7-13), 2 ogres asleep; Hold Person never holds a troll (7 casts); Stinking Cloud sickens ogres and trolls about half the time (23 saves, 13 failed), and the computer never walks into the cloud. Each fight matched ours draw for draw.
+- *seen* (Combat Chat 34): **TURN** with no undead on the field says NOTHING HAPPENS and spends the cleric's TURN for the fight; a level-5 cleric turned both of 4:10's spectres. A QUICK cleric turns by itself, so taking control after its first turn leaves no TURN on the menu.
+- Not answered yet (Combat Chat 34): READY during a fight (whether it uses the turn).
