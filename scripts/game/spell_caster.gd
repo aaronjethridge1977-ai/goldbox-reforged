@@ -80,8 +80,10 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				out.append("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 			return out
 		CURE_DISEASE:
+			# GAME.OVR 0x29347 -> 0x292A2 (chat 75, DOSBox: effect 0x22 alone is lifted too,
+			# "IS CURED"; the mummy's disease and rot: one "IS CURED"; nothing on the healthy).
 			for t in targets:
-				SpecialAffects.cure_disease(t)
+				_cure_292a2(t, out)
 			return out
 		CURE_BLINDNESS:
 			for t in targets:
@@ -128,15 +130,7 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 						t.affects.erase(b)
 				out.append("%s IS CURED" % t.name)
 				return out
-			var cured := false
-			for pair in [[0x22, []], [0x2B, [0x2C, 0x1F]], [0x32, [0x39]]]:
-				if t.has_affect(pair[0]):
-					cured = true
-					out.append("%s IS CURED" % t.name)
-					for b in t.affects.duplicate():
-						if int(b.effect) == pair[0] or int(b.effect) in pair[1]:
-							t.affects.erase(b)
-			if not cured and _heal(t, _roll(rng, 1, 4) + 8):
+			if not _cure_292a2(t, out) and _heal(t, _roll(rng, 1, 4) + 8):
 				out.append("%s IS HEALED" % t.name)
 			return out
 		57:                 # Potion of Speed: haste, unless slowed
@@ -274,6 +268,22 @@ static func pass_time(party: Array, minutes: int) -> PackedStringArray:
 		for a in ending:
 			ended(m, a, out)
 	return out
+
+
+## The cures of GAME.OVR 0x292A2 (Cure Disease's handler 0x29347, and Neutralize Poison's
+## on the unpoisoned): each of effects 0x22, 0x2B (with 0x2C and 0x1F) and 0x32 (with 0x39,
+## the rot) found is named cured (0x2BF6B: "<NAME> IS CURED") and removed with its partners;
+## true if any was found.
+static func _cure_292a2(t: PartyMember, out: PackedStringArray) -> bool:
+	var cured := false
+	for pair in [[0x22, []], [0x2B, [0x2C, 0x1F]], [0x32, [0x39]]]:
+		if t.has_affect(pair[0]):
+			cured = true
+			out.append("%s IS CURED" % t.name)
+			for b in t.affects.duplicate():
+				if int(b.effect) == pair[0] or int(b.effect) in pair[1]:
+					t.affects.erase(b)
+	return cured
 
 
 static func _heal(m: PartyMember, amount: int) -> bool:

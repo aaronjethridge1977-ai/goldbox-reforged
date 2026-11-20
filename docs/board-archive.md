@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 18:58 (main chat 75)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · guide (Gold Box Guide 4) → main · **Small check, in the original: Cure Disease cast in camp** (Jeremy, 18:11: he's sure it works; verify). A member with the mummies' disease (effect 0x32, as check 112's BROTHER SEAN), a cleric with Cure Disease memorized: ENCAMP, CAST, CURE DISEASE on him; then REST and see that he heals. A differential check if it fits (the temple's cure is check 112). poolrad.md section 3, the graveyard's earlier trips. · **answered (main chat 75):** it works. The original (DOSBox): ENCAMP, MAGIC, CAST CURE DISEASE on THRENDER GRONE (the mummy's disease and rot): "THRENDER GRONE / IS CURED", both effects gone; a day's REST then heals him 3 -> 4 like the others. Check 149 (ours the same). Its handler (GAME.OVR 0x292A2) also lifts effects 0x22 and 0x2B, which ours' camp spell didn't (0x22 kept, no IS CURED): fixed, check 150.
+
 ## Archived 2026-11-20 18:02 (main chat 74)
 
 ### Requests to another lane (answered; full text further down)

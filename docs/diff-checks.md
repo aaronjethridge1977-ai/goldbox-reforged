@@ -172,6 +172,25 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix); DIFFCHECKS 150/150
+
+- **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's
+  start (3:0, THRENDER GRONE with the mummy's disease 0x32 and rot 0x39) with THRENDER at 3 HP and BROTHER SEAN given
+  CURE DISEASE in memory (a made-up state: no cleric of this party reaches 3rd-level spells), tpseed 11111111. In the
+  original (DOSBox): ENCAMP, MAGIC, CAST (the list opens on its last line: End wraps to CURE DISEASE), CAST, THRENDER:
+  "THRENDER GRONE / IS CURED", both effects gone from his .SPC; then MAGIC's REST, 24 hours (twelve d100 interruption
+  rolls, none): THRENDER 3 -> 4, as every living member. So the camp spell does cure, and the cured heal on rest as
+  others (a diseased member doesn't: check 148's rule). Ours the same (`SpellCaster` CURE_DISEASE ->
+  `SpecialAffects.cure_disease`): matched at once, 3 of 3; the cure cast on BAKSHI instead differs (THRENDER HP 3).
+- **Check 150, the same spell on effect 0x22 alone** (main path; **a difference, fixed**): check 149's start with
+  THRENDER's 0x32 record made 0x22 and the rot dropped. The original: "THRENDER GRONE / IS CURED", 0x22 gone. Cure
+  Disease's handler is GAME.OVR 0x29347, a wrapper of 0x292A2 (Neutralize Poison's cure on the unpoisoned): each of
+  0x22, 0x2B (with 0x2C, 0x1F) and 0x32 (with 0x39) found is named cured through 0x2BF6B and removed; nothing on the
+  healthy (the spell is spent; no message). Ours' camp spell went through `SpecialAffects.cure_disease` (0x32, 0x39,
+  0x1F, 0x2B, 0x2C, no 0x22, no message): ours kept 0x22. Now `SpellCaster._cure_292a2`, shared with Neutralize
+  Poison: "IS CURED" per cure, as the original. 3 of 3; before the fix and with the cure on BAKSHI it differs. The
+  temple's CURE DISEASE still uses `SpecialAffects.cure_disease` (Combat's; check 144 matches; 0x22 there untested).
+
 ## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 
 - **Check 143, SELL of a readied item** (main path): check 132's start (3:0's arms and armour shop, tpseed 11111111).
