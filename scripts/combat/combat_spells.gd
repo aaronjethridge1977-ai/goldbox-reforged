@@ -494,7 +494,22 @@ func max_picks(id: int) -> int:
 
 func spell_range(i: int, id: int) -> int:
 	var m: PartyMember = c.combatants[i].who
-	return maxi(table.range_for(id, m.caster_level(table, id)), 1)
+	return maxi(table.range_for(id, level_of(m, id)), 1)
+
+
+## DS:0x6DBF: an item is in use (GAME.OVR 0x22B21 / 0x22BFC set it before the cast routine 0x27C38, the aim
+## and the effect, and 0x22C1C clears it after). While it is set the caster's level is 6 for any cleric or
+## magic-user spell (START.EXE 0xBA:0x26C2), the range's too (0x27741): a scroll, wand or potion casts at
+## level 6 whoever uses it (main chat 79, checks 179/180 in camp: LIRA at magic-user 1 and 8, Protection
+## from Good 12 minutes both times; ours took the reader's own level in a fight).
+var item_in_use := false
+
+
+## The level a spell is cast at (START.EXE 0xBA:0x26C2): the caster's, or 6 with an item in use.
+func level_of(m: PartyMember, id: int) -> int:
+	if item_in_use and table.spell_class(id) in [SpellTable.CLERIC, SpellTable.MAGE]:
+		return 6
+	return m.caster_level(table, id)
 
 
 ## Why combatant i can't aim spell `id` at `cell` ("" if it can).
@@ -615,6 +630,7 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 		return
 	if item != null:
 		CharacterSheet.spend_use(m, item, id)
+		item_in_use = true      # the effect at level 6 (0x22BFC); cleared at the end of cast()
 	else:
 		m.forget(id)
 	reveal(m)
@@ -622,6 +638,7 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 	me.attacks = 0
 	if m.has_affect(EFFECT_SILENCED) and item == null:
 		c.message.emit("%s IS SILENCED" % m.name)
+		item_in_use = false
 		return
 	if not announced:
 		c.message.emit(("%s USES %s" % [m.name, item.name.to_upper()]) if item != null else "%s CASTS A SPELL" % m.name)
@@ -643,6 +660,7 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 	spell_cast.emit(i, id, cell, targets)
 	_cast_cell = cell
 	_resolve(i, id, targets)
+	item_in_use = false      # 0x22C1C
 
 
 var _cast_cell := Vector2i.ZERO      # the aim point of the spell being resolved
@@ -650,7 +668,7 @@ var _cast_cell := Vector2i.ZERO      # the aim point of the spell being resolved
 
 func _resolve(i: int, id: int, targets: Array[int]) -> void:
 	_resolving = id
-	_resolving_caster = (c.combatants[i].who as PartyMember).caster_level(table, id)
+	_resolving_caster = level_of(c.combatants[i].who as PartyMember, id)
 	_resolve_spell(i, id, targets)
 	_resolving = 0
 	_resolving_caster = -1
@@ -659,7 +677,7 @@ func _resolve(i: int, id: int, targets: Array[int]) -> void:
 func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	var lvl := m.caster_level(table, id)
+	var lvl := level_of(m, id)
 	# A wand of paralyzation's target saves before its 5d4 rounds are rolled, and they are
 	# rolled saved or not (lab, Combat Chat 2: Yarash's wand in 7:23, d20 then 5d4, 13 times).
 	var saved := {}
@@ -1176,7 +1194,9 @@ func ai_use_item(i: int, tries: int) -> bool:
 		return false
 	if OS.get_environment("APDBG") != "":
 		print("APDBG %s uses item %s spell %d" % [m.name, chosen.name, chosen_id])
+	item_in_use = true       # the aim with the item in use (0x22BFC): its range at level 6
 	var plan := _ai_plan(i, chosen_id, true)
+	item_in_use = false
 	if plan.is_empty():
 		me.moves = 0
 		me.attacks = 0
