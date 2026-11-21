@@ -622,3 +622,14 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   So the party dies to three breaths, not to blows. *seen* Open: does his breath's damage follow his current HP (the
   AD&D dragon rule: hurt him first and it shrinks) and how often he breathes: one reading of GAME.OVR (Combat); the
   nameless 239-HP 2x2 figure did not show on screen in the video's part. This video too starts ~130 s late.
+- **Jeremy's notes on p41g1/p41d4 (2026-11-21 13:50; Gold Box Guide 9): "This fight is extremely easy with the
+  current setup."** *Jeremy*
+  - **Plan 5 (his way; replaces Plan 4's round-1 detail, the flight for Tyranthraxus kept):** the clerics Hold
+    Person everyone (they carry enough casts for all twelve: three guards a cast); the magic-users Stinking Cloud
+    the ones not held; the fighters fight the ones not helpless while the others kill the helpless. A fallback would
+    be easy but is probably unnecessary.
+  - **The tool's faults he saw:** the Fireball aimed so it burnt our own (aim so no ally is in it); LIRA cast in
+    contact (step back first, or don't cast there); aiming by NEXT/PREV scans (use MANUAL and go straight to the
+    cell wanted); the second Stinking Cloud overlapped the first (place it beside, covering two more cells);
+    CEDRIC's book (three Blesses, two Cure Light Wounds): **spell loadouts to be discussed thoroughly with Jeremy.**
+  - Jeremy will play the fight himself from `p40c1_s40hall` to show how.
