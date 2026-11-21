@@ -557,8 +557,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Sokal Keep rest fights, 4:21 15,1**: four interruptions in five rests (undead), and four camps ended with a death (Player 15). The plan dropped the camp.
-- **Sokal Keep huge scorpions, 4:21 2,11** [39 x2]: won 4 of 4, 3 with nobody dead (Player 9).
 - **Valjevo, 5:4 9,1** [56 x4].
   - Won 2 of 2 from c33b's save, one with nobody dead (Player 8).
   - Player 28 (the original's 6 members, 260 HP; the bot's 7 had 318): four FIRE GIANTS (the bot's log), **1 deathless win in 12**
