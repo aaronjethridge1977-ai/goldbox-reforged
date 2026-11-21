@@ -202,8 +202,16 @@ class Player:
             self.note("loss", "the party was destroyed at %d,%d %s" % self.where())
             raise Stop("the party was destroyed (a loss: reload from the last checkpoint)")
         k, why = self.plan.answer(scr, st, self)
+        if k is None and scr["kind"] == "hmenu" and self.tactics.on and getattr(self, "blank_polls", 0) < 10:
+            # Player 39 (p39b1, p39b3: the throne room, a hasted member's blow, then a menu no rule took; the AIM was
+            # on screen a moment later): an unanswered menu in a tactics fight is polled again (10 times, 0.3 s apart)
+            self.blank_polls = getattr(self, "blank_polls", 0) + 1
+            self.log("NOTE no rule for the menu %r: polled again (%d)" % (st["bottom"], self.blank_polls))
+            time.sleep(0.3)
+            return True
+        self.blank_polls = 0
         if k is None:
-            raise Stop("no rule for screen %s: %s" % (scr["kind"], scr.get("text", st["bottom"])))
+            raise Stop("no rule for screen %s: %s (bottom %r)" % (scr["kind"], scr.get("text", st["bottom"]), st["bottom"]))
         for kk in (k if isinstance(k, list) else [k]):
             self.key(kk, why)
         return True

@@ -161,7 +161,11 @@ DIRS = (("up", 0, -1), ("pgup", 1, -1), ("right", 1, 0), ("pgdn", 1, 1), ("down"
 
 # Player 33: a camp's Bless (effect 1) or Prayer (49, on its caster) still standing (ours' combat_spells.gd
 # EFFECT_BLESS, EFFECT_PRAYER) is not cast again
-STANDING = {"BLESS": 1, "PRAYER": 49}
+STANDING = {"BLESS": 1, "PRAYER": 49, "HASTE": 39}
+# Player 39 (the Lead's answer, 2026-11-21: the throne room with Haste): HASTE first of all while no member is hasted,
+# once a fight, aimed at the party member with the most `advance` fighters within 2 squares (the spell takes up to
+# the caster's level of figures within 2 of its point: ours' combat_spells.gd); never at an enemy
+ONCE = ("PRAYER", "BLESS", "HASTE")
 
 
 # Player 36: the kobold throne room's Plan 1 (Gold Box Guide 2): `focus TROLL[,...]|none` (plans.py): every blow, arrow and
@@ -276,10 +280,11 @@ class Tactics:
             # Player 36 (the throne room's Plan 1): Stinking Cloud on the focus kind first while one stands unhurt
             # Player 37 (p37n2: LIRA's Fireball came on her third turn, after two clouds): Fireball before the cloud
             prio = ("FIREBALL", "STINKING CLOUD") + tuple(s for s in prio if s not in ("FIREBALL", "STINKING CLOUD"))
+        prio = ("HASTE",) + tuple(s for s in prio if s != "HASTE")
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
-            if spell in ("PRAYER", "BLESS") and self.cast.get(spell):
+            if spell in ONCE and self.cast.get(spell):
                 continue           # once a fight
             if spell in STANDING and any(STANDING[spell] in f.get("fx", ()) for f in party if _up(f)):
                 continue           # Player 33 (p33c1: Bless cast again after the camp's): already on the party
@@ -291,10 +296,26 @@ class Tactics:
                 return spell
         return None
 
+    def _haste_points(self, party):
+        """Player 39: party figures to aim Haste at, the one with most advance fighters (then members) within 2 first."""
+        up = [f for f in party if _up(f)]
+        fighters = [f for f in up if f["name"].upper() in ADVANCE]
+        if not fighters:
+            return []
+        best = []
+        for f in up:
+            k = sum(1 for g in fighters if _dist(f, g) <= 2)
+            m = sum(1 for g in up if _dist(f, g) <= 2)
+            if k:
+                best.append((-k, -m, f["n"]))
+        return [b[-1] for b in sorted(best)]
+
     def targets(self, spell, me, party, foes):
         """Figures to aim at, best first ([] none worth it; None: on the caster)."""
         if spell in ("PRAYER", "BLESS"):
             return None
+        if spell == "HASTE":
+            return self._haste_points(party)
         if spell == "CURE LIGHT WOUNDS":   # Player 38: the most hurt members first (touch: the scan finds who is near)
             return [f["n"] for f in sorted(_hurt(party), key=lambda f: f["hp"] - f["max"])]
         mages = sorted([f for f in foes if _is_mage(f)], key=lambda f: f["hp"])
@@ -382,6 +403,23 @@ class Tactics:
             self.order, self.far, self.scan = [self.shot, "ATTACK", 0], True, None
             self.shot = None
             self.log("TACTICS %s's second shot" % self.order[0])
+        if b.startswith("AIM:") and not self.order and not getattr(self, "blow", None) and not getattr(self, "shot", None) \
+                and not getattr(self, "scroll_aim", None) and "SPELL:" not in st["rows"][23]:
+            # Player 39 (p39b3: an AIM with no order after DORN's blow; the tool stopped): the attacker is the aim
+            # list's first figure (the caster's / attacker's own entry): his blow
+            try:
+                lst, _ = aim_list(p.g.mem)
+                me = next((f for f in figures(p.g.mem) if lst and f["n"] == lst[0]), None)
+                if me and me["n"] <= self.party_n:
+                    self.blow = me["name"]
+            except Exception as e:
+                self.log("TACTICS an AIM with no order, unreadable: %s" % e)
+        if b.startswith("AIM:") and not self.order and getattr(self, "blow", None) and "SPELL:" not in st["rows"][23]:
+            # Player 39 (p39b1: hasted ELWEN's AIM came back after her blow and the tool stopped): a hasted member's
+            # second blow, as the bow's second shot
+            self.order, self.far, self.scan = [self.blow, "ATTACK", 0], False, None
+            self.blow = None
+            self.log("TACTICS %s's second blow" % self.order[0])
         if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK":
             if getattr(self, "far", False):
                 return self._aim_shoot(st, p)
@@ -422,6 +460,7 @@ class Tactics:
         self.order = None
         self.scan = None
         self.shot = None
+        self.blow = None
         self.scroll_aim = None
         try:
             figs, party, foes = self._sides(p)
@@ -433,6 +472,9 @@ class Tactics:
             me = next((f for f in party if f["name"] == member), None)
             if me:
                 self.log("TACTICS %s at %d,%d/%d" % (member, me["x"], me["y"], me["fp"]))
+            if self.cast.get("HASTE"):
+                # Player 39: who carries Haste (effect 39) since it was cast
+                self.log("TACTICS hasted: %s" % (", ".join(f["name"] for f in party if 39 in f.get("fx", ())) or "none"))
             if not getattr(self, "fx_logged", False):
                 # Player 33: the party's standing effects at the fight's first menu (a camp's Bless, Prayer...)
                 self.fx_logged = True
@@ -475,6 +517,13 @@ class Tactics:
                 return "t", "tactics: %s TURNs undead" % member
         self.use = None
         left = SCROLLS.get(member.upper())
+        if "CAST" in items and left:
+            # Player 39: a memorized Haste goes before the readied scroll's spell (round 1, the Lead's answer)
+            o = self.choose(member, p)
+            if o == "HASTE":
+                self.order = [member, o, 0]
+                self.scan = None
+                return "c", "tactics: %s casts %s (before the scroll)" % (member, o)
         if left and "USE" in items and member not in self.use_off and (member, left[0]) not in self.refused:
             try:
                 figs, party, foes = self._sides(p)
@@ -748,6 +797,8 @@ class Tactics:
             self.order = None
             self.reach[member] = "hit"
             self.idle[member] = 0
+            if not getattr(self, "far", False):
+                self.blow = member      # Player 39: AIM back at once = a second blow (Haste)
             return "t", "tactics: %s attacks figure %d (%s)" % (member, f["n"], why)
         sc["pos"] = (at + 1) % max(n_ent, 1)
         return "n", "tactics: to figure %d (aim entry %d, at %d)" % (f["n"], i, at)
@@ -863,7 +914,7 @@ class Tactics:
             if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
                 t = [caster] + [f["n"] for f in party if f["n"] != caster]
             near = [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))] if me else [f["n"] for f in foes]
-            if spell not in ("PRAYER", "BLESS"):
+            if spell not in ("PRAYER", "BLESS", "HASTE"):
                 # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]
@@ -906,9 +957,14 @@ class Tactics:
     def _aimed(self, st, lst, at, figs):
         """The figure aimed at: the aim list's entry DS:0xBEFD - 1; when that is out of the list (p30b2, p30c1: a
         begun spell's aim at a later turn) the right panel's name and HITPOINTS, if one figure only matches."""
+        name = st["rows"][1].strip("? ").strip()
+        # Player 39 (p39a1: LIRA's begun Haste at her next turn: the aim index stayed on figure 40 through all 53 NEXTs
+        # and no party member was ever seen): a party member's name on the panel is unique, so it comes first
+        pm = [f["n"] for f in figs if f["n"] <= self.party_n and f["name"] == name]
+        if len(pm) == 1:
+            return pm[0]
         if 0 <= at < len(lst):
             return lst[at]
-        name = st["rows"][1].strip("? ").strip()
         hp = st["rows"][3].strip("? ").split()
         hp = int(hp[-1]) if hp and hp[-1].isdigit() else None
         m = [f["n"] for f in figs if f["name"] == name and (hp is None or f["hp"] == hp)]
