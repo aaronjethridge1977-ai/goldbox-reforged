@@ -172,6 +172,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 87 (5): chat 86's three differences fixed (Combat Chat 39, 72d52ba): checks 250, 252, 253, 256-258 and 271 join the gate
+
+Each 3 of 3 on origin/main after the fix; the full gate DIFFCHECKS 273/273.
+
+## Chat 87 (4): the REST time after EXIT, the adventure menu's VIEW (checks 272-274)
+
+Main path, coverage (no difference), each 3 of 3 and failing on a broken copy. **REST left by EXIT (272):** the time
+set (00:00:10) isn't kept: REST opens at 00:00:00 again; MINS, INC, REST rests 5 minutes. **The adventure menu's VIEW
+(outside camp; no check had it):** the same words as the camp's: DROP of the unreadied sword (273), TRADE of the
+shield to BRAM (274).
+
 ## Chat 87 (3): the shop's BUY list reopened after NEXT and EXIT, the shop's VIEW without money (checks 270, 271; 271 a difference)
 
 **The arms shop's BUY left by EXIT on page 2 (270, coverage, matched 3 of 3):** BUY opens on page 1 with the first
