@@ -32,6 +32,11 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   fights without the HP, spells or items to match. *book* (Cluebook)
 - Check the game's training caps before choosing classes. Where the caps are low, multi-class demi-humans give up almost
   nothing. (Pool) Fighter 8, thief 9, cleric 6, magic-user 6. *book* (Manual)
+  (Silver Blades) Every human class 15, thieves 18 in every race; the demi-human limits are Curse's (below). *book*
+  (Silver Blades Journal p.47; strategy/silver-blades.md section 1)
+- (Silver Blades) **New characters start at level 8** (magic-users 9, thieves 10); a demi-human whose limit is lower
+  starts at its limit and never trains. A new party arrives about as strong as an imported one. *book* (Silver Blades
+  Journal p.5)
 - (Pool) Four classes only: cleric, fighter, magic-user, thief; no paladins or rangers, and no dual-classing (both come
   with Curse of the Azure Bonds). *book* (Pool Manual) + *players* ([GameBanshee, Curse party creation](https://www.gamebanshee.com/curseoftheazurebonds/walkthrough/partycreation.php))
 
@@ -52,6 +57,8 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   fighter 6/5/4; thieves, humans and half-orcs only by the XP table's top (thief 12, human cleric 10, fighter 12,
   paladin and ranger 11, magic-user 11). A capped class isn't offered ("Not Enough Experience" if nothing else can
   train). *code* + *book* (Curse GAME.OVR 0x24DDE-0x24F5B; Manual p.23; main chat 72)
+  (Silver Blades) The printed limits are Curse's for every demi-human; only the top changes: humans 15 in every class,
+  thieves 18. Whether its hall enforces them as printed: **unconfirmed** (request). *book* (Silver Blades Journal p.47)
 - (Pool) Who may multi-class: dwarf, gnome and halfling fighter/thief; elf F/MU, F/T, MU/T, F/MU/T; half-elf as the elf
   and also with cleric. Humans are single-class. *book* (Pool Manual p.5)
 - **Elves throw off Sleep and charm 90% of the time, half-elves 30%.** An elf or half-elf rolls that d100 for every
@@ -62,6 +69,9 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   Change Class" at a hall: the old class stops, the new starts at level 1, both classes' abilities once the new level
   passes the old); **paladins** (human, lawful good, Cha 17+) and **rangers** (human or half-elf, good) are new.
   *book* (Curse Manual pp.4-8, 23; strategy/curse.md section 1)
+- (Silver Blades) Curse's races, classes and multi-classes unchanged. The 10% XP bonus needs **16** in the prime
+  requisite (paladins Strength and Wisdom, rangers Strength, Intelligence and Wisdom); Curse's manual said 15. *book*
+  (Silver Blades Journal pp.3-4)
 - **unconfirmed** (tabletop rules; requests to the lanes): dwarves and halflings get save bonuses from Constitution.
 
 **Each member's job**
@@ -93,6 +103,10 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 - **Before importing into Curse:** items stay behind (money becomes 300 platinum each); give every demi-human fighter
   18 Strength (two fighter levels in Curse); a human's 17 in a second class's prime requisite keeps a later dual-class
   open; have at least one woman (Hap's Swanmays). *book* + *players* (strategy/curse.md section 1)
+- **Before importing into Silver Blades:** it takes characters from Curse only (Pool's come through Curse); items and
+  money stay behind, the party arrives with nothing and the town gives it gear. Humans have room to grow (15; thieves
+  18); demi-humans keep Curse's limits, and new characters start at 8, so a demi-human already at its limit gains
+  nothing by import. *book* + *players* (strategy/silver-blades.md section 1)
 - **Before importing:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter caps
   differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual) Players report the racial limits still
   hold in Pools of Darkness while humans go far higher, which makes demi-humans weak there. *players*
@@ -265,6 +279,9 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 | 2nd | 3 | 3 | Hold Person (cleric), Spiritual Hammer; Stinking Cloud, Mirror Image |
 | 3rd | 5 | 5 | Prayer, Dispel Magic; Fireball, Lightning Bolt, Haste, Slow, Hold Person (magic-user) |
 | 4th+ | 7 | 7 | beyond Pool's caps (cleric 6, magic-user 6): Curse of the Azure Bonds on |
+
+(Silver Blades) Higher spell levels: cleric 6th at level 11 (only with Wisdom 17+); magic-user 6th at 12 (Intelligence
+12+) and 7th at 14 (Intelligence 14+); rangers' druid 2nd at 12. *book* (Silver Blades Journal pp.55-57)
 
 A multi-class casts by its level in that class: a fighter 5 / magic-user 4 has second-level spells, not Fireball.
 (Pool) A scroll's spell above the magic-user's level can be cast from the scroll (at level 6) but not copied into the
@@ -689,6 +706,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 2. Rest to memorize more and cast them.
 3. Repeat until everyone is full, then memorize the fighting spells.
 In ours, SETTINGS REST REMEMORIZES saves the menu steps.
+(Silver Blades) FIX does the loop in one command, but with Cure Light Wounds only, and heals no diseased member until
+Cure Disease is cast (Curse's cluebook: FIX casts all cure spells). Which spells it uses: **unconfirmed** (request).
+*book* (Silver Blades Manual p.8)
 
 **Where to rest**
 - **When a rest is interrupted, go to the inn instead of camping again.** *seen* (Player 14, p14b3)
@@ -764,6 +784,9 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
   main chat 66)
 - The fee comes out of the member's coins. Change was seen given in gold, not platinum (Player 3), and in silver (main
   labs, chats 8 and 10): *seen*; which coins and when: **unconfirmed** (request).
+- (Silver Blades) **Training is free,** and so is the temple's healing; identifying an item costs 100 gp (Curse 200). A
+  member with XP for two levels trains one and keeps one point short of the next; whether Pool and Curse do the same: **unconfirmed**.
+  *book* (Silver Blades Manual pp.4, 10; Journal p.5)
 - A multi-class trains in the hall's class when that class is ready, even if a slower class isn't. *seen* (Player 3)
 - (Pool) **Hit points gained at training:** one roll of the trained class's hit die (at least two-thirds of the die at
   level 1), plus the Constitution bonus, divided by the member's number of classes, at least 1. A multi-class training
