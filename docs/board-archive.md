@@ -2,6 +2,17 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 13:39 (Gold Box Lead)
+
+### Rule changes
+
+- 2026-11-20 · combat (Combat Chat 37) · **A caster whose slow spell a wound spoils keeps its movement for its later turn (GAME.OVR 0x14CFE: BEGINS CASTING ends no turn; was: 0 moves, it guarded); a tiger rakes only on two claw hits in one attack call (the bite doesn't count, 0x13EED; was: any two hits that turn), and a target felled by the rake sends it to a new target pick (0x15FDF)** · fights with slow spells cast and hit; tigers (6:25's band).
+- 2026-11-20 · combat (Combat Chat 37) · **An item's cleric or magic-user spell in a fight (a scroll, a Wand of Magic Missiles or of Fireball) is cast at level 6 (the item-only spells 57-67 at 12, main chat 80): range, durations, damage dice and magic resistance's caster level (DS:0x6DBF, START.EXE 0xBA:0x26C2; was: a cleric's or magic-user's own level); a scroll's USE spends through 0x2A2A2 (the last slot holding the spell, byte 48 down, gone below 210); the money TRADE refuses what the receiver can't carry (0x250D5); SCRIBE lists in record order** · item use by casters in fights; scrolls; TRADE of heavy coin.
+- 2026-11-20 · combat (Combat Chat 36) · **The temple's CURE DISEASE: offered for and lifting effects 0x1F 0x22 0x2B 0x2C 0x32 0x39 (GAME.OVR 0x4864, DS:0x114; was without 0x22, offered only for the disease); a camp spell on a member that says nothing (CLW at full HP, Cure Disease on the healthy) shows no line** (main chat 75) · temples; camp casting.
+- 2026-11-20 · combat (Combat Chat 36) · **APPRAISE as the original (main chat 74): at the temple too (was nothing); KEEP only when one more coin fits and under 16 items (else SELL alone, K sells); SELL pays through 0x24E8C (an overloaded seller gets the room, the rest goes on the pile: "OVERLOADED.  MONEY WILL BE PUT IN POOL."; was all to the seller)**; camp ORDER's PLACE clears the message area · shops and temples with gems or jewellery; main's ready check tapp.
+- 2026-11-20 · combat (Combat Chat 36) · **Lightning Bolt bounces off walls as the original's** (GAME.OVR 0x29BCF: the aim square, then the breath's bolt walk 0x29973, 8 squares' worth, each wall turning it back; the first bounce spends 4 squares more when the caster is within 4 of the wall; anyone on the path, the caster too, saves for half; was: stopped at the first wall) · any Lightning Bolt (spell, Wand of Lightning Bolt) near walls; the spell lab's lb1/lb2 match (regress).
+- 2026-11-20 · combat (Combat Chat 36) · **With SETTINGS ORIGINAL'S BUGS off (the default in play): magic resistance by the rule book (#7, the Lead's rule (c): the base + 5% per caster level under 11, - 5% per level over, 0-100%; Tyranthraxus' 15% against an 11th-level caster, 45% against a 5th; was: resists every spell); Restoration gives the level back to the class the last drain took (#8; ours' quick saves keep the drained classes)** · on in every lab run, so no check or replay changes.
+
 ## Archived 2026-11-21 13:20 (Gold Box Sources 1)
 
 ### Rule changes
