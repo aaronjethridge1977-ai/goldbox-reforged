@@ -172,6 +172,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 89: Enter and Left / Right at the temple's and the shop's menus, the shop's SELL NO (checks 284-287; two differences)
+
+Main path, each against the original in DOSBox (3:0's temple and arms and armour shop), 3 of 3 and failing on a broken
+copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter at IS IT A DEAL? (NO lit: nothing), NO
+(the item menu with READY lit and the item still lit), EXIT x3: nothing sold.
+
+**Differences (ready diffs to Combat, lab `data/c89/`; checks 284-286 wait for them):**
+- **The temple's menu takes only its letters** (`temple_letters.diff`, temple_screen.gd; the Lead's answer to main chat 88,
+  Q24 extended): Enter and Left / Right do nothing (ours moved the light and took the lit word). Check 284: Right, Enter,
+  EXIT leaves the temple in the original; ours opened VIEW.
+- **The shop's menu the same, and its BUY list keeps the light on Left / Right** (`shop_letters.diff`, shop_screen.gd):
+  the original's shop menu ignores Enter, Left and Right; its BUY list (ITEMS: BUY NEXT PREV EXIT) takes Enter for the
+  lit word (BUY) but Right doesn't move the light. Check 285: Enter, BUY, EXIT, EXIT buys nothing in the original (ours
+  opened the list and bought); 286: BUY, Right, Enter buys a hand axe in the original (ours paged with NEXT).
+
 ## Chat 88: the training hall's TRAIN NO, DROP and REMOVE, the inn's STAY NO, camp SAVE's Esc, the temple's VIEW and TAKE EXIT (checks 275-283; three differences)
 
 Main path, each against the original in DOSBox, 3 of 3 and failing on a broken copy. **Matched, in the gate (DIFFCHECKS
