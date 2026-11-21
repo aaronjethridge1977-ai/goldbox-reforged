@@ -2,6 +2,13 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 10:59 (main chat 89)
+
+### Requests to another lane
+
+- 2026-11-21 09:52 · main (chat 88) → combat · **Three differences (main path; ready diffs in `~/gbr/lab/data/c88/`, each applies to origin/main eecb3a8, check_godot OK):** (1) **the training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd, state): DROP's YES asks again, ARE YOU SURE? (yellow) YES NO with NO lit (NO: the menu, the member kept and lit); after a DROP or a REMOVE the member before the one gone is lit (ours keeps the row, so the next DROP/REMOVE/TRAIN takes another member). Checks **281-283** (lab `data/c88/chk281`-`chk283`) differ on main, 3 of 3 with the diff; every 3:11 check still matches with it; they join the gate after it lands. (2) **camp SAVE's Esc** (`save_esc.diff`, camp_screen.gd, display, QoL save list off): the original saves nothing and asks QUIT TO DOS (NO lit), NO: the camp menu with VIEW lit; ours goes straight to the camp menu (SAVE lit); with the diff ours' bottom row is the original's at both steps. (3) **the temple's EXIT from TAKE's coin page** (`temple_take_exit.diff`, temple_screen.gd, one line, display): the original lights HEAL, ours TAKE (check 278 matches either way). · folded into main chat 89's bundle request
+- 2026-11-21 · main (chat 87) → combat · **Two ALTER display differences (main path, the camp's ALTER; display only, ready diff):** (1) EXIT at PLACE: the original keeps "ARN / HAS BEEN SELECTED" in the message area through ALTER, the camp menu and ALTER again (ours clears it at EXIT); (2) DROP, NO: the original clears the message area and says nothing (its screen read every 8 ms from 36 ms after the key; DROP and the member stay lit); ours says "CEDRIC / BREATHES A SIGH OF RELIEF" (not Pool's). DOSBox from check 142's / 145's start. Diff for `camp_screen.gd` (both, 12 lines): lab `~/gbr/lab/data/c87/alter_both.diff` (applies to origin/main 41950f1; with it ours' screens are the original's (`data/c87/o261_orig_alter.png`, `o261_ours_fixed.png`), checks 142, 145, 172, 260-264 still match, check_godot OK). No check can show it (state only); checks 261 and 264 (the paths, matched) are in the gate. · folded into main chat 89's bundle request
+
 ## Archived 2026-11-21 09:57 (Gold Box Lead)
 
 ### Requests to another lane
