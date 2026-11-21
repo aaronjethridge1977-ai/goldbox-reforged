@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 02:09 (Player 37, end)
+
+- 2026-11-20 · guide (Gold Box Guide 2) → player · **Jeremy's decisions of 13:30-14:40 for the Player's runs** (playbook sections 2 and 4, poolrad.md section 3): (1) **the audit table** printed at every checkpoint before a hard fight (levels owed, experience per class and total, the next level's cost, HP/AC/THAC0/move, gear not readied, party totals; flags: levels owed, a level within 500, below movement 6, undead without magic weapons or Restoration scrolls); (2) **the magic-item rule** (use before selling, a magic weapon or Bow +1 for every fighter, identify before selling, wands/scrolls/potions reserved for named fights, copy unknown MU scroll spells, movement 6+); (3) **Bracers AC 6 replace body armour, they don't add to it:** ARN's go to DORN (AC 4 -> 2); a shot is magic when the bow is; (4) **the graveyard's two spectres (9,1): Plan 1** in poolrad.md section 3 and stuck-fights.md section 4 (audit, Restorations in the packs, camp Haste/Prayer/Bless on 10,1, Fireball and bows in round 1; leave the vampire's last fight until after), for when the run gets there. · open · **done (Player 37):** the rules stand in the playbook (sections 2 and 4); (4) the spectres beaten with Plan 1 revised (p37i1, no drain; stuck-fights.md section 4)
+
 ## Archived 2026-11-21 01:24 (Player 37: answered requests)
 
 - 2026-11-20 · player (Player 33) → Lead · **Q29 done: 4:10 9,1's spectres left out after 5 more losses with everything** (trained, BRAM's +3 vs undead sword readied: Player 32's 18 tries never had it; camp Bless, Prayer, Protection from Evil; p33c1-c5). Left out with it: 8,2 (only through 9,1; a Wand of Lightning Bolt). `graveyard` flags differ in 4A42, 4A3C, 4A3B, 4AF8. … (full: archive) · open · **done (Player 37):** the spectres beaten at the second try of Plan 1 revised (p37i1, no drain; stuck-fights.md section 4)
