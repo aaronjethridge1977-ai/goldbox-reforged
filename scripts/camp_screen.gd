@@ -120,6 +120,9 @@ var _cursor := 0
 var _top := 0                      # the list's first row on the screen (a page, or the last page's overlap)
 var _cast_id := 0
 var _caster: PartyMember = null    # while choosing whom a spell is cast on
+## CAST SPELL ON WHOM starts on the last target picked since MAGIC was opened (chat 83, DOSBox: LIRA's ENLARGE on
+## CEDRIC, then REDUCE: the light starts on CEDRIC; the camp menu after EXIT has LIRA lit).
+var _last_target: PartyMember = null
 var _rng2 := RandomNumberGenerator.new()
 var _hour_steps := 0
 var _ordering := -1                # ORDER: the member being moved, or -1
@@ -157,6 +160,7 @@ func _init() -> void:
 
 func open(party: Array[PartyMember], period: int, percent: int) -> void:
 	_party = party
+	_last_target = null
 	_period = period
 	_percent = percent
 	_rest_steps = 0
@@ -652,8 +656,12 @@ func _list_menu() -> Array:
 	var items: Array = [{"memorize": "MEMORIZE", "cast": "CAST", "scribe": "SCRIBE"}[_list_kind]]
 	if _top + _page_rows() < _list.size():
 		items.append("NEXT")
-	if _top > 0:
-		items.append("PREV")
+	# PREV only with a spell above the page (chat 83, DOSBox: ELWEN's list at top 1, only "1ST LEVEL" above:
+	# MEMORIZE NEXT EXIT; CEDRIC's at top 5: PREV).
+	for i in mini(_top, _list.size()):
+		if _list[i][1] != 0:
+			items.append("PREV")
+			break
 	items.append("EXIT")
 	return items
 
@@ -1079,7 +1087,9 @@ func _open_pending() -> void:
 
 ## NEXT / PREV as the shop's list (Combat Chat 15) and the original's (Combat Chat 16, Player 15's p13a1 at the
 ## inn: ELWEN with BLESS lit on row 1, NEXT, nine Ends light SLEEP): the last page shows the list's last rows
-## (overlapping the one before) and the light keeps its screen row; on a level's heading it goes to the next spell.
+## (overlapping the one before) and the light keeps its screen row; on a level's heading NEXT goes on to the spell
+## below it and PREV back to the spell above it (chat 83, DOSBox: ELWEN's ANIMATE DEAD, PREV: the light on SLEEP
+## above "2ND LEVEL"; CEDRIC's CAUSE BLINDNESS, PREV: RESIST COLD above it; p36h1's 7:17 MEMORIZE).
 func _turn_page(step: int) -> void:
 	var rows := _page_rows()
 	var row := _cursor - _top
@@ -1090,10 +1100,13 @@ func _turn_page(step: int) -> void:
 	_cursor = clampi(_top + row, 0, maxi(_list.size() - 1, 0))
 	if not _list.is_empty() and _list[_cursor][1] == 0:
 		var i := _cursor
-		while i < mini(_top + rows, _list.size()) and _list[i][1] == 0:
-			i += 1
-		if i < _list.size() and _list[i][1] != 0:
-			_cursor = i
+		while i >= 0 and i < _list.size() and _list[i][1] == 0:
+			i += 1 if step > 0 else -1
+		if i < 0 or i >= _list.size():
+			i = _cursor
+			while i < _list.size() - 1 and _list[i][1] == 0:
+				i += 1
+		_cursor = i
 	_refresh()
 
 
@@ -1147,6 +1160,8 @@ func _choose() -> void:
 		elif SpellCaster.needs_member(spells, id):
 			_mode = "whom"
 			_pick = 0
+			if _last_target != null and _party.has(_last_target):
+				_sel = _party.find(_last_target)
 			_lines = []
 			_refresh()
 		else:
@@ -1155,6 +1170,8 @@ func _choose() -> void:
 
 func _cast(target: PartyMember) -> void:
 	var on_member := _mode == "whom"
+	if on_member:
+		_last_target = target
 	var lines := SpellCaster.cast_outside(spells, _caster, _cast_id, _party, target, _rng2)
 	_sel = maxi(_party.find(_caster), 0)
 	if on_member and lines.size() <= 1:
@@ -1412,6 +1429,7 @@ func _act(choice: String) -> void:
 					_rest_menu("magic")
 				"EXIT":
 					_pick = 2
+					_last_target = null
 					_show_menu()
 			_refresh()
 		"list":

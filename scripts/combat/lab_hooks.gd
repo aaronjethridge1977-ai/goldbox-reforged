@@ -135,12 +135,17 @@ static func handle(main: Node, n: String) -> bool:
 ## handcast=<aimskip>:<picks>[:1]: plays the open fight as the lab's combat33/handcast.py plays the original's, for
 ## a lone caster: at the member's menu CAST (else QUICK, and QUICK for good once taken), the spell list's lit
 ## spell, NEXT <aimskip> times then TARGET (several picks: NEXT and TARGET again up to <picks>, then EXIT),
-## ABORT SPELL? YES, CONTINUE BATTLE NO; with :1, TURN first while the menu offers it. Each key is printed (HAND KEY), so the two games' key lists compare.
+## ABORT SPELL? YES, CONTINUE BATTLE NO; with :1, TURN first while the menu offers it; :<casts>:1 as handuse.py's CASTS and QUICKOTHERS. Each key is printed (HAND KEY), so the two games' key lists compare.
 static func _handcast(main: Node, arg: String) -> void:
 	var a := arg.split(":")
 	var aim_skip := int(a[0]) if a.size() > 0 and a[0] != "" else 1
 	var picks_max := int(a[1]) if a.size() > 1 else 1
 	var turn_first := a.size() > 2 and a[2] == "1"     # handcast.py's TURNFIRST: TURN while the menu offers it
+	# Combat Chat 38 (combat38/handuse.py): :<casts> the caster's CASTs at most, then QUICK; :1 after it, a member
+	# without CAST goes on QUICK and the caster keeps casting (QUICKOTHERS).
+	var casts_max := int(a[3]) if a.size() > 3 and a[3] != "" else 99
+	var quick_others := a.size() > 4 and a[4] == "1"
+	var casts := 0
 	var cs = main._combat
 	CombatScreen.lab_original_aim = true     # the original's AIM cycle (TARGETING SKIPS PARTY off)
 	var aim_n := 0
@@ -211,11 +216,15 @@ static func _handcast(main: Node, arg: String) -> void:
 			if turn_first and "TURN" in st.split(":")[1].split(",") and not quick:
 				k = "t"
 				why = "TURN"
-			elif "CAST" in st.split(":")[1].split(",") and not quick:
+			elif "CAST" in st.split(":")[1].split(",") and not quick and casts < casts_max:
 				k = "c"
 				why = "CAST"
 				picks = 0
 				aim_n = 0
+				casts += 1
+			elif quick_others and not ("CAST" in st.split(":")[1].split(",")):
+				k = "q"
+				why = "QUICK (not the caster)"
 			else:
 				k = "q"
 				why = "QUICK"

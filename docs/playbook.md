@@ -835,3 +835,5 @@ Tool and method notes behind the guide's lines; players can skip this.
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 - A cleric can't READY a magic-user's scroll (READY does nothing, no message): hand scrolls to a member of the scroll's class before a fight. *seen* (main chat 85, DOSBox, check 243)
+- READY works in a fight from USE's item list (End to the item, R, then EXIT): a Ring of Protection +2 readied there lowers AC at once (4 to 2) and the member's menu comes back with the turn unspent (*seen*: Combat Chat 38, the spell lab's ring_kob in DOSBox; Guide 4's question).
+- A wand's spell goes off at level 6 too: a 1st-level magic-user's Wand of Lightning Bolt does 6d6 a bolt (*seen*: Combat Chat 38, the spell lab's wand_kob in DOSBox, three bolts; adds to section 1's scroll line).
