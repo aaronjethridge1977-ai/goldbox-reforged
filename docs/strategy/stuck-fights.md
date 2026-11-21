@@ -339,7 +339,19 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     unless fire finishes it). *seen*
   - **The cluebook's "rest in the wyvern cave":** 8:13's rest and wandering-kobold scripts let the party be while it
     came in by the LARGE cave (0x4AC7 = 255) **and the wyvern lives** (0x4A8E = 0; the rubble slope at 8:13 wakes it).
-    In this chain the wyvern is dead (2): no camp. *code*
+    In this chain the wyvern is dead (2): no camp. *code* **When it died:** segment 16 (p22c2, the party at level 3:
+    `s16b` at 8:13 10,15 is the last save with it alive, 0x4A8E = 0; `s16c` has 1); every save since has 2. Players
+    38-39 also came in by the SMALL cave (0x4AC7 = 0), which rules the camp out too. *seen* (the Player's save index)
+  - **Fire the party carries** (`p39a1_s39door`'s item files): LIRA's one Fireball scroll; Fireball and Burning Hands
+    in her book (one 3rd-level slot: Fireball or Haste). No wand, no necklace, no other Fireball scroll. Also carried:
+    9 Restoration scrolls (ELWEN 6, LIRA 2, CEDRIC 1 with one spell), Cure Light Wounds x2 (ARN), Prayer / Remove Curse / Animate
+    Dead (LIRA), Stinking Cloud and Detect Magic, Blink (ELWEN), a Potion of Healing (ELWEN), a Potion of Giant
+    Strength (CEDRIC). *seen*
+  - **Level caps** (START.EXE's experience tables; the halls' race checks, playbook section 1): cleric 6 (27,501),
+    magic-user 6 (40,001), fighter 8 (125,001; elf 7 at STR 18), thief 9 (110,001); half-elf cleric 5. At the door:
+    ARN F6 59,741 and BRAM F6 57,523 (F7 at 70,001); CEDRIC C6 **capped**; ELWEN C5 **capped** / F5 / MU4 at 22,291
+    (MU5 at 22,501: 210 short); LIRA F5 / MU5 at 31,238 (F6 35,001; **MU6 40,001: a second 3rd-level slot, so
+    Haste and Fireball both**; her fighter cap 7); DORN F5 / T6 at 31,238 (F6 35,001, T7 42,501). *code* + *seen*
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
