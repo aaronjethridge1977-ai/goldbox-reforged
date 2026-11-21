@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned (checks 312, 313; one difference)
+## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned; Esc in the camp's member lists (checks 312-315; two differences, original's bug 19 again)
 
 - **The crash (main path, Jeremy's 0.1.7-test2 finale fights):** `combat_screen.gd` `_bevel` drew the selected figure's
   cursor box with two `set_pixelv` calls even when the figure was off the view (after a cast the view follows the
@@ -195,8 +195,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   camp menu, SAVE lit; from MAGIC: its menu, CAST lit), the clock unmoved; ours stayed in the REST menu. **Check
   313** (312's keys to the second ENCAMP, REST, REST, EXIT, F2): 0 on main, 3 of 3 with `data/c93/rest0.diff`
   (Combat's camp_screen.gd). Both fixes: `data/c93/c93_fixes.diff` (DIFFCHECKS 311/311 with them).
+- **Esc in the camp's member lists (main path):** ALTER's PARTY ORDER (SELECT EXIT) and PLACE take Esc as EXIT (back to
+  ALTER; DORN HAS BEEN SELECTED stays up): ours the same. **Check 314** (into the gate): a later P is ALTER's PICS,
+  not PLACE, so the order stays; fails on a copy where Esc does nothing there. **CAST SPELL ON WHOM** (the camp's
+  CAST on a member) differs: Esc takes the light off the party and stays (as TRADE's lists, chat 92); SELECT then
+  backs out (the spell kept), Home lights the last member, End no one, and SELECT then casts on no one: the spell is
+  used up, nobody healed (**original's bug 19**, its second place). Ours went back to the list on Esc. **Check 315**:
+  0 on main and on a copy where End lights the first member, 3 of 3 with `data/c93/whom_esc.diff` (Combat's
+  camp_screen.gd). The CAST list opens with its last spell lit.
 - **Gate:** checks 295-304 and 306-311 joined (Combat Chat 41 landed chat 90-92's diffs; each 3 of 3 on origin/main)
-  and 312: **DIFFCHECKS 311/311.**
+  and 312, then 314: **DIFFCHECKS 312/312.** All of chat 93's fixes: `data/c93/c93_fixes.diff` (bevel, rest0, whom_esc; DIFFCHECKS 311/311 and 312-315 with them).
 
 ## Chat 92: the view sheet's money TRADE / DROP keys, PgDn / PgUp in the shop's BUY list and the camp's spell lists (checks 308-311; five differences, one original's bug)
 
