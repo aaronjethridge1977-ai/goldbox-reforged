@@ -215,11 +215,17 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 					continue
 				add_affect(m, table.effect(id), id, special_duration(table, id, lvl, rng, false), lvl)
 				out.append("%s %s" % [m.name, WORDS[id]])
+				# The handler gets the member's first record of the type: one already aged (bit
+				# 0x10) ages nobody and the new record keeps its plain power (chat 84, check 236,
+				# DOSBox: ARN hasted [39, 8, 21], a second HASTE of 8 minutes: [39, 8, 21] and
+				# [39, 8, 5], his age unchanged; check 235: a shorter old one goes, he ages).
 				for a in m.affects:
-					if int(a.effect) == table.effect(id) and int(a.value) & 0x10 == 0:
-						a.value = int(a.value) + 0x10
-						_age_up(m)
-						out.append("%s AGES" % m.name)
+					if int(a.effect) == table.effect(id):
+						if int(a.value) & 0x10 == 0:
+							a.value = int(a.value) + 0x10
+							_age_up(m)
+							out.append("%s AGES" % m.name)
+						break
 			return out
 		36:                 # Animate Dead: GAME.OVR 0x29087
 			# Up to the caster's level of the dead (status 6, record +0x9F 0), in party order, rise: each joins the
