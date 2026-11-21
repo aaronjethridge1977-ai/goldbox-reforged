@@ -33,3 +33,5 @@ label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
 label p35i6 game: draw 22439 of 42186, 7:26's kobold band (27,22): a kobold's pick of whom to hit, original d5, ours d6 (one candidate more in ours; traced; Player 35 -> combat)
 label p35i7 game: draw 29021 of 33593, 6:25's band (3,29, tigers): the original draws d1 at OVR:0b95d where ours rolls a tiger's to-hit (as p35i6's OVR:0b95d in a band fight; traced; Player 35 -> combat)
+label p36e1 game: draw 2219 of 4234, 7:23 4,1 (YARASH's fight): the original draws d100 at OVR:09969 where ours has YARASH pick whom to hit (p24b6's difference on a clean recording, slot emptied; Player 36 -> combat)
+label p36h1 game: draw 3932 of 16374, 7:26 24,27 (the nomads): the original draws d100 at OVR:09969 where ours rolls a NOMAD's initiative (p26a1's difference, the same draw, on a clean recording; Player 36 -> combat)
