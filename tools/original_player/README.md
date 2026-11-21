@@ -1315,11 +1315,12 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 39 (2026-11-21): the match 67 of 71; tactics' HASTE; the throne room with Haste 5 of 5 lost; segment.py's waits (p37i1)
+## Player 39 (2026-11-21): the match 68 of 71; tactics' HASTE; the throne room with Haste 5 of 5 lost; segment.py's waits (p37i1)
 
 **Stage 1:** nothing answered by main or Combat this run (the MEMORIZE paging diff for p36h1 not on origin/main;
-p17a6 open). segment.py's new waits change one recording's keys (p13b6: two keys): replayed, still identical. **67 of
-71** (lab `p39/score.md`).
+p17a6 open). segment.py's new waits change one recording's keys (p13b6: two keys): replayed, still identical (67).
+Then Combat Chat 38 landed main 83's MEMORIZE paging (1c68d3a): **p36h1 identical: 68 of 71** (baseline 68; known.txt's
+p36h1 label kept as a comment; lab `p39/score.md`).
 
 **Tactics.** `HASTE` comes first of all spells while no member carries effect 39 (once a fight; `STANDING`), before a
 readied scroll's spell; its aim is the party member with most `advance` fighters within 2 squares (the spell takes up
@@ -1342,6 +1343,10 @@ IT|YES`, `campcast LIRA FIREBALL`, `picks LIRA HASTE`, `prepare` (`s39haste`; 8:
 `s39door` (`p39a1_s39door`), then king10f's fight with `ready LIRA -BROAD SWORD, -SHORT BOW, +MAGIC USER SCROLL`
 (p39a1 picked up a plain BROAD SWORD on the trip). Counted p39a1, b2, b4, c1, c2: all lost (c2: three trolls down,
 9 enemies left, then two rose again at full HP). Stopped for the Lead.
+
+**The band rule** (`p39/bandtrip.plan`, p39f1-f12 from `p38a2_s38audit`): the manner menu used: kobolds at 7:26
+12,23, PARLAY ABUSIVE, gone at once (p39f9). Fix: the band rule's manner comes before the plan's answers (p39f2's
+`answer SLY|NICE` took the menu). Lizard men who surprised the party at 8:27 6,18: FLEE went straight into the fight (p39f10).
 
 Lab: `p39/` (king11.plan, bandtrip.plan, reload.txt, score.md, seg_i1*.out), saves `p2start/p39a1_s39door`; archive
 `player39_lab.tar.gz`.
