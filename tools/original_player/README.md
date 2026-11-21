@@ -1315,6 +1315,48 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 42 (2026-11-21): the vampire; the movement audit; exact replays in the original (Guide 9's videos); Plan 4 at the finale; walls, flight, Fireball's reach
+
+**Stage 1:** 68 of 71, nothing new from main or Combat in it. Combat Chat 40's p37i1 (a new-area recording, outside the
+71) re-scored on 2d308e9 with `OP_FIGHTMENU=1`: the end save's statediff 0 differences.
+
+**Plan 2's levels (the throne room):** `p42/vamp.plan` from `s41trained`: 4:10's vampire (ECL4 block 10: 15,0's stairs,
+event 27, YES: the lair at 14,0, event 28, him and three wolves; then 14,0 again with SEARCH on: the trove; then the
+coffin 12,4, entered from 12,3, sanctified: the weakened vampire, 15 HP): p42v13 lost (four members went from full HP
+to dying within a round with one wolf left: cause not found), p42v14 and p42v37 won, **0x4A41 = 255, no drain**, +5,017
+XP each (`s42vinn`). The trove's potions and scrolls were refused for weight: **the party was at movement 3 again**
+(about 8,300 pp and 6,200 gp): `p42/audit.plan` (Player 38's way: a purchase regroups the pooled money into platinum,
+`pooltake` hands it out): movement 9, DORN 12 (`s42moved`). **The bands** (`p42/bands.plan`, 7:26, `bands on`): one band
+a cycle at best (displacers 434 XP each); **driders surprised the party twice and destroyed it in their first round**
+(p42w3, p42w4). `p42/bands2.plan` stays in 7:26 (eight rounds, a camp checkpoint each, `prepare` there, the boat home:
+7:26 13,27 WHICH ROUTE: BOAT lands on 3:0 15,1), skipping Podol's waves.
+
+**`replay.py <run log> <seed> <out log> [speed]`** (Guide 9's videos): boots slot I (copy the save first: lab
+`p42/film.sh`), sets the game's message speed (DS:0x49E2) and the run's seed, sends the log's keys through
+`game.press` (the original's own key waits; `OP_KEYDELAY` before each), and the tool's Space at a fight's start **as
+many seconds after the key before as in the run** (it decides how many turns the computer plays; at the slow speed
+the Space keeps the fast run's timing). The seed is checked before each key (DRIFT lines). p41g1, p41d4 and p39c2:
+0 drifts in 325, 851 and 1177 keys. `OP_STOPAT=<n>`, `OP_PROBE=<n,...>` (every figure before those keys),
+`OP_PROBEMAP=1` (the field's walls and figures).
+
+**Tactics:** `walls(mem)`: the field's impassable cells (the combat map at the far pointer DS:0x6716 + 7, 50 x 25
+ground ids; an id's move cost at DS:0x2744, 4 bytes an id; Combat's trace.py and battlefield.gd), kept out of every
+MOVE step and `OP_GOTO` (p41g1's DORN pressed into 27-28,10). **Fireball keeps every member 3+ squares from the aimed
+figure** (the p41g1 probe: its Fireball at 27,15 took 15 from ARN and BRAM on row 12). `OP_PLAN4=1` (Guide 9's Plan
+4: Stinking Cloud then Hold Person first, Hold Person only from a caster with no standing foe next to him, nobody
+walks while a member is next to a standing foe, missiles may take a held foe out of reach), `OP_FBCLEAR`.
+**`OP_FLIGHT=<name>`**: while a foe of that name stands, every member walks a shortest path (8 directions, walls and
+figures avoided, a refused cell avoided after) to the field's border and steps off; the original asks FLEE: YES NO
+(YES). **The finale with Plan 4** (`p42/finale4.plan` from `p40c1_s40hall`): guards 1 of 5 counted (3 of 7 in all);
+the flight fails at movement 3 (stuck-fights.md section 5).
+
+**DORN's crossbow** (Jeremy): never had one; the 10 Quarrels +2 came from 2:20's pile (`p16e2/slums3`).
+
+Lab: `p42/` (reload.sh and helpers from p41, flags.py: ECL cells from a save, poll.sh, replay.py, film.sh, films.sh,
+vamp.plan, audit.plan, bands.plan, bands2.plan, finale4.plan); runs p42v*, p42m1, p42w*, p42x*, p42y1, p42z*, p42f1-f8,
+p42r1-r3 and p42p1 (replay tests); saves `p2start/p41t1_s41trained`, `p42v37_s42vinn`, `p42m1_s42moved`; videos in
+`.lab/stuck/finale_guards/p41/`, `.lab/stuck/kobold_king/p42/`; tries in `.lab/stuck/finale_guards/p42/`.
+
 ## Player 41 (2026-11-21): the finale's guards with finale2 5 of 5 lost; a spell's aim named the wrong figure among look-alikes (fixed); Stinking Cloud's 2x2
 
 **Stage 1:** 68 of 71, nothing new to rerun (p17a6 waits on main / design, p37i1's DORN step on Combat).
