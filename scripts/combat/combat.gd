@@ -145,14 +145,16 @@ func outcome() -> int:
 	if standing(1) == 0 and (decided or (enemies_all_gone() and not lab_play_out())):
 		return 1
 	if standing(0) == 0:
+		# With the whole party down the original also plays out the round before the fight is
+		# lost (lab, Combat Chat 2: 7:23, the party held by Yarash's wand, the last one slain,
+		# then the round's remaining turns and picks, 29 draws); and so when the last one got away
+		# (Combat Chat 41, DOSBox: 8:27's kobolds, ARN alone off the field's edge with FLEE: YES: the
+		# eighteen kobolds left in the round took their turns, 531 draws, then THE PARTY HAS FLED).
+		if not order.is_empty():
+			return 0
 		for c in combatants:
 			if c.team == 0 and c.get("fled", false):
 				return 3
-		# With the whole party down the original also plays out the round before the fight is
-		# lost (lab, Combat Chat 2: 7:23, the party held by Yarash's wand, the last one slain,
-		# then the round's remaining turns and picks, 29 draws).
-		if not order.is_empty():
-			return 0
 		return 2
 	return 0
 

@@ -4,7 +4,7 @@ class_name LabHooks
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "partyhp", "monsters", "outcome", "who", "temple",
 		"ending"]
-const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast="]
+const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee="]
 
 
 ## Whether `n` is one of these keys.
@@ -144,7 +144,134 @@ static func handle(main: Node, n: String) -> bool:
 	elif n.begins_with("handcast="):    # handcast=<aimskip>:<picks>: the lab's handcast.py in ours (Combat Chat 34)
 		await _handcast(main, n.trim_prefix("handcast="))
 		return true
+	elif n.begins_with("handflee="):    # handflee=<dirs, by .>: the lab's combat41/fleemove.py in ours (Combat Chat 41)
+		await _handflee(main, n.trim_prefix("handflee="))
+		return true
 	return false
+
+
+## handflee=<dir.dir...>: plays the open fight as the lab's combat41/fleemove.py plays the original's: at a member's
+## menu with MOVE (not on QUICK): M, then the first direction that moves (ATTACK ALLY: n and the next direction; a key
+## that left MOVE LEFT as it was: the next direction; after 3 x directions + 12 keys: Enter); FLEE: y; the same
+## member's menu again after its MOVE, or a menu without MOVE: DONE, then QUIT; CONTINUE BATTLE: NO.
+static func _handflee(main: Node, arg: String) -> void:
+	# handflee=@<file>: the keys of a run of the original's fleemove.py ("KEY <key> (...)" lines), pressed in order at
+	# the same points (the original's screen sometimes lags a step, so its choices can't always be recomputed).
+	var script_keys := PackedStringArray()
+	if arg.begins_with("@"):
+		for line in FileAccess.get_file_as_string(arg.substr(1)).split("\n"):
+			var w := line.strip_edges().split(" ", false)
+			var at := w.find("KEY")
+			if at >= 0 and at + 1 < w.size():
+				script_keys.append(w[at + 1].capitalize() if w[at + 1].length() > 1 else w[at + 1])
+		arg = ""
+	var ki := 0
+	var dirs := arg.split(".") if arg != "" else PackedStringArray(["Left", "Home", "End", "Up", "Down"])
+	var cs = main._combat
+	var di := 0
+	var tries := 0
+	var left_before := -1
+	var lastdir := ""
+	var moving := false
+	var moved_who := -1
+	var seen := false
+	var last := ""
+	var steady := 0
+	var t_end := Time.get_ticks_msec() + 1800000
+	while Time.get_ticks_msec() < t_end:
+		await main.get_tree().process_frame
+		if not cs.visible or cs._combat == null:
+			if seen:
+				break
+			continue
+		if cs._result != 0 and not cs._asking_continue:
+			break
+		var st := ""
+		if cs._asking_continue:
+			st = "continue"
+		elif cs._asking_ally:
+			st = "ally"
+		elif cs._asking_flee:
+			st = "flee"
+		elif cs._flash != "" or cs._row24_msg != "" or cs._announcing or main._busy:
+			st = ""
+		elif cs._cmode == "move":
+			st = "move:%d" % (int(cs._combatants[cs._combat.active].moves) / 2)
+		elif cs._cmode == "done":
+			st = "done"
+		elif cs._cmode == "menu" and cs._combat.active >= 0 and not cs._combatants[cs._combat.active].get("quick", false):
+			st = "menu:%d:" % cs._combat.active + ",".join(cs._bottom_menu())
+		steady = steady + 1 if st == last else 0
+		last = st
+		if st == "" or steady < 3:
+			continue
+		var k := ""
+		var why := ""
+		if st == "continue":
+			if seen:
+				k = "n"
+				why = "continue battle: no"
+		elif st == "ally":
+			di += 1
+			k = "n"
+			why = "attack ally?"
+		elif st == "flee":
+			k = "y"
+			why = "flee?"
+		elif st == "done":
+			k = "q"
+			why = "DONE's QUIT"
+		elif st.begins_with("move:"):
+			if not moving:
+				continue
+			var n := int(st.split(":")[1])
+			if left_before >= 0 and n == left_before and lastdir == dirs[di % dirs.size()]:
+				di += 1
+			left_before = n
+			tries += 1
+			if tries > 3 * dirs.size() + 12:
+				k = "Enter"
+				why = "end MOVE"
+				moving = false
+			else:
+				lastdir = dirs[di % dirs.size()]
+				k = lastdir
+				why = "step (left %d)" % n
+		elif st.begins_with("menu:"):
+			seen = true
+			var p := st.split(":")
+			var who := int(p[1])
+			var items := p[2].split(",")
+			if moving or who == moved_who:
+				moving = false
+				moved_who = -1
+				k = "d"
+				why = "DONE"
+			elif "MOVE" in items:
+				di = 0
+				left_before = -1
+				tries = 0
+				lastdir = ""
+				moved_who = who
+				moving = true
+				k = "m"
+				why = "MOVE " + cs._combatants[who].who.name
+			else:
+				k = "d"
+				why = "DONE"
+		if k == "":
+			continue
+		if ki < script_keys.size():
+			if script_keys[ki].to_lower() != k.to_lower():
+				why += ", the original's key " + script_keys[ki]
+				k = script_keys[ki]
+			ki += 1
+		print("   HAND KEY %s (%s)" % [k, why])
+		await main._press(k)
+		last = ""
+		steady = 0
+		if st == "continue":
+			break
 
 
 ## handcast=<aimskip>:<picks>[:1]: plays the open fight as the lab's combat33/handcast.py plays the original's, for

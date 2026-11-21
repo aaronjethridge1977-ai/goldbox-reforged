@@ -613,16 +613,18 @@ func _draw_original(field: Image) -> void:
 	elif _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
 	elif _asking_flee:
-		g.text(0, 24, "FLEE:", GameScreen.WHITE)
-		g.menu_line(24, ["YES", "NO"], 6)
+		# GAME.OVR 0xA41E: "Flee:" through the question 0x2D9A0 with colour 0xD, YES straight after the colon
+		# (Combat Chat 41, DOSBox: magenta, the menu from column 5).
+		g.text(0, 24, "FLEE:", MAGENTA)
+		g.menu_line(24, ["YES", "NO"], 5)
 	elif _asking_ally:
 		if not _ally_from_move:
 			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
-		g.text(0, 24, "ATTACK ALLY:", GameScreen.WHITE)
+		g.text(0, 24, "ATTACK ALLY:", MAGENTA)     # 0x151C5: "Attack Ally: " with 0x2D9A0's colour 0xD, as FLEE's
 		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_abort:
 		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
-		g.text(0, 24, "ABORT SPELL?", GameScreen.WHITE)
+		g.text(0, 24, "ABORT SPELL?", GameScreen.YELLOW)     # 0x27EFD: colour 0xE through 0x2D9A0 (Combat Chat 41)
 		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_continue:
 		# Magenta, YES straight after the colon (main's cold-open capture of the original).
