@@ -163,6 +163,15 @@ DIRS = (("up", 0, -1), ("pgup", 1, -1), ("right", 1, 0), ("pgdn", 1, 1), ("down"
 STANDING = {"BLESS": 1, "PRAYER": 49}
 
 
+# Player 36: the kobold throne room's Plan 1 (Gold Box Guide 2): `focus TROLL[,...]|none` (plans.py): every blow, arrow and
+# MOVE goes to these kinds first (the helpless of them first), Stinking Cloud at the bunch with most of them
+FOCUS = []
+
+
+def _focus(f):
+    return any(w in f["name"].upper() for w in FOCUS)
+
+
 def _is_drainer(f):
     return any(m in f["name"].upper() for m in DRAINERS)
 
@@ -231,6 +240,9 @@ class Tactics:
         prio = self.priority
         if sum(1 for f in foes if not _is_large(f)) >= 10:
             prio = self.horde     # Player 33 (p33f1: the band's 29 kobolds, Sleep last, CEDRIC dead): a horde
+        if FOCUS and any(_focus(f) and not helpless(f) for f in foes):
+            # Player 36 (the throne room's Plan 1): Stinking Cloud on the focus kind first while one stands unhurt
+            prio = ("STINKING CLOUD",) + tuple(s for s in prio if s != "STINKING CLOUD")
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
@@ -275,9 +287,10 @@ class Tactics:
                 if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6):
                     continue
                 k = sum(1 for g in foes if _dist(g, f) <= 1)
-                if k >= 2:
-                    best.append((-k, f["n"]))
-            return [n for _, n in sorted(best)]
+                kf = sum(1 for g in foes if _dist(g, f) <= 1 and _focus(g) and not helpless(g))
+                if k >= 2 or kf:
+                    best.append((-kf, -k, f["n"]))
+            return [b[-1] for b in sorted(best)]
         if spell == "SLOW":            # Player 33 (spell sheet): no save; the strongest not slowed yet, so its
             # reach (the caster's level in figures nearest the aim point) takes the big hitters
             return [f["n"] for f in sorted(foes, key=lambda f: (not _is_large(f), -f["hp"])) if f["n"] not in self.slowed]
@@ -420,7 +433,7 @@ class Tactics:
         if self.reach.get(member) == "none":
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
-            goal = min(foes, key=lambda f: (not helpless(f), _dist(me, f))) if me is not None and foes else None
+            goal = min(foes, key=lambda f: (not _focus(f), not helpless(f), _dist(me, f))) if me is not None and foes else None
             if member.upper() in ADVANCE and "MOVE" in items and goal is not None and member not in self.moved \
                     and _dist(me, goal) <= 8 and self.idle.get(member, 0) < 8:
                 # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack; not
@@ -483,7 +496,7 @@ class Tactics:
         if adj:
             # the goal if it is next to us, else a helpless one, else the weakest
             f = next((f for f in adj if goal is not None and f["n"] == goal["n"]), None) or \
-                min(adj, key=lambda f: (not helpless(f), f["hp"]))
+                min(adj, key=lambda f: (not _focus(f), not helpless(f), f["hp"]))
             k = next(k for k, dx, dy in DIRS if (pos[0] + dx, pos[1] + dy) == (f["x"], f["y"]))
             if (pos, k) not in mv["blocked"]:
                 mv["last"] = (pos, k)
@@ -543,9 +556,10 @@ class Tactics:
                 # Player 35 (Plan 1s, Gold Box Guide 2): a bow shoots the leaders and magic-users first, never a
                 # helpless one out of reach (the fighters take those with a blow), then the weakest
                 cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
-                cand.sort(key=lambda c: (not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
+                cand.sort(key=lambda c: (not _focus(c[1]), not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
             else:
-                cand.sort(key=lambda c: (not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]), c[1]["hp"]))
+                cand.sort(key=lambda c: (not _focus(c[1]), not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]),
+                                         c[1]["hp"]))
             self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
         sc = self.scan
         sc["steps"] += 1
