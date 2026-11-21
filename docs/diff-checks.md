@@ -172,6 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 87 (2): NO at an item's DROP, the shop's SELL and ID, the temple's two questions (checks 265-269)
+
+Main path, coverage (no difference): each checked in DOSBox and matched at once, 3 of 3, and each fails on a copy
+deliberately broken (recipes: ~/gbr/checks/README.md "Chat 87 (2)"). After NO the original keeps the item (or the
+cure) lit and lights the menu's first word (READY; HEAL): camp DROP (265), the arms shop's SELL (266) and ID (267),
+the temple's PAY FOR CURE (268) and CAST CURE ANYWAY (269); the next key acts on the same item or cure. Ours the same
+(screens compared for 265). Enter does nothing on the original's item menu (seen).
+
 ## Chat 87: MEMORIZE reopened after a page turn, EXIT at PLACE, MEMORIZE and SCRIBE THESE SPELLS? NO, ALTER DROP's NO (checks 260-264; two display differences)
 
 Main path, coverage (no state difference): each checked in DOSBox against the original and matched at once, 3 of 3,
