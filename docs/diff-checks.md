@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 80: the camp's USE of a clerical scroll (check 185), of a Potion of Speed (check 186, a fix) and of three more item spells (checks 187-189); the camp's CAST of RESIST COLD, DETECT MAGIC and RESIST FIRE at cleric level 3 (checks 190-192)
+## Chat 80: the camp's USE of a clerical scroll (check 185), of a Potion of Speed (check 186, a fix) and of three more item spells (checks 187-189); the camp's CAST of RESIST COLD, DETECT MAGIC and RESIST FIRE at cleric level 3 (checks 190-192), STRENGTH, INVISIBILITY, FIND TRAPS (checks 193-195)
 
 Both against the original in DOSBox (3:0, tpseed 11111111), from checks 130's and 167's starts; recipes in ~/gbr/checks/README.md "Chat 80", the lab's `data/c80/`.
 - **185**: CEDRIC (cleric 1) reads a Clerical Scroll of PROTECTION FROM EVIL (spell 6) on ARN: effect 8 for **18 minutes, power 6**, as a magic-user scroll's (checks 179/180). Matched at once (chat 79's fix covers it), 3 of 3; one Home fewer (BRAM) differs; without chat 79's fix differs (3 minutes, power 1).
@@ -181,6 +181,8 @@ Both against the original in DOSBox (3:0, tpseed 11111111), from checks 130's an
 - **188**: byte 61 made 81 (Neutralize Poison, spell 58), LIRA at 1 HP of 30, not poisoned: CAST SPELL ON WHOM (on LIRA), SELECT: 1d4 + 8 healed (1 -> 12; GAME.OVR 0x29E65, chat 27's reading confirmed). Matched; another seed differs.
 - **189**: byte 61 made 90 (Bodily Health, spell 67, the Manual's): effect 4 for 1440 minutes, power 255, the item gone. Matched; without the USE differs.
 - **190-192** (check 173's start with CEDRIC's memorized spell changed): RESIST COLD on ARN (effect 10, 10 minutes, power 1); DETECT MAGIC (no target: effect 5 on CEDRIC, 10 minutes, power 1); RESIST FIRE with CEDRIC at cleric level 3 (the list gets a 2ND LEVEL heading above 1ST, in record order; effect 20, 30 minutes, power 3). All matched at once; another target, no CAST, level 2: each differs.
+- **193**: LIRA made magic-user 3 with STRENGTH memorized, on CEDRIC with STR 12: 17 (a cleric's 1d6), effect 38 for 180 minutes, the old strength kept in the record's power; her only spell cast, the original goes back to the magic menu (one EXIT fewer). With STR 18 the dice can't show (a non-fighter stops at 18): the start lowers it. Another seed differs (15).
+- **194**: the same with INVISIBILITY on CEDRIC: effect 25, 0 minutes (until broken), power 3. **195**: CEDRIC (cleric 3) FIND TRAPS: effect 19 on himself, 30 minutes at level 2 and 3 alike, power 3. Both matched at once; another target, level 2 differ.
 - Not checked: the paladin's cleric spells (0x26c2 reads only +0x96, the cleric level; ours takes paladin level - 8) and the ranger's; combat's scroll USE still at the reader's level (Combat's request, chat 79).
 
 ## Chat 79: the camp's USE of a Magic User scroll (checks 179 and 180, a fix), money TRADE to a member who can't carry it (ready check 181, to Combat), the silver shop's SELL (check 182), a buff CAST with SEARCH on then a step (check 183), a scroll's combat-only spell in camp (check 184)
