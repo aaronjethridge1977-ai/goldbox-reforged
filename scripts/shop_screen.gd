@@ -452,6 +452,7 @@ func appraise_one(jewel: bool) -> int:
 	if m.money[k] <= 0:
 		return -1
 	m.money[k] -= 1
+	m.refresh_cache()       # the appraisal works the cached THAC0 and AC out again (GAME.OVR 0x26ECA; main chat 82)
 	_jewel = jewel
 	_value = piece_value(jewel, _rng)
 	_mode = "value"

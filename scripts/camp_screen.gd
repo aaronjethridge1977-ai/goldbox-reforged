@@ -896,16 +896,34 @@ func _learn_step() -> void:
 		if t > 0:
 			t -= 1
 		if t == 0 and m.learn_hours == 0 and _learn_timer.has(m):
-			var pending := m.learning_spells()
-			if not pending.is_empty():
-				var id: int = pending[0]
-				var k := m.memorized.find(id + PartyMember.LEARNING)
-				m.memorized[k] = id
-				_held.append([m.name, "HAS MEMORIZED", spells.name_of(id)])
-			elif not m.scribe_pending().is_empty():
+			# GAME.OVR 0x24911: the scroll walk (0x247B3) first, then the memory (0x246F1), one copy a time;
+			# each walk returns the next spell's level for the countdown (level x 3 steps). A copy that uses
+			# a scroll up (0x2A2A2 drops it) ends the walk with 0, so the countdown is 0 and wraps: 256 steps
+			# (21:20) before the next copy, unless a spell still to memorize sets it (Combat Chat 38, Player
+			# 37's p37b2: LIRA's nine marked spells took three rests, one used-up scroll each).
+			var next := 0
+			if not m.scribe_pending().is_empty():
+				var n_items := m.items.size()
 				var id := m.scribe_next()
 				_held.append([m.name, "HAS SCRIBED", spells.name_of(id)])
-			t = _next_learn_steps(m)
+				var pend := m.scribe_pending()
+				if m.items.size() < n_items:
+					pend.clear()
+				if not pend.is_empty():
+					next = spells.level(pend[0])
+				elif not m.learning_spells().is_empty():
+					next = spells.level(m.learning_spells()[0])
+			else:
+				var pending := m.learning_spells()
+				if not pending.is_empty():
+					var id: int = pending[0]
+					var k := m.memorized.find(id + PartyMember.LEARNING)
+					m.memorized[k] = id
+					_held.append([m.name, "HAS MEMORIZED", spells.name_of(id)])
+				pending = m.learning_spells()
+				if not pending.is_empty():
+					next = spells.level(pending[0])
+			t = next * 3 if next > 0 else (256 if not (m.scribe_pending() + m.learning_spells()).is_empty() else 0)
 		_learn_timer[m] = t
 	_hour_steps += 1
 	if _hour_steps >= 12:
@@ -918,11 +936,12 @@ func _learn_step() -> void:
 						_learn_timer[m] = _next_learn_steps(m)
 
 
-## 5-minute steps for the next spell to memorize, then to scribe: 15 minutes a level.
+## 5-minute steps for the next spell to scribe, then to memorize (the study's end, GAME.OVR 0x249D3: the
+## scroll walk asked first): 15 minutes a level.
 func _next_learn_steps(m: PartyMember) -> int:
-	var pending := m.learning_spells()
+	var pending := m.scribe_pending()
 	if pending.is_empty():
-		pending = m.scribe_pending()
+		pending = m.learning_spells()
 	return spells.level(pending[0]) * 3 if not pending.is_empty() else 0
 
 

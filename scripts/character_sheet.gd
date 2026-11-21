@@ -305,6 +305,8 @@ func _readied_in(m: PartyMember, slot: int) -> GameItem:
 
 
 func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
+	# VIEW's page works the cached THAC0 and AC (+0x110/+0x111) out again (GAME.OVR 0x2165C; main chat 82).
+	m.refresh_cache()
 	var W := GameScreen.WHITE
 	var G := GameScreen.GREEN
 	var show_portrait := portrait and not m.is_monster and game_path != ""

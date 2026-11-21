@@ -137,9 +137,18 @@ static func add(m: PartyMember, types: Array) -> void:
 ## (u16, 0 = for good), power, then the game's own list pointers. A saved character keeps
 ## spells still running this way (the shipped party carries a Bless with 2 minutes left).
 static func add_records(m: PartyMember, data: PackedByteArray) -> void:
+	# Each record of the file is an effect, two of a type too (main chat 82, check 217: ARN's two blindness
+	# records, the camp's CURE BLINDNESS lifts the first); only the copy of an effect already on the member
+	# (the racial ones, given at creation) is passed over, once per effect held.
+	var held := {}
+	for a in m.affects:
+		held[int(a.effect)] = int(held.get(int(a.effect), 0)) + 1
 	for o in range(0, data.size() - 8, 9):
 		var type := data[o]
-		if type == 0 or m.has_affect(type):
+		if type == 0:
+			continue
+		if int(held.get(type, 0)) > 0:
+			held[type] = int(held[type]) - 1
 			continue
 		m.affects.append({"effect": type, "spell": 0, "minutes": data.decode_u16(o + 1), "value": data[o + 3]})
 
