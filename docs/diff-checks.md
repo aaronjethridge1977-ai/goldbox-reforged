@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned; Esc in the camp's member lists (checks 312-315; two differences, original's bug 19 again)
+## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned; Esc in the camp's member lists (checks 312-316; three differences, original's bug 19 twice more)
 
 - **The crash (main path, Jeremy's 0.1.7-test2 finale fights):** `combat_screen.gd` `_bevel` drew the selected figure's
   cursor box with two `set_pixelv` calls even when the figure was off the view (after a cast the view follows the
@@ -203,8 +203,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   used up, nobody healed (**original's bug 19**, its second place). Ours went back to the list on Esc. **Check 315**:
   0 on main and on a copy where End lights the first member, 3 of 3 with `data/c93/whom_esc.diff` (Combat's
   camp_screen.gd). The CAST list opens with its last spell lit.
+- **A scroll's CAST SPELL ON WHOM** (the view sheet's USE, CAST; main path) the same: Esc takes the light off and
+  stays, SELECT then backs out to the ITEMS page (the scroll kept), Esc, End, SELECT casts on no one and the scroll is
+  used up (bug 19's third place). Ours went back to ITEMS on Esc. **Check 316** (check 185's start): 0 on main and
+  on a copy where End lights the first member, 3 of 3 with `data/c93/scroll_esc.diff` (Combat's character_sheet.gd).
+- Matched by construction, no check: the view sheet's ITEMS list never pages (16 items, the most a character
+  carries, fill rows 5-20).
 - **Gate:** checks 295-304 and 306-311 joined (Combat Chat 41 landed chat 90-92's diffs; each 3 of 3 on origin/main)
-  and 312, then 314: **DIFFCHECKS 312/312.** All of chat 93's fixes: `data/c93/c93_fixes.diff` (bevel, rest0, whom_esc; DIFFCHECKS 311/311 and 312-315 with them).
+  and 312, then 314: **DIFFCHECKS 312/312.** All of chat 93's fixes: `data/c93/c93_fixes.diff` (bevel, rest0, whom_esc, scroll_esc; DIFFCHECKS 312/312 and 313, 315, 316 with them).
 
 ## Chat 92: the view sheet's money TRADE / DROP keys, PgDn / PgUp in the shop's BUY list and the camp's spell lists (checks 308-311; five differences, one original's bug)
 
