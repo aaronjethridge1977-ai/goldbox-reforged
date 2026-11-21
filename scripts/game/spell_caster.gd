@@ -145,6 +145,22 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				add_affect(t, 39, id, special_duration(table, id, lvl, rng, false), lvl)
 				out.append("%s IS SPEEDY" % t.name)
 			return out
+		14:                 # Friends: GAME.OVR 0x283F1
+			# The caster's charisma (record 0x15) goes up 2d4, at most 25, before the effect is
+			# added through the common cast (0x278DB); the effect's power holds the old charisma,
+			# which comes back when it ends (0xF231). Chat 81, check 199 (DOSBox: LIRA 18 -> 24,
+			# [14, 3 minutes, 18]).
+			var t: PartyMember = targets[0]
+			if t.stats.size() <= 5 or t.status == PartyMember.STATUS_DEAD:
+				return out
+			var old: int = t.stats[5]
+			_set_charisma(t, mini(old + _roll(rng, 2, 4), 25))
+			if SpecialAffects.blocks(t, table.effect(id), func(): return _roll(rng, 1, 100), table.level(id)):
+				out.append("%s IS UNAFFECTED" % t.name)
+				return out
+			add_affect(t, table.effect(id), id, special_duration(table, id, lvl, rng, false), old)
+			out.append("%s %s" % [t.name, WORDS[id]])
+			return out
 		62:                 # Potion of Healing
 			var t: PartyMember = targets[0]
 			if _heal(t, _roll(rng, 2, 4) + 2):
@@ -179,6 +195,13 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 
 const MANUAL_READING := 4
 const MANUAL_TRAINING := 7
+const FRIENDS := 14
+
+
+static func _set_charisma(m: PartyMember, v: int) -> void:
+	m.stats[5] = v
+	if m.raw.size() > 0x15:
+		m.raw[0x15] = v
 
 
 ## Dice of a spell cast outside a fight: from the original's dice when a replay runs on them (tpseed), so a
@@ -211,6 +234,10 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 	match int(a.effect):
 		Strength.ENLARGE, Strength.STRENGTH:
 			Strength.ended(m, a)
+		FRIENDS:
+			# 0xF231: the charisma the effect held comes back.
+			if m.stats.size() > 5 and int(a.value) < 0xFF:
+				_set_charisma(m, int(a.value))
 		MANUAL_READING:
 			out.append("%s STARTS TO TRAIN" % m.name)
 			m.affects.append({"effect": MANUAL_TRAINING, "spell": 67, "minutes": 43200, "value": 0xFF})
