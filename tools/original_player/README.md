@@ -1315,6 +1315,22 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 36 (2026-11-20): the DOSBox speed test (keep 15000)
+
+**The DOSBox speed test** (the Lead's Stage 1 item; lab `p36/speed.sh`, `p36/samecheck.py`, `p36/speed.txt`):
+`OP_CYCLES=<n|max>` (orig.py) sets `cpu_cycles` for one run; `samecheck.py <ref> <new>` compares two runs of the
+original from one start, plan and seed (the trace's draws by address and roll, and each checkpoint's save files byte
+for byte; SAVGAM bytes 12818-13030 differ between two runs at 15000 too, p35i1 against p35h1: set aside). Reruns of
+Player 35's traced references: **p35i1** (segment 3, the training trip, no fight, no Alt-M) identical at 60000 (242 s)
+and at max (239 s), 15000 took 249-260 s; **p35i2** (segment 2, QUICK casters, an interrupted rest) parts at 60000
+(draw 850) **and at 15000 too** (p36c2: draw 7823); **p19d1** (an OP_MAGICAT recording) parts at 60000 (draw 984; 310 s
+against 346 s); **p35i7** (segment 25, a long rest, the soldiers' band) parts at 60000 (draw 15619 of 33593; 602 s
+against 666 s). Each parting follows an Alt-M (OP_MAGIC: MAGIC ON for the QUICK members) that landed at another draw
+(p35i2: 798 at 15000, 850 at 60000; the control at 15000: 3981 against 4045): **the asynchronous Alt-M makes runs with
+QUICK casters unrepeatable at any speed** (only the trace records where it landed; ours replays from it, OP_MAGICAT or
+the trace's MAGIC lines), and a run without it repeats at any speed. **Kept 15000:** the gain is under 10% (the tool's
+own pacing, about 0.5 s a key, is most of a run's time), and nothing about the original's side needs more.
+
 ## Player 35 (2026-11-20): the match 63 of 71; Stojanow and Sokal's army done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; the original's leftover save files
 
 **The Stage 1 match (60, then 63 of 71 after the reruns below):** main chat 72's two fixes (the wall ahead in an arrival's init, 0x6DC8's fled monsters) and

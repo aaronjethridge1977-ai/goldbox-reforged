@@ -9,7 +9,7 @@ DOSBox's emulated memory (as the lab's seed.py does), which gives the program im
   orig.py start | stop | status
   orig.py boot <save letter>     title -> load -> code wheel -> the save
 """
-import os, struct, subprocess, sys, time
+import os, re, struct, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LAB = os.environ.get("OP_LAB", os.path.expanduser("~/gbr/player_lab"))
@@ -50,6 +50,8 @@ def pid(name="dosbox"):
 def conf():
     """por.conf with the lab's paths (the original's settings: S3, normal core, fixed 15000 cycles)."""
     src = open(os.path.join(LAB, "por.conf")).read().replace("/home/claude/lab", LAB)
+    if os.environ.get("OP_CYCLES"):     # Player 36: the speed test (cpu_cycles = N or max for this run only)
+        src = re.sub(r"(?m)^cpu_cycles\s*=.*$", "cpu_cycles = " + os.environ["OP_CYCLES"], src)
     path = os.path.join(RUN, "op.conf")
     open(path, "w").write(src)
     return path
