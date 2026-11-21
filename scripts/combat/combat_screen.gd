@@ -1299,8 +1299,6 @@ func _after_player_action(what: String) -> void:
 			return
 	if what == "blocked":
 		_on_message("CAN'T GO THERE")
-	elif what == "no moves":
-		_on_message("NO MOVES LEFT")
 	elif what == "fell":
 		if _combatants[_selected].team == 0:
 			_on_message("YOUR TEAMMATE IS DOWN")

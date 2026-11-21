@@ -1185,6 +1185,10 @@ func step(dir: int) -> String:
 		return "blocked"
 	var cost := 3 if dir % 2 == 1 else 2
 	if cost > c.moves:
+		# GAME.OVR 0x12F0D: a step dearer than the movement left takes none and ends the movement (the
+		# MOVE loop 0xA236 then ends: the menu without MOVE). Combat Chat 39, Player 39's p37i1: ARN, 2
+		# half-moves left, pressed Home (a diagonal, 3) and the original's menu came back without MOVE.
+		c.moves = 0
 		return "no moves"
 	free_attacks(active, to)
 	if c.down:
@@ -2250,7 +2254,6 @@ func ai_act() -> bool:
 		var smart := SmartQuick.smart(self, active)
 		if c.team == 0 and (party_judge.is_valid() or quick_bandages or smart) and bandage():
 			return false
-		choose_weapon(active)
 		var morale := _morale_check(active)
 		if c.team == 0 and party_judge.is_valid() and party_judge.call(self, active) == "flee":
 			morale = "flee"
@@ -2296,6 +2299,10 @@ func ai_act() -> bool:
 			return false
 		elif magic and not smart and magic.ai_cast(active, spell_d7):
 			return false
+		# The weapon choice (GAME.OVR 0xBF8A) comes here, after the item, TURN and spell weighing (0xAD62; Combat
+		# Chat 39, seen in DOSBox: BAKSHI on QUICK, a kobold next to him, threw his readied Javelin of Lightning
+		# where ours had readied his sword at the turn's start and had no item left to use).
+		choose_weapon(active)
 		if not find_target(active):
 			guard(active)
 			return false

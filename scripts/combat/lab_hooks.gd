@@ -2,7 +2,8 @@ class_name LabHooks
 ## The side lane's lab keys for main.gd's `--keys` replay (moved out of main.gd, decided 2026-11-14,
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
-const KEYS := ["smartquick", "smartmonsters", "fightend", "partyhp", "monsters", "outcome", "who", "temple", "ending"]
+const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "partyhp", "monsters", "outcome", "who", "temple",
+		"ending"]
 const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast="]
 
 
@@ -46,6 +47,20 @@ static func handle(main: Node, n: String) -> bool:
 			print("   ASKED CONTINUE BATTLE")
 		for f in foes:
 			print("   FOE %d %d" % [f.hp, f.status])
+	elif n == "fightmenu":              # waits (up to 60 s) for a member's fight menu, steady 3 frames (Combat Chat 39)
+		# Player 39's p37i1: a replayed key reached ours while the spectres' turn still ran (the original's gap
+		# 0.5 s) and DORN's MOVE keys were lost; a replay puts this before a fight menu's key. No fight: no wait.
+		var t_end := Time.get_ticks_msec() + 60000
+		var steady := 0
+		while combat.visible and combat._combat != null and Time.get_ticks_msec() < t_end:
+			var up: bool = combat._cmode == "menu" and combat._combat.active >= 0 \
+					and not combat._combatants[combat._combat.active].get("quick", false) and not combat._announcing \
+					and combat._flash == "" and combat._row24_msg == "" and not main._busy and not combat._asking_continue
+			steady = steady + 1 if up else 0
+			if steady >= 3:
+				break
+			await main.get_tree().process_frame
+		return true
 	elif n == "partyhp":                # each member's HP and status byte (record 0x11B, 0x10C)
 		for k in main._party.size():
 			print("   PARTY %d %d %d" % [k + 1, main._party[k].hp, main._party[k].status])
@@ -145,6 +160,12 @@ static func _handcast(main: Node, arg: String) -> void:
 	# without CAST goes on QUICK and the caster keeps casting (QUICKOTHERS).
 	var casts_max := int(a[3]) if a.size() > 3 and a[3] != "" else 99
 	var quick_others := a.size() > 4 and a[4] == "1"
+	# Combat Chat 39 (combat38/handuse.py's USES / USEDOWN): :<uses>:<down> USE that many times while the menu
+	# offers it, each time End <down> times on the item list, then U (the lit item), then the aim as a spell's.
+	var uses_max := int(a[5]) if a.size() > 5 and a[5] != "" else 0
+	var use_down := int(a[6]) if a.size() > 6 and a[6] != "" else 0
+	var uses := 0
+	var downs := 0
 	var casts := 0
 	var cs = main._combat
 	CombatScreen.lab_original_aim = true     # the original's AIM cycle (TARGETING SKIPS PARTY off)
@@ -171,6 +192,8 @@ static func _handcast(main: Node, arg: String) -> void:
 			st = "abort"
 		elif sheet != null and sheet.visible and sheet._mode == "cast":
 			st = "choose"
+		elif sheet != null and sheet.visible and sheet._mode == "items":
+			st = "use"
 		elif cs._flash != "" or cs._row24_msg != "":
 			st = ""             # a message on row 24 (handcast.py waits for the menu to come back)
 		elif cs._cmode == "aim" and cs._aim_for == "spell":
@@ -196,6 +219,18 @@ static func _handcast(main: Node, arg: String) -> void:
 			why = "cast the lit spell"
 			aim_n = 0
 			picks = 0
+		elif st == "use":
+			if downs < use_down:
+				k = "End"
+				why = "item list down"
+				downs += 1
+			else:
+				k = "u"
+				why = "use the lit item"
+				uses += 1
+				downs = 0
+				aim_n = 0
+				picks = 0
 		elif st.begins_with("aim:"):
 			if "TARGET" in st.split(":")[1].split(",") and aim_n >= aim_skip:
 				k = "t"
@@ -213,7 +248,11 @@ static func _handcast(main: Node, arg: String) -> void:
 				aim_n += 1
 		elif st.begins_with("menu:"):
 			seen = true
-			if turn_first and "TURN" in st.split(":")[1].split(",") and not quick:
+			if "USE" in st.split(":")[1].split(",") and not quick and uses < uses_max:     # handuse.py: USE first
+				k = "u"
+				why = "USE"
+				downs = 0
+			elif turn_first and "TURN" in st.split(":")[1].split(",") and not quick:
 				k = "t"
 				why = "TURN"
 			elif "CAST" in st.split(":")[1].split(",") and not quick and casts < casts_max:
