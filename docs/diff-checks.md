@@ -172,6 +172,30 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 90: APPRAISE's SELL KEEP and menu keys (checks 295-298; two differences), chat 89's ten join the gate
+
+**Joined:** 284-286 and 288-294 after Combat Chat 40 landed `c89_five.diff` (72f845a): 3 of 3 each on origin/main;
+**DIFFCHECKS 293/293.**
+
+**Differences (main path, DOSBox at 3:0's arms and armour shop, check 108's start, and Tyr's temple, check 153's start;
+ready diff to Combat, lab `data/c90/c90_bundle.diff`, shop_screen.gd and temple_screen.gd):**
+- **YOU CAN: SELL KEEP** (the Lead's answer (b), 2026-11-21): Right and keypad 6 sell, Left and keypad 4 keep (DOS's
+  Left is scan code 0x4B, the letter K; with KEEP not offered Left sells, as K does); Esc sells too in the original:
+  **original's bug 18** (on under ORIGINAL'S BUGS and in every lab run; off, Esc keeps). Ours: Left / Right moved the
+  light, Esc kept. Check 295 (shop): APPRAISE, GEMS (50 gp), Left (kept), GEMS (100 gp), Esc (sold: 20 platinum), EXIT.
+  Check 296 (temple): APPRAISE, GEMS (500 gp), Right (sold), GEMS (100 gp, SELL alone), Left (sold), EXIT, NO.
+- **APPRAISE's menu (GEMS JEWELRY EXIT)**, the shop's and the temple's: Enter, Space, the digits, the arrows and End
+  choose nothing but make the original work the member's cached load (+0x102) out again (read live: 721 -> 5721 on
+  THRENDER GRONE, 0 -> 512 on ARN), which KEEP's offer reads with ORIGINAL'S BUGS on; Home and keypad 7 (scan code
+  0x47, the letter G) appraise a gem; other letters, X, and Backspace do nothing. Ours: Enter took the lit word,
+  Left / Right moved the light, Home did nothing. Check 297 (temple): APPRAISE, Enter, Right, Enter, then as 296: the
+  first gem now SELL alone, Right sells, the second SELL KEEP, Left keeps (fails by 1 platinum and a gem on a copy
+  that only ignores the keys). Check 298 (shop): APPRAISE, Home (a gem: 50 gp), Left (kept), Space, Home (100 gp),
+  Right (sold), EXIT.
+
+Each 3 of 3 with the bundle (c89's five, SELL KEEP and the APPRAISE menu: check_godot OK, DIFFCHECKS 283/283 then);
+0 of 4 on main. They join after the bundle lands.
+
 ## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-294; five differences)
 
 Main path, each against the original in DOSBox (3:0's temple and arms and armour shop), 3 of 3 and failing on a broken
