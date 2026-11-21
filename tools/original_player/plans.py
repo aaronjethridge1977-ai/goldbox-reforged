@@ -590,6 +590,37 @@ class CampCast(Heal):
         return Heal.next(self, p)
 
 
+class CampScribe(Heal):
+    """Player 37: `scribe <NAME> <spell>, <spell>` (Jeremy's magic-item rule: copy unknown magic-user scroll spells;
+    stuck-fights.md section 4: LIRA copies Haste from the Kovel scroll): ENCAMP, select the member, MAGIC, SCRIBE
+    (the member's own scrolls: "SPELLS ON SCROLLS"), each spell lit and SCRIBE (marked "*"), EXIT, the "SPELLS TO BE
+    SCRIBED" list checked against the plan's, EXIT, "SCRIBE THESE SPELLS?" YES, then REST for the time offered (the
+    copying is done while resting, 15 minutes a level, after any memorizing: camp_screen.gd's rules) and the spell
+    book read from the record (0x33 + id - 1). A spell not on the member's scrolls, refused ("YOU CAN NOT SCRIBE THAT
+    SPELL.": a level the member has no slot for) or not in the book after the rest stops the run."""
+    def __init__(self, who, spells):
+        super().__init__(force=True)
+        self.who, self.spells = who.upper(), [x.strip().upper() for x in spells if x.strip()]
+
+    def __repr__(self):
+        return "scribe %s %s" % (self.who, ", ".join(self.spells))
+
+    def next(self, p):
+        if getattr(p, "heal", None) is None:
+            new_heal(p)
+            p.heal.update(scribes=[(self.who, list(self.spells))], scribe_check=(self.who, list(self.spells)))
+            return False, "e", "scribe: ENCAMP"
+        h = p.heal
+        if h["done"] and h.get("scribe_check"):
+            who, want = h.pop("scribe_check")
+            m = next((m for m in members(p.g.mem) if m["name"] == who), None)
+            miss = [w for w in want if not (m and MU_IDS.get(w) and m["rec"][0x33 + MU_IDS[w] - 1])]
+            if miss:
+                raise_stop(p, "scribe: %s not in %s's book after the rest" % (", ".join(miss), who))
+            p.note("scribe", "%s's book now has %s" % (who, ", ".join(want)))
+        return Heal.next(self, p)
+
+
 def new_heal(p):
     p.heal = {"done": False, "phase": "rounds", "round": 0, "cured": 0, "memo_any": False, "op": None,
               "cures": 0, "rests": 0, "days": 0, "interrupts": 0, "fights0": p.fights, "days_memo": False,
@@ -615,9 +646,17 @@ class TripEnd:
 # into every fight from Sokal Keep on with their level-2 and level-3 slots empty; README "Player 27"). Ids by
 # class and level: cleric 1-8, 22-28, 36-44; magic-user 9-21, 29-35, 45-55.
 CLERIC1, MU1 = range(1, 9), range(9, 22)
-SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 6: "PROTECTION FROM EVIL", 15: "MAGIC MISSILE", 21: "SLEEP", 23: "HOLD PERSON",
+SPELL_NAMES = {1: "BLESS", 3: "CURE LIGHT WOUNDS", 6: "PROTECTION FROM EVIL", 15: "MAGIC MISSILE", 18: "READ MAGIC", 21: "SLEEP", 23: "HOLD PERSON",
                26: "SLOW POISON", 31: "KNOCK", 32: "MIRROR IMAGE", 34: "STINKING CLOUD", 42: "PRAYER",
                47: "FIREBALL", 48: "HASTE", 51: "LIGHTNING BOLT"}
+# Player 37: the magic-user spells by name (START.EXE's table, 41 bytes a name), for SCRIBE's book check
+MU_IDS = {"BURNING HANDS": 9, "CHARM PERSON": 10, "DETECT MAGIC": 11, "ENLARGE": 12, "REDUCE": 13, "FRIENDS": 14,
+          "MAGIC MISSILE": 15, "PROTECTION FROM EVIL": 16, "PROTECTION FROM GOOD": 17, "READ MAGIC": 18, "SHIELD": 19,
+          "SHOCKING GRASP": 20, "SLEEP": 21, "DETECT INVISIBILITY": 29, "INVISIBILITY": 30, "KNOCK": 31,
+          "MIRROR IMAGE": 32, "RAY OF ENFEEBLEMENT": 33, "STINKING CLOUD": 34, "STRENGTH": 35, "BLINK": 45,
+          "DISPEL MAGIC": 46, "FIREBALL": 47, "HASTE": 48, "HOLD PERSON": 49, "INVISIBILITY, 10' RADIUS": 50,
+          "LIGHTNING BOLT": 51, "PROTECTION FROM EVIL, 10' RADIUS": 52, "PROTECTION FROM GOOD, 10' RADIUS": 53,
+          "PROTECTION FROM NORMAL MISSILES": 54, "SLOW": 55}
 PICKS1 = ((CLERIC1, 0xB2, (3, 3, 1)), (MU1, 0xB5, (21, 15)))
 PICKS = ((range(1, 9), 0xB2, (3, 3, 1)), (range(22, 29), 0xB3, (23,)), (range(36, 45), 0xB4, (42,)),
          (range(9, 22), 0xB5, (21, 15)), (range(29, 36), 0xB6, (31, 34, 32)), (range(45, 56), 0xB7, (47, 48, 51)))
@@ -1785,6 +1824,26 @@ class Plan:
                 h["cured"] += 1
                 return ("cast", c[0]["i"], c[1]["i"])
             return ("rest", 24 * 60)
+        if h.get("scribes") is not None:
+            # Player 37: `scribe`: mark the plan's spells, one REST for the time offered, then leave
+            if h["scribes"]:
+                who, spells = h["scribes"].pop(0)
+                byname = {m["name"]: m["i"] for m in M}
+                if who not in byname:
+                    raise_stop(p, "scribe: no %s in the party" % who)
+                h["scribe_want"] = list(spells)
+                return ("scribe", byname[who], list(spells))
+            # (p37b1: an 11-hour rest copied one scroll's three spells, Blink, Ray of Enfeeblement, Slow; the other
+            # marks waited: rest again for the time offered while a marked spell is missing from the book, 6 at most)
+            who, want = h.get("scribe_check") or ("", [])
+            m = next((m for m in M if m["name"] == who), None)
+            miss = [w for w in want if not (m and MU_IDS.get(w) and m["rec"][0x33 + MU_IDS[w] - 1])]
+            if miss and h.get("scribe_rests", 0) < 6:
+                h["scribe_rests"] = h.get("scribe_rests", 0) + 1
+                if h["scribe_rests"] > 1:
+                    p.note("scribe", "%s still to copy: %s; rest again" % (who, ", ".join(miss)))
+                return ("rest", None)
+            return ("leave",)
         if h.get("casts") is not None:
             # Player 33: `campcast`: the plan's casts in turn, then leave
             if not h["casts"]:
@@ -1897,6 +1956,12 @@ class Plan:
         if bw[:2] == ["CAST", "MEMORIZE"]:
             if h.get("sub") == "over":
                 return "e", "heal: EXIT MAGIC"
+            if op[0] == "scribe":
+                # (a member with no scrolls: nothing happens, the menu stays: Player 37)
+                h["scribe_tries"] = h.get("scribe_tries", 0) + 1
+                if h["scribe_tries"] > 3:
+                    raise_stop(p, "scribe: SCRIBE opened no list for %s (no scrolls?)" % P[op[1]][1])
+                return "s", "heal: SCRIBE"
             return ("c", "heal: CAST") if op[0] == "cast" else ("m", "heal: MEMORIZE")
         if bw[:2] == ["CHOOSE", "SPELL:"] and "CAST" in bw and op[0] == "cast":
             if h.get("sub") == "over":
@@ -1910,13 +1975,19 @@ class Plan:
             if len(lit) != 1:
                 raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
             if lit[0] in hit:
-                if len(op) > 3 and spell in ("BLESS", "PRAYER", "KNOCK"):
+                if len(op) > 3 and spell in ("BLESS", "PRAYER", "KNOCK", "READ MAGIC", "DETECT MAGIC"):
                     # (Bless and Prayer take the party, no CAST SPELL ON WHOM: the cast is over; Player 35: Knock
                     # cast in camp to free its slot for Stinking Cloud, the plan's `answer LOSE IT|YES`)
                     h["sub"] = "over"
                     p.note("heal", "%s casts %s in camp" % (P[op[1]][1], spell))
                 return "c", "heal: CAST %s (%s)" % (spell, P[op[1]][1])
             return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % spell
+        if op[0] == "cast" and len(op) > 3 and scr["kind"] == "yesno" and "LOSE IT" in scr["bottom"]:
+            # Player 37: a combat-only spell cast in camp: "IS A COMBAT-ONLY SPELL... LOSE IT?" YES frees its slot
+            # (LIRA's Sleep for Read Magic, before SCRIBE)
+            h["sub"] = "over"
+            p.note("heal", "%s loses %s (its slot freed)" % (P[op[1]][1], op[3]))
+            return "y", "heal: LOSE IT? YES"
         if "CAST SPELL ON WHOM" in scr["bottom"] and op[0] == "cast":
             t = op[2]
             hl = scr.get("highlight")
@@ -1930,6 +2001,51 @@ class Plan:
                 P[op[1]][1], op[3].title() if len(op) > 3 else "Cure Light Wounds", P[t][1], P[t][3],
                 members(mem)[t]["max"]))
             return "s", "heal: SELECT %s" % P[t][1]
+        if op[0] == "scribe":
+            spells = op[2]
+            if bw[:2] == ["CHOOSE", "SPELL:"] and "SCRIBE" in bw:
+                h["scribe_tries"] = 0
+                if not spells or h.get("sub") == "over":
+                    return "e", "heal: the scroll spells marked, EXIT"
+                want = spells[0]
+                rows = {r: st["rows"][r].strip("?\\ *") for r in range(4, 23)}
+                hit = [r for r, t in rows.items() if t == want]
+                lit = [r for r in range(4, 23) if screens._rowcol(st["im"], r) == screens.WHITE]
+                if not hit:
+                    d = h.get("mdir", "n")
+                    if d == "n" and "NEXT" not in bw:
+                        d = "p"
+                    elif d == "p" and "PREV" not in bw:
+                        d = "n"
+                    h["mdir"] = d
+                    if ("NEXT" in bw or "PREV" in bw) and h.get("mpages", 0) < 8:
+                        h["mpages"] = h.get("mpages", 0) + 1
+                        return d, "heal: page for %s" % want
+                    raise_stop(p, "scribe: %s not on %s's scrolls (rows %s)" % (
+                        want, P[op[1]][1], [t for t in rows.values() if t]))
+                if len(lit) != 1:
+                    raise_stop(p, "scribe: no single lit spell (rows %s)" % lit)
+                if lit[0] == hit[0]:
+                    if st["rows"][hit[0]].lstrip("?\\ ").startswith("*"):
+                        spells.pop(0)       # (already marked: the next one)
+                        return self._heal(scr, st, p, h)
+                    spells.pop(0)
+                    h["mpages"], h["mdir"] = 0, "n"
+                    p.note("scribe", "%s marks %s" % (P[op[1]][1], want))
+                    return "s", "heal: SCRIBE %s" % want
+                return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % want
+            if bw == ["EXIT"] and "TO BE SCRIBED" in row1:
+                shown = [st["rows"][r].strip("?\\ *") for r in range(4, 23)]
+                miss = [w for w in h.get("scribe_want", []) if w not in shown]
+                if miss:
+                    raise_stop(p, "scribe: %s refused (SPELLS TO BE SCRIBED: %s)" % (
+                        ", ".join(miss), [t for t in shown if t]))
+                return "e", "heal: the list to be scribed shown, EXIT"
+            if scr["kind"] == "yesno" and "SCRIBE THESE SPELLS" in scr["bottom"]:
+                h["sub"] = "over"
+                return "y", "heal: YES"
+            if bw[:2] == ["CHOOSE", "SPELL:"] or "SCRIBE" in scr["bottom"]:
+                return None
         if op[0] == "memorize":
             spells = op[2]
             if bw[:2] == ["CHOOSE", "SPELL:"] and "MEMORIZE" in bw:
@@ -2087,6 +2203,9 @@ def load(path):
             pl.goals.append(Heal())
         elif cmd == "cure":
             pl.goals.append(Heal(force=True, cure=True))
+        elif cmd == "scribe":     # Player 37: `scribe <NAME> <spell>, <spell>`
+            who, _, sp = rest.strip().partition(" ")
+            pl.goals.append(CampScribe(who.replace("_", " "), sp.split(",")))
         elif cmd == "campcast":   # Player 33: `campcast <CASTER> <SPELL>[|<TARGET>]`
             who, _, sp = rest.strip().partition(" ")
             sp, _, to = sp.partition("|")
