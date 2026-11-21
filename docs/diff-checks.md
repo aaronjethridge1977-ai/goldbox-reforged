@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE (checks 245-248, matched)
+## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light (checks 245-251; 250 a difference)
 
 Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3, and each
 fails on a copy deliberately broken (recipes: ~/gbr/checks/README.md "Chat 86"). **A fighter/magic-user given a
@@ -183,7 +183,14 @@ sheet's target; fails on a copy resetting it). **Readied arrows (247):** DROP on
 question (as 119's sword), HALVE keeps the light on the readied part down to 1, READY off, DROP asks YOUR 1 ARROW WILL BE
 GONE FOREVER. **The adventure menu's ENLARGE on another member, then SHIELD (248):** the list comes back after the cast
 with its last row lit; CEDRIC [12, 10, 1], LIRA [17, 5, 1] (fails on a copy starting the target on the first member).
-DIFFCHECKS 245/245.
+**A scroll's target question left by EXIT (249):** the spell is kept; USE again lights the page's last spell and the
+target starts on the caster. **A fighter/thief given a magic-user's scroll (251):** READY refused silently, USE nothing.
+**The scroll page's light (250, a difference, main path):** the original lights the last spell wherever the scroll sits
+in the item list; ours lit the item cursor's row, so a scroll on the first row cast its first spell (Combat's
+`character_sheet.gd`: a one-line diff on the board; 250 joins when it lands). **219, 225, 226** (chat 83's MEMORIZE
+paging and WHOM light) joined after Combat Chat 38's fixes. **dc_new.sh's shared game folder:** checks run side by side
+through `DC_DATA` shared one game folder (a `cp -r` of the `cd/game` link), which made 219/225/226 look flaky; fixed in
+the lab copy `data/c86/dc_new.sh`; the gate's diffcheck.sh was never affected. DIFFCHECKS 250/250.
 
 ## Chat 85: the camp's CAST list after a cast, STRENGTH twice, the adventure menu's HASTE, a cleric with a magic-user's scroll, BLESS after PRAYER (checks 240-244, matched)
 
