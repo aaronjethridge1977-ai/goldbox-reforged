@@ -63,6 +63,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
     extra (Player 5): {n: [keys]} ours-only keys sent after the segment's n-th original key (1-based), for a screen
     only ours shows (a known difference already on the board), so the replay can go on to the next difference."""
     out, on, camp, fight, rest_min, spells = [], False, False, False, 0, 0
+    last_t = None
     extra, n = extra or {}, 0
     magicat, magic_slot = magic_draws(run, a), 0
     for line in open(os.path.join(LOGS, "%s.log" % run)):
@@ -123,6 +124,14 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         if fight:            # the won screen and the treasure take a few frames in ours (chat 24)
             out += ["wait", "wait", "wait"]
             fight = False
+        # Player 39 (Combat Chat 38's p37i1 ask (1)): a tactics fight's key replayed after two waits reached ours while
+        # the spectres were still moving after LIRA's Fireball (the original's ELWEN menu came 6.4 s later) and was lost:
+        # before a fight menu's key, ours waits twice the original's gap from the key before (0.5 s a wait: ours' figures
+        # move at about half the DOSBox speed: p37i1's two spectre rounds took ~11 s in ours, 6.4 s in the original)
+        tk = float(line.split()[0])
+        if ("QUICK" in bottom.split() and "DONE" in bottom.split()) and last_t is not None and tk - last_t > 1.5:
+            out += ["wait"] * int((tk - last_t) / 0.25)
+        last_t = tk
         if k == "m" and re.match(r"(memorize|heal): (MEMORIZE )?[A-Z][A-Z ]+$", why):
             spells += 1      # Player 14: a spell to be memorized at the next REST
         out.append(GKEY.get(k, k))
