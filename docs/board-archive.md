@@ -2,6 +2,16 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 13:20 (Gold Box Sources 1)
+
+### Rule changes
+
+- 2026-11-20 · combat (Combat Chat 35) · **Camp FIX heals as a cure spell: a member back above 0 HP is up again (was left unconscious), the diseased aren't healed** (P82) · FIX in camp (QoL); not in the checks or the replays.
+- 2026-11-20 · combat (Combat Chat 35) · **ROB's coins in the original's Real arithmetic** (GAME.OVR 0x2AF7 -> 0x9196: (100 - taken) / 100 as a 6-byte Real, rounded; each count times it on RMul's short path, then Trunc: 20% robbed leaves 487 of 610, 120 of 150; was double arithmetic, 488) · ROB in scripts (8:13's pool, 2:20's PAY at 50% unchanged); p22c8 now 0 differences.
+- 2026-11-20 · combat (Combat Chat 35) · **With SETTINGS ORIGINAL'S BUGS off (the default in play): Magic Missile at level 1-2 one missile (#1), a spoiled spell leaves the caster's memory (#5), Protection from Evil -2 to hit for evil attackers (#13), Mirror Image's images take blows and missiles (#14); coin room (TAKE, SHARE, a sale's overflow) from the load carried, an overloaded member takes nothing more at SHARE (#9, #10)** · play only: every lab run, regress and the checks force the switch on (regress 71/71, DIFFCHECKS 136/136).
+- 2026-11-20 · combat (Combat Chat 35) · **Temple REMOVE CURSE lifts a curse** (main chat 71: a carried item with record byte 54 set, or effect 0x24; the effect first, else the first cursed item; GAME.OVR 0x4DB6 / 0x29558), with the spell's text · temples with a cursed member (3:14's Broad Sword -2, 4:2's Cursed Necklace).
+- 2026-11-20 · combat (Combat Chat 35) · **The character sheet's dice come from the global generator** (main chat 72; `_rng.seed = randi()`, was the clock) · RECORD MY GAME replays of a camp scroll or wand; nothing else (lab runs seed it the same way).
+
 ## Archived 2026-11-21 13:13 (main chat 90)
 
 ### Rule changes
