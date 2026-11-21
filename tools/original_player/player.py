@@ -163,9 +163,21 @@ class Player:
             if self.g.control_sent:
                 self.g.control_sent = False    # Player 30: the next fight gets its Space
                 self.tactics.reset()
-            if not self.g.party_size and scr["kind"] == "walking":
-                self.g.party_size = len(self.g.party())
-                self.start_names = [m[0] for m in self.g.party()]   # Player 11: members lost show in the summary
+            if scr["kind"] == "walking":
+                # Player 36 (p36n1: Princess Fatima joined as the seventh and the tactics took her for an enemy): the
+                # party is read again at every walking screen (no monsters in the list there), an NPC who joins counts
+                # (the count from ECL cell 0x6E3E, the party size Fatima's event compares with 8; the record list
+                # can run on into a fight's leftovers)
+                first = not self.g.party_size
+                n = self.g.mem.ecl(0x6E3E)[0]
+                if first or not 1 <= n <= 8:
+                    self.g.party_size = 0
+                    self.g.party_size = len(self.g.party())
+                if 1 <= n <= 8 and n != self.g.party_size:
+                    self.log("NOTE party size %d -> %d (ECL 0x6E3E)" % (self.g.party_size, n))
+                    self.g.party_size = n
+                if first:
+                    self.start_names = [m[0] for m in self.g.party()]   # Player 11: members lost show in the summary
         if scr["kind"] not in self.seen_kinds:
             self.seen_kinds.add(scr["kind"])
             shot = os.path.join(LOGS, "%s_screen_%s.png" % (self.run, scr["kind"]))
