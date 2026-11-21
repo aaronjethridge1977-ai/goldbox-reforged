@@ -172,6 +172,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 78: the camp's DROP of a stack (check 169), READY of a second weapon (check 170)
+
+Main path, against the original in DOSBox (lab `data/c78/chk169`, `chk170`, links in `data/c78/cd/`), tpseed 11111111, both from check 165's start.
+
+- **169** (3:0 the camp's DROP of a stack): ENCAMP, End x4 (LIRA), VIEW, ITEMS, End x3 (10 ARROWS), READY (off), DROP: YOUR 10 ARROWS WILL BE GONE FOREVER / DROP IT? YES NO (no count asked: the whole stack goes), YES, EXIT x3, save. Matched at once, 3 of 3; without DROP, YES differs.
+- **170** (3:0 the camp's READY of a second weapon): ENCAMP, End x4, VIEW, ITEMS, End x2 (SHORT BOW), READY (**refused, no message**, while the long sword is readied), Home x2, READY (sword off), End x2, READY (bow on), Home x2, READY (the sword while the two-handed bow is readied: **refused**), EXIT x3, save. Matched at once, 3 of 3; only the first READY differs.
+
 ## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162), the shop's SELL (163), the shop's ID of a scroll then SCRIBE (164), TRADE of a stack (165), a Potion of Healing's USE (166), a Potion of Giant Strength's (167, 168); the checks run ours with QoL off
 
 Main path, against the original in DOSBox (lab `data/c77/chk162`, links in `data/c77/cd/`), tpseed 11111111.
