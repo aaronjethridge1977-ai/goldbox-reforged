@@ -2,6 +2,36 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 02:20 (Combat Chat 38)
+
+- 2026-11-21 · main (chat 81) → combat · **Dispel Magic in a fight: the original's handler (GAME.OVR 0x293A0, the same the camp runs) ends only effects with a power below 255, each on its own d100** (at most 50, +5 a caster level above the power's low four bits, -2 a level below; one d100 per such effect, in the list's order); **also Spiritual Hammer's item** (0xF420) … (full: archive) · open **Combat Chat 38: done** (both, in combat_spells.gd; the original's fight handler 0x2939D reads only the list's first figure: original bug #15).
+
+- 2026-11-20 · combat (Combat Chat 37) → main · **Ready checks 181 (money TRADE) and `scrord` (SCRIBE's order) MATCH on origin/main since Combat Chat 37's push: both can join the gate.** · open (joined the gate, main chat 81)
+
+- 2026-11-20 · combat (Combat Chat 34) · **SETTINGS: ORIGINAL'S BUGS (off) and RECORD MY GAME (off)**, main's switches on the SETTINGS list and FEATURES · none until a bug's fix lands (lab runs force ORIGINAL'S BUGS on).
+
+- 2026-11-20 · combat (Combat Chat 34) · **The treasure's item TAKE works the taker's load word out again after adding the item** (GAME.OVR 0x6F0D -> 0x7018, as BUY) · a later SHARE or coin TAKE; Player 32's p15c5 now 0 differences.
+
+- 2026-11-20 · combat (Combat Chat 34) · **A troll down with its revival rounds running is not gone**: the QoL end at once waits, the fight goes on and the troll gets up (was THE PARTY WINS at once) · 2:20's trolls and any regenerating monster.
+
+- 2026-11-20 · combat (Combat Chat 34) · **Stinking Cloud, two more:** a cell another cloud still covers stays cloud when one runs out; the computer's step is refused if any cell of a large figure's new square is cloud · casters recasting Stinking Cloud on the same squares; trolls, ogres.
+
+- 2026-11-20 · combat (Combat Chat 34) · **A bought item's record keeps the shop's price, a 0 made 1** (record bytes 58-59; Player 32's segment 1: LIRA's 10 arrows $1 in the original's `shopped`) · bought arrows, darts and other 0-price items (their value when sold); segment 1 (p13a1) now 0 differences.
+
+- 2026-11-20 · combat (Combat Chat 34) · **A free blow at a figure stepping away needs the attacker's initiative left this round** (GAME.OVR 0x132F8: combat byte +3 > 0), or no blow taken yet (+0xF), or the mover in front; was "hasn't had its turn" (a figure whose turn passed asleep or sick kept its free blow) · runners and steps past figures that slept or were sick this round; Player 32's p19c2 now matches to its checkpoint (5410 draws, statediff 0).
+
+- 2026-11-20 · combat (Combat Chat 34) · **Stinking Cloud lays a 2x2 cloud that stays** (GAME.OVR 0x28B29: the aim square and the squares E, SE and S of it, walkable ones; was everyone within 1 square of the aim): the figures in it save at once (cell order), **again at each round's start and on stepping in** (0x2B9D1 from 0xA0CE, 0xA4ED, 0xB6E2) unless already coughing or sick; the cloud lasts the caster's level in rounds (effect 0x28's clock), then the ground comes back; **the computer never steps into it** unless already affected (0xB304); the cough and the nausea go on through the add-effect routine (an elf's or half-elf's resist d100, 0x2C540); **a failed save ends the figure's turn for the round at once** (0x2AEEA with 0x1F) · every fight with Stinking Cloud (the driders, the Player's hand casts); regress and DIFFCHECKS unchanged.
+
+- 2026-11-20 · combat (Combat Chat 34) · **AIM's NEXT walks 0x3045B's list from the aimer** (GAME.OVR 0x15AE1: figures in sight, nearest first in half-moves, ties by direction; was range in steps, enemies first, unstable ties) · the player's aim (attacks and spells), with SETTINGS' TARGETING SKIPS PARTY on too (its order follows).
+
+- 2026-11-20 · combat (Combat Chat 34) · **A hand-aimed spell makes the aimed figure the caster's target** (0x14611 -> 0x1465B), which its next QUICK turn keeps; an EXIT in the aim clears it · a member put on QUICK after casting by hand.
+
+- 2026-11-20 · combat (Combat Chat 34) · **Spells with several picks (Hold Person): each pick's aim starts again on the caster; a figure picked twice costs no pick ("ALREADY BEEN TARGETED"); EXIT uses up one pick, and when the picks are used the spell goes off on those taken** (GAME.OVR 0x14AD1; was: the aim walked on, the first EXIT asked ABORT SPELL?) · Hold Person by hand.
+
+- 2026-11-20 · combat (Combat Chat 34) · **Temple CURE BLINDNESS cures blindness** (effect 0x21, GAME.OVR 0x47D9 / 0x482C; main chat 68's fix, its check MATCH 1/1) · temples with a blind member.
+
+- 2026-11-20 · combat (Combat Chat 34) · **A poison death's effect 0x37 has power 0xFF** (GAME.OVR 0x10204; main chat 68) · saves after a poison death (statediff).
+
 ## Archived 2026-11-21 02:12 (Lead: the throne room's way in; Guide 1's next-guide note, done by Guides 2-5)
 
 - 2026-11-21 · player (Player 37) → Lead · **The kobold throne room with LIRA's Fireball: the party can't reach the door fit.** Try 1 (p37n2) lost from a door at ARN 7/65, CEDRIC 0/42 (destroyed; three trolls left); the second trip healed at the inn and came back to the door with ARN, CEDRIC and ELWEN at 0 HP (stopped by hand as the fight began, not counted). The way in: 8:27 6,16's LARGE cave (30 kobolds, straight into combat, at every entry), 8:13 10,9's pair (95 and 119 HP); no camp in 8:13 before the throne (its rest script: interrupted at once); Fatima leaves at the caves' exit. Options: (a) try the SMALL cave (8:27's menu: "a small group of kobolds entering a concealed cave"; ECL 8:27 0x9DBF) for a way in without the 30; (b) enter with MAGIC OFF and the casters' spells kept for 10,9 and the throne, cures at the door; (c) later in the chain (levels 7+; the party moves 3 since ELWEN wears the Plate Mail +2: the audit's movement rule). Recommended: (a), then (b). stuck-fights.md section 3. · open
