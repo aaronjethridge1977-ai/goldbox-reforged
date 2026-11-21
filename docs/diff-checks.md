@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix); DIFFCHECKS 150/150
+## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151); DIFFCHECKS 151/151
 
 - **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's
   start (3:0, THRENDER GRONE with the mummy's disease 0x32 and rot 0x39) with THRENDER at 3 HP and BROTHER SEAN given
@@ -190,6 +190,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   0x1F, 0x2B, 0x2C, no 0x22, no message): ours kept 0x22. Now `SpellCaster._cure_292a2`, shared with Neutralize
   Poison: "IS CURED" per cure, as the original. 3 of 3; before the fix and with the cure on BAKSHI it differs. The
   temple's CURE DISEASE still uses `SpecialAffects.cure_disease` (Combat's; check 144 matches; 0x22 there untested).
+- **Check 151, the camp's REST of a day with a diseased member** (main path, the standing list): check 149's start, no
+  cure: ENCAMP, REST 24 hours (twelve d100 interruption rolls, none). The original: THRENDER (the mummy's disease) stays
+  at 3 HP, BAKSHI and PHINEAS 4 -> 5; ours the same (the heal skips the diseased). Matched at once, 3 of 3; with the
+  disease taken from the start, ours heals him (differs). Ours' keys wait after REST: a key sent while ours still
+  rests leaves it in camp, where F2 doesn't save (a first try compared a stale save).
 
 ## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 
