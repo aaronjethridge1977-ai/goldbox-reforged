@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162), the shop's SELL (163), the shop's ID of a scroll then SCRIBE (164), TRADE of a stack (165), a Potion of Healing's USE (166); the checks run ours with QoL off
+## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162), the shop's SELL (163), the shop's ID of a scroll then SCRIBE (164), TRADE of a stack (165), a Potion of Healing's USE (166), a Potion of Giant Strength's (167, 168); the checks run ours with QoL off
 
 Main path, against the original in DOSBox (lab `data/c77/chk162`, links in `data/c77/cd/`), tpseed 11111111.
 
@@ -182,6 +182,8 @@ Main path, against the original in DOSBox (lab `data/c77/chk162`, links in `data
 - **164** (3:0 the arms shop's ID of an unread scroll, then SCRIBE): check 156's start with LIRA's gold 500 and the unread scroll (byte 53 = 6, spells 17, 20): VIEW, ITEMS, End x4, ID (FOR 200 GOLD PIECES), YES (MAGIC USER SCROLL WITH 2 SPELLS: byte 53 cleared), EXIT x3, ENCAMP (the shop's pick carried over: End x4 lands on CEDRIC; SCRIBE on a cleric does nothing), End x2, MAGIC, SCRIBE (both spells listed), Home, SCRIBE, EXIT, EXIT, YES, REST, REST (4:15), save: 300 gold left as 60 platinum, 17 in the book, the scroll 210. Matched at once, 3 of 3; without the ID differs.
 - **165** (3:0 the camp's TRADE of a stack): check 156's start: ENCAMP, End x4 (LIRA), VIEW, ITEMS, End x3 (10 ARROWS), READY (off), TRADE (TRADE WITH WHOM?, the cursor on LIRA), End (DORN), SELECT: the whole stack of 10 moves to DORN, unreadied. Matched at once, 3 of 3; to ELWEN differs.
 - **166** (3:0 the camp's USE of a Potion of Healing): no save of ours had one; the record (type 70, byte 60 one charge, byte 61 = 85: item spell 62, value 200, unread) copied from a Player save, appended to LIRA with HP 1 of 9: ENCAMP, End x4, VIEW, ITEMS, End x4 (POTION), USE (**nothing while the potion isn't readied**), READY, USE (the potion gone, no message on the list), EXIT x2, save. tpseed 22222222 (simulated so the two d4 draws are low: 0, 1; the original's trace: two draws of 4 at OVR 0x2A001): 2d4+2 = 5, HP 6 (tpseed 11111111 gives 8, the maximum: a cap could hide an error). Ours matched at once, 3 of 3; USE without READY differs (HP 1).
+- **167** (3:0 the camp's USE of a Potion of Giant Strength): a Player save's record (byte 61 = 82: spell 59; link bytes zeroed) appended to LIRA (long sword only): ENCAMP, End x4, VIEW, ITEMS, End x4, READY, USE, EXIT x3, save: STR 21 (exceptional byte cleared), affect 38 for 70 minutes, power 76 (the minutes from one d4 draw at OVR 0x2783D: tpseed 22222222 gives 50). Matched at once, 3 of 3; tpseed 22222222 differs.
+- **168** (the same potion on ARN, long sword and shield readied): READY refused without a message (no free hand), USE does nothing: STR 18(00) kept. Matched at once, 3 of 3; with the shield unreadied first differs (STR 21).
 
 ## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat), the temple's RAISE DEAD (check 160), SCRIBE using up a one-spell scroll (check 161); DIFFCHECKS 161/161
 
