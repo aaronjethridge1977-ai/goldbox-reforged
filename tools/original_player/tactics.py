@@ -191,6 +191,11 @@ def _focus(f):
 # last three members; the guide: "stand on a fallen troll's square"): with OP_HOLDDOWN on (default), a fighter in
 # `advance` walks onto a fallen focus figure's square nobody holds, and once there stays (no MOVE off it)
 HOLDDOWN = os.environ.get("OP_HOLDDOWN", "1") != "0"
+# Player 40: OP_MOVETEST=<key> (a hand check: which key ends a MOVE with the member where he stepped): see _fight
+MOVETEST = os.environ.get("OP_MOVETEST", "")
+# Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
+# holds the fallen figure's corner square only
+HOLDCORNER = os.environ.get("OP_HOLDCORNER", "0") == "1"
 
 # Player 38 (p38e3: the throne room's second wave began with the party at 49 HP; the tool answered CONTINUE BATTLE NO;
 # the book: "between waves, Continue Combat for a round or two to heal"): when the last enemy falls, CONTINUE BATTLE
@@ -439,6 +444,8 @@ class Tactics:
         if b.startswith("ATTACK ALLY"):
             self.log("TACTICS ATTACK ALLY? NO")
             return "n", "tactics: ATTACK ALLY: NO"
+        if getattr(self, "mt", None) and ("MOVE LEFT" in b or "MOVE/ATTACK" in b):
+            return self._move_test(st, p)
         if self.move and ("MOVE LEFT" in b or "MOVE/ATTACK" in b):
             return self._move_step(st, p)
         if b.startswith("MOVE/ATTACK"):
@@ -561,6 +568,22 @@ class Tactics:
         the figures TARGET may take (in reach), then the best: a helpless one first (a blow slays it), then the enemy
         magic-users, then the weakest. Nothing in reach: DONE (hold the line, let them come) while an enemy is within
         6 squares, else QUICK (the fight's other figures out of sight: the computer walks to them)."""
+        if MOVETEST and not getattr(self, "mt_done", False) and "MOVE" in items:
+            # Player 40 (Guide 6's question: does a member stay on a fallen troll's square?): OP_MOVETEST=<key>: the
+            # first member with MOVE steps once to a free square, then presses <key>; the logs show where he stands
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            taken = {c for f in figs if f is not me and (_up(f) or f["n"] <= self.party_n) for c in cells(f)}
+            free = [(min([_dist({"x": me["x"] + dx, "y": me["y"] + dy}, f) for f in foes] or [99]), k, dx, dy)
+                    for k, dx, dy in DIRS if (me["x"] + dx, me["y"] + dy) not in taken] if me else []
+            if free:
+                d, k, dx, dy = max(free)
+                self.mt = {"member": member, "step": k, "phase": 0, "from": (me["x"], me["y"]),
+                           "to": (me["x"] + dx, me["y"] + dy)}
+                self.mt_done = True
+                self.log("TACTICS MOVETEST %s at %d,%d: MOVE, %s to %d,%d, then %s" % (
+                    member, me["x"], me["y"], k, me["x"] + dx, me["y"] + dy, MOVETEST))
+                return "m", "tactics: MOVETEST: %s MOVE" % member
         if FOCUS and HOLDDOWN and member.upper() in ADVANCE:
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
@@ -568,7 +591,7 @@ class Tactics:
             held = {(f["x"], f["y"]) for f in party if _up(f) and f is not me}
             # (p38e3: BRAM went round a large troll's corner 25,12 between 26,12 and its second cell 25,13: any of
             # the fallen figure's cells will do)
-            fcells = {c for f in fallen for c in cells(f)}
+            fcells = {c for f in fallen for c in (cells(f) if not HOLDCORNER else [(f["x"], f["y"])])}
             if me is not None and fallen:
                 if (me["x"], me["y"]) in fcells:
                     self.holding = getattr(self, "holding", set()) | {member}
@@ -579,7 +602,8 @@ class Tactics:
                     if goal is not None and _dist(me, goal) <= 8:
                         self.moved.add(member)
                         self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None,
-                                     "square": (goal["x"], goal["y"]), "cells": cells(goal)}
+                                     "square": (goal["x"], goal["y"]),
+                                     "cells": cells(goal) if not HOLDCORNER else [(goal["x"], goal["y"])]}
                         self.log("TACTICS %s walks onto fallen figure %d %s's square %d,%d (%d squares)" % (
                             member, goal["n"], goal["name"], goal["x"], goal["y"], _dist(me, goal)))
                         return "m", "tactics: %s MOVEs onto fallen figure %d's square" % (member, goal["n"])
@@ -683,12 +707,28 @@ class Tactics:
             return "e", "tactics: the items page has no single lit row: EXIT"
         return ("end" if cand[0] > lit[0] else "home"), "tactics: light to %s" % rows[cand[0]][1]
 
+    def _move_test(self, st, p):
+        """Player 40: OP_MOVETEST's step, then its key; the member's square logged before the key."""
+        mt = self.mt
+        figs, party, foes = self._sides(p)
+        me = next((f for f in party if f["name"] == mt["member"]), None)
+        pos = (me["x"], me["y"]) if me else None
+        if mt["phase"] == 0:
+            mt["phase"] = 1
+            return mt["step"], "tactics: MOVETEST: %s steps %s" % (mt["member"], mt["step"])
+        self.log("TACTICS MOVETEST %s stands at %s before %s (bottom %r)" % (mt["member"], pos, MOVETEST, st["bottom"]))
+        self.mt = None
+        self.mt_after = mt["member"]
+        return MOVETEST, "tactics: MOVETEST: %s" % MOVETEST
+
     def _move_step(self, st, p):
         """Player 35: one MOVE key toward the goal figure. In the original's MOVE/ATTACK a step into an enemy attacks
         it, so next to an enemy's corner cell (the goal's, or any enemy's: walking off would give it a free blow) the
         step goes into it: the attack. Otherwise the free step that most shortens the distance to the goal's corner
         (no cell another standing figure holds, nor a direction that left the figure where it was). Stuck, or 16 keys:
-        Esc, back to the menu. (p35c3: stopping "in reach" by the record's footprint and AIMing found nothing.)"""
+        Enter, back to the menu. Player 40 (Guide 6's question, seen in DOSBox p40m1/p40m2): **Esc undoes the walk** (the
+        figure back where MOVE began, as ours' combat_screen.gd, GAME.OVR 0xA2D2); Enter keeps it. Every OP_HOLDDOWN
+        stand of Players 38-39 ended in Esc, so nobody ever stood on a fallen troll. (p35c3: stopping "in reach" by the record's footprint and AIMing found nothing.)"""
         mv = self.move
         figs, party, foes = self._sides(p)
         me = next((f for f in party if f["name"] == mv["member"]), None)
@@ -701,17 +741,17 @@ class Tactics:
                 self.log("TACTICS %s stands on fallen figure %d's square %d,%d" % (mv["member"], mv["goal"],
                                                                                   me["x"], me["y"]))
                 self.move = None
-                return "esc", "tactics: move: on the fallen figure's square: Esc"
+                return "enter", "tactics: move: on the fallen figure's square: Enter (keeps the walk)"
         mv["tries"] += 1
         if me is None or not foes:
             self.move = None
-            return "esc", "tactics: move: no goal left: Esc"
+            return "enter", "tactics: move: no goal left: Enter"
         pos = (me["x"], me["y"])
         if mv["last"] and mv["last"][0] == pos:
             mv["blocked"].add((pos, mv["last"][1]))
         if mv.get("struck"):
             self.move = None
-            return "esc", "tactics: move: the blow was struck: Esc"
+            return "enter", "tactics: move: the blow was struck: Enter (Esc would undo the walk)"
         adj = [f for f in foes if max(abs(f["x"] - pos[0]), abs(f["y"] - pos[1])) <= 1]
         if (mv.get("focus") or mv.get("square")) and goal is not None and not any(f["n"] == goal["n"] for f in adj) \
                 and not mv.get("nofree"):
@@ -732,7 +772,7 @@ class Tactics:
         if goal is None or mv["tries"] > 16:
             self.log("TACTICS %s stops at %d,%d" % (mv["member"], pos[0], pos[1]))
             self.move = None
-            return "esc", "tactics: move over: Esc"
+            return "enter", "tactics: move over: Enter"
         # (p35j2: a step onto a fallen member's square asked ATTACK ALLY: every member's square is taken)
         taken = {(f["x"], f["y"]) for f in figs if (_up(f) or f["n"] <= self.party_n) and f is not me}
         here = max(abs(goal["x"] - pos[0]), abs(goal["y"] - pos[1]))
@@ -750,7 +790,7 @@ class Tactics:
         if best is None or best[0] > here:
             self.log("TACTICS %s can't step nearer figure %d at %d,%d" % (mv["member"], goal["n"], pos[0], pos[1]))
             self.move = None
-            return "esc", "tactics: move: no step nearer: Esc"
+            return "enter", "tactics: move: no step nearer: Enter"
         mv["last"] = (pos, best[1])
         return best[1], "tactics: %s steps %s to %d,%d (figure %d at %d,%d)" % (
             mv["member"], best[1], best[2][0], best[2][1], goal["n"], goal["x"], goal["y"])

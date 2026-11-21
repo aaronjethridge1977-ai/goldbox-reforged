@@ -1315,6 +1315,40 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 40 (2026-11-21): the finale's guards 5 of 5 lost; MOVE's Esc undoes the walk (the hold-down fixed); party ORDER; a troll stays down under a member on its corner
+
+**Stage 1:** nothing new to rerun (p17a6 waits on main/design; Combat hasn't answered p37i1's DORN step). main chat 86
+confirmed p36h1 on origin/main: its commented label left `match/known.txt`. Still 68 of 71.
+
+**The finale on the no-shortcut chain** (the Lead: on along the chain while the throne room waits; stuck-fights.md
+section 5). `p40/finale1.plan` from `p38a2_s38audit`: DORN's Ring +3 to CEDRIC and ARN's spare Ring +2 to BRAM (plain
+armour: the ring's AC counts), segment 34's way in (5:6, the gate with RHODIA, 5:5's maps, the stairs to 5:7),
+**Genheeris** at 2,5 (reached only through 2,6, event 6, a small fight; `answer IN FACT I WILL JOIN YOU. IS IT A
+DEAL|YES`; the computer runs him), `prepare` at 3,6 (`s40hall`), then the hall. 5:3's events 14 and 12,10 and a 5:5
+fight are met on the way (p40a1: BRAM dead, reloaded from `s40g`). **Five counted tries from `p40c1_s40hall`, all lost**
+(best p40d4: 8 of 12 guards down). The guards open in contact with the order's first four, so the clerics' Hold
+Persons were often spoilt.
+
+**Tactics:** Sleep skips figures above level 4 (a level in the name over 4) or over 36 HP at full (p40c1: the horde
+order cast Sleep at 8th-level fighters). **MOVE ends with Enter, not Esc** (seen in DOSBox, `OP_MOVETEST=<key>`: the
+first member with MOVE steps once, then presses the key; p40m1 Esc: ARN back on 27,12, MOVE offered again; p40m2
+Enter: ARN stays on 28,11). Esc undoes the walk in the original and in ours (combat_screen.gd, GAME.OVR 0xA2D2), so
+every OP_HOLDDOWN stand of Players 38-39 and every walk the tool stopped short was undone. `OP_HOLDCORNER=1` holds a
+fallen figure's corner square only.
+
+**Party order** (camp ALTER, ORDER: SELECT a member (End / Home light him), PLACE: Home / End move him, PLACE again):
+the order's first four start in the front row. `keys order e,a,o,@DORN,s,home,home,home,p,@LIRA,s,home,home,p,e,e,e`
+(`p40/finale2.plan`) gives ARN, BRAM, DORN, LIRA, CEDRIC, ELWEN, GENHEERIS (p40e0: CEDRIC starts at 26,11, the back row).
+
+**Guide 6's troll question** (`p40/troll.plan`: the Slums' trolls and ogres, 2:20 0,14, from `p16e2_s7pre20`, tactics
+on, `focus TROLL`, `advance ARN,BRAM`): a fallen troll rises at full HP as a new figure on its corner square (p40t1:
+when the last other enemy fell, ARN standing on its second cell 26,11). p40t3 (`OP_HOLDCORNER=1`): BRAM on troll 9's
+corner 27,11 from 56 s to the end: it never rose; troll 12 rose on its corner 26,10 after ARN, who stood there, fell.
+The regeneration shows too: 3 HP a round. All three troll tries lost (tactics, QUICK won it in p16e2).
+
+Lab: `p40/` (finale1.plan, finale2.plan, troll.plan, poke.py: keys by hand outside fights), saves `p2start/p40a2_s40s`,
+`p40c1_s40hall`; stuck folders `finale_guards/`, `kobold_king/p37`-`p40` and `saves/`; archive `player40_lab.tar.gz`.
+
 ## Player 39 (2026-11-21): the match 68 of 71; tactics' HASTE; the throne room with Haste 5 of 5 lost; segment.py's waits (p37i1)
 
 **Stage 1:** nothing answered by main or Combat this run (the MEMORIZE paging diff for p36h1 not on origin/main;
