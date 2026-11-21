@@ -1355,7 +1355,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_ESCAPE:
 		choice = "EXIT" if "EXIT" in items else ("NO" if "NO" in items else "")
 		if _mode == "save":
-			_show_menu()
+			# Chat 88 (DOSBox): Esc at SAVE WHICH GAME saves nothing, then asks QUIT TO DOS with NO lit,
+			# as after a save; NO comes back to the camp menu with VIEW lit.
+			_mode = "quit"
+			_pick = 1
+			_refresh()
 			return
 	else:
 		for it in items:

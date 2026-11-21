@@ -613,7 +613,8 @@ func _draw_original(field: Image) -> void:
 	elif _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
 	elif _asking_ally:
-		g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
+		if not _ally_from_move:
+			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		g.text(0, 24, "ATTACK ALLY:", GameScreen.WHITE)
 		g.menu_line(24, ["YES", "NO"], 13)
 	elif _asking_abort:
@@ -887,6 +888,7 @@ var _asking_ally := false
 var _move_start := {}          # where MOVE began (Esc puts the figure back there)
 var _asking_abort := false     # ABORT SPELL? (EXIT from a spell's aim)
 var _ally_target := -1
+var _ally_from_move := false   # asked from MOVE (a step onto a teammate): NO stays in MOVE, YES strikes as a step does
 
 
 ## The terrain byte under the party's band square (0xD7A0: DS:0x3648[y * 44 + x + the band's
@@ -1298,7 +1300,11 @@ func _after_player_action(what: String) -> void:
 		if _combat == null:
 			return
 	if what == "blocked":
-		_on_message("CAN'T GO THERE")
+		# GAME.OVR 0xA478 -> START.EXE 0xBA:0x1693: "Blocked" on row 24 in green for the message pause, then the
+		# MOVE line again (Combat Chat 40; was CAN'T GO THERE, not an original string).
+		_say("BLOCKED")
+	elif what == "no attacks":
+		_on_message("CAN'T GO THERE")    # an enemy's square with no attacks left: not yet seen in the original
 	elif what == "fell":
 		if _combatants[_selected].team == 0:
 			_on_message("YOUR TEAMMATE IS DOWN")
@@ -2150,6 +2156,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			if key == KEY_N:
 				_asking_ally = false
+				_ally_from_move = false
 				_refresh()
 				return
 			var me: int = _combat.active
@@ -2160,6 +2167,20 @@ func _unhandled_input(event: InputEvent) -> void:
 					c.team = 1 - int(c.team)
 			ally_attacked.emit()
 			_asking_ally = false
+			if _ally_from_move:
+				_ally_from_move = false
+				var shown_before := _message_count
+				var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
+				var up_before := _standing()
+				if not _combat.sweep(me, _ally_target):
+					_combat.attack(me, _ally_target)    # 0xA5BD: the sweep first, else the blow (0x1407F)
+				_note_falls(up_before)
+				if paced():
+					_after_blow(me, shown_before, weapon_before)
+				if _combatants[me].moves < 2:
+					_combatants[me].moves = 0
+				_after_player_action("attacked")
+				return
 			_attack_aimed(_ally_target)
 		return
 	if _announcing:
@@ -2332,6 +2353,12 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
 			var up_before := _standing()
 			var what := _combat.step(_STEP_KEYS[key])
+			if what == "ally":
+				_asking_ally = true          # Combat Chat 40: ATTACK ALLY: YES NO, from the MOVE loop
+				_ally_from_move = true
+				_ally_target = _combat.step_ally
+				_refresh()
+				return
 			_note_falls(up_before)
 			if what == "moved":
 				Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)

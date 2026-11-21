@@ -17,7 +17,8 @@ extends Control
 ##   or money): nothing happens. Ours (P57, an exception, Jeremy 2026-11-14) says why on row 24
 ##   for a moment, white, in place of CHOOSE A FUNCTION. Then a magic-user who gained a level
 ##   picks a new spell.
-## - DROP: "DROP <NAME> FOREVER?" (yellow) YES NO, NO lit. REMOVE: at once, no question.
+## - DROP: "DROP <NAME> FOREVER?" (yellow) YES NO, NO lit; YES: "ARE YOU SURE?" YES NO, NO lit. REMOVE: at once,
+##   no question. After either the member before the one gone is lit (chat 88, DOSBox).
 ## - ADD: the waiting characters listed from row 2 at column 1, "ADD A CHARACTER:" ADD EXIT.
 ## - SAVE: "SAVE WHICH GAME:" A to J. EXIT TO DOS: "QUIT TO DOS" (yellow) YES NO, NO lit.
 ## - MODIFY for one who has adventured: nothing happens.
@@ -47,7 +48,7 @@ var _creator: CharacterCreator
 var _modifier: CharacterModify
 
 var _sel := 0
-var _mode := "menu"   # menu, confirm_train, congrats, confirm_drop, quit, save, learn, add
+var _mode := "menu"   # menu, confirm_train, congrats, confirm_drop, confirm_drop2, quit, save, learn, add
 var _pick := 1
 var _plan: Array[int] = []
 var _cursor := 0
@@ -194,6 +195,9 @@ func _refresh() -> void:
 					var q := "DROP %s FOREVER?" % _who().name
 					_scr.text(0, 24, q, PROMPT)
 					_scr.menu_line(24, YES_NO, q.length() + 1, _pick)
+				"confirm_drop2":
+					_scr.text(0, 24, "ARE YOU SURE?", PROMPT)
+					_scr.menu_line(24, YES_NO, 14, _pick)
 				"quit":
 					_scr.text(0, 24, "QUIT TO DOS", PROMPT)
 					_scr.menu_line(24, YES_NO, 12, _pick)
@@ -340,7 +344,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				if String(it).unicode_at(0) == key:
 					_function(it)
 					return
-		"confirm_train", "confirm_drop", "quit":
+		"confirm_train", "confirm_drop", "confirm_drop2", "quit":
 			var yes := key == KEY_Y or (enter and _pick == 0)
 			var no := key == KEY_N or esc or (enter and _pick == 1)
 			if key == KEY_LEFT or key == KEY_RIGHT:
@@ -350,8 +354,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				match _mode:
 					"confirm_train": _do_train()
 					"confirm_drop":
+						# Chat 88 (DOSBox): YES asks again, ARE YOU SURE? (yellow) YES NO, NO lit.
+						_mode = "confirm_drop2"
+						_pick = 1
+						_refresh()
+					"confirm_drop2":
 						party.remove_at(_sel)
-						_sel = clampi(_sel, 0, maxi(party.size() - 1, 0))
+						# Chat 88 (DOSBox): the member before the dropped one is lit (the first if it was the first).
+						_sel = clampi(_sel - 1, 0, maxi(party.size() - 1, 0))
 						_show_menu()
 					"quit": get_tree().quit()
 			elif no:
@@ -419,7 +429,8 @@ func _function(item: String) -> void:
 			if party.size() > 1:
 				roster.append(party[_sel])
 				party.remove_at(_sel)
-				_sel = mini(_sel, party.size() - 1)
+				# Chat 88 (DOSBox): as after DROP, the member before the removed one is lit.
+				_sel = clampi(_sel - 1, 0, party.size() - 1)
 				_show_menu()
 		"SAVE CURRENT GAME":
 			if SaveListScreen.on() and game_path != "":

@@ -50,6 +50,19 @@ static func refuse(m: PartyMember, it: GameItem) -> String:
 static func changed(m: PartyMember, it: GameItem, readying: bool) -> PackedStringArray:
 	var out := PackedStringArray()
 	match power(it):
+		0x81, 0x85, 0x88, 0x8A:
+			# 0x11B35: readying appends a record of the effect (0 minutes, power 12; 0x2BD3C), unreadying removes
+			# the bearer's first record of that type (0x2AF10). So the .SPC carries it, and a computer-run member
+			# who puts the item away in a fight loses it (Combat Chat 40, DOSBox: Player 37's p37i1, BRAM on QUICK
+			# put his Two-Handed Sword +1 +3 vs Undead away and his effect 3 went).
+			var t: int = it.raw[61]
+			if readying:
+				m.affects.append({"effect": t, "spell": 0, "minutes": 0, "value": 12})
+			else:
+				for a in m.affects:
+					if int(a.effect) == t:
+						m.affects.erase(a)
+						break
 		GAUNTLETS:
 			if readying:
 				if Strength.add(m, Strength.STRENGTH, 0, 18, 100, 0):

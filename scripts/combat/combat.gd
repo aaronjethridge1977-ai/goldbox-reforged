@@ -891,7 +891,7 @@ func choose_weapon(i: int) -> void:
 				shield_rate = sr
 	if m.weapon == null or (m.weapon != pick and not m.weapon.cursed):
 		if m.weapon != null:
-			m.weapon.readied = false
+			_put_away(i, m.weapon)
 		var hands := hands_used(m)
 		if shield != null and not shield.cursed:
 			hands -= types.hands(shield.type)
@@ -901,12 +901,12 @@ func choose_weapon(i: int) -> void:
 	var keep_shield := shield == null or (shield == best_shield and not shield.cursed)
 	if held > 2:
 		if shield != null and not shield.cursed:
-			shield.readied = false
+			_put_away(i, shield)
 		elif pick != null:
 			_toggle_ready(i, pick, hands_used(m))
 	elif held < 2 and keep_shield:
 		if shield != null:
-			shield.readied = false
+			_put_away(i, shield)
 		if best_shield != null:
 			_toggle_ready(i, best_shield, hands_used(m))
 	if m.items.map(func(it): return it.readied) == readied_before:
@@ -934,7 +934,7 @@ func _toggle_ready(i: int, it: GameItem, hands: int) -> void:
 	var m: PartyMember = combatants[i].who
 	if it.readied:
 		if not it.cursed:
-			it.readied = false
+			_put_away(i, it)
 		return
 	if hands + types.hands(it.type) > 2:
 		message.emit("YOUR HANDS ARE FULL!")
@@ -946,6 +946,17 @@ func _toggle_ready(i: int, it: GameItem, hands: int) -> void:
 	if (types.class_flags(it.type) & m.class_flags) == 0:
 		return
 	it.readied = true
+	for line in ItemPowers.changed(m, it, true):
+		message.emit(line)
+
+
+## Puts a readied item away through the ready routine (0x2250A): its power's unready runs (ItemPowers.changed:
+## a lent effect's record goes; Combat Chat 40).
+func _put_away(i: int, it: GameItem) -> void:
+	var m: PartyMember = combatants[i].who
+	it.readied = false
+	for line in ItemPowers.changed(m, it, false):
+		message.emit(line)
 
 
 ## Applies damage the way the original does (see "Going down" above).
@@ -1165,9 +1176,12 @@ static func dir_to(from: Vector2i, to: Vector2i) -> int:
 	return 0
 
 
+var step_ally := -1            # the teammate a step ran into ("ally": the screen asks ATTACK ALLY)
+
+
 ## Steps the active combatant one cell in direction `dir` (0..7, 0 = up, clockwise), or
 ## attacks whoever stands there. Returns "moved", "attacked", "fell" (brought down by a
-## free attack on the way), "blocked" or "no moves".
+## free attack on the way), "ally" (a teammate there: `step_ally`), "blocked" or "no moves".
 func step(dir: int) -> String:
 	if active < 0:
 		return "blocked"
@@ -1176,12 +1190,19 @@ func step(dir: int) -> String:
 	var fit := fits(active, to)
 	var other: int = fit[1]
 	if other >= 0:
-		if combatants[other].team == c.team or c.attacks <= 0:
-			return "blocked"
+		if combatants[other].team == c.team:
+			# GAME.OVR 0xA54C -> 0x15193: a step onto a figure of one's own side asks "ATTACK ALLY:" YES NO (the
+			# screen asks; NO goes back to the MOVE loop, the movement kept). Combat Chat 40, DOSBox (disp_kob).
+			step_ally = other
+			return "ally"
+		if c.attacks <= 0:
+			return "no attacks"
 		if not sweep(active, other):
 			attack(active, other)
 		return "attacked"
 	if not fit[0]:
+		# A wall: "Blocked" (GAME.OVR 0xA466: the ground's cost, DS:0x2744, over the movement left; 0xFF a wall).
+		# The field's edge (ground 0) asks "Flee:" in the original (0xA413 -> 0x13465): not built, Blocked here.
 		return "blocked"
 	var cost := 3 if dir % 2 == 1 else 2
 	if cost > c.moves:
