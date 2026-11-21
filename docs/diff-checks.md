@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light, EXIT at WHOM (checks 245-253; 250, 252, 253 differences)
+## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light, EXIT at WHOM, DISPLAY after a REST (checks 245-254; 250, 252, 253 differences)
 
 Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3, and each
 fails on a copy deliberately broken (recipes: ~/gbr/checks/README.md "Chat 86"). **A fighter/magic-user given a
@@ -193,7 +193,8 @@ through `DC_DATA` shared one game folder (a `cp -r` of the `cd/game` link), whic
 the lab copy `data/c86/dc_new.sh`; the gate's diffcheck.sh was never affected. **EXIT at CAST SPELL ON WHOM (252 the adventure menu, 253 the camp; a
 difference, main path):** the original builds the spell list again with its last spell lit; ours kept the row, so the
 next CAST cast a different spell and the keys parted (Combat's `camp_screen.gd`: a diff on the board; 252-253 join when
-it lands). DIFFCHECKS 250/250.
+it lands). **DISPLAY before and after a REST that ends an effect (254):** the original's own save of check 248's end:
+both games list SHIELD, then not after 5 minutes; ENLARGE 10 -> 5 (ours' pages seen with `screen=`). DIFFCHECKS 251/251.
 
 ## Chat 85: the camp's CAST list after a cast, STRENGTH twice, the adventure menu's HASTE, a cleric with a magic-user's scroll, BLESS after PRAYER (checks 240-244, matched)
 
