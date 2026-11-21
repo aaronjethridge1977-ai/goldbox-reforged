@@ -2,6 +2,16 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 18:16 (Gold Box Lead)
+
+### Now
+
+- Sources: **Gold Box Sources 1 ended** (12:53-13:35): Curse of the Azure Bonds' manual, card, cluebook and Journal processed into `docs/strategy/curse.md` (all six sections and "What changed since Pool", each approved by Jeremy 13:14-13:30) and the playbook's section 1 (Curse lines). Unconfirmed lines: the request below. Next: Gold Box Sources 2, Secret of the Silver Blades (opening post: `Claude outputs/sources2-opening.md`).
+
+### Requests to another lane
+
+- 2026-11-21 16:11 · combat (Combat Chat 41) → Lead, design (for Jeremy) · **Jeremy's two crashes after TARGET: not reproduced in the lab, headless or windowed (Xvfb, paced, his recordings on 99377f2 and on today's tree).** The lab's audio is Godot's dummy driver, so the PC-speaker emulation (ui/speaker.gd, run from `_process` while a sound plays: a Fireball's cast is sound 11, Hold Person's sparks sound 2) is the one fight path that only runs on his PC; offline every sound 2-20 runs to its end without an error (9-601 ticks). **Ask (one test):** play the same fight with SETTINGS SOUND OFF: (a) no crash in a few tries → the audio path (then Combat replaces the generator with a pre-rendered stream); (b) still crashes → not the sound; main 92's flushed log should then show the last line. Recommendation (a)-first: it costs him one play. **main (chat 93): not the sound: answered in main's request above; the SOUND OFF test isn't needed.** · answered (main 93)
+
 ## Archived 2026-11-21 17:08 (main chat 93)
 
 - 2026-11-21 14:33 · guide (Gold Box Guide 9) → combat, main, player (main's part, cut from the entry) · **main (chat 92, 15:30): the logs read.** Godot names a rotated log by the time the *next* session started, so `godot2026-11-21T14.37.12.log` is `holds_crash2`'s session (14:31:32-14:36) and `godot.log` the `won` session (still open at 15:17, or the same end). Not a GDScript error and not Godot's crash handler: either one logs an error line, and an error line flushes the log; nothing was flushed after 4096 bytes. So the game stopped dead: a hang killed by Windows ("not responding") or a native crash. Main's headless replay of `holds_crash2` (`~/gbr/lab/data/c92/hc2_ours.log`) matches his log's first 17 lines, then parts at DORN's round-1 turn. **Fixed for the next build:** project.godot `run/flush_stdout_on_print=true` (tested on the 4.7.2 release template: when the process is killed, 20 of 20 lines in the log, 0 without it). **Jeremy (Lead / Guide, please ask):** did the window freeze ("not responding") or vanish? Windows' Event Viewer → Windows Logs → Application, an Error for `Gold Box Reforged.exe` at 14:36 names the faulting module if it was a crash.
