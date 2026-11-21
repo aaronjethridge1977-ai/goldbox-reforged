@@ -172,6 +172,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 81: the camp's CAST of PROTECTION FROM GOOD, DETECT INVISIBILITY, MIRROR IMAGE (checks 196-198), FRIENDS (199, 200, a fix), PRAYER (201), DISPEL MAGIC (202, 203, a fix) and HASTE (204, 205, a fix)
+
+All against the original in DOSBox (3:0, tpseed 11111111), from checks 192's and 193's starts; recipes in ~/gbr/checks/README.md "Chat 81", the lab's `data/c81/`. All main path (the camp's spells).
+- **196-198, 201**: PROTECTION FROM GOOD on ARN (effect 9, 9 minutes, power 3), DETECT INVISIBILITY (24, 15, 3), MIRROR IMAGE (28, 6, 3: no image dice in camp), PRAYER at cleric 5 (49, 5, 5). Matched at once.
+- **199, 200 (Friends, a fix)**: GAME.OVR 0x283F1: the caster's charisma + 2d4, at most 25, then the common cast (0x278DB) adds effect 14 with the old charisma as its power; 0xF231, its end, puts it back. Ours added the effect only (power = level). `SpellCaster.cast_outside` and `ended`.
+- **202, 203 (Dispel Magic, a fix)**: GAME.OVR 0x293A0: each of the target's effects with a power below 255 (the racial ones are 255) goes on a d100 at most 50, + 5 a caster level above the power's low four bits, - 2 a level below; "IS AFFECTED" when one went. Ours did nothing in camp. **Combat's Dispel Magic clears every effect, the racial ones too, with no dice** (combat_spells.gd: request to Combat).
+- **204, 205 (Haste, a fix)**: the first (level) members in party order (DORN, sixth, not at 5; LIRA herself not at 3); the effect's handler GAME.OVR 0xF8A5 runs at once: a power without bit 0x10 gets it, "AGES", the record's age word (0x30) + 1, once per effect (power 5 -> 21). Ours hasted everyone at power 5 and aged nobody. **statediff.gd compares age now** (break test 174/194). A Potion of Speed in camp (check 186) stays at power 12, no ageing. Combat's Haste already ages at its first round (combat_spells.gd `adjust_round`, Combat's reading of the same handler).
+- Not checked: Friends cast twice (the second raise and the effect's merge), Haste on a slowed member in camp (ours ends the Slow, as combat), what 0xb0:0x2a (Dispel's removal) runs (ours runs the effect's end); the paladin's cleric spells (chat 80's note).
+
 ## Chat 80: the camp's USE of a clerical scroll (check 185), of a Potion of Speed (check 186, a fix) and of three more item spells (checks 187-189); the camp's CAST of RESIST COLD, DETECT MAGIC and RESIST FIRE at cleric level 3 (checks 190-192), STRENGTH, INVISIBILITY, FIND TRAPS (checks 193-195)
 
 Both against the original in DOSBox (3:0, tpseed 11111111), from checks 130's and 167's starts; recipes in ~/gbr/checks/README.md "Chat 80", the lab's `data/c80/`.
