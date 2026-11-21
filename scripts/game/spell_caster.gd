@@ -471,6 +471,8 @@ static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, va
 ## diseases, which run their course (SpecialAffects.disease_expires). Returns the lines
 ## to show ("ROTS...").
 static func pass_time(party: Array, minutes: int) -> PackedStringArray:
+	if OriginalBugs.on():
+		return _pass_time_original(party, minutes)
 	var out := PackedStringArray()
 	for p in party:
 		var m: PartyMember = p
@@ -494,6 +496,56 @@ static func pass_time(party: Array, minutes: int) -> PackedStringArray:
 		m.affects = keep
 		for a in ending:
 			ended(m, a, out)
+	return out
+
+
+## The original's effect clock (GAME.OVR 0x23DCD, ORIGINAL'S BUGS on: bug #17): time passes in steps of at most
+## 10 minutes (0x240A4); in each, every member's list is walked from its head to the record that was last when the
+## walk began (0x23F03). A record with 0 minutes is passed over; one with more minutes than the step loses the step
+## (0x23F83); else it is removed (0x2AF10, its end run). After a removal the walk goes on from the head when the
+## removed record's predecessor was the head (0x23FCF, the predecessor found before the removal), else from the
+## record that followed it: so when the second record runs out, the first loses a step more (Combat Chat 40, DOSBox,
+## Player 37's p37i1: CEDRIC's Haste ahead of his Bless and Prayer, both out in one round, lost 2 minutes, the
+## others' Haste 1, and ran out a minute before theirs).
+static func _pass_time_original(party: Array, minutes: int) -> PackedStringArray:
+	var out := PackedStringArray()
+	var left := minutes
+	while left > 0:
+		var step := mini(left, 10)
+		left -= step
+		for p in party:
+			var m: PartyMember = p
+			if m.affects.is_empty():
+				continue
+			var tail: Dictionary = m.affects.back()
+			var i := 0
+			var done := false
+			while i < m.affects.size() and not done:
+				var a: Dictionary = m.affects[i]
+				if is_same(a, tail):
+					done = true
+				if int(a.minutes) == 0:
+					i += 1
+					continue
+				if int(a.minutes) > step:
+					a.minutes = int(a.minutes) - step
+					i += 1
+					continue
+				a.minutes = int(a.minutes) - step
+				var lasts := true
+				while lasts and int(a.minutes) <= 0:
+					if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT]:
+						lasts = SpecialAffects.disease_expires(m, a, out)
+					else:
+						lasts = false
+				if lasts:
+					i += 1
+					continue
+				var after_head := i == 1
+				m.affects.remove_at(i)
+				ended(m, a, out)
+				if after_head:
+					i = 0
 	return out
 
 

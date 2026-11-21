@@ -543,7 +543,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_mode = "amount"
 			else:
 				_mode = "menu"
-				_pick = _menu_items().find("TAKE") if CoinPile.has_money(pile) else 0
+				_pick = 0   # chat 88 (DOSBox): EXIT from TAKE's coin page lights HEAL, the pile kept or not
 			_refresh()
 		"ask_leave":
 			if choice == "YES":
