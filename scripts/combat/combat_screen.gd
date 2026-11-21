@@ -1826,6 +1826,7 @@ func _begin_spell(id: int, item: GameItem) -> void:
 		return
 	_spell_id = id
 	_use_item = item
+	_combat.magic.item_in_use = item != null     # the aim's range at level 6 with an item (DS:0x6DBF)
 	_spell_picks = []
 	_picks_left = _combat.magic.max_picks(id) if _combat.magic.aim_kind(id) == "pick" else 1
 	var self_spell := _combat.magic.aim_kind(_spell_id) == "self"
@@ -1917,6 +1918,7 @@ func _abort_spell() -> void:
 	if _use_item == null:
 		(_combatants[me].who as PartyMember).forget(_spell_id)
 	_use_item = null
+	_combat.magic.item_in_use = false
 	_spell_resolving = false
 	_announced = false
 	_spell_picks.clear()

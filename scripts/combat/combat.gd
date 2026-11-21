@@ -307,6 +307,8 @@ func next_turn() -> int:
 		if c.has("kept_moves"):
 			c.moves = c.kept_moves
 			c.erase("kept_moves")
+		if magic:
+			magic.item_in_use = false      # DS:0x6DBF never outlives an item's use
 		return active
 	active = -1
 	return -1
