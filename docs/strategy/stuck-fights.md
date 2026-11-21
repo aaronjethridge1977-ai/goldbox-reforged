@@ -121,6 +121,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\stojanow\`.
   (ARN F3 drained, LIRA F3/MU3, DORN F3/T4 drained); p27v1/v2 (videos for Jeremy, `.lab/for-jeremy/stojanow/`); Player
   30's tactical mode 8 of 8 from `s28p` / `s28b` (p30a3-p30e3: best 139 of 382 HP dealt). Taken by `shortcutwin` in the
   first full run (p27c2).
+  Also (merged from poolrad.md's parked notes, Jeremy, Gold Box Guide 8): Player 31 by hand with the Lead's advice, 5
+  more lost (p31b2-b6, best 122 of 382 HP): an ettin starts beside the party (p31a1: 27,10 by BRAM at 28,11), so no
+  casting before contact; Player 27 on QUICK threw Hold Person and Sleep at the ettins, never Prayer or Stinking
+  Cloud; main's bot lost twice in ours (its table expects level 7); the parties of Players 3, 7 and 9 were destroyed.
 - **Player 34, the redo** (party undrained: ARN F6 65 HP AC -1, BRAM F6 60 AC 0 with the Two-Handed Sword +1/+3,
   CEDRIC C6 42, ELWEN C5/F4/MU4 37, LIRA F5/MU4 39 AC -2, DORN F5/T6 46 AC 4; from `p33f3_mopup1`): the first half to
   `s28p` in one try (p34c1: the wagon, the toll, the bugbears; nobody dead). From `s28p` the walk to the towers crossed

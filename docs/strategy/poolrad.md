@@ -557,20 +557,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Stojanow Gate, 2:9 7,6** ("A GROUP OF MONSTERS IS WAITING ON THE OTHER SIDE OF THE WALL", ECL 0xB081). Six ettins (10 HD, 50 HP each, AC 3, THAC0 10, two attacks 2d8 and 3d6, move 12), two level-6 MUs (23 HP, Magic Missile 3d4+3 that never misses, Mirror Image) and two fighter-3 aides (18 HP). 382 HP in total against the party's ~205 at levels 3-6.
-  - Player 26: 6 of 6 lost (p26d2 with COMBAT; p26e1-e5 with FLEE, which still starts the fight).
-  - Player 27: 3 of 3 lost with every slot filled (`s28p`). QUICK threw Hold Person at the ettins and Sleep at the ettins, and never cast Prayer or Stinking Cloud.
-  - Nine tries, nine wipes. The best damage was 70 of 382, and the party lasted 4-6 rounds.
-  - The whole party moved only 3 (16 items each).
-  - Main's bot (7 members, ARN 6) also lost twice in ours. The bot's table expects level 7 here.
-  - Earlier parties from c27a, c32a and c34d were destroyed there too (Players 3, 7, 9).
-  - Player 31, the Lead's advice by hand (fighters AIM the helpless first, else GUARD; casters as Player 30): 5 more lost
-    (p31b2-b6), best 122 of 382 HP. One ettin starts next to the party (p31a1: at 27,10 beside BRAM at 28,11), so
-    there is no "cast before contact" here; the casters stand in the line and lose their begun Stinking Clouds
-    to hits; the party lasts about three rounds. More levels first (*seen in the original*).
-  - The gate was passed by `shortcutwin` (Player 27, p27c2).
-  - The report suggests (untried): more levels first; cast by hand (Stinking Cloud while the ettins are bunched, Prayer and Bless before contact, Hold Person on the mages); sell gear; position the line.
-  - Player 30, the tactical mode (casts by hand, fighters on QUICK): 8 of 8 lost (p30a3-p30e3, from `s28p` and from `s28b` with three Stinking Clouds memorized). Best p30d2: 139 of 382 HP dealt, two ettins slain while helpless in a Stinking Cloud. Hold Person and Prayer begun in melee never went off (*seen in the original*).
 - **Sokal Keep event 9, 4:21 7,4** ("A LARGE FORCE OF ORCS AND HOBGOBLINS", 56 figures).
   - Level 2: 10 tries, 8 wipes and 2 wins, each with a member dead (Player 15). The early tries ran with MAGIC OFF.
   - Deferred to level 3. Player 15: 6 tries, 1 win with nobody dead. Player 16: p16a1 lost a member, p16a2 won deathless. At level 3 in all: 8 tries, 2 deathless wins.
@@ -602,7 +588,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 - **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
 - (Folded into section 3, Guide 3.) **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).
 - **Slums event 9, 2:20 3,3** (30 figures): lost twice without `prepare` (Player 15).
-- **Stojanow 2:9 7,6 from earlier saves** (the two magic-users and ettins, [24 x2, 53 x2, 71 x6]): destroyed on every seed (Players 3, 7, 9). It is the same fight as the gate above.
 - **Spectres, 4:10 9,1** [17 x2]. Won 4 of 4, two with nobody dead (Player 7, corrected by Player 8). Drained members count as dead.
 - **Norris the Gray, Kuto's catacombs**: p16c1 met him early (LIRA dead); p16c3 lost three; p16d1 won deathless from `s6pre12` at the first try.
 - **The mage and his guards, 7:23 4,1** (13 figures): p24b5 destroyed, p24b6 won (ARN 3/32 HP).
