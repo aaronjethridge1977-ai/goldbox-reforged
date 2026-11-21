@@ -195,6 +195,63 @@ multi-class's start splits (the game's own fighter/thief is fighter 7 / thief 8)
    without a thief must spring the castle's traps. *book* (Cluebook, above)
 10. **Bestow Curse leaves the magic-users' books** on import (*players*); nothing else is known to be taken.
 
+## 2. The route
+
+**The shape** *book* (Cluebook pp.2-4): one valley, in order. Outfit in New Verdigris; through the town's teleport gate to
+the Well of Knowledge and kill its Ancient Red Dragon; back in town, confront Marcus the wizard; through the Ruins for
+the Amulet of Eldamar and clear the Black Circle's headquarters; down the Mines to Derf at the Temple of Tyr, collect the
+eight pieces of Oswulf's staff and have Derf mend it; the malfunctioning teleporter to mine level 9 and the wheel lift
+to 10; up the Dungeon (levels 10 to 1) for its three keys; the Western Crevasses (a kidnapped woman), the Frost Giant
+Village (win the king over), the Eastern Crevasses; the Castle (Oswulf's spirit lets the staff's bearer in), its traps
+and puzzles, the Dreadlord and the gem holding Eldamar's soul.
+
+**What gates what** *book* (Cluebook pp.13-15, 23-24, 43-44, 49)
+- **The Ring of Tyr** (Derf, the Temple) shows the staff pieces in the mines and opens Oswulf's tomb on level 9; most
+  pieces can't be found without it.
+- **The Amulet of Eldamar** (the Ruins' dragon) shows the Dungeon's three keys; without it none can be found.
+- **The Staff of Oswulf** (eight pieces, mended by Derf) lets the party past the spirit at the castle gate.
+- **The three keys** open the way to the Dreadlord; a wrong key at the Sanctum's doors summons a fight.
+
+**Levels:** none in the books (new characters start at 8, section 1). Levels per stretch come from players and our own
+runs: **unconfirmed**.
+
+| # | Stretch | Areas (Cluebook pages) | Rest | Ends with |
+|---|---|---|---|---|
+| 1 | New Verdigris | the town (5-6) | safe, but the first rest on entering is interrupted; unsafe while Marcus sends assassins, safe again once he is gone | outfitted; the gate to the Well |
+| 2 | The Well of Knowledge | (6-8) | nowhere safe until the dragon dies; a FIX or a memorize usually works | the Ancient Red Dragon dead; the Well's teleporters open, no more wandering monsters |
+| 3 | Marcus; the Ruins; the Black Circle HQ | town (5-6), Ruins (27-30), HQ (9-12) | Ruins: a FIX or memorize usually works; HQ: never in corridors, usually in rooms | the Amulet of Eldamar; the HQ cleared; Marcus forced out |
+| 4 | The Temple of Tyr; the Mines 1-8 | (12-22) | the Temple: fully safe; the mines: never fully (the wheel lift aside), more interruptions on harder levels | the Ring of Tyr; staff pieces; Vala freed (level 6) |
+| 5 | Mines 9-10 | (21-24) | as the mines | the staff whole (Oswulf's tomb, level 9); the wheel lift to 10 and the Dungeon |
+| 6 | The Dungeon, levels 10-7 | (23-26) | no place guaranteed (drider patrols); a FIX or memorize often works | the first key (the Amulet shows it) |
+| 7 | The Dungeon, levels 6-1; the Drider Base | (31-36) | rooms safer than corridors; one FIX or memorize usually works; the Drider Base's storeroom fully safe | the three keys; Sir Deric; the exit to the Crevasses |
+| 8 | The Western Crevasses | (37-40) | no safe place; harder levels interrupt more; fled monsters pursue to the next teleporter | the woman rescued; the village |
+| 9 | The Frost Giant Village | (39-41) | as the crevasses, FIX and memorize usually work | the king convinced: free passage |
+| 10 | The Eastern Crevasses; the Castle entrance | (41-46) | as the crevasses; the castle: hard, harder on higher levels | Oswulf's spirit passed with the staff |
+| 11 | The Castle's middle level | (45-48) | hard: several interruptions on the hardest levels | Sargatha; the way up |
+| 12 | The Dreadlord's Sanctum | (49-51) | hard; if badly hurt, the teleporter (26) back to the Well to rest | the Dreadlord; the soul gem shattered |
+
+After the Dreadlord, the castle is safe to rest anywhere and the mines go quiet (Cluebook pp.14, 43). **No point of no
+return** is printed. *book*
+
+**Notes by stretch** (*book*, the Cluebook unless marked; hard fights in section 3; the riddle answers and passwords
+are in `.lab`, Jeremy 2026-11-21)
+1. **New Verdigris** (pp.5-6): the mayor gives the starting gear (Journal p.8); buy mirrors and canaries at the armoury
+   (p.6); train at the hall, free (p.5); the Vault turns platinum into gems for the Well (Manual p.10).
+2. **The Well** (pp.6-8): the dragon at the centre is the area's goal; after it the Well answers questions for 100 gems
+   and its teleporters link the valley (p.8).
+3. **Marcus and the Ruins** (pp.5-6, 9-12, 27-30): attack Marcus at his house after the Well; the headquarters' papers
+   implicate him (p.10). The Ruins' dragon guards the Amulet (p.27). The key from the commander's office (12) glows
+   at the secret door into the inner rooms (3); LOOK or SEARCH there (pp.9-10).
+4. **The Mines** (pp.12-24): get the Ring of Tyr from Derf first; dig for gems (a dwarf doubles them, p.15); take
+   canaries (p.15); free Vala on level 6 and take her (p.20); the malfunctioning teleporter on level 8 hurts but drops the party to 9, where an artifact guarded by five margoyles
+   and five gargoyles makes the force wall over the wheel lift: destroy it (pp.9, 21).
+5. **The Dungeon** (pp.23-26, 31-34): carry the Amulet; the riddles (p.26) and Sargatha's teleport traps (p.23); the
+   Brass Key is in 22 (p.25).
+6. **The Drider Base** (pp.35-36): rest in the storeroom (4); Sir Deric joins here only.
+7. **The Crevasses and the village** (pp.37-43): a ranger reads tracks; rescue the woman; then convince the king.
+8. **The Castle** (pp.43-51): with Vala along, she points out the Eastern Crevasses' teleporter (p.43); a thief for the traps; the Silver Key opens the
+   Sanctum's 13 (p.49).
+
 ## For the lanes
 
 [Next review.]
