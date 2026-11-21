@@ -388,11 +388,17 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 					m.raw[0x14] = m.stats[4]
 
 
+## As the original's common add (GAME.OVR 0x2C540): the member's first record of the type (0xba:0x2199) is
+## removed (0x2AF10) only when the new one lasts longer (the old one not 0) or the new one is 0; the new record
+## is always appended (0x2BD3C). So an equal or shorter one is a second record (chat 83, DOSBox: CEDRIC's
+## BLESS cast twice in camp leaves two [1, 6 minutes, 1] records on each member; check 218).
 static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, value: int) -> void:
 	for a in m.affects:
 		if int(a.effect) == effect:
-			a.minutes = maxi(int(a.minutes), minutes)
-			return
+			if (int(a.minutes) > 0 and minutes > int(a.minutes)) or minutes == 0:
+				m.affects.erase(a)
+				ended(m, a, PackedStringArray())
+			break
 	m.affects.append({"effect": effect, "spell": spell, "minutes": minutes, "value": value})
 
 
