@@ -352,6 +352,20 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     ARN F6 59,741 and BRAM F6 57,523 (F7 at 70,001); CEDRIC C6 **capped**; ELWEN C5 **capped** / F5 / MU4 at 22,291
     (MU5 at 22,501: 210 short); LIRA F5 / MU5 at 31,238 (F6 35,001; **MU6 40,001: a second 3rd-level slot, so
     Haste and Fireball both**; her fighter cap 7); DORN F5 / T6 at 31,238 (F6 35,001, T7 42,501). *code* + *seen*
+- **Plan 2 (Jeremy approved 2026-11-21 08:16; Gold Box Guide 6):**
+  - **Levels first:** train until **LIRA is magic-user 6** (40,001: Haste and Fireball both memorized) and **ARN and
+    BRAM fighter 7** (70,001); the graveyard branch next (the knight's tomb, then the vampire's last fight), the
+    wilderness and the no-shortcut chain for the rest. Clerics are capped (CEDRIC 6, ELWEN 5): their share is lost.
+  - **ELWEN SCRIBEs Fireball at magic-user 5** (210 XP away). Scribing uses the scroll up (Combat Chat 38), so she
+    needs a Fireball scroll of her own: one found by the check below, else LIRA's (then the party carries none).
+  - **Fire to finish trolls:** every Fireball (LIRA's, ELWEN's, scrolls) at bunched wounded trolls, so the killing
+    blow is fire; Burning Hands (LIRA, 5, one adjacent figure) only on a troll at 5 HP or less.
+  - **The Player checks first** whether the other Fireball scrolls (1:24 Temple of Bane, 4:2 Grishnak's temple) and
+    the Necklace of Missiles (5:6 behind the altar) can still be taken in this chain, and takes them.
+  - **The tool before the next tries:** Stinking Cloud aimed as 2x2 at the trolls with the party outside; the 7 Cure
+    Light Wounds kept for the fight (no cures on the way in); Hold Person only for wave 3's two envoys (persons;
+    trolls aren't), the other 2nd-level slots to Stinking Cloud or cures; the hold-down only if the DOSBox check shows a figure can stay.
+  - No wyvern-alive replay (the wyvern died in segment 16, Jeremy agreed); no SURRENDER.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
