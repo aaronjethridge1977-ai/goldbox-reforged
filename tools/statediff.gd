@@ -144,7 +144,8 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	var n := 0
 	var a: PackedByteArray = t.record
 	var b: PackedByteArray = u.record
-	var fields := [["HP", 0x11B, 1], ["max HP", 0x32, 1], ["experience", 0xAC, 4], ["status", 0x10C, 1]]
+	var fields := [["HP", 0x11B, 1], ["max HP", 0x32, 1], ["experience", 0xAC, 4], ["status", 0x10C, 1],
+			["age", 0x30, 2]]     # chat 81: the camp's Haste ages each member it hastes
 	for i in 7:
 		fields.append(["coins %d" % i, 0x88 + 2 * i, 2])
 	for i in 7:     # the ability scores and STR 18/xx (chat 66: a temple's RAISE DEAD costs a point of CON)
