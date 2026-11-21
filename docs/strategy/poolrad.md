@@ -112,6 +112,7 @@ files); results *seen* unless marked.
     slain outright. Keep the party out of the 3x3 (the caster too). *seen* (Combat Chat 34)
   - Results: at level 3, won deathless at the second try (p16e2); from an earlier save, won 2 of 2, both with deaths
     (Player 8).
+- From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): Sleep the goblin guards' leaders. *book*
 
 **Sokal Keep (4:21)**
 - **The army (event 9, 7,4):** 31 orcs, 4 orc leaders, 15 hobgoblins. *code*
@@ -133,6 +134,9 @@ files); results *seen* unless marked.
   **Rest at New Phlan's inn:** from 7,15 a step S, TAKE A BOAT BACK TO PHLAN; the pier's walk crosses the temple of
   Tyr (EXIT); the inn is 3:0 4,12. *seen* (Gold Box Guide 4, Jeremy 18:22)
 - **The huge scorpions (2,11):** won 4 of 4, 3 deathless (Player 9). Memorize Slow Poison first. *book*
+- From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): the patrols parley with the password SHESTNI before the
+  chapel, SAMOSUD after Ferran; the armoury's secret room (its north-west corner, behind the illusionary north-east wall);
+  the cluebook suggests hiring an NPC for the army. *book*
 
 **Kuto's Well (8:29)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:09)
 - **Norris the Gray** (event 12; his squares 1,5 5,5 10,3, in the catacombs behind the secret door at 5,8 N: LOOK):
@@ -367,6 +371,9 @@ files); results *seen* unless marked.
      then every fighter on one spectre at a time, BRAM's sword first. Each drain: a Restoration scroll at once.
   - The simulation: see "The simulation redone" above (Guide 2's first figures were too hopeful). **Mirror Image
     doesn't help** (section 4's rule: images take spells, not blows).
+- From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): clear it early, the undead multiply; raise saves before
+  the gas room; the evil magic-user who joins betrays the party; Tempus's wooden holy symbol (New Phlan's shop) repels
+  vampires; the ju-ju zombie has treasure. *book*
 
 **Stojanow Gate (2:9)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **Take the towers one at a time, by surprise, and the wall fight never comes.** Each tower room opens with the guards
@@ -555,21 +562,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 - The Adventurer's Journal has false entries (e.g. 5, 43, 44, 54; tavern tale 11); the Kovel orc jail clue is false. *book* (Cluebook)
 
 ---
-
-## Parked for review with Jeremy (the old hard-fight and cluebook notes)
-
-### What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
-
-The cluebook gives no area order or expected levels; its only marker: if the party can clear the Slums' troll-and-ogre room, it can handle the rest. Our full run follows main's bot's route for the comparison; **the strategy track and the no-shortcut wins should use these approaches** (they change how a fight is met, not the rules).
-
-- **Slums trolls and ogres:** two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and casts at the trolls from one square back; drop the trolls together, stand on a fallen troll's corner (top-left) square so it can't rise, then kill the ogres. Slums goblin guards: Sleep their leaders.
-- **Sokal Keep, the assault force (room 6):** go in fully rested; enter by a **southern door** to form a short straight line with secure flanks; Sleep and Hold Person on the archers and on the front rank to build a wall of helpless enemies; their archers run out of arrows after about 4 rounds; consider hiring an NPC. Patrols: parley SHESTNI (before the chapel), SAMOSUD (after Ferran). **Never melee Ferran Martinez (the spectre; 2 levels a hit): parley, say LUX, tell the truth** (he shows the hidden treasure). Haunts (room 7): LUX. Slow Poison memorized before the scorpions.
-- **Valhingen Graveyard:** don't enter before the council's two-handed sword +1 (+3 vs undead) and the Restoration scrolls; clear it early (the undead multiply), easiest first: skeletons, zombies, then wights; no rest until cleared; raise saves before the gas room and the mummies' fear; the vampire dies twice (coffin first, after the two spectres); the evil magic-user who joins betrays you. Tempus's wooden holy symbol (New Phlan's shop) repels vampires.
-- **Stojanow Gate:** trickery is intended. **Buy the merchant's wagon by day as a disguise, pass the bugbears, and surprise each tower's guards one at a time.** Forcing both gates brings both towers' ettins at once (our lost fight). Don't stand by the wall; an alarm lasts an hour: hide in a tower and rest it out.
-- **Valjevo Castle:** disguises at the laundry (parley Nice); patrols: Meek + HARASH, or Haughty / Abusive + TYRANTHRAXUS; main gate RHODIA (from captured Cadorna or the gnoll overseer); the barracks giants can be conned (Haughty / Sly), caught asleep by day; safe rests during an alarm: the smokehouse, officers' quarters, armoury, old building, maze towers; stay out of the Bane chapel's coins and swords; no Fireball on fire giants (immune).
-- **The finale:** parley past the false Tyranthraxus (Meek / Nice). Avoid the medusa room and the upstairs trap door (stone). In the waiting room parley Nice; in his office **Denheeris joins if you promise to attack Tyranthraxus at once** (go straight to the lair). Rest anywhere upstairs before; **cast every preparatory spell before entering**, then kill him and the guards; Resist Fire likely helps (fire-themed).
-- **Elsewhere:** the library basilisk: raise saves, kill it before it gazes; the library spectre attacks if you took books. The silver dragon: talk, never attack. Sorcerer's Island: NOKNOK at the level-3 door; break the pump once and leave; parley Nice with the caged lizard men (SAVIOR, the friend word for the Lizard Man Keep). Wilderness: parley Abusive with nasty intelligent groups, Nice with neutral ones, high-Charisma spokesman.
-- **Known treasure (rooms, not item lists):** the Slums kobolds' bracers (armour that doesn't slow); Ohlo's reward; Sokal's armoury secret room (NW corner behind the illusionary NE wall); Kuto's hag (under the rug); the library chambers; the Pit buccaneer's magic items; Bane's 3 hidden treasures; Kovel 8 and 12; the wyvern's nest and kobold trove; Yarash's desk and 3 rooms (the dial: Copper, Silver, Gold); the graveyard's giant skeleton, ju-ju zombie and knight's tomb; Valjevo's officers' quarters and well. The exact item list: main's magic-gear map (from the game data).
 
 ## For the lanes
 
