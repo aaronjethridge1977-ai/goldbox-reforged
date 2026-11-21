@@ -58,8 +58,11 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   effect put on it, but only Sleep and charm can be thrown off. *code* (START.EXE 0x2C540; effects 0x6B elf, 0x7C
   half-elf; SpecialAffects.blocks; Combat Chats 33-34) + *seen* for the half-elf (Combat Chat 33)
 - Elves and half-elves find secret doors 2 in 5 instead of 1 in 5. *code* (ECL 7:22; Player 25)
-- **unconfirmed** (tabletop rules; requests to the lanes): humans dual-class instead of multi-class (from Curse);
-  dwarves and halflings get save bonuses from Constitution.
+- (Curse) The same multi-classes, plus the half-elf ranger and cleric/ranger; **humans dual-class** instead ("Human
+  Change Class" at a hall: the old class stops, the new starts at level 1, both classes' abilities once the new level
+  passes the old); **paladins** (human, lawful good, Cha 17+) and **rangers** (human or half-elf, good) are new.
+  *book* (Curse Manual pp.4-8, 23; strategy/curse.md section 1)
+- **unconfirmed** (tabletop rules; requests to the lanes): dwarves and halflings get save bonuses from Constitution.
 
 **Each member's job**
 - **Fighters** hold the front line. They wear the best AC or carry the most damage, whichever the coming fight needs,
@@ -87,6 +90,9 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
     DARKSTAR, a pure magic-user, with darts readied, the stack going from 11 to 8. *seen* + *code* (main chat 71: the
     Player lab's saves of the original; ITEMS) + *book* (Manual) DARKSTAR (magic-user 1) unreadied and READIED his 8
     Darts again in the original's camp. *seen* (check 71, main chat 73)
+- **Before importing into Curse:** items stay behind (money becomes 300 platinum each); give every demi-human fighter
+  18 Strength (two fighter levels in Curse); a human's 17 in a second class's prime requisite keeps a later dual-class
+  open; have at least one woman (Hap's Swanmays). *book* + *players* (strategy/curse.md section 1)
 - **Before importing:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter caps
   differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual) Players report the racial limits still
   hold in Pools of Darkness while humans go far higher, which makes demi-humans weak there. *players*

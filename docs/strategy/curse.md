@@ -249,9 +249,9 @@ Invisibility or the Dust, just before the trigger (Card p.2). Haste ages each me
 - **Otyughs (sewers 4 and 6):** three attacks a turn. Cast before entering; Stinking Cloud can disable them; Fireball;
   at 6 (a tough fight) Prayer first and hold the doorway (pp.10-11).
 - **Trolls (sewers 7, 8):** they get up again unless burned: Fireball. A member standing on either square a fallen troll
-  held stops it rising. At 8, keep the party tight (p.10). Pool's rule (the killing blow must be fire or acid,
-  poolrad.md) may differ: **unconfirmed** for Curse; the Flame Tongue (+1) from the hideout's armoury is "great against
-  trolls" (p.44).
+  held stops it rising. At 8, keep the party tight (p.10). The same holds in Pool's original, on the troll's corner
+  square, *seen* (playbook Inbox, Player 40), beside Pool's fire-or-acid killing blow (*code*); Curse's code:
+  **unconfirmed**. The Flame Tongue (+1) from the hideout's armoury is "great against trolls" (p.44).
 - **The Fire Knives' last room (hideout 15):** rest and FIX first; Bless, Enlarge, Haste; hold or cripple with spells;
   fighters close in on the damaged; keep thieves and magic-users out of melee; cut off their retreat (p.13).
 
@@ -373,11 +373,45 @@ Invisibility or the Dust, just before the trigger (Card p.2). Haste ages each me
 
 ## 5. The magic-gear map
 
-Later, from the game's data, by a lane.
+**From the books** (Gold Box Sources 1; *book*, the Cluebook's "Special items" pp.43-46 and its area notes). Where the
+books give no place, it says so. **The full map comes from the game's data** (every treasure list and every monster's
+items, square by square, as Pool's in poolrad.md section 5): requested of main on the board, low priority.
+
+| Item | Where (Cluebook page) | Who / notes |
+|---|---|---|
+| Dust of Disappearance; an ioun stone (+1 Dex, to 18) | the Thieves' Guild treasure room, wizard-locked (8-9) | the only Dust in the game: keep it for a fight that can't be won otherwise (Mogion, the Beholder Corps) |
+| Bracers AC 4; several magic items | the sewers' troll lair (10, 43) | bracers: no armour (magic-users, thieves) |
+| A gold ring (Zhentrim mark); gems and jewellery | the otyughs' trade, sewers 5-6 (10) | |
+| Elfin chain; Necklace of Missiles; Long Sword +1 Flame Tongue; Long Sword +3 Frost Brand; Mace +2; Flail +2; **Bracers of Defenselessness (cursed)** | the Fire Knives' armoury, searched (12, 43-44) | elfin chain keeps a thief's skills; the necklace throws Fireballs for anyone who readies it (good for clerics); Flame Tongue against trolls; Frost Brand +6 against fire creatures |
+| Money and magic items | Kybor's desk, the hideout (12) | |
+| Gauntlets of Dexterity; Mace +3; Long Sword +2 Dragon Slayer (triple damage on black dragons); a scroll against dragon breath | the salamander cavern (p.44) or the drow elf barracks (p.15): the books give both | gauntlets: +1 Dex past 18, thief skills as a 4th-level thief |
+| Drow gear: a sword +5, swords +3, chain mail +3 | on the drow, Hap's caves and the tower (44) | fades once taken out of the drow areas |
+| Plate Mail +3 | the drow lord in the Wizard's Tower; Mogion in the Pit (43) | |
+| A black dragon's egg; a dragon's heart | the tower's laboratory (11); the roof (2) (18-19) | for Silk's reward, if a member is a Swanmay |
+| Ring of Wizardry; Wand of Fireballs; **Robe of Powerlessness (cursed)** | Dracandros (43) | the ring doubles a magic-user's level 1-3 spells |
+| Wand of Defoliation; Wand of Lightning Bolts | the dead cleric under Yulash's shambling mounds (21, 43) | defoliation: plants only (the Pit); lightning makes shambling mounds bigger |
+| Bracers AC 2 | the Zhentrim marauders, Yulash (43) | |
+| Darts of the Hornet's Nest, magic arrows, wands, potions, scrolls | Zhentil Keep's magic shop, dear (25) | the cluebook's buy: darts, arrows, wands, potions |
+| A treasure; **Sword +2 Berserking (cursed)** | the trapped altar, the Shrine of Bane (26, 45) | |
+| Long Bow +3 | the Red Plume's (a rakshasa's) ambush, the Burial Glen 5/7 (30) | |
+| The queen's treasure: Ring of Invisibility, 12 Blessed Crossbow Bolts, Crossbow +5, Ring of Protection +2, Staff Sling +3 | the Burial Glen 11, for a party that reburied the dead (31, 46) | the bolts kill a rakshasa outright. Taken by force: Armor of Vulnerability, Gauntlets of Fumbling, Bracers of Defenselessness, Hat of Stupidity, Robe of Powerlessness, Robe of Vermin, Sword -2, Sword +2 Berserking (all cursed). A player's queen's treasure also had a Long Sword +5 (*players*, [CRPG Addict](https://crpgaddict.blogspot.com/2013/01/curse-of-azure-bonds-won.html)) |
+| Girdle of Storm Giant Strength (Str 24); Sword +3 | the dying man's hidden treasure, the ruins 4-5 (32, 45-46) | rescue him from the hell hounds first |
+| Valuables | the rakshasa's storehouse, the ruins 3 (32) | side with the unkempt rakshasa |
+| Cloak of Displacement | not placed in the books (43) | AC -2 and the first attack each fight misses |
+| Helm of Dragons; Gauntlet of Moander; Amulet of Lathander | Dracandros; Mogion's fight; Dexam (1, 19, 23, 28) | artifacts: not in the item lists, can't be used, sold or stolen |
+| Random treasure | Oxam's Tower (level 1 room 4, level 7 room 4) and the caverns' treasury (38-39) | |
 
 ## 6. The Journal's false entries
 
-[Next review.]
+The Journal warns that some entries and tavern tales are false; read an entry only when the game names it (Journal
+pp.10, 25). *book*
+- **Entry 25** (a spirit's tale of a red web that gives Thri-kreen strength if a word is spoken before it) is a lie: the
+  web is a rakshasa's trap with spiders (Cluebook p.28). Hack it rather than speak or enter (section 2).
+- The books name no other false entries. **The game's scripts settle it:** the entries the ECL never refers to are the
+  decoys. Requested of main on the board (low priority); until then, treat an entry the game hasn't named as unread.
+- Entries that matter when named: 22 and 52 (Yulash's map and checkpoints), 24 (the dragon-slaying blade below the
+  tower), 35 (the three artifacts are needed against Tyranthraxus), 37 (the funeral passage into the temple), 44
+  (Silk's offer), 57 (the head rakshasa's offer). *book*
 
 ---
 
