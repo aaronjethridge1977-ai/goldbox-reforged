@@ -442,6 +442,15 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     **ELWEN trained to magic-user 5 and learnt FIREBALL** (p41t1, `s41trained`, 3:0 the inn). 5:6's Necklace of
     Missiles is still behind the altar (on the finale's way). **Left: the levels** (ARN 61,361 and BRAM 58,560 of
     70,001; LIRA 31,974 of 40,001): the vampire (4:10, 0x4A41 = 0, never fought), then the bands.
+  - **The vampire (Player 42, `p42/vamp.plan` from `s41trained`, ECL4 block 10):** 15,0's stairs (event 27, YES) put
+    the party in the lair at 14,0 (event 28): **the vampire (43 HP) and three wolves**, Bless and Prayer in camp
+    first. p42v13 **lost**: the vampire fell in round 3 with nobody hurt, then with one 6-HP wolf left four members
+    went from full HP to dying within one round and the party was destroyed (cause not identified; LIRA's Stinking
+    Cloud lay beside them). **p42v14 won** (no drain). The trove (14,0 again with SEARCH on): ARN took the **Wand of
+    Magic Missiles**; the 3 healing potions and the cleric scrolls were refused (every member but ELWEN at the weight
+    limit: about 8,300 pp and 6,200 gp carried, movement 3). The coffin (12,4, entered from 12,3; sanctified): the
+    weakened vampire, 15 HP, one blow (p42v37): **0x4A41 = 255, no drain**, +5,017 XP each (`s42vinn`). Left: ARN
+    3,623, BRAM 6,424, LIRA 5,748. ARN now wields the knight's Long Sword +2 (from LIRA's pack).
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
