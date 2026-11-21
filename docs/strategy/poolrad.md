@@ -560,11 +560,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Finale guards, 5:7 3,8** [85 x12]: party destroyed on every seed (Players 2, 3, 7, 9).
-  - Player 29 (the full run's party, 263 HP, levels 4-6, from `s34h` at full HP, levels 1-3 memorized, MAGIC ON): **1 win in 5**
-    (p29b2 won and was left with 5 standing, 141 HP; p29d1-d4 destroyed in under a minute). The 12 guards (8th-level
-    fighters, 75-87 HP) carry 12 Rings of Protection +3, Plate Mail +2 and Two-Handed Swords +2, but the vote and Tyranthraxus
-    come straight after the treasure: there is no camp to ready them. Main's bot lost it twice and took it by shortcut.
 - **Tyranthraxus alone, 5:7** [66 x1].
   - From c27a: won 2 of 2 (Player 3).
   - From c32a: won 2 of 4, every win with deaths (Player 7), which is a loss by the death rule.

@@ -490,6 +490,11 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   4 Hold Person, 3 Prayer, 3 Bless; ELWEN 5 Hold Person, 2 Stinking Cloud, 2 Prayer, 3 Sleep; LIRA 2 Stinking Cloud,
   Fireball, 3 Sleep. On the way (p40a1): 5:3's event 14 (12,12) and 12,10 fought on QUICK, then a 5:5 fight at 9,9
   killed BRAM (reloaded from `s40g`, the gate).
+- **Earlier** (merged from poolrad.md's parked notes, Jeremy, Gold Box Guide 8): the parties of Players 2, 3, 7 and 9
+  destroyed on every seed. **Player 29: 1 win in 5** (the full run's party, 263 HP, levels 4-6, from `s34h` at full HP,
+  levels 1-3 memorized, MAGIC ON): p29b2 won with 5 standing at 141 HP; p29d1-d4 destroyed in under a minute. The
+  guards carry 12 Rings of Protection +3, Plate Mail +2 and Two-Handed Swords +2, but the vote and Tyranthraxus come
+  straight after the treasure: no camp to ready them. Main's bot lost it twice in ours and took it by shortcut.
 - **Tries (all from `p40c1_s40hall`, tactics on): 5 of 5 lost.** **p40c1** (LIRA's and ELWEN's Sleeps at the guards,
   the horde order's first spell: a tactics fault, fixed: Sleep skips figures over level 4 or 36 HP; all 12 left);
   **p40d1** (CEDRIC's Hold Person spoilt by a blow, three clouds at one edge figure; 11 left); **p40d2** (Hold Person
