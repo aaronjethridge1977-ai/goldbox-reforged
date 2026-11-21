@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 78: the camp's DROP of a stack (check 169), the adventure menu's CAST (check 170), a combat-only spell there (check 171), ALTER SPEED (check 172, a fix), CAST PROTECTION FROM EVIL on another member (check 173)
+## Chat 78: the camp's DROP of a stack (check 169), the adventure menu's CAST (check 170), a combat-only spell there (check 171), ALTER SPEED (check 172, a fix), CAST PROTECTION FROM EVIL on another member (check 173), ENLARGE and SHIELD (check 174)
 
 Main path, against the original in DOSBox (lab `data/c78/chk169`, links in `data/c78/cd/`), tpseed 11111111, both from check 165's start.
 
@@ -181,6 +181,7 @@ Main path, against the original in DOSBox (lab `data/c78/chk169`, links in `data
 - **171** (3:0 the adventure menu's CAST of a combat-only spell): check 102's start: End x4 (LIRA), CAST (SLEEP her only spell), CAST: SLEEP / IS A COMBAT-ONLY SPELL... / LOSE IT? YES NO; NO keeps it (the list again), CAST, YES loses it (the list closes), save. Matched at once, 3 of 3; NO then EXIT differs.
 - **172** (3:0 the camp's ALTER SPEED): check 102's start (speed 0): ENCAMP, ALTER, SPEED (GAME SPEED = 0 (0=FASTEST 9=SLOWEST), SLOWER EXIT), SLOWER x3, FASTER, EXIT x3, save: the original's save has **2 in cell 0x49FC** (SAVE writes DS:0x49E2 into the live script memory, GAME.OVR 0x1FECE, high byte 0). **Ours differed (0): its quick save kept the speed only in [qol] speed**, its original-format save only in the file's copy. **Fixed** (main.gd `_quick_save` and `_save_original` write the speed into the live cell, as the original). Then 3 of 3; without FASTER differs (3). Main path: only the save's contents (no script reads 0x49FC that we know of); DIFFCHECKS 172/172.
 - **173** (3:0 the camp's CAST PROTECTION FROM EVIL on another member): check 102's start with CEDRIC given spell 6 (+0x28): ENCAMP, End x2, MAGIC, CAST, End (the list wraps from its last line to PROTECTION FROM EVIL), CAST, Home x2 (ARN), SELECT, EXIT x3, save: ARN's .SPC holds effect 8 for 3 minutes, power 1. Matched at once, 3 of 3; BRAM as the target differs.
+- **174** (3:0 the camp's CAST ENLARGE on another member, then SHIELD): check 102's start with LIRA given ENLARGE (+0x2A = 12) and SHIELD (+0x29 = 19): ENCAMP, End x4, MAGIC, CAST, Home (ENLARGE), CAST, Home x2 (CEDRIC), SELECT, Home (SHIELD: after a cast the light stays on the same line), CAST (the caster, no question), EXIT x3, save: CEDRIC effect 12 for 10 minutes (STR 18/00 unchanged: already above Enlarge's level-1 target), LIRA effect 17 for 5 minutes. Matched at once, 3 of 3; ELWEN as the target differs.
 - Not in the gate (they repeat check 116, chat 67): LIRA's short bow refused while her long sword is readied and the sword refused while the bow is; and (lab `data/c78/chk171r`) ARN's bow refused with the shield readied, the shield refused with the bow: both matched 3 of 3.
 
 ## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162), the shop's SELL (163), the shop's ID of a scroll then SCRIBE (164), TRADE of a stack (165), a Potion of Healing's USE (166), a Potion of Giant Strength's (167, 168); the checks run ours with QoL off
