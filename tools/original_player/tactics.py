@@ -45,7 +45,8 @@ def figures(mem):
         out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
                     "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r),
                     "cl": r[0x96], "mu": r[0x9B],
-                    "fp": max(1, min(4, r[0x6C] & 7))})   # Player 35: the footprint (record +0x6C, ours' combat.gd)   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
+                    "fp": max(1, min(4, r[0x6C] & 7)),
+                    "max": r[0x32], "memo": bytes(r[0x17:0x2C])})   # Player 35: the footprint (record +0x6C, ours' combat.gd)   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
     return out
 
 
@@ -180,6 +181,17 @@ def _focus(f):
 # `advance` walks onto a fallen focus figure's square nobody holds, and once there stays (no MOVE off it)
 HOLDDOWN = os.environ.get("OP_HOLDDOWN", "1") != "0"
 
+# Player 38 (p38e3: the throne room's second wave began with the party at 49 HP; the tool answered CONTINUE BATTLE NO;
+# the book: "between waves, Continue Combat for a round or two to heal"): when the last enemy falls, CONTINUE BATTLE
+# YES while a member up is hurt by 4 or more and a member up has Cure Light Wounds in memory (OP_CONTINUE rounds at
+# most, default 6); in those rounds the clerics cast it on the most hurt, the dying are bandaged
+CLW = 3                       # the cleric spell id (record 0x17-0x2B, the memorized list)
+CONTINUE = int(os.environ.get("OP_CONTINUE", "6"))
+
+
+def _hurt(party):
+    return [f for f in party if _up(f) and f.get("max", 0) - f["hp"] >= 4]
+
 
 def _fallen_focus(figs, party_n):
     return [f for f in figs if f["n"] > party_n and _focus(f) and not _up(f)]
@@ -250,6 +262,9 @@ class Tactics:
         """The spell this member should cast now, or None (QUICK)."""
         figs, party, foes = self._sides(p)
         me = next((f for f in party if f["name"] == member), None)
+        if me is not None and not foes and CLW in me.get("memo", b"") and _hurt(party) \
+                and (member, "CURE LIGHT WOUNDS") not in self.refused:
+            return "CURE LIGHT WOUNDS"     # Player 38: the continued battle between waves (CONTINUE BATTLE: YES)
         if me is None or not foes:
             return None
         known = self.spells.get(member)       # the spells seen in this member's CAST list (None: not looked yet)
@@ -280,6 +295,8 @@ class Tactics:
         """Figures to aim at, best first ([] none worth it; None: on the caster)."""
         if spell in ("PRAYER", "BLESS"):
             return None
+        if spell == "CURE LIGHT WOUNDS":   # Player 38: the most hurt members first (touch: the scan finds who is near)
+            return [f["n"] for f in sorted(_hurt(party), key=lambda f: f["hp"] - f["max"])]
         mages = sorted([f for f in foes if _is_mage(f)], key=lambda f: f["hp"])
         persons = [f for f in foes if not _is_large(f)]
         if spell in ("HOLD PERSON", "STINKING CLOUD", "SLEEP"):
@@ -334,6 +351,21 @@ class Tactics:
     def answer(self, scr, st, p):
         """One key for a tactical screen, or None (the plan's other rules go on)."""
         b = st["bottom"]
+        if b.startswith("CONTINUE BATTLE"):
+            try:
+                figs, party, foes = self._sides(p)
+            except Exception:
+                party, foes = [], [1]
+            n = getattr(self, "continued", 0)
+            dying = any(f["status"] == 5 for f in party)
+            cures = any(_up(f) and CLW in f.get("memo", b"") for f in party)
+            if not foes and n < CONTINUE and (dying or (cures and _hurt(party))):
+                self.continued = n + 1
+                self.log("TACTICS CONTINUE BATTLE YES (%d): %s" % (self.continued, ", ".join(
+                    "%s %d/%d" % (f["name"], f["hp"], f.get("max", 0)) for f in party)))
+                return "y", "tactics: CONTINUE BATTLE YES (round %d: cures and bandages)" % self.continued
+            self.continued = 0
+            return "n", "tactics: CONTINUE BATTLE NO"
         if b.startswith("ABORT SPELL?"):
             # the original after an aim's EXIT (seen, p30b1): a spell with nowhere to go is given up
             self.scan = None
