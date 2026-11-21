@@ -1315,7 +1315,7 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 36 (2026-11-20): the DOSBox speed test (keep 15000)
+## Player 36 (2026-11-20): the DOSBox speed test (keep 15000); the match 64 of 71 (three re-recordings); the band rule; the throne room 5 of 5 lost
 
 **The DOSBox speed test** (the Lead's Stage 1 item; lab `p36/speed.sh`, `p36/samecheck.py`, `p36/speed.txt`):
 `OP_CYCLES=<n|max>` (orig.py) sets `cpu_cycles` for one run; `samecheck.py <ref> <new>` compares two runs of the
@@ -1342,6 +1342,23 @@ seg05r.plan, seed 40404049; 40404042-48: a death, a wipe, or "rest interrupted 5
 **identical in ours: 64 of 71** (segment 5 complete; baseline 64). Combat's YARASH dump: a HOLD rerun of p36e1's seed (p36g1, `HOLD=2212,2218
 HOLDREC=17,15`) parted at draw 770 (an Alt-M), so it is the same fight in another run: YARASH rec+0x17 `00 00 00 0f 13 22
 22 20 2d 2f 36` (lab `p36/p36g1_hold.txt`). Score: **64 of 71** (`p36/score.md`).
+
+**Guide 3's band rule** (`bands on|off`, plans.py BANDS; Jeremy 17:26, poolrad.md section 3): on 6:25/7:26/8:27 the member
+with the best Charisma is lit before each step (Home/End on the walking screen); at COMBAT WAIT FLEE PARLAY: "YOU SURPRISE
+A GROUP OF ..." WAIT (the band leaves at once: p36t2's wild boars and centaurs), nomads/merchants/centaurs PARLAY, the
+cheap humanoid kinds PARLAY with the area's manner (6:25 NICE, 7:26 and 8:27 ABUSIVE; FLEE first when the manner's value
++ 1 + the lit member's Charisma bonus can't reach 100 and the party's slowest has the kind's movement), the rich kinds
+and beasts fought when rested (HP and memorized spells at 3/4 of the most seen), else FLEE when movement allows. The
+reason and the screen's text are logged (`bands: <kind> [<text>] ...`). Tested from `p25h2_s25b` on 6:25
+(`p36/bandtest.plan`, p36t1-t3): WAIT and the talkers work; no cheap band met yet (PARLAY's manner menu untried); that
+party moves 3, so FLEE never applied. "YOU ARE SURPRISED BY A GROUP OF ..." parses since p36t3.
+
+**The kobold throne room, Plan 1: 5 of 5 lost** (p36n1-n5, `p36/king4.plan`; stuck-fights.md section 3). New: **`focus
+<kind>,...|none`** (tactics.FOCUS: blows, arrows and MOVE goals on that kind first, the helpless of them first; Stinking
+Cloud at the bunch with most of them, first in the casters' order while one stands unhurt; a fighter in `advance` walks
+to a focus figure within 4 squares past the small fry, 6 walks a fight); **the party's size from ECL 0x6E3E** at every
+walking screen (Fatima joined as the seventh and the tactics took her for an enemy, p36n1); member lists read eight rows
+(TRADE WITH WHOM had no row for her, p36k1-k5: tool stops, not tries); `ready`/`trade` take `PRINCESS_FATIMA`.
 
 ## Player 35 (2026-11-20): the match 63 of 71; Stojanow and Sokal's army done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; the original's leftover save files
 
