@@ -238,6 +238,8 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				out.append("%s IS UNAFFECTED" % m.name)
 				continue
 			add_affect(m, effect, id, minutes, lvl)
+			if effect == SPIRITUAL_HAMMER:
+				_hammer_on(m)
 		if WORDS.has(id):
 			out.append("%s %s" % [m.name, WORDS[id]])
 	return out
@@ -246,6 +248,35 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 const MANUAL_READING := 4
 const MANUAL_TRAINING := 7
 const FRIENDS := 14
+
+
+const SPIRITUAL_HAMMER := 23
+
+
+static func _is_hammer(it: GameItem) -> bool:
+	return it.raw.size() >= GameItem.SIZE and it.type == 0x14 and it.raw[49] == 0xF3
+
+
+## Spiritual Hammer's effect handler (GAME.OVR 0xF420) runs as the effect is added: unless the
+## member already has the spell's hammer (type 0x14, name word 49 = 0xF3) or carries 16 items, a
+## new record goes on the end of the list: type 0x14, name words 0x14 0xF3, +1, bytes 61-62
+## 0x17 0x89, nothing else (no name, weight or price), not readied. Chat 81, check 209 (DOSBox:
+## CEDRIC, cleric 3, in camp: [23, 3 minutes, power 3] and the hammer, his mace still readied).
+static func _hammer_on(m: PartyMember) -> void:
+	if m.items.size() >= 16:
+		return
+	for it in m.items:
+		if _is_hammer(it):
+			return
+	var rec := PackedByteArray()
+	rec.resize(GameItem.SIZE)
+	rec[46] = 0x14
+	rec[48] = 0x14
+	rec[49] = 0xF3
+	rec[50] = 1
+	rec[61] = 0x17
+	rec[62] = 0x89
+	m.items.append(GameItem.from_record(rec))
 
 
 static func _age_up(m: PartyMember) -> void:
@@ -294,6 +325,12 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 	match int(a.effect):
 		Strength.ENLARGE, Strength.STRENGTH:
 			Strength.ended(m, a)
+		SPIRITUAL_HAMMER:
+			# 0xF420 with its end flag: the hammer the effect made goes.
+			for it in m.items:
+				if _is_hammer(it):
+					m.items.erase(it)
+					break
 		FRIENDS:
 			# 0xF231: the charisma the effect held comes back.
 			if m.stats.size() > 5 and int(a.value) < 0xFF:
