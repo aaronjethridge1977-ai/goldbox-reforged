@@ -206,6 +206,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   p31c1, c3, c4, c6, c7 by hand (`p31/king3.plan`, Sleep in every MU level-1 slot): 5 of 5 lost, 18-34 of 56 slain;
   the trolls finish the party. A camp at the door draws KOBOLDS ... BOMBARD YOU WITH ROCKS (p30g1). Ours loses the
   same fight draw for draw to 16203 (p23a4).
+  Also (merged from poolrad.md's parked notes, Jeremy, Gold Box Guide 8): Player 28 from `s17a` with Hold Person
+  picks (CEDRIC x4, ELWEN x4): 5 of 5 destroyed in the horde, 23-31 of 56 standing; the parties from c24f, c32a and
+  c34d (Players 2, 7, 9) destroyed on every seed; main's bot wiped seven times. The trip in costs HP: 123-193 of ~197
+  at the door (Player 31).
 - **Read (Players 23, 31):** level: the party was at F3-5 with a drained ARN; the four trolls. Asked the Lead (more
   levels first). Every new try is reported on the board (Jeremy).
 - **Analysis (Gold Box Guide 2, 2026-11-20 13:12; from ECL8 block 13, MON8CHA, the saves and logs above):**
@@ -378,6 +382,41 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     its **corner (top-left) square**, the MOVE ended with Enter; a fighter whose troll is held stays put. It holds only
     while that member stands, so fire stays first, and a held troll is the next Fireball's or Burning Hands' target.
   - No wyvern-alive replay (the wyvern died in segment 16, Jeremy agreed); no SURRENDER.
+- **Read (Gold Box Guide 8, 2026-11-21; the battlefield, ECL8 block 13, GEO8 block 13, the Players' logs, players' guides):**
+  - **Every wave starts at distance 0** (wave 1 SPRITE_START 0,0,0 at 0xA0F8; waves 2-3 SPRITE_START n,1,n then
+    SPRITE_ADVANCE): the monsters' anchor is the party's own square, so the wave is in contact from round 1. *code*
+  - **Three squares start the fight: 4,3, 5,3 and 6,3** (event 9 on the throne row; 0xA01B turns the party north on
+    each). Every try started on 4,3 (from the door 4,4). Our battlefield and placement code (`battlefield.gd`,
+    `placement.gd`, run on GEO8 block 13, troll footprint 2) gives at 4,3 the trolls the original shows at the start
+    of p39c2 (25,12 24,12 30,12 23,12). **At 6,3 the party's right side is the east wall**, all four trolls start
+    together on the left (23-26, rows 11-13), the kobolds ahead and left, and the back corner (28-29,14) is reached
+    only around the left; at 4,3 and 5,3 one troll starts on the right (30,12) and both flanks are open. Party
+    slots (facing N): 1 27,13, 2 28,13, 3 26,13, 4 29,13, 5 28,14, 6 29,14, 7 27,14. *code* (not yet seen at 6,3)
+    One documented win entered "so only one flank was open" *players* (Demetrios1453, ENWorld, Part 35).
+  - **The ballista is script damage, not a figure:** 7 bolts at random members, 2d6 each, between waves 1 and 2
+    (0xA1A4; again on FIGHT after a flight, 0xA363). Its emplacements are sealed map cells (event 23, "A RUINED
+    BALLISTA LIES HERE": 7-9,3, 3,4, 3,5, 4,1, 6,1): it can't be reached or attacked. *code* Players: everyone at
+    20+ HP before wave 1 ends *players* ([hitchhikerprod](https://walkthroughs.hitchhikerprod.com/pool-of-radiance/));
+    heal in a continued fight after wave 2, not wave 1: the trolls may rise *players*
+    ([GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/koboldcave.php)).
+  - **The drunk kobold's escort was never taken:** every plan answered SLIP PAST at 12,9. WAKE IT, YES: he walks the
+    party to the throne room past the traps (0xB119, the tables at 0xB537/0xB550/0xB569: "TAPS THE WALL"), which
+    skips 10,9's net trap with its 20 kobolds and 11,9's spikes. It sets only 0x4A08 (a message): the fight is the
+    same. *code* + *players* (the crippled kobold's hint; hitchhikerprod)
+  - **Tool fault: fighters' walks go back and forth.** In the throne tries most combat steps returned to the cell
+    two steps before: p39b4 98 of 115, p39c2 62 of 80, p39b2 30 of 35, p38e3 35 of 74, p36n5 40 of 47 (p39c2: ARN's
+    whole move 27,13 / 27,14 / 27,13 ..., his troll two squares off; MOVE LEFT fell each step). The `advance` fighters
+    seldom reached the trolls, and a step away from an adjacent kobold may draw its free blow. *seen* (the logs)
+- **Plan 2 additions (Jeremy, Gold Box Guide 8, 2026-11-21 08:59):**
+  - **Start the fight on 6,3:** from the door walk 4,4 -> 5,4 -> 6,4, then north onto 6,3 (5,3 and 4,3 start it too:
+    don't step on them). The best ACs in the left front slots 1, 3 and 7 (27,13 / 26,13 / 27,14), the casters in
+    slots 5-6 (28,14 / 29,14), set with camp ALTER, ORDER. **First one DOSBox check of the start at 6,3** (a
+    screenshot and the figures' cells, compared with the Read above), then the tries.
+  - **The trip in by the escort:** at 12,9 WAKE IT, then YES (FOLLOW).
+  - **The tool's walk fixed before any counted try** (no back-and-forth steps; a fighter walks to its troll or
+    stands).
+  - **CONTINUE BATTLE after wave 1: NO**, unless every troll was finished by fire or is held down; heal in a
+    continued fight after wave 2 instead. Before wave 1 ends, cures so everyone has 20+ HP (the ballista).
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 

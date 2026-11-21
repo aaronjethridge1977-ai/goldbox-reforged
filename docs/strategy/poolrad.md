@@ -579,19 +579,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
   - Events 11 and 12 can only be reached across event 9's squares.
 - **Sokal Keep rest fights, 4:21 15,1**: four interruptions in five rests (undead), and four camps ended with a death (Player 15). The plan dropped the camp.
 - **Sokal Keep huge scorpions, 4:21 2,11** [39 x2]: won 4 of 4, 3 with nobody dead (Player 9).
-- **Kobold king's throne room, 8:13 4,3 (event 9)**.
-  - Three fights in a row with no camp between: the horde (LOAD_MON 31 x4, 0 x35, 1 x11), the ballista (120 x5, 0 x45, 1 x8), then the envoys.
-  - Player 23: 5 of 5 lost in the first fight, the horde (56 figures; 16-23 still standing at the wipe). Party at the door: ARN 32, BRAM 52, CEDRIC 30, ELWEN 28, LIRA 22, DORN 29 HP.
-  - Player 30: every earlier try reached the door with the casters' spells spent on the way (four fights). A camp at the door draws KOBOLDS APPEAR AND BOMBARD YOU WITH ROCKS (p30g1). From the inn with MAGIC OFF on the way, the casters keep their spells: p30h3 by hand (Sleep and Stinking Cloud picks) still lost, 37 of 56 standing (*seen in the original*).
-  - Earlier: destroyed on every seed from c24f (Player 2), c32a (Player 7) and c34d (Player 9). Main's bot wiped there seven times.
-  - Deferred with events 20 and 11. The level-2 spell gap applied here too.
-  - Retry with the fixed tool (Player 28: spare gear sold, levels 1-3 memorized at the inn: CEDRIC Hold Person x4, Prayer x2,
-    Slow Poison; ELWEN Hold Person x4, Knock; from `s17a` again, `plans/p28_c34d_17r_kobold_retry.plan`): **5 of 5 destroyed**
-    in the horde (p28g1, p28h1-h4; 23-31 of 56 figures standing at the last count). The conclusion stands.
-  - Player 31, by hand with the Lead's advice (from the inn, MAGIC OFF on the way, every magic-user's level 1 on Sleep,
-    fighters AIMing at the helpless first): **5 of 5 lost** (p31c1, c3, c4, c6, c7; best c7, 22 of 56 standing). The
-    horde holds four TROLLs (36 HP, untouched by Sleep); Sleep and blows at sleeping kobolds clear 15-35 kobolds, then
-    the trolls finish the party. The trip in costs HP too (123-193 of ~197 at the door) (*seen in the original*).
 - **Valjevo, 5:4 9,1** [56 x4].
   - Won 2 of 2 from c33b's save, one with nobody dead (Player 8).
   - Player 28 (the original's 6 members, 260 HP; the bot's 7 had 318): four FIRE GIANTS (the bot's log), **1 deathless win in 12**
@@ -691,3 +678,4 @@ and where it was learnt. The Lead folds them into the sections daily and clears 
 - Valhingen's spectres (4:10 9,1): the clerics' TURN sends both away (21 squares); chase them with the advance fighters while Haste lasts, don't guard: p37g1 guarded and lost, p37i1 chased and won with no drain. *seen* (Player 37; stuck-fights.md section 4, Gold Box Guide 6)
 - The kobold caves (8:13): the camp and the wandering kobolds leave the party be only while it came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0): the cluebook's "rest in the wyvern cave"; once the wyvern is woken (the rubble slope) or killed, no camp before the throne is beaten. *code* (ECL8 block 13 0xB428, 0xB388; ECL8 block 27 0x9DB5; Gold Box Guide 6)
 - A killed troll stays down only when the killing blow is fire or acid (Fireball, Burning Hands; not lightning). *code* (GAME.OVR 0x11434; Gold Box Guide 6)
+- The kobold throne room (8:13): its waves start at distance 0, on the party's square; event 9 lies on 4,3, 5,3 and 6,3, and 6,3 puts the east wall on the party's right with all four trolls on the left (our placement code on GEO8 13); the ballista is script damage from sealed cells (7 x 2d6, 0xA1A4), so cure to 20+ HP before wave 1 ends; the drunk kobold's escort (12,9 WAKE IT, YES) skips 10,9's and 11,9's traps. *code* + *players* (Gold Box Guide 8; stuck-fights.md section 3)
