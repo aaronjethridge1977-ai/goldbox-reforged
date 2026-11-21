@@ -42,7 +42,7 @@ extends Control
 ##     ORDER: "PARTY ORDER:" SELECT EXIT; SELECT: "<NAME>" / "HAS BEEN SELECTED", PLACE EXIT,
 ##       and Home/End carry the selected member up and down the party.
 ##     DROP: "<NAME>" / "WILL BE GONE", "DROP FROM PARTY?" (yellow) YES NO with NO lit; NO:
-##       "<NAME>" / "BREATHES A SIGH OF RELIEF".
+##       the message area cleared, nothing said (main chat 87, DOSBox).
 ##     SPEED: "GAME SPEED = n (0=FASTEST 9=SLOWEST)", "GAME SPEED:" FASTER SLOWER EXIT (4 at
 ##       the start).
 ##     ICON: the icon editor. PICS: "MONSTERS ON  PORTRAITS ON  EXIT", M and P switch them.
@@ -1511,20 +1511,20 @@ func _act(choice: String) -> void:
 					_say_lines([])
 					_pick = 0
 				"EXIT":
+					# Main chat 87 (check 261, DOSBox): EXIT at PLACE keeps "<NAME> / HAS BEEN SELECTED" and the
+					# order so far; the message stays through the camp menu and ALTER again.
 					_ordering = -1
-					_say_lines([])
 					_pick = 0
 					_alter_menu()
 					return
 			_refresh()
 		"drop":
-			var m := _who()
+			# Main chat 87 (check 264, DOSBox, the screen read every 8 ms): NO clears the message area and
+			# says nothing (no "BREATHES A SIGH OF RELIEF"); the member stays lit.
 			if choice == "YES":
 				_party.remove_at(_sel)
 				_sel = mini(_sel, _party.size() - 1)
-				_lines = []
-			else:
-				_say_name(m.name, "BREATHES A SIGH OF RELIEF")
+			_lines = []
 			_pick = 1
 			_alter_menu()
 		"speed":
