@@ -105,6 +105,13 @@ def _is_leader(f):
     return any(w in u for w in ("LEADER", "CAPTAIN", "CHIEF", "LVL", "LEVEL", "SERGEANT", "KING"))
 
 
+def _sleepable(f):
+    """Player 40: a figure Sleep can take (4 hit dice or fewer): no level over 4 in its name ("8TH LVL FIGHTER"),
+    no more than 36 HP at full."""
+    m = re.search(r"(\d+)(?:ST|ND|RD|TH) L", f["name"].upper())
+    return not (m and int(m.group(1)) > 4) and f.get("max", 0) <= 36
+
+
 def _is_large(f):
     return any(m in f["name"].upper() for m in LARGE)
 
@@ -358,6 +365,9 @@ class Tactics:
                                                     if not _is_mage(f) and f["n"] not in dr]
         if spell == "SLEEP":           # (Player 30, the horde) the biggest bunch of small figures, as Stinking Cloud;
             best = []                  # else any person (the wall's aides)
+            # Player 40 (p40c1: LIRA's and ELWEN's Sleeps at the finale's 8th-level guards, the horde order's first):
+            # Sleep takes nothing above 4 hit dice: a level in the name over 4, or over 36 HP at full (4d8+4)
+            persons = [f for f in persons if _sleepable(f)]
             for f in persons:
                 if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6) \
                         or self.slept.get(f["n"], 0) >= 2:

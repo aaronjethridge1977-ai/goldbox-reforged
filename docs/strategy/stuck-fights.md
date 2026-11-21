@@ -4,7 +4,7 @@ Kept by the Player lane (the Lead's note, Jeremy's decision 2026-11-20 12:44) fo
 stuck-fights chat. One section per fight that has reached five losses in a row under the reload rule. Text only.
 **Each fight's logs, plans and the original's saves are copied to `D:\ai_projects\goldbox-reforged\.lab\stuck\<fight>\`**
 (`/mnt/d/ai_projects/goldbox-reforged/.lab/stuck/<fight>/`; git-ignored; a README.txt in each names every file):
-`sokal9`, `stojanow`, `kobold_king`, `graveyard_spectres`. The Player lab's own copies: `~/gbr/player_lab`, saves
+`sokal9`, `stojanow`, `kobold_king`, `graveyard_spectres`, `finale_guards`. The Player lab's own copies: `~/gbr/player_lab`, saves
 `.lab/player/saves/p2start/<name>/`, logs `logs/<run>.log`.
 
 "Loss" here is the reload rule's: a wipe, or a won fight with a member dead (a death is reloaded, not raised).
@@ -386,3 +386,29 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
   - **Read (Gold Box Guide 6, 2026-11-21): done; no Plan 2.** The lesson for the guide: the clerics' TURN does move
     the spectres (both fled 21 squares), so after TURN the fighters chase while Haste lasts; guarding loses the Haste
     (p37g1). Next on this branch: the knight's tomb (8,2), then the vampire's last fight. *seen*
+
+## 5. The finale's guards (5:7 3,8: "TWO GUARDS MOVE TO BAR YOUR PATH")
+
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
+
+- **Enemy:** 12 8TH LVL FIGHTERs (87 HP each, 1,044 in all), then Tyranthraxus at once (poolrad.md section 3, "The
+  finale"). The menu offers COMBAT WAIT FLEE PARLAY. The fight opens with the guards in a 5-wide block (rows 13-14,
+  x 24-30) touching the party's front row (row 12; the back row is 11): **every member of the order's first four is
+  in contact from round 1.**
+- **Party** (the no-shortcut chain, Player 40: `p38a2_s38audit`, then `p40/finale1.plan`: Valjevo's 5:3-5:6 left out,
+  since no member is near a level and the barracks giants' experience changes nothing): ARN F6 65 HP AC -3, BRAM F6 60
+  AC -2 (ARN's spare Ring +2), CEDRIC C6 42 AC -2 (DORN's Ring +3), ELWEN C5/F5/MU4 41 AC -5, LIRA F5/MU5 43 AC -2,
+  DORN F5/T6 46 AC 2, **Genheeris** (joins at 2,5, reached only through 2,6: a small fight there; "IN FACT I WILL JOIN
+  YOU. IS IT A DEAL?" YES; magic-user 7, 22 HP, AC 9; the computer runs him). Memorized at 3,6 (`s40hall`): CEDRIC
+  4 Hold Person, 3 Prayer, 3 Bless; ELWEN 5 Hold Person, 2 Stinking Cloud, 2 Prayer, 3 Sleep; LIRA 2 Stinking Cloud,
+  Fireball, 3 Sleep. On the way (p40a1): 5:3's event 14 (12,12) and 12,10 fought on QUICK, then a 5:5 fight at 9,9
+  killed BRAM (reloaded from `s40g`, the gate).
+- **Tries (all from `p40c1_s40hall`, tactics on): 5 of 5 lost.** **p40c1** (LIRA's and ELWEN's Sleeps at the guards,
+  the horde order's first spell: a tactics fault, fixed: Sleep skips figures over level 4 or 36 HP; all 12 left);
+  **p40d1** (CEDRIC's Hold Person spoilt by a blow, three clouds at one edge figure; 11 left); **p40d2** (Hold Person
+  went off three times, a Fireball, four clouds; 10 left at 593 HP); **p40d3** (5 left, 292 HP; the party 5 up, 99
+  HP); **p40d4** (4 left, 219 HP; ARN last). (p40c2, p40d5: stopped by hand, not counted.)
+- **Read:** the casters stand in the front row and their spells are spoilt by blows; the held guards don't fall fast
+  enough. **The party order sets the start:** ALTER ORDER (camp: SELECT a member, Home/End move it in PLACE, PLACE)
+  puts the order's first four in front; `p40/finale2.plan` puts ARN, BRAM, DORN, LIRA forward and CEDRIC, ELWEN behind
+  (p40e0, stopped in round 1: CEDRIC at 26,11, the back row). Not yet tried in a counted fight. To the Lead (board).
