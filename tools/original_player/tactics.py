@@ -175,6 +175,16 @@ def _focus(f):
     return any(w in f["name"].upper() for w in FOCUS)
 
 
+# Player 38 (p38e1: the throne room's four trolls all killed, then two rose again at their own squares and beat the
+# last three members; the guide: "stand on a fallen troll's square"): with OP_HOLDDOWN on (default), a fighter in
+# `advance` walks onto a fallen focus figure's square nobody holds, and once there stays (no MOVE off it)
+HOLDDOWN = os.environ.get("OP_HOLDDOWN", "1") != "0"
+
+
+def _fallen_focus(figs, party_n):
+    return [f for f in figs if f["n"] > party_n and _focus(f) and not _up(f)]
+
+
 def _is_drainer(f):
     return any(m in f["name"].upper() for m in DRAINERS)
 
@@ -224,6 +234,7 @@ class Tactics:
         self.fidle = {}          # Player 36: walks to the focus figure this fight, per member
         self.use = None          # Player 37: a scroll USE under way: {member, spell, tried rows}
         self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
+        self.holding = set()     # Player 38: members standing on a fallen focus figure's square (OP_HOLDDOWN)
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -459,6 +470,30 @@ class Tactics:
         the figures TARGET may take (in reach), then the best: a helpless one first (a blow slays it), then the enemy
         magic-users, then the weakest. Nothing in reach: DONE (hold the line, let them come) while an enemy is within
         6 squares, else QUICK (the fight's other figures out of sight: the computer walks to them)."""
+        if FOCUS and HOLDDOWN and member.upper() in ADVANCE:
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            fallen = _fallen_focus(figs, self.party_n)
+            held = {(f["x"], f["y"]) for f in party if _up(f) and f is not me}
+            if me is not None and fallen:
+                if (me["x"], me["y"]) in {(f["x"], f["y"]) for f in fallen}:
+                    self.holding = getattr(self, "holding", set()) | {member}
+                elif "MOVE" in items and member not in self.moved and not any(_dist(me, f) <= 1 for f in foes
+                                                                              if _focus(f)):
+                    free = [f for f in fallen if (f["x"], f["y"]) not in held]
+                    goal = min(free, key=lambda f: _dist(me, f)) if free else None
+                    if goal is not None and _dist(me, goal) <= 8:
+                        self.moved.add(member)
+                        self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None,
+                                     "square": (goal["x"], goal["y"])}
+                        self.log("TACTICS %s walks onto fallen figure %d %s's square %d,%d (%d squares)" % (
+                            member, goal["n"], goal["name"], goal["x"], goal["y"], _dist(me, goal)))
+                        return "m", "tactics: %s MOVEs onto fallen figure %d's square" % (member, goal["n"])
+            if me is not None and member in getattr(self, "holding", set()) and \
+                    (me["x"], me["y"]) not in {(f["x"], f["y"]) for f in fallen}:
+                self.holding.discard(member)
+        if member in getattr(self, "holding", set()):
+            self.moved.add(member)       # Player 38: on a fallen troll's square: strike what is in reach, no MOVE off
         if FOCUS and member.upper() in ADVANCE and "MOVE" in items and member not in self.moved:
             # Player 36 (p36n2: BRAM struck kobolds next to him for ten minutes with a troll two squares off): a fighter
             # in `advance` with a focus figure within 4 squares and none next to him walks to it, past the small fry
@@ -565,6 +600,15 @@ class Tactics:
         figs, party, foes = self._sides(p)
         me = next((f for f in party if f["name"] == mv["member"]), None)
         goal = next((f for f in foes if f["n"] == mv["goal"]), None)
+        if mv.get("square"):
+            # Player 38: onto a fallen focus figure's square (OP_HOLDDOWN): past the others, then stop there
+            goal = {"n": mv["goal"], "x": mv["square"][0], "y": mv["square"][1], "name": "fallen", "hp": 0}
+            if me is not None and (me["x"], me["y"]) == mv["square"]:
+                self.holding.add(mv["member"])
+                self.log("TACTICS %s stands on fallen figure %d's square %d,%d" % (mv["member"], mv["goal"],
+                                                                                  me["x"], me["y"]))
+                self.move = None
+                return "esc", "tactics: move: on the fallen figure's square: Esc"
         mv["tries"] += 1
         if me is None or not foes:
             self.move = None
@@ -576,7 +620,8 @@ class Tactics:
             self.move = None
             return "esc", "tactics: move: the blow was struck: Esc"
         adj = [f for f in foes if max(abs(f["x"] - pos[0]), abs(f["y"] - pos[1])) <= 1]
-        if mv.get("focus") and goal is not None and not any(f["n"] == goal["n"] for f in adj) and not mv.get("nofree"):
+        if (mv.get("focus") or mv.get("square")) and goal is not None and not any(f["n"] == goal["n"] for f in adj) \
+                and not mv.get("nofree"):
             adj = []         # Player 36: walking to the focus figure: past the others (a blow on them only if stuck)
         if adj:
             # the goal if it is next to us, else a helpless one, else the weakest
@@ -606,7 +651,7 @@ class Tactics:
             d = max(abs(q[0] - goal["x"]), abs(q[1] - goal["y"]))
             if best is None or d < best[0]:
                 best = (d, k, q)
-        if (best is None or best[0] > here) and mv.get("focus") and not mv.get("nofree"):
+        if (best is None or best[0] > here) and (mv.get("focus") or mv.get("square")) and not mv.get("nofree"):
             mv["nofree"] = True      # Player 36: no free step toward the focus: strike what is next to us instead
             return self._move_step(st, p)
         if best is None or best[0] > here:
