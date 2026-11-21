@@ -1458,6 +1458,12 @@ class Plan:
             return "n", "treasure left: don't go back (pilot)"
         if kind == "yesno" and "QUIT TO DOS" in scr["bottom"]:
             return "n", "never quit to DOS (asked after SAVE)"
+        bw0 = scr["bottom"].split()
+        if BANDS["on"] and kind == "hmenu" and "ABUSIVE" in bw0 and "NICE" in bw0 and BANDS.get("manner") \
+                and p.on_band():
+            # Player 39 (p39f2: the lizard men's PARLAY at 7:26 answered NICE by the plan's `answer SLY|NICE`, meant
+            # for another screen): the band rule's manner comes before the plan's answers
+            return self.choose(scr, BANDS["manner"]), "bands: PARLAY %s" % BANDS["manner"]
         text = scr.get("text", "") + " " + scr.get("question", "") + " " + scr["bottom"]
         for words, choice, src in self.answers:
             if words in text and choice.startswith("seq:"):
