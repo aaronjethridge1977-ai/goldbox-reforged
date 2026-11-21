@@ -1315,9 +1315,9 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 35 (2026-11-20): the match 60 of 71; Stojanow done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; Sokal Plan 1; restore() empties slot I
+## Player 35 (2026-11-20): the match 63 of 71; Stojanow and Sokal's army done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; the original's leftover save files
 
-**The Stage 1 match:** main chat 72's two fixes (the wall ahead in an arrival's init, 0x6DC8's fled monsters) and
+**The Stage 1 match (60, then 63 of 71 after the reruns below):** main chat 72's two fixes (the wall ahead in an arrival's init, 0x6DC8's fled monsters) and
 segment.py's **`OP_CAMPEND=1`** (match/replay.txt, p16d1 only: the original's checkpoint save is made in camp, so ours
 ENCAMPs and EXITs before F2) make p16d1, p22c2 and p25e4 identical: **60 of 71** (baseline 60). **Run `check_godot.sh
 <worktree>` in the lab before any replay**: match.py replays the lab's `proj` (the first run of this chat replayed
@@ -1349,7 +1349,14 @@ ours within 2). (5) Sleep at one lone figure twice at most. (6) A MOVE screen no
 Short Bow +1 with BRAM's 20 Arrows +1). The level detour by Kuto's Well (Player 16's route) lost twice: the old route
 never rests in the well, `s6well`/`s6pre12` hold an unconscious DORN and no spells, and Norris's band comes at 1,5.
 Then straight to the door (the Lead's "try at level 3"): the rests at 8,14 and 9,5 drew undead five times (tool stops).
-See stuck-fights.md section 1 for the tries.
+Detour v2/v3 (`sokal_rug.plan`, `sokal_v3.plan`: rests in the well, cures only at its bottom): **the hag's rug wants LOOK**
+on 7,14 after FORCE IT ("BENEATH A RUG YOU FIND A COMPARTMENT..." YES: Banded Mail +1, Bracers AC 4, Quarter Staff +1);
+Norris's band won, ELWEN C2 / LIRA F2 / DORN F2 trained, and **the army won at the first try, nobody dead** (p35k5:
+`s9won`). Plan pitfalls met: `--after` skips `tactics on` written before the checkpoint; a merged header's answers can
+contradict (CLIMB DOWN YES before segment 7's NO); a foreground `timeout` under 600 s kills a try (start long jobs with
+`setsid nohup` and poll). **The Stage 1 reruns** (lab `p35/stage1.sh`, `stage1b.sh`): p14b3 and p15d8 (identical), p22c3
+and p25j10 (new traced differences at OVR:0b95d in band fights) swapped into `match/recordings.txt`; p16a2, p24b6, p26a1
+don't repeat. **The lab's `p14/q.sh` now empties the start's slots** (the stale CHRDATH*.SPC behind the POISONED pair).
 
 ## Player 34 (2026-11-20): the Stage 1 match fresh, 57 of 71 identical; NOT RUN; replay settings; Sokal's event 9 and Stojanow's west tower by hand, 5 of 5 lost each; stuck-fights.md
 

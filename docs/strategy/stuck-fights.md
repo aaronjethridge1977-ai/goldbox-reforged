@@ -82,7 +82,31 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
     door; a lizardman and 4 giant lizards guard it): **Bracers AC 4 to LIRA** (instead of her chain mail; with BRAM's
     spare Shield), **Banded Mail +1 to DORN** (in place of ARN's Bracers AC 6); the Quarter Staff +1 to a caster.
     Norris: poolrad.md section 3, "Kuto's Well".
-  - **Results:** (the Player's lines here)
+  - **Results (Player 35, 2026-11-20; plans `p35/sokal_p1.plan` -> `sokal_v3.plan` in the lab; files to D:
+    `.lab/stuck/sokal9/p35/`):**
+    - **The audit at the inn** (`p35f1_s9a`, from Player 34's `p15h6_s6t`): ELWEN and LIRA moved 3 (spare Chain Mail;
+      LIRA's Chain Mail +1 unworn): now 9 and 12; DORN's Bracers AC 6 (AC 2); ELWEN's Shield +1; LIRA's Short Bow +1 with
+      BRAM's 20 Arrows +1. Hold Person x3 picked for CEDRIC's slots.
+    - **The detour, first plan** (Player 16's Kuto's Well route: cures only, no rest in the well): p35f1 (35060001) and
+      p35f2 (35060002) **party destroyed by Norris's band** at 1,5 and 1,10 (the band comes on the way to 10,3 before the
+      plan's rest; at `s6well` / `s6pre12` DORN is unconscious and no spells are left). Read: tool (plan): the old route
+      relied on the bot's QUICK; rest in the well first.
+    - **Straight to the door** (the Lead's "try at level 3"): p35g1, p35g2 tool stops (the rests at 8,14 and 9,5 drew
+      undead five times; the fighters wandered after zombies behind walls: MOVE now only within 8 squares). No army try.
+    - **The detour, v2** (rests in the well, cures only at its bottom): **the hag's rug:** after FORCE IT at 7,14, LOOK:
+      "BENEATH A RUG YOU FIND A COMPARTMENT CONTAINING ARMS AND ARMOR." YES: Banded Mail +1, Bracers AC 4, Quarter Staff +1
+      (p35j6: `s9rug`; walking on without LOOK gives nothing, as Player 16's run). p35j1: five rests at 7,13 interrupted
+      (tool stop); p35j2: a MOVE onto a fallen member's square asked ATTACK ALLY (fixed).
+    - **v3** (`p35/sokal_v3.plan` from `p2start/p35j6_s9rug`): the rug's gear (Bracers AC 4 to LIRA: AC 0 with her bow;
+      Chain Mail +1 to ELWEN: AC -2; Banded Mail +1 to DORN: AC -1; ARN's 18 Arrows to LIRA; `s9gear`), **Norris's band
+      won** at 1,10 (p35k1, `s6norris`), the town's halls: **ELWEN C2, LIRA F2, DORN F2** (p35k5, `s9t`; two tool stops on
+      the way: CLIMB DOWN answered YES at the well's top, a shop's "CAN I SHOW YOU OUR WARES?").
+    - **p35k5 (seed 35090005), Plan 1's first try at the army: WON, nobody dead** (`s9won`, 4:21 8,5; BRAM and CEDRIC
+      unconscious at the end, bandaged by DORN and LIRA). Bless from camp at 9,5 (five undead fights during that rest,
+      all won), step W; the fighters held the doorway (`advance none`), ELWEN's and LIRA's Sleeps on the thickest clumps,
+      blows on the weakest; 50 figures (277 HP) against 142 HP. Read: **the audit, the levels and the rug's armour**
+      (the same fight was 5 of 5 lost by Player 34 at movement 3 with ELWEN and LIRA at 9 HP). **Sokal's army: done
+      without a shortcut.** Saves `p2start/` of p35k5's `s9t`, `s9door`, and `p35k5/s9won`.
 
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
 
