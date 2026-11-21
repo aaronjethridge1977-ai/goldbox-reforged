@@ -212,7 +212,82 @@ Stone is the card's place to patrol for XP (Card p.2).
 
 ## 3. Hard fights
 
-[Next review.]
+From the books only (*book*: the Cluebook unless marked; monster notes from the Journal's bestiary, pp.5-8); nothing
+here has been seen in play. The general rule from Curse's own card: save before a hard fight, and if it's lost, reload
+and cast Bless, Prayer, Protection from Evil (10'), Enlarge, Invisibility 10' and Haste, or use Giant Strength,
+Invisibility or the Dust, just before the trigger (Card p.2). Haste ages each member a year (Card p.2; Cluebook p.6).
+
+**Tilverton and the sewers**
+- **The royal guards** after the coach: they never run out. Win the first wave, then go into an alley (pp.7-8).
+- **Otyughs (sewers 4 and 6):** three attacks a turn. Cast before entering; Stinking Cloud can disable them; Fireball;
+  at 6 (a tough fight) Prayer first and hold the doorway (pp.10-11).
+- **Trolls (sewers 7, 8):** they get up again unless burned: Fireball. A member standing on either square a fallen troll
+  held stops it rising. At 8, keep the party tight (p.10). Pool's rule (the killing blow must be fire or acid,
+  poolrad.md) may differ: **unconfirmed** for Curse; the Flame Tongue (+1) from the hideout's armoury is "great against
+  trolls" (p.44).
+- **The Fire Knives' last room (hideout 15):** rest and FIX first; Bless, Enlarge, Haste; hold or cripple with spells;
+  fighters close in on the damaged; keep thieves and magic-users out of melee; cut off their retreat (p.13).
+
+**Hap and the caves**
+- **The efreeti in the barn:** beat the four drow patrols first, or they join him (p.14).
+- **The drow clerics (caves 7) and mages (9):** 50% magic resistance blunts area spells. Fighter/magic-users (or
+  dual-classed fighters) cast Minor Globe of Invulnerability on themselves and go in with swords while the rest stay out
+  of sight; the others charge once the drow have spent their spells. A Swanmay lets the party back away from both
+  (p.15).
+- **The salamanders (6):** fight at the doorway so they can't swarm through; fire resistance first (p.15). The Frost
+  Brand (+3, counts +6 against fire creatures) from the hideout suits them (p.44).
+- **Crimdrac the dracolich (14):** only if the party resists. Low AC, fire breath: spread out; Prayer and protections
+  just before; of the attack spells only Fireball and Magic Missile work, Magic Missile is surer (it can't be spoiled)
+  (p.16). If he lives, he waits on the road from Hap to Essembra later (p.42).
+
+**The Wizard's Tower**
+- **The 14 black dragons (roof):** avoid them (parley NICE or MEEK, or attack Dracandros). If fighting: the dragon
+  slayer sword (triple damage against black dragons) and the scroll against breath on one fighter, Haste and Enlarge,
+  him into the horde, the others shooting, Confusion and Fireball (p.18).
+- **Burly (level 2, 3):** potions before the party arrives and a Symbol of Pain on his shield. Haste and Enlarge first;
+  a thief's backstab, Magic Missile, sometimes Stinking Cloud (p.18).
+- **The wyverns (15-16):** poison; Neutralize Poison memorized (p.19).
+- **Dracandros (10):** Minor Globe, Protection from Normal Missiles, Invisibility, and Fire Shield if he gets the
+  chance; efreeti and drow guards. Haste first; Ice Storm to hurt him through the globe, then a fighter on him; or out of
+  his sight, kill the guards, then go for him. Mind the Fire Shield before a backstab (pp.6, 18-19).
+
+**Yulash and the Pit**
+- **Shambling mounds (Yulash 6, the Pit):** half damage from weapons, immune to most spells but Magic Missile, made
+  stronger by lightning; they engulf in two rounds and smother. Slow them; Enlarge; the Wand of Defoliation (range 3)
+  (pp.21-22).
+- **Giant slugs:** acid spit for heavy damage; kill them fast or go round them (p.22).
+- **Mogion and the bits of Moander (Pit level 2, 8):** cast before; a barrage (Fireball best) so Mogion and her cultists
+  can't cast; then the mounds; against the bits Hold Monster, Charm Monster, Confusion, Slow; clerics Slay Living and
+  Poison; Enlarged and Hasted fighters; the Wand of Defoliation is essential. The Dust of Disappearance if nothing else
+  works (p.23).
+
+**Zhentil Keep and the Beholder**
+- **Bane's priests:** hit them first so they can't cast; their Hold Person leaves a member helpless, and they throw clubs
+  at the held (pp.24-25).
+- **Dexam the beholder (Beholder cave 12):** immune to spells; can kill up to three members a round. Haste and Enlarge
+  just before; Fireball or swords clear the minotaurs in front; the fighters swarm him; a backstab is ideal; then the
+  medusa. Caught unready: get out of his sight (he is weaker at range and slow) and use missiles (p.28).
+- **Manticores (11):** tail spikes from range: close in (p.27).
+
+**Myth Drannor**
+- **Rakshasa:** immune to the party's spells; they cast damage spells. One or two: rush them with fighters so they can't
+  cast; many: pull back the unprotected (only members under a Minor Globe hold their ground) and use magic weapons. The
+  queen's Blessed Crossbow Bolts kill one outright (pp.30, 32).
+- **Thri-kreen:** paralysing bite; dodge missiles; kill them quickly and move the paralysed out of reach (p.31; Journal
+  entry 45).
+- **Phase and giant spiders:** poison: Slow Poison and Neutralize Poison memorized (pp.30-31).
+- **The high priest in the temple's private chapel:** several Hold Persons and Slay Living: attack and subdue him
+  quickly (p.34).
+- **Tyranthraxus (temple 18):** a lightning bolt every round, with high priests and margoyles. Spread out and keep away
+  from walls (the bolt rebounds); Fireballs and Lightning Bolts on the margoyles and priests before they cast;
+  Confusion; Hasted, Enlarged fighters straight at him; Hold Monster and Charm Monster on him. A Hasted, high-Dexterity
+  fighter with Darts of the Hornet's Nest, and rangers with magic armour and bows, do well. The three artifacts are
+  needed to hurt him (p.34; Cluebook p.1; Journal entry 35). The head rakshasa's help (parley HAUGHTY) and the Knights'
+  distraction thin his side first (pp.30, 32).
+
+**Optional**
+- **The Mulmaster Beholder Corps (Dagger Falls, Oxam's caverns):** the deadliest fight in the game, not needed to win;
+  the Dust of Disappearance on the party first (p.38). Tavern tale 16: more than three beholders means the Corps: flee.
 
 ## 4. Curse-only rules
 
