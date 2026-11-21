@@ -172,6 +172,26 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 88: the training hall's TRAIN NO, DROP and REMOVE, the inn's STAY NO, camp SAVE's Esc, the temple's VIEW and TAKE EXIT (checks 275-283; three differences)
+
+Main path, each against the original in DOSBox, 3 of 3 and failing on a broken copy. **Matched, in the gate (DIFFCHECKS
+279/279):** 275 the training hall's DO YOU WISH TO TRAIN? NO (nothing trained, the member still lit); 276 the inn's STAY?
+NO (THEN YOU MUST LEAVE., the party a square east); 277 camp SAVE then Esc (ours with the QoL save list, the gate's
+setting); 278 the temple's VIEW, EXIT, POOL, TAKE, EXIT, EXIT, RETRIEVE YOUR MONEY? YES, SHARE, EXIT; 279 the hall's DROP
+... FOREVER? NO; 280 the hall's VIEW CHARACTER, EXIT TO DOS NO, REMOVE, ADD's EXIT and ADD (the member back last).
+
+**Differences (ready diffs to Combat, lab `data/c88/`):**
+- **The training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd; checks 281-283 wait for it): DROP's
+  YES asks again, ARE YOU SURE? (yellow) YES NO with NO lit (ours drops at the first YES); after a DROP or a REMOVE the
+  member before the one gone is lit (ours keeps the row: the next action took the wrong member).
+- **Camp SAVE's Esc** (`save_esc.diff`, camp_screen.gd; display, with the QoL save list off): the original saves nothing
+  and asks QUIT TO DOS (NO lit), NO: the camp menu with VIEW lit; ours goes straight to the camp menu.
+- **The temple's TAKE EXIT** (`temple_take_exit.diff`, temple_screen.gd; display): the original lights HEAL, ours TAKE.
+  The original's temple menu also takes no Enter and no Left / Right (Q24 is for a script's menus: to the Lead).
+
+**Seen, no check:** Esc at the inn's WHO WILL PAY? locks the original up (docs/original-bugs.md 16); ours ignores it.
+**Keys:** `esc` in lower case (the replay maps only `esc`).
+
 ## Chat 87 (5): chat 86's three differences fixed (Combat Chat 39, 72d52ba): checks 250, 252, 253, 256-258 and 271 join the gate
 
 Each 3 of 3 on origin/main after the fix; the full gate DIFFCHECKS 273/273.
