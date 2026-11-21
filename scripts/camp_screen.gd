@@ -1122,6 +1122,11 @@ func _cast(target: PartyMember) -> void:
 	var on_member := _mode == "whom"
 	var lines := SpellCaster.cast_outside(spells, _caster, _cast_id, _party, target, _rng2)
 	_sel = maxi(_party.find(_caster), 0)
+	if on_member and lines.size() <= 1:
+		# A spell that says nothing (Cure Disease on the healthy, CLW at full HP): no line, straight back to the
+		# spell list (main chat 75, DOSBox: dumped 0.15 s after SELECT).
+		_back_to_list()
+		return
 	if on_member:
 		# The result on the adventure screen, under CAST SPELL ON WHOM.
 		# Keys wait while it shows ("shown": no menu items), or a second SELECT casts again.

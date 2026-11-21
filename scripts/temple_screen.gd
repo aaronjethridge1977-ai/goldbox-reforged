@@ -284,7 +284,7 @@ func _needs(m: PartyMember, i: int) -> bool:
 		"CURE LIGHT WOUNDS", "CURE SERIOUS WOUNDS", "CURE CRITICAL WOUNDS":
 			return true
 		"CURE DISEASE":
-			return SpecialAffects.diseased(m) or m.has_affect(SpecialAffects.ROT)
+			return SpecialAffects.temple_cure_needed(m)
 		"RAISE DEAD":
 			return m.status == PartyMember.STATUS_DEAD
 		"STONE TO FLESH":

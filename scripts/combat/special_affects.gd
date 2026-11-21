@@ -112,7 +112,9 @@ const DISEASE := 0x32       # no healing; 1 HP every 10 days
 const ROT := 0x39           # months left in the high nibble of its power
 const DISEASE_MINUTES := 14400
 const ROT_MINUTES := 43200
-const CURES_DISEASE := [0x32, 0x39, 0x1F, 0x2B, 0x2C]
+## The temple's CURE DISEASE (GAME.OVR 0x4864, Combat Chat 36): offered when the member has any of the table at
+## DS:0x114 (0x1F 0x22 0x2B 0x2C 0x32 0x39; START.EXE's data, read beside 0x290E's directions), and lifts them all.
+const CURES_DISEASE := [0x1F, 0x22, 0x2B, 0x2C, 0x32, 0x39]
 
 # Item name words (START.EXE's word table) and item types the powers look for.
 const WORD_MIRROR := 0x76
@@ -363,7 +365,16 @@ static func infect(m: PartyMember, months: int) -> bool:
 	return true
 
 
-## Cure Disease (spell or temple): removes the diseases; true if there was one.
+## Whether the temple's CURE DISEASE is for `m` (0x4864: any effect of its table).
+static func temple_cure_needed(m: PartyMember) -> bool:
+	for e in CURES_DISEASE:
+		if m.has_affect(e):
+			return true
+	return false
+
+
+## The temple's Cure Disease (the camp spell is SpellCaster's 0x292A2): removes the table's effects; true if
+## there was a disease.
 static func cure_disease(m: PartyMember) -> bool:
 	var keep: Array = []
 	var had := false
