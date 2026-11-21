@@ -172,6 +172,41 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 91: USE IT?, the view sheet's SPELLS page, the shop's ID question, the treasure's TAKE on PgUp, the camp's light (checks 304-307; four differences)
+
+**Joined:** 305 (no fix needed): **DIFFCHECKS 294/294.** 295-303 wait for Combat's landing of `c90_bundle.diff` (not
+on origin/main by 14:30); 293/293 on a copy with the bundle and chat 91's three diffs.
+
+**Differences (main path, DOSBox at 3:0's camp and arms and armour shop, 8:27 after check 100's kobolds):**
+- **USE IT? takes only Y / N** (check 304, check 134's start: LIRA's combat-only wand): Enter, Right, Left and Esc do
+  nothing in the original, then YES spends the charge; ours on main and with the bundle alone falls out of step (Enter
+  takes the lit word). Fix: `"use"` joins the bundle's DROP IT? / IS IT A DEAL? list (`data/c91/useit.diff`).
+- **ID's IS IT A DEAL? the same** (check 306, check 152's start): Enter, Right, Left, Esc nothing, YES pays 200 gold and
+  identifies; already in the bundle (`"id"`), seen in DOSBox now. Fails on main (ARN's gold 500 kept).
+- **The treasure's TAKE: MONEY ITEMS EXIT opens ITEMS on PgUp** (scan code 0x49, the letter I; as Right is MONEY):
+  check 307 (check 100's fight, then T, PgUp, Enter: the LOOT list's TAKE takes the lit SHORT SWORD). Ours ignores PgUp.
+  Fix: `data/c91/take_pgup.diff` (on the bundle). The treasure's main menu (VIEW TAKE POOL SHARE EXIT) ignores Down,
+  PgUp, PgDn, End (no POOL); the view sheet's VIEW menu ignores PgUp (no ITEMS), its ITEMS menu Up (no HALVE); the
+  temple's menu Up / Down (no HEAL / POOL) and its HEAL list Up, Down, PgDn (no light move; ours moves it on Up / Down:
+  Jeremy's P33, an addition).
+- **The camp's light after a submenu** (display only: the camp's, MAGIC's and ALTER's menus take no Enter or arrows,
+  so no check can see it): the light keeps the index of the word last chosen, in whatever menu comes next, and past that
+  menu's end starts at the first word. ORDER's EXIT (from SELECT EXIT or PLACE EXIT, index 1) lights ALTER's DROP;
+  PICS's EXIT SPEED; SPEED's EXIT DROP (SLOWER EXIT) or SPEED; ICON's IS THIS ICON OK? YES ORDER; ALTER's and MAGIC's
+  EXIT the camp's EXIT; REST's EXIT (index 6) SAVE or CAST; DISPLAY's EXIT CAST; CAST's list EXIT MEMORIZE,
+  MEMORIZE NEXT EXIT's EXIT SCRIBE; REST's menu opens on MINS from the camp, INC from MAGIC (ours already).
+  Ours fixed each to its own word. Also **GAME SPEED: offers FASTER only above 0 and SLOWER only below 9** (SLOWER
+  EXIT at 0, FASTER SLOWER EXIT at 1, FASTER EXIT at 9). Fix: `data/c91/camp_light.diff` (camp_screen.gd, applies to
+  origin/main alone).
+
+**Matched (no fix):** the view sheet's SPELLS page (check 305, check 134's start): only E, Enter and Esc leave it (to
+VIEW, ITEMS lit); I, R, D, Y, Home, Right nothing. Ours matches; fails on copies where Enter doesn't leave or I opens
+ITEMS.
+
+**Checks:** 304-307 in the lab (`data/c91/chk<n>`, keys `k<n>`, the original's ends `o<n>`), ~/gbr/checks/README.md
+"Chat 91". 304 and 307 3 of 3 with the fixes (`data/c91/c91_on_c90.diff`, or all of it from origin/main
+`c91_all.diff`), 0 on main and on the bundle alone; 306 3 of 3 with the bundle, 0 on main; 305 matches on main.
+
 ## Chat 90: APPRAISE's SELL KEEP and menu keys, the treasure's TAKE, the view sheet's questions and menus (checks 295-303; six differences), chat 89's ten join the gate
 
 **Joined:** 284-286 and 288-294 after Combat Chat 40 landed `c89_five.diff` (72f845a): 3 of 3 each on origin/main;
