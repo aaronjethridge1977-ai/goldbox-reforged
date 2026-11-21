@@ -1520,8 +1520,14 @@ func _bevel(img: Image, at: Vector2i) -> void:
 	img.fill_rect(Rect2i(at, Vector2i(2, CELL - 1)), Color8(255, 255, 255))
 	img.fill_rect(Rect2i(at + Vector2i(CELL - 2, 1), Vector2i(2, CELL - 1)), Color8(0, 0, 0))
 	img.fill_rect(Rect2i(at + Vector2i(1, CELL - 1), Vector2i(CELL - 1, 1)), Color8(0, 0, 0))
-	img.set_pixelv(at + Vector2i(CELL - 1, 0), Color8(0, 0, 0))
-	img.set_pixelv(at + Vector2i(0, CELL - 1), Color8(255, 255, 255))
+	# Only inside the image (main chat 93): release builds don't check set_pixel's bounds (debug builds log an
+	# error and skip it), so a box for a figure off the view (the caster after a cast moved the view) wrote outside
+	# the image: Jeremy's crashes after TARGET in 0.1.7-test2 (a segfault on the release template).
+	var inside := Rect2i(Vector2i.ZERO, img.get_size())
+	if inside.has_point(at + Vector2i(CELL - 1, 0)):
+		img.set_pixelv(at + Vector2i(CELL - 1, 0), Color8(0, 0, 0))
+	if inside.has_point(at + Vector2i(0, CELL - 1)):
+		img.set_pixelv(at + Vector2i(0, CELL - 1), Color8(255, 255, 255))
 
 
 func _say(text: String, then: Callable = Callable()) -> void:
