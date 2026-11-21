@@ -1033,6 +1033,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		key = KEY_END
 	var cancel := event.is_action("ui_cancel")
 	var items := _current_menu()
+	# DROP IT?, IS IT A DEAL? (SELL, ID) and USE IT? take only Y and N: Enter, Esc and Left / Right do nothing (main
+	# chat 90, DOSBox: 3:0's camp VIEW ITEMS DROP and the arms and armour shop's SELL; check 300; USE IT?: chat 91, 304).
+	if _mode == "confirm" and _pending in ["drop", "sell", "id", "use"] and (cancel or event.is_action("ui_accept") \
+			or event.is_action("ui_left") or event.is_action("ui_right")):
+		return
+	# The VIEW page's menu (VIEW:ITEMS ... EXIT) and the ITEMS menu (READY USE TRADE ...) take only their letters and
+	# Esc (EXIT): Enter and Left / Right do nothing (main chat 90, DOSBox at 3:0's camp, check 303).
+	if _mode in ["view", "items"] and (event.is_action("ui_accept") or event.is_action("ui_left") \
+			or event.is_action("ui_right")):
+		return
+	# TRADE WITH WHOM? SELECT EXIT keeps its light on Left / Right (Enter is SELECT; main chat 90, check 302).
+	if _mode in ["whom", "coin_whom"] and (event.is_action("ui_left") or event.is_action("ui_right")):
+		return
 	if (event.is_action("ui_left") or event.is_action("ui_right")) and not items.is_empty() and _mode != "amount":
 		var lit := _pick if _pick < items.size() else 0
 		_pick = (lit + (1 if event.is_action("ui_right") else items.size() - 1)) % items.size()

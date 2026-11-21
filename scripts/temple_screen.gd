@@ -464,6 +464,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mode = "coins"
 		_refresh()
 		return
+	if _mode == "appraise":
+		# APPRAISE's menu (GEMS JEWELRY EXIT) reads keys as the original's own loop (main chat 90, DOSBox at 3:0's
+		# shop and temple, checks 297, 298): Home (keypad 7: scan code 0x47, the letter G) appraises a gem; Enter,
+		# Space, the digits, the arrows and End choose nothing but work the cached load out again (the word KEEP's
+		# offer reads with ORIGINAL'S BUGS on); other letters and Backspace do nothing.
+		if key in [KEY_HOME, KEY_KP_7]:
+			key = KEY_G
+		elif key in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_END, KEY_KP_1,
+				KEY_KP_2, KEY_KP_4, KEY_KP_6, KEY_KP_8] or (key >= KEY_0 and key <= KEY_9):
+			_party[_who].refresh_load_word()
+			return
 	var items: Array = _menu_items()
 	match _mode:
 		"list": items = LIST_MENU
@@ -495,10 +506,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
 		if _mode == "coins":
 			choice = "COIN"
+	elif _mode == "value" and key in [KEY_LEFT, KEY_KP_4, KEY_RIGHT, KEY_KP_6]:
+		# YOU CAN: SELL KEEP: Right (keypad 6) sells, Left (keypad 4, scan code 0x4B, read as K) keeps, or sells
+		# when KEEP isn't offered (main chat 90, DOSBox at 3:0's shop and temple; the Lead, 2026-11-21).
+		choice = "SELL" if key in [KEY_RIGHT, KEY_KP_6] or not _keep_ok else "KEEP"
 	elif key == KEY_LEFT or key == KEY_RIGHT:
 		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
 		return
+	elif key == KEY_ESCAPE and _mode == "value":
+		# The original sells on Esc too: original's bug 18 (on under ORIGINAL'S BUGS; off, Esc keeps).
+		choice = "SELL" if OriginalBugs.on() or not _keep_ok else "KEEP"
 	elif key == KEY_ESCAPE:
 		choice = "EXIT" if "EXIT" in items else "NO"
 	else:

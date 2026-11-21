@@ -404,8 +404,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	# The treasure's menu (VIEW TAKE POOL ... EXIT) and THERE IS STILL TREASURE LEFT's YES NO take only their
 	# letters: Enter and Left / Right do nothing (main chat 89, DOSBox at 3:14's rugs, check 290; Q24
 	# extended, as the temple's).
-	if _mode in ["menu", "ask_exit"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]:
-		return
+	# TAKE: MONEY ITEMS EXIT the same, but Right (scan code 0x4D, the letter M) is MONEY; the LOOT list (ITEMS: TAKE
+	# EXIT) takes Enter for its lit word, and Left / Right don't move its light (main chat 90, DOSBox at 8:27 after
+	# check 100's kobolds, check 299).
+	if _mode in ["menu", "ask_exit", "take"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT] \
+			or (_mode == "items" and key in [KEY_LEFT, KEY_RIGHT]):
+		if _mode == "take" and key == KEY_RIGHT:
+			key = KEY_M
+		else:
+			return
+	# PgUp at TAKE is ITEMS (scan code 0x49, the letter I; main chat 91, DOSBox after check 100's kobolds, check 307).
+	if _mode == "take" and key == KEY_PAGEUP:
+		key = KEY_I
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
 		if _mode == "coins":

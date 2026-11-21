@@ -517,7 +517,7 @@ func _draw_walk() -> void:
 			_scr.text(0, 24, "DROP FROM PARTY?", PROMPT)
 			_scr.menu_line(24, YES_NO, 17, _pick)
 		"speed":
-			_labelled("GAME SPEED:", ["FASTER", "SLOWER", "EXIT"], 12)
+			_labelled("GAME SPEED:", _speed_menu(), 12)
 		"pics":
 			var items := ["MONSTERS " + ("ON" if show_monsters else "OFF"),
 				"PORTRAITS " + ("ON" if show_portraits else "OFF"), "EXIT"]
@@ -694,9 +694,14 @@ func _draw_display() -> void:
 
 # --- Menus ----------------------------------------------------------------------------------
 
+## The light keeps the index of the word last chosen, in whatever menu comes next; past that menu's end it starts
+## at the first word (main chat 91, DOSBox at 3:0's camp: ORDER's EXIT lights ALTER's DROP, PICS's EXIT SPEED, ICON's
+## YES ORDER, ALTER's and MAGIC's EXIT the camp's EXIT, REST's EXIT (index 6) SAVE or CAST, DISPLAY's EXIT CAST,
+## CAST's list EXIT MEMORIZE, MEMORIZE NEXT EXIT's EXIT SCRIBE).
 func _to_menu(mode: String, items: Array) -> void:
 	_mode = mode
-	_pick = clampi(_pick, 0, items.size() - 1)
+	if _pick < 0 or _pick >= items.size():
+		_pick = 0
 	_refresh()
 
 
@@ -1268,7 +1273,7 @@ func _leave_list() -> void:
 	if _starting:
 		_next_starter()
 		return
-	_pick = MAGIC_MENU.size() - 1
+	_pick = _list_menu().size() - 1
 	_magic_menu()
 
 
@@ -1303,7 +1308,7 @@ func _items() -> Array:
 		"whom": return ["SELECT", "EXIT"]
 		"alter": return ALTER_MENU
 		"order": return ["PLACE" if _ordering >= 0 else "SELECT", "EXIT"]
-		"speed": return ["FASTER", "SLOWER", "EXIT"]
+		"speed": return _speed_menu()
 		"pics": return ["MONSTERS", "PORTRAITS", "EXIT"]
 	return []
 
@@ -1421,8 +1426,11 @@ func _act(choice: String) -> void:
 				"INC": _change(1)
 				"DEC": _change(-1)
 				"EXIT":
-					_pick = 3
-					_back_from_rest()
+					_pick = REST_MENU.size() - 1    # past the camp's and MAGIC's menus: SAVE or CAST lit
+					if _rest_back == "magic":
+						_magic_menu()
+					else:
+						_show_menu()
 			_refresh()
 		"magic":
 			match choice:
@@ -1436,7 +1444,7 @@ func _act(choice: String) -> void:
 					Rememorize.refill(_party, spells)
 					_rest_menu("magic")
 				"EXIT":
-					_pick = 2
+					_pick = MAGIC_MENU.size() - 1
 					_last_target = null
 					_show_menu()
 			_refresh()
@@ -1467,7 +1475,7 @@ func _act(choice: String) -> void:
 					_who().cancel_learning()
 			_magic_menu()
 		"display":
-			_pick = 3
+			_pick = 0
 			_magic_menu()
 		"whom":
 			if choice == "SELECT":
@@ -1498,14 +1506,16 @@ func _act(choice: String) -> void:
 				"ICON":
 					if _icon_editor == null:
 						_icon_editor = IconEditor.new()
-						_icon_editor.finished.connect(func(_c: bool) -> void: _refresh())
+						_icon_editor.finished.connect(func(_c: bool) -> void:
+							_pick = 0        # IS THIS ICON OK? YES: ORDER lit (main chat 91, DOSBox)
+							_refresh())
 						add_child(_icon_editor)
 					_icon_editor.open(GameData.find_game_path(), _who())
 				"PICS":
 					_pick = 0            # lab: MONSTERS lit, not carried over
 					_to_menu("pics", ["MONSTERS", "PORTRAITS", "EXIT"])
 				"EXIT":
-					_pick = 4
+					_pick = ALTER_MENU.size() - 1
 					_show_menu()
 		"order":
 			match choice:
@@ -1522,7 +1532,7 @@ func _act(choice: String) -> void:
 					# Main chat 87 (check 261, DOSBox): EXIT at PLACE keeps "<NAME> / HAS BEEN SELECTED" and the
 					# order so far; the message stays through the camp menu and ALTER again.
 					_ordering = -1
-					_pick = 0
+					_pick = 1
 					_alter_menu()
 					return
 			_refresh()
@@ -1541,7 +1551,7 @@ func _act(choice: String) -> void:
 				"SLOWER": speed = mini(speed + 1, 9)
 				"EXIT":
 					_lines = []
-					_pick = 2
+					_pick = _speed_menu().size() - 1
 					_alter_menu()
 					return
 			_show_speed()
@@ -1550,15 +1560,22 @@ func _act(choice: String) -> void:
 				"MONSTERS": show_monsters = not show_monsters
 				"PORTRAITS": show_portraits = not show_portraits
 				"EXIT":
-					_pick = 4
+					_pick = 2
 					_alter_menu()
 					return
 			_refresh()
+
+
+## FASTER only above speed 0, SLOWER only below 9 (main chat 91, DOSBox: GAME SPEED: SLOWER EXIT at 0,
+## FASTER SLOWER EXIT at 1, FASTER EXIT at 9; the light keeps its index).
+func _speed_menu() -> Array:
+	return (["FASTER"] if speed > 0 else []) + (["SLOWER"] if speed < 9 else []) + ["EXIT"]
 
 
 func _show_speed() -> void:
 	_mode = "speed"
 	_plain_rope = true
 	_say_lines([["", GameScreen.GREEN], ["GAME SPEED = %d (0=FASTEST 9=SLOWEST)" % speed, GameScreen.GREEN]])
-	_pick = clampi(_pick, 0, 2)
+	if _pick >= _speed_menu().size():
+		_pick = 0
 	_refresh()
