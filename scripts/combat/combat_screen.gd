@@ -612,6 +612,9 @@ func _draw_original(field: Image) -> void:
 		g.text(0, 24, _row24_msg, GameScreen.GREEN)
 	elif _flash != "":
 		g.text(0, 24, _flash, GameScreen.GREEN)
+	elif _asking_flee:
+		g.text(0, 24, "FLEE:", GameScreen.WHITE)
+		g.menu_line(24, ["YES", "NO"], 6)
 	elif _asking_ally:
 		if not _ally_from_move:
 			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
@@ -888,6 +891,7 @@ var _asking_ally := false
 var _move_start := {}          # where MOVE began (Esc puts the figure back there)
 var _asking_abort := false     # ABORT SPELL? (EXIT from a spell's aim)
 var _ally_target := -1
+var _asking_flee := false      # Combat Chat 40: "FLEE:" YES NO, a MOVE step off the field's edge (GAME.OVR 0xA413)
 var _ally_from_move := false   # asked from MOVE (a step onto a teammate): NO stays in MOVE, YES strikes as a step does
 
 
@@ -1309,7 +1313,8 @@ func _after_player_action(what: String) -> void:
 		if _combatants[_selected].team == 0:
 			_on_message("YOUR TEAMMATE IS DOWN")
 	var c: Dictionary = _combatants[_selected]
-	if _combat.outcome() != 0 or (c.moves <= 0 and c.attacks <= 0) or (what == "attacked" and c.attacks <= 0):
+	if _combat.outcome() != 0 or what == "fled" or (c.moves <= 0 and c.attacks <= 0) \
+			or (what == "attacked" and c.attacks <= 0):
 		_advance()
 	elif paced():
 		_ensure_view(c.cell, 1)     # a step the player made: margin 1 (GAME.OVR 0x12F0D)
@@ -2151,6 +2156,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		_flash_timer.timeout.emit()
 		get_viewport().set_input_as_handled()
 		return
+	if _asking_flee:
+		if key == KEY_Y or key == KEY_N:
+			get_viewport().set_input_as_handled()
+			_asking_flee = false
+			if key == KEY_N:
+				_refresh()       # NO: back to the MOVE loop (0xA44D)
+				return
+			var me: int = _combat.active
+			var up_before := _standing()
+			var away := _combat.player_flees(me)
+			_note_falls(up_before)
+			if away:
+				_move_start = {}
+				_cmode = "menu"
+				_after_player_action("fled")
+			else:
+				_refresh()
+		return
 	if _asking_ally:
 		if key == KEY_Y or key == KEY_N:
 			get_viewport().set_input_as_handled()
@@ -2289,7 +2312,7 @@ const _DIR_KEYS := [KEY_UP, KEY_PAGEUP, KEY_RIGHT, KEY_PAGEDOWN, KEY_DOWN, KEY_E
 
 func _field_click(p: Vector2i, _double: bool) -> void:
 	if _combat == null or _combat.active < 0 or _result != 0 or _combatants[_combat.active].get("quick", false) \
-			or _flash != "" or _asking_ally or _asking_abort or _casting != "":
+			or _flash != "" or _asking_ally or _asking_flee or _asking_abort or _casting != "":
 		return
 	var cell := _view + Vector2i(p.x / CELL, p.y / CELL)
 	var me: Dictionary = _combatants[_combat.active]
@@ -2353,6 +2376,10 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			var weapon_before: GameItem = (_combatants[me].who as PartyMember).weapon
 			var up_before := _standing()
 			var what := _combat.step(_STEP_KEYS[key])
+			if what == "edge":
+				_asking_flee = true
+				_refresh()
+				return
 			if what == "ally":
 				_asking_ally = true          # Combat Chat 40: ATTACK ALLY: YES NO, from the MOVE loop
 				_ally_from_move = true
