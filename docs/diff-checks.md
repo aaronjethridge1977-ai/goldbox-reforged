@@ -172,13 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 90: APPRAISE's SELL KEEP and menu keys, the treasure's TAKE (checks 295-299; three differences), chat 89's ten join the gate
+## Chat 90: APPRAISE's SELL KEEP and menu keys, the treasure's TAKE, the view sheet's questions (checks 295-302; five differences), chat 89's ten join the gate
 
 **Joined:** 284-286 and 288-294 after Combat Chat 40 landed `c89_five.diff` (72f845a): 3 of 3 each on origin/main;
 **DIFFCHECKS 293/293.**
 
 **Differences (main path, DOSBox at 3:0's arms and armour shop, check 108's start, and Tyr's temple, check 153's start;
-ready diff to Combat, lab `data/c90/c90_bundle.diff`, shop_screen.gd, temple_screen.gd and treasure_screen.gd):**
+ready diff to Combat, lab `data/c90/c90_bundle.diff`, shop_screen.gd, temple_screen.gd, treasure_screen.gd and
+character_sheet.gd):**
 - **YOU CAN: SELL KEEP** (the Lead's answer (b), 2026-11-21): Right and keypad 6 sell, Left and keypad 4 keep (DOS's
   Left is scan code 0x4B, the letter K; with KEEP not offered Left sells, as K does); Esc sells too in the original:
   **original's bug 18** (on under ORIGINAL'S BUGS and in every lab run; off, Esc keeps). Ours: Left / Right moved the
@@ -200,8 +201,18 @@ ready diff to Combat, lab `data/c90/c90_bundle.diff`, shop_screen.gd, temple_scr
   Ours: Enter took MONEY, Left / Right moved the lights. Check 299: check 100's start and fight, TAKE, Enter, Left,
   Right (the coins), EXIT, ITEMS, Right, Enter (ARN takes a short sword), EXIT x3, NO (ours on main: no sword).
 
+- **The view sheet's DROP IT? and IS IT A DEAL? take only Y and N** (character_sheet.gd's "confirm" for DROP, SELL and
+  ID): Enter, Esc, Left and Right do nothing in the original (DOSBox: 3:0's camp VIEW ITEMS DROP, check 106's start;
+  the arms and armour shop's SELL, check 163's start); ours took Enter for the lit NO, Esc as NO, and moved the light.
+  USE IT? not seen (left as it is). Check 300: DROP, Enter, Right, Enter, Esc (nothing), YES: the sword gone (ours on
+  main: kept). Check 301: SELL (7 gold), Right, Esc, Enter (nothing), YES: sold (ours on main: not).
+- **TRADE WITH WHOM? and TRADE TO? (SELECT EXIT) keep the light on Left / Right**; Enter is SELECT (DOSBox, check 105's
+  and 178's starts). Ours moved the light to EXIT. Check 302: TRADE, Right, End (BRAM), Enter: the sword to BRAM
+  (ours on main: EXIT, kept).
+
 Each 3 of 3 with the bundle `data/c90/c90_bundle.diff` (on origin/main 791987a: SELL KEEP, the APPRAISE menu, the
-treasure's TAKE; check_godot OK, DIFFCHECKS 293/293 with it); 0 of 5 on main. They join after the bundle lands.
+treasure's TAKE, the sheet's questions; check_godot OK, DIFFCHECKS 293/293 with it); 0 of 8 on main. They join after
+the bundle lands.
 
 ## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-294; five differences)
 

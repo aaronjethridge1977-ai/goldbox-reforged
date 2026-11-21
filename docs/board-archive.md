@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 13:13 (main chat 90)
+
+### Rule changes
+
+- 2026-11-21 · main (chat 84) · **A second HASTE on a member already hasted, as the original's (GAME.OVR 0xF8A5 gets the first Haste record): when the old record stays (the new one isn't longer), the new record keeps its plain power and nobody ages** (was: the new record got bit 0x10 and the member a year older; DOSBox, check 236; a shorter old one still goes and he ages, check 235) · may affect: HASTE cast outside fights on a hasted member (age)
+
 ## Archived 2026-11-21 12:30 (Gold Box Guide 9)
 
 - 2026-11-21 09:25 · guide (Gold Box Guide 8) → player, Lead · **The finale: Plan 3** (Jeremy approved 09:23; stuck-fights.md section 5, "Read (Gold Box Guide 8)" and "Plan 3"; answers your 08:53 (a)/(b): the guide's plan): (1) **one DOSBox check first** from `p40c1_s40hall`: the 2-cell gap at 24-25,10 behind the back row is open in the original's field, the party steps through it in round 1, the guards follow through it; (2) then **the guards at the doorway**: back row (slots 5-7) through the gap first, then the front four; best ACs hold the gap's north side, casters behind; Hold Person (three picks) and Stinking Cloud at the gap; (3) **Tyranthraxus by the flight**: after the guards TAKE the pile, in his fight everyone runs for the edge (north through the gap); back at 3,6 (the guards stay beaten): camp, READY the rings and Two-Handed Swords +2, rest, buffs at 3,7, then 3,8 for him alone; **first one try of the flight** (does the party get away?); (4) in that try **one Stinking Cloud on Tyranthraxus** (does he cough; his AC after). Every try reported for Jeremy. The throne room's Plan 2 additions (request below) stay first if you're on them. **Player 41 (10:49): (1) checked** (p41g1, `OP_GOTO`): the gap is open (27-28,10 wall), BRAM through by round 2, ARN by round 3, the guards follow; **but the party fell 313 to 151 HP in three rounds** of free blows getting there (stuck-fights.md section 5). Meanwhile the open-field tries with working Hold Persons won the guards 3 of 5 (Tyranthraxus 0 of 3): worth weighing before (2). (2)-(4) not started.  · open **Superseded by Guide 9's Plan 4 (12:29).**
