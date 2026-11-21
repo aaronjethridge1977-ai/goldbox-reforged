@@ -476,9 +476,17 @@ func _view_menu() -> Array:
 	var m := _who()
 	if _has_spells(m):
 		items.append("SPELLS")
-	if not in_combat:
+	# TRADE and DROP (money) only for a member carrying some, gems and jewelry included (main chat 86, check
+	# 256: DOSBox, camp VIEW: ARN with nothing VIEW:ITEMS EXIT, with one gem ITEMS TRADE DROP EXIT). In a
+	# fight: not seen (DROP kept as it was).
+	var money := false
+	if m != null:
+		for c in m.money:
+			money = money or c > 0
+	if money and not in_combat:
 		items.append("TRADE")
-	items.append("DROP")
+	if money or in_combat:
+		items.append("DROP")
 	if _orders_on(m):
 		items.append("ORDER")
 	items.append("EXIT")
@@ -737,9 +745,10 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 			return "OOPS!"
 		if not wasted and spells != null and it.raw.size() >= GameItem.SIZE:
 			# Lab (Combat Chat 5, camp, Restoration and Cure Light Wounds scrolls): the
-			# scroll's own page, "<NAME>'S SPELLS ON SCROLL", the last one lit.
+			# scroll's own page, "<NAME>'S SPELLS ON SCROLL", the last one lit (main chat 86,
+			# check 250: also with the scroll at the top of the item list).
 			_scroll = it
-			_scroll_cursor = clampi(_cursor, 0, maxi(_scroll_ids().size() - 1, 0))
+			_scroll_cursor = maxi(_scroll_ids().size() - 1, 0)
 			_mode = "scroll"
 			_pick = 0
 			return "\u0001"
@@ -1273,5 +1282,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					m.money[_coin] -= n
 					m.lower_load(n)     # a DROP (GAME.OVR 0x2568A)
 				_coin_cursor = 0
-				_mode = "coin"
+				# Back to the coin list while money is left, else to VIEW (main chat 86, checks 257-258:
+				# DOSBox, a TRADE and a DROP of ARN's only gem: VIEW:ITEMS EXIT).
+				_mode = "coin" if not coins_held(m).is_empty() else "view"
 			_after_change(false)

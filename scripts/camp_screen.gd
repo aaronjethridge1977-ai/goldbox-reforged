@@ -1465,10 +1465,10 @@ func _act(choice: String) -> void:
 			if choice == "SELECT":
 				_cast(_party[_sel])
 			else:
+				# EXIT: the list is built again, its last spell lit, as after a cast (main chat 86, checks 252-253:
+				# DOSBox, the adventure menu's and the camp's CAST, ENLARGE then EXIT: SLEEP lit below it).
 				_sel = maxi(_party.find(_caster), 0)
-				_mode = "list"
-				_pick = 0
-				_refresh()
+				_back_to_list()
 		"ask":
 			if choice == "YES":
 				_who().forget(_cast_id)
