@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 92: the view sheet's money TRADE / DROP pages' keys (checks 308-309; three differences, one original's bug)
+
+**Gate unchanged: DIFFCHECKS 294/294.** Combat had not landed `c90_bundle.diff` / `c91_on_c90.diff` by 15:24, so
+295-307 still wait. Jeremy's Godot log for the crash after TARGET had not arrived.
+
+**Seen (main path, DOSBox at 3:0's camp from check 178's start, DORN 3 gold 1000 platinum):**
+- **SELECT TYPE OF COIN:** Home / End move the light (Up / Down are ours' exception P33/P45); Left, Right do nothing;
+  Space and Enter ask HOW MUCH; Esc at HOW MUCH goes back to the coins (nothing traded), Enter with nothing
+  typed trades or drops 0; Backspace works. All as ours.
+- **Difference 1: TRADE's coin page, EXIT and Esc:** back to the **view page** while HOW MUCH hasn't been asked on
+  this visit, back to TRADE TO? once it has (answered, 0, or Esc'd). Ours: always TRADE TO? (EXIT), Esc the same.
+  DROP's coin page: the view page either way (as ours).
+- **Difference 2: Esc at TRADE TO? and TRADE WITH WHOM?** takes the light off the party list and stays (ours: EXIT).
+  SELECT with no one lit backs out (the view page / the item list), Home lights the last member; the next TRADE starts
+  on the member lit before the Esc (the last chosen, as ours already keeps).
+- **Difference 3, original's bug 19:** End after that Esc lights no one, and SELECT trades to a member past the
+  party's end: DORN's Long Sword left his list and nobody had it; 100 platinum left his purse the same way.
+  docs/original-bugs.md row 19. Fixed by default (End from no one lights the first member); on in lab runs.
+
+**Fix:** a ready diff to Combat (character_sheet.gd is Combat's): `~/gbr/lab/data/c92/trade_esc.diff` (on origin/main;
+the edit as a script: `data/c92/trade_esc.py <checkout>`); with chat 90-91's diffs: `data/c92/c92_all.diff` (c91_all
+plus this). DIFFCHECKS 294/294 on a copy with all of them; 295-303, 304, 306, 307 and 308-309 match on it too.
+
+**Checks (ready, not in the gate; lab `data/c92/chk308`, `chk309`, keys `k<n>`, the original's ends `o<n>`):**
+- **308:** check 178's start: ENCAMP, Home (DORN), VIEW, TRADE, Esc (no one lit), Home x2 (DORN, LIRA), SELECT, Enter,
+  100, Enter, Esc (TRADE TO?: HOW MUCH was asked), Home (ELWEN), SELECT, Enter, 50, Enter, EXIT x2, TRADE, SELECT
+  (ELWEN's coins), Esc (the view page: nothing asked), DROP, Enter, 7, Enter, EXIT, ITEMS, READY (the sword off),
+  TRADE, Esc, Home x2, SELECT (the sword to LIRA), EXIT x3, F2. 3 of 3 with the fix; 0 on main and on a copy with
+  only the Esc-at-the-list half.
+- **309:** check 178's start: ENCAMP, Home, VIEW, ITEMS, READY (off), TRADE, Esc, End, SELECT (bug 19: the sword
+  gone), EXIT x3, F2. 3 of 3 with the fix; 0 on main and on a copy with the bug off.
+
 ## Chat 91: USE IT?, the view sheet's SPELLS page, the shop's ID question, the treasure's TAKE on PgUp, the camp's light (checks 304-307; four differences)
 
 **Joined:** 305 (no fix needed): **DIFFCHECKS 294/294.** 295-303 wait for Combat's landing of `c90_bundle.diff` (not
