@@ -19,7 +19,7 @@ extends RefCounted
 ##   Disappearance makes the party invisible; the Manual of Bodily Health: "IS READING"
 ##   for a day, then "STARTS TO TRAIN" for 30 days, then CON + 1 ("IS HARDIER", 0xEDDA,
 ##   0xEE8E; the hit point recount for CON 15+ is not built).
-## Not yet: Knock and Find Traps outside doors, Remove Curse, Dispel Magic outside fights.
+## Not yet: Knock and Find Traps outside doors, Remove Curse. Dispel Magic outside fights: chat 81 (0x293A0).
 
 const CURE_LIGHT := 3
 const CURE_BLINDNESS := 37
@@ -144,6 +144,32 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			if not t.has_affect(42):
 				add_affect(t, 39, id, special_duration(table, id, lvl, rng, false), lvl)
 				out.append("%s IS SPEEDY" % t.name)
+			return out
+		41, 46:             # Dispel Magic: GAME.OVR 0x293A0
+			# Each of the target's effects with a power below 255 (not the racial ones) goes on a
+			# d100 at most 50, plus 5 a level the caster is above the power's low four bits, or
+			# minus 2 a level below; an effect that goes runs its end. Chat 81, checks 202, 203
+			# (DOSBox: ARN's Protection from Evil, power 6 against cleric 5 (48%) stays; power 1
+			# against cleric 6 (75%) goes, the d100 71).
+			for t in targets:
+				var m: PartyMember = t
+				var gone := false
+				for a in m.affects.duplicate():
+					var p := int(a.value)
+					if p >= 0xFF:
+						continue
+					p &= 0x0F
+					var chance := 50
+					if lvl > p:
+						chance = 50 + 5 * (lvl - p)
+					elif lvl < p:
+						chance = 50 - 2 * (p - lvl)
+					if _roll(rng, 1, 100) <= (chance & 0xFF):
+						m.affects.erase(a)
+						ended(m, a, out)
+						gone = true
+				if gone:
+					out.append("%s IS AFFECTED" % m.name)
 			return out
 		14:                 # Friends: GAME.OVR 0x283F1
 			# The caster's charisma (record 0x15) goes up 2d4, at most 25, before the effect is
