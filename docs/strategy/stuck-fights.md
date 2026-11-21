@@ -451,6 +451,15 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     limit: about 8,300 pp and 6,200 gp carried, movement 3). The coffin (12,4, entered from 12,3; sanctified): the
     weakened vampire, 15 HP, one blow (p42v37): **0x4A41 = 255, no drain**, +5,017 XP each (`s42vinn`). Left: ARN
     3,623, BRAM 6,424, LIRA 5,748. ARN now wields the knight's Long Sword +2 (from LIRA's pack).
+  - **The levels after the vampire (Player 42):** the party was at movement 3 again (the coins): Player 38's audit
+    (`p42/audit.plan`: one shop purchase regroups the pooled purse into platinum; `pooltake`): movement 9, DORN 12
+    (`s42moved`). Then the 7:26 bands with `bands on` (`p42/bands4.plan`: one trip out, rounds between 15,20 and
+    12,27 with a checkpoint after every walk and rest, `prepare` there, the boat home; stirges on QUICK): about
+    5,000 XP a member in ~5 hours of trips; **driders surprised the party 5 times and destroyed it in their first
+    round** (no FLEE when surprised; once won with 2 of 6 standing); the party-surprised driders were let go by the
+    rule's WAIT (guide question on the board). Sokal Keep's army (Guide 10's (c)) is already beaten in this chain
+    (0x4AD7 = 255). **At `p2start/p42k1_s42d108` (7:26 12,27): ARN 72,442 (fighter 7 due), BRAM 69,641 (360
+    short), LIRA 37,008 (2,993 short).**
   - **Read (Gold Box Guide 10, 2026-11-21 15:40; p39c2's video, contact sheets in `.lab/stuck/kobold_king/p42/sheets/`):**
     (1) **our own clouds sit on our members** (26:15-26:55, 32:00-32:55: CEDRIC STARTS TO COUGH, CHOKES AND GAGS
     FROM NAUSEA: the cleric loses his turns), and the clouds mostly land on 3-HP kobolds beside the trolls (p42v13's

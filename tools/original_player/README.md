@@ -1329,7 +1329,10 @@ XP each (`s42vinn`). The trove's potions and scrolls were refused for weight: **
 `pooltake` hands it out): movement 9, DORN 12 (`s42moved`). **The bands** (`p42/bands.plan`, 7:26, `bands on`): one band
 a cycle at best (displacers 434 XP each); **driders surprised the party twice and destroyed it in their first round**
 (p42w3, p42w4). `p42/bands2.plan` stays in 7:26 (eight rounds, a camp checkpoint each, `prepare` there, the boat home:
-7:26 13,27 WHICH ROUTE: BOAT lands on 3:0 15,1), skipping Podol's waves.
+7:26 13,27 WHICH ROUTE: BOAT lands on 3:0 15,1), skipping Podol's waves. Then `p42/bands4.plan` (a checkpoint after every walk and rest; `OP_QUICKKINDS=STIRGE`): at the stop **ARN 72,442,
+BRAM 69,641, LIRA 37,008** (`p2start/p42k1_s42d108`, 7:26 12,27); five drider wipes on the way. Guide 10's tactics: a
+large foe touching the member is in reach (no GUARD beside a troll); no walk into this fight's Stinking Clouds;
+MANUAL aiming not done.
 
 **`replay.py <run log> <seed> <out log> [speed]`** (Guide 9's videos): boots slot I (copy the save first: lab
 `p42/film.sh`), sets the game's message speed (DS:0x49E2) and the run's seed, sends the log's keys through
@@ -1353,7 +1356,7 @@ the flight fails at movement 3 (stuck-fights.md section 5).
 **DORN's crossbow** (Jeremy): never had one; the 10 Quarrels +2 came from 2:20's pile (`p16e2/slums3`).
 
 Lab: `p42/` (reload.sh and helpers from p41, flags.py: ECL cells from a save, poll.sh, replay.py, film.sh, films.sh,
-vamp.plan, audit.plan, bands.plan, bands2.plan, finale4.plan); runs p42v*, p42m1, p42w*, p42x*, p42y1, p42z*, p42f1-f8,
+vamp.plan, audit.plan, bands.plan, bands2.plan, finale4.plan); runs p42v*, p42m1, p42w*, p42x*, p42y1, p42z*, p42u*, p42t*, p42s*, p42q1, p42o1, p42n*, p42k1, p42f1-f8,
 p42r1-r3 and p42p1 (replay tests); saves `p2start/p41t1_s41trained`, `p42v37_s42vinn`, `p42m1_s42moved`; videos in
 `.lab/stuck/finale_guards/p41/`, `.lab/stuck/kobold_king/p42/`; tries in `.lab/stuck/finale_guards/p42/`.
 
