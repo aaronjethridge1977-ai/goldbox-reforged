@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 92: the view sheet's money TRADE / DROP pages' keys (checks 308-309; three differences, one original's bug)
+## Chat 92: the view sheet's money TRADE / DROP keys, PgDn / PgUp in the shop's BUY list and the camp's spell lists (checks 308-311; five differences, one original's bug)
 
 **Gate unchanged: DIFFCHECKS 294/294.** Combat had not landed `c90_bundle.diff` / `c91_on_c90.diff` by 15:24, so
 295-307 still wait. Jeremy's Godot log for the crash after TARGET had not arrived.
@@ -195,7 +195,25 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 the edit as a script: `data/c92/trade_esc.py <checkout>`); with chat 90-91's diffs: `data/c92/c92_all.diff` (c91_all
 plus this). DIFFCHECKS 294/294 on a copy with all of them; 295-303, 304, 306, 307 and 308-309 match on it too.
 
-**Checks (ready, not in the gate; lab `data/c92/chk308`, `chk309`, keys `k<n>`, the original's ends `o<n>`):**
+**Seen too (main path, DOSBox):**
+- **Difference 4: the shop's BUY list (ITEMS: BUY NEXT PREV EXIT) pages on PgDn / PgUp** as NEXT / PREV (the light
+  stays on the page's row; PgDn on the last page and PgUp on the first do nothing). Ours: no PgUp / PgDn anywhere.
+  Ready diff `data/c92/shop_pg.diff` (shop_screen.gd; edit as a script `shop_pg.py`).
+- **Difference 5: the camp's spell lists (CHOOSE SPELL: MEMORIZE / SCRIBE ... NEXT PREV EXIT) page on PgDn / PgUp,
+  and Left / Right do nothing there** (the lit word stays: Enter after PgDn, PgUp and Right memorized the lit spell).
+  Ours moved the menu light on Left / Right (Enter then took NEXT or EXIT). Ready diff `data/c92/camp_pg.diff`
+  (camp_screen.gd; `camp_pg.py`).
+- **Open (not a check yet): picks not yet learned are gone after leaving camp.** ELWEN's MEMORIZE picks (MAGIC
+  MISSILE, BLESS, 2 SPIRITUAL HAMMER), MEMORIZE THESE SPELLS? YES, EXIT to the walk, ENCAMP, MAGIC, MEMORIZE: the book
+  again with every slot free (seen three times in one DOSBox session). But check 260's original end (the same start,
+  the same flow, ENCAMP and SAVE F) holds the pick (0x8B), and chat 92's first 311 end held none: what clears them
+  isn't known yet (the time? a save?). Ours keeps them. Check 311 rests before leaving camp, so it doesn't depend on it.
+
+**All of chat 92's fixes:** `data/c92/c92_fixes.diff` (on origin/main); with chat 90-91's diffs `data/c92/c92_all.diff`
+(on origin/main; after `c91_all.diff` the shop part conflicts: run the three `.py` edits instead). DIFFCHECKS 294/294
+on a copy with all of them; 295-311 match on it.
+
+**Checks (ready, not in the gate; lab `data/c92/chk308`-`chk311`, keys `k<n>`, the original's ends `o<n>`):**
 - **308:** check 178's start: ENCAMP, Home (DORN), VIEW, TRADE, Esc (no one lit), Home x2 (DORN, LIRA), SELECT, Enter,
   100, Enter, Esc (TRADE TO?: HOW MUCH was asked), Home (ELWEN), SELECT, Enter, 50, Enter, EXIT x2, TRADE, SELECT
   (ELWEN's coins), Esc (the view page: nothing asked), DROP, Enter, 7, Enter, EXIT, ITEMS, READY (the sword off),
@@ -203,6 +221,11 @@ plus this). DIFFCHECKS 294/294 on a copy with all of them; 295-303, 304, 306, 30
   only the Esc-at-the-list half.
 - **309:** check 178's start: ENCAMP, Home, VIEW, ITEMS, READY (off), TRADE, Esc, End, SELECT (bug 19: the sword
   gone), EXIT x3, F2. 3 of 3 with the fix; 0 on main and on a copy with the bug off.
+- **310:** check 270's start (DORN 1000 platinum): Up, YES, End x5, BUY, PgDn, End x2, BUY (from page 2), PgDn, PgUp,
+  PgUp, End, BUY, EXIT x2, F2. 3 of 3 with `shop_pg.diff`; 0 on main.
+- **311:** check 260's start (`data/c83/mem_start`): ENCAMP, End x3 (ELWEN), MAGIC, MEMORIZE, PgDn x2, PgUp, Right,
+  Enter, Left, Enter (2 SPIRITUAL HAMMER), EXIT, EXIT, YES, REST, REST (22:50), EXIT x2, F2. 3 of 3 with
+  `camp_pg.diff`; 0 on main and on a copy with either half alone.
 
 ## Chat 91: USE IT?, the view sheet's SPELLS page, the shop's ID question, the treasure's TAKE on PgUp, the camp's light (checks 304-307; four differences)
 
