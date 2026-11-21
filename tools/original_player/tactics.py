@@ -218,6 +218,7 @@ class Tactics:
         self.move = None         # Player 35: the member walking toward an enemy (MOVE): {member, goal, tries}
         self.moved = set()       # Player 35: members who have walked this turn (one MOVE a turn)
         self.fx_logged = False
+        self.fidle = {}          # Player 36: walks to the focus figure this fight, per member
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -430,6 +431,25 @@ class Tactics:
         the figures TARGET may take (in reach), then the best: a helpless one first (a blow slays it), then the enemy
         magic-users, then the weakest. Nothing in reach: DONE (hold the line, let them come) while an enemy is within
         6 squares, else QUICK (the fight's other figures out of sight: the computer walks to them)."""
+        if FOCUS and member.upper() in ADVANCE and "MOVE" in items and member not in self.moved:
+            # Player 36 (p36n2: BRAM struck kobolds next to him for ten minutes with a troll two squares off): a fighter
+            # in `advance` with a focus figure within 4 squares and none next to him walks to it, past the small fry
+            # (kobolds hit AC -1 only on a 20), and attacks it by stepping in; 6 such walks a fight at most
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            fl = [f for f in foes if _focus(f)]
+            if me is not None and fl and not any(_dist(me, f) <= 1 for f in fl):
+                goal = min(fl, key=lambda f: (not helpless(f), _dist(me, f)))
+                fi = getattr(self, "fidle", {})
+                self.fidle = fi
+                if _dist(me, goal) <= 4 and fi.get(member, 0) < 6:
+                    fi[member] = fi.get(member, 0) + 1
+                    self.moved.add(member)
+                    self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None,
+                                 "focus": True}
+                    self.log("TACTICS %s walks to figure %d %s (%d squares, the focus)" % (
+                        member, goal["n"], goal["name"], _dist(me, goal)))
+                    return "m", "tactics: %s MOVEs to figure %d (the focus)" % (member, goal["n"])
         if self.reach.get(member) == "none":
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
@@ -493,6 +513,8 @@ class Tactics:
             self.move = None
             return "esc", "tactics: move: the blow was struck: Esc"
         adj = [f for f in foes if max(abs(f["x"] - pos[0]), abs(f["y"] - pos[1])) <= 1]
+        if mv.get("focus") and goal is not None and not any(f["n"] == goal["n"] for f in adj) and not mv.get("nofree"):
+            adj = []         # Player 36: walking to the focus figure: past the others (a blow on them only if stuck)
         if adj:
             # the goal if it is next to us, else a helpless one, else the weakest
             f = next((f for f in adj if goal is not None and f["n"] == goal["n"]), None) or \
@@ -519,6 +541,9 @@ class Tactics:
             d = max(abs(q[0] - goal["x"]), abs(q[1] - goal["y"]))
             if best is None or d < best[0]:
                 best = (d, k, q)
+        if (best is None or best[0] > here) and mv.get("focus") and not mv.get("nofree"):
+            mv["nofree"] = True      # Player 36: no free step toward the focus: strike what is next to us instead
+            return self._move_step(st, p)
         if best is None or best[0] > here:
             self.log("TACTICS %s can't step nearer figure %d at %d,%d" % (mv["member"], goal["n"], pos[0], pos[1]))
             self.move = None

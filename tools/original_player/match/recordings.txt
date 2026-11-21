@@ -14,7 +14,7 @@
 5 p15g1 p15f14_s5pre9 s5c4
 5 p15g2 p15g1_s5c4 s5b
 5 p15h6 p15g2_s5b s6t
-5 p16a2 p15h6_s6t s5r9
+5 p36m3 p15h6_s6t s5r9   # Player 36: p16a2 re-recorded (the Lead), traced, slot emptied; seed 40404049 (40404042-48: a death, a wipe or rests interrupted 5 times)
 5 p16b2 p16a2_s5r9 sokal
 6 p16c1 p16b2_sokal s6well
 6 p16c3 p16c1_s6well s6pre12

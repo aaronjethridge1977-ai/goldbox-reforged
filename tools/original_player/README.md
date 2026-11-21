@@ -1337,11 +1337,11 @@ the checkpoint saved): **p24b6 -> p36e1** (seed 24240020; 24240016-1f each lost 
 p36h1** (`p36/seg27c.plan`: the clean start memorizes and rests first, so 3:0's 4,4 was met at night, BREAK IN, locked;
 a `restuntil 8` after the inn). Both part in ours where the old ones did: p36e1 at draw 2219 (the original draws d100 at
 OVR:09969 where ours has YARASH pick whom to hit), p36h1 at draw 3932 (the same draw as p26a1: the original's d100 at
-OVR:09969, ours a NOMAD's initiative): real differences, not the stale files (to combat). **p16a2** (from `p15h6_s6t`,
-seg05r.plan): 0 of 4 seeds reached s5r9 (a death; three runs stopped "rest interrupted 5 times" at Sokal Keep's 8,14);
-more seeds later in the run (`p36m*`). Combat's YARASH dump: a HOLD rerun of p36e1's seed (p36g1, `HOLD=2212,2218
+OVR:09969, ours a NOMAD's initiative): real differences, not the stale files (to combat). **p16a2 -> p36m3** (from `p15h6_s6t`,
+seg05r.plan, seed 40404049; 40404042-48: a death, a wipe, or "rest interrupted 5 times" at Sokal Keep's 8,14):
+**identical in ours: 64 of 71** (segment 5 complete; baseline 64). Combat's YARASH dump: a HOLD rerun of p36e1's seed (p36g1, `HOLD=2212,2218
 HOLDREC=17,15`) parted at draw 770 (an Alt-M), so it is the same fight in another run: YARASH rec+0x17 `00 00 00 0f 13 22
-22 20 2d 2f 36` (lab `p36/p36g1_hold.txt`). Score: 63 of 71 (`p36/score.md`).
+22 20 2d 2f 36` (lab `p36/p36g1_hold.txt`). Score: **64 of 71** (`p36/score.md`).
 
 ## Player 35 (2026-11-20): the match 63 of 71; Stojanow and Sokal's army done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; the original's leftover save files
 
