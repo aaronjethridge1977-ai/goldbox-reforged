@@ -172,6 +172,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162); the checks run ours with QoL off
+
+Main path, against the original in DOSBox (lab `data/c77/chk162`, links in `data/c77/cd/`), tpseed 11111111.
+
+- **162** (3:0 the camp): check 159's start with LIRA's scroll unread (byte 53 = 6) and READ MAGIC memorized (+0x2B = 18): ENCAMP, End x4, MAGIC, CAST, CAST (on herself, at once), SCRIBE (PROTECTION FROM GOOD, SHOCKING GRASP listed), Home, SCRIBE, EXIT, EXIT, YES, REST, REST (4:15), EXIT x2, save. The original: 17 in the book, the scroll 210 with 20 and **byte 53 cleared** (read), READ MAGIC gone from memory, no affect left in the .SPC. Ours matched, 3 of 3; without the CAST differs.
+- **The gate's settings (a check-script change):** the first run differed: ours' REST put the cast READ MAGIC back (4:30 of rest, +0x2B = 18) because ours ran with the release's QoL defaults (REST REMEMORIZES on). `diffcheck.sh` now writes ours' settings.cfg with every QoL switch that changes play off, the same list as segment.py's `QOL_OFF` (rememorize, fix, magic_menu, aim_skips_party, start_memorized, quick_bandages, smart_quick, smart_monsters): the 161 earlier checks still match (161/161); the deliberate-break test 142/162. Not a game difference: no code change.
+
 ## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat), the temple's RAISE DEAD (check 160), SCRIBE using up a one-spell scroll (check 161); DIFFCHECKS 161/161
 
 All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk159`, links in `data/c76/cd/`), tpseed 11111111.
