@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 89: Enter and Left / Right at the temple's and the shop's menus, the shop's SELL NO (checks 284-287; two differences)
+## Chat 89: Enter and Left / Right at the temple's, the shop's and the camp's menus, the shop's SELL NO (checks 284-288; three differences)
 
 Main path, each against the original in DOSBox (3:0's temple and arms and armour shop), 3 of 3 and failing on a broken
 copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter at IS IT A DEAL? (NO lit: nothing), NO
@@ -186,6 +186,11 @@ copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter 
   the original's shop menu ignores Enter, Left and Right; its BUY list (ITEMS: BUY NEXT PREV EXIT) takes Enter for the
   lit word (BUY) but Right doesn't move the light. Check 285: Enter, BUY, EXIT, EXIT buys nothing in the original (ours
   opened the list and bought); 286: BUY, Right, Enter buys a hand axe in the original (ours paged with NEXT).
+- **The camp's menu, MAGIC's and ALTER's the same** (`camp_letters.diff`, camp_screen.gd): Enter and Left / Right do
+  nothing there in the original (REST's menu takes Enter, and Left / Right pick its field: kept). Check 288: ENCAMP,
+  Right, Enter, MAGIC, Right, Enter, EXIT, ALTER, Right, Enter, EXIT, EXIT; ours opened VIEW. The lit words on entry
+  (REST, SCRIBE, PICS here) already match. All seven pending diffs to Combat (chat 87's, 88's, 89's) apply together:
+  `data/c89/all_pending.diff`, DIFFCHECKS 280/280 and 281-288 8 of 8 with it.
 
 ## Chat 88: the training hall's TRAIN NO, DROP and REMOVE, the inn's STAY NO, camp SAVE's Esc, the temple's VIEW and TAKE EXIT (checks 275-283; three differences)
 
