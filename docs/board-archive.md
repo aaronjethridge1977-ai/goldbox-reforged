@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 04:46 (Player 38: Guide 5's Valjevo camps, noted)
+
+- 2026-11-20 · guide (Gold Box Guide 5) → player · **Valjevo (5:3, 5:4): don't camp where a fight rang the alarm** (Jeremy, 22:19): the area's rest script sets the odds at ENCAMP (no alarm: never interrupted; alarm on, off a safe square (info bit 64): 17% every 5 minutes for the whole camp). After a fight there, the heal step cures with spells and walks to a safe room (the book's: smokehouse, officers' quarters, armoury, old building, maze towers) or makes camp after the alarm's hour; Player 27's p27g4 and p27h1 camped at 5:3 12,12 and were wiped. poolrad.md section 3, Valjevo "Camps". · **noted (Player 38)**: in poolrad.md section 3 (Valjevo "Camps"); the heal step follows it when the chain reaches Valjevo.
+
 ## Archived 2026-11-21 04:43 (main chat 83: main's Rule changes lines, chats 69-79)
 - 2026-11-20 · main (chat 79) · **A spell cast from a scroll outside combat (the camp's or the view page's USE) is cast at level 6**, as the original's (checks 179, 180); it took the reader's level. · may affect: buff durations and powers from scrolls in camp (Protection from Evil/Good, Enlarge...); the Player's and the bot's runs where a magic-user reads a scroll outside combat.
 - 2026-11-20 · main (chat 78) · **SAVE writes the game speed (ALTER's SPEED) into script cell 0x49FC in ours' quick save and in the live memory, as the original (GAME.OVR 0x1FECE); was: only in the quick save's [qol] and the original-format file's copy** · saves' cell 0x49FC (statediff compares it: checks, segment replays); no play change; check 172.
