@@ -1315,6 +1315,41 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 38 (2026-11-21): the match 67 of 71; the audit's movement (`pooltake`, `coins`, `buypurse`); the throne room from a fit door (hold-down, CONTINUE BATTLE)
+
+**Stage 1:** p36e1 identical since Combat Chat 38's fix (0xB44E): **67 of 71** (baseline 67). p36h1 re-scored on main chat
+82's PARTY_STRENGTH fix: all 16374 draws identical, statediff 1 left (ELWEN's MEMORIZE at 7:17 1,14: the original's
+screens took the recorded keys to SLEEP, MAGIC MISSILE, SLEEP; ours to SHIELD and one SLEEP: ours' list, main chat 83
+and Combat). Lab `p38/score.md`.
+
+**New plan lines.** `pooltake <NAME> <n> [<COIN>], ..., <NAME> rest` (after a `buy` line, the same shop visit): after the
+visit's purchases each member in turn TAKEs n of the coin (platinum unless named) from the shop's pool (999 a round,
+the member's record read after each), the last `rest` takes what is left (the buy step's own TAKE). `coins <FROM> <COIN>
+<n>|<TO>` (CoinTrade): the view menu's money TRADE (TRADE TO?, the coin lit on the view page's list from row 7, HOW
+MUCH; the giver's record read after each round). `buypurse on|off`: a purchase from the buyer's own purse, no POOL first
+(the purse regroups into platinum and gold). A member at his most (load word = allowance + 1500) is refused a purchase
+and any coins by TRADE (p38a1: ARN, BRAM, CEDRIC, DORN): so `p38/move.plan`'s way is the pool: the buy step POOLs all
+the money, one purchase (LIRA's arrows) regroups the pool, `pooltake CEDRIC 600, ELWEN 700, LIRA 1000, DORN 1600, ARN
+2300, BRAM rest`, then `ready <NAME>` with no items (a VIEW: it works the load word out again): everyone 9 or 12
+(p38a2, `p38a2_s38audit`; `p38/plan_coins.py` and `p38/load.py` read the purses, loads and allowances). The SCRIBE list
+logs each key's lit row ("SCRIBE list" lines).
+
+**Tactics.** `OP_HOLDDOWN` (default on): with a focus kind, a fighter in `advance` walks onto a fallen focus figure's
+square (any of its cells) that no member holds and stays there (p38e1: two killed trolls rose again on their squares).
+**CONTINUE BATTLE: YES NO** (the original's question when the last enemy of a wave falls): YES while a member up is hurt
+by 4+ and someone has Cure Light Wounds memorized (`OP_CONTINUE` rounds, 6), and with no enemy up the clerics cast it on
+the most hurt (the dying are bandaged as before); NO otherwise.
+
+**The throne room** (stuck-fights.md section 3): (a) the SMALL cave (`p38/king8.plan`, p38b1) enters 8:13 at 6,15 but
+skips nothing (8:27 6,16's 30 kobolds come before the cave menu); (b) QUICK with MAGIC OFF (`tactics off`, OP_MAGIC=0)
+to the door (`king9.plan`, `king10.plan`): **the door fit** (`p38d1_s38door10`). `king10f.plan` (LIRA's Fireball scroll
+readied, `scrolls LIRA FIREBALL`, `focus TROLL`): p38e1-e5 lost (e3 cleared wave 1, lost in wave 2); to the Lead.
+The band rule: nomads at 7:26 13,23 PARLAYed (p38b1: they greet and leave). Combat Chat 38's SCRIBE ask: p38s1 (p37b2
+rerun): the original's list holds the clerical scroll's spells too.
+
+Lab: `p38/` (move.plan, king8-10.plan, king10f.plan, bandtrip.plan, load.py, plan_coins.py, score.md, reload.txt),
+saves `p2start/p38a2_s38audit`, `p38c1_s38kobold9`, `p38d1_s38door10`; archive `player38_lab.tar.gz`.
+
 ## Player 37 (2026-11-21): the match 66 of 71; `scribe`, `scrolls`; the graveyard spectres beaten; the throne room with Fireball
 
 **Stage 1:** Combat Chat 37 fixed p35i6 and p35i7 (OVR:0b95d): both identical, **66 of 71** (baseline 66; 3 game: p17a6,
