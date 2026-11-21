@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light, EXIT at WHOM, DISPLAY after a REST, VIEW's money words (checks 245-258 but 255; 250, 252, 253, 256-258 differences)
+## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light, EXIT at WHOM, DISPLAY after a REST, VIEW's money words, VIEW's SPELLS (checks 245-259 but 255; 250, 252, 253, 256-258 differences)
 
 Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3, and each
 fails on a copy deliberately broken (recipes: ~/gbr/checks/README.md "Chat 86"). **A fighter/magic-user given a
@@ -197,7 +197,8 @@ it lands). **DISPLAY before and after a REST that ends an effect (254):** the or
 both games list SHIELD, then not after 5 minutes; ENLARGE 10 -> 5 (ours' pages seen with `screen=`). **TRADE's EXIT:** both games go back to VIEW (seen; no check: the end state can't show it). **VIEW's money
 TRADE and DROP (256-258, a difference, main path):** the original offers them only to a member carrying money (gems and
 jewelry count) and goes back to VIEW when the last coin is dropped or traded; ours offered them to everyone and went back
-to the coin list (Combat's `character_sheet.gd`: a diff on the board; 256-258 join when it lands). DIFFCHECKS 251/251.
+to the coin list (Combat's `character_sheet.gd`: a diff on the board; 256-258 join when it lands). **VIEW of a caster with nothing memorized (259):** no SPELLS in either game. DIFFCHECKS
+252/252.
 
 ## Chat 85: the camp's CAST list after a cast, STRENGTH twice, the adventure menu's HASTE, a cleric with a magic-user's scroll, BLESS after PRAYER (checks 240-244, matched)
 
