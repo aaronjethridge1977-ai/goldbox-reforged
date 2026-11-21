@@ -172,6 +172,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE (checks 245-248, matched)
+
+Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3, and each
+fails on a copy deliberately broken (recipes: ~/gbr/checks/README.md "Chat 86"). **A fighter/magic-user given a
+clerical scroll (245, 243's reverse):** READY does nothing, no message; USE nothing (fails on a copy without READY's
+class test). **One clerical scroll's two spells in turn (246):** the scroll's page lights its last spell; after CURE
+LIGHT WOUNDS on ARN the second USE's CAST SPELL ON WHOM starts on ARN, the last target, not the caster (ours keeps the
+sheet's target; fails on a copy resetting it). **Readied arrows (247):** DROP on a readied stack is refused with no
+question (as 119's sword), HALVE keeps the light on the readied part down to 1, READY off, DROP asks YOUR 1 ARROW WILL BE
+GONE FOREVER. **The adventure menu's ENLARGE on another member, then SHIELD (248):** the list comes back after the cast
+with its last row lit; CEDRIC [12, 10, 1], LIRA [17, 5, 1] (fails on a copy starting the target on the first member).
+DIFFCHECKS 245/245.
+
 ## Chat 85: the camp's CAST list after a cast, STRENGTH twice, the adventure menu's HASTE, a cleric with a magic-user's scroll, BLESS after PRAYER (checks 240-244, matched)
 
 Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3 (recipes:
