@@ -18,6 +18,7 @@ Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk an
 | Feedback desk (Jeremy's play notes; builds nothing) | claude.ai, cloud | pushes only this board's requests and "For the Test List", ai-business-ideas `plans/jeremy-feedback.md`, and the Test List doc |
 | Player (plays the **original** in DOSBox by program: plan, memory reads, QUICK fights, recording; Methods 4) | Claude Code on Jeremy's PC, a second Ubuntu tab, its own worktree and lab folder; long runs as background jobs overnight | `tools/original_player/` (lab `~/gbr/player_lab`, display :97, its own pid files); reads main's plans and lab tools, asks main for changes |
 | **Lead** (starts every lane's runs, lane management, Jeremy's queue `plans/for-jeremy.md`; Methods 5-8) | Claude Code on Jeremy's PC, tmux session `lead`, ~/gbr | `~/gbr/lead/` (launcher, logs, state); the board's Queues and Lanes; opening posts |
+| Guide chats (Gold Box Guide N: Jeremy's strategy sessions; stuck fights since 2026-11-20) | claude.ai, reading GitHub and `D:\ai_projects\goldbox-reforged\.lab\stuck\` | `docs/playbook.md` and `docs/strategy/` sections (the Lead folds their Inboxes daily), `docs/strategy/stuck-fights.md`; board requests |
 | Design office | claude.ai | no code; proposals and Jeremy's decisions (`ideas/game-modernizer.md`) |
 
 Files not listed: whoever needs them asks here first.
