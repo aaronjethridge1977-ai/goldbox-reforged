@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 89: Enter and Left / Right at the temple's, the shop's and the camp's menus, the shop's SELL NO (checks 284-288; three differences)
+## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-290; five differences)
 
 Main path, each against the original in DOSBox (3:0's temple and arms and armour shop), 3 of 3 and failing on a broken
 copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter at IS IT A DEAL? (NO lit: nothing), NO
@@ -189,8 +189,19 @@ copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter 
 - **The camp's menu, MAGIC's and ALTER's the same** (`camp_letters.diff`, camp_screen.gd): Enter and Left / Right do
   nothing there in the original (REST's menu takes Enter, and Left / Right pick its field: kept). Check 288: ENCAMP,
   Right, Enter, MAGIC, Right, Enter, EXIT, ALTER, Right, Enter, EXIT, EXIT; ours opened VIEW. The lit words on entry
-  (REST, SCRIBE, PICS here) already match. All seven pending diffs to Combat (chat 87's, 88's, 89's) apply together:
-  `data/c89/all_pending.diff`, DIFFCHECKS 280/280 and 281-288 8 of 8 with it.
+  (REST, SCRIBE, PICS here) already match.
+- **The training hall's questions** (`hall_letters.diff`, party_menu.gd, on top of chat 88's `hall_drop_remove.diff`):
+  DO YOU WISH TO TRAIN? and QUIT TO DOS take only Y and N (NO lit; Enter, Left and Right do nothing); ours took Enter
+  for the lit NO. Check 289: TRAIN, Enter, Right, Enter, Left, YES trains in the original; ours went back to the menu
+  untrained. (The hall's SAVE CURRENT GAME with a letter matched: no message, no QUIT TO DOS, back to CHOOSE A FUNCTION.)
+- **The treasure's menu and THERE IS STILL TREASURE LEFT's YES NO** (`treasure_letters.diff`, treasure_screen.gd): Enter
+  and Left / Right do nothing (VIEW lit, then YES lit). Check 290 (check 92's start, 3:14's rugs): Enter, Right, Enter,
+  EXIT, Enter, Right, Enter, NO; ours opened VIEW. The LOOT list (ITEMS: TAKE EXIT) not seen (nothing could be taken
+  there): unchanged.
+
+All nine pending diffs to Combat (chat 87's ALTER, chat 88's three, chat 89's five) apply together as
+`data/c89/all_pending.diff`: DIFFCHECKS 280/280 and 281-290 (no 287) all match with it; the bot presses none of these keys
+there (its Enter is LEARN WHICH SPELL?'s and the results page's, both kept).
 
 ## Chat 88: the training hall's TRAIN NO, DROP and REMOVE, the inn's STAY NO, camp SAVE's Esc, the temple's VIEW and TAKE EXIT (checks 275-283; three differences)
 
