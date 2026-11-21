@@ -1336,6 +1336,21 @@ once, so only their aim point was a guess.
 **Stinking Cloud's aim (Guide 6's request):** the area is the aimed square and the squares right, below and
 below-right (2x2), not a 3x3 around it: the aim may now sit beside a member (a troll next to ARN).
 
+**The finale, the fair tries** (the Lead's (a) again, `p41/reload.sh p41d 1 5 ...`, seeds 41040001-05): the guards
+won 3 of 5 (d2, d4, d5), Tyranthraxus 0 of 3 (stuck-fights.md section 5; to the guide chat). **Sleep and Hold Person
+skip figures over one square** (p41d5: three Sleeps and four Hold Persons at TYRANITHRAXUS, 2x2), and Sleep reads a
+foe's HP (its record has no "max": every foe passed the 36).
+
+**Plan 2, step 1 (the throne room; Jeremy 08:16):** `p41/grish.plan` from `p38a2_s38audit`: Grishnak's temple (4:2
+3,11; never visited in this chain): won (p41b1), **its Fireball scroll** (Fireball, Detect Invisibility, Reduce: ARN),
+a second (Blink, Burning Hands, Mirror Image: LIRA), the Cursed Necklace (carried), potions, the Brass Key; back at the
+inn (`s41back`, p41b3). `p41/bane.plan`: 1:24 with `search on` (the chain's party missed the trap door, 0x4A2E = 48):
+on the way two 7:26 band losses (p41c2 displacer beasts, fought on QUICK: the plan's `tactics on` sat before the
+checkpoint the try started after; p41c4 13 driders) and p41c10 stopped in Podol's crowd (34 min of waves, then four
+goblins at the map's edge); in 1:24 SEARCH finds the bodies' jewelry (14,5) and a trap door (12,6). Not finished.
+Plan lessons: a `map` stays in force across areas (`map` alone after the next `area`); steps before the checkpoint a
+try starts `--after` are skipped (`tactics on`, `bands on` after each checkpoint).
+
 **`OP_AIMDEBUG=1`** logs the raw aim list, its index, the reading and the held enemies at each aim step.
 
 Lab: `p41/` (reload.sh and the helpers from p40, finale2.plan, reload.txt, `*.q.out`); runs p41a1-a5, p41x1, p41x2;

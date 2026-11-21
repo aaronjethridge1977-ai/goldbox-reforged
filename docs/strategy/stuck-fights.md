@@ -557,3 +557,13 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     rest, memorize, cast the buffs at 3,7, step onto 3,8: his speech, the vote (all ATTACK), the fight alone. **First
     one try of the flight** (does the party get away; a member left behind: reload). No shortcut: the game's own script.
   - **Stinking Cloud on Tyranthraxus:** one cast in that try (does he cough; his AC after).
+- **The fair tries (Player 41, the Lead's (a) again, 10:06-10:33; the aim fix in; seeds 41040001-05): the guards won
+  3 of 5** (p41d2, d4, d5: party 5-6 up at 143-169 HP; d1 lost with 7 left, d3 with 5). Working Hold Persons (three
+  guards a cast) made the difference. **Then Tyranthraxus, at once (the vote ATTACK, no camp): 0 of 3.** p41d4: 
+  TYRANITHRAXUS (80 HP, 2x2) and a second 2x2 figure of 239 HP, the party (5 up, 167 HP) destroyed in ~20 s; p41d5:
+  him alone, the party 6 up at 179 HP, destroyed in 107 s with him at 71: tactics spent the turns on Sleep x3 and
+  Hold Person x4 at him (a tool fault, fixed after: no Sleep or Hold Person on a figure over one square, and a foe's
+  HP counts for Sleep's 36); p41d2: down to LIRA at 29 HP, then the original dropped to DOS (`p41d2_stop.png`; after
+  the tool's CONTROL space at OVR:0bb90: the game's or the tool's, not known). Files `.lab/stuck/finale_guards/p41/`.
+  **Stopped there (the Lead's rule).** These tries ran before Plan 3 (above) was read; Plan 3's doorway and
+  flight answer what they show (the guards won in the open 3 of 5; Tyranthraxus at once is the wall).

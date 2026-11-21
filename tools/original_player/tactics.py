@@ -109,7 +109,9 @@ def _sleepable(f):
     """Player 40: a figure Sleep can take (4 hit dice or fewer): no level over 4 in its name ("8TH LVL FIGHTER"),
     no more than 36 HP at full."""
     m = re.search(r"(\d+)(?:ST|ND|RD|TH) L", f["name"].upper())
-    return not (m and int(m.group(1)) > 4) and f.get("max", 0) <= 36
+    # Player 41 (p41d5: LIRA's three Sleeps at Tyranthraxus, 80 HP, 2x2): a foe's record has no "max" (0 passed), so
+    # its HP now counts too, and a figure over one square is no small creature
+    return not (m and int(m.group(1)) > 4) and max(f.get("max", 0), f["hp"]) <= 36 and f.get("fp", 1) == 1
 
 
 def _is_large(f):
@@ -331,7 +333,8 @@ class Tactics:
         if spell == "CURE LIGHT WOUNDS":   # Player 38: the most hurt members first (touch: the scan finds who is near)
             return [f["n"] for f in sorted(_hurt(party), key=lambda f: f["hp"] - f["max"])]
         mages = sorted([f for f in foes if _is_mage(f)], key=lambda f: f["hp"])
-        persons = [f for f in foes if not _is_large(f)]
+        # Player 41 (p41d5: four Hold Persons at Tyranthraxus, a 2x2 figure): a figure over one square is no person
+        persons = [f for f in foes if not _is_large(f) and f.get("fp", 1) == 1]
         if spell in ("HOLD PERSON", "STINKING CLOUD", "SLEEP"):
             # Player 32 (p32a1: Sleep thrown at 4:10's skeletons): the undead take no Sleep, Hold or poison cloud
             foes = [f for f in foes if not _is_undead(f)]
