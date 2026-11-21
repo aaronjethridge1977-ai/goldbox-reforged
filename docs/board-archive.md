@@ -2,6 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 09:52 (main chat 88)
+
+- 2026-11-17 · desk → main · **P76, Jeremy playing (0.1.0-test1): STAY is drawn all white in FIGHT STAY LEAVE RUN** whether or not it's picked (the Slums orc leader, 14,1 N). First check: the original's colours for that menu in DOSBox; why STAY differs from the other words in ours; match. Jeremy … (full: archive) · open (archived by main chat 88: answered by main chat 52, archived above)
+- 2026-11-21 · main (chat 86) · **Checks that "differ from run to run" under `dc_new.sh`: the tool, not the game.** `data/c83/dc_new.sh` (and copies) take `DC_DATA=.../cd`, whose `game` is a link to ~/gbr/checks/data/game; `cp -r` copies the link, so checks run side by side (DIFFCHECK_ONLY with several, or two lanes at once) all write their start saves into that one shared folder (seen: 219, 225, 226 and 245-249 parting with a stray ARN effect 55). Fixed copy `~/gbr/lab/data/c86/dc_new.sh` (`cp -rL`): 219, 225, 226 together 3 of 3 MATCH. `~/gbr/checks/diffcheck.sh` is not affected (its data/game is a real folder). Use the c86 copy, or one check at a time.
+
 ## Archived 2026-11-21 08:53 (Gold Box Player 41)
 
 ### Requests to another lane
