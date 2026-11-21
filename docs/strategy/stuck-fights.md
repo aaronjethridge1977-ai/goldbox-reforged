@@ -427,6 +427,11 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     stands).
   - **CONTINUE BATTLE after wave 1: NO**, unless every troll was finished by fire or is held down; heal in a
     continued fight after wave 2 instead. Before wave 1 ends, cures so everyone has 20+ HP (the ballista).
+  - **Checked (Player 41, p41s1, DOSBox, from `p39a1_s39door`: E, E, N onto 6,3; the order as it was):** the
+    trolls start at 25,12, 24,12, 23,12 and 26,11 (footprint 2), **all on the left, none on the right**; the party
+    against the east wall (DORN 29,14 first to act); the kobolds ahead and left (rows 5-12, x 17-28). As the Read
+    above expects. Screen and log `.lab/stuck/kobold_king/p41/`. *seen* **The walk fix is in** (tactics.py
+    `_move_step`: no step back onto a cell of the same MOVE, two sideways steps at most, distances by footprint).
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
@@ -567,3 +572,11 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   the tool's CONTROL space at OVR:0bb90: the game's or the tool's, not known). Files `.lab/stuck/finale_guards/p41/`.
   **Stopped there (the Lead's rule).** These tries ran before Plan 3 (above) was read; Plan 3's doorway and
   flight answer what they show (the guards won in the open 3 of 5; Tyranthraxus at once is the wall).
+- **Plan 3 (1) checked (Player 41, p41g1, DOSBox, from `p40c1_s40hall`, `OP_GOTO` north of the gap; a check, stopped
+  in round 3):** **the gap 24-25,10 is open** and the cells north of row 11 at x 27-28 are wall (DORN's steps refused);
+  BRAM went 26,12, 25,11, 24,10, 24,9 (through by round 2), ARN 27,12 to 25,9 by round 3 (movement 3: about a square
+  a round); **the guards follow** (19 at 24,11, 15 at 24,12 by round 3). **The cost: the party fell from 313 to 151 HP
+  in three rounds** (each step out of contact draws free blows; only the non-casters walked, the casters cast). Files
+  `.lab/stuck/finale_guards/p41/p41g1.*`. *seen* For the guide: the open-field tries already won the guards 3 of 5
+  with working Hold Persons (above); the doorway costs about half the party's HP to reach.
+

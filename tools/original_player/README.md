@@ -1351,6 +1351,12 @@ goblins at the map's edge); in 1:24 SEARCH finds the bodies' jewelry (14,5) and 
 Plan lessons: a `map` stays in force across areas (`map` alone after the next `area`); steps before the checkpoint a
 try starts `--after` are skipped (`tactics on`, `bands on` after each checkpoint).
 
+**Guide 8's plans:** the MOVE walk no longer goes back and forth (no step back onto a cell of the same MOVE, two
+sideways steps at most, distance and taken cells by footprint: p39c2's ARN 27,13 / 27,14 / ...). **`OP_GOTO="x,y;..."`**
+(a test switch): each member with MOVE walks once a round, striking nothing, to the nearest free listed square.
+Checks: p41s1 (the throne fight's start on 6,3: trolls all left) and p41g1 (the finale's gap 24-25,10 open, the
+guards follow; 313 to 151 HP getting there).
+
 **`OP_AIMDEBUG=1`** logs the raw aim list, its index, the reading and the held enemies at each aim step.
 
 Lab: `p41/` (reload.sh and the helpers from p40, finale2.plan, reload.txt, `*.q.out`); runs p41a1-a5, p41x1, p41x2;

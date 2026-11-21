@@ -195,6 +195,8 @@ def _focus(f):
 HOLDDOWN = os.environ.get("OP_HOLDDOWN", "1") != "0"
 # Player 40: OP_MOVETEST=<key> (a hand check: which key ends a MOVE with the member where he stepped): see _fight
 MOVETEST = os.environ.get("OP_MOVETEST", "")
+# Player 41: OP_GOTO="x,y;x,y" (see _fight)
+GOTO = [tuple(int(v) for v in q.split(",")) for q in os.environ.get("OP_GOTO", "").split(";") if q.strip()]
 # Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
 # holds the fallen figure's corner square only
 HOLDCORNER = os.environ.get("OP_HOLDCORNER", "0") == "1"
@@ -592,6 +594,20 @@ class Tactics:
                 self.log("TACTICS MOVETEST %s at %d,%d: MOVE, %s to %d,%d, then %s" % (
                     member, me["x"], me["y"], k, me["x"] + dx, me["y"] + dy, MOVETEST))
                 return "m", "tactics: MOVETEST: %s MOVE" % member
+        if GOTO and "MOVE" in items and member not in self.moved:
+            # Player 41 (Guide 8's Plan 3: the finale's doorway gap and Tyranthraxus by the flight): OP_GOTO="x,y;..."
+            # every member with MOVE walks (once a round, no blow on the way) to the nearest free square of the list
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            taken = {c for f in figs if f is not me and (_up(f) or f["n"] <= self.party_n) for c in cells(f)}
+            free = [q for q in GOTO if q not in taken]
+            if me is not None and (me["x"], me["y"]) not in GOTO and free:
+                q = min(free, key=lambda q: max(abs(q[0] - me["x"]), abs(q[1] - me["y"])))
+                self.moved.add(member)
+                self.move = {"member": member, "goal": 0, "tries": 0, "blocked": set(), "last": None,
+                             "square": q, "cells": [q], "flee": True}
+                self.log("TACTICS %s GOTO %d,%d from %d,%d" % (member, q[0], q[1], me["x"], me["y"]))
+                return "m", "tactics: %s MOVEs to %d,%d (OP_GOTO)" % (member, q[0], q[1])
         if FOCUS and HOLDDOWN and member.upper() in ADVANCE:
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
@@ -762,8 +778,8 @@ class Tactics:
             return "enter", "tactics: move: the blow was struck: Enter (Esc would undo the walk)"
         # Player 41: next to any of a figure's cells (a troll's second cell too), not only its corner
         adj = [f for f in foes if _dist({"x": pos[0], "y": pos[1]}, f) <= 1]
-        if (mv.get("focus") or mv.get("square")) and goal is not None and not any(f["n"] == goal["n"] for f in adj) \
-                and not mv.get("nofree"):
+        if ((mv.get("focus") or mv.get("square")) and goal is not None and not any(f["n"] == goal["n"] for f in adj)
+                and not mv.get("nofree")) or mv.get("flee"):
             adj = []         # Player 36: walking to the focus figure: past the others (a blow on them only if stuck)
         if adj:
             # the goal if it is next to us, else a helpless one, else the weakest
@@ -805,7 +821,8 @@ class Tactics:
             mv["side"] = mv.get("side", 0) + 1
             if mv["side"] > 2:
                 best = (here + 1,) + best[1:]
-        if (best is None or best[0] > here) and (mv.get("focus") or mv.get("square")) and not mv.get("nofree"):
+        if (best is None or best[0] > here) and (mv.get("focus") or mv.get("square")) and not mv.get("nofree") \
+                and not mv.get("flee"):
             mv["nofree"] = True      # Player 36: no free step toward the focus: strike what is next to us instead
             return self._move_step(st, p)
         if best is None or best[0] > here:
