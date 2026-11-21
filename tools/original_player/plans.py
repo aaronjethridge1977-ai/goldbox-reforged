@@ -29,6 +29,10 @@
                                  the fight's first poll (game.py _shortcut_win), logged SHORTCUT and in the summary
   picks <NAME> <spell>, ...      (Player 30) `prepare` / `heal` memorize these first for the member (known spells, in
                                  order, while their level has a free slot), then the bot's picks in the rest
+  focus <KIND>,...|none          (Player 36) a step: tactics' blows, arrows, MOVEs and Stinking Cloud go to these kinds
+                                 first (the helpless of them first): the throne room's TROLL
+  bands on|off                   (Player 36) a step: Guide 3's band rule on 6:25/7:26/8:27 (BANDS: the best Charisma lit,
+                                 PARLAY the cheap kinds with the area's manner, FLEE or fight the rich ones, WAIT)
   advance <NAME>,...|none        (Player 35) a step: who MOVEs toward the enemy when nothing is in reach (OP_ADVANCE)
   learn <spell>, ...             (Player 35) a magic-user's new spell at training: these first, then LEARN_ORDER
   drop <NAME> <words>*<n>, ...   (Player 35) several drops in one VIEW (`<words> +0`: a plain one, matched on the plus)
@@ -754,6 +758,88 @@ def next_cure(M):
     return None
 
 
+# Player 36: Guide 3's wilderness bands step (Jeremy 17:26; docs/strategy/poolrad.md section 3, "The wilderness bands").
+# `bands on|off` (a step): on a band (6:25, 7:26, 8:27) the member with the best Charisma is lit before each step
+# (Home/End on the walking screen, DS:0x5D92); at the encounter menu: the cheap humanoid kinds PARLAY with the area's
+# manner (or FLEE when the party's slowest has the kind's movement and PARLAY isn't sure); the rich kinds and the beasts
+# are fought when the party is rested (HP and memorized spells at 3/4 of the most seen), else FLEE when movement
+# allows; the party surprised them: WAIT; nomads, merchants and centaurs: PARLAY. Movement: record 0x11C (cached).
+BANDS = {"on": False, "lit_tries": 0, "spells_max": {}}
+BAND_CHEAP = {"KOBOLDS": 6, "LIZARD MEN": 6, "SOLDIERS": 6, "GNOLLS": 9, "BANDITS": 9, "BUCCANEERS": 9,
+              "THIEVES": 12}
+BAND_TALKERS = ("NOMADS", "MERCHANTS", "CENTAURS")
+BAND_MOVE = {"DRIDERS": 12, "TROLLS": 12, "MINOTAURS": 12, "TIGERS": 12, "MANTISES": 12, "GIANT MANTIS": 12,
+             "ANKHEGS": 12, "BOARS": 15, "WILD BOARS": 15, "DISPLACER BEASTS": 15, "GIANT LIZARDS": 15,
+             "SNAKES": 15, "STIRGES": 18, "HIPPOGRIFFS": 18, "THRI-KREEN": 18, "WYVERNS": 24, "PHASE SPIDERS": 31,
+             "QUICKLINGS": 99}
+BAND_MANNER = {6: ("NICE", 50), 7: ("ABUSIVE", 60), 8: ("ABUSIVE", 30)}    # area 6:25, 7:26, 8:27: the manner's value
+
+
+def cha_bonus(c):
+    return 0 if c < 4 else 5 * (c - 3) if c < 8 else 25 if c < 13 else {13: 30, 14: 35, 15: 40, 16: 50, 17: 55}.get(c, 60)
+
+
+def band_party(p):
+    M = [m for m in members(p.g.mem) if m["status"] < 6]
+    for m in M:
+        BANDS["spells_max"][m["name"]] = max(BANDS["spells_max"].get(m["name"], 0), len(m["mem"]))
+    return M
+
+
+def band_spokesman(p):
+    """The walking screen on a band: the key that lights the best Charisma, or None."""
+    M = band_party(p)
+    if not M:
+        return None
+    best = max(M, key=lambda m: m["rec"][0x15])
+    sel = loot.selected(p.g.mem)
+    if sel is None or sel == best["i"] or BANDS["lit_tries"] >= 8:
+        return None
+    BANDS["lit_tries"] += 1
+    return ("end" if best["i"] > sel else "home"), "bands: light %s (CHA %d) before the next step" % (
+        best["name"], best["rec"][0x15])
+
+
+def band_choice(scr, p):
+    """The encounter menu on a band: (choice word, why)."""
+    text = scr.get("text", "")
+    items = scr["bottom"].split()
+    M = band_party(p)
+    slow = min((m["rec"][0x11C] for m in M), default=0)
+    # (p36t1: "YOU SURPRISE A GROUP OF WILD BOARS."; 8:29's "YOU HAVE SURPRISED A PARTY OF KOBOLDS"; "YOU SPOT A GROUP OF ...")
+    m = re.search(r"(?:SPOT|SURPRISED?|ENCOUNTER(?:ED)?) (?:A |AN )?(?:GROUP|PARTY|BAND) OF ([A-Z' -]+)", text)
+    kind = m.group(1).strip() if m else ""
+    sel = loot.selected(p.g.mem)
+    lit = next((x for x in M if x["i"] == sel), None)
+    cha = lit["rec"][0x15] if lit else 0
+    manner, val = BAND_MANNER.get(p.area()[0], ("ABUSIVE", 30))
+    sure = val + 1 + cha_bonus(cha) >= 100
+    BANDS["manner"] = manner
+    rested = all(x["hp"] * 4 >= x["max"] * 3 for x in M) and \
+        sum(len(x["mem"]) for x in M) * 4 >= sum(BANDS["spells_max"].get(x["name"], 0) for x in M) * 3
+    why = "bands: %s [%s] (slowest move %d, lit %s CHA %d, %s %s, rested %s)" % (
+        kind or "?", " ".join(text.split())[:70], slow, lit["name"] if lit else "?", cha, manner, "sure" if sure else "not sure", rested)
+    if re.search(r"YOU (?:HAVE )?SURPRISED? ", text) and "WAIT" in items:
+        return "WAIT", why + ": the party surprised them, WAIT"
+    if any(t in kind for t in BAND_TALKERS) and "PARLAY" in items:
+        return "PARLAY", why + ": they greet and leave"
+    cheap = next((v for k, v in BAND_CHEAP.items() if k in kind), None)
+    if cheap is not None:
+        if "FLEE" in items and slow >= cheap and not sure:
+            return "FLEE", why + ": cheap, PARLAY not sure, FLEE (movement %d >= %d)" % (slow, cheap)
+        if "PARLAY" in items:
+            return "PARLAY", why + ": cheap, PARLAY"
+        if "FLEE" in items and slow >= cheap:
+            return "FLEE", why + ": cheap, FLEE"
+        return "COMBAT", why + ": cheap, no PARLAY or FLEE"
+    mv = next((v for k, v in BAND_MOVE.items() if k in kind), 12)
+    if rested:
+        return "COMBAT", why + ": rich kind, rested: fight"
+    if "FLEE" in items and slow >= mv:
+        return "FLEE", why + ": rich kind, not rested, FLEE (movement %d >= %d)" % (slow, mv)
+    return "COMBAT", why + ": rich kind, not rested, FLEE can't get away"
+
+
 PICK_OVERRIDE = {}    # Player 30: `picks <NAME> <spell>, ...`: these first, in order, into the member's free slots
 
 
@@ -911,6 +997,35 @@ class TacticsStep:
         p.tactics.on = self.on
         p.g.take_control = self.on
         p.note("tactics", "tactical mode %s" % ("on" if self.on else "off"))
+        return True, None, ""
+
+
+class Focus:
+    """Player 36: `focus <kind>,...|none`: tactics.FOCUS from here (the throne room's trolls first)."""
+    def __init__(self, kinds):
+        self.kinds = [] if kinds.strip().lower() == "none" else [k.strip().upper() for k in kinds.split(",") if k.strip()]
+
+    def __repr__(self):
+        return "focus %s" % (",".join(self.kinds) or "none")
+
+    def next(self, p):
+        import tactics
+        tactics.FOCUS[:] = self.kinds
+        p.note("tactics", "focus: %s" % (",".join(self.kinds) or "none"))
+        return True, None, ""
+
+
+class BandsStep:
+    """Player 36: `bands on|off`: Guide 3's band rule (BANDS) from here on."""
+    def __init__(self, on):
+        self.on = on
+
+    def __repr__(self):
+        return "bands %s" % ("on" if self.on else "off")
+
+    def next(self, p):
+        BANDS["on"] = self.on
+        p.note("bands", "band rule %s" % ("on" if self.on else "off"))
         return True, None, ""
 
 
@@ -1234,6 +1349,15 @@ class Plan:
                         p.answer_counts[(words, choice)] = p.answer_counts.get((words, choice), 0) + 1
                         return k, "%s: %s|%s (%d of %d)" % (src, words, choice, p.answer_counts[(words, choice)], limit)
                     return k, "%s: %s|%s" % (src, words, choice)
+        if BANDS["on"] and p.on_band():
+            if kind == "encounter":
+                choice, why = band_choice(scr, p)
+                k = self.choose(scr, choice)
+                if k:
+                    return k, why
+            bw = scr["bottom"].split()
+            if kind == "hmenu" and "ABUSIVE" in bw and "NICE" in bw and BANDS.get("manner"):
+                return self.choose(scr, BANDS["manner"]), "bands: PARLAY %s" % BANDS["manner"]
         if kind in self.defaults:
             return self.defaults[kind], "default for %s" % kind
         return None, ""
@@ -1983,11 +2107,13 @@ def load(path):
                 setattr(pl.goals[-1], a, getattr(pl, a, None) if a != "aliases" else pl.aliases)
         elif cmd == "ready":      # Player 32: `ready <NAME> -<words>, +<words>`
             who, _, sp = rest.strip().partition(" ")
+            who = who.replace("_", " ")     # Player 36: PRINCESS_FATIMA (a name with a space)
             pl.goals.append(ReadyItems(who, [(x.strip()[0] == "+", x.strip()[1:].strip().upper())
                                              for x in sp.split(",") if x.strip()[:1] in "+-" and x.strip()]))
         elif cmd == "trade":      # Player 32: `trade <FROM> <item words>|<TO>` (the item unreadied first)
             who, _, sp = rest.strip().partition(" ")
             words, to = sp.rsplit("|", 1)
+            who, to = who.replace("_", " "), to.replace("_", " ")
             pl.goals.append(ReadyItems(who, [("T:" + to.strip().upper(), words.strip().upper())]))
         elif cmd == "use":        # Player 32: `use <NAME> <item words>|<TARGET>` (a scroll's lit spell on TARGET)
             who, _, sp = rest.strip().partition(" ")
@@ -2022,6 +2148,10 @@ def load(path):
             PICK_OVERRIDE[who.strip()] = [x.strip().upper() for x in sp.split(",") if x.strip()]
         elif cmd == "tactics":
             pl.goals.append(TacticsStep(rest.strip() == "on"))
+        elif cmd == "focus":      # Player 36: `focus TROLL,...|none` (tactics.FOCUS)
+            pl.goals.append(Focus(rest))
+        elif cmd == "bands":      # Player 36: `bands on|off`
+            pl.goals.append(BandsStep(rest.strip() == "on"))
         elif cmd == "answerfrom":
             words, choice = rest.rsplit("|", 1)
             pl.goals.append(AnswerFrom(words.strip(), choice.strip(), os.path.basename(path)))

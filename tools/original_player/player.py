@@ -178,6 +178,13 @@ class Player:
         if scr["kind"] == "walking":
             if plans.RELOAD_RULE:
                 plans.reload_rule(self)       # Player 32: Jeremy's reload rule (plans.py)
+            if plans.BANDS["on"] and self.on_band():
+                kw = plans.band_spokesman(self)      # Player 36: the band rule's spokesman, lit before the step
+                if kw:
+                    self.key(kw[0], kw[1])
+                    return True
+            else:
+                plans.BANDS["lit_tries"] = 0
             return self.walk(st)
         if scr["kind"] == "wiped":
             self.note("loss", "the party was destroyed at %d,%d %s" % self.where())

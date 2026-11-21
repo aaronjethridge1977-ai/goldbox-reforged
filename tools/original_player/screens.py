@@ -105,10 +105,11 @@ def classify(st):
     elif b.endswith("SELECT") or b.endswith("SELECT EXIT"):
         out["kind"] = "member"
         out["question"] = b
-        # the party list: rows 4-9, columns 18-38; the highlighted name is white
+        # the party list: rows 4-9, columns 18-38; the highlighted name is white (Player 36: rows 10-11 too, an NPC
+        # as the seventh: p36k1, PRINCESS FATIMA on row 10 and TRADE WITH WHOM had no rule)
         hl = None
         names = []
-        for r in range(4, 10):
+        for r in range(4, 12):
             name = rows[r][17:32].strip("? ").strip()
             if not name:
                 continue
