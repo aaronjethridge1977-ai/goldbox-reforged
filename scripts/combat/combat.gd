@@ -1370,7 +1370,11 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			# A tiger whose two claws both hit rakes with its rear claws: two more attacks of
 			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
 			message.emit("%s RAKES..." % am.name)
-			_extra_attacks(i, j, 2, 2, 4)
+			if _extra_attacks(i, j, 2, 2, 4) > 0:
+				# The rake runs the whole attack routine (0x1407F) with the two 2d4 attacks; a target that falls
+				# with one left sends it to a new target (0x15FDF, its d-count pick at 0x160DB) before the rake
+				# ends the turn (0x2637) (Player 35's p35i7, draw 29060: LIRA fell to the first rear claw, d5).
+				find_target(i)
 	if i != active and a.attacks <= 0:
 		# Out of turn (a guard's strike, a free attack) with its attacks spent: that is its
 		# turn for this round (GAME.OVR 0x142AB ends the attacker's turn, 0xBA:0x2637; lab:
@@ -1450,13 +1454,14 @@ func _spend_turn(i: int) -> void:
 
 
 ## Attacks a power adds (a tiger's rake, a mantis's hold): `n` rolls to hit, `count`d`size` each.
-func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> void:
+## Returns the attacks left unmade because the target fell.
+func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> int:
 	var am: PartyMember = combatants[i].who
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
 	for k in n:
 		if t.down:
-			return
+			return n - k
 		var need: int = am.thac0 - tm.ac - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s (needs %d)" % [am.name, tm.name, need])
 		if d20 == 1 or (d20 != 20 and d20 < need):
@@ -1465,6 +1470,7 @@ func _extra_attacks(i: int, j: int, n: int, count: int, size: int) -> void:
 		var dmg := roll(count, size, "%s damage" % am.name)
 		message.emit("%s ATTACKS %s HITTING FOR %d" % [am.name, tm.name, dmg])
 		_hurt(j, dmg)
+	return 0
 
 
 ## What a hit does besides damage, from the attacker's standing effects (SpecialAffects):
