@@ -1315,6 +1315,37 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 39 (2026-11-21): the match 67 of 71; tactics' HASTE; the throne room with Haste 5 of 5 lost; segment.py's waits (p37i1)
+
+**Stage 1:** nothing answered by main or Combat this run (the MEMORIZE paging diff for p36h1 not on origin/main;
+p17a6 open). segment.py's new waits change one recording's keys (p13b6: two keys): replayed, still identical. **67 of
+71** (lab `p39/score.md`).
+
+**Tactics.** `HASTE` comes first of all spells while no member carries effect 39 (once a fight; `STANDING`), before a
+readied scroll's spell; its aim is the party member with most `advance` fighters within 2 squares (the spell takes up
+to the caster's level of figures within 2 of its point), never an enemy. **The aim reads the right panel's name first
+when it is a party member's** (p39a1: a begun spell going off at a later turn kept DS:0xBEFD on one entry through all
+53 NEXTs). **A hasted member's second blow:** AIM back after a blow (or an AIM with no order: the attacker is the aim
+list's first figure) is answered as the bow's second shot. The state lines log who is hasted once Haste is cast.
+player.py: a menu no rule takes in a tactics fight is polled again (10 times, 0.3 s) before stopping; a stop's
+message shows the bottom row.
+
+**segment.py** (Combat Chat 38's p37i1 ask (1)): before a fight menu's key (QUICK and DONE on the bottom row) ours
+waits **twice the original's gap** from the key before when it is over 1.5 s (ours' figures move at about half the
+DOSBox speed). p37i1: ELWEN's TURN (key #105, 6.4 s after LIRA's Fireball: two spectre rounds) was sent to ours while
+the spectres still moved and was lost; now it reaches her menu (d12 = 11, d20 = 10) and the draws are **identical to
+1048 of 1307**; then DORN's MOVE parts (ours: CAN'T GO THERE from 29,16 where the original steps on to 25,14; ARN one
+step more, 13,11): to Combat.
+
+**The throne room** (stuck-fights.md section 3, Player 39): `p39/king11.plan` from `p38a2_s38audit`: `answer LOSE
+IT|YES`, `campcast LIRA FIREBALL`, `picks LIRA HASTE`, `prepare` (`s39haste`; 8:13 allows no camp), king10's trip to
+`s39door` (`p39a1_s39door`), then king10f's fight with `ready LIRA -BROAD SWORD, -SHORT BOW, +MAGIC USER SCROLL`
+(p39a1 picked up a plain BROAD SWORD on the trip). Counted p39a1, b2, b4, c1, c2: all lost (c2: three trolls down,
+9 enemies left, then two rose again at full HP). Stopped for the Lead.
+
+Lab: `p39/` (king11.plan, bandtrip.plan, reload.txt, score.md, seg_i1*.out), saves `p2start/p39a1_s39door`; archive
+`player39_lab.tar.gz`.
+
 ## Player 38 (2026-11-21): the match 67 of 71; the audit's movement (`pooltake`, `coins`, `buypurse`); the throne room from a fit door (hold-down, CONTINUE BATTLE)
 
 **Stage 1:** p36e1 identical since Combat Chat 38's fix (0xB44E): **67 of 71** (baseline 67). p36h1 re-scored on main chat

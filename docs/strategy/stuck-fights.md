@@ -292,6 +292,20 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   (`OP_CONTINUE`), cures on the most hurt. **p38e4** lost in wave 1 (313 HP to 111 in 100 s once the trolls closed);
   **p38e5** lost in wave 1 (two trolls left at 27 and 15). Each try spent LIRA's Fireball and scroll, both clouds and
   Hold Persons; the trolls close in about 3 rounds and do the killing. To the Lead (board).
+- **Player 39 (2026-11-21), the Lead's (a) Haste: 5 of 5 lost; stopped for the Lead and Jeremy.** 8:13 allows no camp,
+  so LIRA swapped Fireball for Haste at New Phlan (`campcast LIRA FIREBALL`, `picks LIRA HASTE`, `prepare`:
+  `p39a1_s39haste`), then king10's trip (QUICK, MAGIC OFF) to a fit door (`p39a1_s39door`: 7 up, 273 HP;
+  `p39/king11.plan`). New tactics: HASTE first in round 1 (it goes off a turn later), aimed at the member with most
+  `advance` fighters within 2; it takes 5 figures within 2 of the point, so 1-2 casters always shared it. Counted tries:
+  **p39a1** (the aim never found a party member: Haste aborted; LIRA's scroll not readied: a plain BROAD SWORD taken on
+  the trip filled her hands; lost in wave 1, 26 enemies left); **p39b2** (hasted ARN, BRAM, CEDRIC, ELWEN, LIRA; scroll
+  Fireball on the kobolds, the trolls already in contact; lost in wave 1, 23 left); **p39b4** (BRAM, ELWEN, LIRA, DORN,
+  Fatima; down to 6 enemies, then the killed trolls stood again at 36 HP; lost); **p39c1** (ARN, BRAM, ELWEN, LIRA,
+  DORN; lost, 24 left); **p39c2** (the same five; **three trolls down and 9 enemies left with 6 up at 141 HP**, then two
+  trolls rose again at full HP and beat the last two). Not counted: p39a2 (stopped by hand for the scroll fix), p39b1 and
+  p39b3 (tool stops at a hasted member's second blow: fixed). No try cleared wave 1 (Player 38's e3 did, without Haste).
+  What beats every try: the trolls' rising (at full HP, at or beside their squares) once the fighters are spread
+  over the kobolds. To the Lead (board): Jeremy and the stuck-fights guide chat.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
