@@ -451,6 +451,21 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     limit: about 8,300 pp and 6,200 gp carried, movement 3). The coffin (12,4, entered from 12,3; sanctified): the
     weakened vampire, 15 HP, one blow (p42v37): **0x4A41 = 255, no drain**, +5,017 XP each (`s42vinn`). Left: ARN
     3,623, BRAM 6,424, LIRA 5,748. ARN now wields the knight's Long Sword +2 (from LIRA's pack).
+  - **Read (Gold Box Guide 10, 2026-11-21 15:40; p39c2's video, contact sheets in `.lab/stuck/kobold_king/p42/sheets/`):**
+    (1) **our own clouds sit on our members** (26:15-26:55, 32:00-32:55: CEDRIC STARTS TO COUGH, CHOKES AND GAGS
+    FROM NAUSEA: the cleric loses his turns), and the clouds mostly land on 3-HP kobolds beside the trolls (p42v13's
+    vampire loss, four members dying in one round with LIRA's cloud beside them, may be the same); (2) **the aim scans
+    eat minutes** (110 aim keys in a row; 40:00-40:55 one Hold Person scanning kobolds, members and trolls, landing on
+    kobolds already (HELPLESS)); (3) **a fighter guards beside a troll while a caster dies** (44:00-45:30: BRAM, 35 HP,
+    aims at range 0-1, backs out and GUARDs, round after round, while two trolls take ELWEN from 30 to 4). *seen*
+    (4) Known: the old start in contact with the trolls and ~40 kobolds (Plan 2's 6,3 fixes it); the original's look
+    panel shows (HELPLESS) under a sleeping kobold (26:45).
+  - **Plan 2 additions from the video (Jeremy approved 2026-11-21 15:46; Gold Box Guide 10):** (a) **no member inside a
+    Stinking Cloud or any area spell** (every fight, as Plan 5's finale); (b) **aim by MANUAL** to the cell wanted, no
+    NEXT/PREV scans (as Plan 5); (c) **a fighter with an enemy in reach attacks it**: no GUARD.
+  - **The levels (Jeremy, 2026-11-21 15:46, answering Player 42's 15:20 question): (c) Sokal Keep's army** (section
+    1, lost at level 3; the party is 5-6 now with two Fireballs and the wand): one set fight with its XP, and a stuck
+    fight to win anyway. Back to (a), the 7:26 bands with reloads, if it is lost twice.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
