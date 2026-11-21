@@ -249,7 +249,20 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     cures between hits on whoever is lowest. A death or wipe: reload (the reload rule).
   - **The tool** (Player): the plan needs melee targets by type (trolls first, the helpless first), bows at range,
     and a step onto a fallen troll's square; where the tool can't, say so on the board.
-  - **Results:** (the Player's lines here)
+  - **Results (Player 36, 2026-11-20): 5 of 5 lost** (p36n1-n5, `p36/king4.plan` from Player 31's `p31c7_s17door`, the
+    inn's picks; OP_MAGIC=0, tactics on, `focus TROLL`, `advance ARN,BRAM,PRINCESS FATIMA`). **Done:** BRAM's Two-Handed
+    Sword readied, LIRA's cloak and Short Bow +1, **Fatima freed and in the party** (event 14 at 1,3, by the west passage;
+    Chain Mail +1 and Long Sword +1 readied, she fought as the seventh). Not done: training (nobody qualifies at the door),
+    movement 6+ (CEDRIC and LIRA 3: the weight is coins, which no step drops), the Stinking Cloud scroll (LIRA and ELWEN
+    had the spell memorized). Each try: n1 1087 s, 18 of 50 slain, the trolls at 36/36/12/36; n2 875 s, troll HP
+    36/36/17 (one down); n3 1116 s, 9 blows on trolls; n4 617 s, trolls 9/36/4/26; **n5 945 s, two trolls down, 36 of 50
+    slain, one member left.** **Why:** (1) **Stinking Cloud was never cast**: from round 1 a troll stands next to a party
+    member (troll 10 starts beside ELWEN at 30,12) and the tool keeps the cloud's 2x2 off the party; (2) the trolls stand
+    behind the kobolds: blows reached them only after n3's new rule (a fighter in `advance` walks to a troll within 4
+    squares past the kobolds): 8-10 troll blows a try before, 9-13 after; (3) at F3-5 a troll's 36 HP and regeneration
+    outlast the few blows that land; the party's level-1 slots went to two Sleeps and Magic Missiles. **The tool now
+    does** melee and bows by type (`focus`), the walk to a troll, Stinking Cloud at the bunch with most trolls (when
+    legal); **it can't**: stand on a fallen troll's square on purpose, or cast the cloud with the party inside it.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 

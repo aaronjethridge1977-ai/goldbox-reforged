@@ -769,7 +769,7 @@ BAND_CHEAP = {"KOBOLDS": 6, "LIZARD MEN": 6, "SOLDIERS": 6, "GNOLLS": 9, "BANDIT
               "THIEVES": 12}
 BAND_TALKERS = ("NOMADS", "MERCHANTS", "CENTAURS")
 BAND_MOVE = {"DRIDERS": 12, "TROLLS": 12, "MINOTAURS": 12, "TIGERS": 12, "MANTISES": 12, "GIANT MANTIS": 12,
-             "ANKHEGS": 12, "BOARS": 15, "WILD BOARS": 15, "DISPLACER BEASTS": 15, "GIANT LIZARDS": 15,
+             "ANKHEGS": 12, "ANHKHEG": 12, "BOARS": 15, "WILD BOARS": 15, "DISPLACER BEASTS": 15, "GIANT LIZARDS": 15,
              "SNAKES": 15, "STIRGES": 18, "HIPPOGRIFFS": 18, "THRI-KREEN": 18, "WYVERNS": 24, "PHASE SPIDERS": 31,
              "QUICKLINGS": 99}
 BAND_MANNER = {6: ("NICE", 50), 7: ("ABUSIVE", 60), 8: ("ABUSIVE", 30)}    # area 6:25, 7:26, 8:27: the manner's value
@@ -793,7 +793,10 @@ def band_spokesman(p):
         return None
     best = max(M, key=lambda m: m["rec"][0x15])
     sel = loot.selected(p.g.mem)
-    if sel is None or sel == best["i"] or BANDS["lit_tries"] >= 8:
+    if sel == best["i"]:
+        BANDS["lit_tries"] = 0          # (p36t3: the light goes back to the first member after a fight)
+        return None
+    if sel is None or BANDS["lit_tries"] >= 8:
         return None
     BANDS["lit_tries"] += 1
     return ("end" if best["i"] > sel else "home"), "bands: light %s (CHA %d) before the next step" % (
@@ -807,7 +810,9 @@ def band_choice(scr, p):
     M = band_party(p)
     slow = min((m["rec"][0x11C] for m in M), default=0)
     # (p36t1: "YOU SURPRISE A GROUP OF WILD BOARS."; 8:29's "YOU HAVE SURPRISED A PARTY OF KOBOLDS"; "YOU SPOT A GROUP OF ...")
-    m = re.search(r"(?:SPOT|SURPRISED?|ENCOUNTER(?:ED)?) (?:A |AN )?(?:GROUP|PARTY|BAND) OF ([A-Z' -]+)", text)
+    # (p36t3: "YOU ARE SURPRISED BY A GROUP OF THRI- KREENS.": the reader splits the hyphen)
+    text = text.replace("- ", "-")
+    m = re.search(r"(?:SPOT|SURPRISED?(?: BY)?|ENCOUNTER(?:ED)?) (?:A |AN )?(?:GROUP|PARTY|BAND) OF ([A-Z' -]+)", text)
     kind = m.group(1).strip() if m else ""
     sel = loot.selected(p.g.mem)
     lit = next((x for x in M if x["i"] == sel), None)
@@ -819,7 +824,7 @@ def band_choice(scr, p):
         sum(len(x["mem"]) for x in M) * 4 >= sum(BANDS["spells_max"].get(x["name"], 0) for x in M) * 3
     why = "bands: %s [%s] (slowest move %d, lit %s CHA %d, %s %s, rested %s)" % (
         kind or "?", " ".join(text.split())[:70], slow, lit["name"] if lit else "?", cha, manner, "sure" if sure else "not sure", rested)
-    if re.search(r"YOU (?:HAVE )?SURPRISED? ", text) and "WAIT" in items:
+    if re.search(r"YOU (?:HAVE )?SURPRISED? (?!BY)", text) and "WAIT" in items:
         return "WAIT", why + ": the party surprised them, WAIT"
     if any(t in kind for t in BAND_TALKERS) and "PARLAY" in items:
         return "PARLAY", why + ": they greet and leave"
