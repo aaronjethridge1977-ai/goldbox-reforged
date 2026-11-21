@@ -407,6 +407,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     two steps before: p39b4 98 of 115, p39c2 62 of 80, p39b2 30 of 35, p38e3 35 of 74, p36n5 40 of 47 (p39c2: ARN's
     whole move 27,13 / 27,14 / 27,13 ..., his troll two squares off; MOVE LEFT fell each step). The `advance` fighters
     seldom reached the trolls, and a step away from an adjacent kobold may draw its free blow. *seen* (the logs)
+  - **Low ceilings** (merged from poolrad.md's parked cluebook notes, Jeremy, 09:02): the cluebook says the caves'
+    low ceilings cut movement, AC and damage; a walkthrough puts it only on fights against nothing but kobolds and
+    kobold leaders (THAC0 2 worse, damage cut) *players* (ssjlee9, GameFAQs): the bands on the way in, not the throne
+    waves (trolls, boars). Not checked in the code.
 - **Plan 2 additions (Jeremy, Gold Box Guide 8, 2026-11-21 08:59):**
   - **Start the fight on 6,3:** from the door walk 4,4 -> 5,4 -> 6,4, then north onto 6,3 (5,3 and 4,3 start it too:
     don't step on them). The best ACs in the left front slots 1, 3 and 7 (27,13 / 26,13 / 27,14), the casters in
