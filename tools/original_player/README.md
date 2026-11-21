@@ -1315,6 +1315,45 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 37 (2026-11-21): the match 66 of 71; `scribe`, `scrolls`; the graveyard spectres beaten; the throne room with Fireball
+
+**Stage 1:** Combat Chat 37 fixed p35i6 and p35i7 (OVR:0b95d): both identical, **66 of 71** (baseline 66; 3 game: p17a6,
+p36e1, p36h1; 2 known shortcut; lab `p37/score.md`). Combat's YARASH hold (p36e1): `p37/yarash.sh` (run A with
+`OP_MAGIC=0`, traced: runs without the Alt-M repeat; YARASH's turn found in A's trace; run B the same seed with `HOLD`).
+
+**New plan lines.** `scribe <NAME> <spell>, ...` (CampScribe): ENCAMP, MAGIC, SCRIBE, each spell lit and marked, the
+"SPELLS TO BE SCRIBED" list checked, YES, then REST for the time offered **again while a marked spell is missing from
+the book** (record 0x33 + id - 1; MU_IDS), up to 6 rests: the original copies one scroll's spells a rest (p37b2: 11:00,
+9:00 and 7:30 offered for 3, 4 and 2 spells; ours offered 9:30 once and copied all nine: to combat). An unidentified
+scroll (item byte 53 set) is listed only under Read Magic's effect: `campcast <MU> READ MAGIC` first (it identifies the
+member's scrolls). `campcast` answers "LOSE IT?" YES for a combat-only spell (a slot freed: LIRA's Fireball for Haste)
+and casts Read Magic, Detect Magic and Haste with no ON WHOM. `scrolls <MEMBER> <spell>, ...|none` (tactics.SCROLLS):
+in a fight the member USEs a readied scroll for the spell while it has a target (the items page, the readied scrolls
+in turn, the scroll's page through `_spell_list`, the aim kept in `scroll_aim`: an item's AIM has no SPELL: line). **A
+scroll takes both hands** (ITEMS types 61/62: hands 2): the weapon is put away to ready one. With two foes or fewer and
+a focus kind among them, Fireball may take a lone figure. `advance` fighters walk to a focus figure at any distance
+(30 turns; p37g1's turned spectres stood 21 squares off). With a focus kind, Fireball before Stinking Cloud. The
+restorer is `OP_RESTORER`, `OP_RESTORER_WEAPON`, `OP_RESTORER_SCROLL` (words; ELWEN's "CLERICAL SCROLL WITH 2"); a
+scroll is readied before each Restoration and USE takes the readied one first. Fix: a MOVE step into any cell of a
+large figure (p37n1's StopIteration).
+
+**The graveyard spectres** (stuck-fights.md section 4): the wand is gone in this chain (segment 26's p25l2 EXITed the
+zombie room's pile: no `default treasure take`). `p37/kovel.plan`: 3:14 3,13's scroll cabinet (event 12, list 25:
+DISARM by DORN; p37a1), LIRA SCRIBEs nine spells (p37b2, `s37scribed`). `p37/grave1.plan`: Fireball lost for Haste,
+ELWEN's scroll read and copied, the marble chest (event 5 at 7,6 with SEARCH on: a giant skeleton first; four scrolls of
+two Restorations), the inn; 10,1's camp (Haste, Bless, Prayer, Protection from Evil on BRAM); LIRA one Fireball scroll
+in both hands. p37g1 lost (TURN sent the spectres off; the party guarded; four drained), **p37i1 won, no drain**
+(`p37i1_s37spectres`). `p37/grave2.plan`: the knight's tomb (event 24, 8,2: Plate Mail +2, Shield +1, Long Sword +2, a
+Ring +3, three Restoration scrolls; `p37k1_s37tombinn`).
+
+**The throne room** (`p37/king5.plan` to `king7.plan`): the audit at New Phlan (ELWEN wears the Plate Mail +2 and
+Shield +1: ARN, overloaded with the shared coins, refused every trade; LIRA refused the Long Sword +2: lawful good only),
+the trip with the band rule on 7:26 and 8:27. 8:27 6,16's cave mouth: 30 kobolds straight into combat (p37n1: ARN and
+CEDRIC down to a few HP). **Try 1 (p37n2) lost** from a hurt door (`s37door`: ARN 7/65, CEDRIC 0/42): the party
+destroyed, three trolls left. **Leaving the caves makes Princess Fatima leave the party** (p37r1, a reload under the
+rule), so the heal trip starts before her (`king7.plan` from `p37n1_s37kobold`). The tool's cave exit needs
+`answerfrom DO YOU WANT TO LEAVE|YES` and `answerfrom WHAT CAVE WILL YOU ENTER|EXIT` (p37q1: 558 re-entries).
+
 ## Player 36 (2026-11-20): the DOSBox speed test (keep 15000); the match 64 of 71 (three re-recordings); the band rule; the throne room 5 of 5 lost
 
 **The DOSBox speed test** (the Lead's Stage 1 item; lab `p36/speed.sh`, `p36/samecheck.py`, `p36/speed.txt`):
