@@ -536,6 +536,36 @@ func _replay_keys(names: PackedStringArray) -> void:
 			for k in _automap.visited:
 				print("   automap %s: %d squares" % [k, (_automap.visited[k] as PackedByteArray).count(1)])
 			continue
+		elif n.begins_with("timed="):       # lab (chat 93): a .gbrrec's keys at their recorded times
+			# (after seed= and load=; windowed with --anim the fight is paced as in play: Jeremy's holds_crash2 kept
+			# all 99 lines of his log, where a key-by-key replay parted at line 17; tools/lab/treplay.sh)
+			var tl := FileAccess.get_file_as_string(n.trim_prefix("timed=")).split("\n", false)
+			var t0 := Time.get_ticks_msec()
+			for li in range(1, tl.size()):
+				var d: Dictionary = JSON.parse_string(tl[li])
+				if not d.has("k"):
+					continue
+				var due := t0 + int(d["t"])
+				while Time.get_ticks_msec() < due:
+					await get_tree().process_frame
+				var tev := InputEventKey.new()
+				var kn := String(d["k"])
+				tev.keycode = OS.find_keycode_from_string(kn)
+				var mods := String(d.get("m", ""))
+				tev.alt_pressed = mods.contains("alt")
+				tev.shift_pressed = mods.contains("shift")
+				tev.ctrl_pressed = mods.contains("ctrl")
+				if kn.length() == 1:
+					tev.unicode = kn.unicode_at(0)
+				tev.pressed = true
+				print("timed %d %s" % [int(d["t"]), kn])
+				Input.parse_input_event(tev)
+				await get_tree().process_frame
+				var tup := tev.duplicate()
+				tup.pressed = false
+				Input.parse_input_event(tup)
+			print("timed done")
+			continue
 		elif n.begins_with("seed="):        # seed=<n>: every generator from n (a RECORD MY GAME replay, before its load)
 			_seed_all(int(n.trim_prefix("seed=")))
 			continue

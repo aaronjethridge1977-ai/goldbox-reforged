@@ -172,6 +172,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned (checks 312, 313; one difference)
+
+- **The crash (main path, Jeremy's 0.1.7-test2 finale fights):** `combat_screen.gd` `_bevel` drew the selected figure's
+  cursor box with two `set_pixelv` calls even when the figure was off the view (after a cast the view follows the
+  spell; the caster stays selected). Debug builds (every lab run) check `set_pixel`'s bounds, log `Index p_x = -24 is
+  out of bounds` and skip it; **release templates don't check**: the write lands outside the image (4.7.2 Linux
+  release template: `set_pixel(-1, 0)` dumps core). Reproduced: `tools/lab/treplay.sh` (his session's keys at their
+  own times, windowed and paced) on a Linux release export of test2's code: **segfault right after
+  `fireball_crash`'s TARGET**, as on his PC; with the fix the Fireball resolves and the fight goes on. `holds_crash2`
+  kept all 99 complete lines of his log (a key-by-key replay parted at line 17); its last TARGET gave NO TARGET THERE
+  and no crash on Linux (its out-of-image writes landed inside the heap; on Windows a hang or crash). Not GDScript's
+  fault or the sound's. Every bounds error in the windowed logs (chats 91, 93) came from `_bevel`. Fix:
+  `~/gbr/lab/data/c93/bevel.diff` (Combat's file; ready diff): only pixels inside the image. No check can see it
+  (headless draws nothing): DIFFCHECKS unchanged with it (311/311). The proof is the release-template replay above.
+- **Picks not yet learned (chat 92's open finding):** the original keeps MEMORIZE's picks (0x80 + id) through leaving
+  camp; in the next camp its first action other than SAVE (VIEW, MAGIC, REST, EXIT seen) drops them (a SAVE made first
+  still holds 0x8B; MEMORIZE then shows the book with every slot free; REST TIME 00:00:00). Ours drops them at ENCAMP
+  (main.gd, chat 83): the same in play, as a loaded game must ENCAMP again. **Check 312** (into the gate, matched):
+  picks, YES, out, ENCAMP, EXIT, F2; fails on a copy without ours' clear.
+- **REST at REST TIME 00:00:00 (difference, main path):** the original's REST goes straight back (from the camp: the
+  camp menu, SAVE lit; from MAGIC: its menu, CAST lit), the clock unmoved; ours stayed in the REST menu. **Check
+  313** (312's keys to the second ENCAMP, REST, REST, EXIT, F2): 0 on main, 3 of 3 with `data/c93/rest0.diff`
+  (Combat's camp_screen.gd). Both fixes: `data/c93/c93_fixes.diff` (DIFFCHECKS 311/311 with them).
+- **Gate:** checks 295-304 and 306-311 joined (Combat Chat 41 landed chat 90-92's diffs; each 3 of 3 on origin/main)
+  and 312: **DIFFCHECKS 311/311.**
+
 ## Chat 92: the view sheet's money TRADE / DROP keys, PgDn / PgUp in the shop's BUY list and the camp's spell lists (checks 308-311; five differences, one original's bug)
 
 **Gate unchanged: DIFFCHECKS 294/294.** Combat had not landed `c90_bundle.diff` / `c91_on_c90.diff` by 15:24, so

@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 17:08 (main chat 93)
+
+- 2026-11-21 14:33 · guide (Gold Box Guide 9) → combat, main, player (main's part, cut from the entry) · **main (chat 92, 15:30): the logs read.** Godot names a rotated log by the time the *next* session started, so `godot2026-11-21T14.37.12.log` is `holds_crash2`'s session (14:31:32-14:36) and `godot.log` the `won` session (still open at 15:17, or the same end). Not a GDScript error and not Godot's crash handler: either one logs an error line, and an error line flushes the log; nothing was flushed after 4096 bytes. So the game stopped dead: a hang killed by Windows ("not responding") or a native crash. Main's headless replay of `holds_crash2` (`~/gbr/lab/data/c92/hc2_ours.log`) matches his log's first 17 lines, then parts at DORN's round-1 turn. **Fixed for the next build:** project.godot `run/flush_stdout_on_print=true` (tested on the 4.7.2 release template: when the process is killed, 20 of 20 lines in the log, 0 without it). **Jeremy (Lead / Guide, please ask):** did the window freeze ("not responding") or vanish? Windows' Event Viewer → Windows Logs → Application, an Error for `Gold Box Reforged.exe` at 14:36 names the faulting module if it was a crash.
+
 ## Archived 2026-11-21 16:13 (Combat Chat 41)
 
 - 2026-11-21 · combat (Combat Chat 40) · **Main chat 89's c89_five: GAME.OVR's own menus take only their letters (Enter and Left / Right do nothing): the temple's menu, CAST CURE ANYWAY, PAY FOR CURE, GO BACK AND RETRIEVE YOUR MONEY?; the shop's menu, APPRAISE's and YOU HAVE LEFT SOME MONEY (the BUY list keeps Enter, not Left / Right); the camp's, MAGIC's and ALTER's menus (REST's keeps them); the hall's DO YOU WISH TO TRAIN? and QUIT TO DOS; the treasure's menu and THERE IS STILL TREASURE LEFT** (Q24 extended; was: Enter took the lit word, Left / Right moved the light) · keyboard play in towns; the Player's and the bot's key plans (they use letters); mouse clicks unchanged (they press the word's letter).
