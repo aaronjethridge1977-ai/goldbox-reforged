@@ -333,14 +333,15 @@ func cloud_save(j: int, by: PartyMember = null) -> void:
 		c.message.emit("%s STARTS TO COUGH" % t.name)
 		if resists(t, -1):
 			return
-		SpellCaster.add_affect(t, EFFECT_COUGH, 34, 1, 0)
+		# Power 0xFF for both (GAME.OVR 0x2BAFD; seen in the spell matrix, Combat Chat 42): Dispel Magic passes them over.
+		SpellCaster.add_affect(t, EFFECT_COUGH, 34, 1, 0xFF)
 		cough(j)
 		return
 	var sick := c.roll(1, 4, "nausea") + 1
 	c.message.emit("%s CHOKES AND GAGS FROM NAUSEA" % t.name)
 	if resists(t, -1):
 		return
-	SpellCaster.add_affect(t, EFFECT_HELPLESS, 34, sick, 0)
+	SpellCaster.add_affect(t, EFFECT_HELPLESS, 34, sick, 0xFF)
 	# ... and runs the effect's handler at once (0x2BB30: 0x2AEEA with 0x1F), the held figure's turn end
 	# (0xFF9A -> 0xBA:0x2637): guard and spell gone, and no turn left this round (Combat Chat 34: the Slums
 	# orc made sick by the cloud was not picked again that round in the original; ours gave it its turn).

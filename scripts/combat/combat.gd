@@ -161,6 +161,23 @@ func outcome() -> int:
 
 ## Lab (the fxlog key): print every figure's effects at each round's start.
 static var lab_print_effects := false
+## Lab (the fxwatch key, Combat Chat 42, the spell matrix): print a figure's status, HP and effects whenever they
+## changed, looked at each turn's start and each round's start (as the lab's trace.py FXWATCH=1 in the original).
+static var lab_watch_effects := false
+var _fx_seen := {}
+
+
+func _lab_fx_watch(where: String) -> void:
+	for k in combatants.size():
+		var m := combatants[k].who as PartyMember
+		var fx := PackedStringArray()
+		for a in m.affects:
+			fx.append("%02x:%d/%d" % [int(a.get("effect", 0)), int(a.get("minutes", 0)), int(a.get("value", 0))])
+		var sig := "st%d hp%d fx %s" % [m.status, m.hp, " ".join(fx) if fx.size() else "-"]
+		if _fx_seen.get(k, "") != sig:
+			_fx_seen[k] = sig
+			# Into the draw log (printed by tplog), after the draw it follows, as trace.py's FX lines.
+			TpDice.log.append("FX after %d R%d %s %d %s %s" % [TpDice.calls, round_no, where, k, m.name, sig])
 
 
 ## The fight was ended by NO at CONTINUE BATTLE.
@@ -216,6 +233,8 @@ func start_round() -> void:
 		_battle_start_powers()
 		_count_enemy_health()     # the fight's setup (GAME.OVR 0xE550)
 	round_no += 1
+	if lab_watch_effects:
+		_lab_fx_watch("round")
 	if lab_print_effects:
 		# Lab (fxlog key, Combat Chat 41): every figure's effect records at each round's start.
 		for k in combatants.size():
@@ -282,6 +301,8 @@ func next_turn() -> int:
 			_end_round()
 			if round_no > 0 and asked_round != round_no and standing(1) == 0:
 				asked_round = round_no
+				if lab_watch_effects:
+					_lab_fx_watch("ask")
 				return ASK_CONTINUE
 			start_round()
 			# A round where no one can act (everyone left asleep, held or choking, chat 13:
@@ -299,6 +320,8 @@ func next_turn() -> int:
 			continue
 		var c: Dictionary = combatants[active]
 		(c.who as PartyMember).refresh_load_word()     # each figure's turn (0x99FD: 0x9A8A)
+		if lab_watch_effects:
+			_lab_fx_watch("turn")
 		if c.down:
 			continue
 		if lab_print_effects:
@@ -331,6 +354,8 @@ func next_turn() -> int:
 			magic.item_in_use = false      # DS:0x6DBF never outlives an item's use
 		return active
 	active = -1
+	if lab_watch_effects:
+		_lab_fx_watch("end")
 	return -1
 
 

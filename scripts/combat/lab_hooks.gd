@@ -3,7 +3,7 @@ class_name LabHooks
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "partyhp", "monsters", "outcome", "who", "temple",
-		"ending", "fxlog"]
+		"ending", "fxlog", "fxwatch"]
 const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee="]
 
 
@@ -92,6 +92,9 @@ static func handle(main: Node, n: String) -> bool:
 		combat._encounters = [{"monsters": rows, "text": "staged"}]
 		combat._enc_index = 0
 		combat._load_monsters()
+	elif n == "fxwatch":                # fxwatch: a figure's status, HP and effects whenever they change (Combat Chat 42)
+		Combat.lab_watch_effects = true
+		return true
 	elif n == "fxlog":                  # fxlog: every figure's effects (effect:minutes) at each round's start (Combat Chat 41)
 		Combat.lab_print_effects = true
 		return true
