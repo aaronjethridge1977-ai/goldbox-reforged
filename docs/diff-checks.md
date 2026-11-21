@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 79: the camp's USE of a Magic User scroll (checks 179 and 180, a fix), money TRADE to a member who can't carry it (ready check 181, to Combat), the silver shop's SELL (check 182)
+## Chat 79: the camp's USE of a Magic User scroll (checks 179 and 180, a fix), money TRADE to a member who can't carry it (ready check 181, to Combat), the silver shop's SELL (check 182), a buff CAST with SEARCH on then a step (check 183), a scroll's combat-only spell in camp (check 184)
 
 Main path, against the original in DOSBox (lab `data/c79/chk179`, `chk180`, links in `data/c79/cd/`), tpseed 11111111, check 159's start (LIRA, fighter/magic-user 1, with a read scroll of PROTECTION FROM GOOD and SHOCKING GRASP).
 
@@ -180,6 +180,8 @@ Main path, against the original in DOSBox (lab `data/c79/chk179`, `chk180`, link
 - **180**: the same with LIRA's magic-user level (+0x9B) made 8: the original still 12 minutes, power 6, so a scroll's level is a fixed 6 (not the reader's level, not "at least 6"); ours without the fix 16 minutes, power 8. 3 of 3 with it.
 - **181** (ready, not in the gate: Combat's file): the view page's money TRADE to a member who can't carry it: check 178's start with DORN's platinum 30000: ENCAMP, Home (DORN), VIEW, TRADE, End (ARN), SELECT, Enter, 30000, Enter (refused: nothing moves, no message on the screen), Enter, 3000, Enter, Enter, 3000, Enter (both taken: ARN's cached word never rises, GAME.OVR 0x250D5), EXIT x4, save: ARN 6000, DORN 24000. Ours moves the 30000 (then the gold). The fix (one test in character_sheet.gd) is with Combat (board); 3 of 3 with it. Lab `data/c79/chk181`, the diff `data/c79/chk181_fix.diff`.
 - **182** (3:0 the silver shop's SELL): check 157's start: Up, YES, End x4 (LIRA), VIEW, ITEMS, End x2 (SHORT BOW), SELL (7 gold, as the arms shop's), YES, EXIT x3, save. Matched at once, 3 of 3; NO differs.
+- **183** (3:0 the adventure menu's CAST of a buff with SEARCH on, then a step): check 173's start: SEARCH, End x2 (CEDRIC), CAST, End (PROTECTION FROM EVIL), CAST, Home x2 (ARN), SELECT, EXIT, Up (a searching step: 10 minutes, into the arms shop's square), NO, save: ARN's 3-minute effect gone, 06:10. Matched at once, 3 of 3; without SEARCH differs (the clock).
+- **184** (3:0 the camp's USE of a scroll's combat-only spell): check 179's keys to USE, CAST on SHOCKING GRASP: THAT ITEM / IS A COMBAT-ONLY ITEM... / USE IT?, YES: the spell gone, the scroll WITH 1 SPELL. Matched at once, 3 of 3; NO differs.
 - Not checked: whether a wand or potion used by a spell caster also casts at 6 (the fix assumes so: ours already gave 6 to anyone who casts no spells, the original's rule for items); combat's scroll USE (combat_spells.gd, Combat's file) still takes the reader's level: to Combat.
 
 ## Chat 78: the camp's DROP of a stack (check 169), the adventure menu's CAST (check 170), a combat-only spell there (check 171), ALTER SPEED (check 172, a fix), CAST PROTECTION FROM EVIL on another member (check 173), ENLARGE and SHIELD (check 174), an effect running out in REST (check 175), the shop's POOL, TAKE and SHARE (check 176), back for the money (check 177), the view page's money TRADE and DROP (check 178)
