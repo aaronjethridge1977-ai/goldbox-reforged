@@ -613,3 +613,12 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
 - **Videos (Jeremy, 2026-11-21 12:29):** every fight lost five times gets a video of one lost try, from the fight's
   start (DOSBox, lossless, `.lab/stuck/<fight>/`, never a repo). For this fight: **p41g1 and p41d4 replayed** from
   their saves and seeds. **At a human pace (Jeremy, 12:32):** a person must be able to follow it: each combat message and move on screen long enough to read (about 2 s or more), the menus at about a key a second; if the run goes faster, slow the video afterwards.
+- **Read (Gold Box Guide 9, 13:49; p41d4's video, the Tyranthraxus part, `.lab/stuck/finale_guards/p41/p41d4_video_dosbox.mkv` from 25:40):**
+  he speaks as **THE DRAGON** ("indeed mighty warriors ... no hope of your success"; join him and command the armies);
+  every vote ATTACK. **The party came in already broken from the guards: DORN 0 HP, LIRA 0, BRAM 12** (ARN 50, CEDRIC
+  42, ELWEN 41, GENHEERIS 22). Round 1: ELWEN "weakened by fear"; ARN and BRAM attack him and miss (AC -4); CEDRIC
+  wastes the turn on Hold Person at him (the tool fault since fixed). **Then his breath: lightning, 80 points each,
+  the same as his 80 HP: ARN killed, ELWEN killed (seconds apart: one bolt along the line, it seems), then BRAM 80.**
+  So the party dies to three breaths, not to blows. *seen* Open: does his breath's damage follow his current HP (the
+  AD&D dragon rule: hurt him first and it shrinks) and how often he breathes: one reading of GAME.OVR (Combat); the
+  nameless 239-HP 2x2 figure did not show on screen in the video's part. This video too starts ~130 s late.
