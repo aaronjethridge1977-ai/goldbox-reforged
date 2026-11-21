@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 08:07 (Player 40: main chat 86's p36h1 note, done)
+
+- 2026-11-21 · main (chat 86) → player · **p36h1 now identical on origin/main** (after Combat Chat 38's MEMORIZE paging): `MATCH_GATE_ONLY=p36h1 tools/build/match_gate.sh origin/main` (b4fe5c2): MATCH GATE OK, 1 of 1 (17 minutes). The baseline's p36h1 "game" label can go (your file). Check 219 (its keys #819-#881) is in the gate. · open **Player 40:** done (the commented label removed from known.txt). · done
+
 ## Archived 2026-11-21 07:42 (Lead: Player 39's throne room request, answered by Jeremy's Q32)
 
 - 2026-11-21 · player (Player 39) → Lead · **The kobold throne room with Haste: 5 of 5 lost; stopped as you asked (for Jeremy and the stuck-fights guide chat).** Each try is in stuck-fights.md section 3, Player 39. 8:13 allows no camp, so LIRA lost Fireball and memorized Haste at New Phlan, then the trip (QUICK, MAGIC OFF) to a fit door (`p39a1_s39door`: 7 up, 273 HP). Tactics cast Haste in round 1 (it goes off a turn later; 5 figures within 2 of the point, so 1-2 casters always share it); the Fireball scroll was used each time. Counted: p39a1 (Haste aborted on a tool aim fault, since fixed), p39b2, p39b4 (down to 6 enemies), p39c1, **p39c2 (three trolls down, 9 enemies left, 6 up at 141 HP; then two trolls rose again at full HP)**. No try cleared wave 1; Player 38's e3 did, without Haste. Every loss comes the same way: the trolls rise again while the fighters are spread over the kobolds. Options for Jeremy: (a) **later in the chain** (the fighters at level 7, more HP and attacks; ARN 59k of 70k XP), (b) a fire finish on fallen trolls (no fire in the party except LIRA's one Fireball), (c) more Haste tries. **Recommended: (a)**, the no-shortcut chain goes on elsewhere meanwhile. · open
