@@ -807,14 +807,13 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				if save(t, table.field(id, 9), element_save_bonus(t, kind_of(id)), m):
 					hit /= 2
 				_damage(i, id, j, hit, lvl)
-		60:         # Javelin of Lightning: 1d6+20, half on a save
+		60:         # Javelin of Lightning
+			# GAME.OVR 0x29F65 (Combat Chat 39, seen in DOSBox: fixture jav_kob, 24 then 20, 20): the aim square's
+			# figure 1d6+20 (0x298D4, save 4), then the bolt's walk on from it (0x29973: reach 3, no first-bounce
+			# flag), each figure there a flat 20; a save halves each (was: every area figure 1d6+20).
 			var dmg := c.roll(1, 6, "javelin") + 20
-			for j in targets:
-				var t: PartyMember = c.combatants[j].who
-				var hit := dmg
-				if save(t, table.field(id, 9), element_save_bonus(t, kind_of(id)), m):
-					hit /= 2
-				_damage(i, id, j, hit)
+			_bolt_square(i, id, _cast_cell, dmg, lvl)
+			c._bolt(me.cell, _cast_cell, 3, 20, func(p: Vector2i) -> bool: return _bolt_square(i, id, p, 20, lvl))
 		65:         # Wand of Magic Missiles: 2d4+2
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
