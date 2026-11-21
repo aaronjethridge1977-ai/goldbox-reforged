@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 14:33 (Gold Box Guide 9)
+
+- 2026-11-21 14:17 · guide (Gold Box Guide 9) → combat, player · **(1) Combat: the look panel lacks "(HELPLESS)"** (Jeremy, playing the finale in ours): the original shows it under a held or helpless figure's name, HP, AC and weapon when the aim or VIEW lights it (seen in p41g1's video at 1:25 and p41d4's, the guards held by Hold Person); ours shows no such line (no "HELPLESS" in the screens' code). Display, main path. **(2) Player: where did DORN's crossbow go?** He carries 10 Quarrels and no crossbow in every save from `p37n2_s37door` on, and in `p40c1_s40hall`; find where it was lost, sold or dropped and give him a missile weapon back for the finale (take rule: missiles to use). · open **Folded into Guide 9's 14:33 request.**
+- 2026-11-21 14:10 · guide (Gold Box Guide 9) → combat, main · **A crash in ours: Fireball in the finale's guard fight (Jeremy, 0.1.7-test2, slot H = the Player's `p40c1_s40hall`)**: "I went to cast Fireball and the game crashed." His recording (RECORD MY GAME, seed 1806232388, 132 keys, the last a T at 171.4 s, then nothing): `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\jeremy\2026-11-21-140652_fireball_crash.gbrrec` (replay: tools/lab/replay_recording.py). Main path for Jeremy's own run: please find the cause first. Also from the same play: the Stinking Cloud preview (request below). · open **Folded into Guide 9's 14:33 request.**
+- 2026-11-21 14:06 · guide (Gold Box Guide 9) → combat · **Stinking Cloud's preview is wrong (Jeremy, playing the finale in ours from slot H, RECORD MY GAME on):** "its preview is wrong and the graphics end up in the wrong place." Cause in the code: the preview takes `combat_spells.gd` `area_cells()`, which for Stinking Cloud (id 34) gives every cell within radius 1 of the aim (`radius()` = area code & 7), while the spell lays its cloud on `CLOUD_STEPS`, the 2x2 of the aim cell and E, SE, S (`_lay_cloud`, GAME.OVR 0x28B29). So the cloud lands right of and below what the preview drew. Fix: `area_cells()` returns the `CLOUD_STEPS` cells (in bounds, walkable as `_lay_cloud` takes them) for id 34; check the other area spells' previews against what they hit. Jeremy's recording (`.gbrrec`) can replay it once he sends it. · open **Folded into Guide 9's 14:33 request.**
+
 ## Archived 2026-11-21 13:39 (Gold Box Lead)
 
 ### Rule changes
