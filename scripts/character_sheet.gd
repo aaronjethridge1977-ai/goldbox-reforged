@@ -861,13 +861,13 @@ func _next_said() -> void:
 ## A clerical scroll gives up the spell in `slot`; its name says one spell fewer (word 48:
 ## 212 "With 3 Spells", 211 "With 2 Spells", 210 "With 1 Spell"; lab: 211 -> 210 after
 ## one of two Cure Light Wounds); an empty scroll is gone.
+## The scroll spell in `slot` is used up: GAME.OVR 0x2A2A2 (PartyMember.spend_scroll_spell, main chat 76) takes the
+## last of bytes 60-62 holding that spell, counts byte 48 down and drops the scroll below 210.
 static func _spend_scroll(m: PartyMember, it: GameItem, slot: int) -> void:
-	it.raw[slot] = 0
-	if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
-		m.items.erase(it)
+	if slot < 60 or slot > 62 or it.raw.size() <= slot:
 		return
-	if it.raw[48] in [211, 212]:
-		it.raw[48] -= 1
+	m.spend_scroll_spell(it, it.raw[slot] & 0x7F)
+	if m.items.has(it):
 		recache_name(it)
 
 
@@ -895,16 +895,13 @@ static func item_spell(m: PartyMember, it: GameItem) -> int:
 static func spend_use(m: PartyMember, it: GameItem, id: int) -> void:
 	var slot := types.slot(it.type) if types != null else 0
 	if slot >= 11 and slot <= 13:
-		var k0: int = scroll_pick.get(it, -1)
+		# A scroll's USE spends through GAME.OVR 0x2A2A2 (0x22C77, after 0x2A255's scroll test), as SCRIBE does
+		# (main chat 76): the last of bytes 60-62 holding the spell emptied, byte 48 one down, the scroll gone
+		# below 210. Was: the chosen slot emptied, the scroll gone when all three were empty.
 		scroll_pick.erase(it)
-		if k0 < 60 or it.raw[k0] & 0x7F != id:
-			k0 = -1
-			for k in [60, 61, 62]:
-				if it.raw[k] & 0x7F == id:
-					k0 = k
-					break
-		if k0 >= 60:
-			_spend_scroll(m, it, k0)
+		m.spend_scroll_spell(it, id)
+		if m.items.has(it):
+			recache_name(it)
 		return
 	if it.raw[60] > 0:
 		if it.count > 1:

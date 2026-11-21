@@ -612,7 +612,7 @@ func _draw_list() -> void:
 		else:
 			var lit := i == _cursor and _mode in ["list", "pending"] and _lines.is_empty()
 			_scr.text(2 if _mode in ["pending", "confirm"] else 3, r, row[0], GameScreen.WHITE if lit else GameScreen.GREEN)
-			if _mode == "list" and _list_kind == "scribe" and _marked(int(row[1])):
+			if _mode == "list" and _list_kind == "scribe" and row.size() > 2 and _marked(int(row[2])):
 				_scr.text(2, r, "*", GameScreen.WHITE if lit else GameScreen.GREEN)
 	if _mode == "list" and _list_kind == "memorize":
 		_scr.text(1, 18, m.name, GameScreen.CYAN)
@@ -948,6 +948,24 @@ func _who() -> PartyMember:
 ## Builds a spell list by level: rows [text, id] with headings as [text, 0].
 func _build_list(ids: Array, mark: String = "") -> void:
 	_list = []
+	if _list_kind == "scribe" and mark == "":
+		# SPELLS ON SCROLLS: the scrolls' record order (each scroll's bytes 60-62 in turn), a level heading
+		# wherever the level changes, as CAST's (main chat 76, DOSBox: a scroll 20, 17 lists SHOCKING GRASP above
+		# PROTECTION FROM GOOD; 17, 34, 20 shows 1ST / 2ND / 1ST; ours sorted by spell number). Each row keeps
+		# its place in _scrolls (row[2]): two scrolls with one spell are two rows.
+		var lv := -1
+		for k in ids.size():
+			var l := spells.level(ids[k])
+			if l != lv:
+				_list.append([LEVEL_WORDS[clampi(l - 1, 0, 4)], 0])
+				lv = l
+			_list.append([spells.name_of(ids[k]), ids[k], k])
+		_top = 0
+		_cursor = -1
+		for i in mini(_list.size(), _page_rows()):
+			if _list[i][1] != 0:
+				_cursor = i
+		return
 	if _list_kind == "cast" and mark == "":
 		# SPELLS IN MEMORY: in the record's own order, a level heading wherever the level changes (Combat
 		# Chat 18, DOSBox: ELWEN's record CLW CLW BLESS SLEEP / KNOCK STINKING CLOUD / SLEEP MAGIC MISSILE /
@@ -1089,16 +1107,14 @@ func _choose() -> void:
 		# Marks the scroll spell to be scribed while resting ("*"), or says why not on row 24
 		# for a moment (lab, chat 22; GAME.OVR 0x1838D): already known, already marked, or a
 		# level the magic-user can't learn yet.
-		for row in _scrolls:
-			if row[2] == id:
-				var it: GameItem = row[0]
-				var why := m.scribe_refusal(spells, it, row[1])
-				if why != "":
-					_note_24(why)
-				else:
-					it.raw[row[1]] |= 0x80
-					_note.text = "%s WILL BE SCRIBED" % spells.name_of(id).to_upper()
-				break
+		var row: Array = _scrolls[_list[_cursor][2]]
+		var it: GameItem = row[0]
+		var why := m.scribe_refusal(spells, it, row[1])
+		if why != "":
+			_note_24(why)
+		else:
+			it.raw[row[1]] |= 0x80
+			_note.text = "%s WILL BE SCRIBED" % spells.name_of(id).to_upper()
 		_refresh()
 	elif _list_kind == "cast":
 		_cast_id = id
@@ -1182,12 +1198,10 @@ func _note_24(text: String) -> void:
 		_refresh()
 
 
-## Whether a scroll spell with this id is marked for SCRIBE.
-func _marked(id: int) -> bool:
-	for row in _scrolls:
-		if row[2] == id and (row[0] as GameItem).raw[row[1]] > 0x80:
-			return true
-	return false
+## Whether the scroll spell at this place in _scrolls is marked for SCRIBE.
+func _marked(k: int) -> bool:
+	var row: Array = _scrolls[k]
+	return (row[0] as GameItem).raw[row[1]] > 0x80
 
 
 ## "<NAME>" / message for a moment, the menu as it was (lab: HAS NO SPELLS MEMORIZED).
