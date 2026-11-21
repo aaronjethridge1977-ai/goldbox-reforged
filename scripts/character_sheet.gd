@@ -1128,12 +1128,33 @@ func _unhandled_input(event: InputEvent) -> void:
 					_cast_scroll(m, m)
 			_refresh()
 		"scroll_whom":
-			if key == KEY_HOME:
-				_target = (_target - 1 + _people.size()) % _people.size()
+			# As TRADE's member lists (main chat 93, DOSBox: check 185's scroll): Esc takes the light off the party and
+			# stays; SELECT with no one backs out to the ITEMS page; Home from no one lights the last member; End from
+			# no one is bug 19: SELECT casts on no one, the scroll's spell used up. Check 316.
+			if cancel:
+				if _target >= 0:
+					_target_kept = _target
+				_target = -1
+			elif key == KEY_HOME:
+				if _target == -1:
+					_target = _people.size() - 1
+				elif _target == -2:
+					_target = -1
+				else:
+					_target = (_target - 1 + _people.size()) % _people.size()
 			elif key == KEY_END:
-				_target = (_target + 1) % _people.size()
-			elif choice == "EXIT" or cancel:
+				if _target == -1:
+					_target = -2 if OriginalBugs.on() else 0
+				elif _target >= 0:
+					_target = (_target + 1) % _people.size()
+			elif choice == "EXIT" or (choice == "SELECT" and _target == -1):
 				_mode = "items"
+			elif choice == "SELECT" and _target == -2:
+				_spend_scroll(m, _scroll, _scroll_slot())   # bug 19: cast on no one, the spell used up
+				_scroll = null
+				_target = _target_kept
+				_mode = "items"
+				_after_change()
 			elif choice == "SELECT":
 				_cast_scroll(m, _people[_target])
 			_refresh()

@@ -483,13 +483,18 @@ func _refresh() -> void:
 	_scr.update()
 
 
+## The member lit in the party list: none while CAST SPELL ON WHOM has its light off (main chat 93).
+func _lit_member() -> int:
+	return -1 if _mode == "whom" and _whom_off != 0 else _sel
+
+
 func _draw_walk() -> void:
 	if _walk:
-		_scr.draw_walk(OverlayLook.last_view, _party, _sel, OverlayLook.last_place, PackedStringArray(), [],
+		_scr.draw_walk(OverlayLook.last_view, _party, _lit_member(), OverlayLook.last_place, PackedStringArray(), [],
 			OverlayLook.last_wild, OverlayLook.last_overland)
 	else:
 		var view: Image = _fire[_fire_frame] if not _fire.is_empty() else OverlayLook.last_view
-		_scr.draw_walk(view, _party, _sel, (place + " CAMPING").strip_edges(), PackedStringArray(), [])
+		_scr.draw_walk(view, _party, _lit_member(), (place + " CAMPING").strip_edges(), PackedStringArray(), [])
 		OverlayLook.camp_view = view
 		OverlayLook.camp_place = (place + " CAMPING").strip_edges()
 	if _plain_rope:
@@ -1164,6 +1169,7 @@ func _choose() -> void:
 			_refresh()
 		elif SpellCaster.needs_member(spells, id):
 			_mode = "whom"
+			_whom_off = 0
 			_pick = 0
 			if _last_target != null and _party.has(_last_target):
 				_sel = _party.find(_last_target)
@@ -1171,6 +1177,10 @@ func _choose() -> void:
 			_refresh()
 		else:
 			_cast(null)
+
+
+## CAST SPELL ON WHOM's light (main chat 93): 0 on _sel; -1 no one (after Esc); -2 past the party's end (bug 19).
+var _whom_off := 0
 
 
 func _cast(target: PartyMember) -> void:
@@ -1343,8 +1353,30 @@ func _unhandled_input(event: InputEvent) -> void:
 			_change(1 if up else -1)
 		elif _mode in ["list", "pending"]:
 			_move_cursor(step)
+		elif _mode == "whom" and _whom_off != 0:
+			# From no one (after Esc): Home lights the last member, End no one past the party's end (bug 19; with
+			# the bugs off the first member); Home from past the end no one again (main chat 93, as TRADE's, chat 92).
+			if up:
+				if _whom_off == -1:
+					_sel = _party.size() - 1
+					_whom_off = 0
+				else:
+					_whom_off = -1
+			elif _whom_off == -1:
+				if OriginalBugs.on():
+					_whom_off = -2
+				else:
+					_sel = 0
+					_whom_off = 0
+			_refresh()
 		elif _mode in ["camp", "magic", "whom", "alter", "order"]:
 			_pick_member(step)
+		return
+	# CAST SPELL ON WHOM: Esc takes the light off the party and the question stays (main chat 93, DOSBox: check
+	# 142's camp, CEDRIC's CURE LIGHT WOUNDS; as TRADE's member lists). Check 315.
+	if _mode == "whom" and key == KEY_ESCAPE:
+		_whom_off = -1
+		_refresh()
 		return
 	# The camp's menu, MAGIC's and ALTER's take only their letters: Enter and Left / Right do nothing
 	# there (main chat 89, DOSBox at 3:0, check 288; Q24 extended, as the temple's). REST's menu keeps them.
@@ -1429,7 +1461,9 @@ func _act(choice: String) -> void:
 			_show_menu()
 		"rest":
 			match choice:
-				"REST": _start_rest()
+				# REST TIME 00:00:00: straight back, as EXIT (main chat 93, DOSBox: the camp menu with SAVE lit, or
+				# MAGIC's menu with CAST lit); ours stayed in the REST menu. Check 313.
+				"REST": _act("EXIT") if _to_rest <= 0 else _start_rest()
 				"DAYS": _field = 0
 				"HOURS": _field = 1
 				"MINS": _field = 2
@@ -1488,11 +1522,19 @@ func _act(choice: String) -> void:
 			_pick = 0
 			_magic_menu()
 		"whom":
-			if choice == "SELECT":
+			if choice == "SELECT" and _whom_off == -2:
+				# Bug 19: cast on no one past the party's end: the spell is used up, nobody healed (DOSBox).
+				_whom_off = 0
+				_caster.forget(_cast_id)
+				_sel = maxi(_party.find(_caster), 0)
+				_back_to_list()
+			elif choice == "SELECT" and _whom_off == 0:
 				_cast(_party[_sel])
 			else:
-				# EXIT: the list is built again, its last spell lit, as after a cast (main chat 86, checks 252-253:
+				# EXIT (or SELECT with no one lit: backs out, the spell kept): the list is built again, its last spell
+				# lit, as after a cast (main chat 86, checks 252-253:
 				# DOSBox, the adventure menu's and the camp's CAST, ENLARGE then EXIT: SLEEP lit below it).
+				_whom_off = 0
 				_sel = maxi(_party.find(_caster), 0)
 				_back_to_list()
 		"ask":

@@ -154,7 +154,9 @@ func tile(col: int, row: int, index: int) -> void:
 	for y in 8:
 		for x in 8:
 			var c := t.get_pixel(x, y)
-			if c.r8 != 0 or c.g8 != 0 or c.b8 != 0:
+			# Only inside the screen (Combat Chat 42: release builds don't check set_pixel's bounds).
+			if (c.r8 != 0 or c.g8 != 0 or c.b8 != 0) and col * 8 + x >= 0 and row * 8 + y >= 0 \
+					and col * 8 + x < img.get_width() and row * 8 + y < img.get_height():
 				img.set_pixel(col * 8 + x, row * 8 + y, c)
 
 
