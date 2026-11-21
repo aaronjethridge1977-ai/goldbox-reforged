@@ -483,6 +483,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		_refresh()
 		return
 	var choice := ""
+	# The temple's menu (HEAL VIEW ... EXIT), CAST CURE ANYWAY and PAY FOR CURE take only their letters, Esc
+	# and the party keys: Enter and Left / Right do nothing there; the HEAL list keeps Enter for its lit word
+	# but not Left / Right (GAME.OVR's own loop 0x5280; main chats 88-89, DOSBox at 3:0's temple, checks 284,
+	# 291; Q24 extended to it, the Lead 2026-11-21).
+	if (_mode in ["menu", "anyway", "pay"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]) \
+			or (_mode == "list" and key in [KEY_LEFT, KEY_RIGHT]):
+		return
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
 		if _mode == "coins":

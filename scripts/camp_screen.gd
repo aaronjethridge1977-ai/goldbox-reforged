@@ -1341,6 +1341,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _mode in ["camp", "magic", "whom", "alter", "order"]:
 			_pick_member(step)
 		return
+	# The camp's menu, MAGIC's and ALTER's take only their letters: Enter and Left / Right do nothing
+	# there (main chat 89, DOSBox at 3:0, check 288; Q24 extended, as the temple's). REST's menu keeps them.
+	if _mode in ["camp", "magic", "alter"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]:
+		return
 	if key == KEY_LEFT or key == KEY_RIGHT:
 		var d := 1 if key == KEY_RIGHT else -1
 		if _mode == "rest":

@@ -401,6 +401,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		"coins": items = ["EXIT"]
 		"ask_exit": items = ASK_MENU
 	var choice := ""
+	# The treasure's menu (VIEW TAKE POOL ... EXIT) and THERE IS STILL TREASURE LEFT's YES NO take only their
+	# letters: Enter and Left / Right do nothing (main chat 89, DOSBox at 3:14's rugs, check 290; Q24
+	# extended, as the temple's).
+	if _mode in ["menu", "ask_exit"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]:
+		return
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
 		if _mode == "coins":

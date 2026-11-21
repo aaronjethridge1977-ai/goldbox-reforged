@@ -345,12 +345,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					_function(it)
 					return
 		"confirm_train", "confirm_drop", "confirm_drop2", "quit":
-			var yes := key == KEY_Y or (enter and _pick == 0)
-			var no := key == KEY_N or esc or (enter and _pick == 1)
-			if key == KEY_LEFT or key == KEY_RIGHT:
-				_pick = 1 - _pick
-				_refresh()
-			elif yes:
+			# The hall's questions take only Y and N (and Esc for NO): Enter and Left / Right do nothing, the
+			# light stays on NO (main chat 89, DOSBox at 3:11: DO YOU WISH TO TRAIN?, QUIT TO DOS; check 289;
+			# Q24 extended, as the temple's).
+			var yes := key == KEY_Y
+			var no := key == KEY_N or esc
+			if yes:
 				match _mode:
 					"confirm_train": _do_train()
 					"confirm_drop":

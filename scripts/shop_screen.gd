@@ -607,6 +607,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	var items: Array = _list_menu() if _mode == "list" else _menu_items()
 	var choice := ""
 	_pick = mini(_pick, items.size() - 1)
+	# The shop's menu (BUY VIEW ... EXIT) and APPRAISE's (GEMS JEWELRY EXIT) take no Enter; neither they nor
+	# the BUY list (ITEMS: BUY NEXT PREV EXIT) move the light with Left / Right; the list takes Enter for its
+	# lit word (main chat 89, DOSBox at 3:0's arms and armour shop, checks 285, 286, 292; Q24 extended).
+	if (_mode in ["menu", "appraise"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]) \
+			or (_mode == "list" and key in [KEY_LEFT, KEY_RIGHT]):
+		get_viewport().set_input_as_handled()
+		return
 	if key == KEY_ENTER or key == KEY_KP_ENTER:
 		choice = items[_pick]
 		if _mode == "coins":
