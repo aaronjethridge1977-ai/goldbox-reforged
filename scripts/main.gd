@@ -1486,6 +1486,10 @@ func _quick_save() -> void:
 	cfg.set_value("place", "facing", int(_facing))
 	cfg.set_value("script", "file", _vm_file)
 	cfg.set_value("script", "block", _vm_block)
+	# SAVE puts the game speed into the script cell (SPEED_CELL, GAME.OVR 0x1FECE), as
+	# _save_original does: the original's saves hold it there (chat 78, check 172).
+	_vm.mem[SPEED_CELL] = CampScreen.speed
+	_vm.hi.erase(SPEED_CELL)
 	cfg.set_value("script", "memory", _vm.mem)
 	cfg.set_value("qol", "speed", CampScreen.speed)
 	cfg.set_value("script", "memory_hi", _vm.hi)
@@ -1637,6 +1641,8 @@ func _save_original(letter: String) -> bool:
 	# 0x4AFD-0x4AFF. Lab (chat 22): a save ours made in Sokal Keep after the Slums kept the
 	# Slums' 2 and 2, 4, 1 there, and the original stopped with "Unable to load geo in
 	# Load3DMap" (then "...wallset in LoadWallSet"); with 4 and 1, 5, 9 it loads and plays.
+	# GAME.OVR 0x1FECE writes the speed into the live script memory, not just the file's copy.
+	_vm.mem[SPEED_CELL] = CampScreen.speed
 	var mem := _vm.mem.duplicate()
 	mem[EclVM.FILE_SET] = _vm_file
 	# Ours keeps the door menu's flags in these cells; the original keeps them elsewhere (DS
