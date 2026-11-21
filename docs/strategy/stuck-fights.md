@@ -450,3 +450,19 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   enough. **The party order sets the start:** ALTER ORDER (camp: SELECT a member, Home/End move it in PLACE, PLACE)
   puts the order's first four in front; `p40/finale2.plan` puts ARN, BRAM, DORN, LIRA forward and CEDRIC, ELWEN behind
   (p40e0, stopped in round 1: CEDRIC at 26,11, the back row). Not yet tried in a counted fight. To the Lead (board).
+- **Tries with `finale2.plan` and the MOVE fix (Player 41, the Lead's (a), seeds 41010001-05): 5 of 5 lost.** p41a1
+  (6 guards left, 317 HP), p41a2 (8 left), **p41a3 (3 left, 206 HP: 9 of 12 down, the best yet)**, p41a4 (5 left),
+  p41a5 (5 left). Files `.lab/stuck/finale_guards/p41/`.
+- **A tool fault spoilt the Hold Persons (found in p41a2, fixed after the five):** in a spell's aim the original
+  doesn't set DS:0xBEFD (the aimed entry), so the tool named the figure under the aim from the right panel's name and
+  HP, and twelve unhurt 8TH LVL FIGHTERs all match: it guessed the first guard not yet picked. Each TARGET after the
+  first went to the same guard again (the original keeps the aim up on a figure picked again), so a Hold Person took
+  8-12 "picks", held one guard at most, and ended by EXIT (p41a2: CEDRIC 100 s on one cast). Now the tool counts the
+  NEXTs along the aim list (NEXT follows the list from the caster, back on the caster after each pick; p41x1's raw
+  dump): **p41x2: picks 8, 9, 10, then the aim closed by itself (Hold Person takes three)**. Player 40's tries were
+  partly hit too (their quick picks were the same guess). So none of the ten tries had three-target Hold Persons.
+  *seen*
+- **Read (Player 41):** with the order changed the party lasts longer and the guards fall 3-9; the collapse comes
+  late (party 6 up at 161 HP with 6 guards left in p41a1, destroyed in 40 s more). The fight hasn't been tried with
+  working Hold Persons (4 casts x 3 guards from CEDRIC, 5 from ELWEN). To the Lead (board): five more with the fix,
+  or the stuck-fights guide chat as decided.

@@ -1315,6 +1315,32 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 41 (2026-11-21): the finale's guards with finale2 5 of 5 lost; a spell's aim named the wrong figure among look-alikes (fixed); Stinking Cloud's 2x2
+
+**Stage 1:** 68 of 71, nothing new to rerun (p17a6 waits on main / design, p37i1's DORN step on Combat).
+
+**The finale's guards (the Lead's (a)):** five counted tries from `p40c1_s40hall` with `p41/finale2.plan` (DORN and
+LIRA forward) and the MOVE fix, `p41/reload.sh p41a 1 5 ...` (seeds 41010001-05), all lost: 6, 8, **3**, 5, 5 guards
+left (stuck-fights.md section 5). Stopped there, files in `.lab/stuck/finale_guards/p41/`.
+
+**A spell's aim among look-alikes (tactics.py `_aim`):** in a spell's aim the original leaves DS:0xBEFD unset (p41x1,
+`OP_AIMDEBUG=1`: 21 throughout, the list 19 long), so `_aimed` fell back to the panel's name and HP; with twelve unhurt
+8TH LVL FIGHTERs it named the first guard not yet picked, and every TARGET after the first went to one guard again (the
+aim stays up on a figure picked again): Hold Person took 8-12 picks and held one. Now, when the index is out of the
+list, the NEXTs since the aim opened (on the caster, entry 0, and again after each pick) name the entry, the list
+wrapping where the panel shows the caster again; a party member on the panel that disagrees stops the count ("aim
+count lost") and the old reading is used. p41x2: picks 8, 9, 10, then the aim closed by itself (Hold Person: three).
+Any fight with look-alike enemies (kobold hordes, the guards) had the fault; Sleep, Stinking Cloud and Fireball aim
+once, so only their aim point was a guess.
+
+**Stinking Cloud's aim (Guide 6's request):** the area is the aimed square and the squares right, below and
+below-right (2x2), not a 3x3 around it: the aim may now sit beside a member (a troll next to ARN).
+
+**`OP_AIMDEBUG=1`** logs the raw aim list, its index, the reading and the held enemies at each aim step.
+
+Lab: `p41/` (reload.sh and the helpers from p40, finale2.plan, reload.txt, `*.q.out`); runs p41a1-a5, p41x1, p41x2;
+archive `player41_lab.tar.gz`.
+
 ## Player 40 (2026-11-21): the finale's guards 5 of 5 lost; MOVE's Esc undoes the walk (the hold-down fixed); party ORDER; a troll stays down under a member on its corner
 
 **Stage 1:** nothing new to rerun (p17a6 waits on main/design; Combat hasn't answered p37i1's DORN step). main chat 86

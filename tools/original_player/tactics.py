@@ -351,13 +351,18 @@ class Tactics:
                 if k >= need:
                     best.append((-k, f["n"]))
             return [n for _, n in sorted(best)]
-        if spell == "STINKING CLOUD":  # the biggest bunch with no party member in its area (radius 1)
+        if spell == "STINKING CLOUD":  # the biggest bunch with no party member in its area
+            # Player 41 (Guide 6's request): the cloud is 2x2, the aimed square and the squares right, below and
+            # below-right (seen, Combat Chat 34), not a 3x3 around it: with a troll beside a member the 3x3 never
+            # found a free aim (p38-p39: kobold bunches only)
             best = []
             for f in foes:
-                if any(_up(a) and _dist(a, f) <= 1 for a in party) or (me and _dist(me, f) > 6):
+                area = {(f["x"] + dx, f["y"] + dy) for dx in (0, 1) for dy in (0, 1)}
+                if any(_up(a) and area & set(cells(a)) for a in party) or (me and _dist(me, f) > 6):
                     continue
-                k = sum(1 for g in foes if _dist(g, f) <= 1)
-                kf = sum(1 for g in foes if _dist(g, f) <= 1 and _focus(g) and not helpless(g))
+                inside = [g for g in foes if area & set(cells(g))]
+                k = len(inside)
+                kf = sum(1 for g in inside if _focus(g) and not helpless(g))
                 if k >= 2 or kf:
                     best.append((-kf, -k, f["n"]))
             return [b[-1] for b in sorted(best)]
@@ -972,6 +977,29 @@ class Tactics:
                          "targets": t, "scan0": 0}
         sc = self.scan
         sc["steps"] += 1
+        # Player 41 (p41a2-a5: Hold Person took 8-12 picks; the entry read at the last pick's place changed at each pick,
+        # 9, then 11, 12 ... 19): OP_AIMDEBUG=1 logs the raw aim list, its index and the held enemies at every step
+        # p41x1 (OP_AIMDEBUG): DS:0xBEFD stayed 21, out of the 19-entry list, through the whole aim, so _aimed fell back
+        # to the panel's name and HP, and twelve unhurt 8TH LVL FIGHTERs all match: it named the first guard not yet
+        # picked. NEXT follows the list in order from the caster (entry 0; steps 1-6 and 8 showed the party members at
+        # entries 0-5 and 7) and the aim is back on the caster after each pick, so the NEXTs since then name the entry;
+        # the list wraps where the panel shows the caster again
+        r = sc["steps"] - sc["scan0"]
+        if lst and not (0 <= at < len(lst)) and r >= 1:
+            name = st["rows"][1].strip("? ").strip()
+            pmn = [f["n"] for f in figs if f["n"] <= self.party_n and f["name"] == name]
+            if sc.get("k") is None and r > 1 and pmn == [lst[0]]:
+                sc["k"] = r - 1
+            guess = lst[(r - 1) % (sc.get("k") or len(lst))]
+            if pmn and pmn[0] != guess:
+                if not sc.get("lost"):
+                    sc["lost"] = True
+                    self.log("TACTICS aim count lost: the panel shows %d, the count %d" % (pmn[0], guess))
+            elif not sc.get("lost"):
+                cur = guess
+        if os.environ.get("OP_AIMDEBUG"):
+            self.log("AIMDEBUG step %d at %d cur %s lst %s held %s" % (sc["steps"], at, cur, lst, sorted(
+                f["n"] for f in foes if helpless(f))))
         # Player 35 (Gold Box Guide 2's diagnosis, Jeremy 13:26): the original puts the aim back on the caster after
         # each pick, so the scan starts again from there (scan0: the step of the last pick); before, only the figures
         # seen before the first pick were `ok`, and Hold Person's other two picks were thrown away
