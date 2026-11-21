@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 90: APPRAISE's SELL KEEP and menu keys, the treasure's TAKE, the view sheet's questions (checks 295-302; five differences), chat 89's ten join the gate
+## Chat 90: APPRAISE's SELL KEEP and menu keys, the treasure's TAKE, the view sheet's questions and menus (checks 295-303; six differences), chat 89's ten join the gate
 
 **Joined:** 284-286 and 288-294 after Combat Chat 40 landed `c89_five.diff` (72f845a): 3 of 3 each on origin/main;
 **DIFFCHECKS 293/293.**
@@ -210,9 +210,17 @@ character_sheet.gd):**
   and 178's starts). Ours moved the light to EXIT. Check 302: TRADE, Right, End (BRAM), Enter: the sword to BRAM
   (ours on main: EXIT, kept).
 
+- **The view sheet's VIEW page menu (VIEW:ITEMS ... EXIT, EXIT lit) and ITEMS menu (READY USE TRADE ..., READY lit)
+  take only their letters and Esc (EXIT, as ours)**: Enter and Left / Right do nothing (DOSBox, check 106's start).
+  Ours: Enter on VIEW's page closed the sheet, Enter on ITEMS readied or unreadied the lit item, the arrows moved the
+  light. Check 303: VIEW, Enter, ITEMS, Enter, Right, Enter (nothing), READY (off), DROP, YES (ours on main: the sheet
+  closed and REST opened; a copy fixing only VIEW's page fails too).
+- Matched, no check: Esc at the treasure's TAKE menu, LOOT list and coin list (EXIT each); the shop's coin page (Right
+  nothing, Enter HOW MUCH, Esc back).
+
 Each 3 of 3 with the bundle `data/c90/c90_bundle.diff` (on origin/main 791987a: SELL KEEP, the APPRAISE menu, the
-treasure's TAKE, the sheet's questions; check_godot OK, DIFFCHECKS 293/293 with it); 0 of 8 on main. They join after
-the bundle lands.
+treasure's TAKE, the sheet's questions and menus; check_godot OK, DIFFCHECKS 293/293 with it); 0 of 9 on main. They
+join after the bundle lands.
 
 ## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-294; five differences)
 
