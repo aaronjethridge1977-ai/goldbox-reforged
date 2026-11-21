@@ -19,6 +19,11 @@ const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock m
 	0x49FD: "sky outdoors", 0x49FE: "sky indoors"}
 
 
+## Chat 82: compare the records' cached THAC0 and AC too (+0x110, +0x111): only checks that ask (diffcheck.sh passes
+## --cache for a check folder holding a `cache` file); the cache follows the original's refreshes only in part.
+var compare_cache := false
+
+
 func _init() -> void:
 	var ours_path := ""
 	var orig_path := ""
@@ -28,6 +33,8 @@ func _init() -> void:
 			ours_path = arg.trim_prefix("--ours=")
 		elif arg.begins_with("--orig="):
 			orig_path = arg.trim_prefix("--orig=")
+		elif arg == "--cache":
+			compare_cache = true
 		elif arg.begins_with("--ignore="):
 			for a in arg.trim_prefix("--ignore=").split(","):
 				ignore[a.hex_to_int()] = true
@@ -146,6 +153,8 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	var b: PackedByteArray = u.record
 	var fields := [["HP", 0x11B, 1], ["max HP", 0x32, 1], ["experience", 0xAC, 4], ["status", 0x10C, 1],
 			["age", 0x30, 2]]     # chat 81: the camp's Haste ages each member it hastes
+	if compare_cache:     # chat 82: the record's cached THAC0 and AC (a check with a `cache` file; TRAIN leaves them stale)
+		fields.append_array([["cached THAC0", 0x110, 1], ["cached AC", 0x111, 1]])
 	for i in 7:
 		fields.append(["coins %d" % i, 0x88 + 2 * i, 2])
 	for i in 7:     # the ability scores and STR 18/xx (chat 66: a temple's RAISE DEAD costs a point of CON)

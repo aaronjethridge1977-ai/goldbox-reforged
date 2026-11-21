@@ -2935,6 +2935,10 @@ func _start_event_fight() -> void:
 		_duelist = _party[_vm.selected]
 		fighters = [_duelist]
 	_vm.duel = 0
+	# A fight's setup refreshes each fighter's cached THAC0 and AC (GAME.OVR 0xD8DA, START.EXE 0xba:0xbb8;
+	# main chat 82): a TRAIN's stale cache lasts until then (an encounter whose monsters flee doesn't refresh: p36h1 at 1:18).
+	for m in fighters:
+		m.refresh_cache()
 	if dev_rng != null:
 		CombatScreen.dev_seed = dev_rng.randi() | 1
 	# The script's fight modifiers (ECL 0x6E70-0x6E72: the kobold caves' nets; side lane).
