@@ -356,8 +356,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   - **Levels first:** train until **LIRA is magic-user 6** (40,001: Haste and Fireball both memorized) and **ARN and
     BRAM fighter 7** (70,001); the graveyard branch next (the knight's tomb, then the vampire's last fight), the
     wilderness and the no-shortcut chain for the rest. Clerics are capped (CEDRIC 6, ELWEN 5): their share is lost.
-  - **ELWEN SCRIBEs Fireball at magic-user 5** (210 XP away). Scribing uses the scroll up (Combat Chat 38), so she
-    needs a Fireball scroll of her own: one found by the check below, else LIRA's (then the party carries none).
+  - **ELWEN learns Fireball at magic-user 5** (210 XP away): she picks it at the training hall's LEARN WHICH SPELL?
+    (Jeremy, 08:20: being able to cast it matters more in the long run than one scroll), so **LIRA keeps her Fireball
+    scroll**. Scribing uses a scroll up (Combat Chat 38): only if Fireball isn't offered at the hall, and then from a
+    scroll the check below finds, not LIRA's.
   - **Fire to finish trolls:** every Fireball (LIRA's, ELWEN's, scrolls) at bunched wounded trolls, so the killing
     blow is fire; Burning Hands (LIRA, 5, one adjacent figure) only on a troll at 5 HP or less.
   - **The Player checks first** whether the other Fireball scrolls (1:24 Temple of Bane, 4:2 Grishnak's temple) and
