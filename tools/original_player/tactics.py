@@ -475,22 +475,24 @@ class Tactics:
             me = next((f for f in party if f["name"] == member), None)
             fallen = _fallen_focus(figs, self.party_n)
             held = {(f["x"], f["y"]) for f in party if _up(f) and f is not me}
+            # (p38e3: BRAM went round a large troll's corner 25,12 between 26,12 and its second cell 25,13: any of
+            # the fallen figure's cells will do)
+            fcells = {c for f in fallen for c in cells(f)}
             if me is not None and fallen:
-                if (me["x"], me["y"]) in {(f["x"], f["y"]) for f in fallen}:
+                if (me["x"], me["y"]) in fcells:
                     self.holding = getattr(self, "holding", set()) | {member}
                 elif "MOVE" in items and member not in self.moved and not any(_dist(me, f) <= 1 for f in foes
                                                                               if _focus(f)):
-                    free = [f for f in fallen if (f["x"], f["y"]) not in held]
+                    free = [f for f in fallen if not held & set(cells(f))]
                     goal = min(free, key=lambda f: _dist(me, f)) if free else None
                     if goal is not None and _dist(me, goal) <= 8:
                         self.moved.add(member)
                         self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None,
-                                     "square": (goal["x"], goal["y"])}
+                                     "square": (goal["x"], goal["y"]), "cells": cells(goal)}
                         self.log("TACTICS %s walks onto fallen figure %d %s's square %d,%d (%d squares)" % (
                             member, goal["n"], goal["name"], goal["x"], goal["y"], _dist(me, goal)))
                         return "m", "tactics: %s MOVEs onto fallen figure %d's square" % (member, goal["n"])
-            if me is not None and member in getattr(self, "holding", set()) and \
-                    (me["x"], me["y"]) not in {(f["x"], f["y"]) for f in fallen}:
+            if me is not None and member in getattr(self, "holding", set()) and (me["x"], me["y"]) not in fcells:
                 self.holding.discard(member)
         if member in getattr(self, "holding", set()):
             self.moved.add(member)       # Player 38: on a fallen troll's square: strike what is in reach, no MOVE off
@@ -603,7 +605,7 @@ class Tactics:
         if mv.get("square"):
             # Player 38: onto a fallen focus figure's square (OP_HOLDDOWN): past the others, then stop there
             goal = {"n": mv["goal"], "x": mv["square"][0], "y": mv["square"][1], "name": "fallen", "hp": 0}
-            if me is not None and (me["x"], me["y"]) == mv["square"]:
+            if me is not None and (me["x"], me["y"]) in mv.get("cells", [mv["square"]]):
                 self.holding.add(mv["member"])
                 self.log("TACTICS %s stands on fallen figure %d's square %d,%d" % (mv["member"], mv["goal"],
                                                                                   me["x"], me["y"]))
