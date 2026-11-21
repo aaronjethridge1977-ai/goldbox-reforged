@@ -43,7 +43,7 @@ extends RefCounted
 ##   plus are avoided (SpecialAffects.weapon_damage). Haste ages its target a year, once
 ##   ("AGES", handler 0x27).
 ## Lightning Bolt walks the breath's bolt and bounces off walls (Combat Chat 36); Stinking Cloud's
-## cloud (Combat Chat 34). Not yet: Spiritual Hammer's weapon, Charm Person lasting beyond the fight,
+## cloud (Combat Chat 34); Spiritual Hammer makes its hammer item (Combat Chat 38). Not yet: Charm Person lasting beyond the fight,
 ## Blink, Silence's own area and save.
 
 const EFFECT_BLESS := 1
@@ -911,14 +911,31 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 					continue
 				SpellCaster.add_affect(t, table.effect(id), id, dur, lvl)
 				c.message.emit("%s %s" % [t.name, "IS HASTED" if id == 48 else "IS SLOWED"])
-		41, 46:     # Dispel Magic: spell effects end on everyone in the area
+		41, 46:     # Dispel Magic (GAME.OVR 0x2939D, the camp's handler too; main chat 81, checks 202, 203)
+			# Once per figure in the area: each effect with a power below 255 (not the racial ones) goes on
+			# its own d100, at most 50, + 5 a caster level above the power's low four bits, - 2 a level below;
+			# an effect that goes runs its end; IS AFFECTED when one went. The original reads the list's first
+			# entry (DS:0x6C95) on every pass instead of entry n (0x6C91 + 4n, as 0x2794E does): only the first
+			# figure is dispelled, once per figure caught (original bug #15, Combat Chat 38).
 			for j in targets:
-				var t: PartyMember = c.combatants[j].who
-				if not t.affects.is_empty():
-					var gone: Array = t.affects.duplicate()
-					t.affects.clear()
-					for a in gone:
+				var who: int = targets[0] if OriginalBugs.on() else j
+				var t: PartyMember = c.combatants[who].who
+				var gone := false
+				for a in t.affects.duplicate():
+					var p := int(a.value)
+					if p >= 0xFF:
+						continue
+					p &= 0x0F
+					var chance := 50
+					if lvl > p:
+						chance = 50 + 5 * (lvl - p)
+					elif lvl < p:
+						chance = 50 - 2 * (p - lvl)
+					if c.roll(1, 100, "dispel %s's effect %d (needs %d)" % [t.name, int(a.effect), chance & 0xFF]) <= (chance & 0xFF):
+						t.affects.erase(a)
 						SpellCaster.ended(t, a, PackedStringArray())
+						gone = true
+				if gone:
 					c.message.emit("%s IS AFFECTED" % t.name)
 		_:
 			_effects(i, id, targets, dur, lvl, saved)
@@ -946,6 +963,8 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictio
 			continue
 		if effect > 0:
 			SpellCaster.add_affect(t, effect, id, dur, lvl)
+			if effect == SpellCaster.SPIRITUAL_HAMMER:
+				SpellCaster._hammer_on(t)      # its handler (GAME.OVR 0xF420) makes the hammer item (main chat 81)
 		if SpellCaster.WORDS.has(id):
 			c.message.emit("%s %s" % [t.name, SpellCaster.WORDS[id]])
 
