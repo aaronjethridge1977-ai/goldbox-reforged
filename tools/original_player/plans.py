@@ -2218,6 +2218,10 @@ class Plan:
                         want, P[op[1]][1], [t for t in rows.values() if t]))
                 if len(lit) != 1:
                     raise_stop(p, "scribe: no single lit spell (rows %s)" % lit)
+                # Player 38 (Combat Chat 38's ask: p37b2's 6 Ends where ours' list needs 3): each key's lit row
+                p.log("SCRIBE list (%s): lit row %d %r, want %s at row %d; rows %s" % (
+                    " ".join(bw), lit[0], rows.get(lit[0]), want, hit[0],
+                    ", ".join("%d %s" % (r, t) for r, t in sorted(rows.items()) if t)))
                 if lit[0] == hit[0]:
                     if st["rows"][hit[0]].lstrip("?\\ ").startswith("*"):
                         spells.pop(0)       # (already marked: the next one)
