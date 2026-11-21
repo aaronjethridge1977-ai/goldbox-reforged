@@ -178,7 +178,7 @@ Main path, against the original in DOSBox (lab `data/c78/chk169`, links in `data
 
 - **169** (3:0 the camp's DROP of a stack): ENCAMP, End x4 (LIRA), VIEW, ITEMS, End x3 (10 ARROWS), READY (off), DROP: YOUR 10 ARROWS WILL BE GONE FOREVER / DROP IT? YES NO (no count asked: the whole stack goes), YES, EXIT x3, save. Matched at once, 3 of 3; without DROP, YES differs.
 - **170** (3:0 the adventure menu's CAST, outside camp): check 102's start (ARN at 5 HP): End x2 (the party cursor to CEDRIC), CAST (his memory, on the last line), CAST (CURE LIGHT WOUNDS), Home x2 (ARN), SELECT (5 -> 8, one d8; the list comes back), EXIT, save. Matched at once, 3 of 3; tpseed 22222222 and BRAM as the target differ.
-- Lab only, not in the gate (they repeat check 116, chat 67): `chk170r` (LIRA's short bow refused while her long sword is readied, the sword refused while the bow is) and `chk171` (ARN's bow refused with the shield readied, the shield refused with the bow): both matched 3 of 3.
+- Not in the gate (they repeat check 116, chat 67): LIRA's short bow refused while her long sword is readied and the sword refused while the bow is; and (lab `data/c78/chk171r`) ARN's bow refused with the shield readied, the shield refused with the bow: both matched 3 of 3.
 
 ## Chat 77: CAST READ MAGIC then SCRIBE from an unread scroll (check 162), the shop's SELL (163), the shop's ID of a scroll then SCRIBE (164), TRADE of a stack (165), a Potion of Healing's USE (166), a Potion of Giant Strength's (167, 168); the checks run ours with QoL off
 
