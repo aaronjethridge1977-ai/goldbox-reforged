@@ -342,7 +342,7 @@ class Tactics:
             if getattr(self, "far", False):
                 return self._aim_shoot(st, p)
             return self._aim_attack(st, p)
-        if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
+        if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23] or getattr(self, "scroll_aim", None)):
             return self._aim(st, p)
         if b.startswith("ATTACK ALLY"):
             self.log("TACTICS ATTACK ALLY? NO")
@@ -378,6 +378,7 @@ class Tactics:
         self.order = None
         self.scan = None
         self.shot = None
+        self.scroll_aim = None
         try:
             figs, party, foes = self._sides(p)
             self.log("TACTICS state at %s's menu: party %d up %d HP; enemies %d up %d HP (%s)" % (
@@ -480,8 +481,12 @@ class Tactics:
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
             goal = min(foes, key=lambda f: (not _focus(f), not helpless(f), _dist(me, f))) if me is not None and foes else None
+            # Player 37 (p37g1: both clerics' TURN sent the spectres 21 squares off and the party guarded while the
+            # camp's Haste ran out; turned undead flee and don't fight back): a focus figure is walked to at any
+            # distance, for up to 30 turns
+            far_ok = goal is not None and _focus(goal)
             if member.upper() in ADVANCE and "MOVE" in items and goal is not None and member not in self.moved \
-                    and _dist(me, goal) <= 8 and self.idle.get(member, 0) < 8:
+                    and (_dist(me, goal) <= 8 or far_ok) and self.idle.get(member, 0) < (30 if far_ok else 8):
                 # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack; not
                 # past 8 squares nor after 8 turns without a blow (p35g2: two zombies 21 squares off behind walls,
                 # the greedy steps went round in circles): then GUARD, then QUICK (the computer finds the way)
@@ -748,6 +753,8 @@ class Tactics:
                     left.remove(spell)
                 self.log("TACTICS %s casts %s from a scroll (left: %s)" % (member, spell, left))
                 self.use = None
+                # (p37h1: an item's aim shows no "SPELL:" on row 23: the spell is kept for _aim)
+                self.scroll_aim = spell
             self.log("TACTICS %s begins %s" % (member, spell))
             self.order = None
             return "c", "tactics: CAST %s" % spell
@@ -761,6 +768,8 @@ class Tactics:
         self._mem = p.g.mem
         spell = st["rows"][23].strip("? ").strip()
         spell = spell.split(":", 1)[1].strip() if ":" in spell else spell
+        if not spell and getattr(self, "scroll_aim", None):
+            spell = self.scroll_aim         # Player 37: a scroll's aim (no SPELL: line)
         figs, party, foes = self._sides(p)
         can = "TARGET" in st["bottom"].split()
         cur = self._aimed(st, lst, at, figs)

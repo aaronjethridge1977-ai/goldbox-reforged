@@ -732,9 +732,12 @@ def reload_rule(p):
         if lost and len(lost) <= have and RESTORER in now and now[RESTORER]["status"] == 0:
             p.note("rule", "drained %s: %d Restoration(s) of %d from the scroll, by %s" % (
                 ", ".join(lost), len(lost), have, RESTORER))
-            gs = [ReadyItems(RESTORER, [(False, "MACE"), (False, "SHIELD"), (True, "CLERICAL SCROLL")])]
-            gs += [ReadyItems(RESTORER, [("U:" + n, "CLERICAL SCROLL")]) for n in lost]
-            gs += [ReadyItems(RESTORER, [(False, "CLERICAL SCROLL"), (True, RESTORER_WEAPON), (True, "SHIELD")]),
+            gs = [ReadyItems(RESTORER, [(False, RESTORER_WEAPON), (False, "SHIELD"), (True, RESTORER_SCROLL)])]
+            for n in lost:
+                # Player 37: a used-up scroll is gone: ready the next before each USE (a no-op while one is readied:
+                # both hands are taken)
+                gs += [ReadyItems(RESTORER, [(True, RESTORER_SCROLL)]), ReadyItems(RESTORER, [("U:" + n, RESTORER_SCROLL)])]
+            gs += [ReadyItems(RESTORER, [(False, RESTORER_SCROLL), (True, RESTORER_WEAPON), (True, "SHIELD")]),
                    RestoreDone()]
             p.plan.goals[p.goal:p.goal] = gs
             p.restoring = True
@@ -748,6 +751,8 @@ def reload_rule(p):
 
 RESTORER = os.environ.get("OP_RESTORER", "")            # Player 32: the cleric who reads the Restoration scroll
 RESTORER_WEAPON = os.environ.get("OP_RESTORER_WEAPON", "MACE +2")
+# Player 37: the words of the restorer's Restoration scrolls (ELWEN also carries a cleric scroll of three other spells)
+RESTORER_SCROLL = os.environ.get("OP_RESTORER_SCROLL", "CLERICAL SCROLL").upper()
 
 
 def restorations(p):
@@ -1269,6 +1274,10 @@ class Plan:
                         if isinstance(want, str):     # ("T:<TO>" / "D", words): TRADE / DROP the first NO row
                             hit = [r for r, (y, n) in sorted(rows.items()) if holds(r, n, words)
                                    and (y == "NO" or want.startswith("U:"))]
+                            if want.startswith("U:"):
+                                # Player 37: USE the readied one first (a scroll must be readied; p37: CEDRIC's
+                                # one-spell Restoration first, the two-spell ones from the chest after it)
+                                hit = [r for r in hit if rows[r][0] == "YES"] + [r for r in hit if rows[r][0] != "YES"]
                             if not hit:
                                 p.note("ready", "nothing to %s for %s" % ("drop" if want == "D" else "trade", words))
                                 spec.pop(0)
