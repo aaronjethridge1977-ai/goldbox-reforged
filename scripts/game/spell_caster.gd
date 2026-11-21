@@ -92,8 +92,14 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				_cure_292a2(t, out)
 			return out
 		CURE_BLINDNESS:
+			# The first blindness effect (0x21) only, as the temple's (main chat 82, check 217: of two, the
+			# second stays).
 			for t in targets:
-				remove_effect(t, 0x21)
+				for a in t.affects:
+					if int(a.effect) == 0x21:
+						t.affects.erase(a)
+						ended(t, a, PackedStringArray())
+						break
 			return out
 		REMOVE_CURSE:
 			# GAME.OVR 0x29558 (as the temple's, temple_screen.gd): effect 0x24 (Bestow Curse) goes if
