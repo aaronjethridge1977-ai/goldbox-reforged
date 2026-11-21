@@ -834,3 +834,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- A cleric can't READY a magic-user's scroll (READY does nothing, no message): hand scrolls to a member of the scroll's class before a fight. *seen* (main chat 85, DOSBox, check 243)

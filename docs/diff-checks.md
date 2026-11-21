@@ -172,6 +172,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 85: the camp's CAST list after a cast, STRENGTH twice, the adventure menu's HASTE, a cleric with a magic-user's scroll, BLESS after PRAYER (checks 240-244, matched)
+
+Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3 (recipes:
+~/gbr/checks/README.md "Chat 85"). **The CAST list after a cast (240):** the original rebuilds it with the last row lit,
+not the row cast from (four spells, the second cast: the light on the last of three); ours does so since Combat Chat 18;
+the check fails on a copy keeping the row. **STRENGTH twice on one member (241):** two records of 180 minutes, STR 18.
+**HASTE from the adventure menu (242):** as the camp's, every member [39, 8, 21]. **A cleric given a magic-user's scroll
+(243):** READY does nothing, no message; USE nothing. **BLESS after PRAYER (244):** both records kept. DIFFCHECKS 241/241.
+
 ## Chat 84: a second HASTE on a hasted member (checks 235, 236, a fix); CAST SPELL ON WHOM after MAGIC's EXIT, ENLARGE twice, ANIMATE DEAD's limits, a scroll of REMOVE CURSE (checks 233, 234, 237-239, matched)
 
 Main path (the camp's CAST). **HASTE on a member already hasted (GAME.OVR 0xF8A5):** the common add (0x2C540) keeps the old record when the new one isn't longer, and the effect's handler is given the member's first Haste record: one already aged (power bit 0x10) ages nobody, so the new record stays at the plain power (DOSBox: ARN [39, 8, 21], LIRA's HASTE at magic-user 5: [39, 8, 21] and [39, 8, 5], age 19 kept; ours had aged him to 20, check 236). With an old record of 3 minutes it goes, the new one ages him (check 235, matched). Fixed in `spell_caster.gd` (Haste: only the first record of the type). **CAST SPELL ON WHOM after MAGIC's EXIT:** the light starts on the caster again (DOSBox: LIRA's ENLARGE on CEDRIC, EXIT to the camp menu, MAGIC, REDUCE: LIRA lit; check 233 matches on main and with Combat's `camp_whom.diff`, fails if the diff keeps the target past EXIT): the diff's clearing at EXIT is right. The spell list reopens with the light on its last row before the EXIT (SLEEP). **ENLARGE twice** on CEDRIC: two [12, 10, 1] records (check 234). **ANIMATE DEAD** at cleric 1 with two dead raises the first only (237); a dead half-elf and a dead elf both rise, no racial save (238). **A clerical scroll of REMOVE CURSE** read in camp (CEDRIC on ARN's readied cursed Long Sword): byte 54 cleared, the scroll gone (check 239). **A paladin can't reach level 9 in Pool:** START.EXE's experience table (image 0x10863, 56 bytes a class) has -1 for every paladin and ranger level, so neither class trains at all (ours reads the same table: `class_tables.gd`); the paladin's cleric spells can't come up in Pool.
