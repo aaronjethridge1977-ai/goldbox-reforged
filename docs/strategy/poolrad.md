@@ -83,7 +83,7 @@ files); results *seen* unless marked.
 **The Slums (2:20)**
 - **The southern streets (6,14):** a wandering encounter of 24, either 4 goblin leaders, a bugbear and 19 goblin
   guards, or 4 orc leaders, a bugbear and 19 orcs. *code* It destroyed two level-1 parties (p14b3, p14b4) and killed a
-  member in another (p15c3). **Two Sleeps should cut it down** (*Jeremy*): Sleep's 4d4 hit dice cover goblins and orcs
+  member in two others (p14b5, p15c3). **Two Sleeps should cut it down** (*Jeremy*): Sleep's 4d4 hit dice cover goblins and orcs
   (1 each), but its 3x3 holds at most 9 figures, so bunch them first (a corner or a doorway), then Sleep.
 - **Event 9 (3,3):** 4 orc leaders and 20 orcs (24 in one load; the Player counted 30: perhaps a second wave). *code* +
   *seen* Lost twice at level 1 by a party that had spent its Sleeps on the way (p15c1, c2). Two fresh Sleeps should do
@@ -194,6 +194,14 @@ files); results *seen* unless marked.
     (Gold Box Guide 4)
 - Patrols and camps as the cluebook says (MEEK + HARASH, or HAUGHTY / ABUSIVE + TYRANTHRAXUS; the safe rest rooms during
   an alarm). *book*
+- **Camps (5:3, 5:4):** the area's rest script runs at ENCAMP and sets the camp's odds until it is left. **With no
+  alarm a camp is never interrupted.** While the alarm rings (it runs from the fight that rang it to about the next
+  hour on the clock: 0x4A62-0x4A64), a camp off a safe square (info bit 64, the book's safe rooms) is checked every 5
+  minutes at 17% (a patrol of giants and a human fighter, "SURPRISES YOU"): 11 minutes about 1 in 3, an hour 9 in 10,
+  a night certain. So **after a fight that rang the alarm, cure with spells and walk on; rest only in a safe room, or
+  ENCAMP anew after the hour has passed** (a camp made during the alarm keeps its odds). *code* (ECL5 blocks 3-4, on
+  rest 0x9BC7, the alarm 0x995D-0x9A04) Player 27's two losses (p27g4, p27h1) camped where they had just fought (5:3
+  12,12) and were interrupted at 8, 11 minutes and 10 hours. *seen* (Gold Box Guide 5)
 
 **The finale (5:7)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
 - **Genheeris** (the robed man at the desk, 2,5): agree to his deal and he **joins** (a 7th-level magic-user, 22 HP,
@@ -208,8 +216,10 @@ files); results *seen* unless marked.
   the original he resists every spell (the original's bug #7): only blows count. So **Haste, Prayer and Bless are cast
   in the guards' last rounds**, once most are held, to be fresh for him (Haste lasts 3 + level rounds: cast in camp
   before the guards it may run out). **An effect carries into the next fight with the rounds it has left** (a fight's
-  end clears nothing; Combat Chat 36, *code*); whether 5:7's script passes time between the two fights: asked of
-  Combat. **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his
+  end clears nothing; Combat Chat 36, *code*), and **5:7's script passes no time between the two fights** (ECL5 block 7,
+  0xA614 to 0xA802: flag tests, his speech with two PRESS BUTTON pauses, the vote, the next fight's setup cells; no
+  REST, clock step or effect clear; *code*, Gold Box Guide 5). The guards' experience and treasure screens come at
+  their fight's end, before his speech, so the rings are taken then. **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his
   fight (READY in a fight is free as for weapons; a ring not yet tried in DOSBox). **Only the better ring counts**, and
   **magic body armour cancels a ring's AC**; its +3 to saves counts either way (Combat Chat 36: START.EXE 0xE22). So
   every member gains +3 against his fear and breath, and those **without magic body armour** (DORN in the Bracers, the
@@ -499,7 +509,7 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
     (p28e3; 8 losses with deaths, 3 wipes) from `s31e`. With no alarm the giants parley (ECL 5:4 0xA38D: HAUGHTY or SLY gives
     the passwords; untried); a won fight sets 0x4A66 bit 16, which keeps the four giants of 5,2 (event 1) away.
 - **Valjevo patrol, 5:4** [75 x1, 55 x5], giants led by a human fighter. It comes on a camp while the alarm holds. Won 3 of 4 seeds (Player 3).
-- **Valjevo camps, 5:3 12,12**: p27g4 and p27h1 were wiped by camps interrupted three times. Inside 5:3 use cures only.
+- (Folded into section 3, Guide 5.) **Valjevo camps, 5:3 12,12**: p27g4 and p27h1 were wiped by camps interrupted three times. Inside 5:3 use cures only.
 - **Finale guards, 5:7 3,8** [85 x12]: party destroyed on every seed (Players 2, 3, 7, 9).
   - Player 29 (the full run's party, 263 HP, levels 4-6, from `s34h` at full HP, levels 1-3 memorized, MAGIC ON): **1 win in 5**
     (p29b2 won and was left with 5 standing, 141 HP; p29d1-d4 destroyed in under a minute). The 12 guards (8th-level
@@ -514,13 +524,13 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
     (7 members, levels 6-7) beat him for real with one death.
 - (Folded into section 3, Guide 4.) **4:2 3,11** [28 x1, 7 x3, 6 x12] (GRISHNAK). Won 3 of 4, every win with deaths; lost seed 0badf00d (Player 8).
 - **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
-- **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).
+- (Folded into section 3, Guide 3.) **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).
 - **Slums event 9, 2:20 3,3** (30 figures): lost twice without `prepare` (Player 15).
 - **Stojanow 2:9 7,6 from earlier saves** (the two magic-users and ettins, [24 x2, 53 x2, 71 x6]): destroyed on every seed (Players 3, 7, 9). It is the same fight as the gate above.
 - **Spectres, 4:10 9,1** [17 x2]. Won 4 of 4, two with nobody dead (Player 7, corrected by Player 8). Drained members count as dead.
 - **Norris the Gray, Kuto's catacombs**: p16c1 met him early (LIRA dead); p16c3 lost three; p16d1 won deathless from `s6pre12` at the first try.
 - **The mage and his guards, 7:23 4,1** (13 figures): p24b5 destroyed, p24b6 won (ARN 3/32 HP).
-- **Pyramid room fights, 7:22**: p25c5 destroyed at 12,15 (rests interrupted after the fight); p25d2 destroyed at 11,13 (three fighters, COMBAT).
+- (Folded into section 3, Guide 3.) **Pyramid room fights, 7:22**: p25c5 destroyed at 12,15 (rests interrupted after the fight); p25d2 destroyed at 11,13 (three fighters, COMBAT).
 - **Wilderness bands**: a 51-figure encounter at 7:26 5,21 (p25a3 destroyed); a band fight at 7:26 12,27 (p25l2 destroyed); 6:25 band fights killed BRAM twice (p25h2, p25j5).
 - (Folded into section 3, Guide 4.) **Graveyard trip 6, 4:10 9,11** ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT", with mummies): p25l3, p25l4 and p25n1 lost a member. p25m1 won, but the mummies' disease stopped healing. p25o1 won, then bought CURE DISEASE.
 - **The graveyard under the reload rule** (Player 32, from `s26t`, tactical mode, clerics turning first): trips 1-6 without a drain (trip 6's mummies turned); trip 7 (9,5: four wights, 16 zombies) lost 17 times until BRAM readied the council's Two-Handed Sword +1 +3 vs undead and CEDRIC took DORN's Mace +2, then won with one level restored from DORN's Restoration scroll; trip 8: 9,7's spectre won, **9,1's two spectres 0 of 18** (two levels a hit). *Seen in the original.*
