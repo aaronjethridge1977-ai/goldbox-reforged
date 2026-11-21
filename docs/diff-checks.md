@@ -172,6 +172,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 87: MEMORIZE reopened after a page turn, EXIT at PLACE, MEMORIZE and SCRIBE THESE SPELLS? NO, ALTER DROP's NO (checks 260-264; two display differences)
+
+Main path, coverage (no state difference): each checked in DOSBox against the original and matched at once, 3 of 3,
+and each fails on a copy deliberately broken (recipes: ~/gbr/checks/README.md "Chat 87"). **MEMORIZE left by EXIT
+with page 2 showing and the light moved (260):** MEMORIZE opens on page 1 again with the page's last spell lit (fails on
+a copy reopening on the page left). **EXIT at PLACE (261):** straight back to ALTER (not ORDER's menu), the order so far
+kept. **MEMORIZE THESE SPELLS? NO (262):** back to MAGIC, the pick dropped (the book again with the slot free).
+**SCRIBE THESE SPELLS? NO (263):** the pick dropped; SCRIBE again, the other spell, a rest: only it is scribed. **ALTER
+DROP, NO (264):** the light stays on the member, DROP lit. **Two display differences (main path, the camp's ALTER;
+ready diffs to Combat, `camp_screen.gd`, lab `data/c87/alter_both.diff`):** the original keeps "<NAME> / HAS BEEN
+SELECTED" after EXIT at PLACE, through the camp menu and ALTER again (ours cleared it); after DROP's NO the original's
+message area is empty from 36 ms on (read every 8 ms): ours said "<NAME> / BREATHES A SIGH OF RELIEF" (not in Pool).
+
 ## Chat 86: a fighter/magic-user with a clerical scroll, one scroll's two spells in turn, readied arrows' DROP, the adventure menu's ENLARGE, a scroll's EXIT, the scroll page's light, EXIT at WHOM, DISPLAY after a REST, VIEW's money words, VIEW's SPELLS (checks 245-259 but 255; 250, 252, 253, 256-258 differences)
 
 Main path, coverage only (no fix): each checked in DOSBox against the original and matched at once, 3 of 3, and each

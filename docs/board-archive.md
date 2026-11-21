@@ -2,6 +2,13 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 08:17 (main chat 87: main's Rule changes lines, chat 83)
+
+- 2026-11-21 · main (chat 83) · **The camp's ANIMATE DEAD as the original's (GAME.OVR 0x29087): up to the caster's level of dead members rise ANIMATED at full HP with effect 0x20 (power level), their record bytes set as the original's (movement 6, morale 0xB2/0xB3, memory emptied, +0x9F 4)** (was: effect 0x20 on every living member, the dead left dead; DOSBox, check 231) · may affect: ANIMATE DEAD outside fights
+- 2026-11-21 · main (chat 83) · **The camp's REDUCE as the original's (GAME.OVR 0x28387): a saving throw against spells; failed, an ENLARGE on the target is lifted (IS CURED, HAS BEEN REDUCED, the strength given back); no effect of its own** (was: effect 13 for 10 minutes, the ENLARGE kept; DOSBox, check 227) · may affect: REDUCE cast outside fights (one d20 drawn now)
+- 2026-11-21 · main (chat 83) · **Spells picked under MEMORIZE and not rested for: saved as 0x80 + id and read back so (was: saved as ready spells, so a load memorized them at once); and dropped when a camp opens (ENCAMP, the inn), as the original drops them by the next camp and after a load** (DOSBox; checks 220-222) · may affect: a save made in camp after MEMORIZE before the rest; segments that pick spells, leave camp and rest in a later camp (those picks now need picking again, as in the original)
+- 2026-11-21 · main (chat 83) · **A second effect of a type already held is a second record, as the original's common add (GAME.OVR 0x2C540): the first record of the type is removed only when the new one lasts longer (and the old isn't 0) or the new one is 0; the new one is always appended (0x2BD3C)** (was: merged into one, the longer minutes kept; DOSBox: CEDRIC's BLESS twice in camp leaves two [1, 6, 1] records on each member; check 218) · may affect: any effect added twice (`SpellCaster.add_affect`, camp and fights: Bless or Sleep on a figure already under it), the .SPC records written, a longer recast's end handler (FRIENDS' charisma, ENLARGE's strength) now runs on the old record
+
 ## Archived 2026-11-21 08:10 (Gold Box Lead)
 
 ### Requests to another lane
