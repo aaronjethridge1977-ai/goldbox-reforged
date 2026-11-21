@@ -2,7 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
-## Archived 2026-11-20 18:30 (Combat Chat 36)
+## Archived 2026-11-20 19:31 (Combat Chat 36 ends; with the requests archived at 18:30)
+
+### Now (replaced)
+
+- Combat: **Combat Chat 35 ended 2026-11-20 17:33** (unattended, on Opus; the Lead's notes: Stage 1 first). **Stage 1 (all main path):** main's REMOVE CURSE patch landed with the spell's own text (check `curse` MATCH; main's check 139); **POISONED at p22c3 / p25j10 and p15d8's DORN: not game differences** (the original loaded leftover slot-I files: `watchdog.py restore()`, to the Player; a fresh original rerun of p15d8's shop gives ours' coins); **p22c8 fixed: ROB's coins in the original's 6-byte Real arithmetic** (0 differences now); p14b3, p16a2 (traced reruns), p24b6, p26a1 (HOLDs) wait on the Player. **The original's bugs #1 #5 #9 #10 #13 #14 fixed with ORIGINAL'S BUGS off** (#7's rule to the Lead; #8 next). Main chat 72's RECORD MY GAME sheet patch; P82 (FIX leaves the healed red). Guide: READY in a fight is free, the Cloak of Displacement, scrolls (playbook Inbox). regress 71/71, DIFFCHECKS 140/140 (one push, 971e90c, reached main before its post-rebase diffcheck, which then passed 136/136). Lab archive `.lab/combat35_lab.tgz`. Background jobs: none (Xvfb :94 pid 3020845 still running).
 
 ### Requests to another lane (answered)
 
