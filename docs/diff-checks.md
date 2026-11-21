@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151); DIFFCHECKS 151/151
+## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53); DIFFCHECKS 152/152
 
 - **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's
   start (3:0, THRENDER GRONE with the mummy's disease 0x32 and rot 0x39) with THRENDER at 3 HP and BROTHER SEAN given
@@ -195,6 +195,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   at 3 HP, BAKSHI and PHINEAS 4 -> 5; ours the same (the heal skips the diseased). Matched at once, 3 of 3; with the
   disease taken from the start, ours heals him (differs). Ours' keys wait after REST: a key sent while ours still
   rests leaves it in camp, where F2 doesn't save (a first try compared a stale save).
+  Check 149's keys had the same fault under load (the Lead's autocheck on 4fd2c88: "F2 not reached"): 30 waits
+  after its REST now, resealed.
+- **Check 152, the arms shop's ID twice** (main path, the standing list): check 143's start with ARN given 500 gold.
+  The original: ID on the unreadied BROAD SWORD (record byte 53 = 6), YES: the list shows BROAD SWORD -2 CURSED (the
+  reply was gone within 0.5 s); ID on the LONG SWORD (byte 53 = 0), YES; 400 gp paid, the 100 left regrouped as 20
+  platinum, the sword's byte 53 cleared. Ours the same (`character_sheet.gd` `_identify`). **statediff.gd now compares
+  byte 53** (`h` in the item key; it compared neither it nor any check's ID before): all 152 checks match with it;
+  the first ID moved to the Long Sword (coins the same) differs only by `h6`. NO at the second ID differs (coins).
 
 ## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 

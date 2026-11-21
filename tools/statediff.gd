@@ -193,11 +193,12 @@ static func _spells(d: PackedByteArray) -> Array:
 
 ## Items as comparable keys (63-byte records): name words 47-49, type 46, plus 50 and 51, readied 52, cursed 54,
 ## count 57, price 58-59, bytes 60-62 (chat 66: until then only the name words were compared; all 109 checks
-## matched with the rest added).
+## matched with the rest added; chat 75: byte 53, the hidden name words an ID clears, as `h`, check 152).
 static func _items(d: PackedByteArray) -> Array:
 	var out := []
 	for i in range(0, d.size() - 62, 63):
-		out.append("%d.%d.%d t%d +%d/%d r%d c%d n%d $%d x%d.%d.%d" % [d[i + 47], d[i + 48], d[i + 49], d[i + 46],
-				d[i + 50], d[i + 51], d[i + 52], d[i + 54], d[i + 57], d.decode_u16(i + 58), d[i + 60], d[i + 61], d[i + 62]])
+		out.append("%d.%d.%d t%d +%d/%d r%d h%d c%d n%d $%d x%d.%d.%d" % [d[i + 47], d[i + 48], d[i + 49], d[i + 46],
+				d[i + 50], d[i + 51], d[i + 52], d[i + 53], d[i + 54], d[i + 57], d.decode_u16(i + 58), d[i + 60], d[i + 61],
+				d[i + 62]])
 	out.sort()
 	return out
