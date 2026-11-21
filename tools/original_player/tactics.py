@@ -19,7 +19,7 @@ The original's screens (seen in DOSBox, Player 30, the Stojanow wall from `s28p`
   figures   the fight's figure n (1-based) is the record at the far pointer DS:0x65B9 + 4n (name +0, HP +0x11B, status
             +0x10C); its cell is DS:0x5F2B + 4(n - 1) (x, y); the party comes first
 """
-import os, struct
+import os, re, struct
 
 MAGES = ("MU", "MAGE", "MAGIC-USER", "MAGIC USER", "WIZARD", "SHAMAN", "CLERIC", "PRIEST")
 LARGE = ("ETTIN", "GIANT", "OGRE", "TROLL", "DRAGON", "HILL GIANT", "FIRE GIANT", "BASILISK", "BULETTE", "OWLBEAR",
@@ -166,6 +166,9 @@ STANDING = {"BLESS": 1, "PRAYER": 49}
 # Player 36: the kobold throne room's Plan 1 (Gold Box Guide 2): `focus TROLL[,...]|none` (plans.py): every blow, arrow and
 # MOVE goes to these kinds first (the helpless of them first), Stinking Cloud at the bunch with most of them
 FOCUS = []
+# Player 37: `scrolls <MEMBER> <spell>, ...`: spells to cast from that member's readied scrolls in fights (USE), one a
+# turn while a target is worth it (the Kovel Fireball scrolls for the graveyard's spectres)
+SCROLLS = {}
 
 
 def _focus(f):
@@ -219,6 +222,8 @@ class Tactics:
         self.moved = set()       # Player 35: members who have walked this turn (one MOVE a turn)
         self.fx_logged = False
         self.fidle = {}          # Player 36: walks to the focus figure this fight, per member
+        self.use = None          # Player 37: a scroll USE under way: {member, spell, tried rows}
+        self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
 
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
@@ -279,7 +284,9 @@ class Tactics:
                 if any(_up(a) and _dist(a, f) <= 2 for a in party) or (me and _dist(me, f) > 9):
                     continue
                 k = sum(1 for g in foes if _dist(g, f) <= 1)
-                if k >= 2:
+                # Player 37: two foes or fewer, a focus kind among them (the graveyard's spectres): one is enough
+                need = 1 if len(foes) <= 2 and any(_focus(g) for g in foes) else 2
+                if k >= need:
                     best.append((-k, f["n"]))
             return [n for _, n in sorted(best)]
         if spell == "STINKING CLOUD":  # the biggest bunch with no party member in its area (radius 1)
@@ -319,6 +326,11 @@ class Tactics:
             # the original after an aim's EXIT (seen, p30b1): a spell with nowhere to go is given up
             self.scan = None
             return "y", "tactics: ABORT SPELL? YES (no target in reach)"
+        if self.use and b.split()[:1] == ["READY"] and "USE" in b.split():
+            return self._use_items(st, p)
+        if b.startswith("CHOOSE SPELL:") and self.use and not self.order:
+            # (the scroll's page after _spell_list found no such spell on it: EXIT back to the items)
+            return "e", "tactics: not on this scroll: EXIT"
         if b.startswith("CHOOSE SPELL:") and self.order:
             return self._spell_list(st, p)
         if b.startswith("AIM:") and not self.order and getattr(self, "shot", None) and "SPELL:" not in st["rows"][23]:
@@ -416,6 +428,20 @@ class Tactics:
                 self.turned.add(member)
                 self.log("TACTICS %s turns undead (%s)" % (member, ", ".join(f["name"] for f in undead[:6])))
                 return "t", "tactics: %s TURNs undead" % member
+        self.use = None
+        left = SCROLLS.get(member.upper())
+        if left and "USE" in items and member not in self.use_off and (member, left[0]) not in self.refused:
+            try:
+                figs, party, foes = self._sides(p)
+                me = next((f for f in party if f["name"] == member), None)
+                t = self.targets(left[0], me, party, foes) if me else []
+            except Exception as e:
+                self.log("TACTICS scroll targets unreadable: %s" % e)
+                t = []
+            if t:
+                self.use = {"member": member, "spell": left[0], "tried": set(), "row": None}
+                self.log("TACTICS %s uses a scroll: %s (targets %s)" % (member, left[0], t[:4]))
+                return "u", "tactics: %s USEs a scroll (%s)" % (member, left[0])
         if "CAST" in items:
             o = self.choose(member, p)
             if o:
@@ -491,6 +517,37 @@ class Tactics:
         self.scan = None
         self.far = far
         return "a", "tactics: %s %s: AIM" % (member, "shoots" if far else "attacks by hand")
+
+    def _use_items(self, st, p):
+        """Player 37: the items page after USE (READY USE DROP ... EXIT; rows "YES <item>" for the readied): light the
+        next readied scroll not tried this turn and USE it (its page: CHOOSE SPELL: CAST EXIT, then _spell_list);
+        none left: EXIT, and the member gives up scrolls for this fight."""
+        u = self.use
+        rows = {}
+        for r in range(5, 23):
+            m = re.match(r"(YES|NO)\s+(.*)", st["rows"][r].strip("?\\ "))
+            if m:
+                rows[r] = (m.group(1), m.group(2).strip().upper())
+        if u["row"] is not None:
+            u["tried"].add(u["row"])
+            u["row"] = None
+        cand = [r for r, (y, n) in sorted(rows.items()) if y == "YES" and "SCROLL" in n and r not in u["tried"]]
+        lit = [r for r in rows if _white(st["im"], r)]
+        if not cand:
+            self.log("TACTICS %s: no readied scroll with %s left (rows %s)" % (u["member"], u["spell"],
+                                                                             sorted(rows.values())))
+            self.use_off.add(u["member"])
+            self.use = None
+            return "e", "tactics: no scroll with the spell: EXIT"
+        if len(lit) == 1 and lit[0] == cand[0]:
+            u["row"] = cand[0]
+            self.order = [u["member"], u["spell"], 0]
+            return "u", "tactics: USE %s" % rows[cand[0]][1]
+        if len(lit) != 1:
+            self.use_off.add(u["member"])
+            self.use = None
+            return "e", "tactics: the items page has no single lit row: EXIT"
+        return ("end" if cand[0] > lit[0] else "home"), "tactics: light to %s" % rows[cand[0]][1]
 
     def _move_step(self, st, p):
         """Player 35: one MOVE key toward the goal figure. In the original's MOVE/ATTACK a step into an enemy attacks
@@ -672,6 +729,10 @@ class Tactics:
             if "NEXT" in st["bottom"].split() and self.order[2] < 4:
                 self.order[2] += 1
                 return "n", "tactics: %s's spells, next page" % member
+            if self.use:
+                # Player 37: this scroll lacks the spell: back to the items page, the next readied scroll
+                self.order = None
+                return "e", "tactics: no %s on this scroll (%s): EXIT" % (spell, ", ".join(sorted(self.seen_names)))
             self.spells[member] = set(self.seen_names)
             self.refused.add((member, spell))
             self.order = None
@@ -681,6 +742,12 @@ class Tactics:
         d = tgt - lit[0]
         if d == 0:
             self.cast[spell] = self.cast.get(spell, 0) + 1     # Prayer, Bless: once (begun now, aimed when it goes off)
+            if self.use:
+                left = SCROLLS.get(member.upper(), [])
+                if spell in left:
+                    left.remove(spell)
+                self.log("TACTICS %s casts %s from a scroll (left: %s)" % (member, spell, left))
+                self.use = None
             self.log("TACTICS %s begins %s" % (member, spell))
             self.order = None
             return "c", "tactics: CAST %s" % spell
