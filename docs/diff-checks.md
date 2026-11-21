@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53), the temple's APPRAISE (check 153); DIFFCHECKS 153/153
+## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53), the temple's APPRAISE (check 153), the shop's BUY that overloads (check 154); DIFFCHECKS 154/154
 
 - **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's
   start (3:0, THRENDER GRONE with the mummy's disease 0x32 and rot 0x39) with THRENDER at 3 HP and BROTHER SEAN given
@@ -206,6 +206,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **Check 153, Tyr's temple APPRAISE** (main path): chat 74's ready check `data/c74/tapp` joins the gate after Combat
   Chat 36's fix (d4d9d13: the temple's APPRAISE is the shop's, KEEP only when one more coin fits and under 16 items,
   SELL through 0x24E8C). MATCH 3 of 3 on 3c24252 (5 differences before the fix); KEEP at the first offer differs.
+- **Check 154, the arms shop's BUY that overloads** (main path, the standing list): check 146's start with DORN given
+  1000 platinum; PLATE MAIL (400 gp, weight 450) bought eight times. The original: five bought (600 platinum left,
+  load word 3163), the last three refused with nothing paid (the refusal's text flashes too fast for the dumps). Ours
+  the same (`PartyMember.can_take_item`: the load plus the item over the ceiling). Matched at once, 3 of 3.
 
 ## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 
