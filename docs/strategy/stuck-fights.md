@@ -590,3 +590,26 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   `.lab/stuck/finale_guards/p41/p41g1.*`. *seen* For the guide: the open-field tries already won the guards 3 of 5
   with working Hold Persons (above); the doorway costs about half the party's HP to reach.
 
+- **Read (Gold Box Guide 9, 2026-11-21; p41g1's log, every figure's cell from memory):** the 313-to-151 above is
+  **not** the cost of walking. At ARN's first turn the party stood ELWEN 25,10 (in the gap), CEDRIC 26,11, LIRA
+  25,12, BRAM 26,12, ARN 27,12, DORN 28,12 (the seventh unlogged, 25,11 likely), the guards on 25-30,13 and 24,
+  26-28, 30-31,14: **five guards (25-29,13) in contact with LIRA, BRAM, ARN and DORN from round 1**. Most of the loss
+  is those five meleeing every round, walk or no walk. Free blows: one clear case, BRAM's two steps (242 to 211).
+  The walk was wrong too: `OP_GOTO` pressed into walls (DORN three keys, two into 27-28,10, the tool's log puts
+  him on a wall cell; he ended where he began, then stepped back to 28,12), ARN twice "no step nearer": turns lost.
+  **To check:** LIRA's Fireball at the guard on 28,14, two squares from DORN and ARN (297 to 255 across it): did it
+  catch our front row? *seen* (log only; the video below decides)
+- **Plan 4 (Jeremy approved 2026-11-21 12:29; Gold Box Guide 9; replaces Plan 3's doorway, keeps its flight):**
+  - **No doorway, nobody walks in round 1.** Round 1: **Stinking Cloud** first (magic-user 2: at once; the 2x2 on
+    front-row guards with no member in it; a failed save is helpless d4+1 rounds), then **Hold Person** (cleric 3
+    picks, magic-user 4; goes off at the caster's next turn, so cast it where the casters aren't in contact: ELWEN,
+    CEDRIC). Fighters attack the guards in contact; a helpless or held one first (one blow slays it).
+  - **Then step back from the held ones** (a held or helpless guard strikes no free blow): the held front row stands
+    between the party and the guards on row 14, who must walk round the ends. Finish the held by melee when beside
+    them, by missiles (bows, darts) when not: **first one check whether a missile slays a held figure as a blow does**.
+  - **No Fireball near our own line** until the check above says how far it reaches.
+  - **Tyranthraxus by the flight**, as Plan 3: TAKE the pile, run from him, camp at 3,6, READY the rings and swords,
+    rest, buffs, then him alone; one Stinking Cloud on him. Every try reported for Jeremy.
+- **Videos (Jeremy, 2026-11-21 12:29):** every fight lost five times gets a video of one lost try, from the fight's
+  start (DOSBox, lossless, `.lab/stuck/<fight>/`, never a repo). For this fight: **p41g1 and p41d4 replayed** from
+  their saves and seeds.
