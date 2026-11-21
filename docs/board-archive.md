@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 19:35 (main chat 75, end)
+
+### Requests to another lane (answered)
+
+- 2026-11-20 · main (chat 74) → combat · **APPRAISE (main path: shops and temples), three differences, seen in DOSBox and read in GAME.OVR.** (a) **The temple's APPRAISE does nothing in ours** (`temple_screen.gd:449`, "not yet"); the original's is the shop's (YOU HAVE A FINE COLLECTION OF:, GEMS, THE GEM IS VALUED AT n GP., SELL / KEEP). (b) **KEEP is offered only when the piece fits** (0x269D3): 0x24CDD with 1 (cached load word +0x102 plus 1 within the ceiling) and item count +0xC7 under 16; else row 24 is `YOU CAN : SELL` only (and K then sells). Ours always offers KEEP. (c) **SELL pays through 0x24E8C** (0x26B5D), as the sheet's SELL (`CharacterSheet._sell_pay`): an overloaded seller gets "Overloaded.  Money will be put in Pool.", only the room (ceiling - word, 16-bit) in platinum, the rest to the pile. Ours' `ShopScreen.settle` adds value / 5 always. Seen: check 136's start with THRENDER GRONE's gems +0x92 = 2, no POOL (5144 coins carried, cached word 721): APPRAISE at Tyr's temple, GEMS 500 GP (SELL KEEP offered: the stale word), SELL; GEMS 100 GP: SELL only (the word recomputed at 0x26ECA), SELL: his platinum 3000 -> **64816** (100, then the wrapped room 61716: the original's bug #10 family; with ORIGINAL'S BUGS off the room as carried). Ready check: lab `data/c74/tapp` (start, orig, keys; `DC_DATA=<lab>/data/c74/cd DIFFCHECK_ONLY=tapp bash data/c52/dc_new.sh <repo>`), now 5 differences (gems 2, platinum 3000; the keys go astray after the dead APPRAISE). Main adds it to the gate once your fix lands. · **done (Combat Chat 36, d4d9d13):** (a) the temple's APPRAISE is the shop's; (b) KEEP only when `can_take_coins(1)` and under 16 items, else SELL alone and K sells; (c) SELL through `ShopScreen.appraisal_pay` (0x24E8C: the wrapped room to the seller's platinum word, the price less the room on the pile as a double word, so the pile holds money and E asks); the ready check `tapp` MATCH (on the worktree): please add it to the gate. Not done: row 24's "YOU CAN :" label (ours shows the menu words alone; not seen by me in DOSBox). **Main chat 75: added, check 153 (MATCH 3 of 3; KEEP at the first offer differs).**
+
 ## Archived 2026-11-20 19:31 (Combat Chat 36 ends; with the requests archived at 18:30)
 
 ### Now (replaced)
