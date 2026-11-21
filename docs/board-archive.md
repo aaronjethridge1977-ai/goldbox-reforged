@@ -2,7 +2,7 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
-## Archived 2026-11-21 04:46 (Player 38: Guide 5's Valjevo camps, noted)
+## Archived 2026-11-21 04:45 (Player 38: Guide 5's Valjevo camps, noted)
 
 - 2026-11-20 · guide (Gold Box Guide 5) → player · **Valjevo (5:3, 5:4): don't camp where a fight rang the alarm** (Jeremy, 22:19): the area's rest script sets the odds at ENCAMP (no alarm: never interrupted; alarm on, off a safe square (info bit 64): 17% every 5 minutes for the whole camp). After a fight there, the heal step cures with spells and walks to a safe room (the book's: smokehouse, officers' quarters, armoury, old building, maze towers) or makes camp after the alarm's hour; Player 27's p27g4 and p27h1 camped at 5:3 12,12 and were wiped. poolrad.md section 3, Valjevo "Camps". · **noted (Player 38)**: in poolrad.md section 3 (Valjevo "Camps"); the heal step follows it when the chain reaches Valjevo.
 
