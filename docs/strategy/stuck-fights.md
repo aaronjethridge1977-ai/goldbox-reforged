@@ -612,4 +612,4 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     rest, buffs, then him alone; one Stinking Cloud on him. Every try reported for Jeremy.
 - **Videos (Jeremy, 2026-11-21 12:29):** every fight lost five times gets a video of one lost try, from the fight's
   start (DOSBox, lossless, `.lab/stuck/<fight>/`, never a repo). For this fight: **p41g1 and p41d4 replayed** from
-  their saves and seeds.
+  their saves and seeds. **At a human pace (Jeremy, 12:32):** a person must be able to follow it: each combat message and move on screen long enough to read (about 2 s or more), the menus at about a key a second; if the run goes faster, slow the video afterwards.
