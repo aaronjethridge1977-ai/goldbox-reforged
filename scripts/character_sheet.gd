@@ -1261,10 +1261,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				var n := mini(int(_amount) if _amount != "" else 0, m.money[_coin])
 				if _pending == "coin_trade" and _people[_target] != m:
 					# GAME.OVR 0x250D5 lowers and raises the giver's cached load by the same amount: neither
-					# word moves (Combat Chat 29). (Its test of the receiver's word, "Overloaded", read, not
-					# seen: not in ours yet.)
-					m.money[_coin] -= n
-					_people[_target].money[_coin] += n
+					# word moves (Combat Chat 29). It first tests the receiver's word: word + n above his
+					# most (0x24C89) moves nothing; its "Overloaded" never shows on the screen (chat 79,
+					# check 181, DOSBox: 30000 platinum refused, then 3000 and 3000 taken: his word stays).
+					if _people[_target].can_take_coins(n):
+						m.money[_coin] -= n
+						_people[_target].money[_coin] += n
 				else:
 					m.money[_coin] -= n
 					m.lower_load(n)     # a DROP (GAME.OVR 0x2568A)
