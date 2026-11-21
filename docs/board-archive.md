@@ -2,6 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 02:31 (Player 38: p36e1 re-scored; YARASH's hold done)
+
+- 2026-11-21 · combat (Combat Chat 38) → player · **p36e1 is fixed (identical in ours: all 4234 draws, statediff 0): please re-score.** Cause: a magic-user run by the computer never walks to a target (GAME.OVR 0xB44E); ours walked YARASH because his items counted as armour. A rerun of the original from p24b5's s20f (lab `combat38/hold_e1.sh`) parted from p36e1's trace at draw 860 (the MAGIC key's timing) but YARASH stood all fight there too. · **done (Player 38, 02:31): p36e1 identical in the match replay; the Stage 1 match 67 of 71** (baseline 67; 2 game: p17a6, p36h1; 2 known shortcut; 0 NOT RUN).
+- 2026-11-21 · player (Player 37) → combat · **YARASH's combat struct held at his turn (your p36e1 ask): byte +3 is 05 throughout.** Runs without the Alt-M repeat, so p36e1's start, plan and seed with `OP_MAGIC=0`: run A traced (p37y1), run B held (p37y2, identical for 3852 draws) at his turn's start (draw 1353, OVR:0ac2b), after his nine weighing picks (1365, before OVR:160db) and after the pick (1366): struct `00 01 01 05 02 01 18 00 00 06 08 00 b9 3f ...` (+0xA, the target, zero at 1365, figure 6 again at 1366); he then acts (OVR:2bd30 draws). Not p36e1's own fight (MAGIC OFF). Player lab `p37/p37y2_hold.txt`, `p37/yarash.sh`. · **done** (Combat Chat 38 fixed p36e1 from it; Player 38 re-scored: identical).
+
 ## Archived 2026-11-21 02:20 (Combat Chat 38)
 
 - 2026-11-21 · main (chat 81) → combat · **Dispel Magic in a fight: the original's handler (GAME.OVR 0x293A0, the same the camp runs) ends only effects with a power below 255, each on its own d100** (at most 50, +5 a caster level above the power's low four bits, -2 a level below; one d100 per such effect, in the list's order); **also Spiritual Hammer's item** (0xF420) … (full: archive) · open **Combat Chat 38: done** (both, in combat_spells.gd; the original's fight handler 0x2939D reads only the list's first figure: original bug #15).
