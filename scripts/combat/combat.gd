@@ -220,6 +220,7 @@ func start_round() -> void:
 		c["no_spells"] = false
 		c["no_items"] = false      # combat byte +2 (Combat Chat 33: the cough clears it)
 		c.erase("kept_attacks")
+		c.erase("kept_moves")
 	for i in combatants.size():
 		var c: Dictionary = combatants[i]
 		if c.down:
@@ -303,6 +304,9 @@ func next_turn() -> int:
 		if c.has("kept_attacks"):
 			c.attacks = c.kept_attacks      # back for the turn after BEGINS CASTING (CombatSpells.cast)
 			c.erase("kept_attacks")
+		if c.has("kept_moves"):
+			c.moves = c.kept_moves
+			c.erase("kept_moves")
 		return active
 	active = -1
 	return -1
@@ -1323,6 +1327,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			return
 	var how := " (FROM BEHIND)" if behind and not stab else ""
 	var verb := "BACKSTABS" if stab else "ATTACKS"
+	a["hits"] = 0     # the slot hit counts start at each attack call (GAME.OVR 0x13C14)
 	while a.attacks > 0 and not t.down:
 		a.attacks -= 1
 		var second: bool = int(a.get("second", 0)) > 0
@@ -1353,10 +1358,15 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			continue
 		message.emit("%s %s %s%s HITTING FOR %d" % [am.name, verb, tm.name, how, dmg])
 		_hurt(j, dmg)
-		a["hits"] = int(a.get("hits", 0)) + 1
+		if not second:
+			# GAME.OVR 0x13EED counts hits per attack slot (DS:0x6822 + slot), from 0 at each attack
+			# call (0x13C14); the rake (0x161CD) asks for two hits of the first slot, the claws: the
+			# bite's hit doesn't count (Player 35's p35i7, draw 29021: a tiger's free attack on BRAM
+			# hit with the bite and one claw, and the original didn't rake; ours did).
+			a["hits"] = int(a.get("hits", 0)) + 1
 		if not t.down:
 			_on_hit_specials(i, j, second)
-		if am.has_affect(0x49) and int(a.hits) == 2 and not t.down:
+		if am.has_affect(0x49) and not second and int(a.hits) == 2 and not t.down:
 			# A tiger whose two claws both hit rakes with its rear claws: two more attacks of
 			# 2d4 (GAME.OVR 0x161CD sets the second attack to 2 x 2d4 and attacks).
 			message.emit("%s RAKES..." % am.name)
