@@ -31,3 +31,5 @@ label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the o
 label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
+label p35i6 game: draw 22439 of 42186, 7:26's kobold band (27,22): a kobold's pick of whom to hit, original d5, ours d6 (one candidate more in ours; traced; Player 35 -> combat)
+label p35i7 game: draw 29021 of 33593, 6:25's band (3,29, tigers): the original draws d1 at OVR:0b95d where ours rolls a tiger's to-hit (as p35i6's OVR:0b95d in a band fight; traced; Player 35 -> combat)

@@ -49,7 +49,7 @@
 15 p22b1 p22a5_kovel band3
 15 p22b2 p22b1_band3 band3
 16 p22c2 p22b2_band3 s16b
-16 p22c3 p22c2_s16b s16e
+16 p35i6 p22c2_s16b s16e   # Player 35: p22c3 traced rerun with the slot emptied (its POISONED came from stale slot-H files)
 16 p22c4 p22c3_s16e s16f
 16 p22c5 p22c4_s16f s16i
 16 p22c7 p22c5_s16i s16j
@@ -64,7 +64,7 @@
 22 p25e4 p25e3_s22c lizard
 23 p25f1 p25e4_lizard buccaneers0
 24 p25g3 p25g2_s24a heir
-25 p25j10 p25h2_s25b zhentil
+25 p35i7 p25h2_s25b zhentil   # Player 35: p25j10 traced rerun with the slot emptied (BRAM's POISONED came from a stale slot-H file)
 26 p25q5 p25o1_s26g8 graveyard
 27 p26a1 p25q5_graveyard mopup1
 28 p27c2 p27a1_s28p stojanow shortcut

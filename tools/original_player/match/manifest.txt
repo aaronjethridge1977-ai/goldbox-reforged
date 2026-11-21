@@ -46,7 +46,7 @@ p22a5 | 14 | p22a4_s14g -> kovel | log=5ebad3c8d039d722 trace=4105c167e66fd244 s
 p22b1 | 15 | p22a5_kovel -> band3 | log=772f3b9a8befcf80 trace=ea1cd3c25975b9cc start=4a870d0b9a876d17 checkpoint=6d363ca7fe566eb3
 p22b2 | 15 | p22b1_band3 -> band3 | log=8d1adc47131610f3 trace=b61fcd0febc0e124 start=6d363ca7fe566eb3 checkpoint=d2b12a9a89a39bce
 p22c2 | 16 | p22b2_band3 -> s16b | log=3e31c93a79e02504 trace=93193685521e53c1 start=d2b12a9a89a39bce checkpoint=71da85c455c0fc54
-p22c3 | 16 | p22c2_s16b -> s16e | log=0179bdf6f9993ddf trace=84a05d3e1f349fee start=71da85c455c0fc54 checkpoint=25941c9a07a56e9c
+p35i6 | 16 | p22c2_s16b -> s16e | log=07fa0aa32651f6de trace=29459cc9f108a5b3 start=71da85c455c0fc54 checkpoint=95b7c33866bfbac7
 p22c4 | 16 | p22c3_s16e -> s16f | log=84e21c1aae6b028b trace=4eeddcdff604a7cf start=25941c9a07a56e9c checkpoint=1b83f5041986a92a
 p22c5 | 16 | p22c4_s16f -> s16i | log=4335de57bc41f4e3 trace=3d7c33337d680ef2 start=1b83f5041986a92a checkpoint=8aa1e5e340ee2604
 p22c7 | 16 | p22c5_s16i -> s16j | log=a4feb1f5e1379c38 trace=9108d6c55b408ebe start=8aa1e5e340ee2604 checkpoint=6c39b29dc17cfc15
@@ -61,7 +61,7 @@ p25d3 | 21 | p25c5_s21b -> pyramid3 | log=5ebcd310dbaeaa49 trace=64a0f8c796607c1
 p25e4 | 22 | p25e3_s22c -> lizard | log=4826d2c32c84fb48 trace=17e72fe2269fb663 start=26104fbe257559bf checkpoint=979c1b641ae48ff0
 p25f1 | 23 | p25e4_lizard -> buccaneers0 | log=9715feec8fa8f561 trace=6285d273f16d1768 start=979c1b641ae48ff0 checkpoint=f9f23f0a13934bc7
 p25g3 | 24 | p25g2_s24a -> heir | log=f25f7f3002ca08f7 trace=4cdb34b9d288e595 start=69ecdb0431a18d72 checkpoint=b96fcea66084f424
-p25j10 | 25 | p25h2_s25b -> zhentil | log=c3837594b3fd1a08 trace=6164fd1901809757 start=09c2b1d49d24a6db checkpoint=eeb87ceafce07a46
+p35i7 | 25 | p25h2_s25b -> zhentil | log=83f6019cc135c923 trace=fbb0bf5bce404ceb start=09c2b1d49d24a6db checkpoint=fa9027bf218ca89e
 p25q5 | 26 | p25o1_s26g8 -> graveyard | log=d39328ee9b3f6396 trace=25b85b08f32643ff start=536e9b0b7e30ac65 checkpoint=db8a47b3ce139700
 p26a1 | 27 | p25q5_graveyard -> mopup1 | log=cddf8e3dae9b92bc trace=e311912ec14a4b0b start=db8a47b3ce139700 checkpoint=b772d9230e698d4d
 p27c2 | 28 | p27a1_s28p -> stojanow | log=c537cecaef7bd094 trace=81e7f0b820e7624c start=bb61c999334854e2 checkpoint=df0655d7d2ca2942
