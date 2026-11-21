@@ -171,6 +171,30 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				if gone:
 					out.append("%s IS AFFECTED" % m.name)
 			return out
+		48:                 # Haste (the magic-user's)
+			# Chat 81, checks 204, 205 (DOSBox: LIRA at magic-user 5 hastes the first five in
+			# party order, DORN not; at 3 the first three, herself not): effect 39 for 3 + level
+			# minutes, and the effect's handler (GAME.OVR 0xF8A5) runs at once: a power without
+			# bit 0x10 gets it ("AGES") and the member's age (record word 0x30) goes up a year,
+			# once per effect (power 5 -> 21). A slowed member's Slow ends instead (as combat's).
+			for t in targets.slice(0, maxi(lvl, 0)):
+				var m: PartyMember = t
+				if m.status == PartyMember.STATUS_DEAD:
+					continue
+				if m.has_affect(42):
+					remove_effect(m, 42)
+					continue
+				if SpecialAffects.blocks(m, table.effect(id), func(): return _roll(rng, 1, 100), table.level(id)):
+					out.append("%s IS UNAFFECTED" % m.name)
+					continue
+				add_affect(m, table.effect(id), id, special_duration(table, id, lvl, rng, false), lvl)
+				out.append("%s %s" % [m.name, WORDS[id]])
+				for a in m.affects:
+					if int(a.effect) == table.effect(id) and int(a.value) & 0x10 == 0:
+						a.value = int(a.value) + 0x10
+						_age_up(m)
+						out.append("%s AGES" % m.name)
+			return out
 		14:                 # Friends: GAME.OVR 0x283F1
 			# The caster's charisma (record 0x15) goes up 2d4, at most 25, before the effect is
 			# added through the common cast (0x278DB); the effect's power holds the old charisma,
@@ -222,6 +246,16 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 const MANUAL_READING := 4
 const MANUAL_TRAINING := 7
 const FRIENDS := 14
+
+
+static func _age_up(m: PartyMember) -> void:
+	if m.raw.size() > 0x31:
+		var w := (m.raw[0x30] | m.raw[0x31] << 8) + 1
+		m.raw[0x30] = w & 0xFF
+		m.raw[0x31] = (w >> 8) & 0xFF
+		m.age = w
+	else:
+		m.age += 1
 
 
 static func _set_charisma(m: PartyMember, v: int) -> void:
