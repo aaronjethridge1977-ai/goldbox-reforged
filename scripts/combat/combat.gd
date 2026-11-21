@@ -159,6 +159,10 @@ func outcome() -> int:
 	return 0
 
 
+## Lab (the fxlog key): print every figure's effects at each round's start.
+static var lab_print_effects := false
+
+
 ## The fight was ended by NO at CONTINUE BATTLE.
 var decided := false
 
@@ -212,6 +216,15 @@ func start_round() -> void:
 		_battle_start_powers()
 		_count_enemy_health()     # the fight's setup (GAME.OVR 0xE550)
 	round_no += 1
+	if lab_print_effects:
+		# Lab (fxlog key, Combat Chat 41): every figure's effect records at each round's start.
+		for k in combatants.size():
+			var f: Dictionary = combatants[k]
+			var fx := PackedStringArray()
+			for a in (f.who as PartyMember).affects:
+				fx.append("%s:%s" % [str(a.get("effect", "?")), str(a.get("minutes", "?"))])
+			print("   FX R%d %d %s%s %s" % [round_no, k, (f.who as PartyMember).name, " (down)" if f.down else "",
+				" ".join(fx)])
 	_round_start_powers()
 	var delays := {}
 	for c in combatants:

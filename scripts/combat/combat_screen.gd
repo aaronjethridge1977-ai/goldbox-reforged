@@ -520,6 +520,10 @@ static func _message_pieces(msg: String) -> String:
 	return msg.replace(" AND IS DYING", "\nAND IS DYING")
 
 
+## The panel's status names for a figure out of the fight (START.EXE DS:0x1047, 13 bytes each).
+const PANEL_STATUS := ["OKAY", "ANIMATED", "TEMPGONE", "RUNNING", "UNCONSCIOUS", "DYING", "DEAD", "STONED", "GONE"]
+
+
 ## The original's combat screen: rope frame (rows 0 and 22, columns 0, 22 and 39), the
 ## 7x7 field at (8, 8), the figure's name (yellow), HITPOINTS, AC and weapon at column 23
 ## rows 1-7, the fight's messages below them, and the prompt or menu on row 24.
@@ -556,11 +560,24 @@ func _draw_original(field: Image) -> void:
 			# cold-open capture, rounds 2 and 3).
 			wn = _turn_weapon
 		var cut := wn.left(16).rfind(" ") if wn.length() > 15 else -1
+		var last_row := 5
 		if cut > 0:
 			g.text(23, 7, wn.left(cut), GameScreen.GREEN)
 			g.text(23, 8, wn.substr(cut + 1).left(16), GameScreen.GREEN)
+			last_row = 8
 		elif wn != "":
 			g.text(23, 7, wn.left(16), GameScreen.GREEN)
+			last_row = 7
+		# START.EXE 0x16A0: a blank row under the weapon (or AC), then in white a figure out of the fight's status
+		# (+0x10D clear: the table DS:0x1047) or, standing, "(Helpless)" under any of effects 0x33, 0x34, 0x35,
+		# 0x1F (DS:0x286B: snake charm, hold, sleep, helpless). Jeremy's play (2026-11-21) and p41g1's video.
+		var state := ""
+		if e.get("down", false):
+			state = PANEL_STATUS[clampi(m.status, 0, PANEL_STATUS.size() - 1)]
+		elif CombatSpells.held(m):
+			state = "(HELPLESS)"
+		if state != "":
+			g.text(23, last_row + 2, state, GameScreen.WHITE)
 	# The last action, as the original prints it from row 10: each name on its own line
 	# (party light cyan, monsters yellow), the rest green, 16 to a line.
 	var names := {}
@@ -2048,7 +2065,7 @@ func _refresh() -> void:
 	if _casting == "aim":
 		var cells: Array[Vector2i] = []
 		if _show_area and _combat.magic.aim_kind(_spell_id) == "area":
-			cells = _combat.magic.area_cells(_combat.active, _spell_id, _spell_cell)
+			cells = _combat.magic.preview_cells(_combat.active, _spell_id, _spell_cell)
 		var colour := area_colour(_combat.magic.table.name_of(_spell_id))
 		for p in cells:
 			var at := (p - _view) * CELL

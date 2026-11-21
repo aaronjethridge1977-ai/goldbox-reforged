@@ -530,7 +530,22 @@ func why_not(i: int, id: int, cell: Vector2i) -> String:
 	return ""
 
 
-## Cells an area spell aimed at `cell` covers (for the preview and its targets).
+## The cells the screen's area preview (QoL) lights for a spell aimed at `cell`: area_cells, but Stinking Cloud's are
+## the cloud itself, the four cells _lay_cloud covers (the aim point, E, SE and S, the walkable ones), not its radius
+## (Jeremy's play, 2026-11-21: the cloud landed right of and below the radius-1 preview). The cast's target list
+## (cast(): the caster's facing, the hit pictures) stays the original's area.
+func preview_cells(i: int, id: int, cell: Vector2i) -> Array[Vector2i]:
+	if id != 34:
+		return area_cells(i, id, cell)
+	var out: Array[Vector2i] = []
+	for d in CLOUD_STEPS:
+		var p: Vector2i = cell + d
+		if c.field.in_bounds(p.x, p.y) and (c.field.walkable(p.x, p.y) or c.field.tile(p.x, p.y) in [CLOUD_GROUND, 39]):
+			out.append(p)
+	return out
+
+
+## Cells an area spell aimed at `cell` covers (its targets; the preview's through preview_cells).
 func area_cells(i: int, id: int, cell: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if id == LIGHTNING:
