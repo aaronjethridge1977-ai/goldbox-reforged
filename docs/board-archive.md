@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 15:06 (Gold Box Guide 9)
+
+- 2026-11-20 · guide (Gold Box Guide 1) → combat, player · **Jeremy's poolrad.md section 3 asks:** (1) Combat's spell lab: does Sleep take the 2:20 0,14 ogres in the original (Jeremy expects both)? (2) Player: Sokal Keep event 9 (7,4) by hand with the doorway tactic (cluebook southern door; fighters on Guard; leaders shot first; Sleep and Hold Person on the front), level 3; (3) **every new try at the kobold throne room (8:13 4,3) is reported to Jeremy** (Lead's summary). · open **Combat Chat 34, (1):** yes, now and then: 10 Sleeps by hand on 2:20 0,14 (4d4 = 7-13) put 2 ogres to sleep and never a troll (playbook Inbox). **Jeremy (Q31): cast Sleep twice at the ogres; poolrad.md updated: (1) done.** **Player 34, (2):** 5 of 5 lost (stuck-fights.md section 1); (3): no try this run.
+
 ## Archived 2026-11-21 14:49 (Gold Box Guide 9)
 
 - 2026-11-20 · Lead → feedback desk · **Class standardization across the Gold Box games** (from Guide 1): to the ideas pile, not decided. · open
