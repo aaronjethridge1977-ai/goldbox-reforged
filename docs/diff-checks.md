@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53), the temple's APPRAISE (check 153), the shop's BUY that overloads (check 154); DIFFCHECKS 154/154
+## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53), the temple's APPRAISE (check 153), the shop's BUY that overloads (check 154), SLOW POISON then the temple's NEUTRALIZE POISON (check 155); DIFFCHECKS 155/155
 
 - **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's
   start (3:0, THRENDER GRONE with the mummy's disease 0x32 and rot 0x39) with THRENDER at 3 HP and BROTHER SEAN given
@@ -210,6 +210,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   1000 platinum; PLATE MAIL (400 gp, weight 450) bought eight times. The original: five bought (600 platinum left,
   load word 3163), the last three refused with nothing paid (the refusal's text flashes too fast for the dumps). Ours
   the same (`PartyMember.can_take_item`: the load plus the item over the ceiling). Matched at once, 3 of 3.
+- **Check 155, SLOW POISON in camp, then the temple's NEUTRALIZE POISON** (main path, the standing list): check 144's
+  start (RHIANNON dead of poison, 0x37) with BROTHER SEAN given SLOW POISON. The original: RHIANNON / IS AFFECTED,
+  GETS BACK UP (HP 1); the walk to the temple; NEUTRALIZE POISON, 1000 gp, RHIANNON / IS CURED.: 0x37, 0x16 (slowed)
+  and 0x0F (the tick) gone, HP 1, OKAY. Ours the same. Also seen: the temple's party cursor starts on the camp's last
+  pick (SEAN), not the first member; ours follows it (the keys go through PHINEAS and back). 3 of 3.
 
 ## Chat 74: the shop's SELL of a readied item (check 143), the temple's CURE DISEASE (check 144), the camp's ALTER DROP (check 145), the shop's BUY four times and BUY refused for money (checks 146, 147), the temple's CURE LIGHT WOUNDS on a diseased member (check 148); DIFFCHECKS 148/148
 
