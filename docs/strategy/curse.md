@@ -136,7 +136,79 @@ comes once all four games are processed)
 
 ## 2. The route
 
-[Next review.]
+**The shape** *book* (Cluebook pp.1, 9, 13, 19, 23, 26-27, 34-35): five parts, one bond each. Tilverton is fixed and
+first; Hap (Dracandros), Yulash (Moander) and Zhentil Keep (the Zhentrim) can be taken in any order (the cluebook's is
+Hap, Yulash, Zhentil Keep); Myth Drannor (Tyranthraxus) opens only when the other four are done. Each of the three middle
+parts gives one artifact (the Helm of Dragons, the Gauntlet of Moander, the Amulet of Lathander); all three are needed
+against Tyranthraxus. Players don't all go to Hap first. *players* ([CRPG Addict](https://crpgaddict.blogspot.com/2013/01/curse-of-azure-bonds-four-down-one-to-go.html))
+
+**Levels:** none in the books (a Pool party arrives at about 6-8, new characters at 5; section 1). Levels per stretch
+come from players and our own runs: **unconfirmed**.
+
+| # | Stretch | Areas (Cluebook pages) | Rest | Ends with |
+|---|---|---|---|---|
+| 1 | Tilverton | the city (7-8) | the inn, free, until the coach | the bonds force the attack on the king's coach |
+| 2 | The Thieves' Guild and the sewers | guild (8-9), sewers (9-11) | with the guildmaster at first, then the treasure room; in the sewers, cleared lairs and the hidden chambers (a training hall) | the way into the Fire Knives' hideout |
+| 3 | The Fire Knives' hideout | (12-13) | only the hidden passage | the first bond gone; the party banished from Cormyr to the overland |
+| 4 | Hap | the village (14) | the inn or the temple | the efreeti's map to the caves |
+| 5 | The Cave of the Dracolich | (15-16) | a few hours at a time; anywhere after 10 patrols or Dracandros | the tower's entrance |
+| 6 | The Wizard's Tower | (17-19) | the roof and courtyard; anywhere after 4 patrols | Dracandros; the second bond; the Helm of Dragons |
+| 7 | Yulash | the city (20-21) | the Red Plumes' barracks, with the commander's goodwill | the Pit's one-way entrance |
+| 8 | The Pit of Moander | (21-23) | none guaranteed: rooms already cleared | Mogion and the bits of Moander; the third bond; the Gauntlet |
+| 9 | Zhentil Keep | the city (24-25) | the inn only | into the Shrine (Olive's way, or the front door) |
+| 10 | The Shrine of Bane, the Cave of the Beholder | (25-28) | the cell (6) in the Shrine; the caves, not guaranteed | Dexam; the fourth bond; the Amulet; Zhentil Keep closed for good |
+| 11 | Myth Drannor: the Burial Glen, the ruins | (29-32) | nowhere until 10 encounters (glen) or 10 patrols (ruins) | into the temple |
+| 12 | The Grand Ruined Temple | (33-34) | none; the party can't leave once inside | Tyranthraxus; the last bond |
+
+**Optional, for XP and items** *book* (Cluebook pp.35-47; Card p.2): the towns' "Search Area" opens a dungeon or ruin
+once Hap, Yulash or Zhentil Keep is done: Shadowdale (three levels, a magistrate's daughter), Ashabenford (a madman with
+a summoning item), Essembra (owlbears and a drow mage), and ruins at Hillsfar, Voonlar, Teshwave and Phlan (random
+encounters). Dagger Falls' Oxam's Tower and the caverns under the falls hold the Mulmaster Beholder Corps, the game's
+deadliest fight; **do Dagger Falls before Tyranthraxus**, it closes after him (Cluebook p.34). The forest by the Standing
+Stone is the card's place to patrol for XP (Card p.2).
+
+**Notes by stretch** (*book*, the Cluebook unless marked; the hard fights are in section 3)
+1. **Tilverton:** memorize at the inn; the armour shop first; train imported members at the hall (8); visit the sage
+   (6) last, after buying and training: her fee is half the party's money. The coach comes once the shop (2) and the
+   sage (6) have been visited and the party has tried to pass 9 twice; after that the shop, temple, sage, store, bar
+   and hall all close and the guards come without end: break off into an alley for the thief. Surrendering instead
+   leads to a cell, and the thieves get the party out (pp.7-8). Players surrender to save a fight. *players*
+   ([speedrun.com](https://speedrun.com/curse_of_the_azure_bonds/guides/d9z1g)) The tavern's brawls are the only
+   XP before the coach (p.7).
+2. **The guild and the sewers:** the treasure room is wizard-locked (Knock, or a strong member's lucky try): the Dust of
+   Disappearance and an ioun stone (+1 Dex). The Knight of Myth Drannor (sewer 3) lets the party by if it claims the
+   princess, or no one. The otyughs at 5 trade a ring for the garbage of the otyughs at 6: parley and agree. The sewers
+   are harder on a second visit (pp.8-11, 13).
+3. **The hideout:** the armoury (9) has stolen magic weapons when searched; don't ready its bracers (cursed). Kybor's
+   desk (11) has papers, money and magic. The last room (15) is a hard fight: rest, FIX, cast before (pp.12-13).
+4. **Hap:** the four drow patrols take NICE or MEEK as peasants; the cluebook advises beating all four before the barn,
+   and by day (drow fight badly in sunlight). Akabar Bel Akash joins at the inn or temple (p.14).
+5. **The caves:** Silk's guards at 3: accept and a woman can join the Swanmays (patrols then let the party by; the drow
+   clerics and mages let it withdraw). The salamanders' casks can be raided with SLY; fire resistance first. The elf
+   barracks (5) hold a dragon-slaying long sword and a scroll against dragon breath. Avoid the mage barracks (9).
+   Crimdrac fights only if the party resists (pp.15-16).
+6. **The tower:** on the roof, PARLEY with the dragons NICE or MEEK (or attack Dracandros): fleeing or attacking means
+   14 black dragons. The paper at level 2's 4 (behind an explosive rune) tells how to pass the stair trap at 9. One
+   member enters the Trial of the Sphere: the duel goes by level and Intelligence; a non-magic-user can do better;
+   touching the sphere destroys the character. Searching Dracandros' bedroom brings more patrols (pp.17-19).
+7. **Yulash:** the commander judges the party (fighting his spies well, not fighting Red Plumes, not sneaking past
+   checkpoints, HAUGHTY or NICE, class, alignment, a Swanmay, no prison record): goodwill means a pass, a map and the
+   barracks. The shambling mounds over the dead cleric (6) give the Wand of Defoliation (for the Pit) and a Wand of
+   Lightning. Dwarves and thieves may notice the weak ground (pp.20-21).
+8. **The Pit:** say yes to Alias and Dragonbait (level 1's 3, again at level 2's 7); tell Alias the truth about a
+   Swanmay or the pair leave. Mogion's bond opens the gate, then the party can fight (pp.21-23).
+9. **Zhentil Keep:** parley MEEK with troopers, SLY with magic-users, NICE with priests; a lost fight means court
+   (pleading guilty costs 90% of the money and half the items) and the arena. Buy at the magic shop: Darts of the
+   Hornet's Nest, magic arrows, wands, potions. Don't break into houses or fight the army. Accept Olive's secret
+   entrance (refuse twice and it closes) (pp.24-25).
+10. **The Shrine and the caves:** NICE to the clerics; take Dimswart (YES); YES to the hooded woman is the only way out;
+    the altar's trap door needs a trap find (pp.25-27).
+11. **Myth Drannor:** rebury the dead, don't loot; accept Princess Daemir's blessing (+2 to hit in Myth Drannor; refusing
+    curses -2, for good). Thri-kreen led patrols: PARLEY and answer TYRANTHRAXUS. Help the unkempt rakshasa; parley
+    HAUGHTY with the head rakshasa (he helps in the last fight); the old sewer grate (ruins 10) leads into the temple
+    and thins Tyranthraxus' forces first (pp.29-32).
+12. **The temple:** no rest and no way out: arrive rested, with wands and potions kept back (pp.33-34). *players*
+    ([GameBanshee](https://www.gamebanshee.com/curseoftheazurebonds/walkthrough/introduction.php))
 
 ## 3. Hard fights
 
