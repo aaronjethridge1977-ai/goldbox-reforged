@@ -313,9 +313,30 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     3d6 rounds, not by holding. Either the original won't let a figure end its move there or the tool's step is wrong:
     to check by hand in DOSBox (requests to the Player and Combat). Ours lets a figure stand on a fallen troll
     (`occupant()` skips downed figures). *seen*
-  - **Only fire or acid keeps a troll down:** the killing blow's kind decides (0x11434: no 3d6 rounds after fire or
-    acid). In this party: LIRA's Fireball (slot or scroll) and **Burning Hands** (LIRA scribed it, p37b2; ELWEN
-    learned it): fire, the caster's level in damage. Lightning (the wands) doesn't count. *code*
+  - **Only fire or acid keeps a troll down, and only as the killing blow** (GAME.OVR read by Guide 6): going down
+    (0x11434) tests the last damage's kind (DS:0x6819: 0x01 fire, 0x10 acid) and otherwise sets the 3d6-round rise
+    (0x66); a weapon blow sets the kind to 0 (0x12A08); the regeneration start on any damage (0x1146F) ignores the
+    kind, so fire earlier in the fight changes nothing. A risen troll comes back at full HP (*seen*: p39c2's troll 10
+    at 36). Lightning (the wands) doesn't count. *code*
+  - **Burning Hands in Pool** (START.EXE's table, id 9): one adjacent figure (area code 4, one pick, as Magic
+    Missile), no save, the caster's level in fire damage: LIRA (magic-user 5) 5. Only LIRA has it in her book
+    (scribed, p37b2); ELWEN's book has neither it nor Shocking Grasp. *code*
+  - **The door (`p39a1_s39door`)**: AC ARN -3, BRAM 0, CEDRIC -2, ELWEN -5, LIRA -2, DORN 2, Fatima 3; HP 273 of 330
+    (DORN 26/46, CEDRIC 28/42); every spell kept **but all 7 Cure Light Wounds spent on the way**; 9 Hold Persons
+    memorized (no use on trolls); LIRA: Haste, 2 Stinking Cloud, 3 Sleep, Read Magic. *seen* (the save)
+  - **A troll's round** (MON8CHA 31): THAC0 13, two claws 1d4+4 and a bite 2d6 (up to 28, 20 on average if all
+    hit). Each attack hits ELWEN 15%, ARN 25%, CEDRIC and LIRA 30%, BRAM 40%, DORN 50%, Fatima 55% (Prayer:
+    5% less each); about 3, 5, 6, 8, 10 and 11 HP a troll-round. Kobolds (1d4) hit AC -1 or better only on a 20,
+    DORN 10%, Fatima 15%; leaders (1d6) DORN 20%, Fatima 25%. *code*
+  - **The other waves** (ECL8 block 13, MON8CHA): the ballista: 7 bolts at random members, 2d6 each (0xA1A4);
+    wave 2: 5 WILD BOAR (18 HP, AC 7, THAC0 15, 3d4, move 15, fight on 1d4+1 rounds when dropped), 45 kobolds, 8 leaders; wave 3: 2 trolls, 2 boars, 8 kobolds and **2 ENVOY** (fighter 6 / magic-user 6,
+    45 HP, AC 2, 1d8+2; memorized: Magic Missile x2, Sleep x2, Stinking Cloud, Mirror Image, **Fireball**). *code*
+  - **Why Stinking Cloud missed the trolls** (Players 36-39): it was cast every try from Player 38 on, but at kobold
+    bunches: the tool keeps the party out of a 3x3 around the aim, while the cloud is 2x2 (the aimed square and the
+    squares right, below and below-right: *seen*, Combat Chat 34). With a troll beside a member from round 1 no 3x3
+    point was free. A 2x2 aimed past the trolls catches them without the party: a tool fix (request to the Player).
+    About half the trolls fail (13 of 23 in the spell lab): helpless d4+1 rounds, one blow drops one (it still rises
+    unless fire finishes it). *seen*
   - **The cluebook's "rest in the wyvern cave":** 8:13's rest and wandering-kobold scripts let the party be while it
     came in by the LARGE cave (0x4AC7 = 255) **and the wyvern lives** (0x4A8E = 0; the rubble slope at 8:13 wakes it).
     In this chain the wyvern is dead (2): no camp. *code*

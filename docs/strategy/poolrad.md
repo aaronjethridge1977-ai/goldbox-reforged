@@ -469,6 +469,21 @@ for) is to come; Gold Box Guide 2 fills it in with Jeremy. *code* (Gold Box Guid
 
 **Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Never sell them.**
 
+**Consumable magic** (from the table below; Gold Box Guide 6, 2026-11-21; *code*). **Fire** (the only way to keep a troll
+down, as the killing blow): MU scrolls with Fireball at 1:24 (Fireball, Ray of Enfeeblement, Stinking Cloud), 3:14 x2
+(Fireball, Haste, Hold Person; Fireball, Detect Invisibility, Reduce), 4:2 (Fireball, Detect Invisibility, Reduce: the
+same list as 3:14's, to check that it isn't one scroll counted twice); Burning Hands on 3:14's (Blink, Burning Hands,
+Mirror Image) and 4:2's; the **Necklace of Missiles** (5:6, Fireball's handler). **Wands:** Magic Missiles x5 (1:24,
+2:20, 4:10 the vampire, 7:17 the shaman, 7:17 the reward); Lightning Bolt (4:10 the zombie room, 5:5, 5:7 Genheeris
+with 56 charges); Paralyzation (7:23). **Potions:** Healing x9 (1:24, 2:15, 4:2, 4:10 x4, 7:23 x2), Extra Healing x8
+(1:24, 2:15 x3, 4:10, 6:28 x3), Speed x3 (1:24, 5:3, 7:23), Giant Strength x2 (1:24, 2:15). **Other:** Dust of
+Disappearance (1:24); the Efreeti Bottle (8:13, one service); Javelins of Lightning (5:4 x2, 6:28; thrown). **Other MU
+scrolls:** Magic Missile (2:20); Blink, Ray of Enfeeblement, Slow (3:14); Slow, Hold Person, Invisibility 10' (4:10);
+Charm Person, Protection from Evil, Strength and Friends, Invisibility, Protection from Normal Missiles (8:13). **Cleric
+scrolls:** Cure Light Wounds x2 (2:20); Animate Dead, Cure Blindness; Snake Charm, Silence, Bless; Animate Dead, Cause
+Disease, Prayer (1:24); Hold Person, Cure Blindness, Bestow Curse; Prayer, Remove Curse, Animate Dead (3:14); 5 at the
+vampire's trove (4:10); the Restorations above. Plus the random items (the dice) listed under the coins table.
+
 | Area | Where (squares; how) | Magic and valuables | Who uses it |
 |---|---|---|---|
 | 1:18 Podol Plaza | the arena's fighters (4,8; the duel / the gathering) | Chain Mail +1, Long Sword +1 (each 4th-level fighter) | C/F/P; T/F/P |
