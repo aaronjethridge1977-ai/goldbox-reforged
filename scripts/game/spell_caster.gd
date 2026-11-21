@@ -74,8 +74,11 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			targets = party.duplicate()
 	# A spell from an item (a scroll) is cast at level 6, whatever the reader's level (chat 79,
 	# check 179, DOSBox: LIRA at magic-user 1 and at 8 both gave PROTECTION FROM GOOD 12
-	# minutes, power 6).
-	var lvl := 6 if from_item else caster.caster_level(table, id)
+	# minutes, power 6; chat 80, check 185: a clerical scroll too). The item spells (class 2) keep
+	# their fixed 12 (START.EXE 0xba:0x26c2 gives 6 for an item in use only below class 2; check 186).
+	var lvl := caster.caster_level(table, id)
+	if from_item and table.spell_class(id) != SpellTable.MONSTER:
+		lvl = 6
 	match id:
 		CURE_LIGHT:
 			var t: PartyMember = targets[0]

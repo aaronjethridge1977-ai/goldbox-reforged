@@ -367,6 +367,11 @@ func class_level(spell_class: int) -> int:
 ## The caster's level for a spell (the original's spellMaxTargetCount): its cleric or
 ## magic-user level, or a paladin's level - 8; 6 for anyone who casts no spells (items).
 func caster_level(table: SpellTable, id: int) -> int:
+	# START.EXE 0xba:0x26c2 (chat 80, check 186): the item spells (class 2, ids 57-67: Speed, Giant
+	# Strength, Healing...) are cast at a fixed 12, whoever uses the item (DOSBox: LIRA, magic-user 1,
+	# drinks a Potion of Speed in camp: haste with power 12).
+	if table.spell_class(id) == SpellTable.MONSTER:
+		return 12
 	var cl := class_level(0)
 	var mu := class_level(1)
 	var paladin: int = raw[0x99] if raw.size() > 0x99 else 0
