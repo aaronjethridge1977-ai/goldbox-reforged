@@ -108,6 +108,18 @@ var movement := 12
 var weapon: GameItem = null
 var armor: GameItem = null
 var shield: GameItem = null
+
+# The record's cached THAC0 and AC (+0x110, +0x111, 60-based) as the original keeps them (main chat 82).
+# The original works them out again only at its refresh (START.EXE 0xba:0xbb8): VIEW, READY, TRADE, DROP,
+# a gem's SELL, a fight's start and end; TRAIN raises the base THAC0 (+0x2D) and leaves the cache, and a
+# load keeps the save's. PARTY_STRENGTH (GAME.OVR 0x200C) reads the cache: p36h1's band at 7:26 found
+# ARN's and LIRA's stale after the fighters' hall (49, not ours' 51). Ours keeps the cache equal to the
+# live values (recalculate()) except while frozen: from TRAIN, or a loaded record whose cache differs,
+# until refresh_cache().
+var cache_frozen := false
+var cache_thac0 := 0
+var cache_ac := 0
+var _cache_from_record := false
 var weight := 0
 ## The load the original keeps in the record (+0x102, a word): START.EXE 0x1924 writes it when GAME.OVR asks
 ## for the record to be worked out again (0xBA:0xBB8 -> 0x1758, 22 sites; ours: refresh_load_word() at
@@ -206,6 +218,7 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 		return null
 	var m := PartyMember.new()
 	m.raw = d
+	m._cache_from_record = true
 	m.name = d.slice(1, 1 + mini(d[0], 15)).get_string_from_ascii().strip_edges()
 	m.race_id = d[0x2E]
 	m.race = RACES[d[0x2E]] if d[0x2E] < RACES.size() else "?"
@@ -282,6 +295,10 @@ func clone() -> PartyMember:
 	m.affects = affects.duplicate(true)
 	m.spell_book = spell_book.duplicate()
 	m.npc = npc
+	m.cache_frozen = cache_frozen
+	m.cache_thac0 = cache_thac0
+	m.cache_ac = cache_ac
+	m._cache_from_record = _cache_from_record
 	for it in items:
 		var c := GameItem.from_record(it.to_record())
 		c.name = it.name
@@ -960,6 +977,36 @@ func recalculate(types: ItemTypes) -> void:
 	elif over > 0x200:
 		by_load = 9
 	movement = mini(movement, by_load)
+	if _cache_from_record:
+		_cache_from_record = false
+		# A loaded record keeps its cache (a load doesn't refresh it): stale after a TRAIN in the original.
+		if not is_monster and raw.size() > 0x111 and raw[0x110] != 0 \
+				and (raw[0x110] != clampi(60 - thac0, 0, 255) or raw[0x111] != clampi(60 - ac, 0, 255)):
+			cache_thac0 = raw[0x110]
+			cache_ac = raw[0x111]
+			cache_frozen = true
+
+
+## The cache as the original holds it now (60-based THAC0 and AC).
+func cached_thac0_60() -> int:
+	return cache_thac0 if cache_frozen else clampi(60 - thac0, 0, 255)
+
+
+func cached_ac_60() -> int:
+	return cache_ac if cache_frozen else clampi(60 - ac, 0, 255)
+
+
+## Keep the cache as it stands while the live values change (TRAIN).
+func freeze_cache() -> void:
+	if not cache_frozen:
+		cache_thac0 = cached_thac0_60()
+		cache_ac = cached_ac_60()
+		cache_frozen = true
+
+
+## The original's refresh (START.EXE 0xba:0xbb8): the cache follows the live values again.
+func refresh_cache() -> void:
+	cache_frozen = false
 
 
 # --- Money ---------------------------------------------------------------------------
@@ -1244,6 +1291,7 @@ func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
 ## the game's dice at 0x1DC04; at level 1 at least two thirds of the die), summed; record 0xB1
 ## gains that / the number of classes (at least 1), max HP that plus the CON bonus, / classes.
 func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNumberGenerator) -> bool:
+	freeze_cache()     # the original's TRAIN leaves +0x110/+0x111 as they were (main chat 82)
 	pay_training(1000)
 	var old_mu := level_in(5)
 	for c in classes:
@@ -1367,8 +1415,8 @@ func to_record() -> PackedByteArray:
 	# recalculate() (which reproduces the shipped characters' caches); left 0 for a member made
 	# in ours, the original's party list showed AC 60 until a fight worked it out.
 	if not is_monster:
-		d[0x110] = clampi(60 - thac0, 0, 255)
-		d[0x111] = clampi(60 - ac, 0, 255)
+		d[0x110] = cached_thac0_60()
+		d[0x111] = cached_ac_60()
 		d[0x112] = clampi(60 - rear_ac, 0, 255)
 		d[0x115] = clampi(int(damage[0]), 0, 255)
 		d[0x117] = clampi(int(damage[1]), 0, 255)

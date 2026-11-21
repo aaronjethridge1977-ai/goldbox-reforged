@@ -1584,8 +1584,8 @@ func party_strength() -> int:
 		var m: PartyMember = p
 		var cleric: int = m.raw[0x96] if m.raw.size() > 0x9B else 0
 		var mage: int = m.raw[0x9B] if m.raw.size() > 0x9B else 0
-		var ac_bonus := maxi(-m.ac, 0)
-		var hit_bonus := maxi(21 - m.thac0, 0)
+		var ac_bonus := maxi(m.cached_ac_60() - 60, 0)          # the record's cache (main chat 82)
+		var hit_bonus := maxi(m.cached_thac0_60() - 39, 0)
 		total += (cleric * 4 + m.hp + ac_bonus * 5 + hit_bonus * 5 + mage * 8) / 10
 	return total & 0xFF
 
