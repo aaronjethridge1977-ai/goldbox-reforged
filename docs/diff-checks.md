@@ -172,6 +172,34 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat); DIFFCHECKS 159/159
+
+All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk159`, links in `data/c76/cd/`), tpseed 11111111.
+
+- **Check 156, HALVE and JOIN** (3:0 the arms and armour shop): check 154's start (LIRA's 10 arrows, readied): Up, YES,
+  End x4 (LIRA), VIEW, ITEMS, End x3 (the arrows), HALVE (5 readied, 5 not), HALVE (3 readied, the new 2 inserted after it,
+  then the 5), End (the 2), JOIN (all three into the 2: one stack of 10, not readied), EXIT x3, F2 (the original: ENCAMP,
+  SAVE F). Matched at once, 3 of 3; JOIN on the readied 3 differs (readied).
+- **Check 157, the silver shop's BUY** (3:0): check 27's start with DORN given 1000 platinum: Up, YES, End x5 (DORN), BUY
+  (the list opens on page 2: BUY PREV EXIT), End x10 (SILVER RING, 90), BUY, Home x4 (20 SILVER ARROWS, 20), BUY, EXIT x2,
+  F2: 22 platinum paid (110 gp), the ring unidentified (words 0.66.177). Matched at once, 3 of 3; one Home fewer (a quarrel)
+  differs. No jewel is sold in Pool's shops; the ring is the silver shop's one piece of jewellery.
+- **Check 158, MEMORIZE then REST** (3:0 camp): check 157's start with LIRA's memory cleared (+0x2B = 0): ENCAMP, End x4,
+  MAGIC, MEMORIZE (the list opens on its last line, SLEEP), Home (SHIELD), MEMORIZE, EXIT, EXIT, YES, REST (4:15 offered),
+  REST (06:00 -> 10:15), EXIT x2, F2: SHIELD (19) memorized. Matched at once, 3 of 3; SLEEP instead differs.
+- **Check 159, SCRIBE** (3:0 camp): check 158's start with a read Magic User Scroll appended to LIRA's items (byte 53 = 0,
+  spells 17 and 20, word 48 = 211 "WITH 2 SPELLS"): ENCAMP, End x4, MAGIC, SCRIBE, Home (PROTECTION FROM GOOD), SCRIBE,
+  EXIT, EXIT, YES, REST, REST (4:15), EXIT x2, F2: 17 in the book, the scroll kept with 20 and word 48 = 210. **Ours left
+  word 48 at 211 (the difference; main path): fixed.** The original spends a scroll spell through GAME.OVR 0x2A2A2: the
+  last of bytes 60-62 holding the spell is emptied, byte 48 counts one down, and below 210 the scroll is removed whatever
+  its slots hold (a made-up 212 scroll with one spell stayed, 211 and empty; a 210 scroll is gone): `PartyMember.
+  spend_scroll_spell` (ours removed it when all three slots were empty and didn't count the word down). 3 of 3; SCRIBE of 20
+  instead differs. An unread scroll (byte 53 = 6) offers nothing to SCRIBE in the original either (no message seen).
+- **Ready check `scrord` (for Combat, camp_screen.gd):** the same with the scroll's spells 20, 17. The original lists a
+  scroll's spells in record order, a level heading wherever the level changes (17, 34, 20 shows 1ST PROTECTION FROM GOOD /
+  2ND STINKING CLOUD / 1ST SHOCKING GRASP), the cursor on the last; ours sorts them by number, so Home picks 17, not 20
+  (`DC_DATA=<lab>/data/c76/cd DIFFCHECK_ONLY=scrord bash data/c52/dc_new.sh <repo>`; differs now by the scroll's slots).
+
 ## Chat 75: the camp's CAST CURE DISEASE, then a day's REST (check 149), and on effect 0x22 alone (check 150, a fix), REST with a diseased member (check 151), the shop's ID twice (check 152; statediff compares record byte 53), the temple's APPRAISE (check 153), the shop's BUY that overloads (check 154), SLOW POISON then the temple's NEUTRALIZE POISON (check 155); DIFFCHECKS 155/155
 
 - **Check 149, CURE DISEASE cast in camp** (main path; Gold Box Guide 4's request: Jeremy is sure it works): check 144's

@@ -421,8 +421,8 @@ func scribe_pending() -> Array[int]:
 	return out
 
 
-## Copies the first marked scroll spell into the book; the spell leaves the scroll, and an
-## empty scroll is gone. Returns the spell id (0 if none was marked).
+## Copies the first marked scroll spell into the book and spends it from the scroll
+## (spend_scroll_spell). Returns the spell id (0 if none was marked).
 func scribe_next() -> int:
 	for it in items:
 		if not is_scroll(it):
@@ -430,14 +430,33 @@ func scribe_next() -> int:
 		for k in [60, 61, 62]:
 			if it.raw.size() > k and it.raw[k] > 0x80:
 				var id: int = it.raw[k] & 0x7F
-				it.raw[k] = 0
+				it.raw[k] = id       # unmarked (spend_scroll_spell empties the spell's last slot)
 				it.raw[53] = 0       # the scroll has been read (lab: "MAGIC USER SCROLL WITH 2 SPELLS" after)
 				if id <= spell_book.size():
 					spell_book[id - 1] = 1
-				if it.raw[60] & 0x7F == 0 and it.raw[61] & 0x7F == 0 and it.raw[62] & 0x7F == 0:
-					items.erase(it)
+				spend_scroll_spell(it, id)
 				return id
 	return 0
+
+
+## A scroll gives up a spell (GAME.OVR 0x2A2A2): the last of its bytes 60-62 holding the spell
+## is emptied, its name word 48 ("WITH n SPELLS": 212, 211, 210) counts one down, and below 210
+## the scroll is gone, whatever its slots still hold (lab, chat 76: SCRIBE from a 211 scroll
+## leaves it 210 with the other spell; a 210 scroll is gone; a 212 scroll with one spell stays,
+## 211 and empty).
+func spend_scroll_spell(it: GameItem, id: int) -> void:
+	var slot := 0
+	for k in [60, 61, 62]:
+		if it.raw.size() > k and it.raw[k] & 0x7F == id:
+			slot = k
+	if slot == 0:
+		return
+	it.raw[slot] = 0
+	it.raw[48] = (it.raw[48] + 255) & 0xFF
+	if it.raw[48] < 210:
+		items.erase(it)
+	else:
+		it.name = ""           # named again from its words (ItemNames): one spell fewer
 
 
 ## SCRIBE's list (lab, chat 22, save J's Darkstar with a scroll from the treasure): every
