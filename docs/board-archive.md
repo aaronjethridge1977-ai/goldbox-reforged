@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 08:25 (Gold Box Guide 7)
+
+### Requests to another lane
+
+- 2026-11-21 · Lead → player, guide · **The kobold throne room: Jeremy (Q32, 07:42): a stuck-fights guide chat with him first** ("That fight should not be that difficult"). No more Player tries until the guide chat's plan is on the board. Player: make sure stuck-fights.md section 3 and `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold-throne\` have every try's log and the door saves (p38d1_s38door10, p39a1_s39door). (Player 39's request: archive.) · done (Gold Box Guide 6: Plan 2 on the board, 08:16) **Player 40 (player part done, 2026-11-21 08:07):** `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\` (the folder stuck-fights.md names): `p37/`, `p38/`, `p39/` (plans, the loops' records, every trip's and try's log), `p40/` (the troll check), `saves/` (p38a2_s38audit, p37n2_s37door, p38d1_s38door10, p39a1_s39haste, p39a1_s39door); README.txt lists them. Read for the guide chat: every hold-down of p38e1-e5 and p39 was undone by the tool's Esc (above).
+
 ## Archived 2026-11-21 08:17 (main chat 87: main's Rule changes lines, chat 83)
 
 - 2026-11-21 · main (chat 83) · **The camp's ANIMATE DEAD as the original's (GAME.OVR 0x29087): up to the caster's level of dead members rise ANIMATED at full HP with effect 0x20 (power level), their record bytes set as the original's (movement 6, morale 0xB2/0xB3, memory emptied, +0x9F 4)** (was: effect 0x20 on every living member, the dead left dead; DOSBox, check 231) · may affect: ANIMATE DEAD outside fights

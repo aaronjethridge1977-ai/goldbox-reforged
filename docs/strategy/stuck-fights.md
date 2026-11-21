@@ -313,6 +313,13 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     3d6 rounds, not by holding. Either the original won't let a figure end its move there or the tool's step is wrong:
     to check by hand in DOSBox (requests to the Player and Combat). Ours lets a figure stand on a fallen troll
     (`occupant()` skips downed figures). *seen*
+    **Answered (Player 40, DOSBox, 2026-11-21; read by Gold Box Guide 7): the tool's step was wrong, the hold-down
+    works.** A MOVE ended with Esc is undone (the figure back where MOVE began, MOVE offered again: p40m1); Enter keeps
+    the walk (p40m2); the tool's `OP_HOLDDOWN` ended every stand with Esc (now Enter). On the Slums' trolls (2:20 0,14,
+    p40t1-t3): **a fallen troll rises at full HP on its corner (top-left) square, unless a standing member is on that
+    square**; a member on its second cell doesn't stop it (p40t1: risen with ARN on 26,11); BRAM on troll 9's corner
+    27,11 from 55 s kept it down to the fight's end (p40t3, 115 s); troll 12 rose on its corner 26,10 once ARN,
+    standing there, had fallen. Ours: whether only the corner counts is with Combat (board). *seen*
   - **Only fire or acid keeps a troll down, and only as the killing blow** (GAME.OVR read by Guide 6): going down
     (0x11434) tests the last damage's kind (DS:0x6819: 0x01 fire, 0x10 acid) and otherwise sets the 3d6-round rise
     (0x66); a weapon blow sets the kind to 0 (0x12A08); the regeneration start on any damage (0x1146F) ignores the
@@ -366,7 +373,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     the Necklace of Missiles (5:6 behind the altar) can still be taken in this chain, and takes them.
   - **The tool before the next tries:** Stinking Cloud aimed as 2x2 at the trolls with the party outside; the 7 Cure
     Light Wounds kept for the fight (no cures on the way in); Hold Person only for wave 3's two envoys (persons;
-    trolls aren't), the other 2nd-level slots to Stinking Cloud or cures; the hold-down only if the DOSBox check shows a figure can stay.
+    trolls aren't), the other 2nd-level slots to Stinking Cloud or cures.
+  - **The hold-down is back** (Player 40's check, above; Guide 7): a troll dropped by a blow gets a standing member on
+    its **corner (top-left) square**, the MOVE ended with Enter; a fighter whose troll is held stays put. It holds only
+    while that member stands, so fire stays first, and a held troll is the next Fireball's or Burning Hands' target.
   - No wyvern-alive replay (the wyvern died in segment 16, Jeremy agreed); no SURRENDER.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)

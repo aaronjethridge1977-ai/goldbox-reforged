@@ -106,7 +106,7 @@ files); results *seen* unless marked.
 - **The trolls and ogres (0,14):** 2 ogres and 4 trolls; the cluebook's test of the party. *code*
   - Works: two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and
     casts at the trolls from one square back; drop the trolls together and stand on a fallen troll's square so it can't
-    rise; then the ogres. *book* Cast Sleep at the ogres twice: if it fails, little is lost. *Jeremy* (2026-11-20) In the original, on this
+    rise (its corner, top-left square, and the MOVE ended with Enter: *seen*, Player 40); then the ogres. *book* Cast Sleep at the ogres twice: if it fails, little is lost. *Jeremy* (2026-11-20) In the original, on this
     room: 10 Sleeps (4d4 = 7-13) put 2 ogres down and never a troll, about 1 cast in 5, so two casts give roughly a 1 in 3
     chance of at least one sleeping ogre (small sample: anywhere from about 1 in 10 to 3 in 4), and a sleeping ogre is
     slain outright. Keep the party out of the 3x3 (the caster too). *seen* (Combat Chat 34)
@@ -285,7 +285,7 @@ files); results *seen* unless marked.
     then 5 wild boars, 45 kobolds, 8 leaders; then 2 trolls, 2 boars, 8 kobolds and 2 envoys (F6/MU6, 45 HP). The
     trolls do the killing (kobolds hit AC -1 only on a 20): at every wipe they stood at 25-36 HP while the blows went
     to kobolds. **Kill the trolls first:** Stinking Cloud on them (half fail, and a sick troll dies to one blow), three
-    fighters on one, stand on a fallen troll's square. **Princess Fatima** waits in her cell west of the throne and
+    fighters on one, stand on a fallen troll's corner (top-left) square (Enter ends the MOVE; Esc undoes it). **Princess Fatima** waits in her cell west of the throne and
     joins for the asking (F4, 33 HP, AC 10: give her spare armour). The efreeti helps against a vampire, not here.
     SURRENDER after a fled wave keeps the waves won but robs the party (not used, *Jeremy*). *code* + *seen* +
     *players* ([Demetrios1453](https://www.enworld.org/goto/post?id=9305676): won with two Fireballs and Fatima;
@@ -300,7 +300,9 @@ files); results *seen* unless marked.
     leaves the party when it leaves the caves. *code* + *seen* (ECL8 block 13 0xA720, NPC_ADD 104; Player 36, p36n1;
     Player 37, p37r1)
   - Between waves the original asks CONTINUE BATTLE: YES plays rounds with no enemy up, for cures and bandages; killed
-    trolls rise on their own square unless a figure stands on it. *seen* (Player 38, p38e1, p38e3)
+    trolls rise on their own corner (top-left) square unless a standing member is on it; one on the second cell
+    doesn't stop it, and the troll rises once the member on it falls. *seen* (Player 38, p38e1, p38e3; Player 40,
+    p40t1-t3)
 
 **Valhingen Graveyard (4:10)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **The two spectres at the brass doors (event 23, 9,1) are optional:** they guard only the knight's tomb (8,2), the one
@@ -627,7 +629,7 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 The cluebook gives no area order or expected levels; its only marker: if the party can clear the Slums' troll-and-ogre room, it can handle the rest. Our full run follows main's bot's route for the comparison; **the strategy track and the no-shortcut wins should use these approaches** (they change how a fight is met, not the rules).
 
-- **Slums trolls and ogres:** two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and casts at the trolls from one square back; drop the trolls together, stand on a fallen troll's square so it can't rise, then kill the ogres. Slums goblin guards: Sleep their leaders.
+- **Slums trolls and ogres:** two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and casts at the trolls from one square back; drop the trolls together, stand on a fallen troll's corner (top-left) square so it can't rise, then kill the ogres. Slums goblin guards: Sleep their leaders.
 - **Sokal Keep, the assault force (room 6):** go in fully rested; enter by a **southern door** to form a short straight line with secure flanks; Sleep and Hold Person on the archers and on the front rank to build a wall of helpless enemies; their archers run out of arrows after about 4 rounds; consider hiring an NPC. Patrols: parley SHESTNI (before the chapel), SAMOSUD (after Ferran). **Never melee Ferran Martinez (the spectre; 2 levels a hit): parley, say LUX, tell the truth** (he shows the hidden treasure). Haunts (room 7): LUX. Slow Poison memorized before the scorpions.
 - **Valhingen Graveyard:** don't enter before the council's two-handed sword +1 (+3 vs undead) and the Restoration scrolls; clear it early (the undead multiply), easiest first: skeletons, zombies, then wights; no rest until cleared; raise saves before the gas room and the mummies' fear; the vampire dies twice (coffin first, after the two spectres); the evil magic-user who joins betrays you. Tempus's wooden holy symbol (New Phlan's shop) repels vampires.
 - **Kobold Caves:** low ceilings cut movement, AC and damage. Enter by the **large wyvern cave**; rest there; a drunken kobold guides you to the king. Free **Princess Fatima** (joins and fights). Find the efreeti bottle and **tell the truth** (he helps in a later fight). Throne room: waves with no rest between; use Continue Combat for a round or two after each wave to heal.
