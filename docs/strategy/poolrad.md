@@ -668,3 +668,4 @@ The cluebook gives no area order or expected levels; its only marker: if the par
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- The kobold throne room (8:13): 8:13 allows no camp, so a spell for the throne must be memorized before the caves; Haste in round 1 took 5 figures within 2 of its point (1-2 casters always among them) and still lost 5 of 5: the killed trolls rise again at full HP while the fighters are spread over the kobolds. *seen* (Player 39, p39a1-c2; stuck-fights.md section 3)
