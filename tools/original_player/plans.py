@@ -1059,6 +1059,24 @@ class Focus:
         return True, None, ""
 
 
+class ScrollsStep:
+    """Player 37: `scrolls <MEMBER> <spell>, <spell>|none`: tactics.SCROLLS for that member from here (a spell per
+    readied scroll the member should USE in fights, each once)."""
+    def __init__(self, rest):
+        who, _, sp = rest.strip().partition(" ")
+        self.who = who.replace("_", " ").upper()
+        self.spells = [] if sp.strip().lower() == "none" else [x.strip().upper() for x in sp.split(",") if x.strip()]
+
+    def __repr__(self):
+        return "scrolls %s %s" % (self.who, ", ".join(self.spells) or "none")
+
+    def next(self, p):
+        import tactics
+        tactics.SCROLLS[self.who] = list(self.spells)
+        p.note("tactics", "scrolls: %s %s" % (self.who, ", ".join(self.spells) or "none"))
+        return True, None, ""
+
+
 class BandsStep:
     """Player 36: `bands on|off`: Guide 3's band rule (BANDS) from here on."""
     def __init__(self, on):
@@ -1975,7 +1993,7 @@ class Plan:
             if len(lit) != 1:
                 raise_stop(p, "heal: no single lit spell (rows %s)" % lit)
             if lit[0] in hit:
-                if len(op) > 3 and spell in ("BLESS", "PRAYER", "KNOCK", "READ MAGIC", "DETECT MAGIC"):
+                if len(op) > 3 and spell in ("BLESS", "PRAYER", "KNOCK", "READ MAGIC", "DETECT MAGIC", "HASTE"):
                     # (Bless and Prayer take the party, no CAST SPELL ON WHOM: the cast is over; Player 35: Knock
                     # cast in camp to free its slot for Stinking Cloud, the plan's `answer LOSE IT|YES`)
                     h["sub"] = "over"
@@ -2274,6 +2292,8 @@ def load(path):
             pl.goals.append(TacticsStep(rest.strip() == "on"))
         elif cmd == "focus":      # Player 36: `focus TROLL,...|none` (tactics.FOCUS)
             pl.goals.append(Focus(rest))
+        elif cmd == "scrolls":    # Player 37: `scrolls <MEMBER> <spell>, ...|none` (tactics.SCROLLS)
+            pl.goals.append(ScrollsStep(rest))
         elif cmd == "bands":      # Player 36: `bands on|off`
             pl.goals.append(BandsStep(rest.strip() == "on"))
         elif cmd == "answerfrom":
