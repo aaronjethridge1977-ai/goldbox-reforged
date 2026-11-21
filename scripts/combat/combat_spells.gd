@@ -603,8 +603,11 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 		me.pending = {"id": id, "cell": cell, "picked": keep}
 		# The original only lowers the caster's initiative here; its attacks (+0x113) stay, so
 		# a caster whose spell a wound spoils still strikes at its later turn (Combat Chat 7:
-		# 6:1's DIRTEN). Kept aside until then (Combat.next_turn puts them back).
+		# 6:1's DIRTEN). Kept aside until then (Combat.next_turn puts them back). Its movement
+		# stays too (GAME.OVR 0x14CFE-0x14D69 ends no turn: Player 35's p35i6, draw 22202: ELWEN,
+		# her Hold Person spoilt by a kobold, walked 3 squares at her later turn; ours guarded).
 		me.kept_attacks = me.attacks
+		me.kept_moves = me.moves
 		me.moves = 0
 		me.attacks = 0
 		c.message.emit("%s BEGINS CASTING" % m.name)
@@ -1040,6 +1043,7 @@ func begin_cast(i: int, id: int) -> bool:
 	var me: Dictionary = c.combatants[i]
 	me.pending = {"id": id, "cell": me.cell, "picked": [] as Array[int], "aim_later": true}
 	me.kept_attacks = me.attacks
+	me.kept_moves = me.moves      # as cast(): the original keeps both (0x14CFE)
 	me.moves = 0
 	me.attacks = 0
 	c.message.emit("%s BEGINS CASTING" % (me.who as PartyMember).name)
