@@ -43,10 +43,37 @@ The input for Jeremy's comparison across the series. Party rows first (section 1
 **Importing a Pool party** (section 1 has the detail): characters keep class, race, levels and stats; all items are
 lost; money is reset to 300 platinum each. *players* + *book*, details **unconfirmed** in the code.
 
-**Spells:** cleric levels 4-5 and magic-user levels 4-5 are new (Pool stopped at 3), and the druid's first level for
-rangers. *book* (Manual pp.18-24) [to be filled in at the section 4 review]
+**Spells** *book* (Manual pp.18-24)
+- **New levels:** cleric 4 (Cure Serious Wounds, Neutralize Poison, Poison, Protection from Evil 10', Sticks to Snakes)
+  and 5 (Cure Critical Wounds, Dispel Evil, Flame Strike, Raise Dead, Slay Living); magic-user 4 (Charm Monster,
+  Confusion, Dimension Door, Fear, Fire Shield, Fumble, Ice Storm, Minor Globe of Invulnerability, Remove Curse) and 5
+  (Cloudkill, Cone of Cold, Feeblemind, Hold Monster); the druid's first level for rangers (Detect Magic, Entangle,
+  Faerie Fire, Invisibility to Animals).
+- **Caps:** clerics reach all their spells at 9, magic-users at 10 (Cluebook p.4); a cleric dual-classed to magic-user
+  at 9 has both lists by 10.
+- **Memorizing:** 15 minutes a spell level after a preparation of 4 hours (levels 1-2), 6 (3-4) or 8 (5). *book*
+  (Manual p.18)
 
-**Items, monsters, interface:** [to be filled in at the section 2-4 reviews]
+**Items** *book* (Cluebook pp.43-46): bracers (AC 4, AC 2; not with armour), elfin chain (thieves keep their skills),
+the Ring of Wizardry (doubles a magic-user's level 1-3 spells), the Girdle of Storm Giant Strength (Str 24), Darts of the
+Hornet's Nest, ioun stones, the Necklace of Missiles, the Wand of Defoliation; the drow's +3 and +5 gear fades in
+sunlight; the three artifacts never show in the item lists and can't be sold or stolen (p.19). Cursed items are more
+common and look like good ones (Bracers of Defenselessness look like AC 4). Section 5 has where they are.
+
+**Monsters:** new to the series: beholders, drow, the dracolich, black dragons, efreeti, salamanders, shambling mounds,
+vegepygmies, giant slugs, otyughs and neo-otyughs, rakshasa, thri-kreen, phase spiders, margoyles, hell hounds, medusae,
+minotaurs, manticores, storm giants. The Journal ranks them I-X; the step up between VI and VII is large (Journal
+pp.5-8). *book* (Pool's list: to compare when its sources are set beside these.)
+
+**Interface** *book* (Manual pp.10-16; Card pp.1, 3)
+- **FIX** in camp: every cleric casts all its cure spells, then memorizes its spells again; it can be repeated; the top
+  of the order is healed first (Manual p.12; Cluebook p.4). New in Curse. *players* ([GameBanshee](https://www.gamebanshee.com/curseoftheazurebonds/walkthrough/introduction.php))
+- **The overland map:** pick a destination and a way to travel (road, wilderness, boat); events on the trails
+  (Manual p.4; Cluebook pp.35, 41-42).
+- **Esc takes back a combat move** (not the damage taken during it); **ALT M** turns magic on or off for members on
+  QUICK; ten save slots A-J (Card p.3). Whether Pool had these: **unconfirmed** (check Pool's card).
+- **The translation wheel** asks for a code letter at start (and translates the elvish and dwarvish runes in the game)
+  (Manual p.1). Copy protection: its answers stay in `.lab`.
 
 ## 1. The party
 
@@ -237,7 +264,7 @@ Invisibility or the Dust, just before the trigger (Card p.2). Haste ages each me
 - **The salamanders (6):** fight at the doorway so they can't swarm through; fire resistance first (p.15). The Frost
   Brand (+3, counts +6 against fire creatures) from the hideout suits them (p.44).
 - **Crimdrac the dracolich (14):** only if the party resists. Low AC, fire breath: spread out; Prayer and protections
-  just before; of the attack spells only Fireball and Magic Missile work, Magic Missile is surer (it can't be spoiled)
+  just before; of the attack spells only Fireball and Magic Missile work, Magic Missile is surer (it goes off at once)
   (p.16). If he lives, he waits on the road from Hap to Essembra later (p.42).
 
 **The Wizard's Tower**
@@ -291,7 +318,58 @@ Invisibility or the Dust, just before the trigger (Card p.2). Haste ages each me
 
 ## 4. Curse-only rules
 
-[Next review.]
+*book* unless marked; nothing here has been seen in play.
+
+**The bonds and the map**
+- **The bonds compel** the party at set points (the coach, Dracandros' roof, Mogion's gate, Tyranthraxus' hall), then
+  release: the fight that follows is free (Cluebook pp.1, 7, 18, 23, 34).
+- **Places close for good:** Tilverton after the party leaves it (the sewers and their hall stay open); Zhentil Keep
+  after the Beholder's caves; Dagger Falls once Tyranthraxus is dead; the temple can't be left once entered (Cluebook
+  pp.27, 34-35).
+- **The Zhentrim bond decides the roads:** Zhentil Keep's patrols let a bonded party pass and attack it once the bond is
+  gone; the Red Plumes on the Yulash-Hillsfar road do the opposite; Hillsfar treats a bonded party badly; Dagger Falls is
+  hostile unless the party warned it of the bugbear army or saved the farm from the ettins (Cluebook pp.36-37, 40-42).
+- **Overland dungeons** open through the towns' Search Area only after Hap, Yulash or Zhentil Keep is done; leave any of
+  them by searching for an exit, except Oxam's Tower and the sewers (Cluebook p.35).
+- **Rest outdoors** anywhere, with a small chance of an encounter every few hours (Cluebook p.35). Indoors, many areas
+  allow rest only after a number of patrols are beaten (section 2's table).
+
+**Training and services**
+- Training costs 1000 gp a level and takes no time; most overland cities have a hall, and halls hide elsewhere (the
+  sewers) (Manual p.8; Card p.2; Cluebook p.10).
+- Shops identify an item for 200 gp (Manual p.13); Zhentil Keep's shops charge inflated prices (Cluebook p.25).
+- The sage in Tilverton takes half the party's money (Cluebook p.7).
+
+**Combat**
+- **Backstab:** from the square opposite the member who first attacked the target this round (that sets its facing);
+  leather or elfin chain only; not on anything larger than man-sized; double damage at thief levels 1-4, triple at 5-8,
+  four times at 9-12 (Manual p.14; Cluebook p.4). The cluebook adds a one-handed sword: **unconfirmed**.
+- **Attacks:** bows twice a round, thrown darts three times; fighters and paladins from 7 and rangers from 8 attack twice
+  every other round; fighters, paladins and rangers can sweep weak foes (Manual p.14).
+- **Fleeing a fight:** a member faster than every enemy leaves the field; as fast as the fastest, a 50% chance; if
+  everyone still standing flees, the dead are lost (Manual p.15).
+- **Casting:** a caster hit before his spell goes off loses it (Cluebook p.5). A dual-class magic-user can't cast in
+  readied armour; rangers cast magic-user spells in armour (Manual p.6; Cluebook p.4). The cluebook says paladins can't
+  cast in combat in armour: **unconfirmed** (the manual doesn't say so).
+- **Area spells:** Fireball fills a 3" radius indoors, 2" outdoors (the cluebook: a 5-square diameter outdoors; indoors
+  only the three squares in each screen corner are safe); Lightning Bolt rebounds off walls and can hit twice;
+  Stinking Cloud is 2x2 from its aim square as the top left (Manual p.21; Cluebook p.6).
+- **Spell notes:** Sleep takes up to 16 one-hit-die foes or one of 4 dice, nothing of 5 or more; Enlarge from a level-6
+  caster gives ogre strength, from level 10 fire giant; Hold Person takes up to 3 targets (cleric) or 4 (magic-user);
+  Magic Missile goes off at once, before the caster can be hit (Manual pp.19-21; Cluebook pp.5, 16).
+- **QUICK members** use readied magic items, and shoot (arrows or sling) when nobody is adjacent (Card p.3).
+
+**Items and NPCs**
+- A scroll's magic-user spells: only magic-users (and rangers from 9) can read them after Read Magic; a thief of 10 or
+  more has a 75% chance (Manual p.17).
+- Elfin chain is the only armour besides leather that keeps a thief's skills (Cluebook p.43). Bracers don't work with
+  armour (p.43).
+- The Dust of Disappearance: one in the game, its invisibility lasts and survives attacking (p.43).
+- The drow's magic gear fades once out of the drow areas (p.44). *players* add that it works until it meets
+  sunlight ([the-spoiler.com](https://the-spoiler.com/RPG/SSI/curse.of.the.azure.bonds.2/Curse%20of%20the%20Azure%20Bonds/nn4/Curse%20of%20the%20Azure%20Bonds_3.htm)).
+- NPCs who join: Akabar Bel Akash (Hap), Alias and Dragonbait (the Pit), Dimswart (the Shrine), Olive Ruskettle (Zhentil
+  Keep). A conscious NPC keeps what he is given; take it back only if he dies (Manual p.8; Cluebook pp.14, 22, 26).
+- Elves can't be raised; for others the chance depends on Constitution (Manual p.9).
 
 ## 5. The magic-gear map
 
