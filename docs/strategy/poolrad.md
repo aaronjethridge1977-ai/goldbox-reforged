@@ -245,7 +245,8 @@ files); results *seen* unless marked.
   0xA614 to 0xA802: flag tests, his speech with two PRESS BUTTON pauses, the vote, the next fight's setup cells; no
   REST, clock step or effect clear; *code*, Gold Box Guide 5). The guards' experience and treasure screens come at
   their fight's end, before his speech, so the rings are taken then. **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his
-  fight (READY in a fight is free as for weapons; a ring not yet tried in DOSBox). **Only the better ring counts**, and
+  fight: USE, End to the ring, R, EXIT; **its AC counts at once and the member's turn is kept** (*seen*: Combat Chat 38
+  in DOSBox, a Ring of Protection +2 readied in a fight, AC 4 to 2; folded by Gold Box Guide 6). **Only the better ring counts**, and
   **magic body armour cancels a ring's AC**; its +3 to saves counts either way (Combat Chat 36: START.EXE 0xE22). So
   every member gains +3 against his fear and breath, and those **without magic body armour** (DORN in the Bracers, the
   magic-users, plain armour) also gain AC 3: Tyranthraxus (THAC0 5) hits AC -1 75% of the time and AC -4 60%. Armour
@@ -670,3 +671,6 @@ Lanes append new lessons here, one line each, with the source tag (*seen* / *cod
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 - The kobold throne room (8:13): 8:13 allows no camp, so a spell for the throne must be memorized before the caves; Haste in round 1 took 5 figures within 2 of its point (1-2 casters always among them) and still lost 5 of 5: the killed trolls rise again at full HP while the fighters are spread over the kobolds. *seen* (Player 39, p39a1-c2; stuck-fights.md section 3)
 - The wilderness bands: a cheap band met with a sure manner left at once on PARLAY ABUSIVE (kobolds, 7:26 12,23); a band that SURPRISED the party took FLEE straight into a fight (lizard men, 8:27 6,18). *seen* (Player 39, p39f9, p39f10)
+- Valhingen's spectres (4:10 9,1): the clerics' TURN sends both away (21 squares); chase them with the advance fighters while Haste lasts, don't guard: p37g1 guarded and lost, p37i1 chased and won with no drain. *seen* (Player 37; stuck-fights.md section 4, Gold Box Guide 6)
+- The kobold caves (8:13): the camp and the wandering kobolds leave the party be only while it came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0): the cluebook's "rest in the wyvern cave"; once the wyvern is woken (the rubble slope) or killed, no camp before the throne is beaten. *code* (ECL8 block 13 0xB428, 0xB388; ECL8 block 27 0x9DB5; Gold Box Guide 6)
+- A killed troll stays down only when the killing blow is fire or acid (Fireball, Burning Hands; not lightning). *code* (GAME.OVR 0x11434; Gold Box Guide 6)

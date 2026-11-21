@@ -306,6 +306,19 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   p39b3 (tool stops at a hasted member's second blow: fixed). No try cleared wave 1 (Player 38's e3 did, without Haste).
   What beats every try: the trolls' rising (at full HP, at or beside their squares) once the fighters are spread
   over the kobolds. To the Lead (board): Jeremy and the stuck-fights guide chat.
+- **Read (Gold Box Guide 6, 2026-11-21, from Players 38-39's original-side logs and ECL8 block 13):**
+  - **The hold-down never held.** In every try with `OP_HOLDDOWN` the figure that "stands on" a fallen troll's square
+    is back on another square after the move's Esc (its next menu): **32 of 32** (p38e3 17, p39c2 10, p39b4 3, p38e5
+    1, p39a1 1); p39c2's troll 10 rose at 30,12, the square BRAM "held" ten times. p38e3 cleared wave 1 by luck of the
+    3d6 rounds, not by holding. Either the original won't let a figure end its move there or the tool's step is wrong:
+    to check by hand in DOSBox (requests to the Player and Combat). Ours lets a figure stand on a fallen troll
+    (`occupant()` skips downed figures). *seen*
+  - **Only fire or acid keeps a troll down:** the killing blow's kind decides (0x11434: no 3d6 rounds after fire or
+    acid). In this party: LIRA's Fireball (slot or scroll) and **Burning Hands** (LIRA scribed it, p37b2; ELWEN
+    learned it): fire, the caster's level in damage. Lightning (the wands) doesn't count. *code*
+  - **The cluebook's "rest in the wyvern cave":** 8:13's rest and wandering-kobold scripts let the party be while it
+    came in by the LARGE cave (0x4AC7 = 255) **and the wyvern lives** (0x4A8E = 0; the rubble slope at 8:13 wakes it).
+    In this chain the wyvern is dead (2): no camp. *code*
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
@@ -349,3 +362,6 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
     ARN drained to nothing, BRAM, ELWEN and LIRA two levels each). **p37i1 won** (`p37i1_s37spectres`): TURN again,
     LIRA's scroll Fireball at one, the advance fighters walked to the fleeing pair (`advance` now walks to a focus
     figure at any distance) and ARN killed both; nobody hurt. (p37h1: a tool stop at the scroll's aim, not a try.)
+  - **Read (Gold Box Guide 6, 2026-11-21): done; no Plan 2.** The lesson for the guide: the clerics' TURN does move
+    the spectres (both fled 21 squares), so after TURN the fighters chase while Haste lasts; guarding loses the Haste
+    (p37g1). Next on this branch: the knight's tomb (8,2), then the vampire's last fight. *seen*
