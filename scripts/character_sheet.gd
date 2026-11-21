@@ -81,7 +81,9 @@ var _mode := "view"      # view, items, spells, whom, coin_whom, coin, amount, c
 var _cursor := 0         # the chosen item
 var _pick := 0           # the lit menu item
 var _pending := ""       # what whom/confirm/coin/amount are for: trade, drop, use, sell, coin_trade, coin_drop
-var _target := 0         # member chosen for a trade
+var _target := 0         # member chosen for a trade; -1 no one (after Esc), -2 past the party's end (bug 19)
+var _target_kept := 0    # the member lit when Esc took the light off: the next TRADE starts there (DOSBox)
+var _coin_asked := false # TRADE's coins: HOW MUCH asked on this visit (EXIT / Esc then go back to TRADE TO?)
 var _coin := 4           # the coin type chosen
 var _coin_cursor := 0    # index into the coins held
 var _amount := ""
@@ -1072,6 +1074,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				"TRADE":
 					_pending = "coin_trade"
 					_mode = "coin_whom"
+					if _target < 0:
+						_target = _target_kept
 				"DROP":
 					_pending = "coin_drop"
 					_coin_cursor = 0
@@ -1118,6 +1122,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif SpellCaster.needs_member(spells, id):
 					_mode = "scroll_whom"
 					_pick = 0
+					if _target < 0:
+						_target = _target_kept
 				else:
 					_cast_scroll(m, m)
 			_refresh()
@@ -1195,6 +1201,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				else:
 					_pending = "trade"
 					_mode = "whom"
+					if _target < 0:
+						_target = _target_kept
 			elif choice == "DROP":
 				if it.readied:
 					_say("MUST BE UNREADIED")
@@ -1209,17 +1217,35 @@ func _unhandled_input(event: InputEvent) -> void:
 				_join(m, it)
 			_after_change()
 		"whom", "coin_whom":
-			if key == KEY_HOME:
-				_target = (_target - 1 + _people.size()) % _people.size()
+			# Esc takes the light off the party (no one chosen) and stays; SELECT with no one backs out as EXIT;
+			# Home from no one lights the last member; End from no one is original's bug 19: a member past the
+			# party's end, not lit, and a trade to it loses the item or the coins (main chat 92, DOSBox at 3:0's
+			# camp: TRADE TO? and TRADE WITH WHOM?; Home after it: no one again).
+			if cancel:
+				if _target >= 0:
+					_target_kept = _target
+				_target = -1
+			elif key == KEY_HOME:
+				if _target == -1:
+					_target = _people.size() - 1
+				elif _target == -2:
+					_target = -1
+				else:
+					_target = (_target - 1 + _people.size()) % _people.size()
 			elif key == KEY_END:
-				_target = (_target + 1) % _people.size()
-			elif choice == "EXIT" or cancel:
+				if _target == -1:
+					_target = -2 if OriginalBugs.on() else 0
+				elif _target >= 0:
+					_target = (_target + 1) % _people.size()
+			elif choice == "EXIT" or (choice == "SELECT" and _target == -1):
 				_mode = "items" if _pending == "trade" else "view"
 			elif choice == "SELECT":
-				var to := _people[_target]
+				var to: PartyMember = _people[_target] if _target >= 0 else null
 				if _pending == "trade":
 					var it := _item()
-					if to != m and it != null:
+					if to == null and it != null:
+						m.items.erase(it)      # bug 19: given past the party's end, gone
+					elif to != m and it != null:
 						if not _can_take(to, it):
 							_say("OVERLOADED")
 						else:
@@ -1229,6 +1255,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_mode = "items"
 				else:
 					_coin_cursor = 0
+					_coin_asked = false
 					_mode = "coin"
 			_after_change()
 		"confirm":
@@ -1271,8 +1298,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				_coin = held[clampi(_coin_cursor, 0, held.size() - 1)]
 				_amount = ""
 				_mode = "amount"
+				_coin_asked = true
 			elif choice == "EXIT" or cancel:
-				_mode = "coin_whom" if _pending == "coin_trade" else "view"
+				# TRADE's coins: EXIT and Esc go back to TRADE TO? once HOW MUCH was asked on this visit (answered
+				# or not), else to the view page (main chat 92, DOSBox; DROP's always to the view page)
+				_mode = "coin_whom" if _pending == "coin_trade" and _coin_asked else "view"
 			_refresh()
 		"amount":
 			if cancel:
@@ -1283,7 +1313,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_amount = _amount.left(-1)
 			elif event.is_action("ui_accept"):
 				var n := mini(int(_amount) if _amount != "" else 0, m.money[_coin])
-				if _pending == "coin_trade" and _people[_target] != m:
+				if _pending == "coin_trade" and _target == -2:
+					m.money[_coin] -= n     # bug 19: given past the party's end, gone
+				elif _pending == "coin_trade" and _people[_target] != m:
 					# GAME.OVR 0x250D5 lowers and raises the giver's cached load by the same amount: neither
 					# word moves (Combat Chat 29). It first tests the receiver's word: word + n above his
 					# most (0x24C89) moves nothing; its "Overloaded" never shows on the screen (chat 79,
