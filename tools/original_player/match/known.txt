@@ -31,4 +31,4 @@ label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the o
 label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
-label p36h1 game: draw 3932 of 16374, 7:26 24,27 (the nomads): the original draws d100 at OVR:09969 where ours rolls a NOMAD's initiative (p26a1's difference, the same draw, on a clean recording; Player 36 -> combat)
+label p36h1 game: statediff 1 at the segment's end, ELWEN's memorized spells after 7:17 1,14's camp MEMORIZE (all 16374 draws identical since main chat 82's PARTY_STRENGTH fix): the original's screens took the keys to SLEEP, MAGIC MISSILE, SLEEP ([.., 15, 21, 21]); ours, the same keys, SHIELD and one SLEEP ([.., 19, 21]): ours' MEMORIZE list (Player 38 -> main)
