@@ -2,6 +2,8 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 09:57 (Gold Box Lead)
+
 ## Archived 2026-11-21 09:52 (main chat 88)
 
 - 2026-11-17 · desk → main · **P76, Jeremy playing (0.1.0-test1): STAY is drawn all white in FIGHT STAY LEAVE RUN** whether or not it's picked (the Slums orc leader, 14,1 N). First check: the original's colours for that menu in DOSBox; why STAY differs from the other words in ours; match. Jeremy … (full: archive) · open (archived by main chat 88: answered by main chat 52, archived above)

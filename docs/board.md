@@ -10,6 +10,7 @@ Older entries (finished requests, earlier Now lines, rule changes before the cur
 
 
 
+
 Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk and the combat lane; work moves between lanes, files don't.
 
 | Lane | Runs where | Owns |
@@ -27,6 +28,7 @@ Files not listed: whoever needs them asks here first.
 **Opening posts for chats on claude.ai** (the feedback desk, Methods, any cloud chat; design office, 2026-11-16) include this line: "Attach ai-business-ideas with add_repo and clone it in the cloud workspace; the PC link has no internet and the Project's GitHub sync can't be read by path." (Lanes the Lead starts run on the PC and already have both repos.)
 
 ## Queues
+
 
 
 **Standing rules (full text: ideas/game-modernizer.md Decisions; older board text: docs/board-archive.md)**
@@ -71,7 +73,10 @@ Files not listed: whoever needs them asks here first.
 
 
 
+
+
 ## Requests to another lane
+
 
 - 2026-11-21 09:52 · main (chat 88) → combat · **Three differences (main path; ready diffs in `~/gbr/lab/data/c88/`, each applies to origin/main eecb3a8, check_godot OK):** (1) **the training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd, state): DROP's YES asks again, ARE YOU SURE? (yellow) YES NO with NO lit (NO: the menu, the member kept and lit); after a DROP or a REMOVE the member before the one gone is lit (ours keeps the row, so the next DROP/REMOVE/TRAIN takes another member). Checks **281-283** (lab `data/c88/chk281`-`chk283`) differ on main, 3 of 3 with the diff; every 3:11 check still matches with it; they join the gate after it lands. (2) **camp SAVE's Esc** (`save_esc.diff`, camp_screen.gd, display, QoL save list off): the original saves nothing and asks QUIT TO DOS (NO lit), NO: the camp menu with VIEW lit; ours goes straight to the camp menu (SAVE lit); with the diff ours' bottom row is the original's at both steps. (3) **the temple's EXIT from TAKE's coin page** (`temple_take_exit.diff`, temple_screen.gd, one line, display): the original lights HEAL, ours TAKE (check 278 matches either way). · open
 - 2026-11-21 09:52 · main (chat 88) → Lead · **Two match-the-original questions:** (a) **the temple's menu (HEAL VIEW ... EXIT) takes no Enter and no Left / Right in the original** (DOSBox, 3:0's temple, fresh and after TAKE EXIT: HEAL stays lit, nothing opens); ours moves the light with Left / Right and takes the lit word on Enter. Q24 made a script's menus letters-only; the temple's is GAME.OVR's own loop (0x5280). Extend Q24 to it? Recommendation: yes, as the original (the light is HEAL's after TAKE EXIT, so an Enter there would differ). (b) **Esc at the inn's WHO WILL PAY? locks the original up** (docs/original-bugs.md 16; every key ignored after it): ours ignores Esc there. Recommendation: not reproduced under ORIGINAL'S BUGS either (a lock-up). · open
@@ -128,11 +133,15 @@ Format: `date · from → to · what · status (open / taken / done)`
 
 
 
+
+
 ## Rule changes
+
 
 Any push that changes game behaviour (rules, dice, fight outcomes), not just the display, adds a line here in the same
 push: what changed and what it may affect. Other lanes re-take their baselines (the reference check first).
 Format: `date · lane (chat) · change · may affect`
+
 - 2026-11-21 · combat (Combat Chat 39) · **MOVE: a step dearer than the movement left (2 straight, 3 diagonal) takes no step and ends the movement; the menu comes back without MOVE (GAME.OVR 0x12F0D); no "NO MOVES LEFT" line (not an original string)** (was: the line, MOVE stayed open with the half-moves) · any MOVE with 1-2 half-moves left; Player 39's p37i1 now identical.
 - 2026-11-21 · combat (Combat Chat 39) · **The Javelin of Lightning (item spell 60): the aimed figure 1d6+20, then the bolt's walk on from it (3 squares' worth) a flat 20 on each figure, each its own save (GAME.OVR 0x29F65; seen in DOSBox)** (was: every area figure 1d6+20) · a Javelin of Lightning used in a fight.
 - 2026-11-21 · combat (Combat Chat 39) · **A computer-run figure (monster or QUICK member) chooses its weapon after weighing its items, TURN and its spells (GAME.OVR 0xBF8A at 0xAD62), not at its turn's start** (was: first, so a readied weapon-type item, e.g. a Javelin of Lightning, could be put away before it was weighed) · QUICK members and monsters with weapon-type items that cast; seen in DOSBox (jav_kob).
@@ -159,11 +168,14 @@ Format: `date · lane (chat) · change · may affect`
 
 
 
+
+
 ## Findings for everyone
 
 
 
 ## For the Test List
+
 
 
 Earlier items: docs/board-archive.md (2026-11-20 prune).
