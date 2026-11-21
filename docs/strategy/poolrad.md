@@ -211,7 +211,8 @@ files); results *seen* unless marked.
   fire (*book*); Hold Person doesn't take giants. **With no alarm ringing, PARLAY HAUGHTY or SLY** gets the passwords
   (today's and the gate's) with no fight; NICE or MEEK: "get lost" (LEAVE, or STAY and fight); ABUSIVE fights. With
   the alarm on they attack on sight. A won fight sets 0x4A66 bit 16 (the four of 5,2 stay away) and a SEARCH of the
-  room finds the passwords. *code* (ECL5 block 4, MON5CHA) Results: 1 deathless win in 12 (Player 28). *seen*
+  room finds the passwords. *code* (ECL5 block 4, MON5CHA) Results: 1 deathless win in 12 (Player 28); 2 of 2 won
+  from c33b's save, one with nobody dead (Player 8). *seen*
   - **Talk or fight, decided at the audit before Valjevo** (*Jeremy*): fight only if a member is short of a level the
     finale needs (CEDRIC is capped at cleric 6: his share is lost); then the graveyard's **Wand of Lightning Bolt**
     (**3 charges**: record byte 60, the 12 is its plus; ITEM4 list 28; 6d6 down a line, it bounces), Stinking Cloud,
@@ -219,6 +220,8 @@ files); results *seen* unless marked.
     (Gold Box Guide 4)
 - Patrols and camps as the cluebook says (MEEK + HARASH, or HAUGHTY / ABUSIVE + TYRANTHRAXUS; the safe rest rooms during
   an alarm). *book*
+  The patrol (5:4: a human fighter and five giants, [75 x1, 55 x5]) comes on a camp while the alarm holds; won on 3
+  of 4 seeds (Player 3). *seen*
 - **Camps (5:3, 5:4):** the area's rest script runs at ENCAMP and sets the camp's odds until it is left. **With no
   alarm a camp is never interrupted.** While the alarm rings (it runs from the fight that rang it to about the next
   hour on the clock: 0x4A62-0x4A64), a camp off a safe square (info bit 64, the book's safe rooms) is checked every 5
@@ -557,13 +560,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Valjevo, 5:4 9,1** [56 x4].
-  - Won 2 of 2 from c33b's save, one with nobody dead (Player 8).
-  - Player 28 (the original's 6 members, 260 HP; the bot's 7 had 318): four FIRE GIANTS (the bot's log), **1 deathless win in 12**
-    (p28e3; 8 losses with deaths, 3 wipes) from `s31e`. With no alarm the giants parley (ECL 5:4 0xA38D: HAUGHTY or SLY gives
-    the passwords; untried); a won fight sets 0x4A66 bit 16, which keeps the four giants of 5,2 (event 1) away.
-- **Valjevo patrol, 5:4** [75 x1, 55 x5], giants led by a human fighter. It comes on a camp while the alarm holds. Won 3 of 4 seeds (Player 3).
-- (Folded into section 3, Guide 5.) **Valjevo camps, 5:3 12,12**: p27g4 and p27h1 were wiped by camps interrupted three times. Inside 5:3 use cures only.
 - **Finale guards, 5:7 3,8** [85 x12]: party destroyed on every seed (Players 2, 3, 7, 9).
   - Player 29 (the full run's party, 263 HP, levels 4-6, from `s34h` at full HP, levels 1-3 memorized, MAGIC ON): **1 win in 5**
     (p29b2 won and was left with 5 standing, 141 HP; p29d1-d4 destroyed in under a minute). The 12 guards (8th-level
