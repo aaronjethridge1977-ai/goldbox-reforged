@@ -301,6 +301,11 @@ func next_turn() -> int:
 		(c.who as PartyMember).refresh_load_word()     # each figure's turn (0x99FD: 0x9A8A)
 		if c.down:
 			continue
+		if lab_print_effects:
+			var fx := PackedStringArray()
+			for a in (c.who as PartyMember).affects:
+				fx.append("%s:%s" % [str(a.get("effect", "?")), str(a.get("minutes", "?"))])
+			print("   FX T R%d %d %s %s" % [round_no, active, (c.who as PartyMember).name, " ".join(fx)])
 		if magic and CombatSpells.held(c.who):
 			# Its turn comes, but the holding effects' handler (GAME.OVR 0xFF9A: sleep, hold, snake charm,
 			# nausea) ends it at once with the turn end 0xBA:0x2637: its guard (combat byte +7) and any spell
