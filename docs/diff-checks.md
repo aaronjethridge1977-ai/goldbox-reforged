@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat), the temple's RAISE DEAD (check 160); DIFFCHECKS 160/160
+## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat), the temple's RAISE DEAD (check 160), SCRIBE using up a one-spell scroll (check 161); DIFFCHECKS 161/161
 
 All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk159`, links in `data/c76/cd/`), tpseed 11111111.
 
@@ -195,6 +195,9 @@ All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk15
   its slots hold (a made-up 212 scroll with one spell stayed, 211 and empty; a 210 scroll is gone): `PartyMember.
   spend_scroll_spell` (ours removed it when all three slots were empty and didn't count the word down). 3 of 3; SCRIBE of 20
   instead differs. An unread scroll (byte 53 = 6) offers nothing to SCRIBE in the original either (no message seen).
+- **Check 161, SCRIBE from a one-spell scroll:** check 159 with the scroll's spells 20, 0, 0 and word 48 = 210, no Home:
+  20 in the book, the scroll gone (210 - 1 < 210). Matched at once, 3 of 3 (ours removed it before the fix too); without
+  the REST differs.
 - **Check 160, RAISE DEAD** (3:0 Tempus' temple): check 155's start (RHIANNON dead, +0x10C = 6, with the poison 0x37 in
   her .SPC): check 144's walk, YES, POOL, End x2 (RHIANNON), HEAL, End x6 (RAISE DEAD), HEAL (WILL ONLY COST 5500 GOLD
   PIECES), YES (RHIANNON / IS CURED.: no survival roll seen), EXIT, SHARE, EXIT, NO, F2: OKAY, HP 1, CON 14 -> 13, the
