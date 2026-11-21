@@ -273,6 +273,25 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
   25-36 HP; LIRA's Fireball came on her third turn, after two clouds (now Fireball first). p37u1 healed at the inn and
   came back to the door with ARN, CEDRIC and ELWEN at 0 HP: stopped by hand as the throne fight began, not counted.
   To the Lead (board): a fit party at the door (the SMALL cave? spells kept for the way?), or later.
+- **The Lead's way in, then five tries from a fit door (Player 38, 2026-11-21): 5 of 5 lost.** First the audit's
+  movement rule: every member carried ~1170 platinum and up to 2560 gold, four at their most (the shop refused them a
+  purchase, the money TRADE moved nothing to them); New Phlan's shop: POOL, one purchase regroups the pool into
+  platinum, each member TAKEs a set amount: the party moves 9+ (`p38a2_s38audit`, `p38/move.plan`). **(a) The SMALL
+  cave** (p38b1, `p38/king8.plan`) enters 8:13 at 6,15 (the LARGE one at 10,15), but 8:27 6,16's 30 kobolds come on
+  the square before the cave menu either way, and 10,9's band on the way in: the door with ELWEN at 0 HP, LIRA's
+  Fireball spent on 1:18's goblins (not a try). **(b) MAGIC OFF** (OP_MAGIC=0, tactics off): the 30 kobolds cost 26 HP
+  (p38c1); with tactics on inside, three plain kobold bands (7,12, 10,9, 5,6) took every spell; **tactics off to the
+  door** (p38d1, `p38/king10.plan`): **the door fit** (`p38d1_s38door10`: 289/297 HP, Fatima 33/33, every spell, LIRA's
+  Fireball scroll). `p38/king10f.plan`: Fatima armed, LIRA's scroll readied, `focus TROLL`, `advance ARN,BRAM,PRINCESS
+  FATIMA`, `scrolls LIRA FIREBALL`. **p38e1**: all four trolls and all but two kobolds killed, then **two killed trolls
+  rose again at their squares** (figures 8 and 10, 18 and 24 HP) and beat the last three. **p38e2**: lost, the four
+  trolls back at 36 HP at the end. New tactics (`OP_HOLDDOWN`: a fighter in `advance` walks onto a fallen troll's
+  square, any of its cells, and stays): **p38e3 cleared the first wave** (BRAM on a fallen troll), then the original
+  asked **CONTINUE BATTLE: YES NO** (the tool said NO: the book's "Continue Combat to heal") and wave 2 (4 boars, 45
+  kobolds) began with 4 up at 49 HP: lost. New: CONTINUE BATTLE YES while hurt and a cure is in memory
+  (`OP_CONTINUE`), cures on the most hurt. **p38e4** lost in wave 1 (313 HP to 111 in 100 s once the trolls closed);
+  **p38e5** lost in wave 1 (two trolls left at 27 and 15). Each try spent LIRA's Fireball and scroll, both clouds and
+  Hold Persons; the trolls close in about 3 rounds and do the killing. To the Lead (board).
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
