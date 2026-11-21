@@ -100,6 +100,20 @@ def _dist(a, b):
     return min(max(abs(p[0] - q[0]), abs(p[1] - q[1])) for p in cells(a) for q in cells(b))
 
 
+def walls(mem):
+    """Player 42 (Guide 9: OP_GOTO pressed DORN into the finale's wall at 27-28,10): the field's cells no figure can
+    stand on. The combat map is 50 x 25 ground ids at the far pointer DS:0x6716 + 7 (Combat's trace.py, Combat Chat 1;
+    0x1F a fallen figure's square); an id's move cost is the first of its 4 bytes in START.EXE's ground table
+    DS:0x2744 (1, or 0xFF impassable; ours battlefield.gd). Returns a set of (x, y); empty if unreadable."""
+    try:
+        mo, ms = struct.unpack("<HH", mem.ds(0x6716, 4))
+        grid = mem.far(ms, mo + 7, 50 * 25)
+        table = mem.ds(0x2744, 4 * 256)
+    except Exception:
+        return set()
+    return {(i % 50, i // 50) for i, g in enumerate(grid) if table[4 * g] != 1}
+
+
 def _is_mage(f):
     w = f["name"].upper().split()
     return any(m in w for m in MAGES) or any(m in f["name"].upper() for m in ("MAGIC", "MAGE"))
@@ -201,6 +215,12 @@ def _focus(f):
 HOLDDOWN = os.environ.get("OP_HOLDDOWN", "1") != "0"
 # Player 40: OP_MOVETEST=<key> (a hand check: which key ends a MOVE with the member where he stepped): see _fight
 MOVETEST = os.environ.get("OP_MOVETEST", "")
+# Player 42 (Guide 9's Plan 4 for the finale's guards, Jeremy 12:29): OP_PLAN4=1: round 1's spells Stinking Cloud then
+# Hold Person (Hold Person only by a caster with no standing foe next to him: it goes off at his next turn); Fireball
+# only with every member OP_FBCLEAR (4) squares or more from the target figure; nobody walks while a member stands
+# next to a foe that isn't helpless; a held foe out of reach may take a missile (it slays: GAME.OVR 0x13C01).
+PLAN4 = os.environ.get("OP_PLAN4") == "1"
+FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
 # Player 41: OP_GOTO="x,y;x,y" (see _fight)
 GOTO = [tuple(int(v) for v in q.split(",")) for q in os.environ.get("OP_GOTO", "").split(";") if q.strip()]
 # Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
@@ -274,6 +294,12 @@ class Tactics:
         self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
         self.holding = set()     # Player 38: members standing on a fallen focus figure's square (OP_HOLDDOWN)
 
+    def _p4_still(self, p):
+        """Player 42 (Plan 4): nobody walks while a member stands next to a foe that isn't helpless (a step out of
+        contact draws its free blow; the held front row keeps the guards behind it off)."""
+        figs, party, foes = self._sides(p)
+        return any(_up(a) and _dist(a, f) <= 1 and not helpless(f) for a in party for f in foes)
+
     # -- reading -------------------------------------------------------------------------------------------
     def _sides(self, p):
         figs = figures(p.g.mem)
@@ -303,6 +329,8 @@ class Tactics:
             # Player 37 (p37n2: LIRA's Fireball came on her third turn, after two clouds): Fireball before the cloud
             prio = ("FIREBALL", "STINKING CLOUD") + tuple(s for s in prio if s not in ("FIREBALL", "STINKING CLOUD"))
         prio = ("HASTE",) + tuple(s for s in prio if s != "HASTE")
+        if PLAN4:
+            prio = ("STINKING CLOUD", "HOLD PERSON") + tuple(s for s in prio if s not in ("STINKING CLOUD", "HOLD PERSON"))
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
@@ -312,6 +340,8 @@ class Tactics:
                 continue           # Player 33 (p33c1: Bless cast again after the camp's): already on the party
             if spell == "BLESS" and contact:
                 continue           # before contact
+            if PLAN4 and spell == "HOLD PERSON" and any(_dist(me, f) <= 1 and not helpless(f) for f in foes):
+                continue           # Plan 4: a blow on the caster spoils it before it goes off
             if spell == "MAGIC MISSILE" and me.get("mu", 2) < 2:
                 continue           # Player 33 (spell sheet): at magic-user level 1 it fires no missile
             if spell in ("PRAYER", "BLESS") or self.targets(spell, me, party, foes):
@@ -354,7 +384,7 @@ class Tactics:
         if spell == "FIREBALL":        # Player 35: the biggest bunch (2 or more), no party member within 2 of it
             best = []
             for f in foes:
-                if any(_up(a) and _dist(a, f) <= 2 for a in party) or (me and _dist(me, f) > 9):
+                if any(_up(a) and _dist(a, f) <= (FBCLEAR - 1 if PLAN4 else 2) for a in party) or (me and _dist(me, f) > 9):
                     continue
                 k = sum(1 for g in foes if _dist(g, f) <= 1)
                 # Player 37: two foes or fewer, a focus kind among them (the graveyard's spectres): one is enough
@@ -606,7 +636,7 @@ class Tactics:
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
             taken = {c for f in figs if f is not me and (_up(f) or f["n"] <= self.party_n) for c in cells(f)}
-            free = [q for q in GOTO if q not in taken]
+            free = [q for q in GOTO if q not in taken and q not in walls(p.g.mem)]
             if me is not None and (me["x"], me["y"]) not in GOTO and free:
                 q = min(free, key=lambda q: max(abs(q[0] - me["x"]), abs(q[1] - me["y"])))
                 self.moved.add(member)
@@ -641,7 +671,8 @@ class Tactics:
                 self.holding.discard(member)
         if member in getattr(self, "holding", set()):
             self.moved.add(member)       # Player 38: on a fallen troll's square: strike what is in reach, no MOVE off
-        if FOCUS and member.upper() in ADVANCE and "MOVE" in items and member not in self.moved:
+        if FOCUS and member.upper() in ADVANCE and "MOVE" in items and member not in self.moved \
+                and not (PLAN4 and self._p4_still(p)):
             # Player 36 (p36n2: BRAM struck kobolds next to him for ten minutes with a troll two squares off): a fighter
             # in `advance` with a focus figure within 4 squares and none next to him walks to it, past the small fry
             # (kobolds hit AC -1 only on a 20), and attacks it by stepping in; 6 such walks a fight at most
@@ -669,6 +700,7 @@ class Tactics:
             # distance, for up to 30 turns
             far_ok = goal is not None and _focus(goal)
             if member.upper() in ADVANCE and "MOVE" in items and goal is not None and member not in self.moved \
+                    and not (PLAN4 and self._p4_still(p)) \
                     and (_dist(me, goal) <= 8 or far_ok) and self.idle.get(member, 0) < (30 if far_ok else 8):
                 # Player 35: the line rule: walk toward the nearest enemy (a helpless one first), then attack; not
                 # past 8 squares nor after 8 turns without a blow (p35g2: two zombies 21 squares off behind walls,
@@ -814,6 +846,9 @@ class Tactics:
         dist = lambda q: min(max(abs(q[0] - c[0]), abs(q[1] - c[1])) for c in gcells)
         seen = mv.setdefault("visited", set())
         seen.add(pos)
+        # Player 42 (Guide 9): no step into the field's walls (p41g1: DORN's keys into 27-28,10 were refused, the log
+        # named him on a wall cell, and the turn was lost)
+        taken = taken | walls(p.g.mem)
         here = dist(pos)
         best = None
         for k, dx, dy in DIRS:
@@ -867,7 +902,8 @@ class Tactics:
             if far:
                 # Player 35 (Plan 1s, Gold Box Guide 2): a bow shoots the leaders and magic-users first, never a
                 # helpless one out of reach (the fighters take those with a blow), then the weakest
-                cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
+                if not PLAN4:
+                    cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
                 cand.sort(key=lambda c: (not _focus(c[1]), not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
             else:
                 cand.sort(key=lambda c: (not _focus(c[1]), not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]),
