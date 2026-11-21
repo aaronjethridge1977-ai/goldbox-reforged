@@ -225,6 +225,8 @@ FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
 # every member with MOVE walks the shortest way (8 directions, walls and figures avoided) to the field's edge and
 # steps off it (the script: a fled party, 0x6DC7 = 129, is put back on 3,6 and meets him alone at the next try)
 FLIGHT = os.environ.get("OP_FLIGHT", "").upper()
+# Player 42: OP_QUICKKINDS="STIRGE,..." (members go QUICK when only those kinds stand)
+QUICKKINDS = [k.strip().upper() for k in os.environ.get("OP_QUICKKINDS", "").split(",") if k.strip()]
 # Player 41: OP_GOTO="x,y;x,y" (see _fight)
 GOTO = [tuple(int(v) for v in q.split(",")) for q in os.environ.get("OP_GOTO", "").split(";") if q.strip()]
 # Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
@@ -587,6 +589,15 @@ class Tactics:
             self.move = None            # Player 35: a MOVE that ended the turn (a blow struck by a step)
             self.last_member = member
         items = b.split()
+        if QUICKKINDS and "QUICK" in items:
+            # Player 42 (Plan 2's bands: 7:26's stirge swarms took ~6 min each by hand for ~230 XP a member): when every
+            # foe standing is of the listed kinds, the member goes QUICK (the computer plays him for the fight)
+            try:
+                foes = self._sides(p)[2]
+            except Exception:
+                foes = []
+            if foes and all(any(k in f["name"].upper() for k in QUICKKINDS) for f in foes):
+                return "q", "tactics: %s on QUICK (only %s left)" % (member, "/".join(sorted({f["name"] for f in foes})))
         if "DONE" in items:
             # Player 34 (p34e1, p34e2: CEDRIC knocked down in Stojanow's west tower bled to death while the fight went
             # on another minute; docs/playbook.md "The dying": bandage the dying at once): a party member dying
