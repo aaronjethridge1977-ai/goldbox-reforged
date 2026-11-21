@@ -648,3 +648,12 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   ours' faults (no (HELPLESS) on the look panel, so held guards were re-held; holds seeming to last about a round;
   Stinking Cloud's effects outside its 2x2; Fireball crashes; board request 14:33) and by the party: **overloaded, and no
   ranged weapons** (DORN's quarrels with no crossbow, only LIRA's bow). *Jeremy*
+- **Videos and checks (Player 42, Guide 9's request):** **p41g1 and p41d4 replayed exactly** from `p40c1_s40hall`
+  and their seeds (`p42/replay.py`: the log's keys sent at the original's own key waits, the tool's Space at the
+  fight's start sent as many seconds after COMBAT as in the run, since it decides how many turns the computer plays;
+  the seed checked before every key: **0 drifts** in 325 and 851 keys), at a human pace (messages at the game's speed
+  9, about 2 s; a key a second): `.lab/stuck/finale_guards/p41/p41g1_video_dosbox.mkv` (10 min) and
+  `p41d4_video_dosbox.mkv` (30 min), with their replay logs. **A missile slays a held or sleeping figure as a blow
+  does** (GAME.OVR 0x13C01 tests the helpless target first for missiles too; Combat Chat 25 saw a nomad's arrow slay
+  a sleeping kobold, p19e6 draw 21571): *code* + *seen*. **`OP_GOTO` and every MOVE walk now skip the field's
+  impassable cells** (the combat map at DS:0x6716, ground ids' move cost at DS:0x2744; Combat's trace.py).
