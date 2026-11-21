@@ -221,6 +221,10 @@ MOVETEST = os.environ.get("OP_MOVETEST", "")
 # next to a foe that isn't helpless; a held foe out of reach may take a missile (it slays: GAME.OVR 0x13C01).
 PLAN4 = os.environ.get("OP_PLAN4") == "1"
 FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
+# Player 42 (Plan 3/4's flight from Tyranthraxus): OP_FLIGHT=<name words>: while a foe of that name is on the field,
+# every member with MOVE walks the shortest way (8 directions, walls and figures avoided) to the field's edge and
+# steps off it (the script: a fled party, 0x6DC7 = 129, is put back on 3,6 and meets him alone at the next try)
+FLIGHT = os.environ.get("OP_FLIGHT", "").upper()
 # Player 41: OP_GOTO="x,y;x,y" (see _fight)
 GOTO = [tuple(int(v) for v in q.split(",")) for q in os.environ.get("OP_GOTO", "").split(";") if q.strip()]
 # Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
@@ -293,6 +297,28 @@ class Tactics:
         self.use = None          # Player 37: a scroll USE under way: {member, spell, tried rows}
         self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
         self.holding = set()     # Player 38: members standing on a fallen focus figure's square (OP_HOLDDOWN)
+
+    def _edge_path(self, p, me, bad=()):
+        """Player 42 (OP_FLIGHT): the shortest walk from the member's cell to any cell on the field's border (x 0 or
+        49, y 0 or 24), 8 directions, through no wall and no other figure's cell; [] if none."""
+        figs, party, foes = self._sides(p)
+        block = walls(p.g.mem) | {c for f in figs if f["name"] != me["name"] and (_up(f) or f["n"] <= self.party_n)
+                                  for c in cells(f)} | set(bad)
+        start = (me["x"], me["y"])
+        prev, q = {start: None}, [start]
+        for c in q:
+            if c != start and (c[0] in (0, 49) or c[1] in (0, 24)):
+                path = []
+                while c:
+                    path.append(c)
+                    c = prev[c]
+                return path[::-1]
+            for _k, dx, dy in DIRS:
+                n = (c[0] + dx, c[1] + dy)
+                if 0 <= n[0] < 50 and 0 <= n[1] < 25 and n not in prev and n not in block:
+                    prev[n] = c
+                    q.append(n)
+        return []
 
     def _p4_still(self, p):
         """Player 42 (Plan 4): nobody walks while a member stands next to a foe that isn't helpless (a step out of
@@ -384,7 +410,7 @@ class Tactics:
         if spell == "FIREBALL":        # Player 35: the biggest bunch (2 or more), no party member within 2 of it
             best = []
             for f in foes:
-                if any(_up(a) and _dist(a, f) <= (FBCLEAR - 1 if PLAN4 else 2) for a in party) or (me and _dist(me, f) > 9):
+                if any(_up(a) and _dist(a, f) <= FBCLEAR - 1 for a in party) or (me and _dist(me, f) > 9):
                     continue
                 k = sum(1 for g in foes if _dist(g, f) <= 1)
                 # Player 37: two foes or fewer, a focus kind among them (the graveyard's spectres): one is enough
@@ -630,6 +656,18 @@ class Tactics:
                 self.log("TACTICS MOVETEST %s at %d,%d: MOVE, %s to %d,%d, then %s" % (
                     member, me["x"], me["y"], k, me["x"] + dx, me["y"] + dy, MOVETEST))
                 return "m", "tactics: MOVETEST: %s MOVE" % member
+        if FLIGHT and "MOVE" in items and member not in self.moved:
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            if me is not None and any(FLIGHT in f["name"].upper() for f in foes):
+                path = self._edge_path(p, me)
+                self.moved.add(member)
+                if path:
+                    self.move = {"member": member, "goal": 0, "tries": 0, "blocked": set(), "last": None,
+                                 "path": path, "flee": True}
+                    self.log("TACTICS %s flees: %d steps to the edge at %d,%d" % (member, len(path) - 1, *path[-1]))
+                    return "m", "tactics: %s MOVEs to the field's edge (OP_FLIGHT)" % member
+                self.log("TACTICS %s: no way to the field's edge" % member)
         if GOTO and "MOVE" in items and member not in self.moved:
             # Player 41 (Guide 8's Plan 3: the finale's doorway gap and Tyranthraxus by the flight): OP_GOTO="x,y;..."
             # every member with MOVE walks (once a round, no blow on the way) to the nearest free square of the list
@@ -805,6 +843,32 @@ class Tactics:
                 self.move = None
                 return "enter", "tactics: move: on the fallen figure's square: Enter (keeps the walk)"
         mv["tries"] += 1
+        if mv.get("path") and me is not None:
+            # Player 42 (OP_FLIGHT): along the path; on the border, a step off the field
+            pos = (me["x"], me["y"])
+            if mv["tries"] > 24:
+                self.move = None
+                return "enter", "tactics: flight: 24 keys: Enter"
+            if pos[0] in (0, 49) or pos[1] in (0, 24):
+                dx = -1 if pos[0] == 0 else (1 if pos[0] == 49 else 0)
+                dy = -1 if pos[1] == 0 else (1 if pos[1] == 24 else 0)
+                k = next(k for k, a, b in DIRS if (a, b) == (dx, dy))
+                self.log("TACTICS %s steps off the field at %d,%d (%s)" % (mv["member"], pos[0], pos[1], k))
+                return k, "tactics: flight: %s steps %s off the field" % (mv["member"], k)
+            path = mv["path"]
+            if pos not in path or (mv["last"] and mv["last"][0] == pos):
+                if mv["last"] and mv["last"][0] == pos:     # the step was refused: not that cell again
+                    k0 = mv["last"][1]
+                    mv.setdefault("bad", set()).add(next((pos[0] + a, pos[1] + b) for k, a, b in DIRS if k == k0))
+                path = self._edge_path(p, me, mv.get("bad", ()))
+                mv["path"] = path
+                if not path:
+                    self.move = None
+                    return "enter", "tactics: flight: no way on: Enter"
+            nxt = path[path.index(pos) + 1]
+            k = next(k for k, a, b in DIRS if (pos[0] + a, pos[1] + b) == nxt)
+            mv["last"] = (pos, k)
+            return k, "tactics: flight: %s steps %s to %d,%d" % (mv["member"], k, nxt[0], nxt[1])
         if me is None or not foes:
             self.move = None
             return "enter", "tactics: move: no goal left: Enter"

@@ -622,3 +622,12 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
 - **Videos (Jeremy, 2026-11-21 12:29):** every fight lost five times gets a video of one lost try, from the fight's
   start (DOSBox, lossless, `.lab/stuck/<fight>/`, never a repo). For this fight: **p41g1 and p41d4 replayed** from
   their saves and seeds. **At a human pace (Jeremy, 12:32):** a person must be able to follow it: each combat message and move on screen long enough to read (about 2 s or more), the menus at about a key a second; if the run goes faster, slow the video afterwards.
+- **Videos and checks (Player 42, Guide 9's request):** **p41g1 and p41d4 replayed exactly** from `p40c1_s40hall`
+  and their seeds (`p42/replay.py`: the log's keys sent at the original's own key waits, the tool's Space at the
+  fight's start sent as many seconds after COMBAT as in the run, since it decides how many turns the computer plays;
+  the seed checked before every key: **0 drifts** in 325 and 851 keys), at a human pace (messages at the game's speed
+  9, about 2 s; a key a second): `.lab/stuck/finale_guards/p41/p41g1_video_dosbox.mkv` (10 min) and
+  `p41d4_video_dosbox.mkv` (30 min), with their replay logs. **A missile slays a held or sleeping figure as a blow
+  does** (GAME.OVR 0x13C01 tests the helpless target first for missiles too; Combat Chat 25 saw a nomad's arrow slay
+  a sleeping kobold, p19e6 draw 21571): *code* + *seen*. **`OP_GOTO` and every MOVE walk now skip the field's
+  impassable cells** (the combat map at DS:0x6716, ground ids' move cost at DS:0x2744; Combat's trace.py).
