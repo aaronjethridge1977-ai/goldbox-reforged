@@ -520,3 +520,40 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   late (party 6 up at 161 HP with 6 guards left in p41a1, destroyed in 40 s more). The fight hasn't been tried with
   working Hold Persons (4 casts x 3 guards from CEDRIC, 5 from ELWEN). To the Lead (board): five more with the fix,
   or the stuck-fights guide chat as decided.
+- **Tyranthraxus, earlier** (merged from poolrad.md's parked notes, Jeremy, Gold Box Guide 8): won 2 of 2 from c27a
+  (Player 3); from c32a 2 of 4, every win with deaths (Player 7: a loss by the death rule); his fear paralyses or
+  weakens low-level members, his breath did 80 to ELWEN in ours. **Player 29: 0 of 7** after the guards (full 263 HP,
+  all ATTACK votes; p29b2 after the won guards, p29f1, p29e1-e5: destroyed in about 18 s each); taken by `shortcutwin
+  5:7 3,8 2` (p29f2). Main's bot (7 members, levels 6-7) beat him with one death.
+- **Read (Gold Box Guide 8, 2026-11-21; ECL5 block 7, GEO5 block 7, the Players' logs, players' guides):**
+  - **One square starts it:** event 8 lies only on 3,8, entered from the door at 3,7 (facing S). The guards come at
+    distance 0 (ENCOUNTER_MENU 16,0,...: maximum 0), in contact from round 1; every reaction is 0 (COMBAT, WAIT and
+    PARLAY fight; FLEE gets away only with the slowest at movement 9: back to 3,6). *code* Our placement code on
+    GEO5 block 7 puts the party on rows 11-12 (front row 12) and the guards on rows 13-14, as p41a3's opening cells
+    (guards 23-31). *code* + *seen*
+  - **A doorway behind the party:** the wall behind row 11 has a 2-cell gap at 24-25,10 (the door from 3,7); north of
+    it an open room (rows 6-9, x 22-32). Slots 5-6 (26,11 / 25,11) stand at its mouth. Every try fought in the open
+    (the guards walked round the east end: p41a3 29,12 and 29,11, behind the line). Through the gap the guards come
+    two at a time against four of ours. *code* (not yet seen) Players: Hold Person and Stinking Cloud over Fireball
+    *players* ([GameBanshee](https://www.gamebanshee.com/poolofradiance/walkthrough/upperandlowerlevels.php)); a
+    cloud blocks a choke point, the enemy won't walk into one *players* ([easydamus](https://www.easydamus.com/PoR.pdf)).
+    The speedrun guide's "they won't even move" is not so here (p41a3).
+  - **Tyranthraxus can wait:** the guards' win sets 0x4A6D bit 4 (0xA620) before his speech; a flight from his fight
+    (0x6DC7 = 129, 0xA803) puts the party at 3,6 facing N (0xA5EA); on 3,8 again bit 4 skips the guards (0xA558) and
+    his speech, the vote and his fight follow (0xA629). So: win the guards, take the pile, run from him, camp, then
+    come back to him alone. *code* (not yet seen: can the party reach the field's edge ahead of him?)
+  - **Unconfirmed:** a speedrunner says Stinking Cloud works on him (coughing: AC -4 to 4) *players*
+    ([speedrun.com](https://www.speedrun.com/pool_of_radiance/forums/h2u0g)); ours has him resisting every spell
+    (the original's bug #7).
+- **Plan 3 (Jeremy approved 2026-11-21 09:23; Gold Box Guide 8):**
+  - **The guards at the doorway:** **first one DOSBox check** (from `p40c1_s40hall`: the gap 24-25,10 open in the
+    original's field, the party can step through it in round 1, and the guards follow through it). Then: round 1 the
+    back row (slots 5-7) goes through the gap first, then the front four (each takes one free blow stepping out of
+    contact); the best-AC fighters hold the gap's north side, the casters behind them; Hold Person (three picks, the
+    aim fix) and Stinking Cloud on what comes into or bunches at the gap; a cloud may block it (the enemy won't walk
+    in). Prayer and Bless as before.
+  - **Tyranthraxus by the flight:** after the guards, TAKE the pile; in his fight everyone runs for the field's edge
+    (north through the gap). Back at 3,6: camp, READY the 12 Rings of Protection +3 and the Two-Handed Swords +2,
+    rest, memorize, cast the buffs at 3,7, step onto 3,8: his speech, the vote (all ATTACK), the fight alone. **First
+    one try of the flight** (does the party get away; a member left behind: reload). No shortcut: the game's own script.
+  - **Stinking Cloud on Tyranthraxus:** one cast in that try (does he cough; his AC after).

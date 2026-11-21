@@ -560,13 +560,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Tyranthraxus alone, 5:7** [66 x1].
-  - From c27a: won 2 of 2 (Player 3).
-  - From c32a: won 2 of 4, every win with deaths (Player 7), which is a loss by the death rule.
-  - His fear paralyses or weakens low-level members; he breathes electricity (80 damage to ELWEN in ours).
-  - Player 29 (after the guards by shortcut, the party at full 263 HP, all ATTACK votes): **0 of 7** (p29b2 after the won guards, p29f1 (the re-arm missed),
-    p29e1-e5: destroyed in about 18 s each). Taken by `shortcutwin 5:7 3,8 2` (p29f2): the game won by shortcut. Main's bot
-    (7 members, levels 6-7) beat him for real with one death.
 - (Folded into section 3, Guide 4.) **4:2 3,11** [28 x1, 7 x3, 6 x12] (GRISHNAK). Won 3 of 4, every win with deaths; lost seed 0badf00d (Player 8).
 - **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
 - (Folded into section 3, Guide 3.) **2:20 southern streets, 6,14**: a 20-figure encounter destroyed p14b3 and p14b4 at level 1; p14b5 lost ELWEN. A 25-figure fight there killed a member (p15c3).
@@ -646,3 +639,4 @@ and where it was learnt. The Lead folds them into the sections daily and clears 
 - The kobold caves (8:13): the camp and the wandering kobolds leave the party be only while it came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0): the cluebook's "rest in the wyvern cave"; once the wyvern is woken (the rubble slope) or killed, no camp before the throne is beaten. *code* (ECL8 block 13 0xB428, 0xB388; ECL8 block 27 0x9DB5; Gold Box Guide 6)
 - A killed troll stays down only when the killing blow is fire or acid (Fireball, Burning Hands; not lightning). *code* (GAME.OVR 0x11434; Gold Box Guide 6)
 - The kobold throne room (8:13): its waves start at distance 0, on the party's square; event 9 lies on 4,3, 5,3 and 6,3, and 6,3 puts the east wall on the party's right with all four trolls on the left (our placement code on GEO8 13); the ballista is script damage from sealed cells (7 x 2d6, 0xA1A4), so cure to 20+ HP before wave 1 ends; the drunk kobold's escort (12,9 WAKE IT, YES) skips 10,9's and 11,9's traps. *code* + *players* (Gold Box Guide 8; stuck-fights.md section 3)
+- The finale (5:7 3,8): the guards come at distance 0 with a 2-cell doorway (24-25,10) behind the party's back row: fight through it, two guards at a time; and Tyranthraxus can wait: win the guards, run from his fight (back to 3,6, the guards stay beaten: 0x4A6D bit 4), camp and ready the rings, then come back to him alone. *code* (Gold Box Guide 8; stuck-fights.md section 5, Plan 3)
