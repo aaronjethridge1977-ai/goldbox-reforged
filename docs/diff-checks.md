@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-292; five differences)
+## Chat 89: Enter and Left / Right at the temple's, the shop's, the camp's, the training hall's and the treasure's menus, the shop's SELL NO (checks 284-294; five differences)
 
 Main path, each against the original in DOSBox (3:0's temple and arms and armour shop), 3 of 3 and failing on a broken
 copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter at IS IT A DEAL? (NO lit: nothing), NO
@@ -185,12 +185,15 @@ copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter 
   Enter, EXIT leaves the temple in the original; ours opened VIEW. Check 291: the HEAL list's Right, Enter (HEAL: IS
   NOT BLIND, CAST CURE ANYWAY), Enter, Right, Enter, NO, CURE LIGHT WOUNDS, HEAL (PAY FOR CURE, YES lit), Enter, Right,
   Enter, YES (100 gp), EXIT, EXIT.
+  The temple's DO YOU WANT TO GO BACK AND RETRIEVE YOUR MONEY? (YES lit) the same: check 294: POOL, EXIT, Enter, Right,
+  Enter (nothing), NO (the temple left, the pool behind).
 - **The shop's menu the same, and its BUY list keeps the light on Left / Right** (`shop_letters.diff`, shop_screen.gd):
   the original's shop menu ignores Enter, Left and Right; its BUY list (ITEMS: BUY NEXT PREV EXIT) takes Enter for the
   lit word (BUY) but Right doesn't move the light. Check 285: Enter, BUY, EXIT, EXIT buys nothing in the original (ours
   opened the list and bought); 286: BUY, Right, Enter buys a hand axe in the original (ours paged with NEXT).
   APPRAISE's menu (GEMS lit) the same: check 292 (check 108's start): APPRAISE, Enter, Right (nothing), GEMS, Enter
-  (SELL, the lit word: 10 platinum), GEMS, KEEP. **YOU CAN: SELL KEEP is different** (a question to the Lead): Enter,
+  (SELL, the lit word: 10 platinum), GEMS, KEEP. YOU HAVE LEFT SOME MONEY HERE ... GO BACK? (YES lit) the same:
+  check 293 (check 176's start): POOL, EXIT, Enter, Right, Enter (nothing), NO (the shop left, the pool behind). **YOU CAN: SELL KEEP is different** (a question to the Lead): Enter,
   Right, keypad 6 and Esc all sell, Left keeps, X does nothing (DOS's Left arrow is scan code 0x4B, the letter K; the
   caller seems to keep only on K); ours sells on Enter (matched), keeps on Esc, and Left / Right only move the light.
 - **The camp's menu, MAGIC's and ALTER's the same** (`camp_letters.diff`, camp_screen.gd): Enter and Left / Right do
@@ -207,7 +210,7 @@ copy. **Matched, in the gate (DIFFCHECKS 280/280):** 287 the shop's SELL, Enter 
   there): unchanged.
 
 All nine pending diffs to Combat (chat 87's ALTER, chat 88's three, chat 89's five) apply together as
-`data/c89/all_pending.diff`: DIFFCHECKS 280/280 and 281-292 (no 287) all match with it; the bot presses none of these keys
+`data/c89/all_pending.diff`: DIFFCHECKS 280/280 and 281-292 (no 287) all match with it (chat 87's and 88's landed in Combat Chat 40; chat 89's five are now `data/c89/c89_five.diff`: DIFFCHECKS 283/283, 284-286 and 288-294 match); the bot presses none of these keys
 there (its Enter is LEARN WHICH SPELL?'s and the results page's, both kept).
 
 ## Chat 88: the training hall's TRAIN NO, DROP and REMOVE, the inn's STAY NO, camp SAVE's Esc, the temple's VIEW and TAKE EXIT (checks 275-283; three differences)
