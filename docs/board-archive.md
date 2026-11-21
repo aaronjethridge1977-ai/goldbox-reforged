@@ -2,6 +2,19 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 08:10 (Gold Box Lead)
+
+### Requests to another lane
+
+- 2026-11-21 08:07 · player (Player 40) → Lead · **The finale's guards (5:7 3,8) on the no-shortcut chain: 5 of 5 lost** (stuck-fights.md section 5; files `.lab/stuck/finale_guards/`). From `p38a2_s38audit` (fighters 6, CEDRIC 6, multis 5; nobody near a level, so Valjevo's 5:3-5:6 left out) straight to the hall: the rings readied, Genheeris joined, `prepare` at 3,6. Tries p40c1, d1-d4 (c1: a Sleep fault, fixed); best **p40d4: 8 of 12 guards down**, d3 7. The guards open in contact with the order's first four (ARN, BRAM, CEDRIC, ELWEN), so Hold Persons were often spoilt; and every stop-short walk was undone by the tool's Esc (fixed since). Options: (a) **five more tries with the party order changed** (DORN and LIRA forward, the clerics behind: `p40/finale2.plan`, tested) and the MOVE fix; (b) more levels first (the multis need 35k+; long); (c) to the stuck-fights guide chat with Jeremy, as the throne room. **Recommended: (a)**, then (c) if it fails. Even a won guards' fight leads straight into Tyranthraxus. · **Lead (2026-11-21 08:15): (a)**, five tries with finale2.plan and the MOVE fix; if all five lose, stop and stage the files for the stuck-fights guide chat (c). · answered
+
+### Findings for everyone
+
+- 2026-11-20 · player (Player 36) · **DOSBox speed: keep cpu_cycles = 15000** (the Lead's test; tools/original_player/README "Player 36"): a run without the tool's Alt-M repeats at 60000 and max (p35i1: draws and saves identical), but under 10% faster (239-242 s against 249-260 s: the tool's pacing is most of a run); runs with QUICK casters part at any speed **and at 15000 too** (p35i2 rerun at 15000 parted at draw 7823): the asynchronous Alt-M lands at another draw each run, so only the trace makes them replayable (ours replays from it). por.conf unchanged; `OP_CYCLES=<n|max>` sets one run's cycles.
+- 2026-11-20 · main (chat 77) · **`~/gbr/checks/diffcheck.sh` now runs ours with every QoL switch that changes play off** (a settings.cfg in each check's Godot user folder: the list in segment.py's `QOL_OFF`). Before, the checks ran with the release's defaults: REST REMEMORIZES (on) put a spell cast in camp back at the next REST (check 162: 4:30 of rest and READ MAGIC kept, the original 4:15 and gone). The 161 earlier checks still match; break test 142/162. A check that needs a QoL switch on can't use the gate as is: tell main.
+
+
+
 ## Archived 2026-11-21 08:07 (Player 40: main chat 86's p36h1 note, done)
 
 - 2026-11-21 · main (chat 86) → player · **p36h1 now identical on origin/main** (after Combat Chat 38's MEMORIZE paging): `MATCH_GATE_ONLY=p36h1 tools/build/match_gate.sh origin/main` (b4fe5c2): MATCH GATE OK, 1 of 1 (17 minutes). The baseline's p36h1 "game" label can go (your file). Check 219 (its keys #819-#881) is in the gate. · open **Player 40:** done (the commented label removed from known.txt). · done
