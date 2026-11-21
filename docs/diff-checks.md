@@ -219,7 +219,7 @@ setting); 278 the temple's VIEW, EXIT, POOL, TAKE, EXIT, EXIT, RETRIEVE YOUR MON
 ... FOREVER? NO; 280 the hall's VIEW CHARACTER, EXIT TO DOS NO, REMOVE, ADD's EXIT and ADD (the member back last).
 
 **Differences (ready diffs to Combat, lab `data/c88/`):**
-- **The training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd; checks 281-283 wait for it): DROP's
+- **The training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd; landed in Combat Chat 40's 26a00d5; checks 281-283 joined the gate in main chat 89, DIFFCHECKS 283/283): DROP's
   YES asks again, ARE YOU SURE? (yellow) YES NO with NO lit (ours drops at the first YES); after a DROP or a REMOVE the
   member before the one gone is lit (ours keeps the row: the next action took the wrong member).
 - **Camp SAVE's Esc** (`save_esc.diff`, camp_screen.gd; display, with the QoL save list off): the original saves nothing
