@@ -40,6 +40,8 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
     three rounds before contact, which fits the archers.
 - **Earlier:** at level 2, 10 tries, 8 wipes, 2 wins with a death (Player 15, p15f4-f15); at level 3, 8 tries, 2
   deathless wins (Players 15-16; p16a2 won it deathless on QUICK, from the east door too).
+  Also (merged from poolrad.md's parked notes, Jeremy, Gold Box Guide 8): the early tries ran with MAGIC OFF and
+  without level-2 spells (the `prepare` gap, Player 27); in ours, c34d's bot won it with its `smartquick`, CEDRIC C3.
 - **Read (Player 34):** tactics and tool more than level. The fight's map puts the party in the open at the door
   with enemies on several sides (`logs/p34b5_screen_combat.png`), not a short line with secure flanks; the tool can't
   form a line or hold it (MOVE by hand), and doesn't shoot the orc leaders first. The two level-1 Sleeps took few

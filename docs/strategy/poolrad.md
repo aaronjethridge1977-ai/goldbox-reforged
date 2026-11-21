@@ -557,12 +557,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ### Hard fights (old notes)
 
-- **Sokal Keep event 9, 4:21 7,4** ("A LARGE FORCE OF ORCS AND HOBGOBLINS", 56 figures).
-  - Level 2: 10 tries, 8 wipes and 2 wins, each with a member dead (Player 15). The early tries ran with MAGIC OFF.
-  - Deferred to level 3. Player 15: 6 tries, 1 win with nobody dead. Player 16: p16a1 lost a member, p16a2 won deathless. At level 3 in all: 8 tries, 2 deathless wins.
-  - The fights were also short of level-2 spells (the `prepare` gap; Player 27).
-  - In ours, c34d's bot won it with its own `smartquick` and CEDRIC at level 3.
-  - Events 11 and 12 can only be reached across event 9's squares.
 - **Sokal Keep rest fights, 4:21 15,1**: four interruptions in five rests (undead), and four camps ended with a death (Player 15). The plan dropped the camp.
 - **Sokal Keep huge scorpions, 4:21 2,11** [39 x2]: won 4 of 4, 3 with nobody dead (Player 9).
 - **Valjevo, 5:4 9,1** [56 x4].
