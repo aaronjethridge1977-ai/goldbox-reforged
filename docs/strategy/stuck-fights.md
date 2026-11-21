@@ -294,4 +294,15 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
     Prayer, Bless; round 1 the wand (**3 charges**, Guide 4) down a long open line, never at a wall near the party (the bolt bounces back: Combat Chat 36), the bows, every fighter on one spectre. **Expect 1-2 drains and pay
     each with a scroll at once** (redone simulation: 2 at most in 77-94% of fights, 4 at most in 99%; drain-free only
     13-29%). Details: poolrad.md section 3.
-  - **Results:** (the Player's lines here)
+  - **Results (Player 37, 2026-11-21): won at the second try, no drain.** In this chain the Wand of Lightning Bolt
+    is gone: the zombie room's pile (4A88 = 255) was left by segment 26's EXIT (p25l2's plan had no `default
+    treasure take`), with its two Restorations. Instead: the Kovel scroll cabinet fetched (3:14 3,13, event 12:
+    DISARM by DORN; p37a1), LIRA SCRIBEs Haste and eight more after Read Magic (the scrolls are unidentified until
+    read; the original copies one scroll's spells a rest: 11, 9 and 7.5 hours; p37b2); the marble chest with SEARCH
+    on (7,6, event 5: a giant skeleton first; four scrolls of two Restorations; p37d1); LIRA's Fireball slot lost
+    for Haste, one Fireball scroll readied in both hands (a scroll takes two: her Broad Sword put away); ELWEN reads
+    the Restorations (CEDRIC can't carry them). Camp on 10,1: Haste, Bless, Prayer, Protection from Evil on BRAM.
+    **p37g1 lost** (both clerics' TURN sent the spectres 21 squares off; the party guarded until the Haste ran out;
+    ARN drained to nothing, BRAM, ELWEN and LIRA two levels each). **p37i1 won** (`p37i1_s37spectres`): TURN again,
+    LIRA's scroll Fireball at one, the advance fighters walked to the fleeing pair (`advance` now walks to a focus
+    figure at any distance) and ARN killed both; nobody hurt. (p37h1: a tool stop at the scroll's aim, not a try.)
