@@ -1779,7 +1779,7 @@ class Plan:
                 p.memo_done_cur = False
                 return "e", "memorize: EXIT MAGIC"
             return "m", "memorize: MEMORIZE (%s)" % P[left[0][0]][1]
-        if bw == ["EXIT"] and "TO BE MEMORIZED" in st["rows"][1]:
+        if (bw == ["EXIT"] or bw[-1:] == ["EXIT"] and set(bw) <= {"NEXT", "PREV", "EXIT"}) and "TO BE MEMORIZED" in st["rows"][1]:
             return "e", "memorize: the list to be memorized shown, EXIT"
         if scr["kind"] == "yesno" and "MEMORIZE THESE SPELLS" in scr["bottom"]:
             left.pop(0)
@@ -2061,7 +2061,7 @@ class Plan:
                     p.note("scribe", "%s marks %s" % (P[op[1]][1], want))
                     return "s", "heal: SCRIBE %s" % want
                 return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % want
-            if bw == ["EXIT"] and "TO BE SCRIBED" in row1:
+            if (bw == ["EXIT"] or bw[-1:] == ["EXIT"] and set(bw) <= {"NEXT", "PREV", "EXIT"}) and "TO BE SCRIBED" in row1:
                 shown = [st["rows"][r].strip("?\\ *") for r in range(4, 23)]
                 miss = [w for w in h.get("scribe_want", []) if w not in shown]
                 if miss:
@@ -2103,7 +2103,7 @@ class Plan:
                     p.note("heal", "%s memorizes %s" % (P[op[1]][1], want))
                     return "m", "heal: MEMORIZE %s" % want
                 return ("end" if hit[0] > lit[0] else "home"), "heal: light to %s" % want
-            if bw == ["EXIT"] and "TO BE MEMORIZED" in row1:
+            if (bw == ["EXIT"] or bw[-1:] == ["EXIT"] and set(bw) <= {"NEXT", "PREV", "EXIT"}) and "TO BE MEMORIZED" in row1:
                 return "e", "heal: the list to be memorized shown, EXIT"
             if scr["kind"] == "yesno" and "MEMORIZE THESE SPELLS" in scr["bottom"]:
                 h["sub"] = "over"
