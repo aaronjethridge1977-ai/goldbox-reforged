@@ -132,6 +132,11 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         if ("QUICK" in bottom.split() and "DONE" in bottom.split()) and last_t is not None and tk - last_t > 1.5:
             out += ["wait"] * int((tk - last_t) / 0.25)
         last_t = tk
+        # Player 41 (Combat Chat 39's answer on p37i1: ours' spectre turn still ran when DORN's "m" came, 0.5 s after the
+        # key before in the original, too short for the waits above): OP_FIGHTMENU=1 puts ours' lab key `fightmenu` (waits
+        # up to 60 s for a member's fight menu) before each fight menu's key; opt-in, so the match's other runs keep theirs
+        if os.environ.get("OP_FIGHTMENU") == "1" and "QUICK" in bottom.split() and "DONE" in bottom.split():
+            out.append("fightmenu")
         if k == "m" and re.match(r"(memorize|heal): (MEMORIZE )?[A-Z][A-Z ]+$", why):
             spells += 1      # Player 14: a spell to be memorized at the next REST
         out.append(GKEY.get(k, k))
