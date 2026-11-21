@@ -459,6 +459,11 @@ class Tactics:
     def answer(self, scr, st, p):
         """One key for a tactical screen, or None (the plan's other rules go on)."""
         b = st["bottom"]
+        if b.replace(" ", "").startswith("FLEE:YES") and FLIGHT:
+            # Player 42 (p42f4): a step off the field's edge asks FLEE: YES NO (seen in DOSBox)
+            self.log("TACTICS %s flees the field" % (self.move or {}).get("member", "?"))
+            self.move = None
+            return "y", "tactics: flight: FLEE YES"
         if b.startswith("CONTINUE BATTLE"):
             try:
                 figs, party, foes = self._sides(p)
