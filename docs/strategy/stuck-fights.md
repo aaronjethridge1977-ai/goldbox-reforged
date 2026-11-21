@@ -675,6 +675,23 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   `.lab/stuck/finale_guards/p42/`. **For the guide:** the flight wants movement 9+: at the guards' pile POOL the
   money and TAKE back platinum only (a shop regroups gold into platinum, a pile doesn't), or reach the hall from the
   Plan 2 chain, which moves 9 since its audit (`s42moved`).
+- **Read (Gold Box Guide 10, 2026-11-21 15:20; p42f1-f7's logs in `.lab/stuck/finale_guards/p42/`):** **(1) By the
+  reload rule (decision 2026-11-20 10:22: a death means a reload) only p42f4 won the guards** (all 7 up); f1 and f7
+  went on to Tyranthraxus with three members dead. **(2) The holds decide it:** f1 and f7 had holds on the guards in
+  contact (8, 9, 10) in round 1 and f4 had them by round 2; f2, f3 and f5 held nobody until rounds 2-3 (25-75 HP gone
+  by then), and in f6 CEDRIC's first holds went to the far guards 17 and 18 ("no more targets after 2 picks") while
+  the guards in contact stayed free. **(3) Clouds overlapped:** ELWEN and LIRA both aimed at the same guard in one
+  round (f1 and f5: figure 10), LIRA twice at figure 8 (f6). (2) and (3) are what Plan 5 changes. **(4) The flight:**
+  movement 3 (the gold, Player 42 above), and the guards' pile then added weight: the take rule gave GENHEERIS
+  Plate Mail +2 (450) twice and Two-Handed Swords +2 (90) just before the fight where speed counts; some members also
+  spent turns attacking him instead of walking on (logged "flees: N steps", then "attacks figure 8"): the Player
+  to explain. **(5) The original's FLEE: YES NO** at the field's edge seen for the first time (p42f4_stop.png, BRAM 15
+  HP): Combat has built it from the code without having seen it.
+- **Plan 5 additions (Jeremy approved 2026-11-21 15:22; Gold Box Guide 10), with Plan 5 as written (13:50):** (a)
+  answer FLEE: YES NO with YES (Player 42 has done this); (b) **at the guards' pile, before Tyranthraxus, take only
+  weightless items (the rings)**; the heavy loot (and the gold) after he is beaten: Player 42's POOL the money and TAKE
+  back platinum only fits this; the party must move 9+ for the flight; (c) **a death in the guards' fight is a
+  reload**: don't go on into Tyranthraxus short-handed.
 - **The throne room's video (Jeremy's rule, five losses):** p39c2 (Player 39's Haste try from `p39a1_s39door`, seed
   39030002, lost) replayed exactly (1177 keys, 0 drifts) at the same human pace:
   `.lab/stuck/kobold_king/p42/p39c2_video_dosbox.mkv` (about 48 min) with its replay log.
