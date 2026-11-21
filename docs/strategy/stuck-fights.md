@@ -432,6 +432,16 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     against the east wall (DORN 29,14 first to act); the kobolds ahead and left (rows 5-12, x 17-28). As the Read
     above expects. Screen and log `.lab/stuck/kobold_king/p41/`. *seen* **The walk fix is in** (tactics.py
     `_move_step`: no step back onto a cell of the same MOVE, two sideways steps at most, distances by footprint).
+  - **Plan 2 under way (Player 41, from `p38a2_s38audit`, no shortcut):** **4:2's Grishnak temple** (never visited
+    in this chain) won (p41b1): its Fireball scroll (Fireball, Detect Invisibility, Reduce; ARN carries it) and a
+    second MU scroll (Blink, Burning Hands, Mirror Image; LIRA), the Cursed Necklace (carried, not readied), potions
+    (`s41back`). **1:24 with SEARCH on** (the chain's party had missed the trap door, 0x4A2E 48 -> 60): the bodies'
+    jewelry (14,5) and the trap door (12,6): a clerical scroll, a potion, **a Ring +3** (p41c11, `s41bane`); no
+    Fireball scroll on the way (Bane's other hidden squares unsearched). On the way two 7:26 band losses (p41c2
+    displacer beasts on QUICK, a plan fault; p41c4 13 driders: the party moves 3, no FLEE) and one stopped Podol crowd.
+    **ELWEN trained to magic-user 5 and learnt FIREBALL** (p41t1, `s41trained`, 3:0 the inn). 5:6's Necklace of
+    Missiles is still behind the altar (on the finale's way). **Left: the levels** (ARN 61,361 and BRAM 58,560 of
+    70,001; LIRA 31,974 of 40,001): the vampire (4:10, 0x4A41 = 0, never fought), then the bands.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 

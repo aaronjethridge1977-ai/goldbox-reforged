@@ -1347,7 +1347,10 @@ a second (Blink, Burning Hands, Mirror Image: LIRA), the Cursed Necklace (carrie
 inn (`s41back`, p41b3). `p41/bane.plan`: 1:24 with `search on` (the chain's party missed the trap door, 0x4A2E = 48):
 on the way two 7:26 band losses (p41c2 displacer beasts, fought on QUICK: the plan's `tactics on` sat before the
 checkpoint the try started after; p41c4 13 driders) and p41c10 stopped in Podol's crowd (34 min of waves, then four
-goblins at the map's edge); in 1:24 SEARCH finds the bodies' jewelry (14,5) and a trap door (12,6). Not finished.
+goblins at the map's edge: stale figure records with empty names counted as enemies near the party, so everyone
+guarded; `figures()` skips them now); p41c11 reached `s41bane`: SEARCH found the bodies' jewelry (14,5) and the trap
+door (12,6: a clerical scroll, a potion, a Ring +3). `p41/train.plan`: ELWEN trained to magic-user 5 and learnt FIREBALL
+(p41t1, `s41trained`, the inn). Saves `p2start/p41b3_s41back`, `p41c1_s41b0`, `p41c11_s41bane`; `.lab/player/saves/p41t1/s41trained`.
 Plan lessons: a `map` stays in force across areas (`map` alone after the next `area`); steps before the checkpoint a
 try starts `--after` are skipped (`tactics on`, `bands on` after each checkpoint).
 
