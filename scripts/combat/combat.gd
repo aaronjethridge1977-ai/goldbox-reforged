@@ -2172,7 +2172,11 @@ func _can_step(c: Dictionary, dir: int) -> bool:
 func _approach(i: int) -> String:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
-	if c.moves / 2 <= 0 or (m.class_id == CLASS_MAGE and m.armor == null):
+	# A magic-user (record class byte +0x2F == 5) that isn't running never steps towards a target: GAME.OVR
+	# 0xB444-0xB455 goes straight to the guard end (0xBB0F), armour or not (Combat Chat 38, Player 36's p36e1:
+	# YARASH stood all fight in 7:23 in the original, a HOLD at draw 2218 showed his +3 at 6 and +6 at 24; ours
+	# walked him 8 squares because his items count as armour here).
+	if c.moves / 2 <= 0 or m.class_id == CLASS_MAGE:
 		guard(i)
 		return "end"
 	# The base direction is GAME.OVR 0x14E38's (called at 0xB47D): from the mover's own square
