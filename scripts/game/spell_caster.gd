@@ -221,6 +221,44 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 						_age_up(m)
 						out.append("%s AGES" % m.name)
 			return out
+		36:                 # Animate Dead: GAME.OVR 0x29087
+			# Up to the caster's level of the dead (status 6, record +0x9F 0), in party order, rise: each joins the
+			# caster's side (+0x10E, +0x10F 1), +0x76 2, +0x6B 0, base movement (+0x72) 6, no spells in memory,
+			# morale (+0x84) 0xB2 (over 0x7F) or 0xB3, +0x9F 4; stood up at full HP (0x2C753: +0x10D 1); then the
+			# effect 0x20 for no time at power (old +0x10E << 4) + level through the common add (0x2C540, "IS
+			# ANIMATED") and status 1, ANIMATED. Nobody else is touched (chat 83, check 231, DOSBox: CEDRIC at
+			# cleric 5 with ARN dead: ARN ANIMATED, HP 14 of 14, [0x20, 0, 5]; ours had put 0x20 on the living).
+			var n := lvl
+			for t in party:
+				var m: PartyMember = t
+				if n <= 0:
+					break
+				if m.status != PartyMember.STATUS_DEAD or (m.raw.size() > 0x9F and m.raw[0x9F] != 0):
+					continue
+				n -= 1
+				var power := lvl
+				if m.raw.size() > 0x10F:
+					power = ((m.raw[0x10E] << 4) + lvl) & 0xFF
+					m.raw[0x10E] = caster.raw[0x10E] if caster.raw.size() > 0x10E else 0
+					m.raw[0x10F] = 1
+					m.raw[0x76] = 2
+					m.raw[0x6B] = 0
+					m.raw[0x72] = 6
+					m.raw[0x84] = 0xB2 if m.raw[0x84] > 0x7F else 0xB3
+					m.raw[0x9F] = 4
+					m.raw[0x10D] = 1
+					m.base_movement = 6
+					m.morale = m.raw[0x84]
+				m.memorized.clear()
+				m.hp = m.hp_max
+				m.status = PartyMember.STATUS_OKAY
+				if SpecialAffects.blocks(m, 0x20, func(): return _roll(rng, 1, 100), table.level(id)):
+					out.append("%s IS UNAFFECTED" % m.name)
+				else:
+					add_affect(m, 0x20, id, 0, power)
+					out.append("%s IS ANIMATED" % m.name)
+				m.status = PartyMember.STATUS_ANIMATED
+			return out
 		13:                 # Reduce: GAME.OVR 0x28387
 			# The target saves against spells (0x2BC4D: a d20, kind 4, no bonus; a natural 1 fails, 20 saves).
 			# Failing, an Enlarge on it is lifted through 0x2BF6B ("<NAME> IS CURED", its first record removed,
