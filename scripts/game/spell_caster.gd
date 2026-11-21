@@ -19,7 +19,7 @@ extends RefCounted
 ##   Disappearance makes the party invisible; the Manual of Bodily Health: "IS READING"
 ##   for a day, then "STARTS TO TRAIN" for 30 days, then CON + 1 ("IS HARDIER", 0xEDDA,
 ##   0xEE8E; the hit point recount for CON 15+ is not built).
-## Not yet: Knock and Find Traps outside doors, Remove Curse. Dispel Magic outside fights: chat 81 (0x293A0).
+## Not yet: Knock and Find Traps outside doors. Remove Curse: chat 81. Dispel Magic outside fights: chat 81 (0x293A0).
 
 const CURE_LIGHT := 3
 const CURE_BLINDNESS := 37
@@ -96,7 +96,27 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				remove_effect(t, 0x21)
 			return out
 		REMOVE_CURSE:
-			return out      # cursed items: not built yet
+			# GAME.OVR 0x29558 (as the temple's, temple_screen.gd): effect 0x24 (Bestow Curse) goes if
+			# there is one ("IS UN-CURSED"), else the first carried item with its curse byte (54) set
+			# loses it ("'S ITEM IS UN-CURSED"). Chat 81, check 211 (DOSBox: CEDRIC at cleric 5 on ARN's
+			# cursed Long Sword: byte 54 cleared, the sword still readied).
+			for t in targets:
+				var m: PartyMember = t
+				var gone := false
+				for b in m.affects:
+					if int(b.effect) == 0x24:
+						m.affects.erase(b)
+						gone = true
+						break
+				if gone:
+					out.append("%s IS UN-CURSED" % m.name)
+					continue
+				for it in m.items:
+					if it.cursed:
+						it.cursed = false
+						out.append("%s'S ITEM IS UN-CURSED" % m.name)
+						break
+			return out
 		SLOW_POISON:
 			# GAME.OVR 0x28873 (lab, chat 23: save J's Thrender poisoned, Brother Sean casts in
 			# camp: "IS AFFECTED", "GETS BACK UP", HP 1, OKAY; resting, about an hour later
