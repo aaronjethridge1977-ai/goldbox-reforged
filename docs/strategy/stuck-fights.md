@@ -631,3 +631,24 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   does** (GAME.OVR 0x13C01 tests the helpless target first for missiles too; Combat Chat 25 saw a nomad's arrow slay
   a sleeping kobold, p19e6 draw 21571): *code* + *seen*. **`OP_GOTO` and every MOVE walk now skip the field's
   impassable cells** (the combat map at DS:0x6716, ground ids' move cost at DS:0x2744; Combat's trace.py).
+- **The Fireball check (Player 42, the p41g1 replay read at LIRA's Fireball, key #106):** aimed at the guard on
+  27,15, it took **15 HP each from ARN (27,12) and BRAM (26,12)**, three rows off; DORN (28,11), CEDRIC (26,11) and
+  Genheeris (27,11) were untouched, and of the guards all but 29,12 were hit (15, or 7 on a save): about a circle of
+  radius 3 (dx² + dy² <= 10) around the aimed square. *seen* The tool's old rule (no member within 2) was too small:
+  now no member within 3 of the aimed figure, in every fight.
+- **Plan 4's tries (Player 42, `p42/finale4.plan` from `p40c1_s40hall`, `OP_PLAN4=1 OP_FLIGHT=TYRAN`, seeds
+  42050001-07):** round 1 went as written (ELWEN's and LIRA's Stinking Clouds, then CEDRIC's Hold Persons three at a
+  time; nobody walked while in contact). **The guards: 1 of the 5 counted tries won** (p42f1: 4 of 7 up, 111 HP;
+  f2, f3, f5, f6 lost with 4, 5, 8 and 2 guards left); **two more wins outside the count**: p42f4 (all 7 up, 272 HP;
+  a tool stop after) and p42f7 (5 up, 164 HP). So 3 of 7 in all, as the open field's 3 of 5 (Player 41). **The flight
+  from Tyranthraxus fails at movement 3** (this save's party carries ~6,400 gold besides its platinum: everyone moves
+  3): from their cells the edge is 5-12 steps, 2-4 rounds, and he kills them on the way: p42f1 destroyed; p42f7 only
+  LIRA got off the field (the others fell, so the party was lost); p42f4 BRAM, two steps from the edge, stepped off
+  in round 1 and the original asked **FLEE: YES NO** (the tool now answers YES). The script puts a fled party on 3,6
+  (ECL5 block 7, 0xA803: 0x6DC7 = 129) with the guards kept beaten (0x4A6D bit 4). *seen* + *code* Files
+  `.lab/stuck/finale_guards/p42/`. **For the guide:** the flight wants movement 9+: at the guards' pile POOL the
+  money and TAKE back platinum only (a shop regroups gold into platinum, a pile doesn't), or reach the hall from the
+  Plan 2 chain, which moves 9 since its audit (`s42moved`).
+- **The throne room's video (Jeremy's rule, five losses):** p39c2 (Player 39's Haste try from `p39a1_s39door`, seed
+  39030002, lost) replayed exactly (1177 keys, 0 drifts) at the same human pace:
+  `.lab/stuck/kobold_king/p42/p39c2_video_dosbox.mkv` (about 48 min) with its replay log.
