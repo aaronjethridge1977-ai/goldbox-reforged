@@ -760,7 +760,8 @@ class Tactics:
         if mv.get("struck"):
             self.move = None
             return "enter", "tactics: move: the blow was struck: Enter (Esc would undo the walk)"
-        adj = [f for f in foes if max(abs(f["x"] - pos[0]), abs(f["y"] - pos[1])) <= 1]
+        # Player 41: next to any of a figure's cells (a troll's second cell too), not only its corner
+        adj = [f for f in foes if _dist({"x": pos[0], "y": pos[1]}, f) <= 1]
         if (mv.get("focus") or mv.get("square")) and goal is not None and not any(f["n"] == goal["n"] for f in adj) \
                 and not mv.get("nofree"):
             adj = []         # Player 36: walking to the focus figure: past the others (a blow on them only if stuck)
@@ -782,16 +783,28 @@ class Tactics:
             self.move = None
             return "enter", "tactics: move over: Enter"
         # (p35j2: a step onto a fallen member's square asked ATTACK ALLY: every member's square is taken)
-        taken = {(f["x"], f["y"]) for f in figs if (_up(f) or f["n"] <= self.party_n) and f is not me}
-        here = max(abs(goal["x"] - pos[0]), abs(goal["y"] - pos[1]))
+        taken = {c for f in figs if (_up(f) or f["n"] <= self.party_n) and f is not me for c in cells(f)}
+        # Player 41 (Guide 8's Plan 2 additions, p39b4 98 of 115 steps, p39c2: ARN 27,13 / 27,14 / 27,13 ... with his
+        # troll two squares off): a sideways step (no nearer) was allowed every time, so the walk went back and forth.
+        # Now the distance is to the goal's nearest cell (its footprint), no step goes back onto a cell this MOVE has
+        # stood on, and two sideways steps at most: then the fighter stands.
+        gcells = cells(goal) if "fp" in goal else [(goal["x"], goal["y"])]
+        dist = lambda q: min(max(abs(q[0] - c[0]), abs(q[1] - c[1])) for c in gcells)
+        seen = mv.setdefault("visited", set())
+        seen.add(pos)
+        here = dist(pos)
         best = None
         for k, dx, dy in DIRS:
             q = (pos[0] + dx, pos[1] + dy)
-            if q in taken or (pos, k) in mv["blocked"]:
+            if q in taken or (pos, k) in mv["blocked"] or q in seen:
                 continue
-            d = max(abs(q[0] - goal["x"]), abs(q[1] - goal["y"]))
+            d = dist(q)
             if best is None or d < best[0]:
                 best = (d, k, q)
+        if best is not None and best[0] == here:
+            mv["side"] = mv.get("side", 0) + 1
+            if mv["side"] > 2:
+                best = (here + 1,) + best[1:]
         if (best is None or best[0] > here) and (mv.get("focus") or mv.get("square")) and not mv.get("nofree"):
             mv["nofree"] = True      # Player 36: no free step toward the focus: strike what is next to us instead
             return self._move_step(st, p)
