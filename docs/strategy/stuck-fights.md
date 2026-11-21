@@ -633,3 +633,9 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     cell wanted); the second Stinking Cloud overlapped the first (place it beside, covering two more cells);
     CEDRIC's book (three Blesses, two Cure Light Wounds): **spell loadouts to be discussed thoroughly with Jeremy.**
   - Jeremy will play the fight himself from `p40c1_s40hall` to show how.
+- **Results (Jeremy, by hand in ours, 0.1.7-test2, slot H = `p40c1_s40hall`, 2026-11-21 14:06-14:48): won at the fifth try**
+  with Plan 5 (holds and clouds); four earlier tries ended in two crashes and two stops. Recordings
+  `.lab/stuck/finale_guards/jeremy/` (`..._won` the win). His read: an easy fight with all the Hold Persons, held back by
+  ours' faults (no (HELPLESS) on the look panel, so held guards were re-held; holds seeming to last about a round;
+  Stinking Cloud's effects outside its 2x2; Fireball crashes; board request 14:33) and by the party: **overloaded, and no
+  ranged weapons** (DORN's quarrels with no crossbow, only LIRA's bow). *Jeremy*

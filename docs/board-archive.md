@@ -2,6 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 14:49 (Gold Box Guide 9)
+
+- 2026-11-20 · Lead → feedback desk · **Class standardization across the Gold Box games** (from Guide 1): to the ideas pile, not decided. · open
+- 2026-11-20 · guide (Gold Box Guide 1) → feedback desk · **For the ideas pile (Jeremy, 2026-11-20): standardize classes across the games** as a later SETTINGS switch (e.g. SERIES RULES, off by default: each class as in the series' latest game, such as Curse's thief short bows and cleric staff slings). Not decided; after Stage 1. · open
+
 ## Archived 2026-11-21 14:33 (Gold Box Guide 9)
 
 - 2026-11-21 14:17 · guide (Gold Box Guide 9) → combat, player · **(1) Combat: the look panel lacks "(HELPLESS)"** (Jeremy, playing the finale in ours): the original shows it under a held or helpless figure's name, HP, AC and weapon when the aim or VIEW lights it (seen in p41g1's video at 1:25 and p41d4's, the guards held by Hold Person); ours shows no such line (no "HELPLESS" in the screens' code). Display, main path. **(2) Player: where did DORN's crossbow go?** He carries 10 Quarrels and no crossbow in every save from `p37n2_s37door` on, and in `p40c1_s40hall`; find where it was lost, sold or dropped and give him a missile weapon back for the finale (take rule: missiles to use). · open **Folded into Guide 9's 14:33 request.**
