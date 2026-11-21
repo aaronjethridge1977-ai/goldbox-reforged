@@ -299,13 +299,14 @@ class Tactics:
         self.use = None          # Player 37: a scroll USE under way: {member, spell, tried rows}
         self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
         self.holding = set()     # Player 38: members standing on a fallen focus figure's square (OP_HOLDDOWN)
+        self.clouds = set()      # Player 42: the cells of this fight's Stinking Clouds (no member walks in)
 
     def _edge_path(self, p, me, bad=()):
         """Player 42 (OP_FLIGHT): the shortest walk from the member's cell to any cell on the field's border (x 0 or
         49, y 0 or 24), 8 directions, through no wall and no other figure's cell; [] if none."""
         figs, party, foes = self._sides(p)
         block = walls(p.g.mem) | {c for f in figs if f["name"] != me["name"] and (_up(f) or f["n"] <= self.party_n)
-                                  for c in cells(f)} | set(bad)
+                                  for c in cells(f)} | set(bad) | getattr(self, "clouds", set())
         start = (me["x"], me["y"])
         prev, q = {start: None}, [start]
         for c in q:
@@ -928,7 +929,7 @@ class Tactics:
         seen.add(pos)
         # Player 42 (Guide 9): no step into the field's walls (p41g1: DORN's keys into 27-28,10 were refused, the log
         # named him on a wall cell, and the turn was lost)
-        taken = taken | walls(p.g.mem)
+        taken = taken | walls(p.g.mem) | getattr(self, "clouds", set())
         here = dist(pos)
         best = None
         for k, dx, dy in DIRS:
@@ -968,7 +969,11 @@ class Tactics:
         if self.scan is None or self.scan.get("spell") != (member, "ATTACK"):
             byn = {f["n"]: f for f in foes}
             far = getattr(self, "far", False)
-            cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and (d <= 3 or far)]
+            # Player 42 (Guide 10 (c), p39c2's video: BRAM guarded beside a troll): the aim list's distance runs to a large
+            # figure's corner, so a troll touching the member by its other cells counted out of reach: by footprint too
+            me = next((f for f in party if f["name"] == member), None)
+            cand = [(i, byn[n]) for i, (n, d) in enumerate(ent) if n in byn and (d <= 3 or far or (
+                me is not None and _dist(me, byn[n]) <= 1))]
             try:
                 plain = not _magic_weapon(mem, member)
             except Exception as e:
@@ -1215,6 +1220,15 @@ class Tactics:
             self.held.add(target)
         if spell == "SLEEP":
             self.slept[target] = self.slept.get(target, 0) + 1
+        if spell == "STINKING CLOUD":
+            # Player 42 (Guide 10 (a): no member inside an area spell): the cloud's 2x2 (aim, right, below, below-right)
+            # is kept out of every MOVE walk for the rest of the fight
+            try:
+                t = {f["n"]: f for f in figures(self._mem)}.get(target)
+                if t:
+                    self.clouds |= {(t["x"] + dx, t["y"] + dy) for dx in (0, 1) for dy in (0, 1)}
+            except Exception:
+                pass
         if spell == "SLOW":
             try:
                 figs = {f["n"]: f for f in figures(self._mem)}
