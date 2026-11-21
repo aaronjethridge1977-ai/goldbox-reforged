@@ -41,11 +41,17 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 - **Demi-humans have level limits by race and class; humans have none.** For a party carried through the series these
   limits are the main thing to weigh. *Jeremy* (Pool) Dwarf fighter 9; elf fighter 7, magic-user 11; gnome fighter 6;
   half-elf fighter 8, magic-user 8; halfling fighter 6; thieves unlimited in every race. *book* (Pool Manual p.5)
-  (Pool) Neither START.EXE nor GAME.OVR holds these limits as a race-by-class table of bytes (searched both orders);
-  under the halls' caps (fighter 8, thief 9, cleric and magic-user 6) only the elf (7), gnome and halfling (6) fighter
-  limits are within reach. *code* (main chat 71) Whether the game enforces those: **unconfirmed** (a level-7 elf
-  fighter at a hall would tell). Each later game's limits, Curse's first (its files are on the PC; to read next):
-  **unconfirmed** (request to the lanes).
+  (Pool) **The training hall enforces them** (no table: compare-and-branch code), fighters only plus the half-elf
+  cleric, by Strength 18+ / 17 / 16 or less: dwarf 9/8/7, elf 7/6/5, gnome 6/5/5, half-elf 8/7/6 (cleric 5), halfling
+  6/5/4; magic-user limits aren't checked (the halls stop at 6 anyway). A capped class just isn't offered. Under the
+  halls' caps (fighter 8, thief 9, cleric and magic-user 6) only the elf, gnome and halfling fighter limits (and a
+  low-Strength dwarf's or half-elf's) are within reach. Ours does the same (LevelDrain.race_capped). *code* (Pool
+  GAME.OVR 0x1C3F7-0x1C501; main chats 71-72)
+  (Curse) Also enforced at the hall, by prime requisite 18+ / 17 / 16 or less: dwarf fighter 9/8/7; elf fighter 7/6/5,
+  magic-user 11/10/9; gnome fighter 6/5/5; half-elf cleric 5, fighter and ranger 8/7/6, magic-user 8/7/6; halfling
+  fighter 6/5/4; thieves, humans and half-orcs only by the XP table's top (thief 12, human cleric 10, fighter 12,
+  paladin and ranger 11, magic-user 11). A capped class isn't offered ("Not Enough Experience" if nothing else can
+  train). *code* + *book* (Curse GAME.OVR 0x24DDE-0x24F5B; Manual p.23; main chat 72)
 - (Pool) Who may multi-class: dwarf, gnome and halfling fighter/thief; elf F/MU, F/T, MU/T, F/MU/T; half-elf as the elf
   and also with cleric. Humans are single-class. *book* (Pool Manual p.5)
 - **Elves throw off Sleep and charm 90% of the time, half-elves 30%.** An elf or half-elf rolls that d100 for every
@@ -79,7 +85,8 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   - (Pool) Weapons: dagger, staff and **darts** (the manual omits darts). ITEMS gives the dart (type 9) the
     magic-user's class bit (1; class bits 93: magic-user, thief, fighter, paladin), and the original's own saves show
     DARKSTAR, a pure magic-user, with darts readied, the stack going from 11 to 8. *seen* + *code* (main chat 71: the
-    Player lab's saves of the original; ITEMS) + *book* (Manual)
+    Player lab's saves of the original; ITEMS) + *book* (Manual) DARKSTAR (magic-user 1) unreadied and READIED his 8
+    Darts again in the original's camp. *seen* (check 71, main chat 73)
 - **Before importing:** (Pool) fighter/thieves can be dwarf, gnome, halfling, elf or half-elf, and their fighter caps
   differ (dwarf 9, half-elf 8, elf 7, gnome and halfling 6). *book* (Pool Manual) Players report the racial limits still
   hold in Pools of Darkness while humans go far higher, which makes demi-humans weak there. *players*
@@ -100,7 +107,7 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 
 Five in the line, three bows, two clerics, two magic-users and a thief. A party that leans on multi-classed demi-humans
 (half-elf cleric/fighters, elf fighter/magic-users) is stronger early in Pool but stops early (a half-elf cleric at 5:
-*players*, [GameBanshee](https://www.gamebanshee.com/poolofradiance/races.php); **unconfirmed** in the game).
+*players*, [GameBanshee](https://www.gamebanshee.com/poolofradiance/races.php); *code*, the hall's check, main chat 72).
 
 ## 2. Gear
 
@@ -111,7 +118,11 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - Ready the arrows as well as the bow. When joining stacks of arrows (JOIN), highlight the readied stack first: the
   joined stack keeps the highlighted stack's readied flag. *seen* (main chat 67, check 116)
 - **Re-equip on the battlefield when the fight changes:** VIEW, ITEMS, READY works in combat; TRADE doesn't. *book*
-  (Pool Manual) Whether readying uses the turn: **unconfirmed** (request to Combat; not answered in Combat Chat 34).
+  (Pool Manual) **READY (or unready) in a fight is free:** it leaves the member's turn as it was, so a member can switch
+  from bow to sword (or back) and still attack; USE of an item does end the turn. *code* (GAME.OVR 0x222DF: READY
+  0x2250A sets no turn flag, USE 0x22AC4 does; Combat Chat 35)
+- When the readied arrows run out the original puts the sword back: ready the spare stack. A bow needs both hands
+  (unready a Brass Mirror too). *seen* (Player 35)
 - (Pool) **Bracers AC 6 are body armour that weighs nothing:** the game counts only the best body armour readied, so worn
   over Banded Mail (AC 4) they do nothing; they beat leather (AC 8) and no armour. Give them to the thief: DORN in
   leather, shield and DEX 17 goes from AC 4 to AC 2, and his thief skills don't suffer. *code* (ITEMS type 77, armour
@@ -145,8 +156,12 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 - **Keep everyone as mobile as possible: movement 6 is the floor.** *Jeremy* Weight slows a member: sixteen items each
   meant movement 3 in fights, and loot had to be left behind; so sell spare gear on every town trip (section 9). *seen*
   (Player 27)
+- **The take rule's loot piles up** (seven spare Long Bows a fighter, spare Chain Mail, platinum) until five of six move
+  3: drop the plain spares before a hard fight. Stojanow's west tower room was lost 5 of 5 at movement 3 and won at
+  once at 9-12. *seen* (Player 35, p34e1-e5, p35b1) (Pool) The allowance at STR 18/100 is 3000 coins' weight: over by
+  more than 1024 is movement 3, 768 is 6, 512 is 9. *code* (START.EXE 0xF40; ours party_member.gd)
 - A member carries 16 items at most. A 17th item, or one over the weight limit, is refused with no message. *seen*
-  (Player 10)
+  (Player 10) TRADE to a member holding 16 items fails silently: drop first. *seen* (Player 35)
 
 **Ammunition**
 - Save magic ammunition (Arrows +1 and the like) for very hard fights; a magic bow can be used any time. *Jeremy*
@@ -176,7 +191,33 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   *seen* (Player 32)
 - To read a clerical scroll: VIEW, ITEMS, READY it (both hands free: weapon and shield off), then USE, CAST, and pick
   the target. USE does nothing on a scroll that isn't readied. *seen* (Player 32, p32s1-s4)
-- Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first. *book* (Manual)
+- Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first. *book* (Manual) A scroll is
+  held in both hands, so a fighter-mage puts the weapon away to read one in a fight. *seen* (Player 37)
+- (Pool) **USE casts any scroll's spell** for a cleric or magic-user, with no level test (a level-1 magic-user can read
+  a Fireball scroll). *code* (GAME.OVR 0x22AC4; Combat Chat 35) **A scroll's spell goes off at caster level 6, whoever
+  reads it;** potions and other item spells (Speed, Giant Strength, Healing...) at level 12. So a low-level
+  magic-user gets a level-6 buff or Fireball (6d6) from a scroll, a higher one no more. *seen* + *code* (Combat Chat 38,
+  p37i1's spectres, draws 744-749; main chats 79-80, checks 179-187; START.EXE 0xBA:0x26C2) (Combat Chat 35's "at the
+  reader's own level" was wrong.)
+- (Pool) **SCRIBE** (copying a magic-user scroll into the book):
+  - copies only a spell of a level the magic-user already has slots for ("YOU CAN NOT SCRIBE THAT SPELL": a level-1
+    magic-user can't copy Stinking Cloud). *code* (GAME.OVR 0x1838D; Combat Chat 35)
+  - takes only a scroll already identified (read): Read Magic does it, and so does a shop's ID; an unread scroll lists
+    nothing. *seen* (main chats 76-77, checks 159-168; Player 37)
+  - costs rest time (4:15 for one 1st-level spell; Pool's nine spells took 11, 9 and 7.5 hours) and leaves the scroll's
+    other spells on it; a one-spell scroll is used up. *seen* (main chat 76; Player 37, p37b2)
+  - **one scroll a rest:** once a copy uses a scroll up, nothing more is copied until the next REST (the time offered
+    still counts every marked spell), so plan one rest per scroll the marks will empty. *seen* + *code* (Player 37's
+    p37b2, three rests for nine spells on five scrolls; Combat Chat 38, GAME.OVR 0x247B3)
+- **A potion is drunk only from a free hand:** USE does nothing until it is READIED, and with weapon and shield readied
+  READY refuses it, with no message: unready the shield first. USE then drinks it without a message. (Pool) Healing
+  heals 2d4+2; Giant Strength gives STR 21/00 for (d4 x 10) + 40 minutes; Neutralize Poison drunk by a member who
+  isn't poisoned heals 1d4+8. *seen* (main chats 73, 77, 80; checks 137, 164-168, 188)
+- (Pool) **Cloak of Displacement:** the first attack roll above 1 against its wearer in each fight misses, once a
+  fight; the rest of the fight it does nothing. *code* (effect 0x59, GAME.OVR 0x110EB; Combat Chat 35) + *seen* (on
+  Tyranthraxus, Player 6's draw 860)
+- (Pool) **Rings of Protection:** two can be worn but only the better plus counts for AC, and magic body armour (+1 or
+  better) cancels a ring's AC (its saving-throw plus still counts). *code* (START.EXE 0xE22; Combat Chat 36)
 - Only a readied mirror turns a basilisk's gaze back, and it needs a free hand: READY refuses it when the hands are full.
   *code* (GAME.OVR 0x10908) + *seen* (Player 17)
 
@@ -203,7 +244,10 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 - The magic-user's LEARN page and camp CAST's spell list open on the *last* spell; End wraps to the first. Check which
   spell is lit before choosing. *seen* (Player 3; main chat 65, check 102)
 - Spells cast in camp last into the next fight while their time runs (Bless, Prayer, Protection from Evil). *seen*
-  (Player 33, p33c3)
+  (Player 33, p33c3) At low level that is minutes (section 4's buffs).
+- **Rest before you break camp:** spells picked under MEMORIZE are learnt only by resting in that same camp; leave camp
+  (or save and load) first and the picks are gone. *seen* (main chat 83, checks 218-224)
+- Two Blesses (or two of any spell) on one member are two records. *seen* (main chat 83)
 
 **What the game gives the casters** (Pool; *code*: START.EXE class tables, read 2026-11-20)
 
@@ -217,8 +261,8 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 | 4th+ | 7 | 7 | beyond Pool's caps (cleric 6, magic-user 6): Curse of the Azure Bonds on |
 
 A multi-class casts by its level in that class: a fighter 5 / magic-user 4 has second-level spells, not Fireball.
-Whether a magic-user can copy a scroll's spell above its level into the spellbook, or cast it from the scroll:
-**unconfirmed** (request to Combat).
+(Pool) A scroll's spell above the magic-user's level can be cast from the scroll (at level 6) but not copied into the
+book (section 2). *code* + *seen* (Combat Chats 35, 38)
 
 | Level | Cleric (before Wisdom) | Cleric, Wisdom 17-18 | Magic-user |
 |---|---|---|---|
@@ -250,7 +294,8 @@ Whether a magic-user can copy a scroll's spell above its level into the spellboo
     one. *code* (Combat Chat 34; GAME.OVR 0x14C0F)
 - A caster wounded before a begun spell goes off LOSES A SPELL but keeps it in memory. *seen* (Combat Chat 33) + *code*
   (Combat Chat 34) (Pool's original takes the copy from the attacker's memory instead, if it has one: START.EXE
-  0xBA:0x148B.)
+  0xBA:0x148B.) It loses the spell but not the turn: at its next turn it still has its full movement and attacks, so a
+  spoiled cleric can still walk up and fight. *seen* (Combat Chat 37, Player 35's p35i6; GAME.OVR 0x14CFE)
 - A caster hit recently can't choose CAST: guard casters with fighters. *book* (Manual)
 - In a fight's CAST list Home moves the highlight up and End down; it opens on the last spell, and long lists page with
   NEXT. EXIT from a spell's aim asks ABORT SPELL? *seen* (Player 30)
@@ -272,6 +317,9 @@ Whether a magic-user can copy a scroll's spell above its level into the spellboo
 - The computer's choice: each turn it tries spells by priority: 7 Sleep, Stinking Cloud, the cleric's Hold Person,
   Fireball, Lightning Bolt; 6 Magic Missile, Charm Person, the magic-user's Hold Person, Prayer; 5 Slow, the cleric's
   Dispel Magic; down to 1 Protection from Evil. *code* (START.EXE spell table byte 13; Combat Chat 33)
+- A pure magic-user run by the computer (an enemy mage, or a member on QUICK) never walks towards a foe: with nothing
+  to cast or use in range it stands on guard, so a lone enemy mage stays where the fight put him. *code* + *seen*
+  (Combat Chat 38, GAME.OVR 0xB44E; Player 36's p36e1, YARASH in 7:23 stood all fight twice)
 
 **Prefer restraint to damage**
 - One blow kills a sleeping or held enemy, so Sleep, Hold Person and Stinking Cloud usually beat damage spells. *book*
@@ -318,13 +366,24 @@ the spell's class)
   level in d6, half on a save; 7x7 indoors (radius 3), radius 2 outdoors; a caster aiming within 3 squares burns
   himself.
 - **Lightning Bolt** (magic-user 3; next turn). *Jeremy:* great if you can get it bouncing round right; it depends on the
-  map. It bounces off walls: mind your own party. *book*
+  map. It bounces off walls: mind your own party. *book* From the aim square it runs 8 squares' worth (a diagonal step
+  costs 1.5); each wall turns it back along its line, and the first bounce costs 4 squares more when the caster stands
+  within 4 squares of that wall; every figure on its path (party and caster too) saves for half. **Aim it along a long
+  open line, not at a near wall with friends or the caster between.** *seen* + *code* (Combat Chat 36: BAKSHI,
+  magic-user 4, hit by his own bolt in the kobold caves; GAME.OVR 0x29973)
 - **Slow** (magic-user 3; next turn; no save). *Jeremy:* useful against enemies with several attacks. As many figures
   as the caster's level, nearest the aim point first; 3 + 1/level rounds; halves movement and attacks (a one-attack
   monster strikes every other round); on a hasted figure it only ends the Haste.
 - **Haste** (magic-user 3; next turn). *Jeremy:* turns your fighters into killing machines. The caster's level in
   allies; 3 + 1/level rounds; doubles movement and attacks; each target ages a year; on a slowed figure it only ends the
   Slow. A hasted caster still casts one spell a turn (a cast ends the turn): Haste the fighters. *code* (Gold Box Guide 2)
+  **Don't recast it on a hasted member:** with the old one's time all left it adds a record and nothing else; with less
+  left, the old one goes and the member ages another year. *seen* (main chat 84, checks 235-238) (Pool) Cast in camp
+  it reaches the first members in party order (as many as the caster's level): put the fighters first (poolrad.md
+  section 4).
+- **Friends** (magic-user 1; camp): +2d4 Charisma (at most 25) for 1 minute a level: cast it just before a talk. A
+  second Friends of equal length raises Charisma again; a longer one gives back the first one's starting Charisma.
+  *seen* (main chats 81, 83)
 - **Bless** (cleric 1; next turn, a long delay). *Jeremy:* can be used well, but he rarely does: try it. +1 to hit for 6
   rounds, only for members not yet in melee. *book* + *seen*
 - **Prayer** (cleric 3; next turn). Within 6 squares of the caster, the party +1 to hit and on saves and enemies -1, 1
@@ -340,7 +399,8 @@ the spell's class)
   the spell's power, gets up on the caster's side ("is animated") at full hit points, as undead (TURN works on it),
   with no memorized spells, movement 6, attack level 0; brought to 0 again it dies for good. Works on monsters and on
   fallen members alike. Not yet in ours (docs/coverage.md, spell 36). *code* (main chat 71: GAME.OVR 0x29087,
-  0x2C753)
+  0x2C753) Cast in camp it raises the first dead members in party order, up to the caster's level; elves and
+  half-elves rise too. *seen* (main chat 84, checks 235-238)
 
 The rest of Pool's list, with suggested uses (Jeremy, 2026-11-20: "a good starting point"; to be tried in play or the
 arena):
@@ -465,7 +525,10 @@ round is a minute; "a level" is the caster's level)
 - In camp just before the trigger, the long buffs: Strength (60 rounds a level), Enlarge, Resist Fire, Resist Cold,
   Protection from Normal Missiles (10 a level), Shield (5 a level), Protection from Evil (cleric 3 a level; magic-user
   and the 10' radius version 2 a level), Mirror Image (2 a level). Spells cast in camp carry into the fight while their
-  time runs. *seen* (Player 33, p33c3)
+  time runs. *seen* (Player 33, p33c3) **At low level they last minutes:** a 1st-level cleric's Protection from Evil 3
+  minutes, a 1st-level magic-user's Shield 5 and Enlarge 10, and a 10-minute REST ends them: cast them right before
+  the fight, not at the last camp. Enlarge on a member already at 18/00 raises nothing. *seen* (main chat 78, checks
+  173-175)
 - In the fight, at the pivotal moment (the turn before the lines meet, the round the boss closes): Bless (6 rounds),
   Prayer (1 a level), Haste (3 + 1 a level), Spiritual Hammer (1 a level).
 - The cluebook and Curse's card say to cast everything (Bless, Prayer, Protection from Evil, Enlarge, Invisibility 10',
@@ -485,6 +548,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 **The line**
 - **Four in front to protect the back; one shooting from the back; the magic-user held in reserve.** *Jeremy*
+- **Fighters GUARD only when no enemy can be reached;** otherwise they move toward the enemy and form a line of four,
+  or three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19)
 - Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps.
   Spread out against breath weapons and area spells. *book* (Cluebook)
 - Keep archers and dart-throwers out of reach: a missile can't be fired with an enemy adjacent. *book* (Manual)
@@ -536,6 +601,14 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 **Enemies**
 - Some monsters never run (morale 255). *code* (MON2CHA.DAX; Stojanow report)
 - Some fights' monsters have fixed hit points, so every try faces the same total. *seen* (Stojanow report)
+- **Killed trolls rise again** on their own square unless a figure stands on it (any of the troll's cells): a fighter
+  stands on each fallen troll. *seen* (Player 38, p38e1/p38e3, Pool's kobold throne room)
+- A tiger rakes (two more 2d4) only when both front claws hit in one attack; the bite doesn't count. *code* (Combat
+  Chat 37, GAME.OVR 0x13EED / 0x161CD)
+
+**Between waves**
+- (Pool) The original asks CONTINUE BATTLE: YES NO; YES plays rounds with no enemy up, for cures and bandages before
+  the next wave (the book's "Continue Combat to heal"). *seen* (Player 38, p38e1/p38e3)
 
 **Fleeing**
 - Fleeing the map works only for a member whose movement is at least the fastest enemy's: unready heavy armour to raise
@@ -552,7 +625,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - **A death means a reload**, even though Raise Dead (5500 GP) is affordable: a human would rather replay the fight than
   pay and lose Constitution. Raise Dead only when reloading would cost an hour or more. *Jeremy* (2026-11-20) (Pool)
   Raise Dead costs 1 Constitution and, at CON 14 and up, the hit points that came from the old Constitution bonus.
-  *code* (Combat Chat 34; main chat 26's lab)
+  *code* (Combat Chat 34; main chat 26's lab) + *seen* (RHIANNON CON 14 -> 13, up at 1 HP; check 111, main chats
+  66/73)
 - **A win with a member dead counts as a loss.** Several "wins" in the original were losses by this rule. *seen*
   (Players 7, 8, 13)
 - **Unconscious is not dead:** 0 HP with status UNCONSCIOUS (4) heals; DEAD (6) is dead. *seen* (Player 8)
@@ -563,7 +637,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 **Experience**
 - (Pool) **No experience for the downed:** a fight's experience is divided among the members still standing and given
   only to them, so an unconscious or dying member at the fight's end gets none. *code* (Combat Chat 34; GAME.OVR
-  0x58A0, 0x58D3)
+  0x58A0, 0x58D3) + *seen* (main chat 73, check 141's gnolls: DIRTEN unconscious at 23435 before and after)
+- (Pool) A single-class member with a high prime requisite gets 10% more (93 -> 102); a multi-class member's share is
+  split between the classes. *seen* (main chat 73, check 141)
 
 **The dying**
 - Bandage the dying at once; heal anyone unconscious before the last enemy falls if you can (section 5). *book* (Manual)
@@ -628,6 +704,8 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
   (Player 26, Stojanow report)
 - **The same encounter can come with or without a parley:** a reaction roll can give COMBAT WAIT FLEE ADVANCE where a
   friendlier roll gives PARLAY. *seen* (Players 7, 24)
+- (Pool) **A wilderness band the party surprises** ("YOU SURPRISE A GROUP OF ...") leaves at once on WAIT, with no
+  fight and no further menu. *seen* (Player 36, p36t2 on 6:25: wild boars twice, centaurs once)
 - **Watch the default:** a menu whose default is COMBAT can kill a friendly NPC (a trader); choose PARLAY to deal with
   him. *seen* (Player 26, p26b5)
 - **How to parley:** Abusive with nasty intelligent groups, Nice with neutral ones; let a high-Charisma member speak.
@@ -676,7 +754,7 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 - **Training costs 1000 GP worth of the trainee's own coins** (any coins, platinum included), and only conscious
   members train. *code* (party_member.gd, the original's "TRAINING COSTS 1000 GP." and "WE ONLY TRAIN CONSCIOUS
   PEOPLE") + *Jeremy* Before training, sell what's needed (APPRAISE, then SELL; APPRAISE also offers KEEP, which takes a
-  jewel off the coin count), POOL the party's money, then SHARE so that each trainee holds the fee. *seen* (Player 15;
+  jewel off the coin count), POOL the party's money, then SHARE (or TAKE by hand: SHARE can strand money, below) so that each trainee holds the fee. *seen* (Player 15;
   main chat 66)
 - The fee comes out of the member's coins. Change was seen given in gold, not platinum (Player 3), and in silver (main
   labs, chats 8 and 10): *seen*; which coins and when: **unconfirmed** (request).
@@ -684,7 +762,8 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 - (Pool) **Hit points gained at training:** one roll of the trained class's hit die (at least two-thirds of the die at
   level 1), plus the Constitution bonus, divided by the member's number of classes, at least 1. A multi-class training
   one class gets that one roll divided by its class count. *code* (Player 3; main chat 71: GAME.OVR 0x1DBB4 / 0x1DB4C;
-  ours the same, matched in check 103)
+  ours the same, matched in check 103) The die is rolled once (no better-of-two). *seen* (the original's traces,
+  checks 96 and 103, main chats 64-65)
 - (Pool) The training hall's caps: fighter 8, thief 9, cleric and magic-user 6 (section 1). *book*
 
 **Money and savings**
@@ -696,13 +775,22 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
   part under a gold piece is lost; silver, copper and electrum too), and a sale pays in platinum and gold. So buying
   something cheap turns a member's gold into platinum, a fifth of the weight. *seen* (main labs, chats 8 and 10;
   party_member.gd `pay_gold_in_shop`, `receive_gold`)
+- (Pool) **A member at his most (load = allowance + 1500) can neither buy nor be given coins by TRADE.** To lighten
+  everyone at once: at a shop POOL the whole party's money, make one purchase (the pool regroups into platinum and
+  gold), then each member TAKEs a set amount of platinum. *seen* (Player 38, p38a1/p38a2 at New Phlan: movement 3 to
+  9+)
+- **SHARE in a shop can strand money:** it may leave coins on the pile ("YOU HAVE LEFT SOME MONEY HERE"), and in the
+  original (ORIGINAL'S BUGS on) it can fill every member's load with phantom jewelry so no one can TAKE the rest: TAKE
+  by hand to the members with room instead. *seen* (main chat 78, checks 176-177)
 
 **Shops**
 - **Sell spare gear on every town trip** (section 2). *seen* (Player 27)
 - **Unready an item before selling it:** SELL does nothing to a readied item, with no message. The price comes in the
   largest coins (7 GP as 1 platinum and 2 gold). *seen* (main chat 65, check 101)
 - A seller too loaded to carry the coins gets what fits; the rest goes on the shop's pile ("OVERLOADED. MONEY WILL BE
-  PUT IN POOL."). *code* (GAME.OVR 0x22E47; Combat Chat 32)
+  PUT IN POOL."). *code* (GAME.OVR 0x22E47; Combat Chat 32) (Pool) **POOL before you APPRAISE and SELL gems:** an
+  overloaded member gets the gem's platinum only up to his room (the rest goes to the pool), and KEEP is offered only
+  when the gem still fits (load and 16 items). *seen* + *code* (Tyr's temple, GAME.OVR 0x269D3 / 0x24E8C; main chat 74)
 - **Coins POOLed in a shop stay in the shop;** leaving asks whether to go back for the money. *seen* (Player 12)
 - **Buy plenty of darts for the magic-users on every trip;** other ammunition only when you run out (section 2). *Jeremy*
 - The first item list in a shop can open one item down, with the highlight kept from an earlier menu: check what's lit
@@ -746,32 +834,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- Fighters GUARD only when no enemy can be reached; otherwise they move toward the enemy and form a line of four, or three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19)
-- Curse of the Azure Bonds enforces racial level limits at the training hall (no table: compare-and-branch in GAME.OVR 0x24DDE-0x24F5B), by prime requisite 18+/17/16-or-less: dwarf fighter 9/8/7; elf fighter 7/6/5, magic-user 11/10/9; gnome fighter 6/5/5; half-elf cleric 5, fighter and ranger 8/7/6, magic-user 8/7/6; halfling fighter 6/5/4; thieves, humans and half-orcs only by the XP table's top (Curse: thief 12, human cleric 10, fighter 12, paladin and ranger 11, magic-user 11). A capped class just isn't offered ("Not Enough Experience" if nothing else can train). *code* + *book* (Curse GAME.OVR; Manual p.23; main chat 72)
-- Pool enforces its racial level limits at the training hall too (answers section 1's "unconfirmed"): compare-and-branch in GAME.OVR 0x1C3F7-0x1C501, fighters only plus the half-elf cleric: dwarf 9/8/7, elf 7/6/5, gnome 6/5/5, half-elf 8/7/6 (cleric 5), halfling 6/5/4 by STR 18+/17/16-or-less; magic-user limits aren't checked (the halls stop at 6 anyway). A capped class isn't offered. Ours does the same (LevelDrain.race_capped). *code* (Pool GAME.OVR; main chat 72)
-- READY in a fight is free: VIEW, ITEMS, READY (or unready) leaves the member's turn as it was, so a member can switch from bow to sword (or back) and still attack; USE of an item does end the turn (GAME.OVR 0x222DF: READY's 0x2250A gets no turn flag, USE's 0x22AC4 sets it). Answers section 2's (4). *code* (Combat Chat 35)
-- The Cloak of Displacement (effect 0x59, lent while readied) makes the first attack roll above 1 against its wearer in each fight a miss, once per fight; the rest of the fight it does nothing (the handler Tyranthraxus has, GAME.OVR 0x110EB; seen on Tyranthraxus, Player 6's draw 860). *code* (Combat Chat 35, for Guide 2's throne-room plan)
-- Scrolls (Pool): SCRIBE copies a magic-user scroll's spell only of a level the magic-user already has slots for ("YOU CAN NOT SCRIBE THAT SPELL", GAME.OVR 0x1838D: a level-1 magic-user can't copy Stinking Cloud); USE casts any scroll's spell for a cleric or magic-user, no level test in the USE path (0x22AC4), at the user's own level (Fireball from a level-3 magic-user: 3d6, half on a save). Not yet seen in DOSBox. *code* (Combat Chat 35, for Guide 2)
-- (Pool) A member unconscious (0 HP, status 4) when a fight ends gets no experience for it: DIRTEN 23435 before and after while the rest of the party got theirs; a single-class member with a high prime requisite gets 10% more (93 -> 102), a multi-class member's share is split between the classes (ELWEN 31, LIRA and DORN 46). *seen* (the original, check 141's gnolls, main chat 73)
-- (Pool) Raise Dead at the temple costs one point of CON (RHIANNON 14 -> 13; HP 1 after). *seen* (the original, check 111, main chat 66/73)
-- (Pool) Training rolls the hit die once (no better-of-two): one d10 per level for a fighter, plus the CON bonus. *seen* (the original's traces, checks 96 and 103, main chats 64-65)
-- (Pool) A Potion of Giant Strength must be readied to be used (it takes a hand: with sword and shield readied READY refuses it); USE drinks it without a message: STR 21/00 for (d4 x 10) + 40 minutes. *seen* (the original, check 137, main chat 73)
-- (Pool) A magic-user can ready darts: DARKSTAR (magic-user 1) unready and READY again on his 8 Darts in the original's camp (the pre-made party carries them readied). *seen* (the original, check 71's start, main chat 73)
-- **Weight is movement:** the take rule's loot piles up (seven spare Long Bows a fighter, spare Chain Mail, platinum) until five of six move 3; drop the plain spares before a hard fight (ARN's allowance at 18/100 is 3000 coins: over by more than 1024 is movement 3, 768 is 6, 512 is 9: START.EXE 0xF40, ours party_member.gd). Stojanow's west tower room: 5 of 5 lost at movement 3 (p34e1-e5), won at once at 9-12 (p35b1). TRADE to a member holding 16 items fails silently: drop first. A bow needs both hands (unready a Brass Mirror). When the readied arrows run out the original puts the sword back; ready the spare stack. *seen* (Player 35)
-- (Pool) **POOL before you APPRAISE and SELL gems:** a member over his load gets the gem's platinum only up to his room (the rest goes to the pool, "Overloaded. Money will be put in Pool."), and KEEP is offered only when the gem still fits (load and 16 items). *seen* + *code* (the original at Tyr's temple, GAME.OVR 0x269D3 / 0x24E8C, main chat 74)
-- Lightning Bolt (Gold Box, Pool seen) bounces off walls and can come back on the caster: from the aim square it runs 8 squares' worth (diagonal steps cost 1.5), each wall turns it back along its line, and the first bounce costs 4 squares more when the caster stands within 4 squares of that wall; every figure on its path (party too, the caster too) saves for half. Aim it along a long open line, not at a near wall with friends or the caster between. *seen* (Combat Chat 36's spell lab: BAKSHI, magic-user 4, hit by his own bolt in the kobold caves; GAME.OVR 0x29973).
-- Rings of Protection (Pool): two can be worn but only the better plus counts for AC, and magic body armour (+1 or better) cancels a ring's AC (its saving-throw plus still counts). *code* (Combat Chat 36: START.EXE 0xE22).
-- **SCRIBE takes only a scroll already read (identified) or any scroll with Read Magic on, costs a 4:15 rest for a 1st-level spell, and leaves the scroll's other spells on it** (*seen*, main chat 76, checks 159 and 161, DOSBox: an unread scroll lists nothing; a two-spell scroll keeps the second; a one-spell scroll is gone).
-- **A potion is drunk only from a free hand:** USE does nothing until the potion is READIED, and a member with a weapon and a shield readied can't ready it (no message): unready the shield first. Pool's Potion of Healing heals 2d4+2; Giant Strength gives STR 21 for about an hour. The shop's ID also reads a scroll, so SCRIBE takes it without Read Magic (*seen*, main chat 77, DOSBox, checks 164-168).
-- **Buffs cast in camp last minutes at low level:** a 1st-level cleric's Protection from Evil lasts 3 minutes, a 1st-level magic-user's Shield 5 and Enlarge 10; a 10-minute REST ends them. Cast them right before the fight, not at the last camp. Enlarge on a member already at 18/00 sets the effect but raises nothing. *seen* (main chat 78, checks 173-175, DOSBox).
-- **SHARE in a shop can strand money:** it may leave coins in the pile ("YOU HAVE LEFT SOME MONEY HERE"), and in the original (ORIGINAL'S BUGS on) it can fill every member's load with phantom jewelry so no one can TAKE the rest: TAKE by hand to the members with room instead. *seen* (main chat 78, checks 176-177, DOSBox).
-- **A wilderness band the party surprises ("YOU SURPRISE A GROUP OF ...") leaves at once on WAIT, with no fight and no further menu** (*seen*, Player 36, p36t2 on 6:25: wild boars twice, centaurs once; the band rule's WAIT).
-- A caster hit while a slow spell is being cast loses the spell but not the turn: at its later turn it still has its full movement and attacks, so a spoiled cleric can still walk up and fight (*seen*, Combat Chat 37 from Player 35's p35i6, GAME.OVR 0x14CFE); and a tiger rakes (two more 2d4) only when both front claws hit in one attack, the bite doesn't count (*code*, Combat Chat 37, 0x13EED / 0x161CD).
-- **Scrolls: an unidentified magic-user scroll can't be copied (SCRIBE) until the reader casts Read Magic (which also identifies it); copying runs one scroll a rest (Pool: 11, 9 and 7.5 hours for nine spells); a scroll is held in both hands, so a fighter-mage puts the weapon away to read one in a fight** (*seen*, Player 37, p37a1/p37b2/p37c1, Pool)
-- A pure magic-user run by the computer (a monster, or a member on QUICK) never walks towards a foe: with nothing to cast or use within range it stands its ground on guard, armour or not, so a lone enemy mage stays where the fight put him (*code*, *seen*: Combat Chat 38 from Player 36's p36e1, YARASH in 7:23 stood all fight in two runs of the original; GAME.OVR 0xB44E).
-- A spell read from a scroll in a fight goes off at caster level 6 whatever the reader's own level (a wand's too, by the code): a fighter/magic-user 5's scroll Fireball does 6d6 (*seen*: Combat Chat 38 from Player 37's p37i1, 4:10's spectres, draws 744-749; GAME.OVR via START.EXE 0xBA:0x26C2).
-- SCRIBE stops for the rest of a REST once a copy uses a scroll up (with nothing left to memorize): nothing more is copied until the next REST (the time offered still counts every marked spell), so plan one rest per scroll the marks will empty (*seen*, Player 37's p37b2 at the New Phlan inn, three rests for nine spells on five scrolls; *code*, Combat Chat 38, GAME.OVR 0x247B3).
-- **Between waves the original asks CONTINUE BATTLE: YES NO; YES plays rounds with no enemy up, for cures and bandages before the next wave (the book's "Continue Combat to heal"). Killed trolls rise again on their own square unless a figure stands on it (any of the troll's cells): a fighter stands on each fallen troll** (*seen*, Player 38, p38e1 and p38e3 in 8:13's throne room)
-- **A member at his most (load word = allowance + 1500) can neither buy nor be given coins by TRADE; at a shop POOL the whole party's money, make one purchase (the pool regroups into platinum and gold), then each member TAKEs a set amount of platinum: everyone light at once** (*seen*, Player 38, p38a1 and p38a2 at New Phlan: movement 3 to 9+)
-- Spells picked under MEMORIZE are learnt only by resting in that same camp: leave camp (or save and load) first and the picks are gone, so rest before you break camp. Two Blesses (or two of any spell) on one member are two records; a second Friends of equal length raises charisma again, a longer one gives the first one's starting charisma back (*seen*: main chat 83, DOSBox, checks 218-224).
-- Don't recast HASTE on a hasted member: with the old one's time all left it adds a record and no year (nothing gained); with less left, the old goes and the member ages another year. ANIMATE DEAD in camp raises the first dead members in party order, up to the caster's level; elves and half-elves rise too (*seen*: main chat 84, DOSBox, checks 235-238).

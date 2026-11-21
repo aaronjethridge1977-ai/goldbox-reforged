@@ -31,9 +31,9 @@ them: **unconfirmed**.
 |---|---|---|---|
 | 1 | New Phlan: shop, inn, memorize | 3:0 | 1 |
 | 2 | The Slums (the trolls and ogres at 0,14 last) | 2:20 | 1-2 (a 20-figure street fight destroyed level-1 parties); trolls and ogres at 3, won deathless |
-| 3 | Sokal Keep by boat | 4:21 | 2: the big battle lost 8 of 10; 3: 2 deathless wins in 8 |
+| 3 | Sokal Keep by boat | 4:21 | 2: the big battle lost 8 of 10 (Player 34: 5 of 5 at F2/C2, multis 1); 3: 2 deathless wins in 8, and Player 34's win (multis still 1/1/1) |
 | 4 | Kuto's Well (Norris the Gray) | 8:29 | 3: won deathless at the first try |
-| 5 | Mendor's Library | 2:15 | 3-4 |
+| 5 | Mendor's Library | 2:15 | fighters and cleric 3, multis 1-2 (Player 34's checkpoints) |
 | 6 | City Hall; Podol Plaza | 3:8, 1:18 | fighters and cleric 4 |
 | 7 | Cadorna's Textile House | 4:2 | about 4: Grishnak won 3 of 4, every win with deaths |
 | 8 | The nomads; the Temple of Bane | 7:17, 1:24 | about 4 |
@@ -44,6 +44,21 @@ them: **unconfirmed**.
 | 13 | Valhingen Graveyard | 4:10 | 3-6: the wights won only with magic weapons; two spectres 0 of 18 |
 | 14 | Stojanow Gate | 2:9 | 3-6: the wall fight lost every try (main's bot table expects 7) |
 | 15 | Valjevo Castle and Tyranthraxus | 5:3-5:7 | 4-6: the guards won 1 of 5; Tyranthraxus 0 of 7 (taken by shortcut) |
+
+**The comparison party member by member** (*seen*, Player 34 from the original's checkpoint saves; ARN, BRAM fighters,
+CEDRIC cleric, ELWEN C/F/MU, LIRA F/MU, DORN F/T)
+- Stretches 1-5: the Slums cleared at level 1 (multis 1/1/1; trained to F2/C2 only after `slums2`); Sokal Keep's
+  event 9 lost 5 of 5 at F2/C2/multis 1, won at F3/C3 (multis 1/1/1, DORN F1/T2); Kuto's Well at F3/C3, multis 1;
+  **Mendor's Library at F3/C3, multis 1-2 (ELWEN C1/F2/MU1, LIRA F2/MU1), not 3-4**.
+- Stretches 6-12: City Hall to Bane at F4/C4, multis 2-3 (ELWEN C2/F2/MU1, LIRA F3/MU1, DORN F3/T2); Kovel at F4-5/C5
+  (ARN drained 4 -> 2); the kobold caves and Sorcerer's Island at ARN F3, BRAM F5, CEDRIC C5, ELWEN C4/F3/MU3, LIRA
+  F3/MU3, DORN F3/T4 (the throne room lost 5 of 5 at these); the Buccaneers and Zhentil at F5-6/C6, ELWEN 4/4/4, LIRA
+  F4/MU4, DORN F4/T5.
+- Stretches 13-15: the graveyard entered at ARN F5, BRAM F6, CEDRIC C6, ELWEN C4/F4/MU4, LIRA F4/MU4, DORN F4/T5 and
+  left drained (ARN F2, LIRA F2/MU2, DORN F3/T3: p25q5); Player 33's redo with no drain reached `graveyard` at ARN F6,
+  BRAM F6, CEDRIC C6, ELWEN C5/F4/MU4, LIRA F5/MU4, DORN F5/T6, and 4:10 9,1's two spectres still won 5 of 5;
+  Stojanow's wall lost at ARN F3, BRAM F5, CEDRIC C6, multis 3-5 (still drained); Valjevo at ARN F5, BRAM F6, CEDRIC
+  C6, ELWEN C5/F5/MU4-5, LIRA F4/MU4, DORN F4/T5 (the guards 1 of 5).
 
 **Notes by stretch** (*seen* unless marked; the hard fights are in section 3)
 1. **New Phlan:** buy, ready everything, rest at the inn, memorize.
@@ -113,7 +128,10 @@ files); results *seen* unless marked.
     the doorway, Sleep and Hold Person on leaders and archers, bows behind. Plan: stuck-fights.md section 1. *code*
 - **Ferran Martinez** (the spectre; 2 levels a hit): never melee him. Parley, say LUX, tell the truth (he shows the
   hidden treasure). *book*
-- **Resting at 15,1:** undead interrupted four rests in five; four camps ended with a death. (Player 15)
+- **No safe camp anywhere in the keep:** at 15,1 undead interrupted four rests in five and four camps ended with a
+  death (Player 15); rests at 8,14 and 9,5 drew undead five times, besides 13,0 (Player 35, "Sokal Keep Plan 1").
+  **Rest at New Phlan's inn:** from 7,15 a step S, TAKE A BOAT BACK TO PHLAN; the pier's walk crosses the temple of
+  Tyr (EXIT); the inn is 3:0 4,12. *seen* (Gold Box Guide 4, Jeremy 18:22)
 - **The huge scorpions (2,11):** won 4 of 4, 3 deathless (Player 9). Memorize Slow Poison first. *book*
 
 **Kuto's Well (8:29)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:09)
@@ -131,7 +149,10 @@ files); results *seen* unless marked.
 - **The hag's rug (7,14), behind the nailed door at the well's bottom** (FORCE IT: YES; a lizardman and 4 giant lizards,
   move 15, guard the door): **Banded Mail +1, Bracers AC 4, Quarter Staff +1** (ITEM8 list 58). Bracers AC 4 to the
   front-line magic-user (they replace body armour: with a shield one AC better than chain mail, and lighter); Banded
-  Mail +1 to the fighter/thief in the line (his thief skills wait while he wears it). *code* + *Jeremy*
+  Mail +1 to the fighter/thief in the line (his thief skills wait while he wears it). *code* + *Jeremy* **How to
+  find it:** after FORCE IT, walking onto 7,14 gives one text only; **LOOK** there asks "BENEATH A RUG YOU FIND A
+  COMPARTMENT CONTAINING ARMS AND ARMOR." (YES; the Bracers AC 4 show as +6). The guards' fight leaves no items, and
+  rests at the well's bottom (7,13) are interrupted by lizard men again and again. *seen* (Player 35, p35j3, p35j6)
 
 **Yarash's pyramid (7:22, 7:23)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:15)
 - **Yarash (7:23 4,1):** a 9th-level magic-user (27 HP, AC 9; Fireball at 9d6, Stinking Cloud, Mirror Image, Shield,
@@ -160,14 +181,18 @@ files); results *seen* unless marked.
   weight (kobolds 1; gnolls, stirges, bandits, soldiers, thieves 2; lizard men 3; boars, centaurs, quicklings, giant
   lizards, hippogriffs 4; displacers, tigers, phase spiders 6; driders, trolls, minotaurs 7; ankhegs, snakes, wyverns 8;
   mantises, thri-kreen 10), then a third (1 in 5), a half (3 in 5) or all of it (1 in 5), at most 56: a stronger party
-  meets bigger bands (p25a3's 51 kobolds at 7:26 5,21). *code* (ECL6 block 25, ECL7 26, ECL8 27)
+  meets bigger bands (p25a3's 51 kobolds at 7:26 5,21). *code* (ECL6 block 25, ECL7 26, ECL8 27) The strength reads
+  each member's cached THAC0 and AC, which TRAIN doesn't refresh: right after training the bands come sized as before
+  it, until a fight (or the member's VIEW page) refreshes them. *code* + *seen* (main chat 82, p36h1 in DOSBox:
+  strength 49 at 7:26, 24 nomads; fresh it would be 51, 25)
 - **The menu:** spotted, FLEE gets away when the party's slowest has the kind's movement (kobolds, lizard men, soldiers
   6; gnolls, bandits, buccaneers 9; driders, trolls, minotaurs, tigers, mantises, ankhegs, thieves 12; boars, displacers,
   giant lizards, snakes 15; stirges, centaurs, hippogriffs, thri-kreen 18; wyverns 24; phase spiders 31; quicklings
   never). **PARLAY:** the manner's value + d30 + the lit member's Charisma bonus (16: 50, 17: 55, 18: 60) must reach
   100: **6:25 NICE (50), 7:26 ABUSIVE (60)**, both sure with Charisma 16+; **8:27 ABUSIVE (30)**, about 2 in 3 with
   Charisma 18. Beasts never talk; nomads, merchants and centaurs greet and leave. Surprised by them: no FLEE (fight or
-  talk); the party surprises them: WAIT and they go. *code*
+  talk); the party surprises them: WAIT and they go, with no fight and no further menu. *code* + *seen* (Player 36,
+  p36t2)
 - **What they're worth:** no magic items (plain gear of 50 gp or less, a few coins); experience per figure (the fight's
   total is split among the six): 6:25 quicklings 221, boars 157, **giant mantis 2,120**, tigers 453, **thri-kreen
   1,064** (3 gems each), ankhegs 430, soldiers 46, thieves 14 (their leader 449), buccaneers 14, snakes 260; 7:26
@@ -265,6 +290,16 @@ files); results *seen* unless marked.
     *players* ([Demetrios1453](https://www.enworld.org/goto/post?id=9305676): won with two Fireballs and Fatima;
     [GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/koboldcave.php): a Fireball for each of the
     first two waves). Plan: docs/strategy/stuck-fights.md section 3.
+  - **The way in** (*seen*, Player 38, p38b1/c1/d1): 8:27 6,16's 30 kobolds come on the square before the cave menu, so
+    the SMALL cave (into 8:13 at 6,15; LARGE at 10,15) doesn't avoid them; on QUICK with MAGIC OFF they and the bands
+    inside (7,12, 10,9, 5,6) cost the party about 30 HP and no spells: the door fit.
+  - **Princess Fatima** is event 14 at 1,3, reached from the throne room's door (4,4) by the west passage (1,5, 1,4)
+    without setting off the throne (4,3); YES adds her when the party is under 8. She comes with Leather Armor, Shield
+    and Short Sword readied; gear traded to her shows without its plus on her list (READY by the plain name). She
+    leaves the party when it leaves the caves. *code* + *seen* (ECL8 block 13 0xA720, NPC_ADD 104; Player 36, p36n1;
+    Player 37, p37r1)
+  - Between waves the original asks CONTINUE BATTLE: YES plays rounds with no enemy up, for cures and bandages; killed
+    trolls rise on their own square unless a figure stands on it. *seen* (Player 38, p38e1, p38e3)
 
 **Valhingen Graveyard (4:10)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **The two spectres at the brass doors (event 23, 9,1) are optional:** they guard only the knight's tomb (8,2), the one
@@ -290,7 +325,11 @@ files); results *seen* unless marked.
   2,030 experience each. *code* **TURN:** a spectre needs a d20 of 20 at cleric 5, 16 at cleric 6 (Pool's cap), so
   never reliable here; they are turned, never destroyed. *code* (the turning table, DS:0x447)
 - **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed
-  (every try drained). *seen*
+  (every try drained). *seen* **Player 37 won** (p37i1: both dead, no drain, nobody hurt): when the clerics' TURN
+  works the spectres flee to the far side and don't fight back, and hasted fighters walk after them and kill them;
+  p37g1, where the party waited, lost four members' levels when they came back. LIRA's scroll Fireball there did 6d6
+  (a scroll casts at level 6). The Haste and Restorations came from the Kovel scroll cabinet (3:14 3,13) and the
+  marble chest (7,6, SEARCH on). *seen* (Player 37, p37g1, p37i1, p37a1, p37d1)
 - **Still open in the Player's run** (Gold Box Guide 3, 2026-11-20): at `p33f3_mopup1`, the save the current chain
   grew from, 0x4A41 = 0 (the vampire never fought), 0x4A18 = 0 (9,1 not beaten), 0x4AF8 = 0 (the tomb not opened);
   only the coffin sanctified (0x4A43 = 251). So the plan starts from the current chain (`p35e2_mopup2`, LIRA at MU5
@@ -314,7 +353,8 @@ files); results *seen* unless marked.
      magic); DORN in the Bracers AC 6; **four or more Restoration scrolls** in the packs (the marble chest at 7,6-8
      gives four; the zombie room two, the paladin's crypt one), so a hit costs a scroll, not a reload; the Wand of
      Lightning Bolt from the zombie room.
-  2. **On 10,1, in camp:** LIRA's Haste on the four fighters, Prayer, Bless; then step onto 9,1.
+  2. **On 10,1, in camp:** LIRA's Haste on the four fighters (a camp Haste takes the first members in party order:
+     the fighters first), Prayer, Bless; then step onto 9,1.
   3. **Round 1:** the Wand of Lightning Bolt (3 charges) down a long open line through both spectres, **never at a
      wall close to the party**: the bolt runs 8 squares' worth and turns back off walls, and everyone on its path,
      the caster too, saves for half (Combat Chat 36); no clear line, no wand; the bows;
@@ -338,6 +378,11 @@ files); results *seen* unless marked.
 - **Results:** Player 34 won the west tower 3 of 5 with a death (movement 3, no cloud, CEDRIC in reach). **Player 35,
   after the audit (movement 9-12): both towers, the patrol and the 16 bugbears won, nobody dead: the gate taken**
   (`s35g`). The audit was the difference. *seen*
+- **From inside the wall (after the toll, 8,5):** the west tower room (4,5 up); on the way down the east tower's
+  garrison comes to the stairs at 4,5 (the level-6 magic-user, an aide, three ettins: "THEY ADVANCE"); the patrol came
+  at 5,5 with COMBAT WAIT FLEE ADVANCE, no PARLAY; the only way out is the gate's 16 bugbears (they come out to 8,7);
+  after them the alarm rings: walk straight out by 4,15, patrols come at about one step in six. *seen* (Player 35,
+  p35b1-p35e2)
 
 **Not hard** (Gold Box Guide 4, 2026-11-20): **Podol Plaza's goblin hordes (1:18) and the run for the gate (6:1 7,2)**
 [100 x4, 99 x30]: won in the original (Player 2); no plan needed. *seen*
@@ -349,7 +394,8 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 (Jeremy, 2026-11-20: a starting point.)
 
 **Resting**
-- **Rest only at the inn** in these places, where camps were interrupted 4-5 times and members died: Sokal Keep's 15,1;
+- **Rest only at the inn** in these places, where camps were interrupted 4-5 times and members died: Sokal Keep (the
+  whole keep, section 3);
   the Textile House (4:2); the pyramid (7:22); the wilderness bands. *seen* (Players 15, 19, 25)
 - **The ruined castle (8:16) is anti-magic:** CAST does nothing there, even in camp. Leave and rest at the inn rather
   than camping inside: one party camped 54 days there to bring a member up from 0 HP. *Jeremy* + *seen* (Player 25,
@@ -376,6 +422,25 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 - **Tyranthraxus's fear:** party members of levels 0-3 are paralysed and 4-5 weakened, whether they save or not.
   *code* (GAME.OVR 0x10705; Player 5)
 
+**Items, spells and temples**
+- **Item spells' level:** a scroll's spell (magic-user or clerical) goes off at caster level 6, whoever reads it;
+  potions and other item spells (Speed, Invisibility's Disappearance, Giant Strength, Healing...) at level 12. A
+  low-level magic-user gets a level-6 buff from a scroll (Protection, Enlarge...); a higher one gets no more. *code* +
+  *seen* (main chats 79-80, checks 179-187: LIRA at magic-user 1 and 8 read Protection from Good, 12 minutes, power 6
+  both times; her Potion of Speed: haste power 12; START.EXE 0xBA:0x26C2) A Potion of Neutralize Poison drunk by a
+  member who isn't poisoned heals 1d4 + 8. *seen* (check 188)
+- **A camp Haste** reaches only the first members in party order (as many as the caster's level) and ages each a year:
+  put the fighters first. **Friends** in camp adds 2d4 Charisma (at most 25) for 1 minute a level: cast it just before
+  a talk. *code* + *seen* (main chat 81, checks 199, 204-205: LIRA at magic-user 5 hasted five of six; at 3 the first
+  three, herself not; Friends 18 -> 24)
+- **Disease first, then wounds:** a temple's wound cure on a diseased member takes the gold and heals nothing (100 gp,
+  "IS CURED.", HP unchanged, the disease kept). **Cure Disease cast in camp works** (the mummy's disease and rot both
+  gone) and the cured then heal on rest like the others: a cleric with it saves the temple's 1000 gp; cast it before
+  resting. *seen* (main chats 74-75, checks 148-150)
+- **Tempus' temple's Raise Dead** costs 5500 gold (from the pool) and always worked; the raised member is up at 1 HP
+  with CON one lower and a poison effect gone. *seen* (main chat 76, check 160: RHIANNON, CON 14 -> 13) The reload rule
+  still comes first (guide section 6).
+
 **Elsewhere**
 - **The Buccaneers' ransom (6:1):** SURRENDER costs coins and items but keeps the rescue; ATTACK, if won, captures the
   fort. *code* (Player 25, ECL 6:1)
@@ -394,6 +459,12 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 Every fixed item list the scripts hand out (each `TREASURE` with an `ITEM<n>.DAX` list) and every item a monster carries (`MON<n>ITM.DAX`: a beaten monster's items all go on the treasure pile, each monster of a group with its own set). Made by `tools/lab/gearmap.gd` (dumps the lists) and `tools/lab/gearmap.py` (joins them with the areas' ECL listings; lab `data/c69/gearmap.txt` is the full output with addresses, coins and the plain items). **Squares** come from the search script's dispatch (the square's event number, through the script's byte table where it has one); "squares not traced" where the code is shared or reached from another event. **Who** is the item type's class byte (ITEMS byte 13; START.EXE DS:0x05D6: magic-user 1, cleric 2, thief 4, fighter 8, druid 16, paladin 64); "any" = every class. Plain items under 100 gp and the shops' stock are left out. Scroll spells are the record's bytes 60-62.
 
 **What the classes may use, from the same bytes (matters for the missile rules above; to confirm in DOSBox, ours' READY and fights use the same test):** **thieves can't use bows or crossbows** (every bow and arrow: fighter / paladin; the light crossbow and quarrels: fighter / paladin): a thief's missiles are **darts and the sling**; **clerics can't use slings or darts** (the sling: thief / fighter / druid / paladin): a cleric has no missile weapon at all, so the cleric's place is the front line; **magic-users: darts, dagger, quarter staff**. Arrows +1 and the Sling of Seeking +2 are the only magic ammunition / launcher beyond the bows.
+
+The knight's tomb (4:10 8,2) is ITEM4 list 29 (four clerical scrolls of RESTORATION x2, Shield +1, Ring of Fire
+Resistance, Long Sword +2, Plate Mail +2); the Wand of Lightning Bolt and the Potion of Healing are the zombie room's
+(9,15), as the rows below give them (Gold Box Guide 2 asked main to check the square-to-list joins). **A "reserved
+for" column** (Jeremy's magic-item rule 4, guide section 2: each wand, scroll and potion with the fight it's kept
+for) is to come; Gold Box Guide 2 fills it in with Jeremy. *code* (Gold Box Guide 2)
 
 **Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Never sell them.**
 
@@ -597,20 +668,3 @@ The cluebook gives no area order or expected levels; its only marker: if the par
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- Route levels, stretches 1-5 (*seen*, Player 34 from the original's checkpoint saves, segments 1-8): the Slums were cleared at level 1 (fighters, cleric 1, multis 1/1/1; trained to F2/C2 only after `slums2`); Sokal Keep's event 9 was lost 5 of 5 at F2/C2/multis 1 and won at F3/C3 (multis still 1/1/1, DORN F1/T2); Kuto's Well at F3/C3, multis 1; **Mendor's Library at F3/C3, multis 1-2 (ELWEN C1/F2/MU1, LIRA F2/MU1), not 3-4**.
-- Route levels, stretches 6-12 (*seen*, Player 34, segments 9-25): City Hall to Bane at F4/C4 with multis 2-3 (ELWEN C2/F2/MU1, LIRA F3/MU1, DORN F3/T2); Kovel at F4-5/C5 (ARN drained 4 -> 2); the kobold caves and Sorcerer's Island at ARN F3, BRAM F5, CEDRIC C5, ELWEN C4/F3/MU3, LIRA F3/MU3, DORN F3/T4 (the throne room lost 5 of 5 at these); the Buccaneers and Zhentil at F5-6/C6, multis 4/4/4, LIRA F4/MU4, DORN F4/T5.
-- Route levels, stretches 13-15 (*seen*, Player 34): the graveyard entered at ARN F5, BRAM F6, CEDRIC C6, ELWEN C4/F4/MU4, LIRA F4/MU4, DORN F4/T5 and left drained (ARN F2, LIRA F2/MU2, DORN F3/T3: p25q5); Player 33's redo with no drain reached `graveyard` at ARN F6, BRAM F6, CEDRIC C6, ELWEN C5/F4/MU4, LIRA F5/MU4, DORN F5/T6, and 4:10 9,1's two spectres still won 5 of 5 there; Stojanow's wall was lost at ARN F3, BRAM F5, CEDRIC C6, multis 3-5 (still drained); Valjevo at ARN F5, BRAM F6, CEDRIC C6, ELWEN C5/F5/MU4-5, LIRA F4/MU4, DORN F4/T5 (guards 1 of 5).
-- **Gear map, the knight's tomb (4:10 8,2) is ITEM4 list 29:** four clerical scrolls of RESTORATION x2, Shield +1, Ring of Fire Resistance, Long Sword +2 (lawful good), Plate Mail +2; the table's 4:10 row seems to give the tomb the Wand of Lightning Bolt and Potion of Healing instead: please check the square-to-list joins (main). **And a "reserved for" column** (Jeremy, the magic-item rule, playbook section 2): each wand, scroll and potion with the fight it's kept for (Gold Box Guide 2 fills it in with Jeremy). *code* (Gold Box Guide 2)
-- **Stojanow from inside the wall (after the toll, 8,5):** the west tower room (4,5 up), then on the way down the east tower's garrison comes to the stairs at 4,5 (the level-6 magic-user, an aide, three ettins: "THEY ADVANCE"); the patrol (a 6th-level fighter, five hill giants) came at 5,5 with COMBAT WAIT FLEE ADVANCE, no PARLAY; the only way out is the gate's 16 bugbears (they come out to 8,7); after them the alarm rings: walk straight out by 4,15, patrols come at about one in six steps. *seen* (Player 35, p35b1-p35e2)
-- **Sokal Keep: no safe camp anywhere inside** (*seen*, Player 35 README "Sokal Keep Plan 1": rests at 8,14 and 9,5 drew undead five times, besides 15,1's four in five and 13,0): section 3's Resting line names only 15,1; widen it to the whole keep. The safe rest is New Phlan's inn: Sokal's 7,15, a step S, TAKE A BOAT BACK TO PHLAN; the pier's walk crosses the temple of Tyr (EXIT); the inn 3:0 4,12. (Gold Box Guide 4, Jeremy 18:22)
-- **A temple's wound cure on a diseased member takes the gold and heals nothing** (*seen*, main chat 74, check 148: CURE LIGHT WOUNDS on THRENDER with the disease: 100 gp paid, "IS CURED.", HP unchanged, the disease kept): cure the disease first, then the wounds. (Gold Box Guide 4)
-- **Cure Disease cast in camp works, and the cured heal on rest at once** (*seen*, main chat 75, checks 149-150, DOSBox: BROTHER SEAN's CURE DISEASE on THRENDER with the mummy's disease and rot: "IS CURED", both gone; a day's REST then healed him 3 -> 4 like the others): a cleric with Cure Disease saves the temple's 1000 gp; cast it before resting the diseased.
-- **Tempus' temple's RAISE DEAD costs 5500 gold (from the pool) and always worked; the raised member is up at 1 HP with CON one lower and a poison effect gone** (*seen*, main chat 76, check 160, DOSBox: RHIANNON dead of poison, CON 14 -> 13).
-- **Kuto's Well, the hag's rug (8:29 7,14):** after FORCE IT, walking onto 7,14 gives one text only; **LOOK** there asks "BENEATH A RUG YOU FIND A COMPARTMENT CONTAINING ARMS AND ARMOR." (YES: Banded Mail +1, Bracers AC 4 (shown +6), Quarter Staff +1). Rests at the well's bottom (7,13) are interrupted by lizard men again and again; the guards' own fight leaves no items. *seen* (Player 35, p35j3, p35j6)
-- **A scroll's spell is cast at level 6, whoever reads it** (*code*, *seen*, main chat 79, checks 179-180, DOSBox: LIRA at magic-user 1 and at 8 read PROTECTION FROM GOOD: 12 minutes, power 6 both times): a low-level magic-user gets a level-6 buff from a scroll (Protection, Enlarge...); a higher one gets no more.
-- **Potions and other item spells (Speed, Invisibility's Disappearance, Giant Strength, Healing...) are cast at level 12, whoever uses them; scrolls (magic-user and clerical) at 6** (*code*, *seen*, main chat 80, checks 185-187, DOSBox: LIRA at magic-user 1 drank a Potion of Speed: haste power 12; START.EXE 0xba:0x26c2). A Potion of Neutralize Poison drunk by a member who isn't poisoned heals 1d4 + 8 (check 188).
-- **The kobold caves: Princess Fatima is event 14 at 8:13 1,3, reached from the throne room's door (4,4) by the west passage (1,5, 1,4) without setting off the throne (4,3)** (*code* + *seen*, Player 36: ECL8 block 13 0xA720; p36n1): SHE OFFERS TO JOIN YOUR BAND, YES adds her (NPC_ADD 104) when the party is under 8; she comes with Leather Armor, Shield and Short Sword readied, and gear traded to her shows without its plus on her list (READY by the plain name).
-- **A camp HASTE reaches only the first (caster level) members in party order and ages each of them a year; FRIENDS in camp adds 2d4 charisma (at most 25) for 1 minute a level** (*code*, *seen*, main chat 81, checks 199, 204-205, DOSBox: LIRA at magic-user 5 hasted five of six, everyone a year older; at 3 the first three, herself not; Friends 18 -> 24): order the party so the fighters come first before a camp Haste, and cast Friends just before a talk.
-- **The graveyard's spectres (4:10 9,1): when the clerics' TURN works they flee to the far side and don't fight back; hasted fighters walk after them and kill them (p37i1: both dead, no drain, nobody hurt; p37g1, where the party waited, lost four members' levels when they came back); the Kovel scroll cabinet (3:14 3,13) and the marble chest (7,6, SEARCH on) are where this chain's Haste and Restorations came from, and Princess Fatima leaves the party when it leaves the kobold caves** (*seen*, Player 37, p37g1/p37i1, p37a1, p37d1, p37r1)
-- **A band's size reads each member's cached THAC0 and AC, which TRAIN doesn't refresh: right after training the wilderness bands are sized as before it, until a fight (or the member's VIEW page) refreshes the cache** (*code*, *seen*, main chat 82, p36h1 replayed in DOSBox: PARTY_STRENGTH 49 at 7:26, 24 nomads; fresh it would be 51, 25)
-- **The kobold caves' way in: 8:27 6,16's 30 kobolds come on the square before the cave menu, so the SMALL cave (into 8:13 at 6,15; LARGE at 10,15) doesn't avoid them; on QUICK with MAGIC OFF they, and the bands inside (7,12, 10,9, 5,6), cost the party about 30 HP and no spells: the door fit** (*seen*, Player 38, p38b1, p38c1, p38d1)
