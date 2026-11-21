@@ -263,6 +263,16 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     outlast the few blows that land; the party's level-1 slots went to two Sleeps and Magic Missiles. **The tool now
     does** melee and bows by type (`focus`), the walk to a troll, Stinking Cloud at the bunch with most trolls (when
     legal); **it can't**: stand on a fallen troll's square on purpose, or cast the cloud with the party inside it.
+- **Plan 1 with LIRA's Fireball (Player 37, 2026-11-21; the Lead's answer: later in the chain).** From the graveyard's
+  `p37k1_s37tombinn` (F6/C6, multis 5/5/4; ELWEN in the knight's Plate Mail +2: the party then moves 3): `p37/king5.plan`
+  to `king7.plan`. **The way in costs the fight before it starts:** 8:27 6,16's LARGE cave mouth is 30 kobolds straight
+  into combat at every entry from 8:27; inside, 10,9 / 14,10 is a pair of 95 and 119 HP; **no camp in 8:13** before the
+  throne room is beaten (its rest script: interrupted at once while 0x4A8D = 0, unless 0x4AC7 = 255 and 0x4A8E = 0;
+  0x4A8E is 2 in this chain); **Fatima leaves the party at the caves' exit** (p37r1), so a heal trip goes before her.
+  **Try 1 (p37n2) lost**, from a door at ARN 7/65, CEDRIC 0/42, DORN 31/46: the party destroyed, three trolls left at
+  25-36 HP; LIRA's Fireball came on her third turn, after two clouds (now Fireball first). p37u1 healed at the inn and
+  came back to the door with ARN, CEDRIC and ELWEN at 0 HP: stopped by hand as the throne fight began, not counted.
+  To the Lead (board): a fit party at the door (the SMALL cave? spells kept for the way?), or later.
 
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 

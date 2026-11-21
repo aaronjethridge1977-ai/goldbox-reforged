@@ -1353,6 +1353,17 @@ CEDRIC down to a few HP). **Try 1 (p37n2) lost** from a hurt door (`s37door`: AR
 destroyed, three trolls left. **Leaving the caves makes Princess Fatima leave the party** (p37r1, a reload under the
 rule), so the heal trip starts before her (`king7.plan` from `p37n1_s37kobold`). The tool's cave exit needs
 `answerfrom DO YOU WANT TO LEAVE|YES` and `answerfrom WHAT CAVE WILL YOU ENTER|EXIT` (p37q1: 558 re-entries).
+p37u1 (`king7.plan` from `p37n1_s37kobold`): out through two fights, the inn (`s37inn4`), back in through the cave
+mouth's 30 kobolds and 10,9's pair, Fatima, the door (`s37door3`) with ARN, CEDRIC and ELWEN at 0 HP: stopped by hand
+as the throne fight began (not counted). 8:13's rest script allows no camp before the throne room (0x4A8E = 2 here).
+The SCRIBE difference held on Combat Chat 37's code (a second replay). Combat's YARASH hold: `p37/yarash.sh` run A
+(p37y1) and B (p37y2, `HOLD=1353,1365,1366`) identical for 3852 draws; his combat struct's byte +3 is 05 at his turn's
+start, after the nine weighing picks and after the pick (`p37/p37y2_hold.txt`). Fix: a long SPELLS TO BE MEMORIZED /
+SCRIBED page (NEXT EXIT). The band rule met one band on 7:26 (stirges, surprised: WAIT); the party moved 3.
+
+Lab: `p37/` (kovel.plan, grave1.plan, grave2.plan, king5-7.plan, yarash.sh, score.md, p37y2_hold.txt, reload.txt),
+saves `p2start/p37b2_s37scribed`, `p37i1_s37spectres`, `p37k1_s37tombinn`, `p37n1_s37kobold`, `p37n2_s37door`;
+archive `player37_lab.tar.gz`.
 
 ## Player 36 (2026-11-20): the DOSBox speed test (keep 15000); the match 64 of 71 (three re-recordings); the band rule; the throne room 5 of 5 lost
 
