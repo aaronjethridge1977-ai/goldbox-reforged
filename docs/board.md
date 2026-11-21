@@ -134,6 +134,7 @@ Any push that changes game behaviour (rules, dice, fight outcomes), not just the
 push: what changed and what it may affect. Other lanes re-take their baselines (the reference check first).
 Format: `date · lane (chat) · change · may affect`
 
+- 2026-11-20 · main (chat 76) · **A slot save's companion keeps each member's drained classes ([qol] drained), so Restoration after a slot load gives the level back to the class the last drain took (bug #8's fix, ORIGINAL'S BUGS off; was: a guess after a slot load)** · Restoration in play after loading a slot; no check or replay (bugs on).
 - 2026-11-20 · main (chat 76) · **SCRIBE spends a scroll spell as GAME.OVR 0x2A2A2: the spell's last slot (bytes 60-62) emptied, name word 48 ("WITH n SPELLS") one down, the scroll gone below 210 (was: gone only when all slots were empty, the word left)** · scrolls after SCRIBE (their names, when they vanish); check 159.
 - 2026-11-20 · main (chat 75) · **statediff.gd compares item record byte 53** (the hidden name words an ID clears; `h` in the item key) · every check with items; all 152 match; break test 132/152. Check 149's keys wait 30 more after REST (the Lead's autocheck: F2 not reached under load), resealed.
 - 2026-11-20 · combat (Combat Chat 36) · **The temple's CURE DISEASE: offered for and lifting effects 0x1F 0x22 0x2B 0x2C 0x32 0x39 (GAME.OVR 0x4864, DS:0x114; was without 0x22, offered only for the disease); a camp spell on a member that says nothing (CLW at full HP, Cure Disease on the healthy) shows no line** (main chat 75) · temples; camp casting.

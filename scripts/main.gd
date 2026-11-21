@@ -1684,7 +1684,7 @@ func _save_original(letter: String) -> bool:
 		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
 		_vm.read_byte(EclVM.SQUARE_INFO))
 	var qol := {"visited": _automap.to_save(), "offers": PackedStringArray(_vm.shown_texts.keys()),
-		"rememorize": Rememorize.to_save(_party)}
+		"rememorize": Rememorize.to_save(_party), "drained": _drained_to_save()}
 	if label != "":
 		qol["label"] = label
 	if ok and not CompanionSave.write(_game_path, letter, qol):
@@ -1693,6 +1693,26 @@ func _save_original(letter: String) -> bool:
 	_party_menu.save_failed = not ok
 	print("   (saved game %s%s)" % [letter.to_upper(), "" if ok else ": FAILED"])
 	return ok
+
+
+## The classes each member's level drains took, newest last (LevelDrain.DRAINED_META: bug #8's fix,
+## Combat Chat 36), in the slot's companion ([qol] drained, by name) so a slot load keeps them as a
+## quick save does (Combat Chat 36's note; main chat 76). The original's record has no room for them.
+func _drained_to_save() -> Dictionary:
+	var d := {}
+	for m in _party:
+		var taken: Array = m.get_meta(LevelDrain.DRAINED_META, [])
+		if not taken.is_empty():
+			d[m.name] = PackedInt32Array(taken)
+	return d
+
+
+func _drained_from_save(d: Variant) -> void:
+	for m in _party:
+		if m.has_meta(LevelDrain.DRAINED_META):
+			m.remove_meta(LevelDrain.DRAINED_META)
+		if d is Dictionary and (d as Dictionary).has(m.name):
+			m.set_meta(LevelDrain.DRAINED_META, Array(d[m.name]))
 
 
 ## The original's wall-set slots as a new game starts them (GAME.OVR 0xE906-0xE963): wall set 0
@@ -1766,6 +1786,7 @@ func load_original_save(letter: String) -> bool:
 	_party.assign(loaded)
 	_vm.party = _party
 	Rememorize.from_save(_party, extra.get("rememorize", {}))   # combat lane (C11-2)
+	_drained_from_save(extra.get("drained", {}))
 	_timer.stop()
 	_busy = false
 	_walk_path.clear()

@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat); DIFFCHECKS 159/159
+## Chat 76: the shop's HALVE and JOIN (check 156), the silver shop's BUY of a ring (check 157), MEMORIZE then REST (check 158), SCRIBE from a scroll (check 159, a fix; ready check `scrord` for Combat), the temple's RAISE DEAD (check 160); DIFFCHECKS 160/160
 
 All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk159`, links in `data/c76/cd/`), tpseed 11111111.
 
@@ -195,6 +195,12 @@ All main path, each against the original in DOSBox (lab `data/c76/chk156`-`chk15
   its slots hold (a made-up 212 scroll with one spell stayed, 211 and empty; a 210 scroll is gone): `PartyMember.
   spend_scroll_spell` (ours removed it when all three slots were empty and didn't count the word down). 3 of 3; SCRIBE of 20
   instead differs. An unread scroll (byte 53 = 6) offers nothing to SCRIBE in the original either (no message seen).
+- **Check 160, RAISE DEAD** (3:0 Tempus' temple): check 155's start (RHIANNON dead, +0x10C = 6, with the poison 0x37 in
+  her .SPC): check 144's walk, YES, POOL, End x2 (RHIANNON), HEAL, End x6 (RAISE DEAD), HEAL (WILL ONLY COST 5500 GOLD
+  PIECES), YES (RHIANNON / IS CURED.: no survival roll seen), EXIT, SHARE, EXIT, NO, F2: OKAY, HP 1, CON 14 -> 13, the
+  poison record gone. Matched at once, 3 of 3; NO at PAY FOR CURE differs.
+- **The shop's OVERLOADED** (check 154's BUY of a sixth PLATE MAIL): no text caught on the original's screen even 0.02 s
+  after the key (GAME.OVR holds "Overloaded" at 0x250CB and 0x25707); ours flashes the same word: display only, left.
 - **Ready check `scrord` (for Combat, camp_screen.gd):** the same with the scroll's spells 20, 17. The original lists a
   scroll's spells in record order, a level heading wherever the level changes (17, 34, 20 shows 1ST PROTECTION FROM GOOD /
   2ND STINKING CLOUD / 1ST SHOCKING GRASP), the cursor on the last; ours sorts them by number, so Home picks 17, not 20
