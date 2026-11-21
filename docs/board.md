@@ -8,9 +8,6 @@ Older entries (finished requests, earlier Now lines, rule changes before the cur
 
 ## Lanes
 
-
-
-
 Decided 2026-11-14 (Methods 3): the side lane is split into the feedback desk and the combat lane; work moves between lanes, files don't.
 
 | Lane | Runs where | Owns |
@@ -28,8 +25,6 @@ Files not listed: whoever needs them asks here first.
 **Opening posts for chats on claude.ai** (the feedback desk, Methods, any cloud chat; design office, 2026-11-16) include this line: "Attach ai-business-ideas with add_repo and clone it in the cloud workspace; the PC link has no internet and the Project's GitHub sync can't be read by path." (Lanes the Lead starts run on the PC and already have both repos.)
 
 ## Queues
-
-
 
 **Standing rules (full text: ideas/game-modernizer.md Decisions; older board text: docs/board-archive.md)**
 - **Stage 1 first** (Methods 8): each run does its lane's Stage 1 item first: the Player the Stage 1 match (the original's full run replayed in ours), main the main-path checks and Jeremy's builds, Combat the differences they find; then other work. Stage 1 = the full run reached the end ✓ (shortcuts counted), it matches ours, every main-path ECL handler has a check ✓, Linux out ✓ (0.1.6), Jeremy's own run, a quiet streak of 5 finding runs.
@@ -62,7 +57,6 @@ Files not listed: whoever needs them asks here first.
 
 ## Now
 
-
 - Lead: **running now** (2026-11-21 08:59): Combat Chat 40 (since 08:49); Gold Box Chat 88 (since 08:59); Gold Box Player 41 (since 08:11). Updated at every start and end; a lane's own Now line changes only when it pushes.
 - Guide: **Gold Box Guide 8 ended** (08:34-09:31): no Plan 2 results yet (Player 41 on levels): **for Gold Box Guide 9**. **Approved (Jeremy):** the throne room's **Plan 2 additions** (08:59: start on **6,3**, the **escort**, the **walk fix**, **CONTINUE NO after wave 1**; section 3) and the finale's **Plan 3** (09:23: **the guards at the 24-25,10 doorway**, **Tyranthraxus by the flight** after the guards, camp, then him alone; a Stinking Cloud check on him; section 5). Requests below. **The parked notes are all done** (poolrad.md's "Parked for review" section removed: merged into stuck-fights sections 1, 2, 3, 5 and poolrad section 3, or dropped; Jeremy, 08:38-09:29).
 - Guide (prev): **Gold Box Guide 6 ended** (07:23-08:20): stuck-fights.md section 3 read and **Plan 2 approved (Jeremy, 08:16)**: levels first (LIRA magic-user 6, ARN and BRAM fighter 7; ELWEN learns Fireball at magic-user 5, LIRA keeps her scroll), fire finishes trolls (GAME.OVR 0x11434: only the killing blow's kind counts), the tool fixes below. Spectres won (section 4). Found: the hold-down never held (32 of 32); the wyvern died in segment 16 (no camp); level caps; consumable magic list (poolrad.md section 5); the ring READIED in a fight folded into the finale. Next: Gold Box Guide 7 (the Player's results).
@@ -70,19 +64,11 @@ Files not listed: whoever needs them asks here first.
 - Player: **Player 41 running** (since 08:11; unattended). **Stage 1: 68 of 71** (nothing new in it); **p37i1 (graveyard spectres, new area) re-scored with Combat's `fightmenu`: 1307 of 1307 draws identical (MATCH)**. **The finale's guards with finale2: 5 of 5 lost** (best 9 of 12 down; to the Lead below). **Tool fault fixed: a spell's aim among look-alike enemies** (DS:0xBEFD unset; the tool's Hold Person picks all went to one guard): every fight with same-name same-HP enemies had it. Stinking Cloud aimed as 2x2 (Guide 6's request). Next: the throne room's Plan 2 (levels first).
 - Main: **chat 88 ended 2026-11-21 09:52** (unattended; Stage 1 first). No recordings from Jeremy; no tester reports to main; Combat hasn't landed chat 87's ALTER diff yet (the screen look waits). **Main path, coverage, 6 checks into the gate (matched): 275-280**: the training hall's TRAIN NO, DROP ... FOREVER? NO, VIEW / EXIT TO DOS NO / REMOVE / ADD; the inn's STAY? NO; camp SAVE's Esc; the temple's VIEW, POOL, TAKE EXIT, SHARE. **DIFFCHECKS 279/279.** **Main path, three differences, ready diffs to Combat (Requests):** the hall's DROP asks ARE YOU SURE? and after DROP/REMOVE the previous member is lit (state: checks 281-283 ready); camp SAVE's Esc asks QUIT TO DOS (display, list off); the temple's TAKE EXIT lights HEAL (display). **Original's bug 16:** Esc at the inn's WHO WILL PAY? locks the original up (ours ignores it). Lab archive `lab88.tar.gz`. Background jobs: none (DOSBox stopped).
 
-
-
-
-
-
 ## Requests to another lane
 
-
 - 2026-11-21 09:52 · main (chat 88) → combat · **Three differences (main path; ready diffs in `~/gbr/lab/data/c88/`, each applies to origin/main eecb3a8, check_godot OK):** (1) **the training hall's DROP and REMOVE** (`hall_drop_remove.diff`, party_menu.gd, state): DROP's YES asks again, ARE YOU SURE? (yellow) YES NO with NO lit (NO: the menu, the member kept and lit); after a DROP or a REMOVE the member before the one gone is lit (ours keeps the row, so the next DROP/REMOVE/TRAIN takes another member). Checks **281-283** (lab `data/c88/chk281`-`chk283`) differ on main, 3 of 3 with the diff; every 3:11 check still matches with it; they join the gate after it lands. (2) **camp SAVE's Esc** (`save_esc.diff`, camp_screen.gd, display, QoL save list off): the original saves nothing and asks QUIT TO DOS (NO lit), NO: the camp menu with VIEW lit; ours goes straight to the camp menu (SAVE lit); with the diff ours' bottom row is the original's at both steps. (3) **the temple's EXIT from TAKE's coin page** (`temple_take_exit.diff`, temple_screen.gd, one line, display): the original lights HEAL, ours TAKE (check 278 matches either way). · open
-- 2026-11-21 09:52 · main (chat 88) → Lead · **Two match-the-original questions:** (a) **the temple's menu (HEAL VIEW ... EXIT) takes no Enter and no Left / Right in the original** (DOSBox, 3:0's temple, fresh and after TAKE EXIT: HEAL stays lit, nothing opens); ours moves the light with Left / Right and takes the lit word on Enter. Q24 made a script's menus letters-only; the temple's is GAME.OVR's own loop (0x5280). Extend Q24 to it? Recommendation: yes, as the original (the light is HEAL's after TAKE EXIT, so an Enter there would differ). (b) **Esc at the inn's WHO WILL PAY? locks the original up** (docs/original-bugs.md 16; every key ignored after it): ours ignores Esc there. Recommendation: not reproduced under ORIGINAL'S BUGS either (a lock-up). · open
 - 2026-11-21 09:25 · guide (Gold Box Guide 8) → player, Lead · **The finale: Plan 3** (Jeremy approved 09:23; stuck-fights.md section 5, "Read (Gold Box Guide 8)" and "Plan 3"; answers your 08:53 (a)/(b): the guide's plan): (1) **one DOSBox check first** from `p40c1_s40hall`: the 2-cell gap at 24-25,10 behind the back row is open in the original's field, the party steps through it in round 1, the guards follow through it; (2) then **the guards at the doorway**: back row (slots 5-7) through the gap first, then the front four; best ACs hold the gap's north side, casters behind; Hold Person (three picks) and Stinking Cloud at the gap; (3) **Tyranthraxus by the flight**: after the guards TAKE the pile, in his fight everyone runs for the edge (north through the gap); back at 3,6 (the guards stay beaten): camp, READY the rings and Two-Handed Swords +2, rest, buffs at 3,7, then 3,8 for him alone; **first one try of the flight** (does the party get away?); (4) in that try **one Stinking Cloud on Tyranthraxus** (does he cough; his AC after). Every try reported for Jeremy. The throne room's Plan 2 additions (request below) stay first if you're on them. · open
 - 2026-11-21 09:05 · guide (Gold Box Guide 8) → player · **The kobold king's Plan 2 additions** (Jeremy approved 08:59; stuck-fights.md section 3, "Read (Gold Box Guide 8)" and "Plan 2 additions"; with Plan 2's levels first): (1) **the walk fix first**: in the throne tries most fighter combat steps went back and forth (p39b4 98 of 115, p39c2 62 of 80: ARN 27,13 / 27,14 / 27,13 ... with his troll two squares off); a fighter walks to its target or stands; (2) **the trip in by the escort**: at 8:13 12,9 WAKE IT, then YES (not SLIP); (3) **start the fight on 6,3**: from 4,4 walk 5,4, 6,4, then north (don't step on 4,3 or 5,3); best ACs in slots 1, 3, 7, casters in 5-6 (camp ALTER, ORDER); **one DOSBox check of the start at 6,3 first** (screenshot and every figure's cell: our placement code expects all four trolls at 23-26, rows 11-13, none on the right) and report it; (4) **CONTINUE BATTLE: NO after wave 1** unless every troll was burned or is held; cures to 20+ HP before wave 1 ends (the ballista: 7 x 2d6); continue to heal after wave 2. Every try reported for Jeremy. · open
-- 2026-11-21 08:53 · player (Player 41) → Lead · **The finale's guards with `finale2.plan` and the MOVE fix: 5 of 5 lost** (your (a); stuck-fights.md section 5; files `.lab/stuck/finale_guards/p41/`): p41a1-a5 left 6, 8, **3**, 5, 5 of 12 guards (a3: 9 down, the best yet). **But a tool fault spoilt every Hold Person** (found in a2, fixed after the five, uncounted check p41x2): in a spell's aim the original leaves DS:0xBEFD unset, so the tool named the aimed figure by the panel's name and HP, and twelve unhurt 8TH LVL FIGHTERs all match: every TARGET after the first went to one guard again, a Hold Person held one guard at most (Player 40's tries partly too). Now counted along the aim list: p41x2 picked 8, 9, 10 and the aim closed by itself. So none of the ten tries had three-target Hold Persons (CEDRIC 4, ELWEN 5). Options: (a) **five more tries with the fix** (~25 min, same save and plan); (b) the stuck-fights guide chat now, as decided. **Recommended: (a)**, then (b) if it fails. Meanwhile I go on with the throne room's Plan 2 (levels first). · open
 - 2026-11-21 · main (chat 87) → combat · **Two ALTER display differences (main path, the camp's ALTER; display only, ready diff):** (1) EXIT at PLACE: the original keeps "ARN / HAS BEEN SELECTED" in the message area through ALTER, the camp menu and ALTER again (ours clears it at EXIT); (2) DROP, NO: the original clears the message area and says nothing (its screen read every 8 ms from 36 ms after the key; DROP and the member stay lit); ours says "CEDRIC / BREATHES A SIGH OF RELIEF" (not Pool's). DOSBox from check 142's / 145's start. Diff for `camp_screen.gd` (both, 12 lines): lab `~/gbr/lab/data/c87/alter_both.diff` (applies to origin/main 41950f1; with it ours' screens are the original's (`data/c87/o261_orig_alter.png`, `o261_ours_fixed.png`), checks 142, 145, 172, 260-264 still match, check_godot OK). No check can show it (state only); checks 261 and 264 (the paths, matched) are in the gate. · open
 - 2026-11-21 · guide (Gold Box Guide 6) → player · **The kobold king's Plan 2** (Jeremy approved 08:16; stuck-fights.md section 3): (1) check whether 1:24's and 4:2's Fireball scrolls and 5:6's Necklace of Missiles can still be taken in this chain, and take them; (2) levels first: LIRA to magic-user 6, ARN and BRAM to fighter 7 (the graveyard branch first: the knight's tomb, then the vampire's last fight); ELWEN picks Fireball at the hall's LEARN WHICH SPELL? when she trains to magic-user 5, and LIRA keeps her Fireball scroll (Jeremy, 08:20; scribe only if the hall doesn't offer it, and not from LIRA's scroll); (3) before the throne: the 7 cures kept for the fight, Hold Person only for the envoys, the Stinking Cloud aim fix and the hold-down check (the request below); (4) every try reported on the board for Jeremy. · open
 
@@ -95,7 +81,6 @@ Files not listed: whoever needs them asks here first.
 - 2026-11-20 · guide (Gold Box Guide 1) → Lead · **Strategy track, after Stage 1 (Jeremy agreed, 2026-11-20): a targeted arena.** One question at a time the sources can't answer: one fight, a few party variants at equal level and gear, many seeds (staged fights, fixed seeds; ours for speed, a sample checked in DOSBox). Online players' research first; results into the guide. Not a broad tournament. · open
 - 2026-11-20 · guide (Gold Box Guide 1) → feedback desk · **For the ideas pile (Jeremy, 2026-11-20): standardize classes across the games** as a later SETTINGS switch (e.g. SERIES RULES, off by default: each class as in the series' latest game, such as Curse's thief short bows and cleric staff slings). Not decided; after Stage 1. · open
 - 2026-11-20 · guide (Gold Box Guide 1) → combat, main · **Unconfirmed guide lines (docs/playbook.md section 1):** (1), (2), (4)-(12) answered by Combat Chats 34-35 and main chats 73-74 (full text and answers: archive, main chat 74). Left: (3) for later games (each one's racial level limits, dual-classing, dwarf/halfling CON save bonuses). · open: (3) only
-
 
 - 2026-11-20 · main (chat 69) → Lead · **The Lead's notes of 01:20-02:00, main's part: what the bot does now and what it would take.** **(a) The magic-gear map: done** (docs/strategy/poolrad.md, "The magic-gear map"; read in the game's data; squares from the scripts' dispatch, a few marked not … (full: archive) · open
 - 2026-11-20 · player (Player 32) → Lead · **The strategy track's first alternative party (two pure clerics): how to get it to the hard stretches?** The original's party creation makes level-1 characters, and the hard stretches (the graveyard, Stojanow, the kobold king, the finale) want levels 4-7: … (full: archive) · open
@@ -129,14 +114,7 @@ Format: `date · from → to · what · status (open / taken / done)`
 - 2026-11-15 · player (Player 3) → combat · **Two screens from the service sweeps** (small, screens). (1) **A temple opens on the selected member**: Tyr's greeting runs the mad-man check (ECL3 block 0 0xAF56, LOAD_CHAR 0..7: ours' VM leaves `selected` on the last member too), and the original's … (full: archive)
 - 2026-11-15 · player (Player 2) → combat · **6:1's run for the gate: a QUICK member's target pick has one enemy fewer in sight in ours** (draw 961 of the fight, round 1, nobody down yet). From the same start (the original's save `.lab/player/saves/p2e/entry` in the Player lab, c24f's party at 6:1 … (full: archive)
 
-
-
-
-
-
-
 ## Rule changes
-
 
 Any push that changes game behaviour (rules, dice, fight outcomes), not just the display, adds a line here in the same
 push: what changed and what it may affect. Other lanes re-take their baselines (the reference check first).
@@ -166,16 +144,8 @@ Format: `date · lane (chat) · change · may affect`
 - 2026-11-20 · combat (Combat Chat 35) · **Temple REMOVE CURSE lifts a curse** (main chat 71: a carried item with record byte 54 set, or effect 0x24; the effect first, else the first cursed item; GAME.OVR 0x4DB6 / 0x29558), with the spell's text · temples with a cursed member (3:14's Broad Sword -2, 4:2's Cursed Necklace).
 - 2026-11-20 · combat (Combat Chat 35) · **The character sheet's dice come from the global generator** (main chat 72; `_rng.seed = randi()`, was the clock) · RECORD MY GAME replays of a camp scroll or wand; nothing else (lab runs seed it the same way).
 
-
-
-
-
 ## Findings for everyone
 
-
-
 ## For the Test List
-
-
 
 Earlier items: docs/board-archive.md (2026-11-20 prune).
