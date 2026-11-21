@@ -318,6 +318,9 @@ class Tactics:
             return self._aim_attack(st, p)
         if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23]):
             return self._aim(st, p)
+        if b.startswith("ATTACK ALLY"):
+            self.log("TACTICS ATTACK ALLY? NO")
+            return "n", "tactics: ATTACK ALLY: NO"
         if self.move and ("MOVE LEFT" in b or "MOVE/ATTACK" in b):
             return self._move_step(st, p)
         if b.startswith("MOVE/ATTACK"):
@@ -492,7 +495,8 @@ class Tactics:
             self.log("TACTICS %s stops at %d,%d" % (mv["member"], pos[0], pos[1]))
             self.move = None
             return "esc", "tactics: move over: Esc"
-        taken = {(f["x"], f["y"]) for f in figs if _up(f) and f is not me}
+        # (p35j2: a step onto a fallen member's square asked ATTACK ALLY: every member's square is taken)
+        taken = {(f["x"], f["y"]) for f in figs if (_up(f) or f["n"] <= self.party_n) and f is not me}
         here = max(abs(goal["x"] - pos[0]), abs(goal["y"] - pos[1]))
         best = None
         for k, dx, dy in DIRS:
