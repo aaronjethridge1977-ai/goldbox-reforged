@@ -653,6 +653,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		choice = "SELL" if OriginalBugs.on() or not _keep_ok else "KEEP"
 	elif key == KEY_ESCAPE:
 		choice = "EXIT" if "EXIT" in items else "NO"
+	elif _mode == "list" and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
+		# PgDn / PgUp page the BUY list as NEXT / PREV where the menu offers them (main chat 92, DOSBox at 3:0's arms
+		# and armour shop, check 310; PgDn on the last page and PgUp on the first do nothing).
+		var word := "NEXT" if key == KEY_PAGEDOWN else "PREV"
+		if word in items:
+			choice = word
 	else:
 		for it in items:
 			if String(it).unicode_at(0) == key:

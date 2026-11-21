@@ -1350,6 +1350,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	# there (main chat 89, DOSBox at 3:0, check 288; Q24 extended, as the temple's). REST's menu keeps them.
 	if _mode in ["camp", "magic", "alter"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]:
 		return
+	# The spell lists (CHOOSE SPELL: MEMORIZE / SCRIBE / CAST ... NEXT PREV EXIT) keep their light on Left / Right and
+	# page on PgDn / PgUp as NEXT / PREV where offered, the light staying on its word (main chat 92, DOSBox at 3:0's
+	# camp: ELWEN's MEMORIZE, Enter after the pages memorized the lit spell; LIRA's SCRIBE; check 311).
+	if _mode == "list" and key in [KEY_LEFT, KEY_RIGHT]:
+		return
+	if _mode == "list" and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
+		var word := "NEXT" if key == KEY_PAGEDOWN else "PREV"
+		if word in items:
+			_act(word)
+		return
 	if key == KEY_LEFT or key == KEY_RIGHT:
 		var d := 1 if key == KEY_RIGHT else -1
 		if _mode == "rest":
