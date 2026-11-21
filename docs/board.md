@@ -57,7 +57,7 @@ Files not listed: whoever needs them asks here first.
 
 ## Now
 
-- Lead: **running now** (2026-11-21 16:49): Combat Chat 42 (since 16:49); Gold Box Chat 93 (since 16:08); Gold Box Player 42 (since 11:08). Updated at every start and end; a lane's own Now line changes only when it pushes.
+- Lead: **running now** (2026-11-21 18:16): Combat Chat 42 (since 16:49); Gold Box Chat 94 (since 18:16); Gold Box Player 42 (since 11:08). Updated at every start and end; a lane's own Now line changes only when it pushes.
 - Guide: **Gold Box Guide 10 running** (since 15:16): **p42f1-f7 read** (stuck-fights.md section 5, "Read (Gold Box Guide 10)"): by the reload rule only p42f4 won the guards; the wins had holds on the guards in contact by round 1-2, the losses held late or held the far guards; clouds overlapped. **Plan 5 additions (Jeremy, 15:22):** FLEE YES; only weightless items from the guards' pile before Tyranthraxus; a death in the guards' fight is a reload. **p39c2's video read** (section 3): our clouds on our members, aim scans, BRAM guarding beside a troll; **Plan 2 additions and the levels (c) Sokal Keep (Jeremy, 15:46)**.
 - Sources: **Gold Box Sources 2 running** (since 15:06): Secret of the Silver Blades' manual, card, cluebook and Journal (all scanned: OCR in `.lab/silver-blades/`); playbook lines pushed (approved 15:44); next `docs/strategy/silver-blades.md` section by section. Unconfirmed lines: the request below.
 - Guide (prev): **Gold Box Guide 9 ended** (09:53-15:14): Plan 5 for the finale (13:50); Jeremy won the guards by hand in ours (14:48); videos of fights lost five times and the spell matrix lab decided.
