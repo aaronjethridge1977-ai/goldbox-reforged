@@ -248,7 +248,8 @@ class Tactics:
             prio = self.horde     # Player 33 (p33f1: the band's 29 kobolds, Sleep last, CEDRIC dead): a horde
         if FOCUS and any(_focus(f) and not helpless(f) for f in foes):
             # Player 36 (the throne room's Plan 1): Stinking Cloud on the focus kind first while one stands unhurt
-            prio = ("STINKING CLOUD",) + tuple(s for s in prio if s != "STINKING CLOUD")
+            # Player 37 (p37n2: LIRA's Fireball came on her third turn, after two clouds): Fireball before the cloud
+            prio = ("FIREBALL", "STINKING CLOUD") + tuple(s for s in prio if s not in ("FIREBALL", "STINKING CLOUD"))
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
@@ -581,8 +582,10 @@ class Tactics:
             # the goal if it is next to us, else a helpless one, else the weakest
             f = next((f for f in adj if goal is not None and f["n"] == goal["n"]), None) or \
                 min(adj, key=lambda f: (not _focus(f), not helpless(f), f["hp"]))
-            k = next(k for k, dx, dy in DIRS if (pos[0] + dx, pos[1] + dy) == (f["x"], f["y"]))
-            if (pos, k) not in mv["blocked"]:
+            # Player 37 (p37n1: StopIteration: the figure's corner on the mover's own cell, a large one): a step into
+            # any of its cells next to us; none: walk on
+            k = next((k for k, dx, dy in DIRS if (pos[0] + dx, pos[1] + dy) in cells(f)), None)
+            if k is not None and (pos, k) not in mv["blocked"]:
                 mv["last"] = (pos, k)
                 mv["struck"] = True
                 self.reach[mv["member"]], self.idle[mv["member"]] = "hit", 0
