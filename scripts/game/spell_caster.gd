@@ -72,7 +72,10 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			targets = [target if target != null else caster]
 		SpellTable.TARGET_PARTY:
 			targets = party.duplicate()
-	var lvl := caster.caster_level(table, id)
+	# A spell from an item (a scroll) is cast at level 6, whatever the reader's level (chat 79,
+	# check 179, DOSBox: LIRA at magic-user 1 and at 8 both gave PROTECTION FROM GOOD 12
+	# minutes, power 6).
+	var lvl := 6 if from_item else caster.caster_level(table, id)
 	match id:
 		CURE_LIGHT:
 			var t: PartyMember = targets[0]

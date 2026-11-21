@@ -172,6 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 79: the camp's USE of a Magic User scroll (checks 179 and 180, a fix)
+
+Main path, against the original in DOSBox (lab `data/c79/chk179`, `chk180`, links in `data/c79/cd/`), tpseed 11111111, check 159's start (LIRA, fighter/magic-user 1, with a read scroll of PROTECTION FROM GOOD and SHOCKING GRASP).
+
+- **179**: ENCAMP, End x4 (LIRA), VIEW, ITEMS, READY (the long sword off: a scroll takes both hands), End x4, READY (the scroll), USE (LIRA'S SPELLS ON SCROLL, in the record's order, the light on the last line), Home, CAST, Home x2 (CEDRIC), SELECT (back to the items, the scroll WITH 1 SPELL), EXIT x3, save: CEDRIC's .SPC holds effect 9 for **12 minutes, power 6**. **Ours differed** (2 minutes, power 1: LIRA's magic-user level). **Fix:** `SpellCaster.cast_outside` casts a spell from an item at level 6 (spell_caster.gd). 3 of 3 with it; without it differs; one Home fewer (ELWEN) differs.
+- **180**: the same with LIRA's magic-user level (+0x9B) made 8: the original still 12 minutes, power 6, so a scroll's level is a fixed 6 (not the reader's level, not "at least 6"); ours without the fix 16 minutes, power 8. 3 of 3 with it.
+- Not checked: whether a wand or potion used by a spell caster also casts at 6 (the fix assumes so: ours already gave 6 to anyone who casts no spells, the original's rule for items); combat's scroll USE (combat_spells.gd, Combat's file) still takes the reader's level: to Combat.
+
 ## Chat 78: the camp's DROP of a stack (check 169), the adventure menu's CAST (check 170), a combat-only spell there (check 171), ALTER SPEED (check 172, a fix), CAST PROTECTION FROM EVIL on another member (check 173), ENLARGE and SHIELD (check 174), an effect running out in REST (check 175), the shop's POOL, TAKE and SHARE (check 176), back for the money (check 177), the view page's money TRADE and DROP (check 178)
 
 Main path, against the original in DOSBox (lab `data/c78/chk169`, links in `data/c78/cd/`), tpseed 11111111, both from check 165's start.
