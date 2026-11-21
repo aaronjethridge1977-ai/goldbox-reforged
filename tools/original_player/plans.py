@@ -36,6 +36,8 @@
   advance <NAME>,...|none        (Player 35) a step: who MOVEs toward the enemy when nothing is in reach (OP_ADVANCE)
   learn <spell>, ...             (Player 35) a magic-user's new spell at training: these first, then LEARN_ORDER
   drop <NAME> <words>*<n>, ...   (Player 35) several drops in one VIEW (`<words> +0`: a plain one, matched on the plus)
+  coins <FROM> <COIN> <n>|<TO>   (Player 38) the money TRADE (VIEW, TRADE, TRADE TO?, the coin, the amount)
+  buypurse on|off                (Player 38) a purchase paid from the buyer's own purse (no POOL first)
   tactics on|off                 (Player 30) a step: from here the casters get orders by hand in fights (tactics.py:
                                  Prayer, Bless, Hold Person on the mages, Stinking Cloud, Magic Missile, Sleep), the
                                  rest go on QUICK; game.py presses Space at each fight's first poll to take the party back
@@ -462,8 +464,51 @@ class ReadyItems(ReadyAll):
         return False, "v", "ready: VIEW %s" % self.who
 
 
+COIN_WORDS = ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS", "JEWELRY"]   # record 0x88 + 2 x index
+
+
+class CoinTrade:
+    """Player 38: `coins <FROM> <COIN> <n>|<TO>` on the walking screen (the audit's movement rule: the light members'
+    platinum to the strong fighters): select FROM, VIEW, TRADE (the view menu's money TRADE), TRADE TO? the receiver,
+    SELECT TYPE OF COIN the coin lit (the view page lists the coins held from row 7, the chosen one white), HOW MUCH
+    typed, Enter; again until n have moved (the giver's record, 0x88 + 2 x coin, read after each round: a field that
+    takes fewer digits, or a refusal, shows there), then EXIT, EXIT, EXIT. The original's TRADE leaves both members'
+    load words as they were (GAME.OVR 0x250D5); VIEW's entry works them out again (0x2165C): `ready <NAME>` with no
+    items is a VIEW. The screens are answered in Plan.answer (p.cointrade)."""
+    def __init__(self, who, coin, n, to):
+        self.who, self.coin, self.n, self.to = who.upper(), COIN_WORDS.index(coin.upper()), n, to.upper()
+
+    def __repr__(self):
+        return "coins %s %s %d|%s" % (self.who, COIN_WORDS[self.coin], self.n, self.to)
+
+    def next(self, p):
+        ct = getattr(p, "cointrade", None)
+        if ct is not None:
+            if not ct["over"]:
+                raise_stop(p, "coins: back on the walking screen with %s's trade not done" % self.who)
+            p.cointrade = None
+            p.note("coins", "%s gave %s %d %s (%s)" % (self.who, self.to, ct["moved"], COIN_WORDS[self.coin],
+                                                       "all asked" if ct["moved"] >= self.n else "short"))
+            return True, None, ""
+        P = loot.party(p.g.mem)
+        js = [i for i, m in enumerate(P) if m[1].upper() == self.who]
+        if not js or self.to not in [m[1].upper() for m in P]:
+            p.note("coins", "%s or %s not in the party: skipped" % (self.who, self.to))
+            return True, None, ""
+        sel = loot.selected(p.g.mem)
+        if sel != js[0]:
+            return False, ("end" if sel is None or js[0] > sel else "home"), "coins: select %s" % self.who
+        p.cointrade = {"j": js[0], "coin": self.coin, "n": self.n, "to": self.to, "moved": 0, "over": False,
+                       "before": None, "typed": None, "same": 0, "still": 0}
+        return False, "v", "coins: VIEW %s" % self.who
+
+
+def held_coins(mem, j, coin):
+    return struct.unpack_from("<H", members(mem)[j]["rec"], 0x88 + 2 * coin)[0]
+
+
 class Heal:
-    """Player 13: `heal` on the walking screen: main's bot's `_heal_if_low` and `_heal` (scripts/dev/bot.gd) for an
+    """Player 13:`heal` on the walking screen: main's bot's `_heal_if_low` and `_heal` (scripts/dev/bot.gd) for an
     area whose rest rule is camp. Nothing unless a member isn't OKAY or is below half HP. Then in camp: every
     memorized Cure Light Wounds cast on the most hurt (by 4 HP or more; MAGIC, CAST, the member list), the free slots
     filled with the bot's picks (MEMORIZE) and a REST for the time the original offers, round after round while the
@@ -1139,6 +1184,9 @@ class Plan:
         self.answers = []        # (words, choice, source)
         self.aliases = set()     # Player 3: `alias` areas
         self.buys = []           # Player 12: one list of (member, name) per shop visit
+        self.pooltakes = []      # Player 38: per shop visit, [(member, n or None for the rest, coin)] (`pooltake`)
+        self.buy_purse = False   # Player 38: `buypurse on`: no POOL before a purchase (the buyer's own purse pays and
+                                 # comes back in platinum and gold: the playbook's coin change)
         self.sells = []          # Player 15: `sell gems`: one per shop visit
         self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
         self.temple_cures = []   # Player 25: `templecure <service>` (bot.gd _temple_cures)
@@ -1234,6 +1282,11 @@ class Plan:
                 return k
         if kind == "camp" or kind == "saveslot":
             return p.save_step(scr)
+        ct = getattr(p, "cointrade", None)
+        if ct is not None and not ct["over"]:
+            k = self._cointrade(scr, st, p, ct)
+            if k:
+                return k
         if getattr(p, "readying", None) is not None:
             bw = scr["bottom"].split()
             if bw[:1] == ["VIEW:ITEMS"] or (bw[:1] and bw[0].startswith("VIEW:")):
@@ -1330,6 +1383,37 @@ class Plan:
                 return self._buy(scr, st, p)
             # The pool's coins back to the last buyer (ours' POOL gives every coin to the buyer): TAKE, each coin
             # type in turn, its whole amount typed.
+            pt = getattr(p, "ptake_cur", None)
+            if " ".join(bw[:4]) == "SELECT TYPE OF COIN" and pt is not None and pt[1] is not None:
+                # Player 38: `pooltake`: this member takes n of one coin kind from the pool (999 a round)
+                name, n, coin, j = pt[:4]
+                now = held_coins(p.g.mem, j, coin)
+                if pt[4] is not None:
+                    moved = now - pt[4]
+                    pt[5] += moved
+                    pt[4] = None
+                    p.note("pooltake", "%s took %d %s (%d of %d)" % (name, moved, COIN_WORDS[coin], pt[5], n))
+                    if moved <= 0:
+                        pt[6] += 1
+                rows, lit = [], None
+                for r in range(1, 12):
+                    m = re.search(r"\b(%s)\s+(\d+)" % "|".join(COIN_WORDS), st["rows"][r])
+                    if m:
+                        if screens._rowcol(st["im"], r, 0, 30 * 8) == screens.WHITE:
+                            lit = len(rows)
+                        rows.append((m.group(1), int(m.group(2))))
+                kinds = [k for k, _v in rows]
+                if pt[5] >= n or COIN_WORDS[coin] not in kinds or pt[6] >= 2:
+                    pt[7] = True
+                    return "e", "pooltake: %s done (%d %s)" % (name, pt[5], COIN_WORDS[coin])
+                if lit is None:
+                    raise_stop(p, "pooltake: no coin lit on the pool's list (%s)" % rows)
+                d = kinds.index(COIN_WORDS[coin]) - lit
+                if d:
+                    return ("end" if d > 0 else "home"), "pooltake: light %s" % COIN_WORDS[coin]
+                pt[4] = now
+                p.coin_amt = str(min(n - pt[5], rows[kinds.index(COIN_WORDS[coin])][1], 999))
+                return "enter", "pooltake: %s takes %s %s" % (name, p.coin_amt, COIN_WORDS[coin])
             if " ".join(bw[:4]) == "SELECT TYPE OF COIN":
                 m = re.match(r"\s*([A-Z]+)\s+(\d+)", st["rows"][2].strip("?\\ "))
                 if not m:
@@ -1680,6 +1764,70 @@ class Plan:
         return None
 
     # -- Player 12: BUY (`buy` lines; the shop's list is the loot pointer DS:0x6810, the buyer DS:0x5D92) ----
+    def _cointrade(self, scr, st, p, ct):
+        """Player 38: the money TRADE's screens (CoinTrade)."""
+        bw = scr["bottom"].split()
+        b = scr["bottom"]
+        name = COIN_WORDS[ct["coin"]]
+        now = held_coins(p.g.mem, ct["j"], ct["coin"])
+        if ct["before"] is not None and not b.startswith("HOW MUCH"):
+            moved = ct["before"] - now
+            ct["moved"] += moved
+            ct["before"] = None
+            if moved <= 0:
+                ct["still"] += 1
+                p.note("coins", "the TRADE of %s moved nothing (the receiver's load word at his most?)" % name)
+            else:
+                p.note("coins", "%d %s moved (%d of %d)" % (moved, name, ct["moved"], ct["n"]))
+        done = ct["moved"] >= ct["n"] or now == 0 or ct["still"] >= 2
+        if bw[:1] and bw[0].startswith("VIEW:"):
+            if done:
+                ct["over"] = True
+                return "e", "coins: EXIT the sheet"
+            if "TRADE" not in bw:
+                raise_stop(p, "coins: no TRADE on the view menu (%s)" % b)
+            return "t", "coins: TRADE (money)"
+        if scr["kind"] == "member" and "TRADE TO" in scr.get("question", ""):
+            if done:
+                return "e", "coins: EXIT TRADE TO?"
+            names = [x.upper() for x in scr["names"]]
+            if ct["to"] not in names or scr["highlight"] is None:
+                raise_stop(p, "coins: %s not on TRADE TO? (%s)" % (ct["to"], names))
+            d = names.index(ct["to"]) - scr["highlight"]
+            return ("s" if d == 0 else "end" if d > 0 else "home"), "coins: TRADE TO? %s" % ct["to"]
+        if " ".join(bw[:4]) == "SELECT TYPE OF COIN":
+            if done:
+                return "e", "coins: EXIT the coin choice"
+            rows, lit = [], None
+            for r in range(5, 15):
+                m = re.search(r"\b(%s)\s+(\d+)" % "|".join(COIN_WORDS), st["rows"][r])
+                if m:
+                    if screens._rowcol(st["im"], r, 8 * 8, 30 * 8) == screens.WHITE:
+                        lit = len(rows)
+                    rows.append(m.group(1))
+            if name not in rows:
+                raise_stop(p, "coins: no %s on the coin choice (%s)" % (name, rows))
+            if lit is None:
+                raise_stop(p, "coins: no coin lit (%s)" % rows)
+            d = rows.index(name) - lit
+            if d:
+                return ("end" if d > 0 else "home"), "coins: light %s (row %d)" % (name, lit)
+            ct["before"], ct["typed"], ct["same"] = now, None, 0
+            ct["amt"] = str(min(ct["n"] - ct["moved"], now))
+            return "enter", "coins: %s chosen (%d held)" % (name, now)
+        if b.startswith("HOW MUCH") and ct["before"] is not None:
+            typed = b.split("?", 1)[1].strip() if "?" in b else ""
+            amt = ct["amt"]
+            if typed == ct["typed"]:
+                ct["same"] += 1
+            ct["typed"] = typed
+            if typed == amt or len(typed) >= len(amt) or ct["same"] >= 4:
+                if typed != amt:
+                    p.note("coins", "the amount field took %r of %s" % (typed, amt))
+                return "enter", "coins: %s typed" % (typed or "nothing")
+            return amt[len(typed)], "coins: amount %s" % amt
+        return None
+
     def _buy(self, scr, st, p):
         mem = p.g.mem
         if not hasattr(p, "buy_visit"):
@@ -1703,6 +1851,24 @@ class Plan:
         if not left:
             if menu == "ITEMS:":
                 return "e", "buy: the visit's list done, back to the menu"
+            pts = self.pooltakes[p.buy_visit] if p.buy_visit < len(self.pooltakes) else []
+            sel = loot.selected(mem)
+            pt = getattr(p, "ptake_cur", None)
+            if pt is not None and pt[7]:
+                pts.pop(0)
+                p.ptake_cur = pt = None
+            if pts and "TAKE" in scr["bottom"].split():
+                who, n, coin = pts[0]
+                js = [i for i, m in enumerate(P) if m[1].upper() == who]
+                if not js:
+                    raise_stop(p, "pooltake: %s not in the party" % who)
+                if sel != js[0]:
+                    return ("end" if sel is None or js[0] > sel else "home"), "pooltake: select %s" % who
+                p.ptake_cur = [who, n, coin, js[0], None, 0, 0, False]
+                if n is None:
+                    pts.pop(0)          # the rest: the shop's TAKE of every coin kind, as the buy step's own
+                    p.ptake_cur = None
+                return "t", "pooltake: TAKE for %s" % who
             if "TAKE" in scr["bottom"].split() and not getattr(p, "take_refused", False):
                 sel = loot.selected(mem)
                 return "t", "buy: TAKE the pool's coins (%s)" % (P[sel][1] if sel is not None else "?")
@@ -1718,7 +1884,7 @@ class Plan:
         if menu == "BUY":
             if sel != j:
                 return ("end" if sel is None or j > sel else "home"), "buy: select %s for %s" % (P[j][1], name)
-            if not getattr(p, "buy_pooled", False):
+            if not getattr(p, "buy_pooled", False) and not self.buy_purse:
                 p.buy_pooled = True      # main's bot: shop._pool() before every purchase
                 return "p", "buy: POOL (main's bot pools before each purchase)"
             p.buy_pooled = False
@@ -2311,6 +2477,22 @@ def load(path):
         elif cmd == "sell":
             # Player 15: `sell gems`: the next shop visit appraises and sells every gem and piece of jewellery
             pl.sells.append(rest.strip())
+        elif cmd == "pooltake":   # Player 38: `pooltake <NAME> <n> <COIN>, ..., <NAME> rest` (the buy line's visit)
+            spec = []
+            for x in rest.split(","):
+                w = x.split()
+                spec.append((w[0].replace("_", " ").upper(), None if w[1] == "rest" else int(w[1]),
+                             COIN_WORDS.index(w[2].upper()) if len(w) > 2 else 4))
+            while len(pl.pooltakes) < len(pl.buys) - 1:
+                pl.pooltakes.append([])
+            pl.pooltakes.append(spec)
+        elif cmd == "buypurse":   # Player 38: `buypurse on|off`
+            pl.buy_purse = rest.strip() == "on"
+        elif cmd == "coins":      # Player 38: `coins <FROM> <COIN> <n>|<TO>` (the money TRADE)
+            who, _, sp = rest.strip().partition(" ")
+            words, to = sp.rsplit("|", 1)
+            coin, n = words.split()
+            pl.goals.append(CoinTrade(who.replace("_", " "), coin, int(n), to.strip().replace("_", " ")))
         elif cmd == "buy":
             pl.buys.append([(int(b.split(None, 1)[0]), b.split(None, 1)[1].strip()) for b in rest.split("|") if b.strip()])
         elif cmd == "default":
