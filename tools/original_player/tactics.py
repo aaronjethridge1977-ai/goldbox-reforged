@@ -42,7 +42,13 @@ def figures(mem):
                 continue
             break
         r = mem.far(seg, off, 0x120)
-        out.append({"n": n, "name": _name(r), "hp": r[0x11B], "status": r[0x10C],
+        # Player 41 (p41c10: Podol's crowd in four waves): records left from an earlier wave, with an empty name or
+        # NULs in it ("UARD\0\0", 111 HP), stood among the party as enemies, so nobody went for the four goblins at
+        # the map's edge (everyone guarded "in reach of" them): skipped (the numbers of the others stay)
+        nm = _name(r)
+        if not nm.strip() or any(ord(c) < 32 for c in nm):
+            continue
+        out.append({"n": n, "name": nm, "hp": r[0x11B], "status": r[0x10C],
                     "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r),
                     "cl": r[0x96], "mu": r[0x9B],
                     "fp": max(1, min(4, r[0x6C] & 7)),
