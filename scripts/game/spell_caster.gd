@@ -221,6 +221,27 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 						_age_up(m)
 						out.append("%s AGES" % m.name)
 			return out
+		13:                 # Reduce: GAME.OVR 0x28387
+			# The target saves against spells (0x2BC4D: a d20, kind 4, no bonus; a natural 1 fails, 20 saves).
+			# Failing, an Enlarge on it is lifted through 0x2BF6B ("<NAME> IS CURED", its first record removed,
+			# the end handler giving the strength back) and "<NAME> HAS BEEN REDUCED". Reduce adds no effect of
+			# its own (chat 83, checks 225, 226, DOSBox: LIRA's REDUCE on the enlarged CEDRIC leaves him no
+			# record; on ARN, not enlarged, nothing).
+			var t: PartyMember = targets[0]
+			if t.status == PartyMember.STATUS_DEAD:
+				return out
+			var d := _roll(rng, 1, 20)
+			var need: int = t.saves[4] if t.saves.size() > 4 else 20
+			if d != 1 and (d == 20 or d + SpecialAffects.save_bonus(t, 4) >= need):
+				return out
+			for a in t.affects:
+				if int(a.effect) == Strength.ENLARGE:
+					t.affects.erase(a)
+					ended(t, a, PackedStringArray())
+					out.append("%s IS CURED" % t.name)
+					out.append("%s HAS BEEN REDUCED" % t.name)
+					break
+			return out
 		14:                 # Friends: GAME.OVR 0x283F1
 			# The caster's charisma (record 0x15) goes up 2d4, at most 25, before the effect is
 			# added through the common cast (0x278DB); the effect's power holds the old charisma,
