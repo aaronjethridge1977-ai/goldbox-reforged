@@ -172,6 +172,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 87 (3): the shop's BUY list reopened after NEXT and EXIT, the shop's VIEW without money (checks 270, 271; 271 a difference)
+
+**The arms shop's BUY left by EXIT on page 2 (270, coverage, matched 3 of 3):** BUY opens on page 1 with the first
+item lit again (fails on a copy reopening where it was left). **The shop's VIEW of a member with no money (271, main
+path, the same difference as chat 86's 256):** the original offers VIEW:ITEMS EXIT in the shop too; ours' DROP opened
+the money page. Chat 86's `view_money.diff` (with Combat) fixes it, 3 of 3; 271 joins with 256-258.
+
 ## Chat 87 (2): NO at an item's DROP, the shop's SELL and ID, the temple's two questions (checks 265-269)
 
 Main path, coverage (no difference): each checked in DOSBox and matched at once, 3 of 3, and each fails on a copy
