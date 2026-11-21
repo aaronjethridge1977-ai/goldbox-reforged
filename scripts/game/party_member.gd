@@ -252,9 +252,11 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	m.morale = d[0x84]
 	m.saves = PackedInt32Array([d[0x6D], d[0x6E], d[0x6F], d[0x70], d[0x71]])
 	m.spell_book = d.slice(0x33, 0x6B)
+	# A spell still to be memorized carries 0x80 (chat 83, DOSBox: ELWEN's MEMORIZE saved before a rest:
+	# 129 for BLESS, 143 for MAGIC MISSILE); ours keeps it as id + LEARNING.
 	for i in range(0x2B, 0x16, -1):
 		if d[i] > 0:
-			m.memorized.append(d[i])
+			m.memorized.append((d[i] & 0x7F) + LEARNING if d[i] & 0x80 else d[i])
 	m.spell_slots = [[d[0xB2], d[0xB3], d[0xB4]], [d[0xB5], d[0xB6], d[0xB7]]]
 	if not item_data.is_empty():
 		m.items = GameItem.list_from(item_data)
@@ -1431,5 +1433,6 @@ func to_record() -> PackedByteArray:
 		d[i] = 0
 	for k in memorized.size():
 		if 0x2B - k >= 0x17:
-			d[0x2B - k] = memorized[k]
+			var s: int = memorized[k]
+			d[0x2B - k] = (s - LEARNING) | 0x80 if s >= LEARNING else s
 	return d

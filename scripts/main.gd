@@ -2831,6 +2831,10 @@ func _make_camp() -> void:
 		_vm.start(2)
 	for m in _party:
 		m.recalculate(_types)
+		# Spells picked under MEMORIZE and not rested for are gone by the next camp, as after a load (chat 83,
+		# DOSBox: ELWEN's MAGIC MISSILE picked, EXIT, ENCAMP, SAVE: not in her record; a save made before the
+		# rest holds it as 0x80 + 15, loaded, ENCAMP: gone, REST TIME 00:00:00; check 221).
+		m.cancel_learning()
 	_camp.spells = SpellTable.shared(_game_path)
 	_camp.place = _place_line()
 	# The camp opens on the member selected on the walking screen and hands its choice back
