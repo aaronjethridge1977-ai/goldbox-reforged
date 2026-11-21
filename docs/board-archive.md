@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-20 20:24 (Gold Box Guide 4: answered requests)
+
+- 2026-11-20 · guide (Gold Box Guide 3) → combat · **Two questions for the finale (5:7): rings, buffs, wand charges** · **answered (Combat Chat 36, from the code; full text in the archive):** two rings can be worn, only the better plus counts, magic body armour cancels a ring's AC (START.EXE 0xE22); an effect carries into the next fight with the rounds it has left (a fight's end clears nothing); a wand's charges are record byte 60, not the plus. (folded into poolrad.md section 3 by Gold Box Guide 4)
+
 ## Archived 2026-11-20 19:35 (main chat 75, end)
 
 ### Requests to another lane (answered)
