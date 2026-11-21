@@ -15,7 +15,72 @@ Journal: its answers stay in `.lab`, as do the Cluebook's riddle answers and pas
 
 ## What changed since Curse
 
-[Next review.]
+The input for Jeremy's comparison across the series. Party rows first (section 1 has the detail).
+
+**Races and classes:** Curse's, unchanged (the six races; paladin and ranger; humans dual-class at a hall). *book*
+(Journal pp.3-7)
+
+**Level limits and starting level**
+- **Humans to 15 in every class** (Curse: fighter and thief 12, paladin, ranger and magic-user 11, cleric 10);
+  **thieves of every race to 18** (Curse 12). Every demi-human limit as in Curse. *book* (Journal p.47)
+- **New characters start at level 8** (magic-users 9, thieves 10) with nothing; Curse's started at 25,000 XP (level 5)
+  with 300 platinum. *book* (Journal p.5; Manual p.4)
+- **The XP bonus at 16** in the prime requisite (Curse's manual: 15). *book* (Journal pp.3-4)
+
+**Importing a Curse party** (section 1): from Curse only; items and money lost (Curse's import from Pool kept 300
+platinum); ability gains from readied items kept and Bestow Curse removed, by players. *book* + *players*
+
+**Spells** *book* (Journal pp.21-26, 50-53)
+- **New levels:** cleric 6th (Harm, Heal; Wisdom 17+, from cleric 11); magic-user 6th (Death Spell, Disintegrate,
+  Flesh to Stone, Globe of Invulnerability, Stone to Flesh; from 12, Intelligence 12+) and 7th (Delayed Blast
+  Fireball, Mass Invisibility, Power Word Stun; from 14, Intelligence 14+); the rangers' druid 2nd (Barkskin, Charm
+  Person or Mammal, Cure Light Wounds; from ranger 12).
+- **Memorizing:** 15 minutes a spell level after 4 hours (levels 1-2) or 6 (3-4), as Curse; the preparation for levels
+  5-7 isn't printed (Curse's: 8 hours for 5th): **unconfirmed**. *book* (Journal p.12)
+- **FIX** memorizes and casts only Cure Light Wounds, then re-memorizes (Manual p.8); Curse's cluebook said every cure
+  spell: **unconfirmed** (request).
+
+**Rules and services**
+- **One valley, no overland map:** New Verdigris, the Well of Knowledge, the Ruins, the Mines (10 levels), the Dungeon,
+  the Ice Crevasses, the Frost Giant Village and the Castle; the Well's teleporters link them once its dragon is dead.
+  *book* (Cluebook pp.1-4, 7-8)
+- **Training is free; the temple heals free; identifying costs 100 gp** (Curse: 1000 a level; 200). *book* (Manual
+  pp.4, 10; Cluebook p.5)
+- **Gems are the currency of help:** the Well answers a question for 100 gems (and the Dungeon's riddles); the Vault
+  stores money and items and turns 100 platinum into a gem; the mines give gems to diggers (a dwarf doubles them).
+  *book* (Manual p.10; Card p.3; Cluebook pp.5, 8, 15)
+- **The armoury sells mirrors** (reflect basilisk and medusa gazes) **and canaries** (warn of the mines' bad air). *book*
+  (Cluebook pp.6, 15)
+- **Difficulty:** ALTER's LEVEL menu, NOVICE to CHAMPION (VETERAN by default); harder gives more XP per fight, easier
+  less, and harder levels interrupt rests more and let fewer flights succeed. Whether Curse had it: **unconfirmed**
+  (its books don't say). *book* (Manual p.8; Card p.2; Cluebook pp.14, 38-39)
+- **Mine encounters** offer TALK, BRIBE, FLEE and ATTACK; talk and bribe work about half the time, better with
+  Charisma. *book* (Cluebook p.14)
+
+**Items** *book* (Journal pp.13-16; Cluebook pp.59-60; section 5 has where)
+- **The mayor's starting gifts:** Gauntlets of Ogre Power, bracers, a wand, a scroll, a Mace +1, Leather +1 (Journal
+  p.8).
+- **New to the series' books:** Silver Long Sword +5 and Silver Shield +5 (the shield reflects gazes like a mirror),
+  Boots of Speed, Periapt of Health (no disease), Stone of Good Luck (+1 to most saves), Eyes of Charming (Charm Person,
+  never runs out), Long Sword vs. Giants, Wand of Ice Storm, Wand of Paralysis, Elixir of Youth, Girdle of Giant
+  Strength; weapons and armour to +5.
+- **The Ring of Wizardry** doubles a magic-user's **5th-level** spells (Curse's: levels 1-3). *book* (Cluebook p.60;
+  Curse Cluebook p.43) Which in the code: **unconfirmed**.
+
+**Monsters:** new against Curse's list: red dragons (hatchlings, sub-adult, ancient) and white dragons, driders, iron
+golems, the lich (the Dreadlord), pyro-hydras and 12- and 16-headed hydras, purple worms, remorhaz, umber hulks, cloud,
+frost, fire and hill giants, mastodons, mobats, megalo-centipedes, cockatrices, basilisks, displacer beasts, griffons and
+hippogriffs, ettins, lizard men and their king, wyverns, worgs, gyno-sphinxes, giant crocodiles and snakes. Human foes
+are named by class and level (a BC Lord is a 13th-level fighter with plate and shield +1, a Legionnaire 14th with +3
+gear: Cluebook p.4). *book* (Journal pp.16-20; Cluebook pp.4, 52-58)
+
+**Interface** *book* (Manual pp.6-12; Card pp.1-3)
+- **Mouse and joystick** (click the 3D view's edge to move, a target square in combat); ESC takes back a combat move;
+  ALT Q, ALT M, Space, CTRL S as Curse's.
+- **Scrolls can be joined into bundles** (Card p.3); **PICS** turns the close-up animations off (Manual p.8);
+  **DISPLAY** lists the effects on the party (Manual p.9); **AREA** is not available everywhere (Manual p.6).
+- **The copy protection** asks for a word from the Rule Book or Journal (Manual p.1; Card p.3). Its answers stay in
+  `.lab`.
 
 ## 1. The party
 
