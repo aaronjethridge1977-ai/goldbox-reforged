@@ -558,16 +558,6 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 ## Parked for review with Jeremy (the old hard-fight and cluebook notes)
 
-### Hard fights (old notes)
-
-- **Slums 2:20 0,14** [8 x2, 31 x4]. From c33b: won 2 of 2, both with deaths (Player 8). Trolls and ogres (event 20) in segment 7: won with nobody dead (p16e2, the second try).
-- **Slums event 9, 2:20 3,3** (30 figures): lost twice without `prepare` (Player 15).
-- **Spectres, 4:10 9,1** [17 x2]. Won 4 of 4, two with nobody dead (Player 7, corrected by Player 8). Drained members count as dead.
-- **Norris the Gray, Kuto's catacombs**: p16c1 met him early (LIRA dead); p16c3 lost three; p16d1 won deathless from `s6pre12` at the first try.
-- **The mage and his guards, 7:23 4,1** (13 figures): p24b5 destroyed, p24b6 won (ARN 3/32 HP).
-- **Wilderness bands**: a 51-figure encounter at 7:26 5,21 (p25a3 destroyed); a band fight at 7:26 12,27 (p25l2 destroyed); 6:25 band fights killed BRAM twice (p25h2, p25j5).
-- **The graveyard under the reload rule** (Player 32, from `s26t`, tactical mode, clerics turning first): trips 1-6 without a drain (trip 6's mummies turned); trip 7 (9,5: four wights, 16 zombies) lost 17 times until BRAM readied the council's Two-Handed Sword +1 +3 vs undead and CEDRIC took DORN's Mace +2, then won with one level restored from DORN's Restoration scroll; trip 8: 9,7's spectre won, **9,1's two spectres 0 of 18** (two levels a hit). *Seen in the original.*
-
 ### What the game's cluebook says about the hard fights (GOG Cluebook and Adventurer's Journal; paraphrased)
 
 The cluebook gives no area order or expected levels; its only marker: if the party can clear the Slums' troll-and-ogre room, it can handle the rest. Our full run follows main's bot's route for the comparison; **the strategy track and the no-shortcut wins should use these approaches** (they change how a fight is met, not the rules).
