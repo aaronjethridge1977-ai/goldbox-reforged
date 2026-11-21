@@ -254,7 +254,7 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
     at `p33f3_mopup1` the vampire, 9,1 and the tomb are all untouched (0x4A41, 0x4A18, 0x4AF8 = 0). **LIRA SCRIBEs Haste**
     from the Kovel scroll (the game's only Haste) and memorizes it in her one 3rd-level slot; ELWEN takes Haste at MU5.
     Take the Wand of Lightning Bolt (zombie room, 9,15) and **four or more Restoration scrolls**; camp on 10,1: Haste,
-    Prayer, Bless; round 1 the wand down the line, the bows, every fighter on one spectre. **Expect 1-2 drains and pay
+    Prayer, Bless; round 1 the wand (**3 charges**, Guide 4) down a long open line, never at a wall near the party (the bolt bounces back: Combat Chat 36), the bows, every fighter on one spectre. **Expect 1-2 drains and pay
     each with a scroll at once** (redone simulation: 2 at most in 77-94% of fights, 4 at most in 99%; drain-free only
     13-29%). Details: poolrad.md section 3.
   - **Results:** (the Player's lines here)

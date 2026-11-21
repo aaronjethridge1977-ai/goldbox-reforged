@@ -189,14 +189,16 @@ files); results *seen* unless marked.
   room finds the passwords. *code* (ECL5 block 4, MON5CHA) Results: 1 deathless win in 12 (Player 28). *seen*
   - **Talk or fight, decided at the audit before Valjevo** (*Jeremy*): fight only if a member is short of a level the
     finale needs (CEDRIC is capped at cleric 6: his share is lost); then the graveyard's **Wand of Lightning Bolt**
-    (12 in its plus field, most likely charges: **unconfirmed**; 6d6 down a line, it bounces), Stinking Cloud, Haste,
-    rested. Otherwise HAUGHTY or SLY, and the charges are kept for the guards.
+    (**3 charges**: record byte 60, the 12 is its plus; ITEM4 list 28; 6d6 down a line, it bounces), Stinking Cloud,
+    Haste, rested. Otherwise HAUGHTY or SLY. The guards get Genheeris's wand (56 charges), not this one. *code*
+    (Gold Box Guide 4)
 - Patrols and camps as the cluebook says (MEEK + HARASH, or HAUGHTY / ABUSIVE + TYRANTHRAXUS; the safe rest rooms during
   an alarm). *book*
 
 **The finale (5:7)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
 - **Genheeris** (the robed man at the desk, 2,5): agree to his deal and he **joins** (a 7th-level magic-user, 22 HP,
-  carrying a **Wand of Lightning**, 10 in its plus field), unless the party already has 8. *code* (ECL5 block 7, NPC_ADD 88)
+  carrying a **Wand of Lightning Bolt with 56 charges** (MON5ITM 88: byte 60; the 10 is its plus): the finale's wand),
+  unless the party already has 8. *code* (ECL5 block 7, NPC_ADD 88; charges Gold Box Guide 4)
 - **The 12 guards (3,8):** 8th-level fighters (87 HP each, about 1,044 in all; 1,370 experience each); no PARLAY;
   **FLEE gets away** with the party's slowest at movement 9 (to 3,6; come back later). They are human: **Hold Person and
   Stinking Cloud take them**, and a held guard dies to one blow (a fighter 8 fails the save about 60%; a cast picks up to
@@ -205,9 +207,15 @@ files); results *seen* unless marked.
 - **Tyranthraxus follows at once, no camp between** (80 HP, AC 0, THAC0 5, two attacks, a lightning breath, fear). In
   the original he resists every spell (the original's bug #7): only blows count. So **Haste, Prayer and Bless are cast
   in the guards' last rounds**, once most are held, to be fresh for him (Haste lasts 3 + level rounds: cast in camp
-  before the guards it may run out; whether a spell's effect carries from one fight into the next: **unconfirmed**,
-  asked of Combat). **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY them in his fight
-  (READY in a fight is free; **unconfirmed** for rings, asked of Combat). One ring a member (two don't stack, *Jeremy*, to confirm; nor, by the rule book, with magic armour: to confirm): AC 3 better, so Tyranthraxus (THAC0 5) hits AC -1 75% of the time and AC -4 60%; a guard's Two-Handed Sword +2 hits AC -1 50%, AC -4 35%. **The vote:**
+  before the guards it may run out). **An effect carries into the next fight with the rounds it has left** (a fight's
+  end clears nothing; Combat Chat 36, *code*); whether 5:7's script passes time between the two fights: asked of
+  Combat. **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his
+  fight (READY in a fight is free as for weapons; a ring not yet tried in DOSBox). **Only the better ring counts**, and
+  **magic body armour cancels a ring's AC**; its +3 to saves counts either way (Combat Chat 36: START.EXE 0xE22). So
+  every member gains +3 against his fear and breath, and those **without magic body armour** (DORN in the Bracers, the
+  magic-users, plain armour) also gain AC 3: Tyranthraxus (THAC0 5) hits AC -1 75% of the time and AC -4 60%. Armour
+  stays as it is (*Jeremy*, 2026-11-20 20:14): plain plate with a ring would be AC 1 better than Plate Mail +2, but the
+  rings come only with the guards. **The vote:**
   everyone ATTACK (a JOIN vote makes that member his, as do evil-aligned NPCs; Genheeris doesn't vote). *code*
 - **Rings of Protection before the finale** (main's gear map): the Slums' hobgoblins' valuables (+1, 2:20 0,2-0,3); the
   east tower's level 6 magic-user at Stojanow (+2, 2:9 11,7); the graveyard's level 6 magic-user (+2, 4:10 8,9);
@@ -297,7 +305,9 @@ files); results *seen* unless marked.
      gives four; the zombie room two, the paladin's crypt one), so a hit costs a scroll, not a reload; the Wand of
      Lightning Bolt from the zombie room.
   2. **On 10,1, in camp:** LIRA's Haste on the four fighters, Prayer, Bless; then step onto 9,1.
-  3. **Round 1:** the Wand of Lightning Bolt down the line at both spectres (it bounces: mind the party); the bows;
+  3. **Round 1:** the Wand of Lightning Bolt (3 charges) down a long open line through both spectres, **never at a
+     wall close to the party**: the bolt runs 8 squares' worth and turns back off walls, and everyone on its path,
+     the caster too, saves for half (Combat Chat 36); no clear line, no wand; the bows;
      then every fighter on one spectre at a time, BRAM's sword first. Each drain: a Restoration scroll at once.
   - The simulation: see "The simulation redone" above (Guide 2's first figures were too hopeful). **Mirror Image
     doesn't help** (section 4's rule: images take spells, not blows).
