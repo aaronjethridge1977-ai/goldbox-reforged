@@ -1181,7 +1181,8 @@ var step_ally := -1            # the teammate a step ran into ("ally": the scree
 
 ## Steps the active combatant one cell in direction `dir` (0..7, 0 = up, clockwise), or
 ## attacks whoever stands there. Returns "moved", "attacked", "fell" (brought down by a
-## free attack on the way), "ally" (a teammate there: `step_ally`), "blocked" or "no moves".
+## free attack on the way), "ally" (a teammate there: `step_ally`), "edge" (off the field: Flee?),
+## "blocked" or "no moves".
 func step(dir: int) -> String:
 	if active < 0:
 		return "blocked"
@@ -1189,6 +1190,12 @@ func step(dir: int) -> String:
 	var to: Vector2i = c.cell + DIRS[dir]
 	var fit := fits(active, to)
 	var other: int = fit[1]
+	if other < 0 and field != null:
+		for p in cells_at(to, int(c.get("fp", 1))):
+			if not field.in_bounds(p.x, p.y):
+				# The field's edge (ground 0, GAME.OVR 0xA413): the screen asks "Flee:" YES NO; YES runs the
+				# getaway (0x13465, `player_flees`). Combat Chat 40.
+				return "edge"
 	if other >= 0:
 		if combatants[other].team == c.team:
 			# GAME.OVR 0xA54C -> 0x15193: a step onto a figure of one's own side asks "ATTACK ALLY:" YES NO (the
@@ -1202,7 +1209,6 @@ func step(dir: int) -> String:
 		return "attacked"
 	if not fit[0]:
 		# A wall: "Blocked" (GAME.OVR 0xA466: the ground's cost, DS:0x2744, over the movement left; 0xFF a wall).
-		# The field's edge (ground 0) asks "Flee:" in the original (0xA413 -> 0x13465): not built, Blocked here.
 		return "blocked"
 	var cost := 3 if dir % 2 == 1 else 2
 	if cost > c.moves:
@@ -2136,6 +2142,12 @@ func _step_failed(i: int) -> bool:
 			guard(i)
 			return true
 	return false
+
+
+## YES at a MOVE's "Flee:" (GAME.OVR 0xA43A -> 0x13465): the getaway as a running figure's, the speeds and the
+## d2 on a tie; away, the member leaves the field (GOT AWAY), else ESCAPE IS BLOCKED and the MOVE goes on.
+func player_flees(i: int) -> bool:
+	return _gets_away(i)
 
 
 func _gets_away(i: int) -> bool:
