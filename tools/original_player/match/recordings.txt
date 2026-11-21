@@ -58,7 +58,7 @@
 17 p23a3 p23a2_s17a s17door
 18 p23b1 p23a3_s17door band1
 19 p24a4 p24a1_s19t pyramid1
-20 p24b6 p24b5_s20f s20m
+20 p36e1 p24b5_s20f s20m   # Player 36: p24b6 re-recorded (the Lead), traced, slot emptied; seed 24240020 (24240016-1f lost a member)
 20 p25b1 p25a3_s20t pyramid2
 21 p25d3 p25c5_s21b pyramid3
 22 p25e4 p25e3_s22c lizard
@@ -66,7 +66,7 @@
 24 p25g3 p25g2_s24a heir
 25 p35i7 p25h2_s25b zhentil   # Player 35: p25j10 traced rerun with the slot emptied (BRAM's POISONED came from a stale slot-H file)
 26 p25q5 p25o1_s26g8 graveyard
-27 p26a1 p25q5_graveyard mopup1
+27 p36h1 p25q5_graveyard mopup1   # Player 36: p26a1 re-recorded (the Lead), traced, slot emptied; plan p36/seg27c.plan (a rest till 8:00 after the inn: the clean start memorizes first and met 3:8 locked)
 28 p27c2 p27a1_s28p stojanow shortcut
 29 p27d3 p27c2_stojanow mopup2
 30 p28a2 p27k2_v3probe valjevo3

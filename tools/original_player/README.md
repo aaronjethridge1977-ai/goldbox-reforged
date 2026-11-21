@@ -1331,6 +1331,18 @@ QUICK casters unrepeatable at any speed** (only the trace records where it lande
 the trace's MAGIC lines), and a run without it repeats at any speed. **Kept 15000:** the gain is under 10% (the tool's
 own pacing, about 0.5 s a key, is most of a run's time), and nothing about the original's side needs more.
 
+**The match's last three re-recorded** (the Lead's answer to Player 35's options: traced, the slot emptied, new references;
+lab `p36/rerec.sh <prefix> <start> <plan> <first seed> <tries> <checkpoint>`: seeds in turn until a run ends `done` with
+the checkpoint saved): **p24b6 -> p36e1** (seed 24240020; 24240016-1f each lost a member in YARASH's fight) and **p26a1 ->
+p36h1** (`p36/seg27c.plan`: the clean start memorizes and rests first, so 3:0's 4,4 was met at night, BREAK IN, locked;
+a `restuntil 8` after the inn). Both part in ours where the old ones did: p36e1 at draw 2219 (the original draws d100 at
+OVR:09969 where ours has YARASH pick whom to hit), p36h1 at draw 3932 (the same draw as p26a1: the original's d100 at
+OVR:09969, ours a NOMAD's initiative): real differences, not the stale files (to combat). **p16a2** (from `p15h6_s6t`,
+seg05r.plan): 0 of 4 seeds reached s5r9 (a death; three runs stopped "rest interrupted 5 times" at Sokal Keep's 8,14);
+more seeds later in the run (`p36m*`). Combat's YARASH dump: a HOLD rerun of p36e1's seed (p36g1, `HOLD=2212,2218
+HOLDREC=17,15`) parted at draw 770 (an Alt-M), so it is the same fight in another run: YARASH rec+0x17 `00 00 00 0f 13 22
+22 20 2d 2f 36` (lab `p36/p36g1_hold.txt`). Score: 63 of 71 (`p36/score.md`).
+
 ## Player 35 (2026-11-20): the match 63 of 71; Stojanow and Sokal's army done without a shortcut (the audit); tactics MOVE, bows, Hold Person's three picks; the original's leftover save files
 
 **The Stage 1 match (60, then 63 of 71 after the reruns below):** main chat 72's two fixes (the wall ahead in an arrival's init, 0x6DC8's fled monsters) and
