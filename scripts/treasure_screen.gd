@@ -438,7 +438,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_refresh()
 		return
 	elif key == KEY_ESCAPE:
-		choice = "EXIT" if "EXIT" in items else "NO"
+		# Esc is EXIT; at the question after EXIT it does nothing (main chat 95, DOSBox at 1:18: check 326).
+		choice = "EXIT" if "EXIT" in items else ""
 	else:
 		for it in items:
 			if String(it).unicode_at(0) == key:

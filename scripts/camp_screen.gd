@@ -1404,7 +1404,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[clampi(_pick, 0, items.size() - 1)]
 	elif key == KEY_ESCAPE:
-		choice = "EXIT" if "EXIT" in items else ("NO" if "NO" in items else "")
+		# Esc is EXIT where the menu has one; at a YES NO question it does nothing (main chat 95, DOSBox at 3:0: DROP
+		# FROM PARTY?, QUIT TO DOS, LOSE IT?, MEMORIZE THESE SPELLS?; checks 322-324).
+		choice = "EXIT" if "EXIT" in items else ""
 		if _mode == "save":
 			# Chat 88 (DOSBox): Esc at SAVE WHICH GAME saves nothing, then asks QUIT TO DOS with NO lit,
 			# as after a save; NO comes back to the camp menu with VIEW lit.
