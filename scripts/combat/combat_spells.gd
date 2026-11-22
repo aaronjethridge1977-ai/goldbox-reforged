@@ -63,6 +63,7 @@ const EFFECT_PRAYER := 49
 const EFFECT_SNAKE_CHARM := 51
 const EFFECT_PARALYZE := 52
 const EFFECT_SLEEP := 53
+const EFFECT_CHARM := 0x0B
 const HELD := [EFFECT_SNAKE_CHARM, EFFECT_PARALYZE, EFFECT_SLEEP, EFFECT_HELPLESS]
 
 const EFFECT_RESIST_COLD := 0x0A
@@ -750,6 +751,19 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				if t.is_large() or immune or save(t, table.field(id, 9), 0, m):
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
+				# The spell adds effect 0x0B (power: the charmer's side in bit 7, low bits 1); its handler (GAME.OVR
+				# 0xF05B) then keeps the figure's own side in bit 6, sets bit 5, moves it to bit 7's side (record
+				# 0x10E), clears its target and makes it computer-run (0x10F); on removal bit 6 gives the side back.
+				# Ours moves the side at once (the handler runs at the figure's next turn or round start in the
+				# original) and stores the power as the handler leaves it (the spell matrix, chk1: 1, then 97).
+				var own_team: int = c.combatants[j].team
+				for a in t.affects:
+					if int(a.effect) == EFFECT_CHARM:
+						own_team = (int(a.value) >> 6) & 1    # charmed again: the side it came from
+				if own_team == 1:
+					# Only on a monster for now: the original's effect stays on a charmed member after the
+					# fight (Charm beyond the fight, not yet in ours).
+					SpellCaster.add_affect(t, EFFECT_CHARM, id, 0, (me.team << 7) | (own_team << 6) | 0x20 | 1)
 				c.combatants[j].team = me.team
 				c.combatants[j].quick = true
 				c.combatants[j].target = -1

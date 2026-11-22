@@ -1957,7 +1957,13 @@ func _round_movement(m: PartyMember) -> int:
 
 
 ## The script's to-hit modifier for an attacker (GAME.OVR 0x2BBF2).
+## The to-hit routine (GAME.OVR 0x2BBEF) picks the bonus by the attacker's side (record 0x10E), not its kind: a
+## charmed kobold on the party's side takes the party's (the spell matrix, chk1, Combat Chat 43: its d20 of 15 at
+## draw 4323 missed in the original, hit in ours).
 func script_hit_mod(m: PartyMember) -> int:
+	for c in combatants:
+		if c.who == m:
+			return monster_hit_mod if c.team == 1 else party_hit_mod
 	return monster_hit_mod if m.is_monster else party_hit_mod
 
 
@@ -2150,16 +2156,32 @@ func _morale_check(i: int) -> String:
 	var own := (m.morale & 0x7F) * 2
 	if own > 102:
 		own = 0
+	own = _morale_hooks(m, own)
 	var lost := 100 - (m.hp * 100) / m.hp_max
 	if not (own < lost or own == 0):
 		return ""
-	if c.team == 1 and not (enemy_health < 100 - morale_base or enemy_health == 0):
+	var side := _morale_hooks(m, enemy_health)
+	if c.team == 1 and not (side < 100 - morale_base or side == 0):
 		return ""
 	if _fastest(1 - c.team) <= _speed(m):
 		return "flee"
 	if m.stats.size() > 1 and m.stats[1] > 5:
 		return "surrender"
 	return ""
+
+
+## The figure's effects of category 0x11 (GAME.OVR 0x2B1E4: 0x01, 0x02, 0x0B), run by the morale test (0xBD2C on
+## its own value, 0xBD7F on the side's) over the byte DS:0x6825: Bless adds 5 (0xED68), Curse takes 5 off, not
+## below 0 (0xED78), a charm makes it 100 (0xF05B), so a charmed figure never runs or gives up (the spell matrix,
+## chk1, Combat Chat 43: ours' charmed kobold ran at draw 2534, the original's struck).
+func _morale_hooks(m: PartyMember, value: int) -> int:
+	if m.has_affect(CombatSpells.EFFECT_BLESS):
+		value = (value + 5) & 0xFF
+	if m.has_affect(CombatSpells.EFFECT_CURSE):
+		value = 0 if value < 5 else value - 5
+	if m.has_affect(CombatSpells.EFFECT_CHARM):
+		value = 100
+	return value
 
 
 ## One step of a running combatant. Returns "moved", "retry", "gone", "blocked", "stop" or "end" (the turn ends).
@@ -2752,6 +2774,10 @@ const DOWN_STRIPS := [0x07, 0x0B, 0x1E, 0x1F, 0x20, 0x33, 0x34, 0x35, 0x36, 0x3A
 func _went_down(j: int) -> void:
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
+	for a in tm.affects:
+		if int(a.effect) == CombatSpells.EFFECT_CHARM:
+			# The removal (0x2AF10) runs the charm's handler (0xF05B) with its flag: the side back from bit 6.
+			t.team = (int(a.value) >> 6) & 1
 	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
 	t.regen_in = 0      # 0x3B
 	t.dies_in = 0       # 0x5F
@@ -2851,6 +2877,8 @@ func _act_powers(i: int) -> void:
 		if immune or _save(tm, 4, -2):
 			message.emit("%s IS UNAFFECTED" % tm.name)
 		else:
+			# The original adds effect 0x0B here too (0x10BD8: power the gazer's side x 128 + 12), which stays
+			# on a member after the fight: not yet in ours (Charm beyond the fight, combat_spells.gd).
 			t.team = c.team
 			t.quick = true
 			t.target = -1
