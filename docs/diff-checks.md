@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 102: the icon's SIZE joins the gate, NPC_ADD's portrait for monster 0x18, the bishop's DIRTEN (checks 359, 360, 367, 368)
+## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded (checks 359, 360, 367-373)
 
 - **359, 360 in the gate** after Combat Chat 44's 3758972 (icon_size.py): 3 of 3 on origin/main; breaks (the icon size,
   2 -> 1 in the original's end) differ. DIFFCHECKS 364/364.
@@ -185,6 +185,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   DIRTEN, 0x4A9B = 254, a jump save onto 12,5 E (the night's shop door at 13,5 is locked on the street route), then
   W, two steps onto 10,5 (event 5, ECL3 block 0 0x9EA6), two Enters, YES: NPC_ADD 107, 99, head 12, body 2.
   Break: head 12 -> 3. Start `~/gbr/lab/data/c102/s368`.
+- **369-372, the other NPC_ADD sites (matched at once on the portrait, main path):** 369 4:2 the chained man, check 59's
+  start with 0x4A73 = 128 (already freed): PARLAY, NICE, YES: SKULLCRUSHER (NPC_ADD 27, 100; 5, 6); 370 8:13 PRINCESS
+  FATIMA (event 14 at 1,3; a jump save onto 2,3 W from check 42's start, then a camp save there: MUFFLED SOUNDS, three
+  Enters, YES: NPC_ADD 104, 100; 13, 9); 371 5:7 GENHEERIS (event 7 at 2,5; a jump save onto 3,5 W from check 58's
+  start with 0x4A6C bit 32: the merchant's offer at once, two Enters, YES: NPC_ADD 88, 100; 5, 2; a camp save made
+  there crashes the original's load, so the jump save is the start); 372 3:11 the dueling room's partner (check 21's
+  start: NO to the duel, YES to a partner, YES at 1 SHARE, NO to another: tpseed's RANDOM 250 gives SWORDSMAN,
+  NPC_ADD [6E79], [6E7A]; 5, 4). Every fixed NPC_ADD site now has a check (2:15 54, 3:0 368, 3:11 372, 4:2 369,
+  4:10 367, 5:7 371, 8:13 370).
+- **The control byte (a difference, fixed, main path; statediff compares record 0x84 and 0x10E now):** ADD_NPC writes
+  128 + operand / 2 to the record's 0x84 (0 -> 128, 99 -> 177, 100 -> 178; the hire 160); ours kept the monster
+  record's 255 in all eight checks. And the scripts' 0x6BB8 read is the record's 0x84 (GAME.OVR 0x7D10), while ours
+  loaded "who controls" from 0xB8 (the monster's experience value: the shipped DIRTEN 150 by chance). **373:** 372's
+  end (the original's save with SWORDSMAN, 0xB8 35) with 0x4A01 and 0x4A05 cleared: off 7,2 and back, YES to the duel,
+  WHO WILL DUEL? Home (THRENDER GRONE lit: wraps to SWORDSMAN), Enter: I CANNOT ARRANGE SUCH A DUEL. Ours before the
+  fix made him a player character and started the duel (the run never reaches its save). Fixed in main.gd
+  `_add_npcs` and party_member.gd `load_files`. Breaks: 0x84 160 -> 100 (372, 373).
 - **DIRTEN's 0, 4:** the shipped party's (slot J's CHRDATJ7: 0xAB 0xFF); every save with him descends from it (491 in
   the labs: 0, 4, 0xFF); none from a join.
 
