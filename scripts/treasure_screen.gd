@@ -190,12 +190,16 @@ func _draw_mode() -> void:
 		"items":
 			_page_frame()
 			_scr.text(17, 1, "LOOT", GameScreen.WHITE)
+			# Each line is built by the item-line routine (GAME.OVR 0x60CF-0x6105 walks the pile, DS:0x6810, through
+			# START.EXE 0xBA:0x442), so Detect Magic marks it as the sheet's lists: "* " before a magic item's name
+			# while any member has the effect (Combat Chat 47, Jeremy's P96: ours left the loot unmarked).
+			var detect := PartyMember.party_detects_magic(_party)
 			for i in PAGE:
 				var k := _top + i
 				if k >= _spoils.items.size():
 					break
 				var it := _spoils.items[k]
-				var name := (it.name if it.name != "" else "ITEM").to_upper()
+				var name := ("* " if detect and it.detect_magic_marks() else "") + (it.name if it.name != "" else "ITEM").to_upper()
 				_scr.text(1, 4 + i, name.left(38), GameScreen.WHITE if k == _cursor else GameScreen.GREEN)
 				_scr.list_line(4 + i, k)
 			_scr.list_chosen(_cursor)
