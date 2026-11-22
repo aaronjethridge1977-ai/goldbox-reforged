@@ -526,7 +526,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				"TAKE":
 					_take_item(_cursor)
 					if _spoils.items.is_empty():
-						_mode = "take" if _spoils.has_money() else "menu"
+						# The last item taken: the main menu, coins left or not (main chat 105, DOSBox 2:20's floorboard
+						# chest: SHARE next; check 402). EXIT from the list still goes to TAKE (below).
+						_mode = "menu"
 						_pick = 0
 						_refresh()
 				"NEXT", "PREV":
