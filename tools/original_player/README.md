@@ -1356,10 +1356,20 @@ train5's round: **LIRA magic-user 6, LIGHTNING BOLT learnt** (p44n1, `p2start/p4
 (the audit as a stop: the run halts there until the loadout review file exists; Guide 12's step 1 (a), (b)); the
 first review, for the throne room: lab `p44/reviews/throne.md`.
 
+**The throne room under the first loadout review** (`p44/throne44.plan` trip from `s44trained`: the review's swaps
+by `campcast` then `picks`, the scrolls traded to readers, `review` read, `s44loadout`; Player 39/41's trip with MAGIC
+OFF to the door; `p44/throne44f.plan`: Fatima armed, LIRA's Fireball scroll, focus TROLL, E, E, N onto 6,3): p44f1
+**the original crashed in wave 2** ("Runtime error 204 at 00B0:0136", `logs/p44f1_stop.png`, 51 figures; a tool stop);
+p44f2 lost in wave 3 (the trip's `cure` steps had spent every Cure Light Wounds: no cure rounds after wave 2; trip again
+without them: `p2start/p44s1_s44door`); p44g1 lost in wave 3 (two unburned trolls back, the envoys); **p44g2 won**
+(waves 1-3; ARN and LIRA up, five unconscious, none dead: `p2start/p44g2_s44throne`). The measure: Player 39 0 of 5;
+here 1 win in 3 counted tries.
+
 **`noshare on|off`** (plans.py, loot.NOSHARE): a pile's coins are left, not SHAREd (the party carries ~8,700 pp).
 
-Lab: `p44/` (valjevo4-8.plan, audit44.plan, home44.plan, ecl5_b3-b7.txt: the disassembly); runs p44v1-v3, p44a1,
-p44w1-w2, p44x1-x8, p44y1, p44z1-z5, p44u1-u4, p44t1, p44h*.
+Lab: `p44/` (valjevo4-8.plan, audit44.plan, home44.plan, throne44.plan, throne44b.plan, throne44f.plan, reviews/,
+ecl5_b3-b7.txt and ecl8_b13.txt: the disassembly); runs p44v1-v3, p44a1, p44w1-w2, p44x1-x8, p44y1, p44z1-z5, p44u1-u4,
+p44t1, p44h1-h2, p44i1, p44j1-j2, p44k1-k2, p44l1, p44m1, p44n1, p44r1, p44f1-f3, p44s1, p44g1-g2.
 
 ## Player 43 (2026-11-21): MANUAL aiming; Plan 5 at the finale (the guards won, the flight failed); xpgoal, lightloot
 

@@ -476,6 +476,15 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\kobold_king\`.
     1, lost at level 3; the party is 5-6 now with two Fireballs and the wand): one set fight with its XP, and a stuck
     fight to win anyway. Back to (a), the 7:26 bands with reloads, if it is lost twice.
 
+  - **Plan 2 under the first loadout review (Player 44, 2026-11-22; lab `p44/reviews/throne.md`):** the chain's party
+    after Valjevo and training (LIRA MU6; spells swapped in camp: two Fireballs each for LIRA and the trolls, Stinking
+    Clouds for the Knocks, four Cure Light Wounds for CEDRIC), trip with MAGIC OFF, Fatima armed, start on 6,3, focus
+    TROLL. **p44g2 won all three waves** (ARN and LIRA up, five unconscious, none dead; `p2start/p44g2_s44throne`).
+    Losses: p44f2 and p44g1 in **wave 3** (the trolls not burned in wave 1 come back with the two envoys; p44f2 had no
+    cures left: the trip's `cure` steps had spent them). p44f1: **the original crashed** in wave 2 (Runtime error 204
+    at 00B0:0136, a heap error, 51 figures; not seen again). The escort (12,9 WAKE IT, YES) left out: its script walks
+    the party to the king itself (ECL8 block 13 0xB119): question to the guide on the board.
+
 ## 4. Valhingen Graveyard: the two spectres (4:10 9,1)
 
 Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\graveyard_spectres\`.
