@@ -149,6 +149,9 @@ static func run(main: Node, path: String) -> void:
 		if hp0 < 0:
 			hp0 = _party_hp(cs)[0]
 			_print_field(cs)
+			if plan.magic:     # at the fight's start: a plan with no entries never shows a menu
+				cs.toggle_magic()
+				print("   PLANFIGHT magic on")
 		rounds = maxi(rounds, cs._combat.round_no)
 		if cs._result != 0 and not cs._asking_continue:
 			result = cs._result
@@ -275,9 +278,6 @@ static func run(main: Node, path: String) -> void:
 				k = "q"
 				why = "QUIT"
 		elif st.begins_with("menu:"):
-			if not seen and plan.magic:
-				cs.toggle_magic()
-				print("   PLANFIGHT magic on")
 			seen = true
 			var p := st.split(":")
 			var who: PartyMember = cs._combatants[int(p[1])].who

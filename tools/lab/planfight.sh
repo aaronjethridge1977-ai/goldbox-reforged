@@ -67,6 +67,8 @@ print("%-24s %5s %5s %6s %7s %7s  %s" % ("plan", "won", "runs", "rounds", "HP lo
 for b in names:
 	rows = []
 	for f in sorted(glob.glob(os.path.join(t, b + "_*.res"))):
+		if not re.fullmatch(re.escape(b) + r"_[0-9a-f]{8}\.res", os.path.basename(f)):     # "haste" isn't "haste_sleep"
+			continue
 		l = open(f).read().strip()
 		d = dict(re.findall(r"(\w+)=(\S*)", l))
 		rows.append(d)
