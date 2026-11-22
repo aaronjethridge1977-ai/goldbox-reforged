@@ -172,6 +172,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 94: Esc at the shop's, temple's and training hall's menus and questions (checks 317-320; three differences); the crash fix's checks join the gate
+
+- **Gate: DIFFCHECKS 316/316.** 313, 315, 316 joined after Combat Chat 42 landed `c93_fixes.diff` (7d1152d; each 3 of 3
+  on origin/main fec4772); 320 joined matched.
+- **Esc at the shop (3:0's arms and armour shop, check 317; main path):** the original ignores Esc at the shop's menu (BUY
+  VIEW POOL APPRAISE EXIT: the member stays lit) and at YOU HAVE LEFT SOME MONEY's YES NO; ours left the shop and took
+  NO. The BUY list and APPRAISE take Esc as EXIT in both. Ready diff `~/gbr/lab/data/c94/shop_esc.py` (Combat's file).
+- **Esc at the temple (Tyr's temple, check 318; main path):** the same at the temple's menu, CAST CURE ANYWAY: YES NO, PAY
+  FOR CURE YES NO and the left-money question; HEAL's list takes Esc as EXIT in both. Ready `temple_esc.py`.
+- **Esc at the training hall (3:11, check 319; main path):** the menu ignores Esc in both; DO YOU WISH TO TRAIN? and QUIT
+  TO DOS YES NO ignore it in the original (ours took NO). DROP's questions not seen: unchanged. Ready `hall_esc.py`.
+- **Esc at the inn's STAY? YES NO (check 320; main path):** nothing in both (script menus ignore Esc). Not WHO WILL PAY?
+  (it locks the original up).
+- All three fixes: `~/gbr/lab/data/c94/c94_esc.diff` (DIFFCHECKS 313/313 then, 317-319 3 of 3; each check 0 on main
+  and 0 on every copy missing one part).
+- **Release builds, other out-of-image writes:** every `set_pixel` read (`_bevel` was the only unguarded one; Combat
+  Chat 42 read them too and added guards); Jeremy's `holds`, `magicuser`, `won` replayed on test3's code with the
+  Linux release template and with the debug binary: exit 0, no bounds errors. `fireball_crash` and `holds_crash2` on
+  origin/main fec4772's release build: exit 0. In these replays `fireball_crash`'s last TARGET gives NO TARGET THERE on
+  test3 and on main alike (chat 93 saw the Fireball resolve there: a timed replay's aim drifts with the PC's load; both
+  of chat 94's ran beside other lanes' gate runs).
+
 ## Chat 93: Jeremy's crash after TARGET found (a release-build-only write outside an image); picks not yet learned; Esc in the camp's member lists (checks 312-316; three differences, original's bug 19 twice more)
 
 - **The crash (main path, Jeremy's 0.1.7-test2 finale fights):** `combat_screen.gd` `_bevel` drew the selected figure's
