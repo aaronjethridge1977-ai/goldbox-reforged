@@ -761,8 +761,8 @@ def reload_rule(p):
         p.note("rule", "reload rule on: %s" % "; ".join("%s L%d %s" % (n, s["lev"], "/".join(map(str, s["abil"])))
                                                          for n, s in now.items()))
         return
-    if game_won(p):
-        return
+    if game_won(p) or getattr(p, "boss_down", False):
+        return             # (Player 45: his fight over with a death: the script's win comes next)
     why = []
     for n, b in base.items():
         s = now.get(n)

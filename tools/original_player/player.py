@@ -175,6 +175,19 @@ class Player:
                     "%s %d/%d%s" % (m["name"], m["hp"], m["max"], "" if m["status"] < 5 else " status %d" % m["status"])
                     for m in ms)))
                 dead = [m["name"] for m in ms if m["status"] >= 6]
+                try:
+                    import tactics as _t
+                    boss = any("TYRAN" in f["name"].upper() for f in _t.figures(self.g.mem))
+                except Exception:
+                    boss = False
+                if dead and boss:
+                    # Player 45 (p45i3: Tyranthraxus fell to ARN's blow, BRAM and ELWEN dead in his fight, and the run
+                    # stopped as a reload at the CONTINUE BATTLE before the script's win, 0x4ABA = 254): the death rule is
+                    # for the guards' fight (Plan 5 (c)); in his fight a death ends the run as won (Player 29's rule)
+                    self.note("fight", "fight %d: %s dead in Tyranthraxus' fight: no reload (Player 29's rule)" % (
+                        self.fights, ", ".join(dead)))
+                    dead = []
+                    self.boss_down = True      # plans.reload_rule: no reload until the script writes the win
                 if dead:
                     raise Stop("RELOAD: %s dead in fight %d (a death in the fight is a reload)" % (", ".join(dead),
                                                                                                     self.fights))
