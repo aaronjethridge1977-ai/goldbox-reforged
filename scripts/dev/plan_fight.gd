@@ -12,6 +12,7 @@ class_name PlanFight
 ##   <MEMBER> <round> aim <FIGURE>                             AIM, NEXT to that figure, TARGET
 ##   <MEMBER> <round> turn | guard | delay | done | quick      TURN; DONE's GUARD / DELAY / QUIT; QUICK
 ##   magic on                                                  Alt-M at the first turn: QUICK members cast
+##   continue yes | no                                         CONTINUE BATTLE? answered so (default NO; main chat 98)
 ## <round> is a number or a range (1-3) or "*" (every round). A member's turn with no entry is played on QUICK for
 ## that turn (ours' QUICK, as the original's); the member is taken off QUICK again before a round with an entry.
 ## Entries that can't be carried out (no CAST on the menu, the spell not memorized) fall back to QUICK, logged.
@@ -23,7 +24,7 @@ const _OUTCOMES := {1: "won", 2: "lost", 3: "fled"}
 
 
 static func _parse(path: String) -> Dictionary:
-	var plan := {"entries": [], "magic": false}
+	var plan := {"entries": [], "magic": false, "cont": false}
 	for raw in FileAccess.get_file_as_string(path).split("\n"):
 		var l := raw.split("#")[0].strip_edges()
 		if l == "":
@@ -31,6 +32,9 @@ static func _parse(path: String) -> Dictionary:
 		var w := l.split(" ", false)
 		if w[0].to_lower() == "magic":
 			plan.magic = w.size() < 2 or w[1].to_lower() == "on"
+			continue
+		if w[0].to_lower() == "continue":
+			plan.cont = w.size() > 1 and w[1].to_lower() == "yes"
 			continue
 		if w.size() < 3:
 			push_warning("planfight: bad line: " + l)
@@ -133,6 +137,9 @@ static func run(main: Node, path: String) -> void:
 	var phase := ""              # "", "choose", "aim", "done"
 	var aim_n := 0
 	var picks := 0
+	var pend := {}      # member -> the entry whose CAST / USE was pressed: a spell with a casting time aims later (main chat 98)
+	var aim_who := ""
+	var tries := {}     # member:round -> menu actions pressed; a 4th falls back to QUICK (main chat 98)
 	var last := ""
 	var steady := 0
 	var pressed_at := ""         # the state a key was sent at: no key again until the state changes (or 3 s pass:
@@ -182,6 +189,8 @@ static func run(main: Node, path: String) -> void:
 			st = "choose"
 		elif sheet != null and sheet.visible and sheet._mode == "items":
 			st = "use"
+		elif sheet != null and sheet.visible and sheet._mode == "scroll":
+			st = "scroll"
 		elif cs._flash != "" or cs._row24_msg != "" or cs._announcing or main._busy:
 			st = ""
 		elif cs._cmode == "aim":
@@ -201,8 +210,8 @@ static func run(main: Node, path: String) -> void:
 		var k := ""
 		var why := ""
 		if st == "continue":
-			k = "n"
-			why = "CONTINUE BATTLE: NO"
+			k = "y" if plan.cont else "n"
+			why = "CONTINUE BATTLE: " + ("YES" if plan.cont else "NO")
 		elif st == "abort":
 			k = "y"
 			why = "ABORT SPELL: YES"
@@ -247,8 +256,21 @@ static func run(main: Node, path: String) -> void:
 				why = "USE " + m.items[at].name
 				aim_n = 0
 				picks = 0
+		elif st == "scroll":
+			# A scroll's own page (<NAME>'S SPELLS ON SCROLL, the last spell lit): CAST it (main chat 98).
+			k = "c"
+			why = "scroll: CAST"
 		elif st.begins_with("aim:"):
 			var items: Array = cs._bottom_menu()
+			var aw := ""
+			if cs._combat.active >= 0 and cs._combat.active < cs._combatants.size():
+				aw = String(cs._combatants[cs._combat.active].who.name)
+			if aw != aim_who:
+				aim_who = aw
+				picks = 0
+				aim_n = 0
+			if pend.has(aw):
+				cur = pend[aw]
 			var tj: int = cs._aim_list[cs._aim_index] if cs._aim_index < cs._aim_list.size() else -1
 			var tname := String(cs._combatants[tj].who.name).to_upper() if tj >= 0 else ""
 			var on: String = cur.get("on", "")
@@ -285,10 +307,19 @@ static func run(main: Node, path: String) -> void:
 			var items := p[3].split(",")
 			cur = _entry(plan, who.name, rnd)
 			var act: String = cur.get("act", "quick")
+			aim_who = ""
+			var tk := "%s:%d" % [who.name, rnd]
+			tries[tk] = int(tries.get(tk, 0)) + 1
+			if act != "quick" and tries[tk] > 3:
+				print("   PLANFIGHT round %d %s: %s tried 3 times: QUICK" % [rnd, who.name, act])
+				act = "quick"
+				cur = {}
 			if act == "cast" and "CAST" in items:
 				k = "c"
+				pend[who.name] = cur
 			elif act == "use" and "USE" in items:
 				k = "u"
+				pend[who.name] = cur
 			elif act == "aim" and "AIM" in items:
 				k = "a"
 				aim_n = 0
