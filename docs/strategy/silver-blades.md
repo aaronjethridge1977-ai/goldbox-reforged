@@ -359,6 +359,58 @@ against gazes (basilisk, medusa); Haste ages each member a year (Journal p.24).
 - **Barkskin** is AC -1; **Charm Person or Mammal** turns a person or mammal in a fight.
 - **Stone to Flesh** (a magic-user spell here) undoes petrification; the temple also cures it (Manual p.4).
 
+## 5. The magic-gear map
+
+**From the books** (Gold Box Sources 2; *book*: the Cluebook's "Major Magic Items: Where to Find Them", pp.59-60, and
+its area notes; locations are the Cluebook's map numbers). Consumables (potions, scrolls, darts, arrows) are in the area
+notes, not the list. "Random magic items" and "several scrolls" are unnamed in the books. **The full map comes from the
+game's data** (every treasure list and every monster's items, square by square, as Pool's in poolrad.md section 5):
+requested of main on the board, low priority.
+
+| Where (Cluebook page) | Magic gear | Notes |
+|---|---|---|
+| New Verdigris: the mayor (Journal p.8) | Gauntlets of Ogre Power, bracers, a wand, a scroll, Mace +1, Leather +1 | the starting gifts |
+| New Verdigris 10, Marcus's house (6) | magic items for sale | very dear until Marcus is gone, then cheap |
+| New Verdigris 3, the old man (5) | Scroll of Protection from Dragon Breath, then a Cloak of Displacement | one item per return visit to town |
+| The Well 20, the Ancient Red Dragon (8) | Bracers AC 4, Potion of Speed, Composite Long Bow +2 | |
+| The Well 22 (8) | Wand of Ice Storm, Necklace of Missiles | the Bane and Black Circle forces fight; let them, then beat the survivors |
+| Black Circle HQ 14, the armoury (10) | Quarterstaff +2, Dagger +2, Dart of the Hornet's Nest | |
+| Black Circle HQ 25, the inner sanctum (11) | Bracers AC 3, Wand of Lightning, Girdle of Giant Strength | beating its mages stops the Ruins' Black Circle encounters |
+| Black Circle HQ: barracks (9-10) | random magic items | on the guards |
+| The Ruins 2, a sub-adult red dragon (27) | Flail +2, Ring of Protection +2, Wand of Fireballs, Shield +2 | |
+| The Ruins 5, the bier (27) | Scroll of Protection from Dragon Breath, Leather +5, Dagger +2 | an ambush follows |
+| The Ruins 13, the Ancient Red Dragon (27-28) | **the Amulet of Eldamar**, Cloak of Displacement, Ring of Invisibility, Plate Mail +2, Long Sword +2 | the Amulet shows the Dungeon's keys |
+| Temple of Tyr 7 (13) | Bracers AC 4, two Shields +3, Dart of the Hornet's Nest, two Potions of Extra Healing, Potion of Invisibility, Battle Axe +2, Dagger +3, Morning Star +2, Hand Axe +2, Chain Mail +3 | Derf lets the party take them; 21 is a library of scrolls (12) |
+| Mine 1, 11, a dead adventurer (15) | Ring of Fire Resistance, Plate Mail +3, Long Sword +3, Shield +3, Composite Bow +2, 20 Arrows +2 | and a staff piece |
+| Mine 2, 21, a trapped chest (16) | Periapt of Health, a magic-user scroll (three spells), Wand of Fireballs, Potion of Speed, Potion of Giant Strength, Elixir of Youth | and a staff piece |
+| Mine 3, 31, eight wyverns (17) | Boots of Speed, Dart of the Hornet's Nest, Potion of Invisibility, Trident +3, Mace +4, Ring of Protection +2 | and a staff piece; 32-36: two random items each |
+| Mine 4, 41 (17-18) | Ring of Protection +3 | and a staff piece; 42: two random items |
+| Mine 5, 51 (19) | Stone of Good Luck, a cleric scroll (three Raise Dead), two magic-user scrolls (three spells each) | and a staff piece |
+| Mine 6, 61, the Lizard King (20) | Eyes of Charming, Necklace of Missiles | Vala and a staff piece |
+| Mine 7, 71, a Black Circle mage's body (20) | Bracers AC 3, Quarterstaff +3, **Ring of Wizardry**, Wands of Lightning, Ice Storm and Paralysis, two Potions of Extra Healing | six umber hulks attack after |
+| Mine 8, 81, Oswulf's tomb (21) | Banded Mail +5, Cloak of Displacement, Long Sword vs. Giants | the Ring of Tyr opens it (86) |
+| Dungeon 6 (25) | Bracers AC 3, Fine Long Bow | |
+| Dungeon 10 (23-25) | six Arrows +4 | |
+| Dungeon 39, six pyro-hydras (31) | the Silver Key, Bracers AC 2, Wand of Paralysis, Necklace of Missiles | |
+| Dungeon 45 (33) | Flail +4, Shield +4, Plate Mail +3 and a long sword | |
+| Dungeon 55, the blind mage's cache (33-34) | Scimitar +4, Quarterstaff +4, four Darts +3, Wand of Fireballs, Staff Sling +3 | needs a password (in `.lab`) |
+| Drider Base 8 (35) | Chain Mail +3 | on a skeleton |
+| Drider Base 21-23, 27 (37) | random items (five per bedroom), scrolls (22), four potions (23); five random items (27) | 27 is behind the iron golems |
+| Frost Giant Village 13, the king's treasure (41) | Long Sword +4, Shield +4, Plate Mail +4, Dagger +3, three Potions of Extra Healing | |
+| Eastern Crevasses 16, Oswulf's spirit (43) | **Silver Long Sword +5, Silver Shield +5** | given for the staff; the shield reflects gazes |
+| Castle middle level 1, searched (47) | Elixir of Youth, Potion of Speed, Long Bow +2 | |
+| Castle middle level 10, searched (47) | Wand of Paralysis, Shield +2, Trident +3, Potion of Invisibility | |
+| Castle middle level 15 (47) | Hammer +4, Scimitar +5, Bracers AC 3, Potion of Giant Strength, Potion of Extra Healing | |
+| Castle middle level 20, the lab, searched (48) | four potions, three more caches of four | |
+| Sanctum 19, a fighter and his guards (49-50) | Plate Mail +5, Shield +5, Girdle of Giant Strength, Long Sword +5 | |
+| Sanctum 22, the Dreadlord (51) | Ring of Invisibility, Ring of Protection +3, Cloak of Displacement | |
+
+**The books disagree** once: the list puts Bracers AC 3 at the headquarters and the castle; the mine notes also have a
+pair at Mine 71. **Item notes** (pp.59-60): Boots of
+Speed double movement; the Periapt of Health stops disease; the Stone of Good Luck gives +1 to most saves; the Eyes of
+Charming cast Charm Person without running out; the Ring of Wizardry doubles a magic-user's 5th-level spells (Curse's:
+levels 1-3, **unconfirmed**); the silver shields reflect basilisk and medusa gazes.
+
 ## For the lanes
 
 [Next review.]
