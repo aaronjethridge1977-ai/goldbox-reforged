@@ -1141,6 +1141,31 @@ class BandsStep:
         return True, None, ""
 
 
+class XpGoal:
+    """Player 43: `xpgoal <NAME>=<xp>,... <checkpoint>`: once every listed member has at least that XP (the record's
+    0xAC), the plan skips ahead to just before the named checkpoint (a band loop ends itself at the levels' goal)."""
+    def __init__(self, rest):
+        w = rest.split()
+        self.want = {n.upper(): int(v) for n, v in (kv.split("=") for kv in w[0].split(","))}
+        self.to = w[1]
+
+    def __repr__(self):
+        return "xpgoal %s %s" % (self.want, self.to)
+
+    def next(self, p):
+        have = {m["name"]: struct.unpack_from("<I", bytes(m["rec"]), 0xAC)[0] for m in members(p.g.mem)}
+        if all(have.get(n, 0) >= v for n, v in self.want.items()):
+            goals = p.plan.goals
+            for i in range(p.goal + 1, len(goals)):
+                if isinstance(goals[i], Checkpoint) and goals[i].name == self.to:
+                    p.note("xpgoal", "met (%s): on to %s" % (", ".join("%s %d" % (n, have.get(n, 0))
+                                                                     for n in self.want), self.to))
+                    # the walk loop's += 1 for this goal lands on the checkpoint itself
+                    p.goal = i - 1
+                    break
+        return True, None, ""
+
+
 class Checkpoint:
     def __init__(self, name):
         self.name = name
@@ -2376,6 +2401,8 @@ def load(path):
             pl.goals[-1].look = getattr(pl, "look", False)
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
+        elif cmd == "xpgoal":
+            pl.goals.append(XpGoal(rest))
         elif cmd == "checkpoint":
             pl.goals.append(Checkpoint(rest.strip()))
             # Player 17: the shop visits planned before it, for a run resumed after it (player.py --after)

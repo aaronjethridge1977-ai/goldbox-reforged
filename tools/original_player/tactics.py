@@ -72,9 +72,56 @@ def effects(mem, r):
 # Person), sleep, helpless (Stinking Cloud) (DS:0x286C; ours' combat_spells.gd HELD)
 HELPLESS = (0x33, 0x34, 0x35, 0x1F)
 
+# Player 43 (Guide 10's (b)): OP_MANUAL=1: spells aimed by MANUAL (else the old NEXT scan)
+MANUAL = os.environ.get("OP_MANUAL", "0") != "0"
+
 
 def helpless(f):
     return f["hp"] > 0 and f["status"] == 0 and any(e in HELPLESS for e in f.get("fx", ()))
+
+
+_RANGES = None
+
+
+def spell_range(spell, f):
+    """Player 43: a spell's range in squares for caster f, from START.EXE's spell table (after the 56 names, 16 bytes
+    an entry: +2 range (255 touch), +3 per caster level; ours spell_table.gd range_for: touch, or 0 with an area, is
+    1); a name both classes have (Hold Person: cleric 6, magic-user 12): the caster's classes, the longer. None if unreadable."""
+    global _RANGES
+    if _RANGES is None:
+        _RANGES = {}
+        try:
+            lab = os.environ.get("OP_LAB", "/home/aaron/gbr/player_lab")
+            import sys
+            sys.path.insert(0, lab)
+            import unexepack
+            img = unexepack.unpack(open(os.path.join(lab, "game", "START.EXE"), "rb").read())
+            i = img.find(b"\x05Bless")
+            for k in range(56):
+                o = i + 41 * k
+                nm = img[o + 1:o + 1 + img[o]].decode("latin1").upper()
+                _RANGES.setdefault(nm, []).append(tuple(img[i + 56 * 41 + 16 * k:i + 56 * 41 + 16 * k + 16]))
+        except Exception:
+            pass
+    out = None
+    for e in _RANGES.get(spell.upper(), ()):
+        lvl = (f.get("cl", 0) if e[0] == 0 else f.get("mu", 0)) if f else 0
+        if f and not lvl and len(_RANGES.get(spell.upper(), ())) > 1:
+            continue                     # (CEDRIC's Hold Person is the cleric's: 6, not the magic-user's 12)
+        if e[2] == 255:
+            r = 1
+        else:
+            r = e[2] + e[3] * lvl
+            if r == 0 and e[6]:
+                r = 1
+        out = r if out is None else max(out, r)
+    return out
+
+
+def aim_dist(mem):
+    """Player 43: {figure: range in squares} from the aim list (DS:0x671B, its second byte half squares)."""
+    n = mem.u8(0x671A)
+    return {mem.u8(0x671B + 3 * i): mem.u8(0x671B + 3 * i + 1) // 2 for i in range(n)}
 
 
 def aim_list(mem):
@@ -520,6 +567,8 @@ class Tactics:
                 return self._aim_shoot(st, p)
             return self._aim_attack(st, p)
         if b.startswith("AIM:") and (self.order or "SPELL:" in st["rows"][23] or getattr(self, "scroll_aim", None)):
+            return self._aim(st, p)
+        if b.startswith("(USE CURSOR KEYS)") and self.scan:
             return self._aim(st, p)
         if b.startswith("ATTACK ALLY"):
             self.log("TACTICS ATTACK ALLY? NO")
@@ -1137,6 +1186,10 @@ class Tactics:
                          "targets": t, "scan0": 0}
         sc = self.scan
         sc["steps"] += 1
+        if MANUAL and not sc.get("nomanual") and me:
+            k = self._manual(st, p, sc, me, member, spell, figs, foes, cur, can)
+            if k:
+                return k
         # Player 41 (p41a2-a5: Hold Person took 8-12 picks; the entry read at the last pick's place changed at each pick,
         # 9, then 11, 12 ... 19): OP_AIMDEBUG=1 logs the raw aim list, its index and the held enemies at every step
         # p41x1 (OP_AIMDEBUG): DS:0xBEFD stayed 21, out of the 19-entry list, through the whole aim, so _aimed fell back
@@ -1191,6 +1244,96 @@ class Tactics:
         if cur == sc["goal"] and can:
             return self._take(member, spell, cur)
         return "n", "tactics: to figure %d (at %s)" % (sc["goal"], cur)
+
+    def _manual(self, st, p, sc, me, member, spell, figs, foes, cur, can):
+        """Player 43 (Gold Box Guide 10's (b), Jeremy 15:22 / 15:46: aim by MANUAL, no NEXT/PREV scans): M, then the
+        cursor keys straight to the target's nearest cell, then TARGET. The cursor opens where the aim is (the caster
+        at the aim's start and after each pick: Player 35's reading); its cell is counted from there. On the target's
+        cell the right panel must show the target's name, else the count is off and the old scan takes over
+        (nomanual). No TARGET there: out of reach or sight; the next target. Returns None to hand over to the scan."""
+        b = st["bottom"]
+        inman = b.startswith("(USE CURSOR KEYS)")
+        byn = {f["n"]: f for f in figs}
+        left = [t for t in sc["targets"] if t not in sc["picked"] and t not in sc.setdefault("mbad", set())
+                and t in byn and _up(byn[t])]
+        if spell == "HOLD PERSON" and not sc["picked"]:
+            persons = {f["n"] for f in foes if not _is_large(f)}
+            left = [t for t in left if t in persons]
+        # (p43b2: ELWEN's Cure Light Wounds walked the cursor 6 squares to DORN: touch) only targets in range
+        rng = spell_range(spell, me)
+        if rng is not None:
+            try:
+                dist = aim_dist(p.g.mem)
+            except Exception:
+                dist = {}
+            left = [t for t in left if dist.get(t, _dist(me, byn[t])) <= rng]
+        if not inman:
+            if sc.get("mout"):
+                # back on the AIM menu after MANUAL's EXIT
+                sc["mout"] = False
+                if sc.get("nomanual"):
+                    return None                  # the count was off: the scan from here
+                if sc["picked"]:
+                    return "e", "tactics: %s %s: MANUAL: no more targets: EXIT" % (member, spell)
+                p.note("tactics", "%s: %s can reach none of its targets (MANUAL)" % (member, spell))
+                self.refused.add((member, spell))
+                self.unreach[(member, spell)] = 2
+                return "e", "tactics: %s %s: no target in reach: EXIT" % (member, spell)
+            if not left:
+                return None
+            if cur == left[0] and can:
+                return self._take(member, spell, cur)      # already on it (Bless, Prayer: the caster)
+            start = byn.get(cur) if cur is not None else me
+            sc["cursor"] = ((start or me)["x"], (start or me)["y"])
+            sc["mgoal"] = left[0]
+            self.log("TACTICS %s's %s: MANUAL from %s to figure %d" % (member, spell, sc["cursor"], left[0]))
+            return "m", "tactics: %s %s: MANUAL" % (member, spell)
+        if sc.get("cursor") is None:
+            # after a pick inside MANUAL: on with the count only if the panel shows the caster (names unique)
+            if st["rows"][1].strip("? ").strip() == me["name"]:
+                sc["cursor"] = (me["x"], me["y"])
+            else:
+                sc["nomanual"] = True
+                sc["mout"] = True
+                self.log("TACTICS MANUAL after a pick: the panel shows %r: the scan takes over" % st["rows"][1].strip())
+                return "e", "tactics: MANUAL with no cursor count: EXIT to the scan"
+        if sc.get("mgoal") not in left:
+            if not left:
+                sc["mout"] = True
+                p.note("tactics", "%s: %s: MANUAL: no target left (%d picked)" % (member, spell, len(sc["picked"])))
+                return "e", "tactics: %s %s: MANUAL: no target left: EXIT" % (member, spell)
+            sc["mgoal"] = left[0]
+        t = byn[sc["mgoal"]]
+        cx, cy = sc["cursor"]
+        aim = min(cells(t), key=lambda c: max(abs(c[0] - cx), abs(c[1] - cy)))
+        dx, dy = (aim[0] > cx) - (aim[0] < cx), (aim[1] > cy) - (aim[1] < cy)
+        if (dx, dy) != (0, 0):
+            if sc["steps"] - sc["scan0"] > 120:
+                sc["nomanual"] = True
+                sc["mout"] = True
+                return "e", "tactics: MANUAL ran long: EXIT to the scan"
+            sc["cursor"] = (cx + dx, cy + dy)
+            k = next(k for k, a, b2 in DIRS if (a, b2) == (dx, dy))
+            return k, "tactics: MANUAL cursor to %d,%d (figure %d at %d,%d)" % (cx + dx, cy + dy, t["n"], aim[0], aim[1])
+        name = st["rows"][1].strip("? ").strip()
+        if os.environ.get("OP_AIMDEBUG"):
+            self.log("AIMDEBUG manual at %s on figure %d %r panel %r bottom %r" % (sc["cursor"], t["n"], t["name"], name,
+                                                                                  b))
+        if name and name != t["name"]:
+            self.log("TACTICS MANUAL count off: the panel shows %r, figure %d is %r: the scan takes over" % (
+                name, t["n"], t["name"]))
+            sc["nomanual"] = True
+            sc["mout"] = True
+            return "e", "tactics: MANUAL count off: EXIT to the scan"
+        if "TARGET" in b.split():
+            sc["mout"] = False
+            k = self._take(member, spell, t["n"])
+            sc["cursor"] = None
+            return k
+        sc["mbad"].add(t["n"])
+        p.note("tactics", "%s: %s: MANUAL: no TARGET on figure %d" % (member, spell, t["n"]))
+        sc["mgoal"] = None
+        return self._manual(st, p, sc, me, member, spell, figs, foes, cur, can)
 
     def _aimed(self, st, lst, at, figs):
         """The figure aimed at: the aim list's entry DS:0xBEFD - 1; when that is out of the list (p30b2, p30c1: a
