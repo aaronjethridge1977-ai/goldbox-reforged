@@ -1765,9 +1765,11 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 
 
 ## Lightning Bolt's crackle (P86; DOSBox, Combat Chat 42's film lb1 at 30 fps): the bolt's walk is drawn by the
-## flight routine (START.EXE 0xBA:0x1A29, from GAME.OVR 0x29B02 / 0x2A1E4: picture 0x32, COMSPR 6 / 134) square by
-## square, about ten squares a second, and each square's figure gets its burst and line (0x298D4) as the walk
-## reaches it. Flies the crackle along the walk's squares up to `to` (the walk's end for (-1, -1)); squares off
+## flight routine (START.EXE 0xBA:0x1A29, from GAME.OVR 0x29B02 / 0x2A1E4: COMSPR 6 / 134) stop by stop, and each
+## square's figure gets its burst and line (0x298D4) as the walk reaches it. The routine draws a step every third
+## of a square and waits its [bp+6] in ms after each (0x2884): the spark passes 30 (0x27E4D), the bolt 50
+## (0x29AFF), so the crackle goes at 30/50 of the spark's ~240 px/s (P86, Combat Chat 45: ours filmed at 1x beside
+## the original's lb1, 30 fps: the original's walk from the aim to the bounce and back took ~0.7 s, ours' 0.3 s). Flies the crackle along the walk's squares up to `to` (the walk's end for (-1, -1)); squares off
 ## the view are passed over.
 ## The figures a spell reached, for matching its lines by name: during a bolt's walk the same-named ones in the
 ## order the walk reaches their squares (several kobolds hit: the line is the next one's on the walk).
@@ -1795,7 +1797,7 @@ func _crackle_to(to: Vector2i) -> void:
 	while _crackle_at != to and not _bolt_walk.is_empty():
 		var p: Vector2i = _bolt_walk.pop_front()
 		if _on_screen(_crackle_at) and _on_screen(p):
-			_fly(_crackle_at, p, [6, 134], 240.0)
+			_fly(_crackle_at, p, [6, 134], 240.0 * 30.0 / 50.0)
 			await flight_done
 		_crackle_at = p
 	_sparkle = hit
