@@ -99,7 +99,13 @@ var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 ## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
 var shop_pile_platinum := 0
-var camp_look := false   # opened from the camp: CAST SPELL ON WHOM shows the camp's picture
+var camp_look := false   # opened from the camp: CAST SPELL ON WHOM and TRADE TO? show the camp's picture
+## Opened from a screen with its own picture (the treasure): the party picks (TRADE TO?, TRADE WITH
+## WHOM?) show it with this place line (main chat 106, P97: DOSBox, the treasure's VIEW, TRADE: the
+## treasure's picture and no place line; ours drew the walking screen's last view, an encounter's portrait).
+var own_look := false
+var own_view: Image
+var own_place := ""
 var portrait := false    # opened from the party menu: the portrait shows
 ## In a fight (lab, chat 11): VIEW offers ITEMS DROP EXIT (DROP lit: VIEW's place), the item
 ## menu READY USE DROP HALVE JOIN EXIT. USE and CAST open their pages on the fight's grey
@@ -137,6 +143,9 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 	shop_pile_platinum = 0
 	portrait = with_portrait
 	camp_look = false
+	own_look = false
+	own_view = null
+	own_place = ""
 	_people = people
 	_title = title
 	_index = clampi(start, 0, maxi(people.size() - 1, 0))
@@ -457,6 +466,8 @@ func _spell_ids() -> Array[int]:
 func _draw_whom(prompt: String, camp: bool = false) -> void:
 	if camp and OverlayLook.camp_view != null:
 		_scr.draw_walk(OverlayLook.camp_view, _people, _target, OverlayLook.camp_place, PackedStringArray(), [])
+	elif own_look:
+		_scr.draw_walk(own_view, _people, _target, own_place, PackedStringArray(), [], false, false, -1)
 	else:
 		_scr.draw_walk(OverlayLook.last_view, _people, _target, OverlayLook.last_place, PackedStringArray(),
 			[], OverlayLook.last_wild, OverlayLook.last_overland, -1)
@@ -595,9 +606,9 @@ func _refresh() -> void:
 			_t(0, 24, "ORDER:", MAGENTA)
 			_menu(_current_menu(), 6)
 		"whom":
-			_draw_whom("TRADE WITH WHOM?")
+			_draw_whom("TRADE WITH WHOM?", camp_look)
 		"coin_whom":
-			_draw_whom("TRADE TO?")
+			_draw_whom("TRADE TO?", camp_look)
 		"coin":
 			_draw_page(m, _coin_cursor)
 			_t(0, 24, "SELECT TYPE OF COIN", MAGENTA)
