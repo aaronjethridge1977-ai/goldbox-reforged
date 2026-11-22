@@ -1155,6 +1155,25 @@ class LightLoot:
         return True, None, ""
 
 
+class Review:
+    """Player 44 (Gold Box Guide 12's step 1 (b), the audit as a stop): `review <file>`: the run goes on only once the
+    Player chat has written the loadout review <file> (from the checkpoint's LEDGER.txt: each member's spells for the
+    fights ahead, each scroll, potion, wand, javelin and the Necklace with its user and round, what to sell or leave;
+    nothing spent that a later fight needs); else it stops here, a tool stop, not a loss."""
+    def __init__(self, path):
+        self.path = os.path.expanduser(path)
+
+    def __repr__(self):
+        return "review %s" % self.path
+
+    def next(self, p):
+        if not os.path.exists(self.path):
+            raise_stop(p, "audit: the loadout review %s is not written yet (the Player chat writes it from the "
+                          "checkpoint's LEDGER.txt)" % self.path)
+        p.note("review", "the loadout review %s read" % self.path)
+        return True, None, ""
+
+
 class NoShare:
     """Player 44: `noshare on|off` (loot.NOSHARE): a pile's coins are left, not SHAREd (p44y1, p44z3: a party at the
     weight cap SHAREd each pile's coins and then refused 5:4's Javelin of Lightning and Two-Handed Sword +2)."""
@@ -2450,6 +2469,8 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "lightloot":
             pl.goals.append(LightLoot(rest.strip() == "on"))
+        elif cmd == "review":
+            pl.goals.append(Review(rest.strip()))
         elif cmd == "noshare":
             pl.goals.append(NoShare(rest.strip() == "on"))
         elif cmd == "xpgoal":
