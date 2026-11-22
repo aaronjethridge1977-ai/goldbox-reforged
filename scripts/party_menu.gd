@@ -52,6 +52,8 @@ var _mode := "menu"   # menu, confirm_train, congrats, confirm_drop, confirm_dro
 var _pick := 1
 var _plan: Array[int] = []
 var _cursor := 0
+# ADD's list: which waiting characters were added while it is open (shown "* NAME"; main chat 102).
+var _added: Array[bool] = []
 var _list: Array[int] = []
 var _scr: GameScreen
 var _note := Label.new()               # what happened, for the bot's log
@@ -151,7 +153,8 @@ func _refresh() -> void:
 				_scr.text(0, 24, "CONGRATULATIONS...", GameScreen.GREEN)
 		"add":
 			for i in roster.size():
-				_scr.text(1, 2 + i, roster[i].name, GameScreen.WHITE if i == _cursor else GameScreen.CYAN)
+				var shown: String = ("* " if i < _added.size() and _added[i] else "") + roster[i].name
+				_scr.text(1, 2 + i, shown, GameScreen.WHITE if i == _cursor else GameScreen.CYAN)
 				_scr.list_line(2 + i, i)
 			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "ADD A CHARACTER:", MAGENTA)
@@ -394,13 +397,27 @@ func _unhandled_input(event: InputEvent) -> void:
 				_pick = 1 - _pick
 				_refresh()
 			elif key == KEY_A or (enter and _pick == 0):
-				if not roster.is_empty() and party.size() < 6:
+				# Main chat 102 (DOSBox): the list stays open, the added one marked "* NAME" and still lit;
+				# ADD on an added one does nothing; the ADD that leaves no one waiting closes the list.
+				if not roster.is_empty() and not _added[_cursor] and party.size() < 6:
 					party.append(roster[_cursor])
-					roster.remove_at(_cursor)
+					_added[_cursor] = true
 					_sel = party.size() - 1      # lab: the one added is chosen
-				_show_menu()
+				if not _added.has(false):
+					_close_add()
+				else:
+					_refresh()
 			elif key == KEY_E or esc or (enter and _pick == 1):
-				_show_menu()
+				_close_add()
+
+
+## Leaves ADD's list: the added ones leave the waiting list (main chat 102).
+func _close_add() -> void:
+	for i in range(roster.size() - 1, -1, -1):
+		if i < _added.size() and _added[i]:
+			roster.remove_at(i)
+	_added = []
+	_show_menu()
 
 
 func _function(item: String) -> void:
@@ -425,6 +442,9 @@ func _function(item: String) -> void:
 			if not roster.is_empty():
 				_cursor = 0
 				_pick = 0
+				_added = []
+				_added.resize(roster.size())
+				_added.fill(false)
 				_mode = "add"
 				_refresh()
 		"REMOVE CHARACTER FROM PARTY":
