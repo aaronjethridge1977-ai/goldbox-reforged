@@ -10,7 +10,7 @@ extends SceneTree
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the ability scores (chat 66), the seven kinds of coins, and the items (type, name words, plus, save
 ## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the standing effects (the original's .SPC beside
-## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62), the magic-user's spell book and the levels (chat 97); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
@@ -170,6 +170,18 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	if ts != us:
 		n += 1
 		print("%s memorized spells: original %s, ours %s" % [name, str(ts), str(us)])
+	# Chat 97 (check 329, a magic-user's training): the spell book (0x33..0x6A, one byte per spell id: the
+	# spell picked at training, SCRIBE) and the levels by class (0x96..0x9D).
+	var tb := _book(a)
+	var ub := _book(b)
+	if tb != ub:
+		n += 1
+		print("%s spell book: original %s, ours %s" % [name, str(tb), str(ub)])
+	var tl := Array(a.slice(0x96, 0x9E))
+	var ul := Array(b.slice(0x96, 0x9E))
+	if tl != ul:
+		n += 1
+		print("%s levels: original %s, ours %s" % [name, str(tl), str(ul)])
 	if t.affects != u.affects:
 		n += 1
 		print("%s affects: original %s, ours %s" % [name, str(t.affects), str(u.affects)])
@@ -188,6 +200,20 @@ static func _int(d: PackedByteArray, off: int, size: int) -> int:
 		1: return d[off]
 		2: return d.decode_u16(off)
 	return d.decode_u32(off)
+
+
+## The magic-user spell ids in the spell book (record bytes 0x33..0x6A, one per spell id 1..56: non-zero = known).
+## Only the magic-user's (ids 9-21, 29-35, 45-55, from the game's spell table): a magic-user's book changes only by
+## the training pick and SCRIBE. The cleric's part isn't compared: the original fills every castable cleric spell in
+## as it loads a save (ours at training and creation: the same in play, but lab-edited saves differ), and in 5:x it
+## sets DIRTEN's 56 (RESTORATION, cleric level 7) for a reason not yet read (chat 97: 47 gate checks differed on these).
+static func _book(d: PackedByteArray) -> Array:
+	var out := []
+	for i in range(0x33, mini(0x6B, d.size())):
+		var id := i - 0x32
+		if d[i] != 0 and ((id >= 9 and id <= 21) or (id >= 29 and id <= 35) or (id >= 45 and id <= 55)):
+			out.append(id)
+	return out
 
 
 ## The memorized spells (record bytes 0x17..0x2B, a spell id each, + 0x80 while being memorized), sorted:

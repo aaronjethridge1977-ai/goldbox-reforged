@@ -694,11 +694,11 @@ func _replay_keys(names: PackedStringArray) -> void:
 				if sh != null and sh.visible:
 					print(sh.screen_text())
 			continue
-		elif n == "party":
+		elif n == "partystats":      # partystats: each member's levels, HP, THAC0, slots, damage and weapon (chat 97: was "party", shadowed by the party menu key)
 			for m in _party:
-				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d items %d" % [m.name,
+				print("   %-15s lv %s xp %d hp %d/%d rolled %d thac0 %d saves %s slots %s ha %d gp %d book %d items %d dmg %s weapon %s" % [m.name,
 					str(m.raw.slice(0x96, 0x9E)), m.experience, m.hp, m.hp_max, m.hp_rolled, 60 - m.base_thac0_60,
-					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1), m.items.size()])
+					str(m.saves), str(m.spell_slots), m.half_attacks, m.wealth_copper() / 200, m.spell_book.count(1), m.items.size(), str(m.damage), str(m.weapon.type) if m.weapon != null else "none"])
 			continue
 		elif n.begins_with("click"):        # click<n>: mouse button n (1 if none) off any menu (a RECORD MY GAME click no screen made keys)
 			var mb := InputEventMouseButton.new()
