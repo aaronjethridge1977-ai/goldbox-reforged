@@ -2732,10 +2732,11 @@ func _add_npcs() -> void:
 		if m.raw.size() > 0x10F:
 			m.raw[0x10E] = 1 if int(req[0]) == 0x18 else 0
 			# ... and draws byte 0xAB and the portrait (main chat 101: GAME.OVR 0x1F248; MAD MAN traced,
-			# GENHEERIS and PRINCESS FATIMA vary so in the original's saves). Not DIRTEN (0x18): 610 of the
-			# original's saves show his record's own 0, 4 (how he skips it isn't read yet).
+			# GENHEERIS and PRINCESS FATIMA vary so in the original's saves). Monster 0x18 too (chat 102:
+			# 4:10's mystic, LEVEL 6 MU, drawn 5, 2 under tpseed 11111111, check 367); DIRTEN's 0, 4 in the
+			# saves is the shipped party's (slot J): he never joins by NPC_ADD.
 			var rules := CreationRules.shared(_game_path)
-			if rules.ok and int(req[0]) != 0x18:
+			if rules.ok:
 				var rng := RandomNumberGenerator.new()
 				rng.randomize()
 				rules.npc_join(m.raw, rng)
