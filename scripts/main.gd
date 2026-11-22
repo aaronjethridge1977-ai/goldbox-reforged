@@ -575,6 +575,12 @@ func _replay_keys(names: PackedStringArray) -> void:
 			while _battle_begins:           # chat 39: the fight opens after A BATTLE BEGINS... (--anim)
 				await get_tree().process_frame
 			_combat.quick_all()
+		elif n.begins_with("planprep="):    # planprep=<plan file>: each member's QUICK flag as the plan's round 1 wants (lab, chat 96)
+			PlanFight.prepare(self, n.trim_prefix("planprep="))
+		elif n.begins_with("planfight="):   # planfight=<plan file>: the open fight played by a plan (lab, chat 96; scripts/dev/plan_fight.gd)
+			while _battle_begins:
+				await get_tree().process_frame
+			await PlanFight.run(self, n.trim_prefix("planfight="))
 		elif LabHooks.handles(n):          # the side lane's lab keys (scripts/combat/lab_hooks.gd)
 			if await LabHooks.handle(self, n):
 				continue
