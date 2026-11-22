@@ -143,7 +143,16 @@ func outcome() -> int:
 	# only down (dying, unconscious) the original plays out the round and then asks
 	# CONTINUE BATTLE (next_turn; checked roll for roll in the lab, 2026-11-14); NO wins.
 	if standing(1) == 0 and (decided or (enemies_all_gone() and not lab_play_out())):
-		return 1
+		# After the fight (GAME.OVR 0x5AD8) the party lives on only if a player character (record +0x84 under 0x80:
+		# no NPC, no charmed member) stands on its side (status okay, animated or running); else THE MONSTERS
+		# REJOICE (the spell matrix, chs1, Combat Chat 45: BAKSHI alone, charmed by his own spell, won the fight
+		# and the party was destroyed).
+		for c in combatants:
+			var w: PartyMember = c.who
+			if c.team == 0 and not c.down and not c.get("fled", false) and not w.is_monster and w.npc < 128 \
+					and w.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED, PartyMember.STATUS_RUNNING]:
+				return 1
+		return 2
 	if standing(0) == 0:
 		# With the whole party down the original also plays out the round before the fight is
 		# lost (lab, Combat Chat 2: 7:23, the party held by Yarash's wand, the last one slain,
@@ -1976,7 +1985,16 @@ func by_distance_from(cell: Vector2i, list: Array[int]) -> void:
 ## modifier (0x6E72), added as a byte; anything outside 1-96 becomes 1.
 func _round_movement(m: PartyMember) -> int:
 	var mv := m.movement
-	if not m.is_monster:
+	# The difficulty's modifier ([0x49D6]+0x6E4) goes by the figure's side (record +0x10E = 0, GAME.OVR 0x12932), not
+	# its kind, as the to-hit's (script_hit_mod): a kobold charmed onto the party's side moves as the party (the spell
+	# matrix, chs1, Combat Chat 45: a running kobold met only it and BAKSHI, both slower, and got away with no d2 at
+	# draw 12881; ours tied 6 with 6).
+	var side := 1 if m.is_monster else 0
+	for c in combatants:
+		if c.who == m:
+			side = c.team
+			break
+	if side == 0:
 		mv = (mv + party_move_mod) & 0xFF
 	return mv if mv >= 1 and mv <= 0x60 else 1
 
@@ -2817,8 +2835,11 @@ func _went_down(j: int) -> void:
 	var tm: PartyMember = t.who
 	for a in tm.affects:
 		if int(a.effect) == CombatSpells.EFFECT_CHARM:
-			# The removal (0x2AF10) runs the charm's handler (0xF05B) with its flag: the side back from bit 6.
+			# The removal (0x2AF10) runs the charm's handler (0xF05B) with its flag: the side back from bit 6, and a
+			# control byte of 0xB3 (the charm's) back to 0 (0xF07E).
 			t.team = (int(a.value) >> 6) & 1
+			if tm.npc == 0xB3:
+				tm.npc = 0
 	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
 	t.regen_in = 0      # 0x3B
 	t.dies_in = 0       # 0x5F
@@ -2918,8 +2939,12 @@ func _act_powers(i: int) -> void:
 		if immune or _save(tm, 4, -2):
 			message.emit("%s IS UNAFFECTED" % tm.name)
 		else:
-			# The original adds effect 0x0B here too (0x10BD8: power the gazer's side x 128 + 12), which stays
-			# on a member after the fight: not yet in ours (Charm beyond the fight, combat_spells.gd).
+			# Effect 0x0B (0x10BD8: power the gazer's side x 128 + 12), stored as its handler leaves it (0xF05B:
+			# + 0x20 + the figure's own side x 64), and a player character's control byte 0xB3 (0xF0E4); it stays
+			# on a member after the fight (Combat Chat 45, as Charm Person's: the spell matrix, chs1).
+			SpellCaster.add_affect(tm, CombatSpells.EFFECT_CHARM, 0, 0, (c.team << 7) | (t.team << 6) | 0x20 | 12)
+			if tm.npc <= 0x7F:
+				tm.npc = 0xB3
 			t.team = c.team
 			t.quick = true
 			t.target = -1
