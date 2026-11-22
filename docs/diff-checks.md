@@ -208,6 +208,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   `~/gbr/lab/data/c105/treasure_last.py` (402 matches with it). Seen, not fixed (screen only): after this LOOK's
   treasure the original's place line shows SEARCH until the next redraw (the LOOK's flag still 1 when the place line
   is drawn; the next step takes 1 minute, not searching).
+- **403, 404 (the same chest's money; main path, matched once the keys used End):** 403: TAKE, MONEY (PLATINUM 200,
+  GEMS 2), Enter, 50; End, Enter, 1 (a gem); EXIT, EXIT, SHARE (149 platinum over six: the first five 25, the last
+  24; the gem to THRENDER GRONE), EXIT: THERE IS STILL TREASURE LEFT ... YES NO, NO. 404: POOL (SILVER 324,
+  PLATINUM 211, GEMS 2), TAKE MONEY 7 silver, EXIT, EXIT, SHARE, TAKE ITEMS, TAKE the shield, EXIT (straight to the
+  main menu: no money left), EXIT, NO. **In the original Down doesn't move the coin list's light** (the second TAKE
+  took 1 platinum); ours' Down moved to GEMS: ours' ARROWS IN LISTS names WHO, spell and creation lists only, so this
+  is put to the Lead (board): the checks use End, which both games take.
 
 ## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
