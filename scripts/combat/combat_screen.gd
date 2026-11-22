@@ -142,6 +142,12 @@ var _sparkle := -1                 # the figure showing a spell's sparkles
 ## for most spells; the burst (0x13: GAME.OVR 0x298D4 the bolt's hit on a square, 0x2A1C6) for Fireball, Lightning
 ## Bolt and the Javelin of Lightning (P86, seen in DOSBox, Combat Chat 42).
 var _hit_pic: Array = [9, 137]
+## Lightning Bolt's and the Javelin's walk (P86): the squares still to crackle through (CombatSpells.bolt_path, taken
+## at the first hit's line) and where the crackle is.
+var _bolt_walk: Array[Vector2i] = []
+var _bolt_on := false
+var _bolt_started := false
+var _crackle_at := Vector2i.ZERO
 ## A figure struck down stays standing through the blow's message; its fall shows COMSPR's
 ## skull (block 11) on its square while "GOES DOWN ..." is up, then the square is empty (lab:
 ## Bakshi and the orcs at speed 4, 0.8 s).
@@ -1125,10 +1131,16 @@ func _show_messages() -> void:
 			_row24_msg = msg
 		else:
 			_panel_msgs.append(msg)
-			for k in _spell_hits:
+			for k in _bolt_order(_spell_hits, who):
 				if (_combatants[k].who as PartyMember).name.to_upper() == who and not msg.contains(" ATTACKS "):
 					_spell_hits.erase(k)
 					_sparkle = k
+					if _bolt_on:
+						# The walk reaches the square first, then its burst and line.
+						_panel_msgs.erase(msg)
+						_refresh()
+						await _crackle_to(_combatants[k].cell)
+						_panel_msgs.append(msg)
 					break
 			if msg.contains("GOES DOWN") or msg.contains("IS KILLED") or msg.contains("FALLS DEAD"):
 				for k in _lingering:
@@ -1145,6 +1157,10 @@ func _show_messages() -> void:
 				await get_tree().create_timer(0.066).timeout
 				_refresh()
 			_sparkle = -1
+			if _bolt_on and _spell_hits.is_empty():
+				# The last figure hit: the walk goes on to its end (GAME.OVR 0x29B02's loop).
+				await _crackle_to(Vector2i(-1, -1))
+				_bolt_on = false
 		else:
 			await get_tree().create_timer(message_hold()).timeout
 		if not _spell_flight.is_empty() and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
@@ -1721,6 +1737,9 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
 		to = _combatants[targets[0]].cell
 	_hit_pic = [10, 138] if id in [CombatSpells.FIREBALL, CombatSpells.LIGHTNING, 60] else [9, 137]
+	_bolt_on = id in [CombatSpells.LIGHTNING, 60]
+	_bolt_started = false
+	_bolt_walk = []
 	# Fireball: no spark flies to the aim; the bursts follow TARGET at once (P86, DOSBox, Combat Chat 42: two hand
 	# casts filmed; Lightning Bolt's spark does fly).
 	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell and id != CombatSpells.FIREBALL:
@@ -1743,6 +1762,44 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 		for n in targets.size() - 1:
 			var t: int = targets[n]
 			_hold_flights[(_combatants[t].who as PartyMember).name.to_upper()] = _combatants[t].cell
+
+
+## Lightning Bolt's crackle (P86; DOSBox, Combat Chat 42's film lb1 at 30 fps): the bolt's walk is drawn by the
+## flight routine (START.EXE 0xBA:0x1A29, from GAME.OVR 0x29B02 / 0x2A1E4: picture 0x32, COMSPR 6 / 134) square by
+## square, about ten squares a second, and each square's figure gets its burst and line (0x298D4) as the walk
+## reaches it. Flies the crackle along the walk's squares up to `to` (the walk's end for (-1, -1)); squares off
+## the view are passed over.
+## The figures a spell reached, for matching its lines by name: during a bolt's walk the same-named ones in the
+## order the walk reaches their squares (several kobolds hit: the line is the next one's on the walk).
+func _bolt_order(hits: Array[int], who: String) -> Array[int]:
+	if not _bolt_on:
+		return hits
+	var order: Array = _combat.magic.bolt_path if not _bolt_started else [_crackle_at] + _bolt_walk
+	var out := hits.duplicate()
+	out.sort_custom(func(a: int, b: int) -> bool:
+		var ia := order.find(_combatants[a].cell)
+		var ib := order.find(_combatants[b].cell)
+		return (ia if ia >= 0 else 999) < (ib if ib >= 0 else 999))
+	return out
+
+
+func _crackle_to(to: Vector2i) -> void:
+	if not _bolt_started:
+		_bolt_started = true
+		_bolt_walk = _combat.magic.bolt_path.duplicate()
+		if _bolt_walk.is_empty():
+			return
+		_crackle_at = _bolt_walk.pop_front()     # the aim's square: the spark ended there
+	var hit := _sparkle
+	_sparkle = -1               # no burst while the crackle walks
+	while _crackle_at != to and not _bolt_walk.is_empty():
+		var p: Vector2i = _bolt_walk.pop_front()
+		if _on_screen(_crackle_at) and _on_screen(p):
+			_fly(_crackle_at, p, [6, 134], 240.0)
+			await flight_done
+		_crackle_at = p
+	_sparkle = hit
+	_refresh()
 
 
 ## The arrow sprite for a flight from a to b, mirrored for the left diagonals (lab: Darkstar's

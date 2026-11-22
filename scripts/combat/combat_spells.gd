@@ -444,7 +444,12 @@ func prayer(m: PartyMember) -> int:
 
 ## Lightning Bolt's hit on one square (GAME.OVR 0x298D4 with the spell's save, type 4): the figure there,
 ## the caster too, saves for half and takes the damage (0x2C22E, the spell being cast). True at a wall.
+## The squares the last bolt walked, in order (the aim's first), for the screen's crackle (P86).
+var bolt_path: Array[Vector2i] = []
+
+
 func _bolt_square(i: int, id: int, p: Vector2i, dmg: int, lvl: int) -> bool:
+	bolt_path.append(p)
 	var j := c.occupant(p)
 	if j >= 0:
 		var t: PartyMember = c.combatants[j].who
@@ -841,6 +846,7 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				# breath's bolt routines, the aim square first (0x298D4), then the walk from it, 8 squares'
 				# worth, bouncing off walls (0x29973 with the first-bounce flag).
 				var hit_one := func(p: Vector2i) -> bool: return _bolt_square(i, id, p, dmg, lvl)
+				bolt_path = []
 				hit_one.call(_cast_cell)
 				c._bolt(me.cell, _cast_cell, 8, dmg, hit_one, true)
 				return
@@ -855,6 +861,7 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			# figure 1d6+20 (0x298D4, save 4), then the bolt's walk on from it (0x29973: reach 3, no first-bounce
 			# flag), each figure there a flat 20; a save halves each (was: every area figure 1d6+20).
 			var dmg := c.roll(1, 6, "javelin") + 20
+			bolt_path = []
 			_bolt_square(i, id, _cast_cell, dmg, lvl)
 			c._bolt(me.cell, _cast_cell, 3, 20, func(p: Vector2i) -> bool: return _bolt_square(i, id, p, 20, lvl))
 		65:         # Wand of Magic Missiles: 2d4+2
