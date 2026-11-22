@@ -2268,12 +2268,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			var up_before := _standing()
 			var away := _combat.player_flees(me)
 			_note_falls(up_before)
+			_move_start = {}
+			_cmode = "menu"
 			if away:
-				_move_start = {}
-				_cmode = "menu"
 				_after_player_action("fled")
 			else:
-				_refresh()
+				# "ESCAPE IS BLOCKED" on row 24 for the message pause, then the turn is over (Combat.player_flees).
+				_say("ESCAPE IS BLOCKED", func() -> void: _after_player_action("escape blocked"))
 		return
 	if _asking_ally:
 		if key == KEY_Y or key == KEY_N:

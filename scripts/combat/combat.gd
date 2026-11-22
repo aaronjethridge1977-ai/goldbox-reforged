@@ -2315,12 +2315,21 @@ func _step_failed(i: int) -> bool:
 
 
 ## YES at a MOVE's "Flee:" (GAME.OVR 0xA43A -> 0x13465): the getaway as a running figure's, the speeds and the
-## d2 on a tie; away, the member leaves the field (GOT AWAY), else ESCAPE IS BLOCKED and the MOVE goes on.
+## d2 on a tie; away, the member leaves the field (GOT AWAY). Blocked, the getaway prints "Escape is blocked" on
+## row 24 (0x13502: 0xBA:0x1693, the routine of a step's "Blocked"; the screen shows it) and ends the member's turn
+## either way (0x1350D: 0xBA:0x2637). Combat Chat 47, DOSBox (flee_k6: ARN at movement 6, kobolds 6): five d2s at
+## OVR:0x134C6 came up blocked, and after each YES the next turn was a kobold's; ours kept the MOVE going.
 func player_flees(i: int) -> bool:
-	return _gets_away(i)
+	var away := _gets_away(i, false)
+	if not away:
+		var c: Dictionary = combatants[i]
+		_spend_turn(i)
+		c.attacks = 0
+		c.second = 0
+	return away
 
 
-func _gets_away(i: int) -> bool:
+func _gets_away(i: int, say_blocked: bool = true) -> bool:
 	var c: Dictionary = combatants[i]
 	var m: PartyMember = c.who
 	var foes := _fastest(1 - c.team)
@@ -2346,7 +2355,7 @@ func _gets_away(i: int) -> bool:
 		c.fled = true
 		m.status = PartyMember.STATUS_RUNNING
 		message.emit("%s GOT AWAY" % m.name)
-	else:
+	elif say_blocked:
 		message.emit("ESCAPE IS BLOCKED")
 	return away
 
