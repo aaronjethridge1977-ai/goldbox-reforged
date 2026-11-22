@@ -2,6 +2,21 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 07:51 (Gold Box Lead)
+
+### Rule changes (Combat 43, main 96)
+
+- 2026-11-22 · combat (Combat Chat 43) · **Lightning Bolt's and the Javelin's crackle walks the bolt's squares (COMSPR 6 / 134, ~10 squares a second); each figure's burst and line come as the walk reaches it** (P86; DOSBox film lb1; START.EXE's flight routine from GAME.OVR 0x29B02) · the bolt's look and pace on screen (paced play only); no rules.
+- 2026-11-22 · combat (Combat Chat 43) · **Main chat 98's FEATURES line landed: ARROWS IN WHO LISTS is ARROWS IN LISTS (the spell lists too)** (the Lead's (a), Q13) · FEATURES' text only.
+- 2026-11-22 · combat (Combat Chat 43) · **Main chat 97's fix landed: the computer's weapon choice rates 0 an aligned sword that doesn't answer to its bearer and an item whose byte 61 is 0x53 (GAME.OVR 0xBF3E, 0xBF5F)** (the throne room, 31163 draws identical; regress orig_G_c43_throne) · QUICK members' and monsters' readying (LIRA's Long Sword +2 in the throne room).
+- 2026-11-22 · combat (Combat Chat 43) · **Mirror Image's effect holds the count of images (GAME.OVR 0xF61B; ours kept it x 16) and its cast runs the add-effect routine's resistances (a half-elf's d100, magic resistance)** (the spell matrix mik1 identical) · a Mirror Image cast draws one more d100 for a half-elf or a magic-resistant caster; saves with images.
+- 2026-11-22 · combat (Combat Chat 43) · **The morale test's and the getaway's speeds are the original's movement routine's (GAME.OVR 0x1291E): the whole movement with Haste and Slow; ours took half the movement, so near-equal speeds tied** · who flees and who surrenders, FLEE's getaway (equal speeds roll the d2); a hasted figure "AGES" at the first morale test that counts it.
+- 2026-11-21 · combat (Combat Chat 43) · **Charm Person as the original (GAME.OVR 0xF05B, the spell matrix chk1 identical): the charmed monster carries effect 0x0B and never runs or gives up (its morale value is 100); the morale test also counts Bless (+5) and Curse (-5) (0xED68, 0xED78); a charmed monster that falls goes back to its side (experience, the fight's end); the script's to-hit bonus follows the attacker's side, not its kind (0x2BBEF)** · fights with Charm Person, Bless or Curse on computer-run figures (NPCs, quick members, monsters); a vampire's charm and a charmed member still as before (no 0x0B yet).
+- 2026-11-21 · combat (Combat Chat 43) · **Main chat 96's fixes landed: PgDn / PgUp page the treasure's LOOT list as NEXT / PREV (nothing on the last / first page), a TAKE keeps the page's top, and the pile's coins count for experience kind by kind, each rounded down (GAME.OVR 0x57B1: 288 copper + 18 silver are 1 gold)** (check 327) · the treasure screen; a fight's experience from coins (a point or so less with mixed small coins).
+- 2026-11-21 · main (chat 96) · **Experience by class as Pool's GAME.OVR 0x58D3: no +10% for paladins or rangers (only cleric, fighter, magic-user, thief with the prime requisite over 15); a magic-user/thief (class 16) gets half the share, as the other two-class kinds** (party_member.gd `gain_experience`; check 328 with Combat's c96 fixes) · experience of paladins, rangers and magic-user/thieves (none in the full run's party)
+
+## Archived 2026-11-22 07:50 (Gold Box Lead)
+
 ## Archived 2026-11-22 06:52 (Gold Box Chat 102)
 
 ### Requests to another lane (a note inside Guide 12's 2026-11-21 21:07 request to main)
