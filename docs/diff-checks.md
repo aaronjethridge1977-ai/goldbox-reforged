@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait (checks 351-360)
+## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait (checks 351-364)
 
 All at 3:11 from check 103's start and tpseed 11111111, main path, as chat 100's 344 (the four steps, YES, REMOVE
 PHINEAS, CREATE, KEEP, a name, K, EXIT, YES, ADD the new one, BEGIN ADVENTURING; ours' keys Down where the original's
@@ -204,6 +204,11 @@ the levels, age and abilities; the 348 gate checks unchanged). Every break of th
   (GAME.OVR 0x1F248; START.EXE DS 0x8C7 heads, 0x8D7 / 0x8E1 / 0x8EB / 0x8F5 bodies; traced on MAD MAN: 11, 5); ours kept
   the record's (35, 3). `CreationRules.npc_join` from main.gd's `_add_npcs`; DIRTEN (0x18) keeps his record's 0, 4 as
   in 610 of the original's saves (how he skips it isn't read).
+- **361-364 matched at once, 3 of 3 each (in the gate):** 361 the camp's ALTER ICON on THRENDER GRONE: PARTS, HEAD,
+  NEXT x3, KEEP (0x0B wraps to 0), WEAPON, PREV x2, EXIT (dropped), COLOR-1 BODY NEXT x5 KEEP, HAIR PREV KEEP, COLOR-2
+  LEG NEXT x2 KEEP, SHIELD PREV KEEP, EXIT, YES (break: body colours); 362 the creator's name line (16 letters typed: 15
+  kept, two Backspaces, a space, Z: `ZBCDEFGHIJKLM Z`) and portrait page (HEAD x15, BODY x13: both wrap to 2; break: head
+  3); 363 an elf female magic-user/thief, 364 a half-elf cleric/magic-user (chaotic evil; breaks: class, sex).
 
 ## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation and MODIFY (checks 336-350)
 

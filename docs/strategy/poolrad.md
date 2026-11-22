@@ -705,3 +705,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- The throne room's wave 3 (8:13, three waves from 6,3): CEDRIC's Prayer and LIRA's Fireball on the kobolds (off our front line) in wave 3's round 1 won 40 of 60 against MAGIC-ON QUICK's 36 of 60 in ours: no clear gain, but wave 3 ends two rounds sooner with ~10 HP less lost. *seen* (in ours, planfight, 60 seeds; main chat 101)
