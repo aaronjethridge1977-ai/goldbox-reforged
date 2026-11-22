@@ -2,7 +2,7 @@ class_name CharacterCreator
 extends Control
 ## CREATE NEW CHARACTER, as the original plays it (see CreationRules for the rules):
 ##   race, sex, class, alignment: framed lists from row 2, column 3 (the current line white,
-##     the rest green), " EXIT" on row 24; Up/Down and Enter, Esc to go back;
+##     the rest green), " EXIT" on row 24; Up/Down and Enter, Esc back to the hall;
 ##   the rolled character on the view page with its portrait, "KEEP THIS CHARACTER? YES NO"
 ##     (No rolls again);
 ##   "CHARACTER NAME:" (up to 15 letters), then the portrait: HEAD BODY KEEP.
@@ -155,17 +155,11 @@ func _reroll() -> void:
 	_draw()
 
 
+## EXIT (Esc / E) at any of the four lists leaves for the hall menu, as the original (main chat 101,
+## DOSBox: not a step back to the list before).
 func _back() -> void:
-	match _stage:
-		"race":
-			visible = false
-			cancelled.emit()
-		"sex":
-			_show_list("race")
-		"class":
-			_show_list("sex")
-		"align":
-			_show_list("class")
+	visible = false
+	cancelled.emit()
 
 
 func _finish() -> void:
