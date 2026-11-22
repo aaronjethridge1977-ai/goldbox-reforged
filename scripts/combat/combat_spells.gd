@@ -193,7 +193,7 @@ func image_die(tm: PartyMember) -> bool:
 	var a := _affect(tm, EFFECT_MIRROR)
 	if a.is_empty():
 		return false
-	var images: int = int(a.value) >> 4
+	var images: int = int(a.value)    # the power byte holds the count (0xF61B)
 	var d := c.roll(1, images + 1, "%s's images" % tm.name)
 	if OriginalBugs.on() or d <= 1:
 		return false
@@ -202,7 +202,7 @@ func image_die(tm: PartyMember) -> bool:
 	if images <= 0:
 		tm.affects.erase(a)
 	else:
-		a.value = images << 4
+		a.value = images
 	return true
 
 
@@ -220,7 +220,7 @@ func image_takes_it(tm: PartyMember, id: int) -> bool:
 	var a := _affect(tm, EFFECT_MIRROR)
 	if a.is_empty():
 		return false
-	var images: int = int(a.value) >> 4
+	var images: int = int(a.value)    # the power byte holds the count (0xF61B)
 	if c.roll(1, images + 1, "%s's images" % tm.name) <= 1:
 		return false
 	if aim_kind(id) == "area" or id in AREA_HANDLERS:
@@ -230,7 +230,7 @@ func image_takes_it(tm: PartyMember, id: int) -> bool:
 	if images <= 0:
 		tm.affects.erase(a)
 	else:
-		a.value = images << 4
+		a.value = images
 	return true
 
 
@@ -819,8 +819,15 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 		34:         # Stinking Cloud: the cloud on four cells from the aim point, not the targets' area (see _lay_cloud)
 			_lay_cloud(i, _cast_cell, lvl)
 		32:         # Mirror Image: d4 images
-			SpellCaster.add_affect(m, EFFECT_MIRROR, id, dur, c.roll(1, 4, "images") << 4)
-			c.message.emit("%s IS DUPLICATED" % m.name)
+			# The d4 (0x28AB2) is the power, the count of images; the effect goes on through the add-effect
+			# routine (0x278DB -> 0x2C540), so the caster's category 9 runs: a half-elf's d100 (0x11A3F), magic
+			# resistance (the spell matrix, mik1, Combat Chat 43: BAKSHI's d100 at draw 1865).
+			var images := c.roll(1, 4, "images")
+			if resists(m, -1):
+				c.message.emit("%s IS UNAFFECTED" % m.name)
+			else:
+				SpellCaster.add_affect(m, EFFECT_MIRROR, id, dur, images)
+				c.message.emit("%s IS DUPLICATED" % m.name)
 		47, 51, NECKLACE:   # Fireball, Lightning Bolt: the caster's level in d6, half on a save
 			var dmg := c.roll(lvl, 6, "%s damage" % (table.name_of(id).to_lower()))
 			if id == LIGHTNING:
