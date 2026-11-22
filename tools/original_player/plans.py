@@ -969,15 +969,24 @@ def picks(m, M=None):
     out = []
     over = PICK_OVERRIDE.get(m.get("name"))
     if over:
-        ids_of = {v: k for k, v in SPELL_NAMES.items()}
+        # Player 45 (p45f1: SHIELD, not in SPELL_NAMES, and LIRA's magic-user HOLD PERSON (id 49; the name gave the
+        # cleric's 23) were dropped): a name is every spell id of that name in START.EXE's table (ledger.spell_name),
+        # the first the member knows with a free slot of its class and level
+        import ledger
+        all_ids = {}
+        for i in range(1, 57):
+            all_ids.setdefault(ledger.spell_name(i), []).append(i)
         free = {slot: max(0, m["rec"][slot] - sum(1 for b in m["mem"] if (b & 0x7F) in ids)) for ids, slot, _ in PICKS}
+        chosen = []
         for name in over:
-            sid = ids_of.get(name)
-            slot = next((sl for ids, sl, _ in PICKS if sid in ids), None)
-            if sid and slot and free.get(slot, 0) > 0 and m["rec"][0x33 + sid - 1]:
-                out.append(name)
-                free[slot] -= 1
-        m = dict(m, mem=list(m["mem"]) + [ids_of[n] for n in out])
+            for sid in all_ids.get(name, []):
+                slot = next((sl for ids, sl, _ in PICKS if sid in ids), None)
+                if slot and free.get(slot, 0) > 0 and m["rec"][0x33 + sid - 1]:
+                    out.append(name)
+                    chosen.append(sid)
+                    free[slot] -= 1
+                    break
+        m = dict(m, mem=list(m["mem"]) + chosen)
     slow = M is None or any(SLOW_POISON in [b & 0x7F for b in o["mem"]] for o in M)
     for ids, slot, order in PICKS:
         n = max(0, m["rec"][slot] - sum(1 for b in m["mem"] if (b & 0x7F) in ids))
