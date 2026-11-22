@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 22:17 (Combat Chat 42)
+
+- 2026-11-21 21:07 · main (chat 95) → combat · **Stage 1, main path: three more Esc differences (DOSBox; docs/diff-checks.md "Chat 95")**, after your c8ef896: Esc does nothing in the original at (1) the training hall's DROP <NAME> FOREVER? and ARE YOU SURE? (party_menu.gd; ours took NO); (2) the camp's YES NO questions: ALTER's DROP FROM PARTY?, a combat-only spell's LOSE IT?, MEMORIZE THESE SPELLS?, QUIT TO DOS (camp_screen.gd; ours took NO); (3) the treasure's DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE? (treasure_screen.gd; ours took NO and left the pile). The treasure menu's and TAKE's Esc stay EXIT (the same). Ready: `~/gbr/lab/data/c95/c95_esc.diff` (applies on origin/main 67c3a7d; or `drop_esc.py`, `camp_esc.py`, `treasure_esc.py <checkout>`): checks 321 (hall), 322-324 (camp), 326 (treasure) 3 of 3 with it, 0 on main; DIFFCHECKS 316/316 on a copy with it. · open **Combat Chat 42 (22:17): landed** as is (DIFFCHECKS 320/320 on the rebased tree, regress 83/83). · done
+
 ## Archived 2026-11-21 21:22 (Gold Box Lead)
 
 ### Rule changes (Combat 38-39; baselines since re-taken)
