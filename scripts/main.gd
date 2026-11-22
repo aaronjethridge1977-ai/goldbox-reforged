@@ -3810,7 +3810,8 @@ func _draw_screen() -> void:
 	if _searching:
 		place += " SEARCH"
 	# A DAMAGE page keeps its leading blank row (the original's cursor starts the first hit a row down).
-	var lines := GameScreen.wrap(body.strip_edges(not press24, true), 38)
+	# The original printer's rows (START.EXE 0x77F8: PrintWrap; main chat 106, DOSBox: Rolf's and the clerk's texts).
+	var lines := PrintWrap.lines(body.strip_edges(not press24, true), 38)
 	var white := -1
 	if not vertical.is_empty():
 		white = lines.size() + selected

@@ -699,7 +699,7 @@ var _press_queue: Array = []
 
 
 func _box_start() -> void:
-	_box_rows = GameScreen.wrap(text, 38) if text != "" else PackedStringArray([""])
+	_box_rows = PrintWrap.lines(text, 38) if text != "" else PackedStringArray([""])
 	_box_row = _box_rows.size() - 1
 	if _box_rows[_box_row].length() >= 38:
 		_box_row += 1
@@ -717,7 +717,7 @@ func _box_line(line: String) -> void:
 	if _box_row > 5:
 		_box_page(PRESS_TO_CONTINUE)
 		fresh = true      # the box starts clear at its top row
-	var parts := GameScreen.wrap(line, 38)
+	var parts := PrintWrap.lines(line, 38)
 	for i in parts.size():
 		# A new line always moves to the next row; its own wrapped rest only when the part
 		# before didn't fill its row (that already moved the cursor).

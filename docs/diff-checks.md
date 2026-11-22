@@ -172,6 +172,39 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 106: the printer's rows (START.EXE 0x77F8); P97's picture at TRADE TO?; the clerk's rewards (410-411)
+
+- **The original printer's rows (a difference, main path: every text; fixed in main's files).** DOSBox: Rolf's
+  tour (3:0 0xB2F6) shows "TO THE CITY'S MOST IMPORTANT BUILDING." with the closing quote alone on the next row,
+  the clerk's Sokal Keep reward "...HERE IS YOUR REWARD." the same; ours moved "BUILDING.'" whole. START.EXE
+  0x77F8 (the printer; Pascal string, 1-based, L its length) cuts the string into chunks: from i, the
+  separators (DS:0xD16, a small set: `! , - . : ; ?`) while j < L, then the run of other characters while j < L
+  up to a space or a separator (that one included), then after a separator the separators that follow while
+  j + 1 < L. A chunk that doesn't fit (x + j - i > the right column, 38) goes whole to the next row, where spaces
+  are skipped (0x77A4). So the space after a word must fit too (a word followed by a space ends at column 37 at
+  most), a full stop or comma may end at 38, and a quote after a full stop is a chunk of its own. Modelled in
+  `~/gbr/lab/data/c106/origwrap.py`: the same rows as seven DOSBox screens today (Rolf's first and third pages, the clerk's Sokal Keep reward,
+  the clerk's entry, the Slums commission, the books, the auction); 314 of the game's 1390 PRINT_CLEAR texts
+  break a row elsewhere in ours. **Fixed:** `scripts/game/print_wrap.gd` (PrintWrap.lines), used by main.gd's
+  text box and ecl_vm.gd's DAMAGE box; `tools/lab/printwrap_check.gd` checks it against the model on 1615 texts
+  (0 differ). Not done: a message joined from several PRINTs is laid out as one string (the original lays out
+  each PRINT's string from the cursor: only a PRINT's last word at column 38 or a quote at a PRINT's end can
+  differ; none seen); Combat's screens still use GameScreen.wrap (request on the board). No check (state
+  only): ours' rows compared by hand (`data/c106/rolf3b.png`, `clerk2b.png`).
+- **P97 (Jeremy, screen only, main path):** TRADE TO? from the treasure menu's VIEW (after Norris, 8:29) drew
+  main's last view, Norris' pre-fight portrait and the time before the fight; the original keeps the treasure's
+  picture and no place line. From camp VIEW, TRADE: the campfire and "... CAMPING" (ours: the walking view).
+  Ready edit for Combat: `~/gbr/lab/data/c106/p97_edit.py` (character_sheet.gd, treasure_screen.gd; DIFFCHECKS
+  407/407 on it).
+- **410, 411 (3:8 the clerk's rewards for the first two commissions; main path; both matched at once):** 405's
+  start with 0x4ABB = 254 (the Slums cleared) / 0x4AA7 = 254 (Sokal Keep taken): Left, Up onto 5,5; THE CLERK
+  SPEAKS. 'YOUR CLEARING OF THE SLUM AREAS PERMITS US TO EXPAND. HERE IS YOUR REWARD.' (index 21 of the 26 in
+  0x9D63's table; Sokal Keep index 1: WITH SOKAL KEEP IN OUR HANDS ...); the treasure (the tables at 0xB5ED..:
+  450 experience each, 250 gold, 50 platinum, 1 jewelry / 1308 experience, 250 platinum, 3 jewelry), SHARE, EXIT;
+  0x4AC1 + 1, the cell 255; then the commissions: without the Slums (410) / the Slums again (411), the books,
+  Podal Plaza's auction. Breaks: 410's 0x4ABB back to 254, 411's 0x4AC1 to 0: both DIFFER. Texts compared by
+  hand (the same words; the rows as above).
+
 ## Chat 105: keys typed while a script runs (P90); a stack's plural (P91); 395-400 in the gate
 
 - **395-400 joined the gate** after Combat Chat 46 landed chat 104's four edits (13913f1): DIFFCHECKS 398/398.
