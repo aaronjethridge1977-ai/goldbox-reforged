@@ -332,9 +332,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	var k := (event as InputEventKey).keycode
 	match _stage:
 		"race", "sex", "class", "align":
-			if k == KEY_UP:
+			# The original moves the choice with Home / End (wrapping); Up / Down too here
+			# (ARROWS IN LISTS, as the party menu's lists; main chat 100).
+			if k in [KEY_HOME, KEY_KP_7, KEY_UP]:
 				_sel = (_sel + _items.size() - 1) % _items.size()
-			elif k == KEY_DOWN:
+			elif k in [KEY_END, KEY_KP_1, KEY_DOWN]:
 				_sel = (_sel + 1) % _items.size()
 			elif k == KEY_ENTER or k == KEY_KP_ENTER:
 				_choose(int(_items[_sel][1]))
