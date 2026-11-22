@@ -57,7 +57,7 @@ Files not listed: whoever needs them asks here first.
 
 ## Now
 
-- Lead: **running now** (2026-11-21 18:43): Combat Chat 42 (since 16:49); Gold Box Chat 94 (since 18:16); Gold Box Player 43 (since 18:43). Updated at every start and end; a lane's own Now line changes only when it pushes.
+- Lead: **running now** (2026-11-21 20:00): Combat Chat 42 (since 16:49); Gold Box Chat 95 (since 20:00); Gold Box Player 43 (since 18:43). Updated at every start and end; a lane's own Now line changes only when it pushes.
 - Guide: **Gold Box Guide 11 running** (since 18:44): Jeremy's win from slot H read (the guards carry to the original; Tyranthraxus by the wand doesn't, bug #7); slot H's items read; two requests below; next: the Player discussion with Jeremy.
 - Guide (prev): **Gold Box Guide 10 ended** (15:16-18:45): p42f1-f7 read (by the reload rule only p42f4 won the guards; holds late or on the far guards lost; clouds overlapped; the flight at movement 3); **Plan 5 additions (Jeremy, 15:22)**; p39c2's video read (our clouds on our members, aim scans, BRAM guarding beside a troll); **Plan 2 additions and the levels (Jeremy, 15:46)** (Sokal Keep was already beaten: the bands went on). **Jeremy beat the game from save H in ours (by 18:42)**, not sure it would have worked in the original: Guide 11 opens with it.
 - Sources: **Gold Box Sources 2 ended** (15:06-19:29): Secret of the Silver Blades done: docs/strategy/silver-blades.md (What changed since Curse, sections 1-6, For the lanes) and the playbook's "(Silver Blades)" lines, all approved by Jeremy; one low-priority request to main (below). Next: Gold Box Sources 3, Pools of Darkness.
