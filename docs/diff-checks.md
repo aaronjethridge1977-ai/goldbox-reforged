@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded; the hall's ADD list (checks 359, 360, 367-375)
+## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded; the hall's ADD list; ALTER PICS (checks 359, 360, 367-377)
 
 - **359, 360 in the gate** after Combat Chat 44's 3758972 (icon_size.py): 3 of 3 on origin/main; breaks (the icon size,
   2 -> 1 in the original's end) differ. DIFFCHECKS 364/364.
@@ -209,6 +209,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   x5), REMOVE DARKSTAR (lit next), ADD, End, ADD (DARKSTAR), End, ADD (PHINEAS: the list closes), BEGIN ADVENTURING;
   375: three REMOVEs, ADD PHINEAS, End, Home, ADD (nothing), EXIT, ADD, ADD (DARKSTAR), EXIT, BEGIN (BROTHER SEAN
   left waiting). Ready `~/gbr/lab/data/c102/add_list.py`; with it 3 of 3, without it ours never reaches its save.
+- **376, 377 (the camp's ALTER PICS; a difference, fixed, main path):** check 142's start (3:0, 0x49FF = 0: both
+  off, the labels show the state), ENCAMP, ALTER, PICS, M and P (376) or M only (377), EXIT x3. The original keeps
+  PICS in ECL cell 0x49FF and its saves (2 monsters on, 1 portraits on; a new game 3); ours kept it in CampScreen's
+  statics, never saved. Fixed in main.gd (`_pics_to_mem` at every save, `_pics_from` at a load). Breaks: 0x49FF -> 1.
 - **DIRTEN's 0, 4:** the shipped party's (slot J's CHRDATJ7: 0xAB 0xFF); every save with him descends from it (491 in
   the labs: 0, 4, 0xFF); none from a join.
 
