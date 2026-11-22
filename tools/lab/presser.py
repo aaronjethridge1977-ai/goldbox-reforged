@@ -5,6 +5,10 @@
 import os, sys, time, lab, keys
 yes = os.environ.get("CONTINUE") == "y"
 t0 = time.time(); seen = False
+# QUICKSET=1 (Combat Chat 44): the save's party is already on QUICK, so the original shows no QUICK menu: the fight
+# counts as begun from the start (CONTINUE BATTLE answered, the end text ends the run); no Q and no Alt-M are sent
+# (MAGIC: cmpfight3's MAGICAT=<draw>).
+if os.environ.get("QUICKSET"): seen = True
 if "noenter" not in sys.argv: keys.key("enter")
 while time.time() - t0 < float(sys.argv[1]):
     time.sleep(0.5)

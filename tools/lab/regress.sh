@@ -121,6 +121,10 @@ run orig_A_c43_mx_mik1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.s
 # Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
 # has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
 run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
+# Combat Chat 44: main chat 98's (2), the throne room with MAGIC on (seed 39600002; the party on QUICK in the save:
+# QUICKSET, MAGICAT=826, the first round's setup): the weapon choice's attack count (Haste mid-round) and the sweep
+# cap cleared by an attack (two original runs agree). Slot G is the Yarash save again after it.
+run orig_G_c44_throne_magic 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && QUICKSET=1 MAGICAT=826 DRAWS_ONLY=1 ./cmpfight3.sh G 39600002 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
 # Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678

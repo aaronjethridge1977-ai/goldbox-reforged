@@ -777,6 +777,7 @@ func shoot(i: int, j: int) -> void:
 		attack(i, j)
 		return
 	a.target = j
+	a.struck = true                # (the attack routine 0x13C01, as attack())
 	_note_attack(a, t)
 	if t.received < 3:
 		t.dir = face_dir(t, a)
@@ -1525,6 +1526,12 @@ func sweep(i: int, j: int) -> bool:
 	var fighter: int = am.raw[0x98] if am.raw.size() > 0x98 else 0
 	var race: int = am.raw[0x2E] if am.raw.size() > 0x2E else 0
 	var cap: int = fighter if fighter > 0 and fighter < 128 and race > 0 and race < 128 else 1
+	if a.get("struck", false):
+		# The cap (record +0x108 byte 5, set each round at 0x12878) is cleared at the end of every attack
+		# (0x13FCC), so only a first blow of the round can sweep; later ones strike the pick (main 98's throne
+		# room with MAGIC on, seed 39600002 draw 8480: DORN, one blow left after his first killed a kobold, slew
+		# the held kobold of his d2 pick; ours swept the two).
+		cap = 0
 	var first: int = a.attacks - int(a.get("second", 0))
 	if first >= cap or tm.raw.size() <= 0x73 or tm.raw[0x73] != 0 or not touching(a, combatants[j]):
 		return false
