@@ -465,7 +465,7 @@ func _say(text: String) -> void:
 			_say_name(m.name, text.substr(m.name.length() + 1))
 			return
 	var lines: Array = [["", GameScreen.GREEN]]
-	for w in GameScreen.wrap(text, 38):
+	for w in PrintWrap.lines(text, 38):
 		lines.append([w, GameScreen.GREEN])
 	_say_lines(lines)
 

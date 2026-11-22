@@ -122,7 +122,7 @@ func _refresh() -> void:
 		var lines := PackedStringArray()
 		if _mode != "ask_leave":
 			for l in _app_text.split("\n", false):
-				lines.append_array(GameScreen.wrap(l, 38))
+				lines.append_array(PrintWrap.lines(l, 38))
 		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", lines, _menu_items(), false, false, _pick)
 		if _mode == "ask_leave":
 			TreasureScreen.draw_ask(_scr, "AS YOU LEAVE A PRIEST SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE\"",
@@ -186,7 +186,7 @@ func _say(lines: Array) -> void:
 	_lines = []
 	var text := PackedStringArray()
 	for l in lines:
-		for w in GameScreen.wrap(l[0], 38):
+		for w in PrintWrap.lines(l[0], 38):
 			_lines.append([w, l[1]])
 			text.append(w)
 	_note.text = " ".join(text)

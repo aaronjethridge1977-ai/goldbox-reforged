@@ -139,7 +139,7 @@ func draw_menu(row: int, items: Array) -> void:
 
 
 func redraw() -> void:
-	var note_lines := GameScreen.wrap(plain(_text_of(note)).strip_edges(), 38)
+	var note_lines := PrintWrap.lines(plain(_text_of(note)).strip_edges(), 38)
 	var items := menu_items(_text_of(menu).split("\n")[0]) if _text_of(menu) != "" else []
 	if layout == "walk":
 		var party: Array = party_of.call() if party_of.is_valid() else []
@@ -179,7 +179,7 @@ func redraw() -> void:
 			if line.begins_with("> "):
 				selected = true
 				line = line.substr(2)
-			for w in GameScreen.wrap(line, 38):
+			for w in PrintWrap.lines(line, 38):
 				if selected and focus < 0:
 					focus = lines.size()
 				lines.append(w)

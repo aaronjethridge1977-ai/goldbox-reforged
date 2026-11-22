@@ -131,7 +131,7 @@ func _refresh() -> void:
 	var lines := PackedStringArray()
 	if _mode != "ask_leave":
 		for l in _note.text.split("\n"):
-			lines.append_array(GameScreen.wrap(l, 38))
+			lines.append_array(PrintWrap.lines(l, 38))
 	_scr.draw_walk(OverlayLook.last_view, _party, _buyer, "", lines, menu,
 		false, false, _pick)
 	if _mode == "menu":

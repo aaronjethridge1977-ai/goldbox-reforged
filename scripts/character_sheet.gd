@@ -579,7 +579,7 @@ func _refresh() -> void:
 				_menu(_item_menu(), 0)
 		"confirm", "id_reply":
 			_draw_items(m, false)
-			var q := GameScreen.wrap(_question, 37)   # lab: "...IDENTIFY" (33) then "YOUR BANDED MAIL"
+			var q := PrintWrap.lines(_question, 38)   # the original's printer (main chat 106); lab: "...IDENTIFY" (33) then "YOUR BANDED MAIL"
 			for i in q.size():
 				_t(1, 21 + i, q[i], GameScreen.YELLOW)
 			var prompt := {"drop": "DROP IT?", "sell": "IS IT A DEAL?", "id": "IS IT A DEAL?", "use": "USE IT?"}.get(_pending, "?") as String
