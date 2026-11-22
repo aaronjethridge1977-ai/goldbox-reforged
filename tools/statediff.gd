@@ -10,7 +10,7 @@ extends SceneTree
 ## the original's CHRDAT<X><n>.SAV and .ITM files beside the save): hit points, maximum hit
 ## points, experience, status, the ability scores (chat 66), the seven kinds of coins, and the items (type, name words, plus, save
 ## plus, readied, cursed, count, price, bytes 60-62: chat 66; before, the name words only), the standing effects (the original's .SPC beside
-## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62), the magic-user's spell book and the levels (chat 97); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
+## the record: type, minutes, power; ours' affects; chat 66), the memorized spells (chat 62), the magic-user's spell book and the levels (chat 97), race, sex, class and alignment (chat 101); the square and facing, and the wall ahead (0xC04E) in a 3D area. Prints one
 ## line per difference and a total; exit code 1 if any.
 
 const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock minutes",
@@ -152,7 +152,9 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 	var a: PackedByteArray = t.record
 	var b: PackedByteArray = u.record
 	var fields := [["HP", 0x11B, 1], ["max HP", 0x32, 1], ["experience", 0xAC, 4], ["status", 0x10C, 1],
-			["age", 0x30, 2]]     # chat 81: the camp's Haste ages each member it hastes
+			["age", 0x30, 2],     # chat 81: the camp's Haste ages each member it hastes
+			# Chat 101 (checks 344-356, CREATE NEW CHARACTER): what the creation lists pick.
+			["race", 0x2E, 1], ["sex", 0x9E, 1], ["class", 0x2F, 1], ["alignment", 0xA0, 1]]
 	if compare_cache:     # chat 82: the record's cached THAC0 and AC (a check with a `cache` file; TRAIN leaves them stale)
 		fields.append_array([["cached THAC0", 0x110, 1], ["cached AC", 0x111, 1]])
 	for i in 7:

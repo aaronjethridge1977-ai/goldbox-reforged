@@ -172,6 +172,24 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 101: character creation of more kinds, EXIT at the creation lists (checks 351-358)
+
+All at 3:11 from check 103's start and tpseed 11111111, main path, as chat 100's 344 (the four steps, YES, REMOVE
+PHINEAS, CREATE, KEEP, a name, K, EXIT, YES, ADD the new one, BEGIN ADVENTURING; ours' keys Down where the original's
+steps End: `~/gbr/lab/data/c101/gen.py`); the original's ends in `~/gbr/lab/data/c101/o<n>`. **statediff now compares
+each member's race, sex, class and alignment** (0x2E, 0x9E, 0x2F, 0xA0: before, a creation check saw them only through
+the levels, age and abilities; the 348 gate checks unchanged). Every break of the original's end caught (`brk<n>`).
+- **351-357 matched at once, 3 of 3 each:** 351 a human cleric (lawful good; spells 1-8 known), 352 a halfling thief,
+  353 a female gnome fighter/thief, 354 a female dwarf fighter, 355 a half-elf cleric/fighter, 356 a female human thief
+  (chaotic evil), **357 a female dwarf fighter after 5 rerolls: a raw STR of 18 kept to her limit 17, no percentile
+  drawn** (found with `data/c101/aim.py`, the original's generator in python, calibrated on 351). Breaks: alignment,
+  race, sex, class, race, alignment, STR 18.
+- **358 (EXIT at each creation list): a difference, fixed in Combat's file (waits for it):** in the original EXIT (Esc
+  or E) at the race, sex, class or alignment list goes back to the hall menu; ours stepped back to the list before. The
+  check: EXIT at the sex list, E at the class list, Esc at the alignment list, Esc at the race list, then ADD PHINEAS
+  back and BEGIN ADVENTURING (ours unfixed never leaves the creator). Ready `~/gbr/lab/data/c101/creator_exit.py`
+  (`c101_creator_exit.diff`); with it 358 matches 3 of 3. Break: PHINEAS's max HP.
+
 ## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation and MODIFY (checks 336-350)
 
 All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the original's ends in `~/gbr/lab/data/c100/o<n>`
