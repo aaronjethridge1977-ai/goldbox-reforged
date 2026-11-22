@@ -1315,7 +1315,60 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
-## Player 44 (2026-11-21): Valjevo stage 2 (the theft read in ECL5; the barracks from the outer court); noshare
+## Player 45 (2026-11-22): items in fights (`uses`, `prep`); home from the throne room; everything identified; Tyranthraxus beaten by blows
+
+**Stage 1:** 68 of 71, nothing new in scripts/ or content/ since Player 44 (lab `p45/score.md`).
+
+**Guide 12's step 1 (c), items in fights** (tactics.py, plans.py): `uses <MEMBER> <item> r<n>|cont [vs=] [aim=]
+[swap=] [hurt=] [ready]`: the member opens USE at his turn, readies the item (unreadying `swap` first: a shield for a
+one-handed potion or wand, the sword for the Javelin; re-readied at his next turn) and USEs it; an item's aim is the
+spell it casts (Necklace: Fireball's rule, no member within 3; wand: Magic Missile; Javelin: the bolt; potion: the
+drinker); `ready`: READY only (the guards' rings in his fight); `=RING`: the name exactly. `prep <spell>, ...`: in the
+CONTINUE BATTLE rounds the members cast these (Haste and Shield once per caster, Prayer and Bless once; Haste, Bless
+and Shield kept out of the fight itself), the battle continued one round past the last begun. **Checked in the
+original (p45c1, a throwaway test from s44door):** READY of an unreadied item in a fight keeps the turn (no message
+with the swap first); the Javelin of Lightning's USE aims by MANUAL like a spell; the Potion of Speed is drunk at once
+(no aim) and its drinker strikes twice (ARN's second blow); the wand aims by MANUAL; the Necklace's fireball goes off
+at once and its aim screen names the item ("NECKLACE"), so the tool first aimed it at the nearest foe and caught our
+own (273 to 246 HP): now aimed as Fireball.
+
+**Out of the throne room** (`p45/out45.plan` from `s44throne`, five at 0 HP): 8:13's camp is allowed once 0x4A8D > 0
+(ECL8 block 13, 0xB428), but the rocks (0xB45A: seven random members, d20 + 50 > 60 - AC, 1d4+1 each) cut every rest
+short before a day passed (p45d1, stopped); walking out, 8,12's deadfall (event 3, one-time: no thief awake to find
+it) dropped the roof and 20 kobolds, who killed the five lying down (p45d2, a loss); the way round it by 5,7, 3,7, 4,10
+(events 22 and 7: descriptions); 8:27's cave menu: EXIT; the cave mouth's kobolds won by ARN and LIRA alone twice
+(p45d7, p45d9; `s45mouth`); 8:27 3,20 W, W (x 2 facing west), 7:26 12,27 E into New Phlan, the inn (`p45d11_s45inn`).
+Princess Fatima leaves at the exit by the script (`OP_LEAVERS`: not a loss). The king's quarters (7,2: 3 trolls, 3
+boars, 24 kobolds; behind them 13,1's 50,000 copper, 6 gems, 2 jewellery) left: nothing the finale needs.
+
+**Identified at the shop (3:0 13,8; `sell gems identify gear`, `sellitems`)**, 36 items (`p45e2_s45shopped`
+LEDGER.txt): Ring of Protection +2 x2, Cursed Necklace, Wand of Magic Missiles (33), Potion of Speed (ARN); Potion
+Extra Healing (3), Two-Handed Sword +2, Mace +3 (BRAM); Potion of Giant Strength, Ring of Feather Falling, Necklace of
+Missiles (6) (CEDRIC); Potion of Healing (ELWEN, DORN); Cloak of Displacement (LIRA); Bracers AC 6, Ring of Fire
+Resistance, Javelin of Lightning (DORN); the scrolls' spells. Sold: ARN's Chain Mail +1, BRAM's Two-Handed Sword +1 +3
+vs Undead (1,750 gp each); the gems (BRAM then moved 3 at the weight cap: 400 pp to ARN).
+
+**The finale** (`p45/finale45.plan`, the review `p45/reviews/finale.md`): `picks` now places any book spell by class
+and level (SHIELD and the magic-user's HOLD PERSON had been dropped); the trip from s45loadout needed a `map` line per
+area (the plan's `map 3:0` held for 2:20); `s45hall` (5:7 3,6, Genheeris joined), `s45ready` (the review's spells).
+**p45i3: the guards won with none dead** (Hold Person, clouds, the Javelin round 2; the Necklace never had a clear
+aim); CONTINUE rounds: BRAM's Giant Strength, LIRA's Haste (six hasted), ARN's Speed, ELWEN's Prayer, the Shields,
+CEDRIC's Bless; three idle cure rounds after that ran the Haste down; the rings readied in his fight (USE, READY);
+**Tyranthraxus fell to ARN's blow** (11 HP to none), BRAM and ELWEN dead in his fight; the tool stopped it as a reload
+at his CONTINUE BATTLE (OP_FIGHTDEATH is for the guards; Player 29's rule makes it a win: fixed), before the script's
+win (0x4ABA). (p45i4 stopped as its fight began: the fix.) **p45i5: THE GAME WON in the original, no shortcut**:
+the guards won with none dead (DORN at 0 HP, unconscious), the CONTINUE rounds' prep (LIRA's Haste, the Shields,
+Prayer, Bless; Giant Strength, Speed), the rings readied, Tyranthraxus by blows alone (ORIGINAL'S BUGS as the game:
+he resists every spell); he fell at 13 HP in the computer-run part of a round with LIRA (8 HP) and Genheeris
+standing; CEDRIC and ELWEN dead in his fight. **0x4ABA = 254** (5:7's win flag); the script took the party home to New
+Phlan (3:0 0,4): `p2start/p45i5_s45won`. Finale tries counted: p45i3 (he fell; stopped by the tool before the
+script's win) and p45i5 (won); p45i1, p45i2, p45i4 tool stops. After p45i5's start: the idle cure rounds once the
+prep is cast end the CONTINUE (Haste kept for him).
+
+Lab: `p45/` (itemtest.plan, out45.plan, home45.plan, finale45.plan, memotest.plan, reviews/finale.md, ecl8_b27.txt,
+ecl7_b26.txt); runs p45c1, p45d1-d11, p45e1-e2, p45f1-f4, p45g1-g2, p45h1, p45i1-i5.
+
+ (the theft read in ECL5; the barracks from the outer court); noshare
 
 **Stage 1:** 68 of 71, nothing new in scripts/ or content/ since Player 43 (p17a6 still waits on main / design).
 

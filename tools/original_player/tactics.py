@@ -628,6 +628,10 @@ class Tactics:
             uses = [] if foes else [u for u in USES if not u["done"] and u["when"] == "cont"
                                     and any(_up(f) and f["name"] == u["member"] for f in party)]
             going = self.prep_round == n
+            if not foes and self.prep_cast and not prep and not uses and not going and not dying:
+                # Player 45 (p45i3: three idle cure rounds after the last prep spell ran Haste down: only ARN was
+                # still hasted when Tyranthraxus came): once the prep is cast, on into the next fight
+                cures = False
             if not foes and ((n < CONTINUE and (dying or (cures and _hurt(party))))
                              or (n < CONTINUE + 3 and (prep or uses or going))):
                 self.continued = n + 1
