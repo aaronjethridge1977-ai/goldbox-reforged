@@ -16,7 +16,57 @@ in the Journal: its answers stay in `.lab`, as do the Cluebook's riddle answers,
 
 ## What changed since Silver Blades
 
-*(Drafted after the sections are approved.)*
+The input for Jeremy's comparison across the series. Party rows first (section 1 has the detail).
+
+**Races and classes:** Silver Blades', unchanged. *book* (Journal pp.1-4, 48)
+
+**Level limits and starting level**
+- **Humans and thieves to 40** (Silver Blades: humans 15, thieves 18); every demi-human limit unchanged since Pool. The
+  books' advice: demi-humans only as thieves. Whether the hall stops at 40: **unconfirmed**. *book* (Cluebook p.1;
+  Journal p.48) + *players*
+- **New characters start with 1,500,001 XP** (about level 14: paladin 12 to thief 16); Silver Blades' started at level 8.
+  A demi-human starts at its limit. *book* (Journal p.5; Card panel 6)
+- **The XP bonus at 16,** as Silver Blades. *book* (Journal p.2)
+
+**Importing a Silver Blades party** (section 1): **the gear and money come too** (Silver Blades' import lost both);
+bundled scrolls and the Vault don't. Players: imported characters arrive one XP short of 16. *book* (Card panels 5-6) +
+*players*
+
+**Spells** *book* (Journal pp.17-24, 55-59)
+- **New levels:** cleric 7th (Destruction, Energy Drain, Resurrection, Restoration; from 16, **Wisdom 18**); magic-user
+  8th (Mass Charm, Mind Blank, Otto's Irresistible Dance, Power Word Blind; from 16, **Intelligence 16**) and 9th
+  (Meteor Swarm, Monster Summoning, Power Word Kill; from 18, **Intelligence 18**); the rangers' druid 3rd level (Cure
+  Disease, Hold Animal, Neutralize Poison, Protection from Fire; from ranger 16).
+- **Memorizing:** 15 minutes a spell level after 4 hours (levels 1-2), 6 (3-4), 8 (5-6), 10 (7-8) or 12 (9): the first
+  full table in the series' books. *book* (Journal p.9)
+- **FIX only heals** now (no memorizing; Silver Blades' FIX re-memorized Cure Light Wounds). *book* (Card panel 6)
+
+**Rules and services**
+- **The Pools and Limbo:** a hub (Elminster: storage, healing, training, travel) between the Realms and three outer
+  dimensions; **most magic items are destroyed** on the full passage unless stored (section 4). New in the series.
+  *book* (Manual p.10; Cluebook p.15)
+- **An overland map again** (Silver Blades had none): the Realms, Moander's body and the Web each have one. *book*
+- **Temples free** (as Silver Blades); **identifying 100 platinum** (Silver Blades: 100 gold); training free in most
+  halls, but Zhentil Keep's costs 10 gems and Mulmaster's a 100-platinum bribe. *book* (Manual p.9; Cluebook pp.31, 63)
+- **REST and FIX are refused in some areas.** *book* (Card panel 6)
+- **The final fight forbids the party's magic,** and the Palace runs on a clock. *book* (Cluebook pp.71-73)
+- **Dave's Challenge:** an optional adventure after the ending, always at Champion, needing every class. New in the
+  series. *book* (Cluebook p.73)
+
+**Items** *book* (Cluebook pp.11-12; section 5): **+4 is the common top** (Silver Blades had +5); new to the series'
+books: the Vorpal Long Sword, Ring of Gaze Resistance, Ring of Blinking, Ring of Vulnerability (cursed), Javelin of
+Lightning, Blessed Bolts, Drow Long Sword and Elfin Chain (they survive the Web), the Fine Long Bow (not magic: it
+survives the Pools, *players*).
+
+**Monsters** *book* (Journal pp.15-18, its "New Monsters" list): Bane minions (black, blue, red), Pets of Kalistes,
+gaze, stone, electric and enormous spiders, giant cockatrices, greater margoyles, greater otyughs, large iron golems,
+walking trees, hill giant shamans; and the four lieutenants (Thorne, an ancient red
+dragon; Kalistes, a marilith; Tanetal, a glabrezu; Gothmenes, a balor).
+
+**Interface** *book* (Manual pp.3-12; Card panels 4-6): as Silver Blades' (mouse, joystick, ESC takes back a move,
+DISPLAY, AREA not everywhere); **a purple name** marks a character ready to train. Players: targeting skips the
+party's own members and spells cast are re-memorized on REST. *players*
+([CRPG Addict](https://crpgaddict.blogspot.com/2016/09/game-230-pools-of-darkness-1991.html))
 
 ## 1. The party
 
@@ -73,8 +123,8 @@ Silver Blades Journal p.47; Curse Manual p.23) + *code* for Curse and Pool (curs
 **New characters start with 1,500,001 XP** ("most single-class characters at about 14th level"). By the tables that is
 paladin 12, ranger 13, fighter, cleric and magic-user 14, thief 16; a two-class character gets 750,000 in each class, a
 three-class 500,000 (our arithmetic). A demi-human whose limit is lower starts at its limit: the Card's warning that
-"most non-human races" start at their class maximums (panel 6). They arrive with nothing; the outfitting is in Phlan's
-shops. *book* (Journal p.5; Journal pp.56-59; Card panel 6)
+"most non-human races" start at their class maximums (panel 6). *book* (Journal p.5; Journal pp.56-59; Card panel 6) The
+books don't say what new characters carry; players say about level 14 with +2 and +3 equipment. *players* ([GameBanshee](https://gamebanshee.com/poolsofdarkness/walkthrough/gameplaynotes.php))
 
 **Non-humans: thieves only.** The Cluebook's advice (p.1): use demi-humans only as thieves, the one class whose
 advancement is unlimited for them, and give magic-users 18 Intelligence; a party with demi-humans in other classes, or a
@@ -172,8 +222,10 @@ Dimension, Bane's Dark Dimension) are reached through the Pools.
   Parlor; otherwise the party arrives bound in the larder (pp.43, 47).
 - **Phlan** can't be entered until Marcus' Tower falls (p.13); the Tower of Marcus rejoins the party to its city.
 
-**Levels:** none in the books (new characters start at about 14, imported ones at 15-16: section 1). Levels per
-stretch come from players and our own runs: **unconfirmed** (step 6).
+**Levels:** none in the books (new characters start at about 14, imported ones at 15-16: section 1). Players give no
+levels per stretch either; one walkthrough says most characters pass level 36 by the end. *players*
+([the Spoiler Centre](https://the-spoiler.com/RPG/SSI/pools.of.darkness.1.html)) Levels per stretch: **unconfirmed**, from our
+own runs.
 
 | # | Stretch | Areas (Cluebook pages) | Rest | Ends with |
 |---|---|---|---|---|
@@ -301,7 +353,11 @@ ready **mirrors or silver shields** against gazes, missiles and spells against w
 - **Dark Phlan:** the treasury's vampires (6); the wedding (11) (pp.69-70).
 - **Gothmenes' finale** (17): a huge force of Moander bits, dracoliches, Bane minions and Pets of Kalistes; the
   Crystal's holder drives off about half but drops to almost no HP; then the elder beholder Xoham; then Gothmenes,
-  **with Bane's power stopping the party's magic**: fighters and missiles carry it (pp.72-73).
+  **with Bane's power stopping the party's magic**: fighters and missiles carry it (pp.72-73). Players: take the
+  Crystal on the first turn after Gothmenes calls the party to the pool; wait too long and he takes it and kills the
+  party at once. *players* ([GameBanshee, the Palace](https://gamebanshee.com/poolsofdarkness/walkthrough/gothmenespalace.php))
+- **Players on the last fight:** far harder than the earlier games' finales. *players*
+  ([GOG forum](https://gog.com/forum/forgotten_realms_collection/too_mant_gliches_never_like_this))
 
 ## 4. Pools-only rules
 
@@ -313,7 +369,11 @@ ready **mirrors or silver shields** against gazes, missiles and spells against w
 - **Most magic items are destroyed** on the full passage between the Realms and an outer dimension, either way; going
   from an outer dimension into Limbo and back keeps them. Store items and money with Elminster (STORAGE: DEPOSIT, TAKE,
   POOL, MONEY) (Manual p.10; Cluebook p.15). Drow gear passes into the Web Dimension (p.39); Shal's vorpal sword survives
-  Limbo (p.56). Which items survive, exactly: **unconfirmed** (request).
+  Limbo (p.56). Players: very few magic items survive; the elemental-resistance rings (rings without a plus) and the
+  vorpal sword do; ordinary items all survive, so carry fine long bows and plain arrows (a fine bow adds Strength damage).
+  Test by saving before a passage and looking. *players* ([GOG forum](https://gog.com/forum/forgotten_realms_collection/questions_about_items_in_pools_of_darkness);
+  [GOG forum](https://gog.com/forum/forgotten_realms_collection/question_about_limbo_and_magical_items_pod)) Which items
+  survive, exactly: **unconfirmed** (request).
 - **Overland maps:** the Realms, Moander's body and the Web Dimension each have an overland of mini-adventures (pp.15,
   40, 57).
 
@@ -327,7 +387,9 @@ ready **mirrors or silver shields** against gazes, missiles and spells against w
 
 **Camp and difficulty**
 - **FIX only heals** (no time for memorizing: use REST); **REST and FIX are missing in some areas** (Card panel 6).
-- **ALTER, LEVEL** as Silver Blades (Novice to Champion; Veteran by default; harder gives more XP) (Manual p.7). The
+- **ALTER, LEVEL** as Silver Blades (Novice to Champion; Veteran by default; harder gives more XP) (Manual p.7). Players: the
+  level changes the enemies' HP and damage, not saving throws (an easier level won't stop a beholder's disintegration).
+  *players* ([GameBanshee](https://gamebanshee.com/poolsofdarkness/walkthrough/gameplaynotes.php)) The
   Cluebook tells parties with demi-humans or a magic-user under Int 18 to play Novice or Squire (p.1). **Dave's
   Challenge** is always Champion (p.73).
 
@@ -422,6 +484,15 @@ Entries 24 and 46 carry the same chant; 46 also has the way out. *book*
 
 ## For the lanes
 
-*(Next.)*
+- **main:** the low-priority request on the board (the hall's limits to 40; what the import from SECRET copies; the
+  ranger/magic-user in armour; the ready-made party's levels; which items survive a Pool; the gear map from the data).
+  Pools' character file is 510 bytes; the ready-made party showed abilities at 0x10-0x1D (each score twice; the
+  percentile Strength last), race at 0xAD (5 on the paladin, so human; 1 on the fighter/thief), class at 0xAE (0
+  cleric, 3 paladin, 4 ranger, 5 magic-user, 14 fighter/thief), levels at 0x151-0x158 (cleric, druid, fighter,
+  paladin, ranger, magic-user, thief, monk) and the magic-user's spell book from 0x90. Unexplained: 0x158 (11) and
+  0x15C (9) on the two magic-users. *code* (Gold Box Sources 3, from CHRDATA1-6.SAV)
+- **Player and guide chats:** store magic items with Elminster before every full passage; take the Crystal on the first
+  turn in Gothmenes' finale; set the play level first (it changes enemy HP and damage, not saves). The copy protection
+  is a word from the Journal (the Manual says count section headings, the Card says don't: answers in `.lab`).
 
 ## Inbox

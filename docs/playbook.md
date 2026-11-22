@@ -34,9 +34,14 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   nothing. (Pool) Fighter 8, thief 9, cleric 6, magic-user 6. *book* (Manual)
   (Silver Blades) Every human class 15, thieves 18 in every race; the demi-human limits are Curse's (below). *book*
   (Silver Blades Journal p.47; strategy/silver-blades.md section 1)
+  (Pools) Humans and thieves to **40** (the Cluebook; the Journal prints "max"); every demi-human limit unchanged, so the
+  books say to use demi-humans only as thieves. *book* (Pools Cluebook p.1; Journal p.48; strategy/pools-of-darkness.md section 1)
 - (Silver Blades) **New characters start at level 8** (magic-users 9, thieves 10); a demi-human whose limit is lower
   starts at its limit and never trains. A new party arrives about as strong as an imported one. *book* (Silver Blades
   Journal p.5)
+- (Pools) **New characters start with 1,500,001 XP** (about level 14: paladin 12 to thief 16); a demi-human starts at
+  its limit. Players: with +2 and +3 gear; an imported Silver Blades party arrives one XP short of 16 with all its gear.
+  *book* (Pools Journal p.5; Card panel 6) + *players* (strategy/pools-of-darkness.md section 1)
 - (Pool) Four classes only: cleric, fighter, magic-user, thief; no paladins or rangers, and no dual-classing (both come
   with Curse of the Azure Bonds). *book* (Pool Manual) + *players* ([GameBanshee, Curse party creation](https://www.gamebanshee.com/curseoftheazurebonds/walkthrough/partycreation.php))
 
@@ -59,6 +64,8 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   train). *code* + *book* (Curse GAME.OVR 0x24DDE-0x24F5B; Manual p.23; main chat 72)
   (Silver Blades) The printed limits are Curse's for every demi-human; only the top changes: humans 15 in every class,
   thieves 18. Whether its hall enforces them as printed: **unconfirmed** (request). *book* (Silver Blades Journal p.47)
+  (Pools) The same demi-human numbers again; humans and thieves to 40. Whether its hall stops at 40: **unconfirmed**
+  (request). *book* (Pools Journal p.48; Cluebook p.1)
 - (Pool) Who may multi-class: dwarf, gnome and halfling fighter/thief; elf F/MU, F/T, MU/T, F/MU/T; half-elf as the elf
   and also with cleric. Humans are single-class. *book* (Pool Manual p.5)
 - **Elves throw off Sleep and charm 90% of the time, half-elves 30%.** An elf or half-elf rolls that d100 for every
@@ -72,6 +79,8 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 - (Silver Blades) Curse's races, classes and multi-classes unchanged. The 10% XP bonus needs **16** in the prime
   requisite (paladins Strength and Wisdom, rangers Strength, Intelligence and Wisdom); Curse's manual said 15. *book*
   (Silver Blades Journal pp.3-4)
+- (Pools) Silver Blades' races and classes unchanged; the XP bonus at **16**. The Journal lets a ranger/magic-user
+  dual-class cast in armour (no other dual-class magic-user may): **unconfirmed** (request). *book* (Pools Journal pp.2, 4)
 - **unconfirmed** (tabletop rules; requests to the lanes): dwarves and halflings get save bonuses from Constitution.
 
 **Each member's job**
@@ -249,6 +258,9 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   magic weapons, half from silver, none from others; a mummy takes half damage from magic weapons; monsters flagged
   0x77 are hurt only by magic weapons. Any plus counts: no "+2 or better" rule appears in the code. *code* (Combat Chat
   34; special_affects.gd, GAME.OVR category 5) Later games: **unconfirmed** (request to Combat).
+- (Pools) **Crossing a Pool of Darkness** between the Realms and an outer dimension destroys most magic items: store
+  them with Elminster in Limbo first. Players: elemental-resistance rings, the vorpal sword and every non-magic item
+  survive; carry a fine long bow and plain arrows. *book* (Pools Manual p.10) + *players* (strategy/pools-of-darkness.md section 4)
 
 ## 3. Spells
 
@@ -282,6 +294,10 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 
 (Silver Blades) Higher spell levels: cleric 6th at level 11 (only with Wisdom 17+); magic-user 6th at 12 (Intelligence
 12+) and 7th at 14 (Intelligence 14+); rangers' druid 2nd at 12. *book* (Silver Blades Journal pp.55-57)
+
+(Pools) Cleric 7th at 16 (Wisdom 18+); magic-user 8th at 16 (Intelligence 16+) and 9th at 18 (Intelligence 18+);
+rangers' druid 3rd at 16. Spell preparation: 4 hours (levels 1-2), 6 (3-4), 8 (5-6), 10 (7-8), 12 (9), plus 15 minutes a
+spell level. *book* (Pools Journal pp.9, 55-58)
 
 A multi-class casts by its level in that class: a fighter 5 / magic-user 4 has second-level spells, not Fireball.
 (Pool) A scroll's spell above the magic-user's level can be cast from the scroll (at level 6) but not copied into the
@@ -709,6 +725,8 @@ In ours, SETTINGS REST REMEMORIZES saves the menu steps.
 (Silver Blades) FIX does the loop in one command, but with Cure Light Wounds only, and heals no diseased member until
 Cure Disease is cast (Curse's cluebook: FIX casts all cure spells). Which spells it uses: **unconfirmed** (request).
 *book* (Silver Blades Manual p.8)
+(Pools) FIX only heals and no longer re-memorizes (use REST); in some areas REST and FIX aren't offered. *book* (Pools
+Card panel 6)
 
 **Where to rest**
 - **When a rest is interrupted, go to the inn instead of camping again.** *seen* (Player 14, p14b3)
@@ -787,6 +805,8 @@ Cure Disease is cast (Curse's cluebook: FIX casts all cure spells). Which spells
 - (Silver Blades) **Training is free,** and so is the temple's healing; identifying an item costs 100 gp (Curse 200). A
   member with XP for two levels trains one and keeps one point short of the next; whether Pool and Curse do the same: **unconfirmed**.
   *book* (Silver Blades Manual pp.4, 10; Journal p.5)
+- (Pools) Temples free; identifying costs 100 platinum; most halls train free, but some charge (10 gems, a 100-platinum
+  bribe). *book* (Pools Manual p.9; Cluebook pp.31, 63; strategy/pools-of-darkness.md section 4)
 - A multi-class trains in the hall's class when that class is ready, even if a slower class isn't. *seen* (Player 3)
 - (Pool) **Hit points gained at training:** one roll of the trained class's hit die (at least two-thirds of the die at
   level 1), plus the Constitution bonus, divided by the member's number of classes, at least 1. A multi-class training
