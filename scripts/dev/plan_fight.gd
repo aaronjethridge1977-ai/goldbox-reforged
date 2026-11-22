@@ -13,18 +13,25 @@ class_name PlanFight
 ##   <MEMBER> <round> turn | guard | delay | done | quick      TURN; DONE's GUARD / DELAY / QUIT; QUICK
 ##   magic on                                                  Alt-M at the first turn: QUICK members cast
 ##   continue yes | no                                         CONTINUE BATTLE? answered so (default NO; main chat 98)
+##   waves <n>                                                 follow n fights in a row (default 1; main chat 99): after a
+##                                                             won fight, Enter past the texts, EXIT and NO at the
+##                                                             treasure (left behind), until the next fight opens
+##   wave <n>                                                  the entries below are for the n-th fight (those before any
+##                                                             wave line: the first); MAGIC ON holds for every wave
 ## <round> is a number or a range (1-3) or "*" (every round). A member's turn with no entry is played on QUICK for
 ## that turn (ours' QUICK, as the original's); the member is taken off QUICK again before a round with an entry.
 ## Entries that can't be carried out (no CAST on the menu, the spell not memorized) fall back to QUICK, logged.
 ##
-## Prints "PLANFIGHT <key> <why>" per key and at the end one line:
+## Prints "PLANFIGHT <key> <why>" per key, "PLANFIGHT WAVE <n> ..." after each fight of a plan with waves, and at the
+## end one line (for waves: the first fight's HP to the last's end, rounds summed, waves=<fights played>/<n>):
 ##   PLANFIGHT RESULT outcome=<won|lost|fled|other> rounds=<n> hp=<before>-><after> lost=<n> down=<names> dead=<names>
 
 const _OUTCOMES := {1: "won", 2: "lost", 3: "fled"}
 
 
 static func _parse(path: String) -> Dictionary:
-	var plan := {"entries": [], "magic": false, "cont": false}
+	var plan := {"entries": [], "magic": false, "cont": false, "waves": 1}
+	var wave := 1
 	for raw in FileAccess.get_file_as_string(path).split("\n"):
 		var l := raw.split("#")[0].strip_edges()
 		if l == "":
@@ -33,13 +40,19 @@ static func _parse(path: String) -> Dictionary:
 		if w[0].to_lower() == "magic":
 			plan.magic = w.size() < 2 or w[1].to_lower() == "on"
 			continue
+		if w[0].to_lower() == "waves" and w.size() > 1:
+			plan.waves = maxi(1, int(w[1]))
+			continue
+		if w[0].to_lower() == "wave" and w.size() > 1:
+			wave = maxi(1, int(w[1]))
+			continue
 		if w[0].to_lower() == "continue":
 			plan.cont = w.size() > 1 and w[1].to_lower() == "yes"
 			continue
 		if w.size() < 3:
 			push_warning("planfight: bad line: " + l)
 			continue
-		var e := {"who": w[0].to_upper(), "act": w[2].to_lower(), "arg": "", "on": "", "picks": 1, "line": l}
+		var e := {"who": w[0].to_upper(), "act": w[2].to_lower(), "arg": "", "on": "", "picks": 1, "line": l, "wave": wave}
 		var r := w[1]
 		if r == "*":
 			e.r0 = 1
@@ -73,9 +86,9 @@ static func _parse(path: String) -> Dictionary:
 	return plan
 
 
-static func _entry(plan: Dictionary, who: String, rnd: int) -> Dictionary:
+static func _entry(plan: Dictionary, who: String, rnd: int, wave := 1) -> Dictionary:
 	for e in plan.entries:
-		if e.who == who.to_upper() and rnd >= e.r0 and rnd <= e.r1:
+		if e.wave == wave and e.who == who.to_upper() and rnd >= e.r0 and rnd <= e.r1:
 			return e
 	return {}
 
@@ -100,14 +113,17 @@ static func _party_hp(cs) -> Array:
 ## from the last fight: GAME.OVR 0xAA38) set as the plan's round 1 wants it: off for a member with a round-1 entry (so
 ## the menu comes, even for the fight's first figure), on for the others. NPCs are left alone.
 static func prepare(main: Node, path: String) -> void:
-	var plan := _parse(path)
+	_prepare_wave(main, _parse(path), 1)
+
+
+static func _prepare_wave(main: Node, plan: Dictionary, wave: int) -> void:
 	for m in main._party:
 		var w: PartyMember = m
 		if w.npc >= 128:
 			continue
-		var want := not _entry(plan, w.name, 1).is_empty()
+		var want := not _entry(plan, w.name, 1, wave).is_empty()
 		Combat.set_record_quick(w, not want)
-		print("   PLANFIGHT prep %s %s" % [w.name, "menu in round 1" if want else "QUICK"])
+		print("   PLANFIGHT prep%s %s %s" % ["" if wave == 1 else " wave %d" % wave, w.name, "menu in round 1" if want else "QUICK"])
 
 
 ## The field as the fight opens: every figure (team, name, cell, HP) and each member's memorized spells, so a plan can
@@ -129,6 +145,72 @@ static func _print_field(cs) -> void:
 static func run(main: Node, path: String) -> void:
 	var plan := _parse(path)
 	var cs = main._combat
+	var first: Dictionary = {}
+	var r: Dictionary = {}
+	var rounds := 0
+	var wave := 1
+	while true:
+		r = await _fight(main, plan, wave)
+		if first.is_empty():
+			first = r
+		rounds += int(r.rounds)
+		if plan.waves > 1:
+			print("PLANFIGHT WAVE %d outcome=%s rounds=%d hp=%d->%d lost=%d down=%s dead=%s" % [wave, _OUTCOMES.get(r.result, "other(%d)" % r.result),
+				r.rounds, r.hp0, r.end[0], r.hp0 - r.end[0], ",".join(r.end[1]), ",".join(r.end[2])])
+		if r.result != 1 or wave >= plan.waves:
+			break
+		if not await _between(main, plan, wave + 1, r.fight):
+			break
+		wave += 1
+	var end: Array = r.end
+	var tail := "" if plan.waves == 1 else " waves=%d/%d" % [wave, plan.waves]
+	print("PLANFIGHT RESULT outcome=%s rounds=%d hp=%d->%d lost=%d down=%s dead=%s%s" % [_OUTCOMES.get(r.result, "other(%d)" % r.result),
+		rounds, first.hp0, end[0], first.hp0 - end[0], ",".join(end[1]), ",".join(end[2]), tail])
+
+
+## Between two fights of a plan with waves (main chat 99): Enter past the texts (THE PARTY HAS WON, the script's),
+## EXIT at the treasure and NO to DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?, until the next fight opens.
+## Each member's QUICK flag is set for the next wave's round 1 once the last fight has closed. False when no fight
+## opens within 120 s (the plan asked for more waves than the place has).
+static func _between(main: Node, plan: Dictionary, wave: int, last_fight) -> bool:
+	var cs = main._combat
+	var prepared := false
+	var t_end := Time.get_ticks_msec() + 120000
+	var last := ""
+	var steady := 0
+	var pressed_ms := 0
+	while Time.get_ticks_msec() < t_end:
+		await main.get_tree().process_frame
+		if cs.visible and cs._combat != null and cs._combat != last_fight:
+			print("   PLANFIGHT wave %d opens" % wave)
+			return true
+		if not prepared and not cs.visible:
+			_prepare_wave(main, plan, wave)
+			prepared = true
+		var tr = main._treasure
+		var st := "busy" if main._busy else "other"
+		if tr != null and tr.visible:
+			st = "treasure:" + String(tr._mode)
+		steady = steady + 1 if st == last else 0
+		last = st
+		if st == "busy" or steady < 3 or Time.get_ticks_msec() - pressed_ms < 500:
+			continue
+		var k := "Enter"
+		if st == "treasure:menu":
+			k = "e"
+		elif st == "treasure:ask_exit":
+			k = "n"
+		print("   PLANFIGHT %s (between waves: %s)" % [k, st])
+		await main._press(k)
+		pressed_ms = Time.get_ticks_msec()
+		steady = 0
+	print("   PLANFIGHT wave %d: no fight opened in 120 s" % wave)
+	return false
+
+
+## One fight by the plan's entries for that wave: {result, rounds, hp0, end, fight}.
+static func _fight(main: Node, plan: Dictionary, wave: int) -> Dictionary:
+	var cs = main._combat
 	CombatScreen.lab_original_aim = true     # the original's AIM cycle (TARGETING SKIPS PARTY off)
 	var seen := false
 	var hp0 := -1
@@ -146,6 +228,7 @@ static func run(main: Node, path: String) -> void:
 	var pressed_ms := 0          # a key the screen ate, as at the fight's first menu, is sent again)
 	var result := 0
 	var rounds := 0
+	var fight = null
 	var t_end := Time.get_ticks_msec() + 3600000
 	while Time.get_ticks_msec() < t_end:
 		await main.get_tree().process_frame
@@ -154,6 +237,7 @@ static func run(main: Node, path: String) -> void:
 				break
 			continue
 		if hp0 < 0:
+			fight = cs._combat
 			hp0 = _party_hp(cs)[0]
 			_print_field(cs)
 			if plan.magic:     # at the fight's start: a plan with no entries never shows a menu
@@ -171,7 +255,7 @@ static func run(main: Node, path: String) -> void:
 				var w: PartyMember = c.who
 				if c.team != 0 or w.npc >= 128 or i == cs._combat.active:
 					continue
-				var want := not _entry(plan, w.name, last_round).is_empty()
+				var want := not _entry(plan, w.name, last_round, wave).is_empty()
 				if want and c.get("quick", false):
 					c.quick = false
 					Combat.set_record_quick(w, false)
@@ -305,7 +389,7 @@ static func run(main: Node, path: String) -> void:
 			var who: PartyMember = cs._combatants[int(p[1])].who
 			var rnd := int(p[2])
 			var items := p[3].split(",")
-			cur = _entry(plan, who.name, rnd)
+			cur = _entry(plan, who.name, rnd, wave)
 			var act: String = cur.get("act", "quick")
 			aim_who = ""
 			var tk := "%s:%d" % [who.name, rnd]
@@ -343,6 +427,4 @@ static func run(main: Node, path: String) -> void:
 		pressed_ms = Time.get_ticks_msec()
 		last = ""
 		steady = 0
-	var end := _party_hp(cs)
-	print("PLANFIGHT RESULT outcome=%s rounds=%d hp=%d->%d lost=%d down=%s dead=%s" % [_OUTCOMES.get(result, "other(%d)" % result),
-		rounds, hp0, end[0], hp0 - end[0], ",".join(end[1]), ",".join(end[2])])
+	return {"result": result, "rounds": rounds, "hp0": hp0, "end": _party_hp(cs), "fight": fight}

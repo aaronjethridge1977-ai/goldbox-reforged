@@ -6,7 +6,10 @@
 # fight), then planfight=<plan> (scripts/dev/plan_fight.gd: the plan's format at its top). Every QoL switch that
 # changes play is off, as in the differential checks. <seeds>: "11111111 22222222" (hex) or "n:<count>[:<first>]"
 # (count seeds from first, default 50010001, step 1). Prints a line per run and a table per plan: wins, losses,
-# mean rounds, mean HP lost (over all runs and over the wins), the members down or dead.
+# mean rounds, mean HP lost (over all runs and over the wins), the members down or dead. A plan with `waves <n>`
+# (main chat 99) follows n fights in a row: its line counts every wave (rounds summed, HP from the first fight's start
+# to the last's end, won = every wave won) and adds the waves reached (mean); each wave's own line is in the run's log
+# (PLANFIGHT WAVE; PF_KEEP=1). Give such runs PF_TMO 1800 or more.
 # Env: PF_JOBS (runs at once, default 4), PF_GAME (the game folder, default ~/gbr/checks/data/game),
 # PF_POST (keys after the fight, main chat 98), PF_KEEP=1 keeps the work folder (its runs' logs: <work>/<plan>_<seed>.log), PF_TMO (seconds a run, default 900),
 # PF_CFG (ours' start cfg, as a check's ours.cfg; default ~/gbr/checks/data/38/ours.cfg: without one ours waits at
@@ -75,7 +78,7 @@ for b in names:
 		rows.append(d)
 	if not rows:
 		continue
-	won = [r for r in rows if r.get("outcome") == "won"]
+	won = [r for r in rows if r.get("outcome") == "won" and ("waves" not in r or r["waves"].split("/")[0] == r["waves"].split("/")[1])]
 	mean = lambda xs: sum(xs) / len(xs) if xs else 0
 	rounds = mean([int(r.get("rounds", 0)) for r in rows])
 	lost = mean([int(r.get("lost", 0)) for r in rows if "lost" in r])
@@ -85,6 +88,8 @@ for b in names:
 		for k in ("down", "dead"):
 			for n in filter(None, r.get(k, "").split(",")):
 				who[n + " " + k] = who.get(n + " " + k, 0) + 1
-	print("%-24s %5d %5d %6.1f %7.1f %7.1f  %s" % (b, len(won), len(rows), rounds, lost, lostw,
+	wv = [int(r["waves"].split("/")[0]) for r in rows if "waves" in r]
+	print("%-24s %5d %5d %6.1f %7.1f %7.1f  %s%s" % (b, len(won), len(rows), rounds, lost, lostw,
+		"waves %.1f; " % mean(wv) if wv else "",
 		", ".join("%s %d" % (k, v) for k, v in sorted(who.items(), key=lambda kv: -kv[1]))))
 EOF
