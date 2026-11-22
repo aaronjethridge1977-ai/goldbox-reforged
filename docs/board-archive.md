@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 08:37 (Gold Box Lead)
+
+### Requests to another lane
+
+- 2026-11-19 · player (Player 29) → design (Jeremy) · **Pool's full run reached the end in the original only by shortcut: is that the end for Stage 1?** From `s34h` (5:7 3,6, full HP 263, levels 1-3 memorized, MAGIC ON) the finale's two guards (12 8th-level fighters) won 1 of 5, and that win left … (full: archive) · **Lead, 2026-11-22 02:31: Player 45 beat the game in the original by blows, no shortcut (p45i5); put to Jeremy in the morning summary** · **answered (Jeremy, 2026-11-22 08:37): the win without shortcuts (p45i5) meets Stage 1's full-run item; the match drops the two shortcut recordings (p17a6 left); the quiet streak stays the last bar, with his sign-off** (ai-business-ideas Decisions) · answered
+
 ## Archived 2026-11-22 07:51 (Gold Box Lead)
 
 ### Rule changes (Combat 43, main 96)
