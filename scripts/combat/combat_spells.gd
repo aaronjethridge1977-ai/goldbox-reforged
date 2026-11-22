@@ -757,9 +757,14 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 			for j in targets:
 				var t: PartyMember = c.combatants[j].who
 				var immune: bool = (t.raw[0x9F] if t.raw.size() > 0x9F else 0) > 1
-				if not immune:
+				# The save's d20 (0x2BC5D), then the add-effect routine's resistances (a half-elf's d100, 0x11A4D),
+				# saved or not, as Hold Person's (the spell matrix, chs1, Combat Chat 45: BAKSHI charming himself,
+				# draws 1864-1865; ours drew the d100 first).
+				var kept := false
+				if not immune and not t.is_large():
+					kept = save(t, table.field(id, 9), 0, m)
 					immune = resists(t, SpecialAffects.CHARM)
-				if t.is_large() or immune or save(t, table.field(id, 9), 0, m):
+				if t.is_large() or immune or kept:
 					c.message.emit("%s IS UNAFFECTED" % t.name)
 					continue
 				# The spell adds effect 0x0B (power: the charmer's side in bit 7, low bits 1); its handler (GAME.OVR
@@ -771,10 +776,12 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				for a in t.affects:
 					if int(a.effect) == EFFECT_CHARM:
 						own_team = (int(a.value) >> 6) & 1    # charmed again: the side it came from
-				if own_team == 1:
-					# Only on a monster for now: the original's effect stays on a charmed member after the
-					# fight (Charm beyond the fight, not yet in ours).
-					SpellCaster.add_affect(t, EFFECT_CHARM, id, 0, (me.team << 7) | (own_team << 6) | 0x20 | 1)
+				# On a member too (the spell matrix, chs1, Combat Chat 45: BAKSHI charmed by his own spell kept 0x0B
+				# power 33 to the fight's end): the handler also makes a player character's control byte +0x84 0xB3
+				# (0xF0E4), so he is run as an NPC, in this fight and after it, until the charm is removed (0xF07E).
+				SpellCaster.add_affect(t, EFFECT_CHARM, id, 0, (me.team << 7) | (own_team << 6) | 0x20 | 1)
+				if t.npc <= 0x7F:
+					t.npc = 0xB3
 				c.combatants[j].team = me.team
 				c.combatants[j].quick = true
 				c.combatants[j].target = -1
@@ -1183,7 +1190,10 @@ func resolve_pending(i: int) -> bool:
 func ai_cast(i: int, tries: int = -1) -> bool:
 	var me: Dictionary = c.combatants[i]
 	var m: PartyMember = me.who
-	if me.team == 0 and not (party_casts or c.magic_on):
+	# GAME.OVR 0xB17F: a figure whose record +0x84 is over 0x7F (a monster, an NPC, a charmed member) weighs its
+	# spells whatever MAGIC says; a player character only with MAGIC on (the spell matrix, chs1, Combat Chat 45:
+	# BAKSHI, charmed by his own Charm Person, cast it on the kobolds with MAGIC off).
+	if me.team == 0 and m.npc < 128 and not (party_casts or c.magic_on):
 		return false
 	# The original lists every memorized spell, camp spells too, and leaves them to the
 	# priority test (GAME.OVR 0xB105, 0xAEAB), so its d-list range counts them; it reads the
