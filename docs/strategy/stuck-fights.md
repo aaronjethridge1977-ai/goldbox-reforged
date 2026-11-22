@@ -827,3 +827,23 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   +4 / +5, Mace +3, Hammer +3, Two-Handed Sword +2, Plate Mail +1 / +3, Shield +2, Leather +4, Sling of Seeking +2,
   the Javelin of Lightning, the Potion of Speed. The chain passed 4:2 and 4:10 without the Gauntlets' squares (4:2
   12,14 / 1,3), the Wand of Lightning Bolt's (4:10 9,15) or the Hammer's and Sling's (4:10 15,8). *seen* (the saves)
+- **Plan 5 with both sets of additions in the Plan 2 chain: THE GAME WON (Player 45, 2026-11-22 02:05-02:26;
+  `p45/finale45.plan` from `p45i1_s45ready`, `OP_PLAN5=1 OP_FIGHTDEATH=1 OP_MANUAL=1`; the loadout review
+  `p45/reviews/finale.md`, measured against Jeremy's):** the party F7/F7/C6/C5-F5-MU5/F6-MU6/F6-T6 with Genheeris;
+  spells as the review (cleric 1 Cure Light Wounds and one Bless, cleric 2 all Hold Person, cleric 3 all Prayer; LIRA
+  Shield, Magic Missile x3, Stinking Cloud x2, Haste, Hold Person; ELWEN's Shield and Fireball; no Charm Person in
+  either book); items by `uses` (Guide 12's step 1 (c)); `prep HASTE, PRAYER, BLESS, SHIELD` in the CONTINUE rounds.
+  - **p45i3:** the guards won with none dead (Hold Person, clouds; DORN's Javelin of Lightning round 2; the Necklace
+    never found an aim with no member within 3 squares); CONTINUE rounds: Giant Strength (BRAM), Haste (LIRA: six
+    hasted), Speed (ARN), Prayer, Bless, both Shields; then three idle cure rounds ran the Haste down (only ARN hasted
+    when he came); every member readied a guard's Ring of Protection +3 in his fight (USE, READY: the turn kept);
+    **he fell to ARN's blow** (11 HP to none); BRAM and ELWEN dead in his fight; the tool stopped it at his CONTINUE
+    BATTLE as a reload (a tool fault: Plan 5 (c) is the guards' fight; Player 29's rule makes a death in his a win),
+    before the script's win flag. *seen*
+  - **p45i5: won.** The guards with none dead (DORN 0 HP, unconscious); the same prep; **Tyranthraxus fell at 13 HP**
+    in the computer-run part of a round with LIRA (8 HP) and Genheeris standing; CEDRIC and ELWEN dead in his fight;
+    **0x4ABA = 254** and the script took the party home to New Phlan (3:0 0,4): `p2start/p45i5_s45won`. *seen*
+  - **Measure:** Plan 5 (Player 43, slot H, no review, no items, the flight): the guards 5 of 6, him 0 of 3. Here
+    the guards 2 of 2 with none dead, him 2 of 2 by blows. Two dead in his fight each time: his breath (80 / 40) on
+    members already low; the open question for the guide is whether the cures should go into his fight's first
+    rounds instead of the CONTINUE rounds. *seen*
