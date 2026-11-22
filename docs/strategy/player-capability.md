@@ -104,3 +104,40 @@ learning from Jeremy's play (board 2026-11-21 19:22, the Coach chat) alongside. 
 guide sessions per hard fight (the fight rating when built). Baselines: the throne room 5 of 5 lost (Player 39, with
 Haste); the finale's guards 1 of 7 by the reload rule (p42f1-f7), then 5 of 6 under Plan 5 with MANUAL (Player 43);
 Tyranthraxus's flight 0 of 3 (Player 43).
+
+## 5. The first two loadout reviews, read (Gold Box Guide 13, 2026-11-22 08:48-09:00)
+
+Read: Player 44's throne room review and Player 45's finale review (lab `p44/reviews/throne.md`,
+`p45/reviews/finale.md`; unchanged through Player 47), against the ledgers `s44loadout`, `s44door`, `s45ready`.
+
+**Right:** the throne room kept the finale's items (Speed, the Necklace, the Javelin): the long-term rule applied;
+two Fireballs a caster and the scroll Fireballs on the trolls, Prayer round 1 (won, p44g2). The finale matched
+Jeremy's loadout on almost every line (clerics all Cure Light Wounds, Hold Person, Prayer; LIRA's Haste for him;
+Giant Strength on BRAM, Speed on ARN; the Necklace and the Javelin on the guards; healing potions with the front line;
+the guards' Rings +3 for saves), and said plainly that no Charm Person is in either book.
+
+**Missed:** (1) **weight:** at the throne room's door (`s44door`) BRAM and CEDRIC moved 3 and DORN 6 (the trip's
+loot); the review, written at the inn when all moved 12/9, assumed 9. (2) **unspent before the last fight:** ELWEN's
+Fireball, Stinking Cloud and Hold Person scrolls, LIRA's Prayer scroll, CEDRIC's two Cure Light Wounds, ARN's Wand
+of Magic Missiles (33). (3) LIRA's second level-3 spell Hold Person, not Fireball or Lightning Bolt (argued; p47k4
+lost the guards to Hold Person saves). (4) Written once from the ledger of the fight before and never re-checked.
+**What it says about the method:** the review is written once, at the inn, from a summary of the ledger; it doesn't
+walk the ledger line by line and isn't checked again at the door, where things go wrong. The ledger's "over" and
+"movement" sometimes disagree (`s45ready` BRAM 412 over, 12/9): to be checked.
+
+**Decided (Jeremy, 09:00):**
+1. **The review's method:** checked again **at the fight's door** against that day's ledger (the stop sits there);
+   **every consumable in the ledger gets a line** (user and round, the fight it is kept for, or sold), the tool
+   flagging any left out; **everything may be spent before the last fight, but no bad tactical choice just to use
+   something up** (*Jeremy*); **movement 9 or more at the door**: coins and loot left or dropped before it.
+2. **Restoration scrolls sold at the first Phlan visit after Valhingen Graveyard (4:10) is cleared** (drainers load
+   only in 2:15, 4:2 and 4:10: main chat 98).
+3. **The chat's key turns in stuck-list fights only.** The orders that won the guards (Player 47: clouds on the foes
+   touching the fighters, no overlap; Hold Person on those in contact; a blow from each member on a held or clouded
+   foe beside him) become the general rules; then `OP_PLAN5` is retired and the rules alone are measured against the
+   chat on the same saves and seeds.
+4. **Tyranthraxus' first breath** (2 of 5 tries lost before a menu of ours): **spread the party in the CONTINUE
+   BATTLE rounds** before he comes; tried in ours first (main, step 3), then in the original. **Casters never strike
+   him** (ELWEN died both times she was ordered to).
+5. **The throne room's escort: closed** (won from 6,3 without it).
+6. **The measure adds:** deaths in wins, minutes of the Player chat per try, consumables left unspent.
