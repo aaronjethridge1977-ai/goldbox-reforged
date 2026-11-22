@@ -265,6 +265,27 @@ func roll(d: PackedByteArray, rng: RandomNumberGenerator) -> void:
 	d[0x6B] = 1
 
 
+## NPC_ADD's draws after the monster record loads (GAME.OVR 0x1F248, main chat 101, traced in DOSBox on
+## 2:15's MAD MAN: after the LOAD_MON's five icon-colour d6s, none more for the record): Random(256) for
+## byte 0xAB, then the portrait: one of the record's
+## classes 0..6 at random (a fighter if none), the body from that class's table (cleric 0x8D7, magic-user
+## 0x8EB, thief 0x8F5, the rest the fighter's 0x8E1; sex * 5 + 1d5) and the head from 0x8C7 (sex * 8 + 1d8).
+## Before, ours kept the monster record's own bytes (MAD MAN's head 35, body 3: the original 11, 5).
+func npc_join(d: PackedByteArray, rng: RandomNumberGenerator) -> void:
+	d[0xAB] = _between(rng, 0, 255)
+	var classes: Array[int] = []
+	for c in 7:
+		if d[0x96 + c] > 0:
+			classes.append(c)
+	if classes.is_empty():
+		classes.append(2)
+	var c: int = classes[_between(rng, 1, classes.size()) - 1]
+	var table: int = {0: 0x8D7, 5: 0x8EB, 6: 0x8F5}.get(c, 0x8E1)
+	var sex := d[0x9E]
+	d[0xBC] = _byte(table + sex * 5 + _between(rng, 1, 5))
+	d[0xBB] = _byte(0x8C7 + sex * 8 + _between(rng, 1, 8))
+
+
 ## What MODIFY allows for ability i (0 STR .. 5 CHA): the race's limits (STR by sex) and
 ## the class's minimum.
 func ability_range(d: PackedByteArray, i: int) -> Vector2i:

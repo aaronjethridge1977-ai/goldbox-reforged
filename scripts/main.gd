@@ -2731,6 +2731,14 @@ func _add_npcs() -> void:
 		# the party from his first fight (full run c29a, 2:15).
 		if m.raw.size() > 0x10F:
 			m.raw[0x10E] = 1 if int(req[0]) == 0x18 else 0
+			# ... and draws byte 0xAB and the portrait (main chat 101: GAME.OVR 0x1F248; MAD MAN traced,
+			# GENHEERIS and PRINCESS FATIMA vary so in the original's saves). Not DIRTEN (0x18): 610 of the
+			# original's saves show his record's own 0, 4 (how he skips it isn't read yet).
+			var rules := CreationRules.shared(_game_path)
+			if rules.ok and int(req[0]) != 0x18:
+				var rng := RandomNumberGenerator.new()
+				rng.randomize()
+				rules.npc_join(m.raw, rng)
 		m.recalculate(_types)
 		m.refresh_load_word()     # ADD_NPC works the record out again (0x3933; Combat Chat 29's load word)
 		m.refresh_cache()         # ... its cached THAC0 and AC too (START.EXE 0xba:0xbb8; check 54: 41, not the record's 149)
