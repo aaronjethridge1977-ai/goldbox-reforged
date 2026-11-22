@@ -1155,6 +1155,21 @@ class LightLoot:
         return True, None, ""
 
 
+class NoShare:
+    """Player 44: `noshare on|off` (loot.NOSHARE): a pile's coins are left, not SHAREd (p44y1, p44z3: a party at the
+    weight cap SHAREd each pile's coins and then refused 5:4's Javelin of Lightning and Two-Handed Sword +2)."""
+    def __init__(self, on):
+        self.on = on
+
+    def __repr__(self):
+        return "noshare %s" % ("on" if self.on else "off")
+
+    def next(self, p):
+        loot.NOSHARE["on"] = self.on
+        p.note("take", "coins %s" % ("left in the piles" if self.on else "SHAREd"))
+        return True, None, ""
+
+
 class XpGoal:
     """Player 43: `xpgoal <NAME>=<xp>,... <checkpoint>`: once every listed member has at least that XP (the record's
     0xAC), the plan skips ahead to just before the named checkpoint (a band loop ends itself at the levels' goal)."""
@@ -1495,7 +1510,8 @@ class Plan:
                     lp.add(j)
                     p.note("take", "%s's coins POOLed into the pile (left there: Plan 5's (b))" % P[j][1])
                     return "p", "treasure: POOL (%s)" % P[j][1]
-            if not p.shared and "SHARE" in scr["bottom"].split() and not loot.LIGHT["on"]:
+            if not p.shared and "SHARE" in scr["bottom"].split() and not loot.LIGHT["on"] \
+                    and not loot.NOSHARE["on"]:
                 p.shared = True
                 return "s", "treasure: SHARE the coins"
             pk = taking and "TAKE" in scr["bottom"].split() and not p.take.get("done") and self._pick(p)
@@ -2434,6 +2450,8 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "lightloot":
             pl.goals.append(LightLoot(rest.strip() == "on"))
+        elif cmd == "noshare":
+            pl.goals.append(NoShare(rest.strip() == "on"))
         elif cmd == "xpgoal":
             pl.goals.append(XpGoal(rest))
         elif cmd == "checkpoint":

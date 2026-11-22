@@ -75,6 +75,7 @@ MISSILE_WORDS = ("ARROW", "QUARREL", "DART", "BOLT", "SLING STONE")
 # Player 43 (Plan 5's (b), Jeremy 15:22: before Tyranthraxus only weightless items from the guards' pile): plan step
 # `lightloot on|off`; while on, only rings, gems, jewellery or items of weight 1 or less, and no SHARE of the coins
 LIGHT = {"on": False}
+NOSHARE = {"on": False}     # Player 44: `noshare on`: leave a pile's coins
 
 
 def worth_taking(it):
