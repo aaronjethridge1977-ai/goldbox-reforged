@@ -31,6 +31,12 @@
                                  order, while their level has a free slot), then the bot's picks in the rest
   focus <KIND>,...|none          (Player 36) a step: tactics' blows, arrows, MOVEs and Stinking Cloud go to these kinds
                                  first (the helpless of them first): the throne room's TROLL
+  uses <NAME> <ITEM> r<n>|cont [vs=<w>] [aim=<w>] [swap=<ITEM>]
+                                 (Player 45) a step: the member USEs that item in a fight (round n on, with a vs foe
+                                 standing; cont: a CONTINUE BATTLE round), readying it (swap unreadied first, readied
+                                 again at his next turn); once each; `uses none` clears (tactics.USES)
+  prep <spell>, ...|none         (Player 45) a step: spells cast in CONTINUE BATTLE rounds once cures are done (Haste
+                                 once per caster, Prayer and Bless once; tactics.PREP; Guide 11's Plan 5 additions (2))
   bands on|off                   (Player 36) a step: Guide 3's band rule on 6:25/7:26/8:27 (BANDS: the best Charisma lit,
                                  PARLAY the cheap kinds with the area's manner, FLEE or fight the rich ones, WAIT)
   advance <NAME>,...|none        (Player 35) a step: who MOVEs toward the enemy when nothing is in reach (OP_ADVANCE)
@@ -1124,6 +1130,50 @@ class ScrollsStep:
         import tactics
         tactics.SCROLLS[self.who] = list(self.spells)
         p.note("tactics", "scrolls: %s %s" % (self.who, ", ".join(self.spells) or "none"))
+        return True, None, ""
+
+
+class UsesStep:
+    """Player 45 (Gold Box Guide 12's step 1 (c)): `uses <MEMBER> <item word> <when> [vs=<word>] [aim=<word>]
+    [swap=<item word>]` (underscores for spaces; <when> r<n> or cont): a tactics.USES line from here (see tactics.py);
+    `uses none` clears them."""
+    def __init__(self, rest):
+        w = rest.split()
+        self.u = None
+        if w and w[0].lower() != "none":
+            opt = dict(x.split("=", 1) for x in w[3:] if "=" in x)
+            when = w[2].lower()
+            self.u = {"member": w[0].replace("_", " ").upper(), "item": w[1].replace("_", " ").upper(),
+                      "when": "cont" if when == "cont" else "r", "round": int(when[1:]) if when.startswith("r") else 1,
+                      "vs": opt.get("vs", "").replace("_", " ").upper(), "aim": opt.get("aim", "").replace("_", " ").upper(),
+                      "swap": opt.get("swap", "").replace("_", " ").upper(), "done": False}
+
+    def __repr__(self):
+        return "uses %s" % (self.u or "none")
+
+    def next(self, p):
+        import tactics
+        if self.u is None:
+            tactics.USES[:] = []
+        else:
+            tactics.USES.append(dict(self.u))
+        p.note("tactics", "uses: %s" % (["%s %s %s" % (u["member"], u["item"], u["when"] if u["when"] == "cont" else
+                                                        "r%d" % u["round"]) for u in tactics.USES] or "none"))
+        return True, None, ""
+
+
+class PrepStep:
+    """Player 45 (Guide 11's Plan 5 additions (2)): `prep <spell>, ...|none`: tactics.PREP from here."""
+    def __init__(self, rest):
+        self.spells = [] if rest.strip().lower() == "none" else [x.strip().upper() for x in rest.split(",") if x.strip()]
+
+    def __repr__(self):
+        return "prep %s" % (", ".join(self.spells) or "none")
+
+    def next(self, p):
+        import tactics
+        tactics.PREP[:] = self.spells
+        p.note("tactics", "prep: %s" % (", ".join(self.spells) or "none"))
         return True, None, ""
 
 
@@ -2578,6 +2628,10 @@ def load(path):
             pl.goals.append(Focus(rest))
         elif cmd == "scrolls":    # Player 37: `scrolls <MEMBER> <spell>, ...|none` (tactics.SCROLLS)
             pl.goals.append(ScrollsStep(rest))
+        elif cmd == "uses":       # Player 45: `uses <MEMBER> <item> r<n>|cont [vs=..] [aim=..] [swap=..]|none`
+            pl.goals.append(UsesStep(rest))
+        elif cmd == "prep":       # Player 45: `prep <spell>, ...|none` (tactics.PREP)
+            pl.goals.append(PrepStep(rest))
         elif cmd == "bands":      # Player 36: `bands on|off`
             pl.goals.append(BandsStep(rest.strip() == "on"))
         elif cmd == "answerfrom":

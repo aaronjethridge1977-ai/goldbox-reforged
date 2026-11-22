@@ -250,6 +250,27 @@ FOCUS = []
 # Player 37: `scrolls <MEMBER> <spell>, ...`: spells to cast from that member's readied scrolls in fights (USE), one a
 # turn while a target is worth it (the Kovel Fireball scrolls for the graveyard's spectres)
 SCROLLS = {}
+# Player 45 (Gold Box Guide 12's step 1 (c): USE in fights of potions, wands, javelins and the Necklace, ordered by the
+# loadout review): `uses <MEMBER> <item word> <when> [vs=<word>] [aim=<word>] [swap=<item word>]` (plans.py): at that
+# member's first turn from <when> on ("r<n>": round n of a fight or later, with a foe whose name has the vs word
+# standing; "cont": a CONTINUE BATTLE round, no foe standing) the member opens USE, readies the item (unreadying the
+# swap item first, re-readied at his next turn: a weapon for the Javelin, a shield for a one-handed potion or wand)
+# and USEs it; its aim as the spell it casts (the aim word's foes first). Each line once. Our own reading of what the
+# items cast (character_sheet.gd item_spell: bytes 61-62; MUST BE READIED; ITEMS' hands): the Necklace of Missiles
+# a fireball (no hands), the Wand of Magic Missiles 2d4+2 missiles (a hand), the Javelin of Lightning a bolt (a
+# weapon), a potion on the drinker (a hand).
+USES = []
+REREADY = {}                 # member -> the item word unreadied for a USE, readied again at his next turn
+ITEM_SPELL = (("NECKLACE", "FIREBALL"), ("WAND", "MAGIC MISSILE"), ("JAVELIN", "LIGHTNING BOLT"), ("POTION", "POTION"))
+# Player 45 (Guide 11's Plan 5 additions (2), Jeremy 19:34): `prep <spell>, ...|none`: in the CONTINUE BATTLE rounds
+# (no foe standing) the members cast these from memory once the cures are done (Haste once per caster, Prayer and
+# Bless once), the battle continued one round more after the last is begun (it goes off at the caster's next turn)
+PREP = []
+PREP_IDS = {"HASTE": 48, "PRAYER": 42, "BLESS": 1}
+
+
+def _item_kind(name):
+    return next(((k, s) for k, s in ITEM_SPELL if k in name.upper()), (None, None))
 
 
 def _focus(f):
@@ -330,6 +351,11 @@ class Tactics:
         # OP_MELEE=0 keeps Player 30's QUICK
         self.melee = os.environ.get("OP_MELEE", "1") != "0"
         self.spells = {}         # member -> the spells seen in their CAST list (kept across fights; refreshed at each look)
+        # Player 45: (member, spell) of `prep` spells begun in this run of CONTINUE BATTLE rounds, and the round (the
+        # CONTINUE count) the last was begun in; kept across reset() (each continued round is a fight to player.py),
+        # cleared at CONTINUE BATTLE NO
+        self.prep_cast = set()
+        self.prep_round = -1
         self.reset()
 
     def reset(self):
@@ -357,6 +383,9 @@ class Tactics:
         self.use_off = set()     # Player 37: members whose readied scrolls have none of their spells left (this fight)
         self.holding = set()     # Player 38: members standing on a fallen focus figure's square (OP_HOLDDOWN)
         self.clouds = set()      # Player 42: the cells of this fight's Stinking Clouds (no member walks in)
+        self.round = 1           # Player 45: the fight's round (a member's second menu starts the next)
+        self.rseen = set()
+        self.item_aim = None     # Player 45: an item's aim under way: (spell, aim word)
 
     def _edge_path(self, p, me, bad=()):
         """Player 42 (OP_FLIGHT): the shortest walk from the member's cell to any cell on the field's border (x 0 or
@@ -403,6 +432,12 @@ class Tactics:
         if me is not None and not foes and CLW in me.get("memo", b"") and _hurt(party) \
                 and (member, "CURE LIGHT WOUNDS") not in self.refused:
             return "CURE LIGHT WOUNDS"     # Player 38: the continued battle between waves (CONTINUE BATTLE: YES)
+        if me is not None and not foes and PREP:
+            self._party = party
+            for spell in PREP:
+                if PREP_IDS.get(spell) in me.get("memo", b"") and (member, spell) not in self.refused \
+                        and self._prep_ok(member, spell):
+                    return spell
         if me is None or not foes:
             return None
         known = self.spells.get(member)       # the spells seen in this member's CAST list (None: not looked yet)
@@ -437,12 +472,44 @@ class Tactics:
                 return spell
         return None
 
+    def _prep_ok(self, member, spell):
+        """Player 45: a `prep` spell not begun yet in these CONTINUE rounds (Haste once per caster, the rest once)."""
+        if spell == "HASTE":
+            return (member, spell) not in self.prep_cast
+        if spell in STANDING and any(STANDING[spell] in f.get("fx", ()) for f in getattr(self, "_party", ()) if _up(f)):
+            return False               # already on the party (a Prayer from the fight still running)
+        return not any(s == spell for _, s in self.prep_cast)
+
+    def _prep_left(self, party):
+        """Player 45: (member, spell) of `prep` spells an up member still has to begin."""
+        self._party = party
+        return [(f["name"], s) for f in party if _up(f) for s in PREP
+                if PREP_IDS.get(s) in f.get("memo", b"") and (f["name"], s) not in self.refused and self._prep_ok(f["name"], s)]
+
+    def _due_use(self, member, foes):
+        """Player 45: this member's first `uses` line due now (see USES), or None."""
+        for u in USES:
+            if u["done"] or u["member"] != member:
+                continue
+            if u["when"] == "cont":
+                if not foes:
+                    return u
+                continue
+            if not foes or self.round < u["round"]:
+                continue
+            if u["vs"] and not any(u["vs"] in f["name"].upper() for f in foes):
+                continue
+            return u
+        return None
+
     def _haste_points(self, party):
         """Player 39: party figures to aim Haste at, the one with most advance fighters (then members) within 2 first."""
         up = [f for f in party if _up(f)]
         fighters = [f for f in up if f["name"].upper() in ADVANCE]
         if not fighters:
             return []
+        # Player 45 (`prep`: a Haste per caster): the fighters not hasted yet, when there are any
+        fighters = [f for f in fighters if 39 not in f.get("fx", ())] or fighters
         best = []
         for f in up:
             k = sum(1 for g in fighters if _dist(f, g) <= 2)
@@ -453,7 +520,7 @@ class Tactics:
 
     def targets(self, spell, me, party, foes):
         """Figures to aim at, best first ([] none worth it; None: on the caster)."""
-        if spell in ("PRAYER", "BLESS"):
+        if spell in ("PRAYER", "BLESS", "POTION"):
             return None
         if spell == "HASTE":
             return self._haste_points(party)
@@ -546,12 +613,25 @@ class Tactics:
             n = getattr(self, "continued", 0)
             dying = any(f["status"] == 5 for f in party)
             cures = any(_up(f) and CLW in f.get("memo", b"") for f in party)
-            if not foes and n < CONTINUE and (dying or (cures and _hurt(party))):
+            # Player 45: `prep` spells still to begin, one begun in the round just ended (it goes off at the caster's
+            # next turn), or a `uses ... cont` item still to use: on, past CONTINUE's cap by 3 at most
+            prep = [] if foes else self._prep_left(party)
+            uses = [] if foes else [u for u in USES if not u["done"] and u["when"] == "cont"
+                                    and any(_up(f) and f["name"] == u["member"] for f in party)]
+            going = self.prep_round == n
+            if not foes and ((n < CONTINUE and (dying or (cures and _hurt(party))))
+                             or (n < CONTINUE + 3 and (prep or uses or going))):
                 self.continued = n + 1
-                self.log("TACTICS CONTINUE BATTLE YES (%d): %s" % (self.continued, ", ".join(
-                    "%s %d/%d" % (f["name"], f["hp"], f.get("max", 0)) for f in party)))
-                return "y", "tactics: CONTINUE BATTLE YES (round %d: cures and bandages)" % self.continued
+                self.log("TACTICS CONTINUE BATTLE YES (%d): %s%s" % (self.continued, ", ".join(
+                    "%s %d/%d" % (f["name"], f["hp"], f.get("max", 0)) for f in party),
+                    "; prep %s, uses %s%s" % (prep, ["%s %s" % (u["member"], u["item"]) for u in uses],
+                                              ", a prep spell going off" if going else "")
+                    if (prep or uses or going) else ""))
+                return "y", "tactics: CONTINUE BATTLE YES (round %d: cures, bandages, prep)" % self.continued
             self.continued = 0
+            if self.prep_cast:
+                self.log("TACTICS prep done: %s" % sorted(self.prep_cast))
+            self.prep_cast, self.prep_round = set(), -1
             return "n", "tactics: CONTINUE BATTLE NO"
         if b.startswith("ABORT SPELL?"):
             # the original after an aim's EXIT (seen, p30b1): a spell with nowhere to go is given up
@@ -650,7 +730,8 @@ class Tactics:
                           for f in foes)))
             me = next((f for f in party if f["name"] == member), None)
             if me:
-                self.log("TACTICS %s at %d,%d/%d" % (member, me["x"], me["y"], me["fp"]))
+                self.log("TACTICS %s at %d,%d/%d%s" % (member, me["x"], me["y"], me["fp"], (
+                    " effects %s" % ",".join("%d" % e for e in me.get("fx", ()))) if USES or PREP else ""))
             if self.cast.get("HASTE"):
                 # Player 39: who carries Haste (effect 39) since it was cast
                 self.log("TACTICS hasted: %s" % (", ".join(f["name"] for f in party if 39 in f.get("fx", ())) or "none"))
@@ -674,6 +755,10 @@ class Tactics:
             self.mturns = getattr(self, "mturns", 0) + 1     # Player 43: member turns this fight (Plan 5's holds)
             self.ally_no = 0
             self.stepped = set()
+            if member in self.rseen:     # Player 45: a member's second menu: the next round
+                self.round += 1
+                self.rseen = set()
+            self.rseen.add(member)
         items = b.split()
         if QUICKKINDS and "QUICK" in items:
             # Player 42 (Plan 2's bands: 7:26's stirge swarms took ~6 min each by hand for ~230 XP a member): when every
@@ -707,6 +792,35 @@ class Tactics:
                 self.log("TACTICS %s turns undead (%s)" % (member, ", ".join(f["name"] for f in undead[:6])))
                 return "t", "tactics: %s TURNs undead" % member
         self.use = None
+        self.item_aim = None
+        if "USE" in items and (REREADY.get(member) or USES):
+            try:
+                foes = self._sides(p)[2]
+            except Exception:
+                foes = [1]
+            if REREADY.get(member):
+                # Player 45: the item unreadied for a USE goes back (READY keeps the turn: the rings, Combat Chat 38)
+                self.use = {"member": member, "item": None, "word": REREADY[member], "phase": "reready", "n": 0}
+                self.log("TACTICS %s readies %s again" % (member, REREADY[member]))
+                return "u", "tactics: %s USE: ready %s again" % (member, REREADY[member])
+            u = self._due_use(member, foes)
+            if u:
+                kind, spell = _item_kind(u["item"])
+                if spell not in ("POTION", None) and foes:
+                    try:
+                        fs, party, foes2 = self._sides(p)
+                        me = next((f for f in party if f["name"] == member), None)
+                        t = self.targets(spell, me, party, foes2) if me else []
+                    except Exception:
+                        t = [1]
+                    if not t:
+                        self.log("TACTICS %s's %s: no aim worth it yet (%s)" % (member, u["item"], spell))
+                        u = None
+                if u:
+                    self.use = {"member": member, "item": u, "word": u["item"], "phase": "use", "n": 0,
+                                "readied": 0, "swapped": False}
+                    self.log("TACTICS %s USEs %s (round %d, %s)" % (member, u["item"], self.round, u["when"]))
+                    return "u", "tactics: %s USEs %s" % (member, u["item"])
         left = SCROLLS.get(member.upper())
         if "CAST" in items and left:
             # Player 39: a memorized Haste goes before the readied scroll's spell (round 1, the Lead's answer)
@@ -892,6 +1006,8 @@ class Tactics:
             m = re.match(r"(YES|NO)\s+(.*)", st["rows"][r].strip("?\\ "))
             if m:
                 rows[r] = (m.group(1), m.group(2).strip().upper())
+        if "phase" in u:
+            return self._item_page(st, rows)
         if u["row"] is not None:
             u["tried"].add(u["row"])
             u["row"] = None
@@ -912,6 +1028,78 @@ class Tactics:
             self.use = None
             return "e", "tactics: the items page has no single lit row: EXIT"
         return ("end" if cand[0] > lit[0] else "home"), "tactics: light to %s" % rows[cand[0]][1]
+
+    def _item_page(self, st, rows):
+        """Player 45 (`uses`): the items page for an item's USE: unready the swap item (when the item isn't readied),
+        ready the item, USE it (its aim: _aim, as a scroll's); or ready the swap item again (`reready`). Home / End
+        move the light a row (as for scrolls)."""
+        u = self.use
+        member = u["member"]
+        u["n"] += 1
+        lit = [r for r in rows if _white(st["im"], r)]
+
+        def row(word, ready=None):
+            return next((r for r, (y, n) in sorted(rows.items()) if word in n and (ready is None or y == ready)), None)
+
+        def press(r, key, why):
+            if len(lit) != 1:
+                return "e", "tactics: the items page has no single lit row: EXIT"
+            if lit[0] == r:
+                return key, "tactics: %s %s" % (why, rows[r][1])
+            return ("end" if r > lit[0] else "home"), "tactics: light to %s" % rows[r][1]
+
+        def give_up(why):
+            self.log("TACTICS %s: %s (rows %s)" % (member, why, sorted(rows.values())))
+            if u.get("item"):
+                u["item"]["done"] = True
+            if u["phase"] == "reready":
+                REREADY.pop(member, None)
+            self.use = None
+            return "e", "tactics: %s: EXIT" % why
+
+        if u["n"] > 14 or len(lit) != 1:
+            return give_up("the item USE ran long or no single lit row")
+        word = u["word"]
+        if u["phase"] == "reready":
+            r = row(word)
+            if r is None or rows[r][0] == "YES":
+                REREADY.pop(member, None)
+                self.use = None
+                self.log("TACTICS %s: %s %s" % (member, word, "readied again" if r is not None else "gone"))
+                return "e", "tactics: %s ready again: EXIT" % word
+            return press(r, "r", "READY")
+        it = u["item"]
+        r = row(word, "YES")
+        if r is None:
+            r = row(word)
+        if r is None:
+            return give_up("no %s on the items page" % word)
+        if rows[r][0] == "NO":
+            sw = it.get("swap")
+            if sw and not u["swapped"]:
+                s = row(sw, "YES")
+                if s is not None:
+                    k = press(s, "r", "unready (for %s)" % word)
+                    if k[0] == "r":
+                        u["swapped"] = True
+                        REREADY[member] = sw
+                    return k
+                u["swapped"] = True
+            if u["readied"] >= 2:
+                return give_up("%s won't ready" % word)
+            k = press(r, "r", "READY")
+            if k[0] == "r":
+                u["readied"] += 1
+            return k
+        k = press(r, "u", "USE")
+        if k[0] == "u":
+            kind, spell = _item_kind(rows[r][1])
+            it["done"] = True
+            self.use = None
+            self.scroll_aim = spell or "POTION"
+            self.item_aim = (self.scroll_aim, it.get("aim"))
+            self.log("TACTICS %s USEs %s (%s; aim %s)" % (member, rows[r][1], self.scroll_aim, it.get("aim") or "-"))
+        return k
 
     def _move_test(self, st, p):
         """Player 40: OP_MOVETEST's step, then its key; the member's square logged before the key."""
@@ -1223,6 +1411,11 @@ class Tactics:
         d = tgt - lit[0]
         if d == 0:
             self.cast[spell] = self.cast.get(spell, 0) + 1     # Prayer, Bless: once (begun now, aimed when it goes off)
+            if spell in PREP and getattr(self, "continued", 0) > 0:
+                # Player 45: a `prep` spell begun in a CONTINUE BATTLE round
+                self.prep_cast.add((member, spell))
+                self.prep_round = self.continued
+                self.log("TACTICS %s begins %s in CONTINUE round %d (prep)" % (member, spell, self.continued))
             if self.use:
                 left = SCROLLS.get(member.upper(), [])
                 if spell in left:
@@ -1246,6 +1439,10 @@ class Tactics:
         spell = spell.split(":", 1)[1].strip() if ":" in spell else spell
         if not spell and getattr(self, "scroll_aim", None):
             spell = self.scroll_aim         # Player 37: a scroll's aim (no SPELL: line)
+        if self.item_aim:
+            # Player 45 (p45c1: the Necklace's aim shows "SPELL:NECKLACE"; aimed as the nearest foe, its fireball caught
+            # CEDRIC's neighbours): an item's aim is the spell it casts
+            spell = self.item_aim[0]
         figs, party, foes = self._sides(p)
         can = "TARGET" in st["bottom"].split()
         cur = self._aimed(st, lst, at, figs)
@@ -1257,7 +1454,13 @@ class Tactics:
             if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
                 t = [caster] + [f["n"] for f in party if f["n"] != caster]
             near = [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))] if me else [f["n"] for f in foes]
-            if spell not in ("PRAYER", "BLESS", "HASTE") and not (PLAN5 and spell == "HOLD PERSON"):
+            if self.item_aim and self.item_aim[1] and t:
+                # Player 45 (`uses ... aim=<word>`): that kind first
+                w = self.item_aim[1]
+                byn = {f["n"]: f for f in foes}
+                t = [n for n in t if n in byn and w in byn[n]["name"].upper()] + \
+                    [n for n in t if not (n in byn and w in byn[n]["name"].upper())]
+            if spell not in ("PRAYER", "BLESS", "HASTE", "POTION") and not (PLAN5 and spell == "HOLD PERSON"):
                 # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]
@@ -1339,7 +1542,9 @@ class Tactics:
             persons = {f["n"] for f in foes if not _is_large(f)}
             left = [t for t in left if t in persons]
         # (p43b2: ELWEN's Cure Light Wounds walked the cursor 6 squares to DORN: touch) only targets in range
-        rng = spell_range(spell, me)
+        # (Player 45: an item's aim has the item's range, level 6 (ours' DS:0x6DBF reading), not the bearer's: unfiltered;
+        # no TARGET out of reach goes to the next target)
+        rng = None if self.item_aim else spell_range(spell, me)
         if rng is not None:
             try:
                 dist = aim_dist(p.g.mem)
