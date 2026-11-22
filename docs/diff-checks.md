@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 97: a magic-user's training pick, the aligned sword in the computer's weapon choice (checks 329, 330; two differences)
+## Chat 97: a magic-user's training pick, the aligned sword in the computer's weapon choice (checks 329, 330; one difference, one question)
 
 - **statediff compares the magic-user's spell book** (record 0x33..0x6A, ids 9-21, 29-35, 45-55) **and the levels by
   class** (0x96..0x9D). The whole book failed 47 gate checks: the original fills a cleric's book with every castable
@@ -184,10 +184,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   TRAIN, YES, then on the spell page (DARKSTAR'S SPELLS TO CHOOSE FROM, 1ST LEVEL, the last spell lit, CHOOSE SPELL:
   LEARN): Esc, Up, Up, Home, Home, End, End, End, Enter. **The original:** Esc and the arrows do nothing; Home / End
   light the spell above / below, wrapping; Enter learns BURNING HANDS (9) and goes straight back to CHOOSE A FUNCTION.
-  Ours' arrows moved: PROTECTION FROM GOOD (17). Fix (Combat's party_menu.gd): `~/gbr/lab/data/c97/learn_keys.py`;
-  3 of 3 with it, 0 on main. At 2500 experience the original's TRAIN does nothing (the next level is 2501).
+  Ours' arrows moved: PROTECTION FROM GOOD (17). The camp's MEMORIZE list is the same in the original (Down nothing, End
+  wraps); ours takes the arrows there too, as in the WHO lists Jeremy kept (Q13): put to the Lead (board). Under (b)
+  `~/gbr/lab/data/c97/learn_keys.py` (party_menu.gd) and 329 join (3 of 3 with it, 0 on main). At 2500 experience the original's TRAIN does nothing (the next level is 2501).
 - **330 (coverage):** the same page: End (wraps to the first), Home (wraps to the last), Home, L: PROTECTION FROM GOOD
-  (17). Matches on main; a clamped list (no wrap) breaks 329 and 330.
+  (17). Matches on main; a clamped list (no wrap) breaks 329 and 330. **In the gate** (DIFFCHECKS 328/328).
 - **The throne room (8:13) from Player 39's door save, tpseed 39600001, all QUICK** (`cmpfight3.sh G 39600001 ""
   "right,up,enter"`): draws identical to 7711 of 31163, then LIRA's first hit: the original 2d4 (her Broad Sword +1),
   ours 1d2 (bare hands). Ours' computer weapon choice rated her Long Sword +2 (an aligned sword of another alignment:
