@@ -8,7 +8,7 @@
 # (count seeds from first, default 50010001, step 1). Prints a line per run and a table per plan: wins, losses,
 # mean rounds, mean HP lost (over all runs and over the wins), the members down or dead.
 # Env: PF_JOBS (runs at once, default 4), PF_GAME (the game folder, default ~/gbr/checks/data/game),
-# PF_KEEP=1 keeps the work folder (its runs' logs: <work>/<plan>_<seed>.log), PF_TMO (seconds a run, default 900),
+# PF_POST (keys after the fight, main chat 98), PF_KEEP=1 keeps the work folder (its runs' logs: <work>/<plan>_<seed>.log), PF_TMO (seconds a run, default 900),
 # PF_CFG (ours' start cfg, as a check's ours.cfg; default ~/gbr/checks/data/38/ours.cfg: without one ours waits at
 # its first screen and load=G never comes).
 set -u
@@ -48,6 +48,7 @@ one() {   # one <plan name> <seed>
 	local keys="load=G,wait,tpseed=$s,wait,planprep=$T/plans/$b.plan"
 	[ -n "$PRE" ] && keys="$keys,$PRE"
 	keys="$keys,planfight=$T/plans/$b.plan,wait,wait"
+	[ -n "$PF_POST" ] && keys="$keys,$PF_POST"
 	XDG_DATA_HOME=$W/xdg timeout "$TMO" "$G" --headless --path "$T/proj" -- --game-path="$W/game" \
 		--save="$W/ours.cfg" --fast --seed=1 "--keys=$keys" > "$T/${b}_$s.log" 2>&1
 	local r; r=$(grep -m1 "^PLANFIGHT RESULT" "$T/${b}_$s.log" || echo "PLANFIGHT RESULT outcome=none (timed out or no fight: see the log)")
