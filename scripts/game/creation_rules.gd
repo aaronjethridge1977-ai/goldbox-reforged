@@ -40,7 +40,8 @@ const RACE_CHOICES := [1, 2, 3, 4, 5, 7]
 const MAGE_START_SPELLS := [11, 18, 19, 21]
 ## A multi-class's age comes from one of its classes, the most it could roll.
 const MULTI_AGE_CLASS := {8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 5, 14: 2, 15: 5, 16: 5}
-## Age adjustments by ability, for ages past the race's marks 0..3.
+## Age adjustments by ability, for ages past the race's marks 0..3 (Wisdom's at mark 0: at or
+## below it, the young character's).
 const AGE_ADJUST := [[1, -1, -2, -1], [0, 1, 0, 1], [-1, 1, 1, 1], [0, 0, -2, -1], [0, -1, -1, -1], [0, 0, 0, 0]]
 const RACE_ADJUST := {1: [0, 0, 0, 0, 1, -1], 2: [0, 0, 0, 1, -1, 0], 5: [-1, 0, 0, 1, 0, 0], 6: [1, 0, 0, 0, 1, -2]}
 
@@ -132,8 +133,18 @@ static func parts(c: int) -> Array[int]:
 static func dice(rng: RandomNumberGenerator, count: int, size: int) -> int:
 	var t := 0
 	for i in count:
-		t += rng.randi_range(1, maxi(size, 1))
+		t += _between(rng, 1, maxi(size, 1))
 	return t
+
+
+## lo..hi from the creator's generator, or with the original's dice on (tpseed, lab only) from
+## TpDice, drawn as GAME.OVR draws them (main chat 100, traced in DOSBox: Random(256) for byte
+## 0xAB, the age dice, six tries of 3d6 per ability, the gold dice, the hit die; a reroll
+## draws from the abilities on), so a creation can be checked against the original's.
+static func _between(rng: RandomNumberGenerator, lo: int, hi: int) -> int:
+	if TpDice.on:
+		return TpDice.between(lo, hi, "creation")
+	return rng.randi_range(lo, hi)
 
 
 ## A new record (285 bytes) with everything set before the roll.
@@ -149,7 +160,7 @@ func start_record(race: int, sex: int, c: int, alignment: int, rng: RandomNumber
 	d[0xBB] = 1
 	d[0xBC] = 1
 	d[0x6C] = 1
-	d[0xAB] = rng.randi_range(0, 255)
+	d[0xAB] = _between(rng, 0, 255)
 	d[0x2E] = race
 	d[0xC0] = 1 if race in [1, 3, 5] else 2   # icon size: the small folk 1
 	d[0x9E] = sex
@@ -181,11 +192,20 @@ func roll(d: PackedByteArray, rng: RandomNumberGenerator) -> void:
 	d[0x16] = 0
 	for i in 6:
 		var best := 0
+		# The race's adjustment to each try: the original's bug 20 (docs/original-bugs.md; main chat
+		# 100): GAME.OVR 0x1ABB5 tests the race list's loop counter ([bp-0x17], left at 7, the
+		# human) for the race, so no race is ever adjusted; fixed with ORIGINAL'S BUGS off.
+		var adjust: int = RACE_ADJUST[race][i] if RACE_ADJUST.has(race) and not OriginalBugs.on() else 0
 		for k in 6:
-			var r: int = dice(rng, 3, 6) + (RACE_ADJUST[race][i] if RACE_ADJUST.has(race) else 0)
+			var r: int = dice(rng, 3, 6) + adjust
 			best = maxi(best, r)
 		for m in 4:
-			if age > _word(DS_AGE_MARKS + race * 10 + m * 2):
+			var mark := _word(DS_AGE_MARKS + race * 10 + m * 2)
+			# Wisdom's first adjustment is the young one: -1 at or below the race's first mark
+			# (GAME.OVR 0x1B011, JB; every other adjustment applies past its mark, JAE; main
+			# chat 100: ours took it past the mark, so a young character kept 1 too many and
+			# every older one lost 1).
+			if (age <= mark) if (i == 2 and m == 0) else (age > mark):
 				best += AGE_ADJUST[i][m]
 		var lo: int
 		var hi: int
@@ -201,7 +221,7 @@ func roll(d: PackedByteArray, rng: RandomNumberGenerator) -> void:
 			best = 13
 		d[0x10 + i] = best
 		if i == 0 and best == 18 and d[0x98] > 0:
-			d[0x16] = mini(rng.randi_range(1, 100), _byte(DS_LIMITS + race * 16 + 4 + sex))
+			d[0x16] = mini(_between(rng, 1, 100), _byte(DS_LIMITS + race * 16 + 4 + sex))
 	# Spells, gold and hit points.
 	for k in range(0x33, 0x6B):
 		d[k] = 0

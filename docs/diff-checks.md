@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 100: training and money, a magic-user's racial limit, a three-class member (checks 336-343)
+## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation (checks 336-346)
 
 All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the original's ends in `~/gbr/lab/data/c100/o<n>`
 (steps `o<n>.steps`, orun.sh); statediff caught each break of the original's end (`brk<n>`).
@@ -199,7 +199,23 @@ All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the o
   (magic-user 3's 5001 less 1: the cut comes before the class test, as ours' training_plan). Break: experience 6000.
 - **343 (an unconscious trainee):** check 103's start with THRENDER GRONE unconscious (status +0x10C 4, HP 0): TRAIN:
   **WE ONLY TRAIN CONSCIOUS PEOPLE**, experience 9000 kept (no cut). Break: experience 8000.
-- **Gate: DIFFCHECKS 341/341.** No difference from the original found (no code change).
+- **Gate: DIFFCHECKS 341/341.**
+- **344-346 (main path: CREATE NEW CHARACTER, ADD CHARACTER TO PARTY; two differences found, fixed):** check 103's
+  start, tpseed 11111111: the four steps, YES, End x5 (PHINEAS), REMOVE, CREATE: race, sex, class, alignment, KEEP
+  THIS CHARACTER? (345: NO once, a reroll), YES, a name, HEAD BODY KEEP: K, the icon page: EXIT, IS THIS ICON OK? YES,
+  ADD (the list: PHINEAS, the new one): End, ADD, BEGIN ADVENTURING. 344: ZED, a human male fighter, lawful good
+  (age 18, STR 12 INT 15 WIS 11 DEX 14 CON 14 CHA 11, HP 7, 90 gold); 345: ZOE, an elf female fighter/magic-user/thief,
+  chaotic evil, one reroll; 346: ZAK, a dwarf male fighter, lawful good (every list's first line). The original's draws
+  (traced): Random(256) for byte 0xAB, the age dice, six tries of 3d6 per ability, the gold dice, the hit die; a
+  reroll from the abilities on: ours' creation now draws from TpDice under tpseed (lab only), in that order.
+  **Found:** (1) **Wisdom's young adjustment** (GAME.OVR 0x1B011): -1 at or below the race's first age mark (a human
+  of 20 or less); ours took 1 off past the mark instead (every older character one WIS short, a young one one over).
+  Fixed (creation_rules.gd; default play). (2) **The original applies no racial adjustments** (bug 20,
+  docs/original-bugs.md: the race test reads the race list's loop counter, 7): fixed with ORIGINAL'S BUGS off as ours
+  always played, as the original with it on. (3) **The creation lists move on Home / End in the original** (End
+  down, wrapping; Down does nothing), ours only on Up / Down: Combat's file (ready
+  `~/gbr/lab/data/c100/creator_keys.py`); until it lands ours' key lists use Down where the original's steps use End.
+  All three fail on the code before chat 100 (WIS; DEX, CON; CON, CHA) and matched 3 of 3 after; breaks caught.
 
 ## Chat 99: a multi-class member trains both classes in one visit, and at an elf's fighter limit (checks 333-335)
 
