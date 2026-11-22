@@ -320,6 +320,9 @@ func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
 		if pic != null:
 			_scr.img.blit_rect(pic, Rect2i(0, 0, 88, 88), Vector2i(224, 8))
 	_t(1, 1, m.name, GameScreen.CYAN)
+	# GAME.OVR 0x210CC (main chat 104, DOSBox: SWORDSMAN's VIEW): a hired NPC (record 0x84 above 0x7F) is marked.
+	if not m.is_monster and m.raw.size() > 0x84 and m.raw[0x84] > 0x7F:
+		_t(m.name.length() + 3, 1, "(NPC)", G)
 	if m.is_monster:
 		_t(1, 3, "MONSTER", W)
 	else:
@@ -485,7 +488,7 @@ func _view_menu() -> Array:
 	if m != null:
 		for c in m.money:
 			money = money or c > 0
-	if money and not in_combat:
+	if money and not in_combat and not _npc_barred(m):
 		items.append("TRADE")
 	if money or in_combat:
 		items.append("DROP")
@@ -493,6 +496,13 @@ func _view_menu() -> Array:
 		items.append("ORDER")
 	items.append("EXIT")
 	return items
+
+
+## GAME.OVR 0x21BFE, 0x22034, 0x22107 (main chat 104, DOSBox: SWORDSMAN's VIEW): no TRADE (money or items) and no
+## SELL for a hired NPC (record 0x84 from 0x80; 0x10D set; status not 1, ANIMATED).
+func _npc_barred(m: PartyMember) -> bool:
+	return m != null and not m.is_monster and m.npc >= 0x80 and m.raw.size() > 0x10D and m.raw[0x10D] != 0 \
+			and m.status != PartyMember.STATUS_ANIMATED
 
 
 ## B3: ORDER on VIEW, for the party's own members, when TACTICS FOR QUICK is SMARTER.
@@ -506,9 +516,11 @@ func _item_menu() -> Array:
 	var use: Array = [] if anti_magic else ["USE"]
 	if in_combat:
 		return ["READY"] + use + ["DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
+	var trade: Array = [] if _npc_barred(m) else ["TRADE"]
+	var sell: Array = [] if _npc_barred(m) else ["SELL"]
 	if in_shop:
-		return ["READY", "TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "SELL", "ID", "EXIT"]
-	return ["READY"] + use + ["TRADE", "DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
+		return ["READY"] + trade + ["DROP"] + (["HALVE"] if room else []) + ["JOIN"] + sell + ["ID", "EXIT"]
+	return ["READY"] + use + trade + ["DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
 
 
 func _current_menu() -> Array:

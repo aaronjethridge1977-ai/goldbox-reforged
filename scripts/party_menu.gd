@@ -417,18 +417,34 @@ func _unhandled_input(event: InputEvent) -> void:
 				_refresh()
 			elif key == KEY_A or (enter and _pick == 0):
 				# Main chat 102 (DOSBox): the list stays open, the added one marked "* NAME" and still lit;
-				# ADD on an added one does nothing; the ADD that leaves no one waiting closes the list.
-				if not roster.is_empty() and not _added[_cursor] and party.size() < 6:
+				# ADD on an added one does nothing. Main chat 104 (DOSBox, GAME.OVR 0x1CB26-0x1CBF5; checks 395, 396,
+				# 399): a player character joins while fewer than six are in the party, an NPC while fewer than
+				# eight in all; the list stays open when no one is left waiting.
+				if not roster.is_empty() and not _added[_cursor] and _room_for(roster[_cursor]):
 					party.append(roster[_cursor])
 					_added[_cursor] = true
 					_sel = party.size() - 1      # lab: the one added is chosen
 				# Main chat 103 (DOSBox, check 344's own keys): the ADD that fills the party (six) closes it too.
-				if not _added.has(false) or party.size() >= 6:
+				if _player_characters() >= 6 or party.size() >= 8:
 					_close_add()
 				else:
 					_refresh()
 			elif key == KEY_E or esc or (enter and _pick == 1):
 				_close_add()
+
+
+## The party's player characters (record 0x84 below 0x80; a hired NPC doesn't count: GAME.OVR 0x1CB5C).
+func _player_characters() -> int:
+	var n := 0
+	for m in party:
+		if (m as PartyMember).npc < 0x80:
+			n += 1
+	return n
+
+
+## ADD's room (GAME.OVR 0x1CB74): a player character while fewer than six, an NPC while fewer than eight in all.
+func _room_for(m: PartyMember) -> bool:
+	return _player_characters() < 6 if m.npc < 0x80 else party.size() < 8
 
 
 ## Leaves ADD's list: the added ones leave the waiting list (main chat 102).

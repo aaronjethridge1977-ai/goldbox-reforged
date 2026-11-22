@@ -3071,8 +3071,8 @@ var _ending: EndingScreen
 ## (GAME.OVR, before the treasure screen): every conscious member whose record byte 0x84
 ## has bit 7 set (a hired NPC) counts (0x85 & 7) shares, everyone else one; from each kind
 ## of coin each hireling's shares of (pool / total shares) leave with them. Returns the
-## original's lines ("<NAME> takes and hides his share.").
-func _hirelings_take_shares(spoils: Spoils) -> String:
+## original's lines ("<NAME> TAKES AND HIDES HIS SHARE."), shown on a page of their own (main chat 104).
+func _hirelings_take_shares(spoils: Spoils) -> PackedStringArray:
 	var shares := 0
 	var total := 0
 	var who := PackedStringArray()
@@ -3082,11 +3082,11 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 			shares += r[0x85] & 7
 			total += r[0x85] & 7
 			if r[0x85] > 0:
-				who.append("%s takes and hides his share." % m.name)
+				who.append(("%s takes and hides his share." % m.name).to_upper())
 		else:
 			total += 1
 	if shares == 0 or total == 0:
-		return ""
+		return PackedStringArray()
 	var took := false
 	for k in spoils.money.size():
 		if spoils.money[k] > 0:
@@ -3098,7 +3098,7 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 				per &= 0xFF
 			spoils.money[k] -= per * shares
 			took = true
-	return "\n".join(who).to_upper() if took else ""
+	return who if took else PackedStringArray()
 
 
 func _on_event_fight_finished(result: int) -> void:
@@ -3205,8 +3205,6 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	found.append_array(field_items)
 	var spoils := Spoils.gather(defeated, coins, found, _vm.read_byte(0x6DE3) != 1)
 	var hidden := _hirelings_take_shares(spoils)
-	if hidden != "":
-		won_text += "\n" + hidden
 	var standing: Array = []
 	for m in _party:
 		if m.can_fight():
@@ -3217,7 +3215,7 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 		m.recalculate(_types)
 	_treasure.picture = _event_picture(255, 1)     # the chest (lab: PIC block 1)
 	_sync_shell()
-	_treasure.open(spoils, _party, won_text, share)
+	_treasure.open(spoils, _party, won_text, share, hidden)
 
 
 func _on_treasure_closed() -> void:

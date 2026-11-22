@@ -36,13 +36,14 @@ var picture: Image
 var _spoils: Spoils
 var _party: Array[PartyMember] = []
 var _who := 0
-var _mode := "results"   # results, menu, take, coins, amount, items, ask_exit
+var _mode := "results"   # hides, results, menu, take, coins, amount, items, ask_exit
 var _pick := 0
 var _cursor := 0         # the chosen coin or item
 var _top := 0            # the LOOT page's first item
 var _amount_coin := -1
 var _typed := ""
 var _won_text := ""
+var _hides := PackedStringArray()   # the hirelings' lines (main chat 104), a page before the results
 var _share_xp := 0
 var _note := Label.new() # the last thing that happened (the bot logs it)
 var _flash := ""         # a refusal on row 24 for a moment (OVERLOADED)
@@ -53,7 +54,7 @@ var _sheet: CharacterSheet
 
 # The bot and main look at these (kept from the old screen).
 var _page: int:
-	get: return 0 if _mode == "results" else 1
+	get: return 0 if _mode in ["results", "hides"] else 1
 var _asking_exit: bool:
 	get: return _mode == "ask_exit"
 var _amount_open: bool:
@@ -65,11 +66,13 @@ func _init() -> void:
 	add_child(_note)
 
 
-func open(spoils: Spoils, party: Array[PartyMember], won_text: String, share: int) -> void:
+func open(spoils: Spoils, party: Array[PartyMember], won_text: String, share: int,
+		hides := PackedStringArray()) -> void:
 	_spoils = spoils
 	_party = party
 	_who = 0
-	_mode = "results"
+	_hides = hides
+	_mode = "hides" if not hides.is_empty() else "results"
 	_pick = 0
 	_won_text = won_text
 	_share_xp = share
@@ -131,6 +134,23 @@ func _refresh() -> void:
 
 func _draw_mode() -> void:
 	match _mode:
+		"hides":
+			# GAME.OVR 0x6866 (main chat 104, DOSBox: SWORDSMAN after 1:18's orcs): its own framed page, a line a
+			# hireling from column 5, row 5 + 2 x i, wrapped at column 34; PRESS <ENTER> white.
+			_page_frame()
+			for i in _hides.size():
+				var row := 5 + 2 * i
+				var line := ""
+				for w in _hides[i].split(" "):
+					if line != "" and 5 + line.length() + 1 + w.length() > 35:
+						_scr.text(5, row, line, GameScreen.GREEN)
+						row += 1
+						line = w
+					else:
+						line = w if line == "" else line + " " + w
+				_scr.text(5, row, line, GameScreen.GREEN)
+			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.WHITE)
+			_scr.update()
 		"results":
 			_page_frame()
 			# The original (main's cold-open capture, chat 38): green, a blank row between the
@@ -374,6 +394,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _flash != "":
 		_flash = ""            # a key takes a refusal away; the key then does what it does
 		_refresh()
+	if _mode == "hides":
+		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_SPACE]:
+			_mode = "results"
+			_refresh()
+		return
 	if _mode == "results":
 		if key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_SPACE]:
 			# The menu comes with nothing to take too (the original's VIEW POOL EXIT; lab,
