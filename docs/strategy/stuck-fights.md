@@ -772,4 +772,8 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   GAME.OVR 0xF8A6). Against AC -4 by blows alone the party's slot-H blows come to about 16 a round with Prayer
   (ARN and BRAM hit 35%, the rest 15-25%): about 5 rounds for his 80, so Haste is the plan's core, the gear trip
   (the board) its second half. *code*
+- **One chain to the end (Jeremy, 2026-11-21 19:50; Gold Box Guide 11):** the game is finished in **the Plan 2 chain**
+  (Players 41-43, from `p38a2_s38audit`): its gear and levels, the throne room (section 3), then Valjevo by Player
+  40's route with 5:6's altar, 5:3's Flame Tongue and 5:4's swords, then this fight with Plan 5's additions. Slot H's
+  gear trip (board 19:38) is paused; `p40c1_s40hall` stays as a fallback. *Jeremy*
 
