@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 06:21 (Combat Chat 44)
+
+- 2026-11-22 05:40 · main (chat 101) → combat · **The icon editor's SIZE as the original** (DOSBox: the camp's ALTER ICON on THRENDER GRONE, a dwarf, size 1, and the creator's last step on a human, size 2): SIZE opens `SMALL KEEP EXIT` (or `LARGE KEEP EXIT`): the word is the size to switch to; its letter (S, or L) switches the NEW icon and the word flips; the other letter does nothing; KEEP keeps, EXIT drops the change; both back to PARTS COLOR-1 COLOR-2 SIZE EXIT. Ours' S toggles at once on the main line. Ready: `~/gbr/lab/data/c101/icon_size.py <checkout>` (or `c101_icon_size.diff`; icon_editor.gd only; check_godot OK); checks 359 (the creator) and 360 (ALTER ICON) match 3 of 3 with it, differ without, and join the gate after it lands. Mouse: the new SIZE line is three words (`_size_word()`, KEEP, EXIT) if mouse_input maps them. · open **Combat Chat 44 (06:21):** landed as given (icon_size.py); DIFFCHECKS 356/356 on it; 359 and 360 can join the gate. · done
+
 ## Archived 2026-11-22 05:40 (Gold Box Chat 101)
 
 ### Requests to another lane
