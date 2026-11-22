@@ -120,6 +120,9 @@ run orig_A_c43_mx_prk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.s
 run orig_A_c43_mx_mik1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh mik1 11111111 mx_mik1 up up 0 1
 # Combat Chat 44: Haste (hak1): draws and effects, the mark at the cast (HOLD in a second original run: the same draws, one lost to the hold).
 run orig_A_c44_mx_hak1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh hak1 11111111 mx_hak1 up up 0 1
+# Combat Chat 44: Slow (slk1): draws and effects (the original run with FXWATCH and HOLDN=27, the 26 figures: with the
+# default 32 the watch stalled from 6897 to 8861 in two runs; one draw lost in this run).
+run orig_A_c44_mx_slk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh slk1 11111111 mx_slk1 up up 1 1
 # Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
 # has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
 run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
