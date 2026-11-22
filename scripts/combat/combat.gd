@@ -1112,12 +1112,25 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 
 
 ## After the fight, as the original does: the dying stop bleeding (UNCONSCIOUS, 0 HP).
+## An unconscious member with hit points (healed while down: a cure in a fight leaves a fallen figure unconscious,
+## 0x2C6F7) stands up OKAY, unless the party got away (GAME.OVR 0x5BD9-0x5C23: running -> okay, else dying ->
+## unconscious, else unconscious with HP -> okay; DS:0x443B, a member running and none okay, takes only the first;
+## Jeremy's P89, Combat Chat 46, DOSBox: RHIANNON unconscious at 5 HP before the Slums' orcs, OKAY at the fight's end).
 func finish() -> void:
+	var got_away := false
+	for c in combatants:
+		if c.team == 0 and not c.who.is_monster and c.who.status == PartyMember.STATUS_RUNNING:
+			got_away = true
+	for c in combatants:
+		if c.team == 0 and not c.who.is_monster and c.who.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED]:
+			got_away = false
 	for c in combatants:
 		var m: PartyMember = c.who
 		if m.status == PartyMember.STATUS_DYING:
 			m.status = PartyMember.STATUS_UNCONSCIOUS
-		if c.team == 0 and m.status == PartyMember.STATUS_RUNNING:
+		elif c.team == 0 and m.status == PartyMember.STATUS_RUNNING:
+			m.status = PartyMember.STATUS_OKAY
+		elif c.team == 0 and not got_away and not m.is_monster and m.status == PartyMember.STATUS_UNCONSCIOUS and m.hp > 0:
 			m.status = PartyMember.STATUS_OKAY
 		c.bleeding = 0
 

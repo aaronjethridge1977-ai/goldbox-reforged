@@ -3139,9 +3139,13 @@ func _on_event_fight_finished(result: int) -> void:
 	# too (the original's figure list holds the whole party; Combat's finish() covers the fighters).
 	# Chat 61: since a script's DAMAGE leaves a member dying, check 69's DIRTEN (the priest's fireball
 	# before the fight) is 4 in the original's save after the fight.
+	# Combat Chat 46 (Jeremy's P89; GAME.OVR 0x5C08): an unconscious member with hit points stands up OKAY, unless the
+	# party ran away (DOSBox: RHIANNON unconscious at 5 HP from before the Slums' orcs, OKAY after them).
 	for m in _party:
 		if (m as PartyMember).status == PartyMember.STATUS_DYING:
 			(m as PartyMember).status = PartyMember.STATUS_UNCONSCIOUS
+		elif result != 3 and (m as PartyMember).status == PartyMember.STATUS_UNCONSCIOUS and (m as PartyMember).hp > 0:
+			(m as PartyMember).status = PartyMember.STATUS_OKAY
 	# The fight drew over the view: back on the walking screen the original shows the 3D view, not
 	# the encounter's picture (chat 40, DOSBox: the Slums' orcs at 13,1 W, the corridor after the
 	# treasure; the picture stays up only until the fight opens).
