@@ -138,6 +138,10 @@ var _hold_flights := {}      # Hold Person's further targets (name: cell), each 
 var _hold_from := Vector2i.ZERO
 var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
 var _sparkle := -1                 # the figure showing a spell's sparkles
+## The picture shown on a figure the spell reaches (COMSPR block and its second frame): the sparkles (picture 0x12)
+## for most spells; the burst (0x13: GAME.OVR 0x298D4 the bolt's hit on a square, 0x2A1C6) for Fireball, Lightning
+## Bolt and the Javelin of Lightning (P86, seen in DOSBox, Combat Chat 42).
+var _hit_pic: Array = [9, 137]
 ## A figure struck down stays standing through the blow's message; its fall shows COMSPR's
 ## skull (block 11) on its square while "GOES DOWN ..." is up, then the square is empty (lab:
 ## Bakshi and the orcs at speed 4, 0.8 s).
@@ -1699,8 +1703,8 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 ## A spell went off (paced): the caster's pose; for a spell aimed away from the caster, COMSPR's
 ## spark (5 / 133 by turns, ~240 px/s) flown to the aim after "CASTS A SPELL" (lab: Bakshi's
 ## Magic Missile and Sleep); each figure the spell reaches shows sparkles (9 / 137 by turns)
-## while its message is up, (game speed + 1) x 0.28 s (sparkle_time; P85). Fireball's and
-## Lightning's own pictures are not filmed yet.
+## while its message is up, (game speed + 1) x 0.28 s (sparkle_time; P85). Fireball and Lightning Bolt show the
+## burst instead (P86); the bolt's crackle walking its squares (COMSPR 6 / 134) is not drawn yet.
 func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():
 		return
@@ -1711,7 +1715,10 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	var to := cell
 	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
 		to = _combatants[targets[0]].cell
-	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell:
+	_hit_pic = [10, 138] if id in [CombatSpells.FIREBALL, CombatSpells.LIGHTNING, 60] else [9, 137]
+	# Fireball: no spark flies to the aim; the bursts follow TARGET at once (P86, DOSBox, Combat Chat 42: two hand
+	# casts filmed; Lightning Bolt's spark does fly).
+	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell and id != CombatSpells.FIREBALL:
 		_spell_flight = {"from": _combatants[i].cell, "to": to}
 	if _cast_announced and not _muted:
 		# No line after the aim: the cast's sound and its flight go first, before the spell's lines.
@@ -2114,7 +2121,7 @@ func _refresh() -> void:
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
 	if _sparkle >= 0 and _sparkle < _combatants.size():
-		var sp := _art.sprite(9 if (Time.get_ticks_msec() / 133) % 2 == 0 else 137)
+		var sp := _art.sprite(_hit_pic[0] if (Time.get_ticks_msec() / 133) % 2 == 0 else _hit_pic[1])
 		if sp != null:
 			img.blend_rect(sp, Rect2i(Vector2i.ZERO, sp.get_size()), (_combatants[_sparkle].cell - _view) * CELL)
 	if not _flight.is_empty() and _flight.img != null:
