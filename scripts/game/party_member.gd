@@ -681,10 +681,10 @@ func experience_worth() -> int:
 	return xp_per_hp * hp_rolled + xp_value
 
 
-## Adds a share of a fight's experience the way the original does: +10% for a single-
-## classed character whose prime requisite(s) are over 15, half for two classes, a third
-## for three. (The original's table leaves mage/thief out of the split, so a mage/thief
-## gets the whole share; kept as the original does it.) Returns what was added.
+## Adds a share of a fight's experience the way the original does (GAME.OVR 0x58D3-0x5A26, main chat 96): +10% for
+## a cleric with WIS, a fighter with STR, a magic-user with INT, a thief with DEX over 15 (no other class has a bonus:
+## not the paladin or the ranger); half for the two-class kinds (8, 10-14 and 16, the magic-user/thief too), a third
+## for the three-class ones (9, 15), whatever their level limits. Returns what was added.
 func gain_experience(share: int) -> int:
 	var st := stats
 	var add := share
@@ -693,15 +693,11 @@ func gain_experience(share: int) -> int:
 			if st[2] > 15: add += share / 10
 		2:
 			if st[0] > 15: add += share / 10
-		3:
-			if st[0] > 15 and st[2] > 15: add += share / 10
-		4:
-			if st[0] > 15 and st[1] > 15 and st[2] > 15: add += share / 10
 		5:
 			if st[1] > 15: add += share / 10
 		6:
 			if st[3] > 15: add += share / 10
-		8, 10, 11, 12, 13, 14:
+		8, 10, 11, 12, 13, 14, 16:
 			add = share / 2
 		9, 15:
 			add = share / 3

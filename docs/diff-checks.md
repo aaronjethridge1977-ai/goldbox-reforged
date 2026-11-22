@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 96: PgDn / PgUp in a treasure LOOT list and the pile's coins as experience (check 327; two differences)
+## Chat 96: PgDn / PgUp in a treasure LOOT list, the pile's coins as experience, experience by class (checks 327, 328; three differences)
 
 - **Gate: DIFFCHECKS 325/325**: 321, 322, 323, 324 and 326 joined after Combat Chat 42 landed chat 95's `c95_esc.diff`
   (b8a304d; the five 3 of 3 on origin/main first).
@@ -195,6 +195,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   added the coins in copper first (468 / 200 = 2): 1251 (ARN 6601, the original 6600). Ready `coin_xp.py`
   (spoils.gd, Combat's). Both: `data/c96/c96_fixes.diff` (on origin/main 6d4fd50, after chat 95's Esc landed; 327
   matches there with it); the `.py` scripts apply with or without chat 95's change.
+- **Difference 3 (new area): experience by class** (GAME.OVR 0x58D3-0x5A26, read while answering Series Party 1's question):
+  +10% only for a cleric (WIS), fighter (STR), magic-user (INT) or thief (DEX) over 15; no bonus for paladins or rangers
+  (ours gave them one); half for classes 8, 10-14 and **16** (the magic-user/thief: ours gave the whole share), a third for
+  9 and 15; no level limit read. **Check 328:** 327's start with ARN's class byte (0x2F) set to 16 (`data/c96/s6mut`),
+  the same fight, then EXIT, NO: ARN 5225 -> 5850 in the original (625, half of 1250), ours 6476. Fixed in ours
+  (party_member.gd, main's: `data/c96/xp_split.py`); 328 also needs Combat's `coin_xp.py`: 3 of 3 with all three, 0 with
+  Combat's two alone.
 - 327: 3 of 3 with both; 0 on main; 0 with either fix alone (the other difference left). DIFFCHECKS 320/320 on a copy
   with both; 321-324, 326 and 327 match on a copy with both diffs.
 
