@@ -176,6 +176,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 - **Gate: DIFFCHECKS 325/325**: 321, 322, 323, 324 and 326 joined after Combat Chat 42 landed chat 95's `c95_esc.diff`
   (b8a304d; the five 3 of 3 on origin/main first).
+- **Gate: DIFFCHECKS 327/327**: 327 and 328 joined after Combat Chat 43 landed the c96 fixes unchanged (0ff8cc4; both 3
+  of 3 on origin/main 52d2408 first).
 
 - **Check 327 (8:29, Norris the Gray; main path):** the Player's `p2start/p16c3_s6pre12` (slot H, copied as G:
   `~/gbr/lab/data/c96/s6pre12`), tpseed 11111111: Right, Up x5 into Norris (1,5), FIGHT, everyone on QUICK
