@@ -172,6 +172,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 95: Esc at the hall's DROP questions, the camp's YES NO questions and the treasure's GO BACK question (checks 321-326; three differences); the build's smoke test replays Jeremy's crashes
+
+- **Gate: DIFFCHECKS 320/320**: 325 joined (matched on origin/main), then 317, 318, 319 after Combat Chat 42 landed
+  chat 94's `c94_esc.diff` (c8ef896; each 3 of 3 on origin/main 67c3a7d).
+- **Esc at the training hall's DROP <NAME> FOREVER? and ARE YOU SURE? (3:11, check 321; main path):** nothing in the
+  original (the question stays); ours took NO. With chat 94's half every hall question takes only Y and N. Ready
+  `~/gbr/lab/data/c95/drop_esc.py` (party_menu.gd, Combat's; applies on main or on top of `c94_esc.diff`).
+- **Esc at the camp's YES NO questions (3:0, checks 322-324; main path):** ALTER's DROP FROM PARTY? (322), a combat-only
+  spell's LOSE IT? from the adventure menu's CAST (323), MEMORIZE THESE SPELLS? (324) and QUIT TO DOS (after Esc at
+  SAVE WHICH GAME; seen, no check: the gate's QoL save list never asks it) ignore Esc in the original; ours took NO.
+  Ready `camp_esc.py` (camp_screen.gd: Esc is EXIT where the menu has one, else nothing).
+- **Esc at the treasure's DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE? (1:18 after check 67's orcs, check 326; main
+  path):** nothing in the original; ours took NO (left the pile). The treasure menu's, TAKE's Esc: EXIT in both. Ready
+  `treasure_esc.py` (treasure_screen.gd).
+- All three: `~/gbr/lab/data/c95/c95_esc.diff` (on top of chat 94's `c94_esc.diff`): 321-324 and 326 3 of 3 with it,
+  0 on main (321 also 0 on main + `c94_esc.diff`); DIFFCHECKS 316/316 on a copy with both diffs.
+- **A magic-user scroll's CAST SPELL ON WHOM (check 325, coverage):** check 179's start (LIRA's scroll), USE, CAST, Esc,
+  SELECT (back to ITEMS, the scroll kept), USE, CAST, Esc, End, SELECT: cast on no one, the scroll used up (bug 19, as
+  316's clerical scroll). Matched on origin/main 3 of 3; 0 on a copy where End lights the first member.
+- **Set aside:** PgDn / PgUp in a treasure LOOT list over 19 items (no fight pile that big found among the checks'
+  starts).
+- **The build's smoke test (e)** (tools/build/windows_test.sh; the Lead's yes): `fireball_crash` and `holds_crash2`
+  replayed on the release template (treplay.sh, windowed on Xvfb :95, about 4 minutes each); each must play to its end
+  (exit 0, "timed done" and the waits after it). On a commit with a deliberate `set_pixelv(100000, 100000)` in `_bevel`
+  holds_crash2 segfaults (exit 139: BUILD FAILED); fireball_crash alone didn't catch that break. origin/main: BUILD OK.
+
 ## Chat 94: Esc at the shop's, temple's and training hall's menus and questions (checks 317-320; three differences); the crash fix's checks join the gate
 
 - **Gate: DIFFCHECKS 316/316.** 313, 315, 316 joined after Combat Chat 42 landed `c93_fixes.diff` (7d1152d; each 3 of 3
