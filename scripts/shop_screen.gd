@@ -651,6 +651,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_ESCAPE and _mode == "value":
 		# The original sells on Esc too: original's bug 18 (on under ORIGINAL'S BUGS; off, Esc keeps).
 		choice = "SELL" if OriginalBugs.on() or not _keep_ok else "KEEP"
+	elif key == KEY_ESCAPE and _mode in ["menu", "ask_leave"]:
+		# The shop's menu and YOU HAVE LEFT SOME MONEY's YES NO ignore Esc; the BUY list and APPRAISE take it as EXIT
+		# (main chat 94, DOSBox at 3:0's arms and armour shop, check 317).
+		pass
 	elif key == KEY_ESCAPE:
 		choice = "EXIT" if "EXIT" in items else "NO"
 	elif _mode == "list" and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
