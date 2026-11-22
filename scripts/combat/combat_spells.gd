@@ -894,8 +894,16 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				var t: PartyMember = c.combatants[j].who
 				if t.has_affect(EFFECT_SLOW):
 					continue
-				SpellCaster.add_affect(t, EFFECT_HASTE, id, c.roll(5, 4, "speed"), lvl)
+				# Combat Chat 46 (the spell matrix, spd2: BAKSHI, a half-elf, drinks one at level 12): the 5d4 minutes are
+				# the cast's duration (0x27826, drawn once; ours drew them again), the add (0x2C540) runs the resistances
+				# (a half-elf's d100, 0x11A4D), and the effect is marked at once (power 12 -> 28 before the next draw),
+				# as Haste's cast.
+				if resists(t, EFFECT_HASTE):
+					c.message.emit("%s IS UNAFFECTED" % t.name)
+					continue
+				SpellCaster.add_affect(t, EFFECT_HASTE, id, dur, lvl)
 				c.message.emit("%s IS SPEEDY" % t.name)
+				haste_mark(t)
 		63:         # Dust of Disappearance: the caster's whole side
 			var side: Array[int] = []
 			for j in range(c.combatants.size()):
