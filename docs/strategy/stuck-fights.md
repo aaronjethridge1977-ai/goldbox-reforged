@@ -776,4 +776,28 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   (Players 41-43, from `p38a2_s38audit`): its gear and levels, the throne room (section 3), then Valjevo by Player
   40's route with 5:6's altar, 5:3's Flame Tongue and 5:4's swords, then this fight with Plan 5's additions. Slot H's
   gear trip (board 19:38) is paused; `p40c1_s40hall` stays as a fallback. *Jeremy*
-
+- **Plan 5's tries (Player 43, 2026-11-21 19:20-20:20; `p43/finale5.plan` from `p40c1_s40hall`, `OP_PLAN5=1
+  OP_MANUAL=1 OP_FLIGHT=TYRAN OP_FIGHTDEATH=1`, seeds 43100001-06; logs in `.lab/stuck/finale_guards/p43/`):**
+  the tool now aims every spell by MANUAL (M, the cursor keys straight to the target's square, the panel checked,
+  TARGET: Fireball in 6 keys where the scans took 20-110), Holds Person first for a cleric (three a cast, the guards in
+  contact first, none helpless), clouds never overlap, the fighters strike the standing guards and the others the
+  helpless, a caster next to a standing guard steps back before a next-turn spell, the pile gives only weightless
+  items (twelve **Rings +3**, weight 0), and a death in the guards' fight stops the try as a reload.
+  - **The guards: won 5 of 6 fights, 4 by the reload rule** (Plan 4: 1 of 5). p43f1 won but DORN died (a reload);
+    p43f2 won (DORN and GENHEERIS unconscious at 0 HP); p43f3 won after ~7.5 minutes with five of seven at 0 HP
+    (stopped by hand at the pile: it ran before the POOL step, not counted); **p43f4 won with all seven standing**
+    (241 HP); p43f5 lost (the party destroyed; holds went out three a cast but the 8th-level guards saved often);
+    p43f6 won (DORN and GENHEERIS at 0 HP). *seen*
+  - **Tyranthraxus: the flight failed in all three tries that reached him.** p43f2 at movement 3 (the coins): only
+    LIRA got off, the others fell (he was at 58 of 80 HP). Then, at the pile, **one POOL with ARN selected put every
+    member's coins on the pile but the NPC's** (GENHEERIS's 15 gp needed his own POOL: ours' coin_pile.gd also leaves
+    NPCs out; no difference) and the coins stayed there (no use after the finale: Plan 5's (b)): **movement 12**.
+    p43f4: LIRA, ARN and CEDRIC got off; BRAM, ELWEN and GENHEERIS fell; DORN stepped off at 40,24 and answered
+    FLEE YES but still stood on the field at his next turn and was lost (unexplained). p43f6: **his first turn
+    dropped BRAM and CEDRIC before anyone moved**, ARN fell on his way, only LIRA got off. The members start 11-13
+    squares from the edge, two turns at movement 12, and he acts first. *seen*
+  - **Five losses in a row** (f1, f2, f4, f5, f6): video of p43f4 (exact replay, human pace) in
+    `.lab/stuck/finale_guards/p43/`; the question to the Lead is on the board.
+  - Also seen: after a MANUAL pick the original goes back to the AIM menu with the aim on the caster (Hold Person's
+    three picks each start from the caster); MANUAL's EXIT goes back to the AIM menu; TARGET shows in MANUAL only
+    in the spell's range (Cure Light Wounds: one square). *seen*

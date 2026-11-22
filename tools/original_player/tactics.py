@@ -586,6 +586,12 @@ class Tactics:
             self.order, self.far, self.scan = [self.blow, "ATTACK", 0], False, None
             self.blow = None
             self.log("TACTICS %s's second blow" % self.order[0])
+        if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK" and getattr(self, "ally_no", 0) >= 2:
+            member = self.order[0]
+            self.order, self.scan, self.ally_no = None, None, 0
+            self.reach[member] = "none"
+            self.blow = self.shot = None
+            return "e", "tactics: %s: the aim twice on a member (ATTACK ALLY): EXIT" % member
         if b.startswith("AIM:") and self.order and self.order[1] == "ATTACK":
             if getattr(self, "far", False):
                 return self._aim_shoot(st, p)
@@ -595,7 +601,10 @@ class Tactics:
         if b.startswith("(USE CURSOR KEYS)") and self.scan:
             return self._aim(st, p)
         if b.startswith("ATTACK ALLY"):
-            self.log("TACTICS ATTACK ALLY? NO")
+            # Player 43 (p43f5: CEDRIC's TARGET on "figure 8" asked ATTACK ALLY 130 times in one turn: the aim count
+            # put a member there): the second in a turn ends the attack's aim (the member guards)
+            self.ally_no = getattr(self, "ally_no", 0) + 1
+            self.log("TACTICS ATTACK ALLY? NO (%d this turn)" % self.ally_no)
             return "n", "tactics: ATTACK ALLY: NO"
         if getattr(self, "mt", None) and ("MOVE LEFT" in b or "MOVE/ATTACK" in b):
             return self._move_test(st, p)
@@ -663,6 +672,7 @@ class Tactics:
             self.move = None            # Player 35: a MOVE that ended the turn (a blow struck by a step)
             self.last_member = member
             self.mturns = getattr(self, "mturns", 0) + 1     # Player 43: member turns this fight (Plan 5's holds)
+            self.ally_no = 0
             self.stepped = set()
         items = b.split()
         if QUICKKINDS and "QUICK" in items:
