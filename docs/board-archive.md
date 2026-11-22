@@ -16,6 +16,16 @@ History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest arch
 - 2026-11-21 · main (chat 96) · **Experience by class as Pool's GAME.OVR 0x58D3: no +10% for paladins or rangers (only cleric, fighter, magic-user, thief with the prime requisite over 15); a magic-user/thief (class 16) gets half the share, as the other two-class kinds** (party_member.gd `gain_experience`; check 328 with Combat's c96 fixes) · experience of paladins, rangers and magic-user/thieves (none in the full run's party)
 
 ## Archived 2026-11-22 07:50 (Gold Box Lead)
+## Archived 2026-11-22 07:59 (Gold Box Chat 102)
+
+### Rule changes
+
+- 2026-11-22 · main (chat 101) · **NPC_ADD draws byte 0xAB and the portrait as the original** (GAME.OVR 0x1F248, MAD MAN traced: Random(256), one of the record's classes at random, the body from that class's table and the head by sex, START.EXE DS 0x8C7-0x8FF); ours kept the monster record's own head and body (MAD MAN 35 and 3, the original e.g. 11 and 5). DIRTEN (0x18) keeps his record's, as in 610 of the original's saves. · may affect: an NPC's portrait on VIEW; **four more draws at each NPC join under tpseed** (MAD MAN, GENHEERIS, PRINCESS FATIMA; as the original: checks 54, 216 match)
+- 2026-11-22 · main (chat 100) · **CREATE NEW CHARACTER: Wisdom's young adjustment as the original's** (GAME.OVR 0x1B011: -1 at or below the race's first age mark; ours took it past the mark, so every older new character was one WIS short and a young one one over); with ORIGINAL'S BUGS on (lab runs) no racial ability adjustments (bug 20), off as before; under tpseed the roll draws the original's dice (lab only) · new characters' WIS (play); creation in lab runs; checks 344-346.
+
+### Findings for everyone
+
+- 2026-11-22 · main (chat 101) · **The gate turns the matched portraits off** (diffcheck.sh's QoL-off list gains `matched_portraits`: the original starts every new character on head 1, body 1) and **statediff compares race, sex, class, alignment, the portrait and the combat icon** (record 0x2E, 0x9E, 0x2F, 0xA0, 0xBB-0xC6 but 0xBF). Player: segment.py's QOL_OFF could add `matched_portraits` too (only matters if a segment creates a character). **Checks 344-357 press End in the creation lists now** (Combat Chat 44's keys), re-sealed.
 
 ## Archived 2026-11-22 06:52 (Gold Box Chat 102)
 

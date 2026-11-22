@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded (checks 359, 360, 367-373)
+## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded; the hall's ADD list (checks 359, 360, 367-375)
 
 - **359, 360 in the gate** after Combat Chat 44's 3758972 (icon_size.py): 3 of 3 on origin/main; breaks (the icon size,
   2 -> 1 in the original's end) differ. DIFFCHECKS 364/364.
@@ -202,6 +202,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   WHO WILL DUEL? Home (THRENDER GRONE lit: wraps to SWORDSMAN), Enter: I CANNOT ARRANGE SUCH A DUEL. Ours before the
   fix made him a player character and started the duel (the run never reaches its save). Fixed in main.gd
   `_add_npcs` and party_member.gd `load_files`. Breaks: 0x84 160 -> 100 (372, 373).
+- **374, 375 (the hall's ADD list; a difference, waits for Combat's file, main path):** check 103's start at 3:11's
+  hall. In the original the ADD list stays open after an ADD ("* NAME", the light kept on it), the light moves over
+  every entry, ADD on an added one does nothing, EXIT (or the ADD that leaves no one waiting) closes it, and a reopened
+  list holds those still waiting, the first lit; ours went back to the menu after each ADD. 374: REMOVE PHINEAS (End
+  x5), REMOVE DARKSTAR (lit next), ADD, End, ADD (DARKSTAR), End, ADD (PHINEAS: the list closes), BEGIN ADVENTURING;
+  375: three REMOVEs, ADD PHINEAS, End, Home, ADD (nothing), EXIT, ADD, ADD (DARKSTAR), EXIT, BEGIN (BROTHER SEAN
+  left waiting). Ready `~/gbr/lab/data/c102/add_list.py`; with it 3 of 3, without it ours never reaches its save.
 - **DIRTEN's 0, 4:** the shipped party's (slot J's CHRDATJ7: 0xAB 0xFF); every save with him descends from it (491 in
   the labs: 0, 4, 0xFF); none from a join.
 
