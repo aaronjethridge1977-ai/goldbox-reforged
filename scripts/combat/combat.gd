@@ -2131,14 +2131,30 @@ func _fastest(team: int) -> int:
 	var best := 0
 	for c in combatants:
 		if c.team == team and not c.down:
-			best = maxi(best, _round_movement(c.who as PartyMember) >> 1)
+			best = maxi(best, _movement_value(c.who as PartyMember) >> 1)
 	return best
 
 
-## A figure's own speed for the same comparisons (morale 0xBDC4, the getaway 0x1348E): the round's
-## movement halved.
+## A figure's own speed for the same comparisons (morale 0xBDC4, the getaway 0x1348E): the movement
+## routine's value halved.
 func _speed(m: PartyMember) -> int:
-	return _round_movement(m) >> 1
+	return _movement_value(m) >> 1
+
+
+## The movement routine (GAME.OVR 0x1291E): the round's movement x 2 (DS:0x681A), then category 0x12: Haste
+## doubles it (its handler 0xF8A6 marks the effect and ages the figure the first time), Slow halves it. So the
+## speeds above are the whole movement with Haste or Slow (ours took half the movement and no Haste or Slow),
+## and a hasted figure's effect is marked whenever its movement is worked out, a morale test's included (the
+## spell matrix, hak1, Combat Chat 43).
+func _movement_value(m: PartyMember) -> int:
+	var v := (_round_movement(m) * 2) & 0xFF
+	if magic:
+		if m.has_affect(CombatSpells.EFFECT_HASTE):
+			magic.haste_mark(m)
+			v = (v * 2) & 0xFF
+		if m.has_affect(CombatSpells.EFFECT_SLOW):
+			v >>= 1
+	return v
 
 
 ## The morale check (see above). Returns "", "flee" or "surrender".

@@ -246,14 +246,20 @@ func adjust_round(entry: Dictionary) -> void:
 	var m: PartyMember = entry.who
 	if m.has_affect(EFFECT_HASTE):
 		entry.moves *= 2      # (attacks: Combat.speed_half, before the round's rounding)
-		var h := _affect(m, EFFECT_HASTE)
-		if not h.is_empty() and (int(h.value) & 0x10) == 0:
-			h.value = int(h.value) + 0x10
-			c.message.emit("%s AGES" % m.name)
-			if m.raw.size() > 0x31:
-				m.raw.encode_u16(0x30, m.raw.decode_u16(0x30) + 1)
+		haste_mark(m)
 	if m.has_affect(EFFECT_SLOW):
 		entry.moves /= 2
+
+
+## Haste's handler (GAME.OVR 0xF8A6) the first time it runs on a figure: bit 0x10 of the power, "AGES", a year on
+## record +0x30.
+func haste_mark(m: PartyMember) -> void:
+	var h := _affect(m, EFFECT_HASTE)
+	if not h.is_empty() and (int(h.value) & 0x10) == 0:
+		h.value = int(h.value) + 0x10
+		c.message.emit("%s AGES" % m.name)
+		if m.raw.size() > 0x31:
+			m.raw.encode_u16(0x30, m.raw.decode_u16(0x30) + 1)
 
 
 ## A round passes for every effect on the field.
