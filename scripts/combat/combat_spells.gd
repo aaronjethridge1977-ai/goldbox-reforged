@@ -960,6 +960,10 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 					continue
 				SpellCaster.add_affect(t, table.effect(id), id, dur, lvl)
 				c.message.emit("%s %s" % [t.name, "IS HASTED" if id == 48 else "IS SLOWED"])
+				if id == 48:
+					# Marked at once (Combat Chat 44, hak1: HOLD before the draw after the cast's d100 shows the
+					# effect added and its power bit 0x10 already set, at both casts; ours waited for the round).
+					haste_mark(t)
 		41, 46:     # Dispel Magic (GAME.OVR 0x2939D, the camp's handler too; main chat 81, checks 202, 203)
 			# Once per figure in the area: each effect with a power below 255 (not the racial ones) goes on
 			# its own d100, at most 50, + 5 a caster level above the power's low four bits, - 2 a level below;
