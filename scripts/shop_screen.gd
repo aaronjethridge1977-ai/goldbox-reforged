@@ -46,6 +46,9 @@ const ASK_MENU := ["YES", "NO"]
 const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]   # every item; row 24 shows _list_menu()
 
 var _items: Array[GameItem] = []
+## The original's list top (GAME.OVR DS:0x6B29): one for every list of the list routine 0x2D669, 1 at the program's
+## start (0xE9D8), kept across shops and loads (main chat 103, p17a6). The BUY list reads and writes it.
+static var list_top := 1
 var _party: Array[PartyMember] = []
 var _buyer := 0
 var _flash_green := false   # the flash is the original's refusal, not our BOUGHT line
@@ -346,6 +349,8 @@ func _reselect(i: int) -> void:
 	_cursor = i
 	if _cursor < _top or _cursor >= _top + PAGE:
 		_top = clampi(_cursor, 0, maxi(_items.size() - PAGE, 0))
+	if _mode == "list":
+		list_top = _top
 	_refresh()
 
 
@@ -371,12 +376,28 @@ func _page(step: int) -> void:
 		_top = mini(_top + PAGE, maxi(_items.size() - PAGE, 0))
 	else:
 		_top = maxi(_top - PAGE, 0)
+	list_top = _top
 	_cursor = clampi(_top + row, 0, maxi(_items.size() - 1, 0))
 	_refresh()
 
 
+## Home / End move the light on the page shown and wrap on it; the page never scrolls (GAME.OVR 0x2D594, main chat
+## 103, DOSBox at 3:0's arms shop, check 379: Home on the top line lights the page's last line). End past the page's
+## last line, or past the list's last item, lights the page's first line; Home above it lights its last line (or the
+## list's last item). Only NEXT / PREV move the page.
 func _move(step: int) -> void:
-	var c := clampi(_cursor + step, 0, maxi(_items.size() - 1, 0))
+	var n := _items.size()
+	if n == 0:
+		return
+	var c := _cursor + step
+	if step > 0:
+		if c > _top + PAGE - 1 or c > n - 1:
+			c = _top
+	else:
+		if c < _top:
+			c = _top + PAGE - 1
+		if c > n - 1:
+			c = n - 1
 	_reselect(c)
 
 
@@ -681,10 +702,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		"menu":
 			match choice:
 				"BUY":
-					# The original opens the list at its top every time (Player 14, p13a1 key 64: ours
-					# reopened it where the last purchase left it, and the same keys bought other items).
+					# The original lights item 1 at every BUY (0x7050; Player 14, p13a1 key 64: ours reopened it
+					# where the last purchase left it) and keeps the list top unless it is past the light
+					# (0x2D766; main chat 103, p17a6: after the mirror shop's PREV the arms shop opened at its top).
 					_cursor = mini(1, maxi(_items.size() - 1, 0))
-					_top = _cursor
+					_top = mini(list_top, _cursor)
+					if _top > _items.size():
+						_top = 0
+					list_top = _top
 					_mode = "list"
 					_refresh()
 				"VIEW": _view()
