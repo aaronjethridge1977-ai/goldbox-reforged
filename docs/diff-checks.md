@@ -221,6 +221,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Keep, the books (0x4A01 = 1, 0x4A06 = 1). 406: the start with quest counters 0x4A39 = 5 and 0x4A3A = 3 (paid
   0x4A8F.. still 0): WE HAVE BEEN INFORMED YOU HAVE ELIMINATED SOME UNDEAD ..., the reward as a treasure (its
   experience page, SHARE, EXIT), then the commissions; the paid counters copied.
+- **407, 408 (3:0 the proclamations at City Hall, event 26; main path, matched at once, texts compared by hand):**
+  407: a jump to 4,2 S (check 46's start), a step onto 4,3: YOU ARE OUTSIDE THE CITY HALL ... (PRESS ENTER), then
+  PROCLAMATIONS ARE POSTED ON THE WALLS, ... LXIV, LXXVIII, CIX, AND LIX. (0x4A13 = 1; the script asks for the wall
+  ahead, 0xC04E = 11). 408: a jump straight onto 4,3 S: the first text only, no proclamations (an arrival's wall ahead
+  isn't 11 yet), and none at a LOOK later (0x4A13 already 1). Ours the same in both.
+- **409 (3:8 the clerk's second visit; main path, matched at once):** 405's end as slot G, Down, Up (4,5: OUTSIDE THE
+  CLERK'S OFFICE, 0x4A06 = 0), Down, Up: 'BACK SO SOON? I CAN ONLY REPEAT THE EARLIER OFFERS: ', then at once THESE
+  ARE ALL OF THE COMMISSIONS (the offers' counter 0x4A05 isn't reset, so none is repeated: the original's own way).
+- **Gate after chat 105: DIFFCHECKS 407/407** (395-409 all in).
 
 ## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
