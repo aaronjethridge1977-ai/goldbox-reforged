@@ -1315,6 +1315,42 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 44 (2026-11-21): Valjevo stage 2 (the theft read in ECL5; the barracks from the outer court); noshare
+
+**Stage 1:** 68 of 71, nothing new in scripts/ or content/ since Player 43 (p17a6 still waits on main / design).
+
+**Why Player 43's stage 2 stopped (ECL5 blocks 3 and 6 read):** the Bane altar's TWO CROSSED SWORDS (5:6 1,0) set
+0x4A6A bit 2 (the offering box's change sets bit 1, the same test): 12,12's two giants (map 5:5's event 14) then attack
+on sight with no PARLAY and ring the alarm, and the gate (12,7 / 12,8 W) answers "THIEF! YOU STOLE FROM LORD BANE!"
+**for good** (boulders, the alarm, no password), whatever the clock; the LOCKED door after it opens only by PICK / BASH.
+And the **2 Long Swords +3 can't be used** by this party: power 0x52, alignment 2 only (docs/coverage.md): ARN and
+BRAM each took 5 HP and READY did nothing (p44a1). So stage 2 went back to **`p43v1_s43v1`** (5:6 1,2, before the
+altar; 0x4A6A = 0) with TWO CROSSED SWORDS: NO. Not a difference: ours has the same rules.
+
+**Valjevo's geography (route.py on GEO5):** the inner castle shares map 5:5 with the outer court (the gate is 12,7 /
+12,8 W, the passage 11,7 / 11,8); **map 5:4's north half (the barracks) and map 5:3 (the west wing) are outside the
+gate**, reached from the outer court's 12,0 N (5:4 12,15), 5:4's 0,3 W to 5:3's 15,3; Player 43's valjevo2 walked
+there from inside (no route). Map 5:3 runs on ECL block 3 (its 1,3: two hill giants, "WELL FITTED APARTMENT").
+**Safe camps in an alarm** (info bit 64; blocks 3 and 4 skip the patrol there): map 5:5's NE room (13-15,0-3, behind
+14,3's five giant snakes) and SW room (9-10,14-15, 10,14's cave-in), map 5:3's 0-1,2-3 and 4-5,4-6. In an alarm block
+5 rolls a step encounter (1 in 20): four giant snakes (FLEE puts the party back a square); their bites killed
+fighters (p44v1-v2, p44w1). The barracks fights (5,2's four fire giants, 5,1's fighter) ring the alarm.
+
+**The run:** p44v1-v2 (from p43w1_s43w1: the snakes at 14,3, a hurt party: `cure` healed nobody, no cures memorized:
+losses), p44a1 (the swords' test), p44w1 (from s43v1: rested at 1,2, `s44p1`; 12,12 fought by mistake, the gate by
+RHODIA; inside a patrol of snakes killed BRAM), p44y1 (12,12 by **PARLAY, MEEK, HARASH**; in by 12,0 N, `s44b1`; the
+fire giants won, 5,1's pile refused: everyone at the weight cap), p44z1-z3 (the fire giants: 2 losses, 1 win), p44u1
+(`noshare on`: **the fire giants won; BRAM the Two-Handed Sword +2, CEDRIC the Javelin of Lightning, ARN a Chain
+Mail +1**; 1,3's hill giants; rested at 5:3 1,2), p44t1 (9,1 empty; **0,2's Potion of Speed, under a loose stone,
+SEARCH on only**: `p2start/p44t1_s44c8`). The fire giants at 5,2: 3 wins in 5 (p44y1, p44z3, p44u1), 2 losses. Spare
++1 gear dropped for weight (ARN Leather +1, Chain +1, Broad Sword +1; ELWEN Chain +1, Shield; CEDRIC Long Sword +1;
+BRAM Flail +1; LIRA Broad Sword +1): movement 9+ for all at s44c8. The Flame Tongue's square is still unknown.
+
+**`noshare on|off`** (plans.py, loot.NOSHARE): a pile's coins are left, not SHAREd (the party carries ~8,700 pp).
+
+Lab: `p44/` (valjevo4-8.plan, audit44.plan, home44.plan, ecl5_b3-b7.txt: the disassembly); runs p44v1-v3, p44a1,
+p44w1-w2, p44x1-x8, p44y1, p44z1-z5, p44u1-u4, p44t1, p44h*.
+
 ## Player 43 (2026-11-21): MANUAL aiming; Plan 5 at the finale (the guards won, the flight failed); xpgoal, lightloot
 
 **Stage 1:** 68 of 71, nothing new from main or Combat in it (p17a6 still waits on main / design).

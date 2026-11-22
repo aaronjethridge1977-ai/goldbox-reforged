@@ -111,6 +111,11 @@ class Player:
         line = index_line(self, cp.name, a, x, y, f, d)
         open(os.path.join(SAVES, "index.txt"), "a").write(line + "\n")
         self.note("checkpoint", line)
+        try:      # Player 44 (Guide 12's step 1 (a)): the party ledger beside every checkpoint
+            import ledger
+            open(os.path.join(d, "LEDGER.txt"), "w").write(ledger.ledger(d))
+        except Exception as e:
+            self.log("NOTE ledger not written: %s" % e)
         self.saving = None
         if plans.RELOAD_RULE:
             self.rule_base = plans.rule_state(self)    # Player 32: the reload rule counts from the last checkpoint
