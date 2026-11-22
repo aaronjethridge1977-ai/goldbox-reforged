@@ -174,6 +174,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 96: PgDn / PgUp in a treasure LOOT list and the pile's coins as experience (check 327; two differences)
 
+- **Gate: DIFFCHECKS 325/325**: 321, 322, 323, 324 and 326 joined after Combat Chat 42 landed chat 95's `c95_esc.diff`
+  (b8a304d; the five 3 of 3 on origin/main first).
+
 - **Check 327 (8:29, Norris the Gray; main path):** the Player's `p2start/p16c3_s6pre12` (slot H, copied as G:
   `~/gbr/lab/data/c96/s6pre12`), tpseed 11111111: Right, Up x5 into Norris (1,5), FIGHT, everyone on QUICK
   (`presser.py 240 noenter`; ARN alone standing), CONTINUE BATTLE NO, the results, End x2 (CEDRIC, 11 items; ARN and
@@ -190,8 +193,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   silver / 20, electrum / 2, gold, platinum x 5, each a long division rounded down, then gems x 250, jewellery x 2200,
   400 a magic item's plus): Norris's 288 copper and 18 silver are 1 gold, so EACH CHARACTER RECEIVES 1250; ours
   added the coins in copper first (468 / 200 = 2): 1251 (ARN 6601, the original 6600). Ready `coin_xp.py`
-  (spoils.gd, Combat's). Both: `data/c96/c96_fixes.diff` (on origin/main 6df7f24); the `.py` scripts also apply on
-  top of chat 95's `c95_esc.diff` (`data/c96/c95_c96_both.diff`: both at once).
+  (spoils.gd, Combat's). Both: `data/c96/c96_fixes.diff` (on origin/main 6d4fd50, after chat 95's Esc landed; 327
+  matches there with it); the `.py` scripts apply with or without chat 95's change.
 - 327: 3 of 3 with both; 0 on main; 0 with either fix alone (the other difference left). DIFFCHECKS 320/320 on a copy
   with both; 321-324, 326 and 327 match on a copy with both diffs.
 
