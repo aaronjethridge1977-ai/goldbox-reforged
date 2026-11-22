@@ -193,6 +193,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   "20 ARROWS QUARREL +1", "20 QUARRELS +1", "20 +1S", "20 ARROWS QUARREL", "20 QUARRELS", "20 ARROWS",
   "6 LEATHER HOLY SYMBOLS", type 0x56 "20 QUARREL +1", type 0x1C "20 SILVER QUARREL +1S", "20 SILVER +1S": ours
   (`item_names.gd`) gives all of them (`data/c105/names.gd`). Screen only.
+- **401 (a fresh game's SAVE CURRENT GAME in PARTY CREATION, loaded; main path, matched at once):** check 395's keys in
+  DOSBox to ZED added, SAVE CURRENT GAME, F (SAVGAMF.DAT and ZED's CHRDATF1 written, the slot's other files left);
+  that save as slot G (`slot.py`): the original's LOAD comes back to the party menu with ZED, as ours' `load=G`; BEGIN
+  ADVENTURING, Rolf's texts (nine Enters), 0,4 W 00:00 in 3:0. The other way (ours' creation save in the original):
+  the same end state but for ZED's portrait body (0xBC: ours' MATCHED PORTRAITS addition, on by default; ORIGINAL
+  starts on the first head and body) and DS bytes that differ between two of the original's own runs.
+- **402 (2:20 the loose floorboard's chest; main path, the first chest a new party finds in the Slums):** check 71's
+  start jumped to 5,9 E, LOOK, YES: THE PARTY HAS FOUND TREASURE, 383 experience each (class-adjusted in the records),
+  TAKE, ITEMS, TAKE the SHIELD, TAKE the MAGIC USER SCROLL WITH 1 SPELL, SHARE (the 200 coins), EXIT. **A difference
+  (main path, Combat's treasure_screen.gd):** taking the pile's last item goes back to the main menu (VIEW TAKE POOL
+  SHARE EXIT, VIEW lit) even with coins left; ours went to TAKE: MONEY ITEMS EXIT when coins were left (Combat Chat
+  16's guess; only the no-coins case had been seen). EXIT from the list still goes to TAKE: (DOSBox). Ready:
+  `~/gbr/lab/data/c105/treasure_last.py` (402 matches with it). Seen, not fixed (screen only): after this LOOK's
+  treasure the original's place line shows SEARCH until the next redraw (the LOOK's flag still 1 when the place line
+  is drawn; the next step takes 1 minute, not searching).
 
 ## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
