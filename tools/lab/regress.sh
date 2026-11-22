@@ -99,6 +99,28 @@ run orig_A_c34_hand_tusp1 0 ./combat34/handreg.sh tu_spec 11111111 "" up 1 1:1
 run orig_A_c36_hand_lb1 0 env OURS_SEED=1 ./combat34/handreg.sh lb_kob1 33333333 up up 10 1
 run orig_A_c36_hand_lb2 0 env GBR_PLAYOUT=1 OURS_SEED=1 ./combat34/handreg.sh lb_kob1 44444444 up up 3 1
 run orig_A_c38_hand_disp 0 env HANDX=0:2:1 OURS_SEED=1 ./combat34/handreg.sh disp_kob 33333333 up up 0 1
+run orig_A_c39_hand_jav 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.sh jav_kob 33333333 up up 1 1
+# Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
+# round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
+run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
+# Combat Chat 42, the spell matrix (combat42/mx.sh: the hand-cast fight in ours with the fxwatch key; the verdict
+# needs the draws and every figure's status, HP and effects (type:minutes/power) in order, as the original's FXWATCH).
+run orig_A_c42_mx_sl1 0 env ORIG=skip OURS_SEED=1 ./combat42/mx.sh sl_kob1 22222222 mx_sl1 up up 12 1
+run orig_A_c42_mx_sco1 0 env ORIG=skip ./combat42/mx.sh sc_orc1 12345678 mx_sco1 up,up enter 2 1
+run orig_A_c42_mx_sck1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh sc_kob1 11111111 mx_sck1 up up 12 1
+run orig_A_c42_mx_hpo1 0 env ORIG=skip ./combat42/mx.sh hp_orc1 12345678 mx_hpo1 up,up enter 1 3
+run orig_A_c42_mx_hpk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh hpk1 11111111 mx_hpk1 up up 1 3
+run orig_A_c42_mx_mhpk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh mhpk1 11111111 mx_mhpk1 up up 1 3
+run orig_A_c42_mx_fb1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh fb_kob1 33333333 mx_fb1 up up 10 1
+run orig_A_c42_mx_lb1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh lb_kob1 33333333 mx_lb1 up up 10 1
+run orig_A_c42_mx_mmk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh mmk1 11111111 mx_mmk1 up up 1 1
+run orig_A_c43_mx_chk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh chk1 11111111 mx_chk1 up up 1 1
+run orig_A_c43_mx_blk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh blk1 11111111 mx_blk1 up up 0 1
+run orig_A_c43_mx_prk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh prk1 11111111 mx_prk1 up up 0 1
+run orig_A_c43_mx_mik1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh mik1 11111111 mx_mik1 up up 0 1
+# Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
+# has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
+run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
 [ $WHAT = ours ] && run orig_61_gate 1 ./reg61.sh   # Combat Chat 7: 6:1's run for the gate (Player 2's p2e entry, seed 2468ace1, QUICK), 7346 draws to the fight's end; the start is the Player lab's save (combat6/g61 slot F); draws only (DRAWS_ONLY)
 # Combat Chat 8: Tyranthraxus alone from Player 5/6's save (combat6/g61 slot B), seeds 12345678 and 2468ace1, to his fall.
 [ $WHAT = ours ] && run orig_B_tyr1 1 ./regtyr.sh 12345678

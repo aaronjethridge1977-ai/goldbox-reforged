@@ -12,9 +12,14 @@
 # OURS_SEED=<n> (Combat Chat 7): ours' own generator seeded (--seed), for keys walked before the dice
 # are seeded (a random encounter on the troll fixture's first step otherwise comes and goes run to run).
 # A wait=<s> token in the keys waits in the original only (ours leaves it out).
+# MAGICAT=<draw> (Combat Chat 44, main chat 98's throne room): MAGIC ON in both games from that draw (the
+# original: trace.py's POKE of DS:0x6E30, held before the draw; ours: the magicat= lab key, at the first computer
+# turn from it). For a party already on QUICK in the save: the original shows no QUICK menu, so presser.py's
+# Alt-M (MAGIC=1) is never sent, and ours' magic key comes after the first turn. Take the draw of the fight's
+# first round setup (OVR:1289f in a first trace; the fight's start clears 0x6E30 at GAME.OVR 0xE457).
 cd "$(dirname "$0")"
 L=$1; SEED=$2; PRE=$3; POST=$4; WHAT=${5:-both}; SEED2=$6; POST2=$7
-NAMES="THRENDER GRONE,BAKSHI,RHIANNON,BROTHER SEAN,DARKSTAR,PHINEAS"
+NAMES=${NAMES:-"THRENDER GRONE,BAKSHI,RHIANNON,BROTHER SEAN,DARKSTAR,PHINEAS"}   # Combat Chat 15: NAMES= for a save without Thrender (F)
 if [ $WHAT != ours ]; then
   /home/aaron/gbr/combat_lab/killmine.sh presser.py; /home/aaron/gbr/combat_lab/killmine.sh 'trace.py run'; /home/aaron/gbr/combat_lab/killmine.sh '[d]osbox -conf'; sleep 1
   CONF=$([ -n "$SLOW" ] && echo por_slow.conf || echo por.conf) ./orig.sh wait=15 enter wait=6 l wait=4 ${L,,} wait=10 $(echo $PRE | tr ',' ' ' | sed "s/\([a-z0-9]*\)/\1 wait=${KW:-3}/g") >/dev/null
@@ -24,6 +29,7 @@ if [ $WHAT != ours ]; then
     python3 seed.py set $SEED2 >/dev/null
   fi
   S=${OSECS:-880}   # OSECS: how long the original may fight (seconds; long fights, Combat Chat 1)
+  [ -n "$MAGICAT" ] && export POKE="${POKE:+$POKE,}$MAGICAT:6e30=1"
   (DISPLAY=:96 timeout $((S + 20)) python3 trace.py run $S > /home/aaron/gbr/combat_lab/tmp/cmp_orig.txt &)
   sleep 1
   KEYS2=$POST; [ -n "$SEED2" ] && KEYS2=$POST2
@@ -39,7 +45,7 @@ if [ $WHAT != orig ]; then
   # OPOST (Combat Chat 8): ours' keys after the seed, when they must differ (an ours-only wait: 2:9's c pressed
   # before the fight opened in ours under load and the party's QUICK never reached it).
   [ -n "$OPOST" ] && POST=$OPOST
-  K="load=$L"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
+  K="load=$L${MAGICAT:+,magicat=$MAGICAT}"; [ -n "$PRE" ] && K="$K,$PRE"; K="$K,tpseed=$SEED"; [ -n "$POST" ] && K="$K,$POST"
   [ -n "$SEED2" ] && K="$K,tpseed=$SEED2${POST2:+,$POST2}"
   W=$(printf "wait,%.0s" $(seq ${OWAITS:-6})); W=${W%,}   # OWAITS: more waits for long fights
   GTIME=${GTIME:-300} ./ours.sh --save=$PWD/qs.cfg --fast ${OURS_SEED:+--seed=$OURS_SEED} "--keys=$K,quickall,${MAGIC:+magic,}fightend,n,$W,tplog,partyhp" 2>&1 | tee /home/aaron/gbr/combat_lab/tmp/cmp_ours_full.txt | grep "^ *#\|^ *pos \|^ *cell \|PARTY \|ASKED " > /home/aaron/gbr/combat_lab/tmp/cmp_ours.txt

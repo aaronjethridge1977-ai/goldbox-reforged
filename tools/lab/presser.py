@@ -10,8 +10,10 @@ while time.time() - t0 < float(sys.argv[1]):
     time.sleep(0.5)
     r = lab.text(lab.screen(), 24)
     if "QUICK" in r:
+        if "magic" in sys.argv and not seen and os.environ.get("MAGICFIRST"):
+            keys.key("alt+m"); time.sleep(0.3)   # Combat Chat 33: a lone member's first QUICK turn runs before a late Alt-M
         keys.key("q")
-        if "magic" in sys.argv and not seen:   # Alt-M while that first QUICK turn runs
+        if "magic" in sys.argv and not seen and not os.environ.get("MAGICFIRST"):   # Alt-M while that first QUICK turn runs
             time.sleep(0.2); keys.key("alt+m")
         seen = True
     if seen and "CONTINUE BATTLE" in r:
