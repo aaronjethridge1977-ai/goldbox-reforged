@@ -184,7 +184,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   BUY list a line in and moved over the whole list. In p17a6 the mirror shop's PREV left the top at 0, so the arms
   shop opened at its first item and two NEXTs and 7 Ends lit 10 ARROWS; ours lit LIGHT CROSSBOW. Ready for Combat:
   `~/gbr/lab/data/c103/list_top.py` (p17a6 0 differences; p13a1, p15c5, p17a7 identical; DIFFCHECKS 373/373 on it).
-- **378, 379 (3:0 the arms shop; ready, join when the fix lands):** check 176's start, Up, YES, POOL, BUY, PREV (378)
+- **378, 379 (3:0 the arms shop; in the gate since Combat Chat 45's 85652c1, DIFFCHECKS 388/388):** check 176's start, Up, YES, POOL, BUY, PREV (378)
   or Home (379: lights HAMMER, row 22, the top kept at 1), EXIT, BUY, NEXT, NEXT, BUY, EXIT, EXIT, NO: the original
   buys VOULGE (378, top 0) and TRIDENT (379). 378 differs on origin/main; both 3 of 3 with the fix; breaks (ARN's gold)
   differ.
@@ -200,7 +200,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **383 (3:0 the arms shop's POOL and SHARE with a hired NPC; matched at once, main path):** check 373's start jumped
   to 13,9 N (Right, Up, Up: the shop's question), YES, POOL, SHARE, EXIT: only the player characters pool and share
   (324 silver, 54 each; SWORDSMAN keeps his 5 silver, no share). A start with his 0x84 = 0 differs (10 differences).
-- **384 (3:11 the hall with an empty party; a difference, main path; ready for Combat: `hall_load.py`):** check 103's
+- **384 (3:11 the hall with an empty party; a difference, main path; Combat Chat 45 landed `hall_load.py`, 2ecf030; 384, 385 in the gate):** check 103's
   start, the four steps, YES, REMOVE x6 (the original removes the last one too), then the menu is CREATE NEW
   CHARACTER, ADD CHARACTER TO PARTY, LOAD SAVED GAME, EXIT TO DOS (no heading), LOAD, G: slot G straight into the
   adventure (8,0 N, CAMPING on the place line), ENCAMP, SAVE F. Ours refused the last REMOVE and had no LOAD there
