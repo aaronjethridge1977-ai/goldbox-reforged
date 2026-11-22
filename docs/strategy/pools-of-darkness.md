@@ -353,11 +353,72 @@ ALT Q, ALT M, Space, CTRL S; DISPLAY shows the effects on the party; AREA isn't 
 
 ## 5. The magic-gear map
 
-*(Next.)*
+**From the books** (Gold Box Sources 3; *book*: the Cluebook's "Major Magic Items: Where to Find Them", pp.11-12, and
+its area notes; numbers are the Cluebook's map locations). The list and the area notes differ in places (the list
+gives +4 where a note gives +2 or +3, or leaves an item out); both are given where they differ. Most of Pools' gear is
+**+4**; Silver Blades' +5 gear only comes by import (section 1). Remember the Pools: most magic items are destroyed
+crossing to an outer dimension unless stored in Limbo (section 4). **The full map comes from the game's data** (every
+treasure and every monster's items, square by square, as Pool's): requested of main on the board, low priority.
+
+| Where (Cluebook page) | Magic gear | Notes |
+|---|---|---|
+| Phlan 22, Sasha (14) | three Clerical Scrolls | when the escort is accepted |
+| Phlan 7, the library (13) | Mage Scroll, Wand of Magic Missiles | later in the game, with a note |
+| Phlan 21, Ohlo's Mystic Devices (14) | magic items for sale | |
+| Limbo (11) | Darts +4, Periapt of Health, Ring of Gaze Resistance, Ring of Invisibility, Ring of Protection from Evil, **Vorpal Long Sword** (from Shal) | the list's; the vorpal sword is given at the Vessel of Moander (p.56) and survives Limbo |
+| Realms overland minis (11, 15-17) | Composite Short Bow +4, Sling +4, Scale Mail +4; Arrows +4 (two), Javelins +4 (two), Bolts +4, Chain Mail +4, Leather +4, Blessed Bolts (two) | the crossroad's storekeeper, if saved: Trident +3, Dagger +3, Light Crossbow +1, **Potions of Speed**; the small village: Arrows +4 |
+| Thar, Taydome's Keep (11, 19) | Mage Scroll | the treasure room (10) costs damage if Ruoln is along |
+| Vala vs. Vaasa 3, 16 (20) | **Silver Shield +4** (Vala); Darts +4, **Ring of Blinking**, Plate Mail +4 (16, searched) | the list adds Composite Short Bow +4 |
+| Temple of Tyr 17, the armoury (11, 22) | Hammer +4, Quarterstaff +4, **Ring of Protection +4**, **Wand of Lightning Bolts** | the plunder at 9 is cursed (section 4) |
+| Hill Giant Steading (11, 23-24) | 14: Dagger +4 (Kardal's); 17, the treasury: **Long Sword vs. Giants +2**, Arrows +2, Shield +3, Light Crossbow +3, Bolts +4; 21, the Shaman's vault: Clerical Scroll, **Ring of Fire Resistance**, Scimitar +3 | the list gives Arrows +4 and two Bolts +4 |
+| Fire Giant Cave (11, 25) | Javelin +4, Fine Long Bow, **Ring of Cold Resistance**; **Ring of Vulnerability -3** (cursed: part of Ungleow's bribe, 3) | never wear the bribe's ring |
+| Dragons' Aerie (11, 27-28) | 4 blue nest: Mace +4, Scimitar +4, Bolts +2, Hammer +2; 5 green: Cloak of Protection +2, Flail +4, Long Sword +1, Ring Mail +4; 6 white: **Wand of Ice Storms**, Mage Scroll, Long Sword +4, Short Sword +2; 7 black: Mace +4, **Wand of Paralyzation**, Mace +3, **Dart of the Hornet's Nest**; 8 (searched): random +2 items, Clerical Scrolls, Plate Mail +1; 13: Short Sword +4 | the list adds Battle Axe +4, Leather +4, Scroll of Protection from Dragon Breath ("Wand of Ice Stones" in the list) |
+| Thorne's Cave (11, 29-30) | 2, the prisoners' things: two Plate Mail +4, Short Sword +4, Arrows +4, Sling +4, Short Sword +3, Banded Mail +4, Bolts +4, Elfin Chain +4, Light Crossbow +4; 4, a red dragon's hoard: Shield +3, Arrows +4, **Necklace of Missiles**, **Ring of Fire Resistance**, Flail +4, Mace +3, Long Sword +4, **Silver Shield +3**, **Bracers of Defense AC 2**; 8, the old man: Trident +4, Helmet +4 | the list adds the **Stone of Luck** and a second Mace +4 and Javelin +4 (two); 6 and 17 are money |
+| Zhentil Keep 14 (31) | Mace +4 | sold for 10 gems |
+| Manshoon's Tower (11, 32-33) | 4: Cloak of Protection +2, Darts +4; 16: magic darts and bolts, **Ring of Cold Resistance**; 18: **Necklace of Missiles** (taking it springs the diagram); 22: Elfin Chain +2, Dagger +4, Trident +4, Light Crossbow +4, Darts +4, Clerical Scroll | |
+| The Descent (11, 34) | Composite Short Bow +4, Composite Long Bow +4; **Light Crossbow -3** (cursed: the Drow coach, 4) | discard the coach's crossbow |
+| Silk and the slave pens (11, 36) | Darts +4, Staff Sling +4, Cloak of Protection +4, Ring Mail +4, **Boots of Speed**, **Drow Elfin Chain +4**, **Drow Long Sword +4** | Silk's reward (8) is Drow gear: it survives into the Web |
+| Kalistes' Temple 5 (11, 38) | Battle Axe +4 | |
+| Web Dimension minis (11, 40-43) | Javelins +4 (two), Scimitar +4, Banded Mail +4, Ring Mail +4, Scale Mail +4 (two), Drow Long Sword +4, Drow Elfin Chain +4; Trident +3; Light Crossbow +3, Composite Long Bow +3, 10 Arrows +3, 10 Bolts +3; Long Sword +4; Elfin Chain +4 | the list adds a Web-overland Short Sword +4 and Chain Mail +4 |
+| Drow Testing Ground (11, 44-46) | Composite Long Bow +4, Chain Mail +4, **Ring of Invisibility**; 16: daggers and **amulets that repel spiders**; 18: **the Ward of Safe Passage** | the Ward opens Kalistes' Parlor |
+| Kalistes' Parlor (11, 47-48) | Elfin Chain +4; 8: some spells; **the Crystal Ring** (Kalistes) | |
+| Nacacia and Myth Drannor (11, 49-51) | 1, Nacacia's reward: Elfin Chain +4, Arrows +4, Fine Long Bow +2, Light Crossbow +3, Bolts +4; 6 (searched): Composite Long Bow +3, Arrows +4, Bolts +4, **Blessed Bolts**, Light Crossbow +3; 11, the elf's grave (robbed, instead of XP): **Girdle of Giant Strength**, Blessed Bolts, **Bolts +5**, Light Crossbow +2 | the list adds Drow Elfin Chain +4 |
+| Tower of Marcus (11, 51-56) | 10: Flail +4; 15: two Javelins +4, Two-Handed Sword +4, **Ring of Protection from Evil**; 16-17: Mage Scroll, **Wand of Ice Storms**; 21: Helmet +4, Ring Mail +4, Shield +4, Chain Mail +4; 11: **Boots of Speed**; 18, Marcus: **Elixir of Youth**, **Ring of Wizardry** | the list's "Temple of Transformation" adds Darts +4, a Long Sword, Clerical and Mage Scrolls |
+| Moander's minis (11, 57-59) | 15: Scimitar +4, Scale Mail +4; 16: Arrows +4, Clerical Scroll, Staff Sling +4, Hammer +4; 18: **Boots of Speed**, Shield +2, Ring Mail +2, Helm +2, Long Sword +3; 22, the hermit: Trident +4, Ring Mail +4, Leather +4, Plate Mail +2, Shield +3, Long Sword +3; 9, Aeghwaet: **his two potions** (required in the heart), **two Elixirs of Youth**, **two Potions of Extra Healing** | the list's Moander overland: Javelin +4, Two-Handed Sword +4, Elixir of Youth |
+| Moander's heart (11, 60-63) | 1: Staff Sling +4; 3: Scale Mail +4; 4: Dagger +4; 7: **eight weapons +3** (two per try, four tries: needed against Tanetal); **the Talisman of Bane** (Tanetal) | the list adds a **Cloak of Displacement** and the **Javelin of Lightning** |
+| Mulmaster 12 (63) | ranged weapons +2 for sale | |
+| Cave of the Beholder (11, 65-68) | 5, the Chancellor: a magic quarterstaff, long sword and cloak; 9: a silver shield; 32, Arcam: a potion, **Eyes of Charming**, a scimitar, a cloak | the list: Scimitar +4, Quarterstaff +4, Long Sword +4, Ring Mail +4, **Cloak of Displacement**, Silver Shield +3, Eyes of Charming |
+| Dark Phlan (11, 69-70) | 1, the Drow: **Cloak of Displacement**, Darts +4, Quarterstaff +4, Composite Short Bow +4, Arrows +4, Arrows +3; 6, the treasury: Arrows +3, Arrows +2, Short Sword +4, Elfin Chain +3, **Javelin of Lightning**, **Bracers of Defense AC 2**, **Ring of Protection +4**, Shield +4, Javelins +4, Banded Mail +4, Plate Mail +4; 11, Sasha: **two Rings of Protection +2**; 13: Composite Long Bow +3, Arrows +4, Shield +3; 14: **two Cloaks of Protection +4**, Composite Long Bow +4, Arrows +2, Plate Mail +3, Scimitar +3 | the list adds a **Ring of Gaze Resistance** and a Staff Sling +4 |
+| The Palace of Gothmenes (11, 71-72) | 10-11: staff slings, arrows and other missiles; 13, the tapestries: "rich treasure" | the list: two Arrows +4, Hammer +4, Javelin +4, Sling +4, Two-Handed Sword +4, Helmet +4, Leather +4, Plate Mail +4, Shield +4, Ring of Protection +4 |
+
+**Consumables named in the books:** Potions of Speed (the crossroad), two Elixirs of Youth and two Potions of Extra
+Healing (Aeghwaet), Elixirs of Youth (Moander's overland, Marcus), Blessed Bolts (the overland minis, Myth Drannor),
+the Necklace of Missiles (Thorne, Manshoon), the Dart of the Hornet's Nest (the Aerie), the wands (Magic Missiles,
+Lightning Bolts, Ice Storms, Paralyzation), and the Clerical and Mage Scrolls above. Potions and scrolls on ordinary
+monsters aren't named.
+
+**Quest objects** (not gear, but carried): Vala's four (Worldstone, Lindenwood Staff, Oakroot Staff, Crucible of Flame:
+p.20); the Lamp of Vigilance, Vessel of Purity and Spirit Flame (Tyr: pp.21-22); the four Aerie keys (pp.27-28); the
+Horn of Doom (p.29); the Essence of Pure Light and the iron medallion (the pens: pp.36-37); the Crystal Ring, the Ward
+(pp.44-48); the amphora, the cornucopia, the tuning fork, the unguent (Moander: pp.57-63); the Talisman of Bane (p.63).
 
 ## 6. The Journal's false entries
 
-*(Next.)*
+The Journal has entries 1-100 (pp.25-46), mostly tavern tales, overheard talk and maps; an entry is read when the game
+names it, and the Manual warns that some of the tales are fiction (p.1).
+**The Cluebook names the false ones** (p.11): **1, 6, 20, 23, 50, 75, 87 and 98**. *book* What each would mislead about:
+- **6, 50, 75, 87, 98: the Red Rider and the Flaming Sword.** A tavern tale of a rider with a flaming sword (6), "Bane"
+  boasting of a red rider sent to the Realms (50), the sword's legend (75), a skull urging the party to seek it (87) and a
+  map to the rider's lair (98): one false quest. Nothing in the Cluebook's areas has it.
+- **1:** the magical gates "steal your strength": false; the Pools are the way through (the real cost is item loss in
+  passage, section 4).
+- **20:** a bard's tale of Auril the Frostmaiden walking the lands.
+- **23:** a map of the Lost Mines.
+
+**Entries the Cluebook points to** (by number only; their contents stay in the Journal): **5** (the priest's map of the
+slave pens' arches and teleporter floor: pp.36-37), **11** (the ritual's options at the Temple of Tyr: p.22), **24** and
+**46** (the Banites' chant: the Cave of the Beholder's labyrinth: pp.64, 68), **74** (Laurellin and Brimwulf: p.22).
+Entries 24 and 46 carry the same chant; 46 also has the way out. *book*
 
 ## For the lanes
 
