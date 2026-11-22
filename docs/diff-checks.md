@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait (checks 351-364)
+## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait, MODIFY on a party member (checks 351-366)
 
 All at 3:11 from check 103's start and tpseed 11111111, main path, as chat 100's 344 (the four steps, YES, REMOVE
 PHINEAS, CREATE, KEEP, a name, K, EXIT, YES, ADD the new one, BEGIN ADVENTURING; ours' keys Down where the original's
@@ -209,6 +209,10 @@ the levels, age and abilities; the 348 gate checks unchanged). Every break of th
   LEG NEXT x2 KEEP, SHIELD PREV KEEP, EXIT, YES (break: body colours); 362 the creator's name line (16 letters typed: 15
   kept, two Backspaces, a space, Z: `ZBCDEFGHIJKLM Z`) and portrait page (HEAD x15, BODY x13: both wrap to 2; break: head
   3); 363 an elf female magic-user/thief, 364 a half-elf cleric/magic-user (chaotic evil; breaks: class, sex).
+- **365, 366 (MODIFY CHARACTER on a party member), matched at once:** the original opens MODIFY for a member with 0
+  experience (BROTHER SEAN's 48 set to 0 in `data/c101/s365`: End x3, MODIFY, Right, Down, Left, Down x5, Right x2, KEEP:
+  STR 17, INT 11) and does nothing at 48 (366: the same keys, nothing changed), as ours' rule (party_menu.gd: experience
+  0). Breaks: INT 12, STR 17.
 
 ## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation and MODIFY (checks 336-350)
 
