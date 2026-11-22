@@ -189,7 +189,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   text box and ecl_vm.gd's DAMAGE box; `tools/lab/printwrap_check.gd` checks it against the model on 1615 texts
   (0 differ). Not done: a message joined from several PRINTs is laid out as one string (the original lays out
   each PRINT's string from the cursor: only a PRINT's last word at column 38 or a quote at a PRINT's end can
-  differ; none seen); Combat's screens still use GameScreen.wrap (request on the board). No check (state
+  differ; none in the clerk's 26 reward messages, modelled PRINT by PRINT); Combat's screens still use GameScreen.wrap (request on the board). No check (state
   only): ours' rows compared by hand (`data/c106/rolf3b.png`, `clerk2b.png`).
 - **P97 (Jeremy, screen only, main path):** TRADE TO? from the treasure menu's VIEW (after Norris, 8:29) drew
   main's last view, Norris' pre-fight portrait and the time before the fight; the original keeps the treasure's
@@ -204,6 +204,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   0x4AC1 + 1, the cell 255; then the commissions: without the Slums (410) / the Slums again (411), the books,
   Podal Plaza's auction. Breaks: 410's 0x4ABB back to 254, 411's 0x4AC1 to 0: both DIFFER. Texts compared by
   hand (the same words; the rows as above).
+- **412-414 (3:8 the clerk's later rewards; main path; all matched at once):** 412: 405's start with 0x4AE7 = 254
+  and the Slums paid (0x4ABB = 255): 0x9DC6's other path, 'THERE IS A REWARD FOR CLEARING THE PODAL PLAZA.' HERE IS
+  YOUR REWARD.' (the original's own doubled quote), 208 experience, 250 gold and 200 platinum, then the commissions
+  (Sokal Keep, the books, the auction). 413: check 327's start (the Player's p16c3 party, levels 5-7, in Kuto's Well)
+  jumped to 3:8 4,5 S (`jump.py ... 4 5 S 3 8`): its Sokal Keep reward was never collected (0x4AA7 = 254), so the
+  clerk pays it: 1308 experience each over real levels. 414: 413 with 0x4AC1 = 3: the fourth paid commission brings
+  0xA592's briefing (0x4AC1 4 or more, 0x4AB1 not 255, PARTY_STRENGTH 19 or more, 0x4A96 not 255): PUTTING DOWN THE
+  PAPERS ... VALHINGEN GRAVEYARD, THE UNDEAD ARE CROSSING THE RIVER ..., then the commissions. Breaks (0x4AE7,
+  0x4AA7 back to 254; 0x4AC1 to 3) DIFFER. Texts compared by hand.
+- **415 (3:8 two book rewards in one visit; matched at once):** 405's start with 0x4AAA and 0x4AAD = 254: WE FIND THESE
+  DISCOURSES VALUABLE. (66 experience, 80 platinum), then THESE HISTORIES CONTAIN MUCH USEFUL INFORMATION. (91, 110
+  platinum), each its own treasure (SHARE, EXIT), then the commissions (the Slums, Sokal Keep, the books). Break 0x4AAD
+  back to 254 DIFFERS. Texts compared by hand.
+- **416 (3:8 the clerk after Norris; main path; matched at once):** check 327's original end (the original's save after
+  Norris, slot F made G with `data/c50/slot.py`) jumped to 3:8 4,5 S: Norris' reward (0x4AA6 = 254: THE COUNCIL HAS
+  AWARDED A BONUS FOR YOUR ELIMINATING NORRIS THE GRAY., 1250 experience, 250 gold, 200 platinum; its last row ends
+  with the quote at column 38) and Sokal Keep's (7850 experience: the jewelry's appraisal), BRAM (dead) left out.
+  Break 0x4AC1 2 -> 1 DIFFERS.
+- **ALTER PICS' PORTRAITS (a difference, main path for any save with it off; fixed in main.gd):** in 416's start
+  (the Player's save, 0x49FF = 0: both off) the original shows the clerk's portrait; ours showed the 3D view. Off
+  and on (DOSBox: ENCAMP, ALTER, PICS, P: PORTRAITS ON, saved 0x49FF = 1, the clerk again): the portrait both
+  times. GAME.OVR keeps the two in DS:0x49F6 (MONSTERS) and DS:0x49F5 (PORTRAITS; the PICS menu 0x19486 labels the
+  state; saved as 0x49FF, 0x1FEDB, loaded 0x1F8E9); 0x49F5 is read in one other place, the VIEW page (0x21530: with it
+  set and DS:0x5376 = 3 the member's portrait is drawn, 0x3D0:0x34), and 0x49F6 by the approaching figure (0x7AF3).
+  Ours had hidden every head picture with PORTRAITS off (an assumption of 2026-11-11). Fixed: main.gd draws the
+  event's picture whatever PORTRAITS says. Screen only (no check); `data/c106/o416_fix.png` = the original's.
 
 ## Chat 105: keys typed while a script runs (P90); a stack's plural (P91); 395-400 in the gate
 

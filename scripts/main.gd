@@ -2625,9 +2625,10 @@ func _after_vm() -> void:
 		_message.text = _vm.text
 		_vm.text_changed = false
 	if _vm.picture >= 0:
+		# ALTER PICS' PORTRAITS doesn't hide an event's picture (main chat 106, DOSBox: 3:8's clerk shows her portrait
+		# with it off and on; its flag DS:0x49F5 is read only by the VIEW page, GAME.OVR 0x21530, for the member's
+		# own portrait). Ours had hidden every head picture with it off (a save with 0x49FF = 0: the Player's).
 		_event_image = null if _vm.picture == 255 else _event_picture(_vm.picture_head, _vm.picture)
-		if _vm.picture_head != 255 and not CampScreen.show_portraits:
-			_event_image = null   # ALTER PICS: PORTRAITS OFF
 		_vm.picture = -1
 	if not _vm.notes.is_empty():
 		_message.text += "\n[not built yet: %s]" % ", ".join(_vm.notes)
