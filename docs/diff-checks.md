@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 100: training and money, a magic-user's racial limit, a three-class member (checks 336-343)
+
+All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the original's ends in `~/gbr/lab/data/c100/o<n>`
+(steps `o<n>.steps`, orun.sh); statediff caught each break of the original's end (`brk<n>`).
+- **336 (training refused for money):** check 103's start with THRENDER GRONE's gold 5000 -> 900 (4 silver, 2 platinum
+  kept: under 1000 gp's worth): the four steps, YES, TRAIN: **TRAINING COSTS 1000 GP.** (no prompt; the Y after it is a
+  dead key), BEGIN ADVENTURING: nothing paid, fighter 2. Break: gold 0.
+- **337 (exactly enough, from two coin kinds):** gold 995 and 2 platinum: trained (level 3, HP 25); **995 gold and 1
+  platinum taken** (a platinum piece is 5 gp), 4 silver and 1 platinum left. Break: platinum 2.
+- **338 (the second room can't be paid):** check 334's keys from sfm with RHIANNON's gold 1500: the hall trains
+  fighter 2 (1000 gp paid as 999 gold, 30 silver and 1 electrum back: 501 gold, 6 silver, 1 electrum), then the
+  magic-users' room says **TRAINING COSTS 1000 GP.**; Y (dead), BEGIN ADVENTURING. Break: magic-user 2.
+- **339 (a magic-user at an elf's limit):** sfm with RHIANNON at magic-user 11 (top level 11) and 800000 experience;
+  check 331's walk, YES, End x2, TRAIN: **NOT ENOUGH EXPERIENCE** (the hall at an elf's fighter limit, 335, said
+  nothing), and **experience drops to 4000** without training (the fighter's "level after next, less 1": the cut is made
+  before the room looks at its class). Break: experience 800000.
+- **340 (a three-class member, hall then room):** sfm with RHIANNON made a half-elf (+0x2E 4, .SPC effect 0x7C)
+  cleric/fighter/magic-user 1/1/1 (+0x2F 9, mask +0xB0 11), 5000 experience; check 334's keys: fighter 2 at the hall
+  (experience 4000), magic-user 2 and a spell at the room (experience 3000: cleric 3's 3001 less 1), HP 7 -> 9, 3001
+  gold. Break: experience 4000.
+- **341 (the same member at the clerics' hall, 5,0):** check 140's walk, YES, End x2, TRAIN, YES, BEGIN ADVENTURING:
+  cleric 2, experience 4000, HP 7 -> 8, 4001 gold. Break: HP 9.
+- **342 (the wrong class at the fighters' hall):** check 103's start with DARKSTAR (magic-user 1) given 6000 experience
+  and 5000 gold; the four steps, YES, End x4, TRAIN: **WE DON'T TRAIN THAT CLASS HERE**, yet **experience drops to 5000**
+  (magic-user 3's 5001 less 1: the cut comes before the class test, as ours' training_plan). Break: experience 6000.
+- **343 (an unconscious trainee):** check 103's start with THRENDER GRONE unconscious (status +0x10C 4, HP 0): TRAIN:
+  **WE ONLY TRAIN CONSCIOUS PEOPLE**, experience 9000 kept (no cut). Break: experience 8000.
+- **Gate: DIFFCHECKS 341/341.** No difference from the original found (no code change).
+
 ## Chat 99: a multi-class member trains both classes in one visit, and at an elf's fighter limit (checks 333-335)
 
 - **The walk:** 3:11's start square is the fighters' hall (8,0 N); after the hall's BEGIN ADVENTURING the party stands
