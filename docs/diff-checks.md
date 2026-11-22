@@ -172,6 +172,25 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 99: a multi-class member trains both classes in one visit, and at an elf's fighter limit (checks 333-335)
+
+- **The walk:** 3:11's start square is the fighters' hall (8,0 N); after the hall's BEGIN ADVENTURING the party stands
+  there, so check 331's walk (Down, Up, Right, Up, Up, Right, Up, Right, Up) reaches the magic-users' room (7,0 E).
+- **The light is kept:** back in the room's party list the light stays on the member lit when the hall's session ended
+  (RHIANNON), in both games. **333:** YES, End x2, TRAIN lights and trains DARKSTAR (magic-user 2). Matched at once.
+- **334 (main path: both classes in one visit):** check 332's hall keys (RHIANNON fighter 2, experience 5000 -> 4000),
+  BEGIN ADVENTURING, the walk, YES, TRAIN: **RHIANNON WILL BECOME: A LEVEL 2 MAGIC-USER** (the 4000 left still
+  trains the other class), YES, End, End, L, TRAIN, BEGIN ADVENTURING: levels 2/2, experience 4000, 3001 gold.
+  Matched at once, 3 of 3.
+- **335 (main path: an elf at its fighter limit):** the same keys from `~/gbr/lab/data/c99/scap` (sfm with RHIANNON at
+  fighter 7 and 130000 experience): **the hall's TRAIN does nothing** (no message, no prompt; the Y after it is a dead
+  key, there to make a wrong prompt in ours show), the room trains magic-user 2 and **experience drops to 5000** (one
+  below magic-user 3). Matched at once, 3 of 3.
+- statediff caught each break of the original's end (DARKSTAR or RHIANNON magic-user 1; fighter 8). **All three in the
+  gate: DIFFCHECKS 333/333.**
+- **Seen:** the camp's SCRIBE list (check 159's start) ignores Up / Down in the original, Home moves (as MEMORIZE and
+  the training page): covered by the Lead's (a) under Q13 (ARROWS IN LISTS); no question.
+
 ## Chat 98: a multi-class member's training, the shop's arrows (checks 331, 332; one question)
 
 - **331 (main path: a fighter/magic-user trains at the magic-users' room):** check 330's start with RHIANNON (elf
