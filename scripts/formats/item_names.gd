@@ -84,12 +84,19 @@ func name_of(it: GameItem) -> String:
 		shown |= 4
 	var parts := PackedStringArray()
 	var plural_done := false
+	# The stack's "s" (START.EXE 0x1210-0x127B; chat 105, P91: DOSBox "20 ARROWS +1", "20 QUARRELS +1",
+	# "20 ARROWS QUARREL +1", "20 +1S", "6 LEATHER HOLY SYMBOLS"): the first shown word that is the only one
+	# shown, word 47 after word 49 (not for type 0x56), word 48 with 47 hidden, word 49 of type 0x56, or
+	# any word of type 0x49 / 0x1C (arrows, quarrels) unless word 49 is "Silver" (0xB1).
+	var type: int = it.raw[46]
+	var missile: bool = (type == 0x49 or type == 0x1C) and it.raw[49] != 0xB1
 	for v in [3, 2, 1]:
 		if (shown >> (v - 1)) & 1 == 0:
 			continue
 		var w := word(ids[v - 1])
-		if it.count >= 2 and not plural_done and (
-				(1 << (v - 1)) == shown or (v == 1 and shown > 4) or (v == 2 and (shown & 1) == 0)):
+		if it.count >= 2 and not plural_done and ((1 << (v - 1)) == shown \
+				or (v == 1 and shown > 4 and type != 0x56) or (v == 2 and (shown & 1) == 0) \
+				or (v == 3 and type == 0x56) or missile):
 			w += "s"
 			plural_done = true
 		parts.append(w)

@@ -50,6 +50,9 @@ var _dax_cache := {}
 const WALK_STEP_SECONDS := 0.22
 var _timer: Timer
 var _busy := false                  # a delay or walk is playing; input waits
+## P90 (chat 105, DOSBox 2:20 5,9 at speed 9): a key typed while a script prints or waits on the walking screen
+## isn't lost: the original acts on the last one once the script is done ("Y L" looks, "L Y" does nothing).
+var _type_ahead: InputEventKey = null
 var _walk_path: Array[Vector2i] = []
 var _walk_final_dir := 0
 var _held_message := ""
@@ -1098,6 +1101,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 		if _busy:
+			if event is InputEventKey and not (event as InputEventKey).echo:
+				_type_ahead = event as InputEventKey
 			get_viewport().set_input_as_handled()
 			return
 		if _door_options != "":
@@ -1848,6 +1853,7 @@ func load_original_save(letter: String) -> bool:
 	_drained_from_save(extra.get("drained", {}))
 	_timer.stop()
 	_busy = false
+	_type_ahead = null
 	_walk_path.clear()
 	_held_message = ""
 	_event_image = null
@@ -1942,6 +1948,7 @@ func _quick_load() -> void:
 	# Stop anything in progress.
 	_timer.stop()
 	_busy = false
+	_type_ahead = null
 	_walk_path.clear()
 	_held_message = ""
 	_pending_move = -1
@@ -2569,6 +2576,7 @@ func _on_timer() -> void:
 		else:
 			_timer.start(WALK_STEP_SECONDS)
 		_show()
+		_type_ahead_go()
 		return
 	# End of a script DELAY: an approaching figure that has arrived becomes its portrait.
 	_busy = false
@@ -2578,6 +2586,20 @@ func _on_timer() -> void:
 	_vm.resume()
 	_after_vm()
 	_show()
+	_type_ahead_go()
+
+
+## The key typed during the DELAY (P90): acted on once the script has ended on the walking screen; a script
+## that stops for a menu or a page instead drops it.
+func _type_ahead_go() -> void:
+	if _type_ahead == null or _busy:
+		return
+	var ev := _type_ahead
+	_type_ahead = null
+	if _mode == Mode.WALK and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
+			and not (_shop.visible or _sheet.visible or _combat.visible or _treasure.visible or _camp.visible \
+			or _temple.visible or _party_menu.visible or _battle_begins):
+		_unhandled_input(ev)
 
 
 ## A script DELAY: the original waits game speed x 225 ms, no key (GAME.OVR 0x3465, opcode 0x3A,
@@ -3936,6 +3958,7 @@ func dev_restore(s: Dictionary) -> bool:
 	dev_restores += 1
 	_timer.stop()
 	_busy = false
+	_type_ahead = null
 	_walk_path.clear()
 	_held_message = ""
 	_pending_move = -1

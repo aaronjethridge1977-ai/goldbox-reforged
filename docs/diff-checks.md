@@ -172,6 +172,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 105: keys typed while a script runs (P90); a stack's plural (P91); 395-400 in the gate
+
+- **395-400 joined the gate** after Combat Chat 46 landed chat 104's four edits (13913f1): DIFFCHECKS 398/398.
+- **P90 (main path, 2:20's loose floorboard, event 16 at 0xAC56):** no roll and no facing test: the room seen (0x4A14),
+  the chest not taken (0x4A83), 0x6DCA >= 1 (SEARCH or LOOK). LOOK finds it in both games. **The difference: a key typed
+  while a script prints or waits** (a step's text and its DELAY): DOSBox at speed 9 (0x49FC = 9 in a jump save from
+  check 71's start, `jump.py ... 5 9 E 2 20`), L 0.3 s after the step, while "THIS LARGE R..." was still being typed on
+  the old square: the LOOK runs after (11:06, the chest). Two keys: "Y L" looks, "L Y" does nothing (the screen is
+  left as it was), "L L" looks once: **the last key counts**. Ours dropped every key while busy. main.gd `_type_ahead`:
+  the last key typed during a DELAY or a scripted walk on the walking screen, acted on when the script ends there;
+  dropped if the script stops at a menu or a page (not seen in DOSBox). Tested with timed keys (`timed=` items: Up at
+  500 ms, the keys from 600 ms; all four orders as the original). No check: a check's keys wait for the engine.
+  Jeremy's recording (a new game from his slot A party) couldn't be replayed key by key; his L came 1 s after his step.
+- **P91 (main path, item names):** START.EXE 0x1100-0x12D1 builds the name (word 49, 48, 47; the count before). The
+  stack's "s" goes on the first shown word that is (a) the only word shown, (b) word 47 after word 49 (not for type
+  0x56), (c) word 48 with word 47 hidden, (d) word 49 of an item of type 0x56, or (e) any word of type 0x49 / 0x1C
+  (arrows, quarrels) unless word 49 is SILVER (0xB1). Ours lacked (b)'s exception, (d) and (e): "20 ARROW +1S" for
+  "20 ARROWS +1". DOSBox, DORN's items with edited records (`~/gbr/lab/data/c105/s91`, `s91b`): "20 ARROWS +1",
+  "20 ARROWS QUARREL +1", "20 QUARRELS +1", "20 +1S", "20 ARROWS QUARREL", "20 QUARRELS", "20 ARROWS",
+  "6 LEATHER HOLY SYMBOLS", type 0x56 "20 QUARREL +1", type 0x1C "20 SILVER QUARREL +1S", "20 SILVER +1S": ours
+  (`item_names.gd`) gives all of them (`data/c105/names.gd`). Screen only.
+
 ## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
 - **393 (1:18, check 67's rest fight with the hired SWORDSMAN; main path, matched at once on the state):** check 373's
