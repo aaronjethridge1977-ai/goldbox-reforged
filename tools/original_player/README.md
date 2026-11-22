@@ -1346,7 +1346,22 @@ blows, Haste in the guards' CONTINUE BATTLE rounds).
 **Plan 2's levels:** `p43/bands5.plan` (bands4 with xpgoal BRAM=70001,LIRA=40001) from `p42k1_s42d108`: BRAM 70,922,
 LIRA 37,591 at `p2start/p43b2_s43d75`; `p43/train5.plan` (LIRA learns LIGHTNING BOLT, Jeremy 20:00) for the trip.
 
-Lab: `p43/` (reload.sh and helpers from p42; bands5.plan, finale5.plan, train5.plan); runs p43a1, p43b1-b2, p43f1-f6.
+**Training** (`p43/train5.plan`, from `p43c1_s43cinn`): ARN and BRAM fighter 7, LIRA and DORN fighter 6
+(`p2start/p43t4_s43trained`, 3:0 the inn); LIRA 38,194, not yet magic-user 6 (Valjevo's giants first: Jeremy 21:27).
+**The chain's trace** (Guide 11's (1)): lab `p43/trace.md` (a helper read all 599 saves; stuck-fights.md section 5).
+
+**Valjevo, stage 1** (`p43/valjevo1.plan` from `p43t4_s43trained`, Player 40's way in): 5:6 1,2's LEVEL 5 CLERIC
+won (Mace +3 BRAM, Necklace of Missiles CEDRIC, Plate Mail +1 ARN), 5:6 1,0 the Bane altar: TWO CROSSED SWORDS YES,
+the 2 Long Swords +3 (ARN, BRAM), no fight (`p2start/p43v2_s43v2`). **Stage 2** (`p43/valjevo2.plan`, `valjevo3.plan`):
+the walk to the gate met a fight at 5:3 12,12 (map 5:5's event 14; straight into combat, no encounter menu) and it
+**rang the alarm** (0x4A62-0x4A64 21,3,0 → 14,2,15; the cleric and the altar left them alone): at the gate's bump
+(12,7 W) "A VOLLEY OF BOULDERS ARE THROWN AT YOU..." and LOCKED instead of the password; back in 5:6 every rest drew a
+patrol, and p43x3 lost CEDRIC (a reload). Player 40 fought at 12,12 too, from COMBAT WAIT FLEE PARLAY on QUICK, and was
+asked the password. Open for Player 44: PARLAY (MEEK + HARASH) at 12,12, or wait out the hour before the gate; the
+party is also heavy again (the Plate Mail +1, the swords: "full or overloaded" at 5:3 12,12's pile).
+
+Lab: `p43/` (reload.sh and helpers from p42; bands5.plan, finale5.plan, train5.plan, valjevo1-3.plan, gateprobe.plan,
+trace.md); runs p43a1, p43b1-b2, p43c1, p43d1-d2, p43f1-f6, p43t1-t4, p43v1-v2, p43w1-w2, p43g1, p43x1-x4.
 
 ## Player 42 (2026-11-21): the vampire; the movement audit; exact replays in the original (Guide 9's videos); Plan 4 at the finale; walls, flight, Fireball's reach
 
