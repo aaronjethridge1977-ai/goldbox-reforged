@@ -402,6 +402,10 @@ class Tactics:
         self.kt_asked = set()    # Player 46: (fight, round) key turns asked
         self.orders = {}         # Player 46: member -> his order from the last key turn, until used (field.parse_orders)
         self.contact_seen = False
+        self.kt_prev = None      # Player 47: (party down, foes held, foes' memorized counts) at the last menu
+        self.kt_why = []         # Player 47: key-turn events since the last key turn
+        self.kt_r1 = None        # Player 47: the fight's first round with foes
+        self.kt_reason = ""
         self.cell_aim = {}       # Player 46: member -> the cells his ordered spell or item aims at, in turn
         self.menus = set()       # Player 46: members whose menus came this fight
 
@@ -1728,11 +1732,43 @@ class Tactics:
         # or the next key turn's orders replace it
         contact = any(_dist(a, f) <= 1 for a in party if _up(a) for f in foes)
         when = KEYTURNS.get("when", ("r1", "contact"))
+        if "default" in when:
+            when = tuple(when) + ("r1", "contact", "fall", "wake", "caster")
         key = (self.fight_no, self.round)
-        if key not in self.kt_asked and ("every" in when or ("r1" in when and self.round == 1)
-                                         or ("contact" in when and contact and not self.contact_seen)):
+        # Player 47 (the Lead's key turns, 2026-11-22: round 1, first contact, and any round after a member falls, a
+        # held figure wakes or an enemy caster begins; every round in a fight on the stuck-fights list): `fall`,
+        # `wake`, `caster` (an enemy's memorized spells fewer than at the last look), `every@<fight>` (every round of
+        # that fight number), `default` (r1 contact fall wake caster); an event marks the next menu not yet asked
+        down = {f["n"] for f in party if not _up(f)}
+        held = {f["n"] for f in foes if _up(f) and helpless(f)}
+        memo = {f["n"]: sum(1 for b in f.get("memo", b"") if b) for f in foes if _up(f)}
+        prev = self.kt_prev
+        if prev is not None:
+            if "fall" in when and down - prev[0]:
+                self.kt_why.append("a member fell (%s)" % ", ".join(f["name"] for f in party if f["n"] in down - prev[0]))
+            woke = {f["n"] for f in foes if f["n"] in prev[1] and _up(f) and not helpless(f)}
+            if "wake" in when and woke:
+                self.kt_why.append("a held figure woke (%s)" % ", ".join(f["name"] for f in foes if f["n"] in woke))
+            cast = [f["name"] for f in foes if f["n"] in memo and memo[f["n"]] < prev[2].get(f["n"], 0)]
+            if "caster" in when and cast:
+                self.kt_why.append("an enemy cast (%s)" % ", ".join(cast))
+        self.kt_prev = (down, held, memo)
+        why = list(self.kt_why)
+        if "every" in when or ("every@%d" % self.fight_no) in when:
+            why.append("every round")
+        # (p46k3: the finale's second fight began with five CONTINUE rounds with no foe: Tyranthraxus came at its
+        # round 6) "round 1" is the first round with foes on the field
+        if "r1" in when and self.kt_r1 in (None, self.round):
+            why.append("round 1")
+        if self.kt_r1 is None:
+            self.kt_r1 = self.round
+        if "contact" in when and contact and not self.contact_seen:
+            why.append("first contact")
+        if key not in self.kt_asked and why:
             self.kt_asked.add(key)
+            self.kt_why = []
             self.contact_seen = self.contact_seen or contact
+            self.kt_reason = "; ".join(why)
             self.orders = self._ask(figs, party, foes, member, p)
         o = self.orders.pop(member, None)
         if not o or o["do"] == "rules":
@@ -1768,8 +1804,9 @@ class Tactics:
         except Exception:
             ws = []
         nomenu = [f["name"] for f in party if _up(f) and f["name"] not in getattr(self, "menus", set())]
-        title = "Fight %d, round %d: %s's turn (acted this round: %s)%s%s" % (
+        title = "Fight %d, round %d: %s's turn (acted this round: %s)%s%s%s" % (
             self.fight_no, self.round, member, ", ".join(sorted(self.rseen - {member})) or "none",
+            "\nkey turn: %s" % self.kt_reason if getattr(self, "kt_reason", "") else "",
             "; in contact" if self.contact_seen else "",
             ("\nno menu seen yet for %s (an NPC is played by the computer: no orders for him)" % ", ".join(nomenu))
             if nomenu and self.round > 1 else "")

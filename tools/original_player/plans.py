@@ -1210,6 +1210,7 @@ class PrepStep:
 
 class KeyturnsStep:
     """Player 46 (Gold Box Guide 12's step 2): `keyturns on [r1] [contact] [every] [dir=<path>]|off`: tactics.KEYTURNS
+    (Player 47: also fall, wake, caster, every@<fight>, default = r1 contact fall wake caster)
     from here (the field read at each key turn; the run waits for the Player chat's orders: tactics.py, field.py)."""
     def __init__(self, rest):
         w = rest.split()

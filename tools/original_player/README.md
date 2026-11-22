@@ -1316,6 +1316,25 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 47 (2026-11-22): the Lead's key turns in the tool; the finale five times under them (Guide 12's measure)
+
+**Stage 1:** 68 of 71, nothing new from main or Combat to re-score (p17a6 waits on main / design). Guide 12 (d), the
+Restoration sale, still waits on main's drainer check (not on the board).
+
+**The Lead's key turns** (2026-11-22: round 1, first contact, any round after a member falls, a held figure wakes or an
+enemy caster begins; every round in a fight on the stuck-fights list): `keyturns on` takes `fall`, `wake`, `caster` (an
+enemy's memorized spells fewer than at the last look), `every@<fight>` (every round of that fight number) and
+`default` (= r1 contact fall wake caster). An event marks the next menu not yet asked; the field read's second line
+says why ("key turn: a member fell (DORN); every round"). "Round 1" is now the first round with foes (the finale's
+second fight has its CONTINUE rounds first: Tyranthraxus came at its round 6-8).
+
+**The measure** (stuck-fights.md section 5, last entry): five tries from `p45i1_s45ready` with `p47/kt47.plan`
+(`keyturns on default every@1`), seeds 47010001-05: the guards 4 of 5, each win with none dead; the game 2 of 5
+(p47k1, p47k5; ELWEN died in both, ordered to strike him); p47k2 and p47k3 lost to his breath before our first menu;
+p47k4 lost the guards (seven of ten Hold Person picks saved against). About 10 minutes of the chat a try.
+
+Lab: `p47/` (kt47.plan, reload.txt); runs p47k1-k5 (field reads and orders in `logs/p47k*.field/`).
+
 ## Player 46 (2026-11-22): p45i5 filmed for Jeremy; Guide 12's step 2, the field read and the key turns (`keyturns`, field.py); the game won again under the chat's orders (p46k3)
 
 **Stage 1:** 68 of 71, nothing new from main or Combat to re-score (p17a6 still waits on main / design).

@@ -863,3 +863,34 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   - **Measure:** the guards 2 of 2 with none dead under the chat's orders (p46k2 none even down); him 1 of 1. The
     breath still kills two or three: in p46k3 the members standing at him or two squares off died, LIRA (kept 6+
     squares off, off his lines) and Genheeris lived. *seen*
+
+### The measure for Guide 12: five tries under the Lead's key turns (Player 47, 2026-11-22)
+
+- **Setup:** from `p45i1_s45ready` (5:7 3,6, ready), `p47/kt47.plan` = Player 46's kt46e.plan with `keyturns on default
+  every@1` (the Lead's answer: every round of the guards, a fight on this list; in Tyranthraxus' fight round 1, first
+  contact, and any round after a member falls, a held figure wakes or an enemy casts), `OP_PLAN5=1 OP_FIGHTDEATH=1
+  OP_MANUAL=1 OP_STUCK_KEYS=1500`, seeds 47010001-05, the Player chat's orders at every key turn. *seen*
+
+  | try | guards | him | who died | chat's minutes |
+  |---|---|---|---|---|
+  | p47k1 | won, 7 rounds, none dead | won | ELWEN (ordered to strike him) | 11 |
+  | p47k2 | won, 7 rounds, none dead | lost | ELWEN, CEDRIC; the party destroyed at his 11 HP | 10 |
+  | p47k3 | won, 5 rounds, none dead | lost | ARN, ELWEN (his breath, round 1), CEDRIC; destroyed at 15 HP | 9 |
+  | p47k4 | **lost** (destroyed, round 10) | - | the party | 8 |
+  | p47k5 | won, 8 rounds, none dead | won | ELWEN (ordered to strike him) | 10 |
+
+- **Against Plan 5's rules alone (5 of 6 guards, Players 43/45):** the guards 4 of 5, every win with none dead (the
+  rules' wins lost members); the game 2 of 5. About 10 minutes of the chat per try (the guards ~6, him ~3).
+- **What decided the guards:** the Hold Person saves. The script puts ELWEN or CEDRIC behind the wall in three of the
+  five (p47k1 CEDRIC at 32,9, p47k4 ELWEN at 26,9, p47k5 ELWEN at 32,9): one cloud in round 1 instead of two, and the
+  others won all the same; p47k4 lost because seven of ten Hold Person picks were saved against (LIRA, DORN, BRAM and
+  Genheeris down by round 8). The orders that worked: round 1 the clouds (no overlap) on the guards touching the
+  fighters, Hold Person on those touching LIRA and DORN, the one behind the wall walked to the gap 24,10; every later
+  round holds on whoever is free and in contact, a blow from each member on a held or clouded guard next to him, the
+  dying bandaged by the rules. *seen*
+- **What decided him:** his breath. In p47k2 and p47k3 he acted before any menu of ours (two members gone before an
+  order could matter); in both wins ELWEN died because I ordered her to strike him (2 of 2: don't). The wins came from
+  ARN's and BRAM's hasted blows (80 HP in 2-3 rounds). Magic Missile at him did nothing seen (p47k3). *seen*
+- **The tool:** the new triggers fired as meant (`fall`, `wake`; `wake` also fires when a cloud's helplessness ends;
+  `caster` never fired: neither guards nor Tyranthraxus showed memorized spells spent). Round 1 of his fight is now the
+  first round with him on the field (he comes at the second fight's round 6-8, after the CONTINUE rounds).
