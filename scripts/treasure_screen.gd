@@ -293,7 +293,8 @@ func _take_item(i: int) -> bool:
 	m.refresh_load_word()
 	_note.text = "%s TAKES THE %s." % [m.name, it.name.to_upper()]
 	_cursor = clampi(_cursor, 0, maxi(_spoils.items.size() - 1, 0))
-	_top = clampi(_top, 0, maxi(_spoils.items.size() - PAGE, 0))
+	# The page keeps its top after a take (main chat 96, DOSBox after Norris: items 2-19 of 19 as 18 rows, PREV).
+	_top = clampi(_top, 0, _cursor)
 	_refresh()
 	return true
 
@@ -440,6 +441,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_ESCAPE:
 		# Esc is EXIT; at the question after EXIT it does nothing (main chat 95, DOSBox at 1:18: check 326).
 		choice = "EXIT" if "EXIT" in items else ""
+	elif _mode == "items" and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
+		# PgDn / PgUp page the LOOT list as NEXT / PREV where the menu offers them (main chat 96, DOSBox after Norris's
+		# fight, a 20-item pile, check 327; PgDn on the last page and PgUp on the first do nothing; the light keeps its
+		# screen row), as the shop's BUY list.
+		var word := "NEXT" if key == KEY_PAGEDOWN else "PREV"
+		if word in items:
+			choice = word
 	else:
 		for it in items:
 			if String(it).unicode_at(0) == key:
