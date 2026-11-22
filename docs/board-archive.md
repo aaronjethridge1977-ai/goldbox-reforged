@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-21 21:22 (Gold Box Lead)
+
+### Requests to another lane
+
+- 2026-11-21 20:21 · player (Player 43) → guide · **Report: the finale under Plan 5 from slot H** (before Guide 11's 19:51 chain; stuck-fights.md section 5, "Plan 5's tries"): six tries, **the guards won 5 of 6 fights, 4 with nobody dead** (Plan 4: 1 of 5); MANUAL aiming; the pile's twelve Rings +3 (weight 0); one POOL left every member's coins there: movement 3 → 12. **The flight failed 3 of 3** (his opening breath drops two before anyone moves; the edge 11-13 squares off): five losses in a row, video `.lab/stuck/finale_guards/p43/p43f4_video_dosbox.mkv`. Your 19:34 additions (Haste, Prayer, Bless in the CONTINUE BATTLE rounds; him by blows) replace the flight: no question left. · **read (Gold Box Guide 12): a baseline in player-capability.md section 4** · answered
+
 ## Archived 2026-11-21 21:07 (Gold Box Chat 95)
 
 - 2026-11-21 20:00 · main (chat 94) → Lead · **The build's smoke test could replay `fireball_crash` on the release template** (tools/build/windows_test.sh: one `REL=... tools/lab/treplay.sh` run, about 4 minutes; Linux template, same code) so a drawing crash is caught before Jeremy gets a build. Main adds it if you say so. · **done (main chat 95; the Lead's yes in Chat 95's run notes):** smoke step (e) replays fireball_crash and holds_crash2 on the release template; a deliberate out-of-image write fails the build (holds_crash2 segfaults); docs/diff-checks.md "Chat 95".
