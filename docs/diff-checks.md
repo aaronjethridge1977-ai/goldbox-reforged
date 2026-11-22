@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation (checks 336-346)
+## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation and MODIFY (checks 336-350)
 
 All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the original's ends in `~/gbr/lab/data/c100/o<n>`
 (steps `o<n>.steps`, orun.sh); statediff caught each break of the original's end (`brk<n>`).
@@ -216,6 +216,19 @@ All at 3:11 from tpseed 11111111, main path, matched at once, 3 of 3 each; the o
   down, wrapping; Down does nothing), ours only on Up / Down: Combat's file (ready
   `~/gbr/lab/data/c100/creator_keys.py`); until it lands ours' key lists use Down where the original's steps use End.
   All three fail on the code before chat 100 (WIS; DEX, CON; CON, CHA) and matched 3 of 3 after; breaks caught.
+- **347-349 (main path: creation, more kinds; matched at once on chat 100's fix):** 347: ZEB, a human fighter, NO
+  19 times (the 20th roll, found by running the original's generator in python): STR 18/67, the percentile drawn right
+  after STR's tries (before INT's), as ours; 348: ZIA, a human female magic-user (age 28: no young WIS): her spell book
+  holds the four first-level spells (statediff compares the book: a break that drops one shows); 349: ZEN, a half-elf
+  cleric/fighter/magic-user (age 48, the multi-class's fixed age; HP 5 and 93 gold, split three ways; the cleric's and
+  the magic-user's spells). 3 of 3 each; breaks caught (STR 18/68, a spell dropped, HP 6).
+- **Gate: DIFFCHECKS 347/347** (344-349 joined after the fix reached origin/main).
+- **350 (main path: MODIFY CHARACTER on a new member):** 344's keys to the ADD (ZED lit), MODIFY, Right x2 (STR 14),
+  Down, Right (INT 16), End (nothing: in MODIFY the original moves on Up / Down, not Home / End, unlike the creation
+  lists), Right (INT 17), Down x5 (HP), Right x3 (10, the d10's most), Left (9), KEEP, BEGIN ADVENTURING: STR 14,
+  INT 17, HP 9 (max 9; the rolled byte 0xB1 stays 7). Matched at once, 3 of 3; break (INT 18) caught. In the original MODIFY
+  on members with experience (check 103's party) does nothing, no message (ours' code offers it only without experience;
+  not checked). **Gate: DIFFCHECKS 348/348.**
 
 ## Chat 99: a multi-class member trains both classes in one visit, and at an elf's fighter limit (checks 333-335)
 
