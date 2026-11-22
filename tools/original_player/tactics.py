@@ -296,7 +296,10 @@ CONTINUE = int(os.environ.get("OP_CONTINUE", "6"))
 
 
 def _hurt(party):
-    return [f for f in party if _up(f) and f.get("max", 0) - f["hp"] >= 4]
+    # Player 43 (p43f2: DORN and GENHEERIS lay at 0 HP, unconscious (status 4), through three cure rounds after the
+    # guards): an unconscious member is healed too, first
+    return sorted([f for f in party if (_up(f) or (f["status"] == 4 and f["hp"] == 0)) and f.get("max", 0) - f["hp"] >= 4],
+                  key=lambda f: f["hp"] > 0)
 
 
 def _fallen_focus(figs, party_n):
@@ -1321,7 +1324,7 @@ class Tactics:
         inman = b.startswith("(USE CURSOR KEYS)")
         byn = {f["n"]: f for f in figs}
         left = [t for t in sc["targets"] if t not in sc["picked"] and t not in sc.setdefault("mbad", set())
-                and t in byn and _up(byn[t])]
+                and t in byn and (_up(byn[t]) or (spell.startswith("CURE") and byn[t]["status"] == 4))]
         if spell == "HOLD PERSON" and not sc["picked"]:
             persons = {f["n"] for f in foes if not _is_large(f)}
             left = [t for t in left if t in persons]

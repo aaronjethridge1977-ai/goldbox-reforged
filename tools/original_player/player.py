@@ -163,6 +163,9 @@ class Player:
                 # reload, not a march into Tyranthraxus short-handed; the guards, the vote and he come in one step,
                 # with no walking screen between): a member dead at a fight's end stops the run as a reload
                 ms = plans.members(self.g.mem)
+                # (p43f1: the record list ran on into a guard's: only the party's own)
+                own = set(getattr(self, "start_names", None) or [m[0] for m in self.g.party()])
+                ms = [m for m in ms if m["name"] in own]
                 self.note("fight", "fight %d over: %s" % (self.fights, ", ".join(
                     "%s %d/%d%s" % (m["name"], m["hp"], m["max"], "" if m["status"] < 5 else " status %d" % m["status"])
                     for m in ms)))

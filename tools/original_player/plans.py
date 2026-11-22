@@ -1478,6 +1478,23 @@ class Plan:
         if kind == "treasure":
             if self.defaults.get("treasure") == "stop":     # Player 4: lab probes (`default treasure stop`)
                 raise_stop(p, "treasure: stop asked by the plan")
+            if loot.LIGHT["on"] and "POOL" in scr["bottom"].split():
+                # Player 43 (Plan 5's (b); p43f2: the flight failed at movement 3 with ~6,900 gp and ~8,500 pp
+                # carried): every member's coins POOLed into the guards' pile and left there (the money has no use
+                # after the finale: not carried into Curse), so the party walks at full movement
+                P = loot.party(p.g.mem)
+                sel = loot.selected(p.g.mem)
+                lp = getattr(p, "light_pooled", set())
+                p.light_pooled = lp
+                left = [j for j in range(len(P)) if j not in lp and sum(
+                    struct.unpack_from("<7H", p.g.mem.far(P[j][0][0], P[j][0][1], 0x120), 0x88))]
+                if left:
+                    j = left[0]
+                    if sel != j:
+                        return ("end" if sel is None or j > sel else "home"), "treasure: select %s to POOL" % P[j][1]
+                    lp.add(j)
+                    p.note("take", "%s's coins POOLed into the pile (left there: Plan 5's (b))" % P[j][1])
+                    return "p", "treasure: POOL (%s)" % P[j][1]
             if not p.shared and "SHARE" in scr["bottom"].split() and not loot.LIGHT["on"]:
                 p.shared = True
                 return "s", "treasure: SHARE the coins"
