@@ -1315,6 +1315,39 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 43 (2026-11-21): MANUAL aiming; Plan 5 at the finale (the guards won, the flight failed); xpgoal, lightloot
+
+**Stage 1:** 68 of 71, nothing new from main or Combat in it (p17a6 still waits on main / design).
+
+**`OP_MANUAL=1`** (Guide 10's (b): no NEXT/PREV scans): a spell's aim presses M, then the cursor keys (DIRS, the
+diagonals Home / PgUp / End / PgDn) straight to the target's nearest cell, counted from where the aim is (the caster at
+the aim's start and after every pick: seen), checks the right panel's name there (a half-drawn panel: CENTER and read
+again), then TARGET; no TARGET there: the next target; none left: EXIT (MANUAL's EXIT goes back to the AIM menu: seen),
+then EXIT. A wrong name hands over to the old scan. **Spell ranges** from START.EXE's spell table (after the 56 names,
+16 bytes an entry: +2 range, 255 touch; +3 per caster level; +12 the casting delay, a next-turn spell when / 3 > 0):
+`spell_range()`; the aim list's second byte gives each figure's range in half squares (`aim_dist()`). Melee and bow
+aims still scan (`_aim_attack`, `_aim_shoot`).
+
+**`OP_PLAN5=1`** (Guide 10's Plan 5 for the finale's guards): a member with cleric levels Holds Person first (persons
+in contact with a member first, none helpless, none picked in the last 10 member turns), a pure magic-user Stinking
+Clouds first (never overlapping a cloud laid, no member inside), fighters (OP_ADVANCE) strike the standing, the others
+the helpless, and a caster next to a standing foe steps back one square first when the spell goes off next turn
+(`_step_back`). **`OP_FIGHTDEATH=1`**: a member dead at a fight's end stops the run as a reload (the finale's guards,
+the vote and Tyranthraxus come in one step). Cures now reach an unconscious member (status 4, 0 HP). A second ATTACK
+ALLY in one turn ends the attack's aim (p43f5: 130 in a row). Plan steps: **`lightloot on|off`** (only rings, gems,
+jewellery or weight <= 1 from a pile; no SHARE; every member's coins POOLed into the pile: one POOL takes them all but
+an NPC's, seen) and **`xpgoal <NAME>=<xp>,... <checkpoint>`** (skip ahead to the checkpoint once all have the XP).
+
+**The finale (`p43/finale5.plan` from `p40c1_s40hall`):** six tries, the guards won 5 of 6 fights (4 with nobody
+dead), Tyranthraxus's flight failed 3 of 3 even at movement 12 (stuck-fights.md section 5, "Plan 5's tries"). Video
+of p43f4 in `.lab/stuck/finale_guards/p43/`. Superseded by Guide 11's one chain (the Plan 2 chain, Tyranthraxus by
+blows, Haste in the guards' CONTINUE BATTLE rounds).
+
+**Plan 2's levels:** `p43/bands5.plan` (bands4 with xpgoal BRAM=70001,LIRA=40001) from `p42k1_s42d108`: BRAM 70,922,
+LIRA 37,591 at `p2start/p43b2_s43d75`; `p43/train5.plan` (LIRA learns LIGHTNING BOLT, Jeremy 20:00) for the trip.
+
+Lab: `p43/` (reload.sh and helpers from p42; bands5.plan, finale5.plan, train5.plan); runs p43a1, p43b1-b2, p43f1-f6.
+
 ## Player 42 (2026-11-21): the vampire; the movement audit; exact replays in the original (Guide 9's videos); Plan 4 at the finale; walls, flight, Fireball's reach
 
 **Stage 1:** 68 of 71, nothing new from main or Combat in it. Combat Chat 40's p37i1 (a new-area recording, outside the

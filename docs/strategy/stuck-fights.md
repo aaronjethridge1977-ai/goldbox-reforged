@@ -801,3 +801,16 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   - Also seen: after a MANUAL pick the original goes back to the AIM menu with the aim on the caster (Hold Person's
     three picks each start from the caster); MANUAL's EXIT goes back to the AIM menu; TARGET shows in MANUAL only
     in the spell's range (Cure Light Wounds: one square). *seen*
+- **The Plan 2 chain's potions and best items (Player 43, Guide 11's trace of 19:15 / 19:51 (1); the full table in the
+  Player lab `p43/trace.md`, copy `.lab/stuck/finale_guards/p43/plan2_chain_trace.md`):** 30 runs, 599 saves from
+  `p38a2_s38audit` to `p43b2_s43d75`: **nothing was drunk, read, zapped, sold or dropped.** Potions: CEDRIC's Giant
+  Strength and ELWEN's Healing from the start, DORN's Healing (4:2 3,11), BRAM's Extra Healing (1:24 12,6): all four
+  still carried. **Restoration: 17 on 9 scrolls** (ELWEN 12, LIRA 4, CEDRIC 1), none read. **Left at the vampire's
+  trove** (4:10 14,0, p42v21, everyone "full or overloaded"): 3 Potions of Healing and the Restoration x2 scrolls (and,
+  by the gear map, a Shield +1). Picked up: the Wand of Magic Missiles (ARN, a fighter: not readied), a Ring of Feather
+  Falling (CEDRIC, not worn), the Cursed Necklace (ARN). **Carried, never worn:** ARN's second Ring of Protection +2,
+  DORN's Ring of Fire Resistance. **Never had:** the Gauntlets of Ogre Power, the Flame Tongue, the Necklace of
+  Missiles, the Wands of Lightning Bolt and Paralyzation, Bracers AC 2-4, Rings of Protection +1 / +3, Long Swords +3 /
+  +4 / +5, Mace +3, Hammer +3, Two-Handed Sword +2, Plate Mail +1 / +3, Shield +2, Leather +4, Sling of Seeking +2,
+  the Javelin of Lightning, the Potion of Speed. The chain passed 4:2 and 4:10 without the Gauntlets' squares (4:2
+  12,14 / 1,3), the Wand of Lightning Bolt's (4:10 9,15) or the Hammer's and Sling's (4:10 15,8). *seen* (the saves)
