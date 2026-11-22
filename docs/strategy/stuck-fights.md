@@ -776,6 +776,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   (Players 41-43, from `p38a2_s38audit`): its gear and levels, the throne room (section 3), then Valjevo by Player
   40's route with 5:6's altar, 5:3's Flame Tongue and 5:4's swords, then this fight with Plan 5's additions. Slot H's
   gear trip (board 19:38) is paused; `p40c1_s40hall` stays as a fallback. *Jeremy*
+- **Valjevo before the throne room (Jeremy, 2026-11-21 21:27; Gold Box Guide 12, Player 43's option (c)):** after the trace and
+  the gear, Valjevo by Player 40's route (about 14,600 XP from the giants; 5:6's altar, 5:3's Flame Tongue and Potion of
+  Speed, 5:4's swords), training (LIRA magic-user 6, Lightning Bolt), then the throne room (section 3), then this fight.
+  The Speed potion and the Necklace are kept for the finale (the loadout review, `docs/strategy/player-capability.md`). *Jeremy*
 - **Plan 5's tries (Player 43, 2026-11-21 19:20-20:20; `p43/finale5.plan` from `p40c1_s40hall`, `OP_PLAN5=1
   OP_MANUAL=1 OP_FLIGHT=TYRAN OP_FIGHTDEATH=1`, seeds 43100001-06; logs in `.lab/stuck/finale_guards/p43/`):**
   the tool now aims every spell by MANUAL (M, the cursor keys straight to the target's square, the panel checked,
