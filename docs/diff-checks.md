@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-384)
+## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-391)
 
 - **p17a6, the match's last item, is the shared list top (a difference, main path; Combat's shop_screen.gd):**
   GAME.OVR's list routine 0x2D669 (overlay stub 0x3C5:0x34; stub base 0x2C8CF, entries 5 bytes from +0x20) keeps the
@@ -205,6 +205,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   CHARACTER, ADD CHARACTER TO PARTY, LOAD SAVED GAME, EXIT TO DOS (no heading), LOAD, G: slot G straight into the
   adventure (8,0 N, CAMPING on the place line), ENCAMP, SAVE F. Ours refused the last REMOVE and had no LOAD there
   (PARTY CREATION's empty hall too). With the fix 3 of 3 (break: THRENDER's HP).
+- **385 (the same, the last member DROPped):** REMOVE x5, DROP, YES, ARE YOU SURE? YES (the original drops the last
+  one; ours refused), then LOAD, G as 384. With the fix 3 of 3.
+- **386-388, the hired SWORDSMAN (check 373's start; matched at once, main path: he is hired in 3:11, beside the
+  fighters' hall):** 386 ENCAMP, VIEW, ITEMS, READY off, TRADE THRENDER GRONE's flail to him (End x6); 387 a jump save
+  onto 8,0 N (`data/c103/s387`), Up (the hall's question), YES, REMOVE SWORDSMAN (the original writes SWORDSMA.CHA
+  and lists him on the ADD list), BEGIN ADVENTURING; 388 the same with his experience 9000 and 2000 gold
+  (`s388`): TRAIN, YES: fighter 4, HP 18 -> 19 (the d10 from tpseed 11111111), 1000 gold. Breaks: HP, level.
+- **389 (the camp's ALTER, DROP of SWORDSMAN; matched at once):** check 373's start, ENCAMP, ALTER, End x6, DROP:
+  SWORDSMAN WILL BE GONE / DROP FROM PARTY? YES: six left; EXIT, EXIT. Break: HP.
+- **390 (3:0 the temple of Tempus, CURE LIGHT WOUNDS on SWORDSMAN; matched at once):** check 373's start with
+  THRENDER GRONE's platinum 3000 and SWORDSMAN at 10 HP, jumped to 2,11 S (`data/c103/s390`; Right, Up, Up, Up: the
+  priests' question), YES, POOL, End x6, HEAL, End x2, HEAL, YES (100 gp; a d8: 10 -> 11), EXIT, SHARE, EXIT, the
+  retrieve question NO. Break: his HP.
+- **391 (3:0 the inn, a night's REST with SWORDSMAN hurt; matched at once):** check 382's start with his HP 10
+  (`data/c103/s391`) and keys, then REST, HOURS, INC x8, REST (8 hours: the clock on, no healing for anyone), EXIT.
+  Break: his HP.
 - An original's SAVGAM names its CHRDAT files (0x3208 on, 0x29 apart): a slot's files renamed by hand (F -> G) load
   with the old names; copy slots with `data/c50/slot.py`.
 
