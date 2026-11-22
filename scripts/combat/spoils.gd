@@ -76,12 +76,14 @@ static func _d10() -> int:
 	return TpDice.random(10, "a monster's item in the pile?") + 1 if TpDice.on else randi_range(1, 10)
 
 
-## The pile's money in gold, as the original counts it for experience.
+## The pile's money in gold, as the original counts it for experience: GAME.OVR 0x57B1-0x584B turns each coin
+## kind into gold on its own, each rounded down (copper / 200, silver / 20, electrum / 2, gold, platinum x 5), so
+## 288 copper and 18 silver are 1 gold, not 2 (main chat 96, DOSBox after Norris, check 327: 1250 each, not 1251).
 func money_worth() -> int:
-	var copper := 0
+	var gold := 0
 	for i in 5:
-		copper += money[i] * PartyMember.COIN_VALUE[i]
-	return copper / PartyMember.COIN_VALUE[3] + money[5] * GEM_GOLD + money[6] * JEWELRY_GOLD
+		gold += money[i] * PartyMember.COIN_VALUE[i] / PartyMember.COIN_VALUE[3]
+	return gold + money[5] * GEM_GOLD + money[6] * JEWELRY_GOLD
 
 
 func has_treasure() -> bool:
