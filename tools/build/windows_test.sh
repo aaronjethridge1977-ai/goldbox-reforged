@@ -19,6 +19,8 @@
 # save, as check 22's keys, the files written; (d) the test keys (N, O, B, F12, Tab, F4) change nothing after load G
 # (lab_keys in main.gd: off in a release build); (c) on Xvfb (SMOKE_DISPLAY, default :95: never :96-:99, the lanes'
 # displays) the window title reads "Gold Box Reforged <version>".
+# (e) Jeremy's crash sessions (SMOKE_REPLAYS, default fireball_crash and holds_crash2 from 0.1.7-test2) play to their
+# end on the release template (main chat 95; about 8 minutes).
 #
 # GODOT (default the lab's 4.7.2) runs the import and export; the export templates are in
 # ~/.local/share/godot/export_templates/4.7.2.stable/ (chat 37). Scratch in /tmp, removed at the end.
@@ -138,7 +140,35 @@ kill "$GPID" 2>/dev/null || true; wait "$GPID" 2>/dev/null || true; GPID=""
 kill "$XPID" 2>/dev/null || true; wait "$XPID" 2>/dev/null || true; XPID=""
 [ "$title" = "Gold Box Reforged $V" ] || fail "smoke (c): window title \"$title\""
 e=$(errs "$T/c.log"); [ -z "$e" ] || fail "smoke (c) window: $e"
-echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\""
+# (e) Jeremy's crash sessions replayed on the release template (main chat 95, the Lead's yes to chat 94's
+# suggestion): 0.1.7-test2 segfaulted on a set_pixelv outside an image, which debug builds skip with an error, so
+# only the release template shows it. Each recording (SMOKE_REPLAYS, space-separated .gbrrec paths; "none" skips)
+# is played windowed and paced on Xvfb $SD by tools/lab/treplay.sh, about 4 minutes each. A timed replay drifts
+# under load (aims land elsewhere), so the test asks only that the session plays to its end: exit 0, "timed done"
+# and the waits after it, no script error.
+REPLAYS=${SMOKE_REPLAYS:-/mnt/d/ai_projects/goldbox-reforged/.lab/stuck/finale_guards/jeremy/2026-11-21-140652_fireball_crash.gbrrec /mnt/d/ai_projects/goldbox-reforged/.lab/stuck/finale_guards/jeremy/2026-11-21-143144_holds_crash2.gbrrec}
+RP=""
+if [ "$REPLAYS" = none ]; then RP="(e) replays SKIPPED (SMOKE_REPLAYS=none)"
+else
+	Xvfb "$SD" -screen 0 1280x800x24 -nolisten tcp > "$T/xvfb.log" 2>&1 & XPID=$!
+	sleep 2
+	for rec in $REPLAYS; do
+		[ -f "$rec" ] || fail "smoke (e): no recording $rec (SMOKE_REPLAYS=none skips)"
+		b=$(basename "$rec" .gbrrec)
+		python3 "$REPO/tools/lab/replay_recording.py" "$rec" "$T/rr_$b" > "$T/rr_$b.log" 2>&1 || fail "smoke (e) $b: replay_recording.py"
+		x=$(REL="$R" DISPLAY_N=$SD TMO=900 bash "$REPO/tools/lab/treplay.sh" "$T/src" "$T/rr_$b" "$rec" "$T/rw_$b" || true)
+		x=${x%%$'\n'*}
+		L="$T/rw_$b/ours.log"
+		[ "$x" = "exit 0" ] || fail "smoke (e) $b: $x ($(grep -v '^wait ' "$L" | tail -2 | tr '\n' ' ' | cut -c1-200))"
+		e=$(grep -E 'SCRIPT ERROR|Parse Error|crashed' "$L" | head -3 || true); [ -z "$e" ] || fail "smoke (e) $b: $e"
+		grep -q '^timed done' "$L" || fail "smoke (e) $b: the session didn't play to its end"
+		[ "$(sed -n '/^timed done/,$p' "$L" | grep -c '^wait ')" -ge 100 ] || fail "smoke (e) $b: the waits after the session missing"
+		RP="$RP $b"
+	done
+	kill "$XPID" 2>/dev/null || true; wait "$XPID" 2>/dev/null || true; XPID=""
+	RP="(e) replays OK:$RP"
+fi
+echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\"; $RP"
 
 # 5. README, licence, zip, info.
 DATE=$(date +%F)
@@ -163,7 +193,7 @@ cp "$T/pck-list.txt" "$OUT.pck-list.txt"
 	echo "built from goldbox-reforged $COMMIT ($REF) as $V (file version $FV), $(date '+%F %T'); Godot $(cat "$TPL/version.txt") official templates"
 	(cd "$OUT" && sha256sum GoldBoxReforged.exe "$ZIP.zip")
 	echo "copy: no game data; pck: $n files, only ours"
-	echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\""
+	echo "smoke: (a) no game OK; (b) load G, ENCAMP SAVE F, F2 OK; (d) test keys off OK; (c) title \"$title\"; $RP"
 	echo "$GATE"
 } > "$OUT.build-info.txt"
 cat "$OUT.build-info.txt"
