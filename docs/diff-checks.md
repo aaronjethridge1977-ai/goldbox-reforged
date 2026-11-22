@@ -172,6 +172,42 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-384)
+
+- **p17a6, the match's last item, is the shared list top (a difference, main path; Combat's shop_screen.gd):**
+  GAME.OVR's list routine 0x2D669 (overlay stub 0x3C5:0x34; stub base 0x2C8CF, entries 5 bytes from +0x20) keeps the
+  page's first item in one global, DS:0x6B29, for all its 15 callers (the shop's BUY 0x6E98, the sheet's items 0x222C9,
+  the magic lists 0x1A0F4-0x1A821, the hall's 0x233B0 / 0x236AF, ...), 1 only at the program's start (0xE9D8). At open
+  it is lowered only when past the light (0x2D766: the BUY lights item 1, 0x7050); NEXT / PREV move it a page and keep
+  the light's row (0x2D502); Home / End (0x2D594) move the light on the page and wrap on it (End past the page's last
+  line or the list's end: its first line; Home above the first: its last line), never scrolling. Ours reopened every
+  BUY list a line in and moved over the whole list. In p17a6 the mirror shop's PREV left the top at 0, so the arms
+  shop opened at its first item and two NEXTs and 7 Ends lit 10 ARROWS; ours lit LIGHT CROSSBOW. Ready for Combat:
+  `~/gbr/lab/data/c103/list_top.py` (p17a6 0 differences; p13a1, p15c5, p17a7 identical; DIFFCHECKS 373/373 on it).
+- **378, 379 (3:0 the arms shop; ready, join when the fix lands):** check 176's start, Up, YES, POOL, BUY, PREV (378)
+  or Home (379: lights HAMMER, row 22, the top kept at 1), EXIT, BUY, NEXT, NEXT, BUY, EXIT, EXIT, NO: the original
+  buys VOULGE (378, top 0) and TRIDENT (379). 378 differs on origin/main; both 3 of 3 with the fix; breaks (ARN's gold)
+  differ.
+- **380 (3:11 the training hall's SAVE CURRENT GAME; matched at once, main path):** check 103's start, the four steps,
+  YES, End x5, REMOVE (PHINEAS), SAVE, F: the original's end is that save (five members' files: a `files` list), ours'
+  F2 after BEGIN ADVENTURING. **381:** the same over a slot F holding a stale CHRDATF6 (start `data/c103/s381`): the
+  original leaves the stale files, as ours. Breaks: BAKSHI's HP; 381's `files` without the stale files.
+- **382 (3:0 the inn, WHO WILL PAY? with a hired NPC; matched at once, main path):** check 373's start (SWORDSMAN
+  hired, 0x84 = 160) jumped to 3:0 (`jump.py ... 7 12 W 3 0`; Right, Up, Up, Up reach STAY?), YES, End x6
+  (SWORDSMAN), Enter: THAT PERSON WON'T PAY. (the inn's script, ECL3 block 0 0xA1C1: 0x6BB8 >= 128), Home x6,
+  Enter: THRENDER GRONE pays a platinum, camp, EXIT. A start with SWORDSMAN's 0x84 = 0 differs (ours takes the
+  NOT ENOUGH PLATINUM exit), as does the usual break.
+- **383 (3:0 the arms shop's POOL and SHARE with a hired NPC; matched at once, main path):** check 373's start jumped
+  to 13,9 N (Right, Up, Up: the shop's question), YES, POOL, SHARE, EXIT: only the player characters pool and share
+  (324 silver, 54 each; SWORDSMAN keeps his 5 silver, no share). A start with his 0x84 = 0 differs (10 differences).
+- **384 (3:11 the hall with an empty party; a difference, main path; ready for Combat: `hall_load.py`):** check 103's
+  start, the four steps, YES, REMOVE x6 (the original removes the last one too), then the menu is CREATE NEW
+  CHARACTER, ADD CHARACTER TO PARTY, LOAD SAVED GAME, EXIT TO DOS (no heading), LOAD, G: slot G straight into the
+  adventure (8,0 N, CAMPING on the place line), ENCAMP, SAVE F. Ours refused the last REMOVE and had no LOAD there
+  (PARTY CREATION's empty hall too). With the fix 3 of 3 (break: THRENDER's HP).
+- An original's SAVGAM names its CHRDAT files (0x3208 on, 0x29 apart): a slot's files renamed by hand (F -> G) load
+  with the old names; copy slots with `data/c50/slot.py`.
+
 ## Chat 102: the icon's SIZE joins the gate; every NPC_ADD site: the portrait and the control byte; a hired NPC loaded; the hall's ADD list; ALTER PICS (checks 359, 360, 367-377)
 
 - **359, 360 in the gate** after Combat Chat 44's 3758972 (icon_size.py): 3 of 3 on origin/main; breaks (the icon size,
