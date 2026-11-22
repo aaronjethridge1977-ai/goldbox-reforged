@@ -266,7 +266,8 @@ ITEM_SPELL = (("NECKLACE", "FIREBALL"), ("WAND", "MAGIC MISSILE"), ("JAVELIN", "
 # (no foe standing) the members cast these from memory once the cures are done (Haste once per caster, Prayer and
 # Bless once), the battle continued one round more after the last is begun (it goes off at the caster's next turn)
 PREP = []
-PREP_IDS = {"HASTE": 48, "PRAYER": 42, "BLESS": 1}
+PREP_IDS = {"HASTE": 48, "PRAYER": 42, "BLESS": 1, "SHIELD": 19}
+PER_CASTER = ("HASTE", "SHIELD")      # once per caster; the rest once for the party
 
 
 def _item_kind(name):
@@ -474,7 +475,7 @@ class Tactics:
 
     def _prep_ok(self, member, spell):
         """Player 45: a `prep` spell not begun yet in these CONTINUE rounds (Haste once per caster, the rest once)."""
-        if spell == "HASTE":
+        if spell in PER_CASTER:
             return (member, spell) not in self.prep_cast
         if spell in STANDING and any(STANDING[spell] in f.get("fx", ()) for f in getattr(self, "_party", ()) if _up(f)):
             return False               # already on the party (a Prayer from the fight still running)
@@ -486,11 +487,13 @@ class Tactics:
         return [(f["name"], s) for f in party if _up(f) for s in PREP
                 if PREP_IDS.get(s) in f.get("memo", b"") and (f["name"], s) not in self.refused and self._prep_ok(f["name"], s)]
 
-    def _due_use(self, member, foes):
+    def _due_use(self, member, foes, me=None):
         """Player 45: this member's first `uses` line due now (see USES), or None."""
         for u in USES:
             if u["done"] or u["member"] != member:
                 continue
+            if u.get("hurt") and (me is None or me["hp"] > u["hurt"]):
+                continue           # `hurt=<hp>`: only once the member is down to that
             if u["when"] == "cont":
                 if not foes:
                     return u
@@ -520,7 +523,7 @@ class Tactics:
 
     def targets(self, spell, me, party, foes):
         """Figures to aim at, best first ([] none worth it; None: on the caster)."""
-        if spell in ("PRAYER", "BLESS", "POTION"):
+        if spell in ("PRAYER", "BLESS", "POTION", "SHIELD"):
             return None
         if spell == "HASTE":
             return self._haste_points(party)
@@ -795,15 +798,16 @@ class Tactics:
         self.item_aim = None
         if "USE" in items and (REREADY.get(member) or USES):
             try:
-                foes = self._sides(p)[2]
+                _, party0, foes = self._sides(p)
+                me0 = next((f for f in party0 if f["name"] == member), None)
             except Exception:
-                foes = [1]
+                foes, me0 = [1], None
             if REREADY.get(member):
                 # Player 45: the item unreadied for a USE goes back (READY keeps the turn: the rings, Combat Chat 38)
                 self.use = {"member": member, "item": None, "word": REREADY[member], "phase": "reready", "n": 0}
                 self.log("TACTICS %s readies %s again" % (member, REREADY[member]))
                 return "u", "tactics: %s USE: ready %s again" % (member, REREADY[member])
-            u = self._due_use(member, foes)
+            u = self._due_use(member, foes, me0)
             if u:
                 kind, spell = _item_kind(u["item"])
                 if spell not in ("POTION", None) and foes:
@@ -1460,7 +1464,7 @@ class Tactics:
                 byn = {f["n"]: f for f in foes}
                 t = [n for n in t if n in byn and w in byn[n]["name"].upper()] + \
                     [n for n in t if not (n in byn and w in byn[n]["name"].upper())]
-            if spell not in ("PRAYER", "BLESS", "HASTE", "POTION") and not (PLAN5 and spell == "HOLD PERSON"):
+            if spell not in ("PRAYER", "BLESS", "HASTE", "POTION", "SHIELD") and not (PLAN5 and spell == "HOLD PERSON"):
                 # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]

@@ -31,10 +31,11 @@
                                  order, while their level has a free slot), then the bot's picks in the rest
   focus <KIND>,...|none          (Player 36) a step: tactics' blows, arrows, MOVEs and Stinking Cloud go to these kinds
                                  first (the helpless of them first): the throne room's TROLL
-  uses <NAME> <ITEM> r<n>|cont [vs=<w>] [aim=<w>] [swap=<ITEM>]
+  uses <NAME> <ITEM> r<n>|cont [vs=<w>] [aim=<w>] [swap=<ITEM>] [hurt=<hp>]
                                  (Player 45) a step: the member USEs that item in a fight (round n on, with a vs foe
                                  standing; cont: a CONTINUE BATTLE round), readying it (swap unreadied first, readied
-                                 again at his next turn); once each; `uses none` clears (tactics.USES)
+                                 again at his next turn; hurt: only at that HP or less); once each; `uses none` clears
+                                 (tactics.USES)
   prep <spell>, ...|none         (Player 45) a step: spells cast in CONTINUE BATTLE rounds once cures are done (Haste
                                  once per caster, Prayer and Bless once; tactics.PREP; Guide 11's Plan 5 additions (2))
   bands on|off                   (Player 36) a step: Guide 3's band rule on 6:25/7:26/8:27 (BANDS: the best Charisma lit,
@@ -94,7 +95,11 @@
   (a walk to an event that turned the party back is done); a fight on a walk that leaves the party hurt (bot.gd
   _hurt) is followed by a heal of anyone hurt before the walk goes on.
   default <kind> <key>           what to press on a kind of screen (screens.py) with no answer
-  sell gems [share] [gear]       (Player 15; gear: Player 27, the bot's spare gear after the gems) the next shop visit: every member's gems and jewellery APPRAISEd and
+  sellitems <NAME> <words>, ...  (Player 45) what a `gear` visit sells (that member's items with those words, not readied;
+                                 members with no line sell nothing) in place of the bot's spare gear
+  sell gems [share] [identify] [gear]
+                                 (Player 45: identify, after the gems: ID every item with hidden name words, 200 gp each)
+                                 (Player 15; gear: Player 27, the bot's spare gear after the gems) the next shop visit: every member's gems and jewellery APPRAISEd and
                                  SOLD (main's bot sells them before training), then EXIT (or the visit's `buy`);
                                  `share`: then everyone's coins POOLed and SHAREd (to fund every trainee)
   buy <m> <item> | <m> <item> ...
@@ -734,6 +739,10 @@ def members(mem):
 RELOAD_RULE = os.environ.get("OP_RELOAD") == "1"
 
 
+# Player 45: NPCs whose leaving the party (by their area's script) isn't a loss (OP_LEAVERS, comma-separated)
+LEAVERS = [n.strip().upper() for n in os.environ.get("OP_LEAVERS", "PRINCESS FATIMA").split(",") if n.strip()]
+
+
 def rule_state(p):
     out = {}
     for m in members(p.g.mem):
@@ -757,6 +766,12 @@ def reload_rule(p):
     for n, b in base.items():
         s = now.get(n)
         if s is None:
+            if n in LEAVERS:
+                # Player 45 (p45d5): an NPC the script lets go (Princess Fatima at the kobold caves' exit, ECL8 block 13
+                # 0x9A23) leaves by the game's rule, not a loss
+                p.note("rule", "%s left the party (the script's NPC drop): not a loss" % n)
+                base.pop(n)
+                return reload_rule(p)
             why.append("%s gone from the party" % n)
             continue
         if s["status"] >= 6:
@@ -1039,6 +1054,10 @@ def _keeper(it):
     return it["plus"] != 0 or "+" in up or it["type"] in loot.QUEST_ITEM_TYPES or any(w in up for w in loot.LOOT_WORDS)
 
 
+# Player 45: `sellitems <MEMBER> <words>, ...` (member -> name words): a `sell gems gear` visit sells these only
+SELL_ITEMS = {}
+
+
 def spare_gear(rec, items):
     """bot.gd's spare gear of one member: [index in the item list] to sell. items: [(item dict, readied byte)]."""
     T = _item_types()
@@ -1146,7 +1165,8 @@ class UsesStep:
             self.u = {"member": w[0].replace("_", " ").upper(), "item": w[1].replace("_", " ").upper(),
                       "when": "cont" if when == "cont" else "r", "round": int(when[1:]) if when.startswith("r") else 1,
                       "vs": opt.get("vs", "").replace("_", " ").upper(), "aim": opt.get("aim", "").replace("_", " ").upper(),
-                      "swap": opt.get("swap", "").replace("_", " ").upper(), "done": False}
+                      "swap": opt.get("swap", "").replace("_", " ").upper(), "hurt": int(opt.get("hurt", 0)),
+                      "done": False}
 
     def __repr__(self):
         return "uses %s" % (self.u or "none")
@@ -1824,6 +1844,10 @@ class Plan:
                 return "j", "sell: JEWELRY (%s has %d)" % (P[sel][1], jw)
             return "e", "sell: %s's gems and jewellery sold" % P[sel][1]
         gear = "gear" in self.sells[getattr(p, "sell_visit", 0)]
+        if "identify" in self.sells[getattr(p, "sell_visit", 0)] and not any(sum(held(j)) for j in range(len(P))):
+            r = self._identify(scr, st, p, P, sel, bw)
+            if r:
+                return r
         if gear and not any(sum(held(j)) for j in range(len(P))):
             r = self._sell_gear(scr, st, p, P, sel, bw)
             if r:
@@ -1863,6 +1887,68 @@ class Plan:
             return "a", "sell: APPRAISE (%s: %d gems, %d jewellery)" % ((P[j][1],) + held(j))
         return None
 
+    def _identify(self, scr, st, p, P, sel, bw):
+        """Player 45 (19:15's job 1: every magic item identified at a shop, for Jeremy's sheets): `sell gems identify`:
+        after the gems, each member's items whose record byte 53 (the hidden name words) isn't 0: the member selected,
+        VIEW, ITEMS, the item lit, ID, YES ("FOR 200 GOLD PIECES I'LL IDENTIFY YOUR ..." / "IS IT A DEAL?"); the
+        answer ("IT LOOKS LIKE SOME SORT OF ...") noted. An item tried twice is left. None when done."""
+        mem = p.g.mem
+        tries = getattr(p, "id_tries", None)
+        if tries is None:
+            tries = p.id_tries = {}
+
+        def todo(j):
+            r = mem.far(P[j][0][0], P[j][0][1], 0x120)
+            io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
+            raws = [x for _, x in loot.chain(mem, iseg, io)]
+            items = [loot.item(x) for x in raws]
+            idx = [i for i, x in enumerate(raws) if x[53] and tries.get((j, len(items), i, items[i]["name"]), 0) < 2]
+            return idx, items
+        b = " ".join(bw)
+        text = " ".join(str(st["rows"][r]).strip("?\\ ") for r in range(19, 24))
+        if "SOME SORT OF" in text or "ANYTHING NEW" in text:
+            if getattr(p, "id_said", None) != text:
+                p.id_said = text
+                p.note("identify", "%s: %s" % (P[sel][1] if sel is not None else "?", text.strip()))
+        if "IS IT A DEAL" in b and "IDENTIFY" in text:
+            return "y", "identify: YES (%s)" % text.strip()
+        if "IS IT A DEAL" in b and ("SOME SORT OF" in text or "ANYTHING NEW" in text):
+            return None                    # (the answer shows for about 0.7 s with the question kept: wait)
+        if scr["kind"] == "hmenu" and bw[:2] == ["BUY", "VIEW"]:
+            left = [j for j in range(len(P)) if todo(j)[0]]
+            if not left:
+                if not getattr(p, "id_done", False):
+                    p.id_done = True
+                    p.note("identify", "done")
+                return None
+            j = left[0]
+            if sel != j:
+                return ("end" if sel is None or j > sel else "home"), "identify: select %s" % P[j][1]
+            return "v", "identify: VIEW (%s)" % P[j][1]
+        if bw[:1] == ["VIEW:ITEMS"]:
+            if sel is not None and todo(sel)[0]:
+                return "i", "identify: ITEMS (%s)" % P[sel][1]
+            if getattr(p, "id_done", False) or not any(todo(j)[0] for j in range(len(P))):
+                return None
+            return "e", "identify: %s done, EXIT the sheet" % (P[sel][1] if sel is not None else "?")
+        if "ID" in bw and "SELL" in bw and "ITEMS" in str(st["rows"][1]):
+            idx, items = todo(sel)
+            if not idx:
+                if getattr(p, "id_done", False) or not any(todo(j)[0] for j in range(len(P))):
+                    return None
+                return "e", "identify: %s's list done, EXIT" % P[sel][1]
+            i = idx[0]
+            target = 5 + i
+            lit = [r for r in range(5, 21) if screens._rowcol(st["im"], r) == screens.WHITE]
+            if len(lit) != 1:
+                raise_stop(p, "identify: no single lit item (rows %s)" % lit)
+            if lit[0] != target:
+                return ("end" if target > lit[0] else "home"), "identify: light to %s" % items[i]["name"]
+            k = (sel, len(items), i, items[i]["name"])
+            tries[k] = tries.get(k, 0) + 1
+            return "i", "identify: ID %s" % items[i]["name"]
+        return None
+
     def _sell_gear(self, scr, st, p, P, sel, bw):
         """Player 27: `sell gems share gear`: after the gems, each member's spare gear (spare_gear) sold at the shop:
         the member selected, VIEW, ITEMS, the item lit (End / Home), SELL, YES ("IS IT A DEAL?"); the light stays on
@@ -1876,7 +1962,14 @@ class Plan:
             (s_, o_), r = P[j][0], mem.far(P[j][0][0], P[j][0][1], 0x120)
             io, iseg = struct.unpack_from("<HH", r, loot.ITEMS_AT)
             items = [(loot.item(x), x[52]) for _, x in loot.chain(mem, iseg, io)]
-            idx = [i for i in spare_gear(r, items) if tries.get((j, len(items), i, items[i][0]["name"]), 0) < 2]
+            lst = SELL_ITEMS.get(P[j][1].upper()) if SELL_ITEMS else None
+            if SELL_ITEMS:
+                # Player 45 (`sellitems`: the loadout review's list): that member's listed items not readied, nobody
+                # else's (the bot's spare_gear keeps every magic item)
+                pick = [i for i, (it, rd) in enumerate(items) if lst and not rd and any(w in it["name"].upper() for w in lst)]
+            else:
+                pick = spare_gear(r, items)
+            idx = [i for i in pick if tries.get((j, len(items), i, items[i][0]["name"]), 0) < 2]
             return idx, items
         b = " ".join(bw)
         if "IS IT A DEAL" in b:
@@ -2628,6 +2721,9 @@ def load(path):
             pl.goals.append(Focus(rest))
         elif cmd == "scrolls":    # Player 37: `scrolls <MEMBER> <spell>, ...|none` (tactics.SCROLLS)
             pl.goals.append(ScrollsStep(rest))
+        elif cmd == "sellitems":  # Player 45: `sellitems <MEMBER> <words>, ...` (SELL_ITEMS)
+            who, _, ws = rest.strip().partition(" ")
+            SELL_ITEMS[who.replace("_", " ").upper()] = [w.strip().replace("_", " ").upper() for w in ws.split(",") if w.strip()]
         elif cmd == "uses":       # Player 45: `uses <MEMBER> <item> r<n>|cont [vs=..] [aim=..] [swap=..]|none`
             pl.goals.append(UsesStep(rest))
         elif cmd == "prep":       # Player 45: `prep <spell>, ...|none` (tactics.PREP)
