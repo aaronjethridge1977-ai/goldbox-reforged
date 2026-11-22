@@ -3090,7 +3090,13 @@ func _hirelings_take_shares(spoils: Spoils) -> String:
 	var took := false
 	for k in spoils.money.size():
 		if spoils.money[k] > 0:
-			spoils.money[k] -= (spoils.money[k] / total) * shares
+			# Chat 104 (DOSBox, checks 393-394): the original keeps a share's size in a byte (GAME.OVR 0x6928
+			# `mov [bp-7],al` after the long division): 3000 gold over 8 shares is 375, so a hireling with 3
+			# shares takes 119 x 3 = 357, not 1125 (bug 21; whole with ORIGINAL'S BUGS off).
+			var per: int = spoils.money[k] / total
+			if OriginalBugs.on():
+				per &= 0xFF
+			spoils.money[k] -= per * shares
 			took = true
 	return "\n".join(who).to_upper() if took else ""
 
