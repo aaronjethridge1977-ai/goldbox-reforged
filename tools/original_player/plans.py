@@ -31,10 +31,11 @@
                                  order, while their level has a free slot), then the bot's picks in the rest
   focus <KIND>,...|none          (Player 36) a step: tactics' blows, arrows, MOVEs and Stinking Cloud go to these kinds
                                  first (the helpless of them first): the throne room's TROLL
-  uses <NAME> <ITEM> r<n>|cont [vs=<w>] [aim=<w>] [swap=<ITEM>] [hurt=<hp>]
+  uses <NAME> <ITEM> r<n>|cont [vs=<w>] [aim=<w>] [swap=<ITEM>] [hurt=<hp>] [ready]
                                  (Player 45) a step: the member USEs that item in a fight (round n on, with a vs foe
                                  standing; cont: a CONTINUE BATTLE round), readying it (swap unreadied first, readied
-                                 again at his next turn; hurt: only at that HP or less); once each; `uses none` clears
+                                 again at his next turn; hurt: only at that HP or less; ready: READY it only, the turn
+                                 kept; =<ITEM>: that name exactly); once each; `uses none` clears
                                  (tactics.USES)
   prep <spell>, ...|none         (Player 45) a step: spells cast in CONTINUE BATTLE rounds once cures are done (Haste
                                  once per caster, Prayer and Bless once; tactics.PREP; Guide 11's Plan 5 additions (2))
@@ -1166,6 +1167,7 @@ class UsesStep:
                       "when": "cont" if when == "cont" else "r", "round": int(when[1:]) if when.startswith("r") else 1,
                       "vs": opt.get("vs", "").replace("_", " ").upper(), "aim": opt.get("aim", "").replace("_", " ").upper(),
                       "swap": opt.get("swap", "").replace("_", " ").upper(), "hurt": int(opt.get("hurt", 0)),
+                      "ready": "ready" in w[3:],
                       "done": False}
 
     def __repr__(self):

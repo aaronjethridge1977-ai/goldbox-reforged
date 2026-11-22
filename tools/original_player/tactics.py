@@ -808,6 +808,12 @@ class Tactics:
                 self.log("TACTICS %s readies %s again" % (member, REREADY[member]))
                 return "u", "tactics: %s USE: ready %s again" % (member, REREADY[member])
             u = self._due_use(member, foes, me0)
+            if u and u.get("ready"):
+                # Player 45 (`uses ... ready`: the guards' Rings of Protection +3 in Tyranthraxus' fight, poolrad.md:
+                # USE, the ring lit, READY, EXIT; its AC counts at once and the turn is kept)
+                self.use = {"member": member, "item": u, "word": u["item"], "phase": "reready", "n": 0}
+                self.log("TACTICS %s readies %s (round %d)" % (member, u["item"], self.round))
+                return "u", "tactics: %s USE: ready %s" % (member, u["item"])
             if u:
                 kind, spell = _item_kind(u["item"])
                 if spell not in ("POTION", None) and foes:
@@ -1043,7 +1049,9 @@ class Tactics:
         lit = [r for r in rows if _white(st["im"], r)]
 
         def row(word, ready=None):
-            return next((r for r, (y, n) in sorted(rows.items()) if word in n and (ready is None or y == ready)), None)
+            # (`=WORDS`: the name exactly, e.g. =RING for the unidentified rings, not the RING OF FIRE RESISTANCE)
+            hit = (lambda n: n == word[1:]) if word.startswith("=") else (lambda n: word in n)
+            return next((r for r, (y, n) in sorted(rows.items()) if hit(n) and (ready is None or y == ready)), None)
 
         def press(r, key, why):
             if len(lit) != 1:
@@ -1065,7 +1073,16 @@ class Tactics:
             return give_up("the item USE ran long or no single lit row")
         word = u["word"]
         if u["phase"] == "reready":
-            r = row(word)
+            r = row(word, "NO") if u.get("item") else row(word)
+            if u.get("item") and (r is None or u.get("pressed")):
+                u["item"]["done"] = True       # `uses ... ready`: one READY of one such item
+                self.use = None
+                self.log("TACTICS %s: %s %s" % (member, word, "readied" if u.get("pressed") else "none unreadied"))
+                return "e", "tactics: %s readied: EXIT" % word
+            if u.get("item"):
+                k = press(r, "r", "READY")
+                u["pressed"] = k[0] == "r"
+                return k
             if r is None or rows[r][0] == "YES":
                 REREADY.pop(member, None)
                 self.use = None
