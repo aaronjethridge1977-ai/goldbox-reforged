@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-391)
+## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-392)
 
 - **p17a6, the match's last item, is the shared list top (a difference, main path; Combat's shop_screen.gd):**
   GAME.OVR's list routine 0x2D669 (overlay stub 0x3C5:0x34; stub base 0x2C8CF, entries 5 bytes from +0x20) keeps the
@@ -221,6 +221,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **391 (3:0 the inn, a night's REST with SWORDSMAN hurt; matched at once):** check 382's start with his HP 10
   (`data/c103/s391`) and keys, then REST, HOURS, INC x8, REST (8 hours: the clock on, no healing for anyone), EXIT.
   Break: his HP.
+- **392 (3:0 the arms shop, SWORDSMAN buys; matched at once):** check 383's start, Right, Up, Up, YES, POOL, End x6
+  (SWORDSMAN), BUY, BUY (HAND AXE: the pile pays, his 5 silver kept), EXIT, SHARE, EXIT. Break: his silver.
 - An original's SAVGAM names its CHRDAT files (0x3208 on, 0x29 apart): a slot's files renamed by hand (F -> G) load
   with the old names; copy slots with `data/c50/slot.py`.
 
