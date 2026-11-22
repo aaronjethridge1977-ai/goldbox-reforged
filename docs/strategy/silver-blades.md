@@ -252,6 +252,60 @@ are in `.lab`, Jeremy 2026-11-21)
 8. **The Castle** (pp.43-51): with Vala along, she points out the Eastern Crevasses' teleporter (p.43); a thief for the traps; the Silver Key opens the
    Sanctum's 13 (p.49).
 
+## 3. Hard fights
+
+From the books only (*book*: the Cluebook unless marked; the monster notes are its "Monsters: How to Deal with Them",
+pp.52-58); nothing here has been seen in play. The general rules: buff before a set fight (Bless, Prayer, Haste,
+Enlarge, Resist Fire or Cold as the enemy needs); spread the party against breath and area spells; ready a **mirror**
+against gazes (basilisk, medusa); Haste ages each member a year (Journal p.24).
+
+**The Well and the town**
+- **The Well's red dragons:** eight hatchlings (18) and three sub-adults (19), and the Ancient Red Dragon at the centre.
+  Their breath can kill a party quickly: Resist Fire on everyone, spread out, magic-users back and casting; Fireball and
+  Ice Storm for the hatchlings (pp.8, 52-53).
+- **Marcus's house (11):** a trap takes about 30 HP from each member, then three cockatrices, two medusae and three fire
+  giants. Ready mirrors; keep high-AC members away from the cockatrices; no Fireball on the fire giants. The six
+  assassins in 12 end the attacks on the party (p.6).
+
+**The Ruins and the Mines**
+- **The Ruins' Ancient Red Dragon (13)** guards the Amulet: as the Well's (pp.27-28, 52).
+- **The Lizard King (mine 6):** ten giant snakes and ten lizard men; prepare before entering; Fireball and Ice Storm on
+  the snakes before they bite. The barracks (63) holds 30 lizard men: Fireball, Ice Storm, Death Spell (p.20).
+- **Margoyles and gargoyles (mine 9):** five each guard the force wall's artifact; magic weapons only (pp.21, 53, 56).
+
+**The Dungeon and the Drider Base**
+- **Driders** (everywhere below): all cast spells, resist magic and bite with poison. Damage as many as possible each
+  round to stop their casting; keep them off the high-AC members (p.53).
+- **Purple worms** (Dungeon 2-1): poisonous, hit often, take a lot. Kill at range, or place the party so the nearest
+  worm blocks the rest (pp.33-34, 57).
+- **Five iron golems (Drider Base 26):** only weapons +3 or better hurt them; Lightning Bolt slows them; **Fireball heals
+  them**. Enlarge on members with good weapons; keep the rest away (they are slow); Haste if it goes badly. "A very
+  difficult fight" (pp.37, 55).
+
+**The Crevasses and the village**
+- **Ten remorhaz (village 17):** one good hit swallows and kills any fighter. All spells at once; keep most of them away
+  from the party, as for purple worms (pp.41, 57).
+- **Three Ancient Red Dragons (Eastern Crevasses 8, the Black Circle's post):** Bless, Prayer, Haste, Enlarge and Resist
+  Fire on as many as possible first (p.43).
+- **Giants:** all but storm giants throw boulders: high-AC members out of their sight; a ranger adds a point of damage a
+  level; the Sword vs. Giants; no Fireball on fire giants, no cold (Ice Storm) on frost giants (pp.53-54).
+- **Mastodons:** surprisingly dangerous; mass damage spells (p.56).
+
+**The Castle**
+- **Sargatha** (the castellan, middle level): don't sign or read her scroll (signing sends the party to Dungeon 10, 4;
+  reading it starts the fight); attack at once: four basilisks, four storm giants, six medusae (p.45). Met again at 21:
+  don't chase her into 22's teleport trap; she sends six storm giants, four cockatrices and four medusae (p.47).
+- **Seven storm giants (middle level 9):** their Lightning Bolts bounce off walls and can hit a member twice. Drop
+  Fireball and Ice Storm on them even with members inside; every caster able puts up a Minor Globe or Globe of
+  Invulnerability (immune to the bolts) (pp.47, 54).
+- **The Dreadlord (Sanctum 22), "the most difficult battle in the game":** ten storm giants and six Banite priests.
+  Before entering: Enlarge on every fighter, Haste, Bless, Prayer, and Globe of Invulnerability on every magic-user. If
+  the enemy wins initiative and casts first, retreat round a corner and let them come; otherwise Fireball and Ice Storm
+  to stop the casting while the fighters go for the Dreadlord. Spells and missiles barely touch him; his AC needs the
+  best fighters, and a thief's backstab is the best chance once his guards are dead (pp.51, 55).
+- **The Vault of the Soul (24):** twelve iron golems and six medusae guard the gem; winning ends the game. Mirrors, +3
+  weapons, no Fireball (p.51).
+
 ## For the lanes
 
 [Next review.]
