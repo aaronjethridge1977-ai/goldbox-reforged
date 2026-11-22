@@ -172,6 +172,29 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 96: PgDn / PgUp in a treasure LOOT list and the pile's coins as experience (check 327; two differences)
+
+- **Check 327 (8:29, Norris the Gray; main path):** the Player's `p2start/p16c3_s6pre12` (slot H, copied as G:
+  `~/gbr/lab/data/c96/s6pre12`), tpseed 11111111: Right, Up x5 into Norris (1,5), FIGHT, everyone on QUICK
+  (`presser.py 240 noenter`; ARN alone standing), CONTINUE BATTLE NO, the results, End x2 (CEDRIC, 11 items; ARN and
+  BRAM hold 16), TAKE, ITEMS (a 20-item pile: ITEMS: TAKE NEXT EXIT), PgDn x2, End, TAKE (a SHORT SWORD), PgUp x2,
+  End, TAKE (a STUDDED LEATHER ARMOR), EXIT x3, NO (leave the pile), the journal (entry 50), 1,5 N 07:53. The
+  original's end saved twice: the character files identical (SAVGAMF.DAT differs in 34 bytes from 12870 on, not
+  compared: 327 matches either save). The original's run: `data/c96/o327.sh <out>` (the fight in the middle).
+- **Difference 1: the LOOT list pages on PgDn / PgUp** as NEXT / PREV (the light keeps its screen row; PgDn on the
+  last page and PgUp on the first do nothing), as the shop's BUY list (chat 92). Ours ignored both: the same keys
+  took a STUDDED LEATHER ARMOR from page 1 and nothing more (CEDRIC's load). Also seen: after a TAKE the original
+  keeps the page's top (19 items from item 2 as 18 rows, PREV shown); ours pulled the page back to the last 19 (the
+  same item lit, its row moved). Ready `~/gbr/lab/data/c96/loot_pg.py` (treasure_screen.gd, Combat's).
+- **Difference 2: the pile's coins count for experience kind by kind** (GAME.OVR 0x57B1-0x584B: copper / 200,
+  silver / 20, electrum / 2, gold, platinum x 5, each a long division rounded down, then gems x 250, jewellery x 2200,
+  400 a magic item's plus): Norris's 288 copper and 18 silver are 1 gold, so EACH CHARACTER RECEIVES 1250; ours
+  added the coins in copper first (468 / 200 = 2): 1251 (ARN 6601, the original 6600). Ready `coin_xp.py`
+  (spoils.gd, Combat's). Both: `data/c96/c96_fixes.diff` (on origin/main 6df7f24); the `.py` scripts also apply on
+  top of chat 95's `c95_esc.diff` (`data/c96/c95_c96_both.diff`: both at once).
+- 327: 3 of 3 with both; 0 on main; 0 with either fix alone (the other difference left). DIFFCHECKS 320/320 on a copy
+  with both; 321-324, 326 and 327 match on a copy with both diffs.
+
 ## Chat 95: Esc at the hall's DROP questions, the camp's YES NO questions and the treasure's GO BACK question (checks 321-326; three differences); the build's smoke test replays Jeremy's crashes
 
 - **Gate: DIFFCHECKS 320/320**: 325 joined (matched on origin/main), then 317, 318, 319 after Combat Chat 42 landed
