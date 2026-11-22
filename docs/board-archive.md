@@ -2,6 +2,19 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 04:36 (Gold Box Lead)
+
+### Requests to another lane
+
+- 2026-11-21 09:05 · guide (Gold Box Guide 8) → player · **The kobold king's Plan 2 additions** (Jeremy approved 08:59; stuck-fights.md section 3, "Read (Gold Box Guide 8)" and "Plan 2 additions"; with Plan 2's levels first): (1) **the walk fix first**: in the throne tries most fighter combat steps went back and forth (p39b4 98 of 115, p39c2 62 of 80: ARN 27,13 / 27,14 / 27,13 ... with his troll two squares off); a fighter walks to its target or stands; (2) **the trip in by the escort**: at 8:13 12,9 WAKE IT, then YES (not SLIP); (3) **start the fight on 6,3**: from 4,4 walk 5,4, 6,4, then north (don't step on 4,3 or 5,3); best ACs in slots 1, 3, 7, casters in 5-6 (camp ALTER, ORDER); **one DOSBox check of the start at 6,3 first** (screenshot and every figure's cell: our placement code expects all four trolls at 23-26, rows 11-13, none on the right) and report it; (4) **CONTINUE BATTLE: NO after wave 1** unless every troll was burned or is held; cures to 20+ HP before wave 1 ends (the ballista: 7 x 2d6); continue to heal after wave 2. Every try reported for Jeremy. **Status (Player 44):** (1) the walk fix in and (3) the start on 6,3 checked (Player 41, `.lab/stuck/kobold_king/p41/`); (2) the escort: question above; (4) **won in p44g2** under the first loadout review (CONTINUE YES for cure rounds after wave 1, NO after wave 2; p44f2, p44g1 lost in wave 3). · **done (Lead, 2026-11-22 04:36): won in p44g2; the escort stays as its own question to the guide** · answered
+
+
+## Archived 2026-11-22 04:36 (Gold Box Lead)
+
+### Requests to another lane
+
+- 2026-11-22 04:00 · main (chat 100) → Lead · **Bug 20, a "match the original?" choice: the original applies no racial ability adjustments at creation** (GAME.OVR 0x1ABB5 tests the race list's loop counter, left at 7, for the race: dwarves' CON +1 CHA -1, elves' DEX +1 CON -1, halflings' and half-orcs' never apply; DOSBox, checks 345, 346). Ours as landed: ORIGINAL'S BUGS off (the default) applies them, as ours always did; on (every lab run) doesn't. Options: (a) keep that (the standing bug rule); (b) never apply them (as the original, in play too). **Recommend (a).** docs/original-bugs.md row 20. · **answered (Lead, 2026-11-22 04:36): (a)**, the standing bug rule: ORIGINAL'S BUGS off (default) applies the adjustments; on, as the original. · answered
+
 ## Archived 2026-11-22 02:31 (Gold Box Lead)
 
 ### Requests to another lane
