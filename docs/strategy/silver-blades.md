@@ -306,6 +306,59 @@ against gazes (basilisk, medusa); Haste ages each member a year (Journal p.24).
 - **The Vault of the Soul (24):** twelve iron golems and six medusae guard the gem; winning ends the game. Mirrors, +3
   weapons, no Fireball (p.51).
 
+## 4. Silver Blades-only rules
+
+*book* unless marked; nothing here has been seen in play. Where a rule matches Curse's, it isn't repeated.
+
+**The valley and its places**
+- **Teleporters link the valley:** the town's gate to the Well, the Well's gates to the Ruins, the headquarters, the
+  Temple of Tyr, Dungeon level 0 and the Frost Giant Village; most of the Well's open only once its dragon is dead
+  (Cluebook pp.7-8). Fled monsters in the Crevasses pursue until the party passes a teleporter (p.37).
+- **The Dungeon's mad spirit** holds the stairs: answer his riddle or fight his iron golems (riddles give more XP); a
+  wrong answer sends the party to the Well, which sells the answer for 100 gems (Cluebook pp.8, 23). Answers in `.lab`.
+- **Wandering monsters stop** in the Well once its dragon dies; the Dungeon has none until the Dreadlord is dead (only
+  patrols); the mines go quiet after the game (Cluebook pp.7, 14, 23).
+- **The difficulty level** sets how often rests are interrupted (Crevasses, village, castle) and the XP per fight (Manual
+  p.8; Cluebook pp.37-51).
+
+**The mines** (Cluebook pp.14-15)
+- **Digging** in worked areas turns up a few gems; a dwarf doubles the find. Bags of 100-200 gems lie about.
+- **Toxic fumes:** only a carried canary warns (it dies while the gas is still thin enough to back out); going on does
+  serious damage.
+- **Umber hulks** burst through walls: dangerous, with good treasure. Looking at one can confuse a member (p.57).
+- **Encounters** can be talked to or bribed (about half the time, better with Charisma) before a fight (p.14).
+
+**Money and help**
+- **Gems** buy the Well's answers (100 each) and its riddle answers; the Vault keeps money and items and turns 100
+  platinum into one gem (Manual p.10; Card p.3; Cluebook p.8).
+- **Marcus's magic shop** becomes much cheaper once the townsmen run it (Cluebook p.6).
+- **Derf heals** the party free at the Temple of Tyr once the staff is mended (Cluebook pp.12-13).
+
+**Combat** (Journal pp.9-12; Manual pp.11-12)
+- **Fleeing:** as Curse, with one exception: a member who reaches the map's edge unseen by every enemy escapes even if
+  slower. **If the whole party flees it gets no XP** for the monsters already killed (Journal p.11).
+- **Backstab:** from exactly opposite the first attacker; leather or elfin chain only; a better chance to hit and more
+  damage. No size limit and no multipliers printed (Curse: man-sized at most; x2 to x4): **unconfirmed**. The Cluebook
+  makes it the way to kill the Dreadlord (p.55).
+- **A caster hit** can't cast that round and loses a spell already started (Journal p.11).
+- **Thieves of 10th level and up** read magic-user scrolls with a 75% chance (Journal p.12).
+- **QUICK magic-users never melee** (Manual p.12). Bandage stops a dying member's bleeding (Manual p.12).
+- **Monsters' poor weapons and armour** aren't listed among the treasure (Manual p.12).
+
+**Spell notes** (Journal pp.21-26)
+- **Fireball** is slow to cast; on the combat screen only the corner squares and the squares directly above and below
+  them are safe (Curse's cluebook: three squares in each corner); CENTER first. **Lightning Bolt** is 4 or 8 squares
+  long in a line from the caster.
+- **Ice Storm** does 3-30 with no save and hurts targets inside a Minor Globe; **Delayed Blast Fireball** also passes a
+  Minor Globe; **Minor Globe** stops spells of levels 1-3, **Globe of Invulnerability** levels 1-4.
+- **Death Spell** kills outright, more of the weak than of the strong; **Disintegrate** destroys one target (magic
+  resistance may save); **Power Word, Stun** stuns one, the weaker the longer; **Mass Invisibility** is Invisibility on
+  several.
+- **Heal** cures disease, blindness and feeblemind and restores all but 1-4 HP; **Harm** leaves a living creature 1-4 HP;
+  only Heal undoes **Feeblemind** (no spells, Intelligence and Wisdom crushed).
+- **Barkskin** is AC -1; **Charm Person or Mammal** turns a person or mammal in a fight.
+- **Stone to Flesh** (a magic-user spell here) undoes petrification; the temple also cures it (Manual p.4).
+
 ## For the lanes
 
 [Next review.]
