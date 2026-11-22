@@ -12,7 +12,9 @@ extends Control
 ##     The parts' record bytes (lab, 2026-11-13: each part stepped a different number of
 ##     times in the original, then the saved records compared): WEAPON 0xC6, BODY 0xC1,
 ##     HAIR 0xC4, SHIELD 0xC5, ARM 0xC2, LEG 0xC3.
-##   SIZE: small (record 0xC0 = 1) or normal (2)
+##   SIZE: small (record 0xC0 = 1) or normal (2) → SMALL KEEP EXIT (or LARGE KEEP EXIT): the word is the
+##     size to switch to, its letter (S or L) switches and flips it; KEEP keeps, EXIT drops the change
+##     (main chat 101, DOSBox: S, S, KEEP leaves a normal icon; S, L on a small one, EXIT leaves it small)
 ##   EXIT → IS THIS ICON OK? YES NO  (No goes back to the editor)
 ## KEEP keeps a change, EXIT drops it; both go back to the list the part was picked from
 ## (lab, 2026-11-13: the colour parts, or HEAD WEAPON).
@@ -101,10 +103,18 @@ func _draw() -> void:
 			g.menu_line(24, PARTS + ["EXIT"])
 		"step":
 			g.menu_line(24, ["NEXT", "PREV", "KEEP", "EXIT"])
+		"size":
+			g.menu_line(24, [_size_word(), "KEEP", "EXIT"])
 		"ok":
 			g.text(0, 24, "IS THIS ICON OK?", 13)
 			g.menu_line(24, ["YES", "NO"], 17)
 	g.update()
+
+
+## The SIZE list's first word: the size the NEW icon would switch to.
+func _size_word() -> String:
+	var d := _trial if not _trial.is_empty() else _new
+	return "SMALL" if d[0xC0] == 2 else "LARGE"
 
 
 func _step(d: int) -> void:
@@ -133,7 +143,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				KEY_P: _stage = "parts"
 				KEY_1: _stage = "colour"; _nibble = 0
 				KEY_2: _stage = "colour"; _nibble = 4
-				KEY_S: _new[0xC0] = 1 if _new[0xC0] == 2 else 2
+				KEY_S: _stage = "size"
 				KEY_E, KEY_ESCAPE: _stage = "ok"
 		"parts":
 			match k:
@@ -147,6 +157,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				_stage = "step"
 				_back = "colour"
 			elif k == KEY_E or k == KEY_ESCAPE:
+				_stage = "main"
+		"size":
+			if k == (KEY_S if _size_word() == "SMALL" else KEY_L):
+				if _trial.is_empty():
+					_trial = _new.duplicate()
+				_trial[0xC0] = 1 if _trial[0xC0] == 2 else 2
+			elif k == KEY_K:
+				if not _trial.is_empty():
+					_new = _trial
+				_trial = PackedByteArray()
+				_stage = "main"
+			elif k == KEY_E or k == KEY_ESCAPE:
+				_trial = PackedByteArray()
 				_stage = "main"
 		"step":
 			match k:
