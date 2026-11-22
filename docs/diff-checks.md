@@ -172,6 +172,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 102: the icon's SIZE joins the gate, NPC_ADD's portrait for monster 0x18, the bishop's DIRTEN (checks 359, 360, 367, 368)
+
+- **359, 360 in the gate** after Combat Chat 44's 3758972 (icon_size.py): 3 of 3 on origin/main; breaks (the icon size,
+  2 -> 1 in the original's end) differ. DIFFCHECKS 364/364.
+- **367 (4:10 Valhingen graveyard, the mystic joins; a difference, fixed, main path):** check 64's start without the
+  shipped DIRTEN and with 0x4A42 = 3 (the event's counter, 3..249), tpseed 11111111: twenty steps from 12,5 N to 8,9
+  (event 26, ECL4 block 10 0xAD33), three Enters, LET HIM JOIN: NPC_ADD 24, 99. The original draws his portrait as
+  any NPC's (GAME.OVR 0x1F248 has no exception): LEVEL 6 MU, head 5, body 2, byte 0xAB 0xF7, 0x10E 1; ours kept the
+  record's (head 0; two differences) (chat 101 had excepted 0x18, taking him for DIRTEN). Fixed in main.gd `_add_npcs`. Break: body 2 -> 3.
+- **368 (3:0 the bishop's study, DIRTEN joins; matched at once, main path):** check 46's start without the shipped
+  DIRTEN, 0x4A9B = 254, a jump save onto 12,5 E (the night's shop door at 13,5 is locked on the street route), then
+  W, two steps onto 10,5 (event 5, ECL3 block 0 0x9EA6), two Enters, YES: NPC_ADD 107, 99, head 12, body 2.
+  Break: head 12 -> 3. Start `~/gbr/lab/data/c102/s368`.
+- **DIRTEN's 0, 4:** the shipped party's (slot J's CHRDATJ7: 0xAB 0xFF); every save with him descends from it (491 in
+  the labs: 0, 4, 0xFF); none from a join.
+
 ## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait, MODIFY on a party member (checks 351-366)
 
 All at 3:11 from check 103's start and tpseed 11111111, main path, as chat 100's 344 (the four steps, YES, REMOVE

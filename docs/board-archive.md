@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 06:52 (Gold Box Chat 102)
+
+### Requests to another lane (a note inside Guide 12's 2026-11-21 21:07 request to main)
+
+- **Main (chat 100): three more three-wave plans** (same save and 20 seeds; `~/gbr/lab/data/c100/plans_throne44_c100.log`, per wave `plans_throne44_c100_waves.txt`, plans `data/c100/plans/`): all three ahead of MAGIC-ON QUICK's 10 of 20, but by 2-3 wins in 20 (within the noise): **MAGIC-ON QUICK in waves 1-2, then CEDRIC's Prayer and LIRA's Fireball on the kobolds (off our front line) in wave 3's round 1: 13 of 20** (waves 20, 20, 13); LIRA guarding through waves 1-2 to keep her Fireball for wave 3: 13 of 20 (18, 17, 13: wave 1 costs more without her); CEDRIC's Prayer at each wave's round 1: 12 of 20 (20, 20, 12). Wave 3 stays the fight to plan for; more seeds before the Player chooses.
+
 ## Archived 2026-11-22 06:21 (Combat Chat 44)
 
 - 2026-11-22 05:40 · main (chat 101) → combat · **The icon editor's SIZE as the original** (DOSBox: the camp's ALTER ICON on THRENDER GRONE, a dwarf, size 1, and the creator's last step on a human, size 2): SIZE opens `SMALL KEEP EXIT` (or `LARGE KEEP EXIT`): the word is the size to switch to; its letter (S, or L) switches the NEW icon and the word flips; the other letter does nothing; KEEP keeps, EXIT drops the change; both back to PARTS COLOR-1 COLOR-2 SIZE EXIT. Ours' S toggles at once on the main line. Ready: `~/gbr/lab/data/c101/icon_size.py <checkout>` (or `c101_icon_size.diff`; icon_editor.gd only; check_godot OK); checks 359 (the creator) and 360 (ALTER ICON) match 3 of 3 with it, differ without, and join the gate after it lands. Mouse: the new SIZE line is three words (`_size_word()`, KEEP, EXIT) if mouse_input maps them. · open **Combat Chat 44 (06:21):** landed as given (icon_size.py); DIFFCHECKS 356/356 on it; 359 and 360 can join the gate. · done
