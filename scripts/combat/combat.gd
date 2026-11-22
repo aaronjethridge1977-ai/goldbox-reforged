@@ -894,6 +894,13 @@ func _rate(m: PartyMember, it: GameItem, hands_left: int = 0) -> int:
 	# shield's) and the weapon's own would pass 3.
 	if hands_left + types.hands(it.type) > 3:
 		return 0
+	# 0xBF3E: an aligned sword (byte 62 0x84) that doesn't answer to the bearer (byte 61's low nibble against
+	# record 0xA0) rates 0; 0xBF5F: so does an item whose byte 61 is 0x53 (main chat 97: the throne room's LIRA
+	# readied a Long Sword +2 of another alignment each turn, took its 15 damage and fought bare-handed).
+	if not ItemPowers.aligned(m, it):
+		return 0
+	if it.raw.size() > 61 and it.raw[61] == 0x53:
+		return 0
 	return r & 0xFF                 # the original keeps the rating in a byte
 
 
