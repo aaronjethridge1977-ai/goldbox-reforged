@@ -294,6 +294,7 @@ func start_round() -> void:
 		c.second = second_for(m)
 		c.attacks += c.second
 		c.acted = false
+		c.struck = false           # record +0x108 byte 8 (0x12829), set by the attack (0x13C01)
 		if magic:
 			magic.adjust_round(c)
 		# A held figure still draws its initiative (GAME.OVR 0x1289F tests only record +0x10d,
@@ -992,13 +993,22 @@ func choose_weapon(i: int) -> void:
 			_put_away(i, shield)
 		if best_shield != null:
 			_toggle_ready(i, best_shield, hands_used(m))
-	if m.items.map(func(it): return it.readied) == readied_before:
-		return                     # nothing changed (ours' recalculate would rebuild a monster's AC)
-	m.recalculate(types)
-	if m.weapon != weapon_before and c.attacks > 0:
-		c.attacks = attacks_for(m)
-		c.second = second_for(m)
-		c.attacks += c.second
+	if m.items.map(func(it): return it.readied) != readied_before:
+		m.recalculate(types)       # (only on a change: ours' recalculate would rebuild a monster's AC)
+		if m.weapon != weapon_before and c.attacks > 0:
+			c.attacks = attacks_for(m)
+			c.second = second_for(m)
+			c.attacks += c.second
+			return
+	# Changed or not, the choice ends in the attack count (GAME.OVR 0xC333 jumps to 0xC3C7, then 0xC3D8 ->
+	# 0x1351E): its category 0x12 runs Haste's handler (the mark, "ages") and doubling, and a figure that hasn't
+	# attacked this round yet (record +0x108 byte 8, set by the attack 0x13C01) takes the new count. So one hasted
+	# in the middle of a round gets the doubled blows at its next computer turn (main chat 98's throne room with
+	# MAGIC on, seed 39600002 draw 2002: DORN, hasted by LIRA in round 1, struck twice; ours once).
+	if magic and m.has_affect(CombatSpells.EFFECT_HASTE):
+		magic.haste_mark(m)
+	if not c.get("struck", false):
+		c.attacks = attacks_for(m) + c.second
 
 
 ## Hands held by `m`'s readied items (record 0x100: ITEMS byte 1 of each, START.EXE 0xBA:0xBB8).
@@ -1406,6 +1416,7 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	var am: PartyMember = a.who
 	var tm: PartyMember = t.who
 	var behind := free
+	a.struck = true                # the attack routine 0x13C01 sets record +0x108 byte 8
 	if not free:
 		# Whoever it attacks becomes its target (GAME.OVR 0x14126; a free attack puts the old
 		# one back, 0x13402).
