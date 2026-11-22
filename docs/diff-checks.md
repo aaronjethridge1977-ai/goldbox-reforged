@@ -172,6 +172,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 98: a multi-class member's training, the shop's arrows (checks 331, 332; one question)
+
+- **331 (main path: a fighter/magic-user trains at the magic-users' room):** check 330's start with RHIANNON (elf
+  fighter/magic-user 1/1) given 5000 experience and 5000 gold (`~/gbr/lab/data/c98/sfm`); the walk to 7,0 E, YES,
+  End x2 (RHIANNON), TRAIN: **RHIANNON WILL BECOME: A LEVEL 2 MAGIC-USER** (the room trains only its class, though
+  5000 is enough for fighter 3), YES, the spell page: End, End, L, then TRAIN again (nothing), BEGIN ADVENTURING.
+  The original: magic-user 2, fighter 1, experience 5000 -> 4000, 999 gold paid, HP 7 -> 8. Matched at once, 3 of 3.
+- **332 (main path: the same member at the fighters' hall):** the same start, check 103's walk (Down, Up, Down, Up),
+  YES, End x2, TRAIN: **A LEVEL 2 FIGHTER** (not 3), YES, TRAIN again (nothing), BEGIN ADVENTURING: fighter 2, the
+  same experience and gold. Matched at once, 3 of 3. statediff caught each break of the original's end (fighter level
+  2 in 331, experience 4999, gold 4000). **Both in the gate: DIFFCHECKS 330/330.**
+- **Seen (to the Lead):** the shop's BUY list and its member pick (BUY VIEW POOL APPRAISE EXIT) ignore Up / Down in the
+  original (Home / End move, wrapping); ours takes the arrows in both (shop_screen.gd), as the WHO and spell lists.
+
 ## Chat 97: a magic-user's training pick, the aligned sword in the computer's weapon choice (checks 329, 330; one difference, one question)
 
 - **statediff compares the magic-user's spell book** (record 0x33..0x6A, ids 9-21, 29-35, 45-55) **and the levels by
