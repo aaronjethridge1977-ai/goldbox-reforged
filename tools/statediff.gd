@@ -159,7 +159,9 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 			["portrait head", 0xBB, 1], ["portrait body", 0xBC, 1], ["icon head", 0xBD, 1], ["icon weapon", 0xBE, 1],
 			["icon size", 0xC0, 1], ["icon body colours", 0xC1, 1], ["icon arm colours", 0xC2, 1],
 			["icon leg colours", 0xC3, 1], ["icon hair colours", 0xC4, 1], ["icon shield colours", 0xC5, 1],
-			["icon weapon colours", 0xC6, 1]]
+			["icon weapon colours", 0xC6, 1],
+			# Chat 102 (checks 367-372, NPC_ADD): ADD_NPC's control byte (128 + morale / 2) and side.
+			["control", 0x84, 1], ["side", 0x10E, 1]]
 	if compare_cache:     # chat 82: the record's cached THAC0 and AC (a check with a `cache` file; TRAIN leaves them stale)
 		fields.append_array([["cached THAC0", 0x110, 1], ["cached AC", 0x111, 1]])
 	for i in 7:

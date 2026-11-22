@@ -2725,6 +2725,11 @@ func _add_npcs() -> void:
 			continue
 		m.is_monster = false
 		m.npc = 128 + int(req[1]) / 2
+		# ... written to the record's 0x84, the morale (ADD_NPC, GAME.OVR 0x38C4; chat 102, checks 54 and 367-372: ours
+		# kept the monster record's, 255 for every NPC).
+		m.morale = m.npc
+		if m.raw.size() > 0x84:
+			m.raw[0x84] = m.npc
 		# ADD_NPC (GAME.OVR 0x38C4) sets the side byte 0x10E: 0 (with the party) for every NPC but
 		# monster 0x18, which joins turned (1). The monster record's own 0x10E stayed before chat 29,
 		# so with Combat Chat 6's turned members (0x10E = 1 fights with the monsters) DIRTEN fought

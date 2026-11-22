@@ -141,10 +141,12 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 	var m := from_bytes(d, item_data)
 	if m != null:
 		m.raise_highest()     # a character joining the party: the recount (0x1F55A)
-		# Chat 31 (Player 5): record byte 0xB8 is who controls a character (the scripts' 0x6BB8: 128 + morale / 2
-		# for an NPC, 0 a player character; a monster record's experience value is the same byte). An original's
-		# save loaded without it made DIRTEN a player character (the finale's vote asked him).
-		m.npc = d[0xB8]
+		# Chat 31 (Player 5): who controls a character (the scripts' 0x6BB8: 128 + morale / 2 for an NPC, 0 a
+		# player character). An original's save loaded without it made DIRTEN a player character (the finale's
+		# vote asked him). Chat 102: the record's 0x84, not 0xB8 (GAME.OVR 0x7D10: the window's read of 0xB8
+		# returns +0x84, ADD_NPC writes +0x84; 0xB8 is the monster record's experience value: the shipped
+		# DIRTEN 150 by chance, a hired SWORDSMAN 35, who came back a player character).
+		m.npc = d[0x84]
 	var spc_path := GameData.real_path(sav_path.get_basename() + ".SPC")
 	if m != null and FileAccess.file_exists(spc_path):
 		SpecialAffects.add_records(m, FileAccess.get_file_as_bytes(spc_path))
