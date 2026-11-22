@@ -1208,6 +1208,27 @@ class PrepStep:
         return True, None, ""
 
 
+class KeyturnsStep:
+    """Player 46 (Gold Box Guide 12's step 2): `keyturns on [r1] [contact] [every] [dir=<path>]|off`: tactics.KEYTURNS
+    from here (the field read at each key turn; the run waits for the Player chat's orders: tactics.py, field.py)."""
+    def __init__(self, rest):
+        w = rest.split()
+        self.on = bool(w) and w[0].lower() == "on"
+        self.when = [x.lower() for x in w[1:] if "=" not in x] or ["r1", "contact"]
+        self.dir = next((x.split("=", 1)[1] for x in w[1:] if x.startswith("dir=")), "")
+
+    def __repr__(self):
+        return "keyturns %s" % (("on " + " ".join(self.when)) if self.on else "off")
+
+    def next(self, p):
+        import tactics
+        tactics.KEYTURNS.clear()
+        if self.on:
+            tactics.KEYTURNS.update({"when": tuple(self.when), "dir": self.dir})
+        p.note("tactics", "keyturns: %s" % (", ".join(self.when) if self.on else "off"))
+        return True, None, ""
+
+
 class BandsStep:
     """Player 36: `bands on|off`: Guide 3's band rule (BANDS) from here on."""
     def __init__(self, on):
@@ -2739,6 +2760,8 @@ def load(path):
             pl.goals.append(UsesStep(rest))
         elif cmd == "prep":       # Player 45: `prep <spell>, ...|none` (tactics.PREP)
             pl.goals.append(PrepStep(rest))
+        elif cmd == "keyturns":   # Player 46: `keyturns on [r1] [contact] [every] [dir=..]|off` (tactics.KEYTURNS)
+            pl.goals.append(KeyturnsStep(rest))
         elif cmd == "bands":      # Player 36: `bands on|off`
             pl.goals.append(BandsStep(rest.strip() == "on"))
         elif cmd == "answerfrom":

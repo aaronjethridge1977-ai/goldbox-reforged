@@ -32,6 +32,7 @@ Owned by the Player lane (Gold Box Player N).
 | `twice.sh` | repeatability: one plan, save and seed twice (each under the watchdog), checkpoints compared with `cmpsaves.py` |
 | `cmpsaves.py` | two of the original's saves byte for byte (ECL addresses named) |
 | `segment.py` | segment check: the original's keys between two checkpoints replayed in ours from the first save and seed; `statediff.gd` at the second |
+| `field.py` | Player 46: a fight's field as text (map, figures, rays, cloud aims, Fireball points) and the key turns' orders (`keyturns`) |
 | `explore.py`, `memdiff.py` | lab tools: press keys and show each wait; find state bytes by DS snapshots |
 
 ## A run
@@ -1314,6 +1315,48 @@ Lead's stop).
 Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdiff.txt`, `ecl8_13.txt`, `ecl3_0.txt`,
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
+
+## Player 46 (2026-11-22): p45i5 filmed for Jeremy; Guide 12's step 2, the field read and the key turns (`keyturns`, field.py); the game won again under the chat's orders (p46k3)
+
+**Stage 1:** 68 of 71, nothing new from main or Combat to re-score (p17a6 still waits on main / design).
+
+**The win for Jeremy (the Lead's (a) with (c)):** p45i5's 991 keys replayed in the original at a human pace (lab
+`p46/film.sh`, `p46/replay.py`, a 1 s pause before each key, message speed 9): 0 drifts; the replay's end save equals
+p45i5's checkpoint s45won (characters byte for byte, ECL by cmpsaves.py) but for the message-speed byte the replay
+sets. `.lab/showcase/player/p45i5_win_dosbox.mkv` (FFV1, 36:45) and `p45i5_win_share.mp4`; README.txt there has the
+times. film.sh fix: the capture waited for a "STARTED" line nobody logs any more, so earlier films (p43f4's) began
+120 s late; it now starts at the replay's second key (after the save's load).
+
+**Guide 12's step 2 (the field read and the chat's key turns):** plan line `keyturns on [r1] [contact] [every]
+[dir=<path>]` / `keyturns off` (tactics.KEYTURNS). At a key turn (a fight's round 1, the first round in contact, or
+every round) the member's menu waits: `field.py` writes the field read to `logs/<run>.field/f<fight>_r<round>.txt`
+(and `.json`; `python3 field.py <json>` prints it again): a map around the figures (party digits, foes letters,
+small = helpless, '+' fallen, '#' walls, '~' clouds), every figure's cell, HP, effects, who it touches; each
+caster's spells in memory with their ranges (START.EXE's table: Stinking Cloud 3, Hold Person 6 cleric / 12
+magic-user, Fireball 10 + level); the eight rays from each caster; the best Stinking Cloud cells (2x2, none of ours,
+no cloud there); Fireball points (no member within 3). The run then waits (OP_ORDERWAIT, 3600 s) for
+`f<fight>_r<round>.orders`, one line per member: `cast <SPELL> [at x,y ...]` (MANUAL to each cell in turn: Hold
+Person's picks), `use <ITEM> [at x,y] [swap=..]`, `move x,y`, `attack x,y` (both by a searched route round walls,
+figures and clouds), `guard`, `quick`, `rules`; `go` for none. Members not named, and every later turn, by the rules
+(a dying member's bandage too). An order holds until that member's next menu uses it or the next key turn's orders
+replace it. A refused file gets `.error` and is read again when rewritten. A key turn resets the 300-key stall guard.
+**What the runs showed:** the round count ticks at a member's second menu, which also comes when a turn's menu is
+shown again (p46k1: the orders were wiped; now kept until used); after a Hold Person pick the aim is back on AIM
+(p46k2: an EXIT there lost LIRA's third pick); an ordered cell out of range has no TARGET (LIRA's cloud at 4 squares:
+the rules' aim then laid it where ELWEN's was ordered: ordered clouds overlapping one laid since are skipped); an
+item's aim name stayed set into the next member's cast (DORN's Javelin: LIRA's cloud aimed as "LIGHTNING BOLT", its
+cells not kept out of walks, and she walked into it); **the NPC (Genheeris) has no menu: the computer plays him**
+(the field read names members with no menu seen).
+
+**The runs** (all from `p45i1_s45ready`, `p46/kt46.plan` / `kt46e.plan` = finale45.plan + `keyturns`, `OP_PLAN5=1
+OP_FIGHTDEATH=1 OP_MANUAL=1`, k3 also `OP_STUCK_KEYS=1500`): p46k1 (stopped by hand: the orders wiped), **p46k2: the
+guards beaten in 5 rounds with all seven standing** (round 1 two clouds, round 2 two more on the flanks and the
+fighters on the clouded, round 3 Hold Person on the three still free, rounds 4-5 a blow each on the held: one blow
+slays a held or clouded figure), stopped by the stall guard in the CONTINUE rounds (a tool stop); **p46k3: the game
+won** (the guards in 8 rounds with none dead, DORN bandaged; Tyranthraxus by ARN's blow at 5 HP; BRAM, CEDRIC and
+ELWEN dead to his breath, LIRA ordered out to 23,8 and Genheeris lived; 0x4ABA = 254): `p2start/p46k3_s46won`.
+
+Lab: `p46/` (film.sh, replay.py, kt46.plan, kt46e.plan, reload.txt, test_field.json, replay_end/); runs p46k1-k3.
 
 ## Player 45 (2026-11-22): items in fights (`uses`, `prep`); home from the throne room; everything identified; Tyranthraxus beaten by blows
 

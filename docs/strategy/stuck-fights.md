@@ -847,3 +847,19 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     the guards 2 of 2 with none dead, him 2 of 2 by blows. Two dead in his fight each time: his breath (80 / 40) on
     members already low; the open question for the guide is whether the cures should go into his fight's first
     rounds instead of the CONTINUE rounds. *seen*
+- **The same fights with the Player chat choosing each round from the field read (Guide 12's step 2; Player 46,
+  2026-11-22 03:12-03:36; `p46/kt46e.plan` = finale45.plan + `keyturns on every`, from `p45i1_s45ready`):**
+  - **p46k2: the guards in 5 rounds, all seven standing** (stopped after by the tool's stall guard, a tool stop):
+    round 1 two Stinking Clouds on the back guards, no overlap (ELWEN 27,13; LIRA's at 4 squares was out of her
+    range 3 and the rules laid it on the same cell); round 2 LIRA's and ELWEN's second clouds on the two flanks (23,12,
+    25,13), the fighters each on a clouded guard (dead at one blow), CEDRIC walked from behind the wall into its gap;
+    round 3 Hold Person (CEDRIC 3 picks, LIRA 2, ELWEN 1) on the three still free; rounds 4-5 every member a blow on
+    a held or clouded guard: six fell in round 4. *seen*
+  - **p46k3: won** (another seed: more saves made, LIRA and DORN at 15 HP by round 3): CEDRIC's three holds round 1,
+    clouds on the guards next to the hurt, BRAM bandaged DORN (dying) by the rules, holds on the last free ones; the
+    guards in 8 rounds, none dead. Tyranthraxus: LIRA (15 HP) ordered out through the wall gap to 23,8, off his lines;
+    the casters' Magic Missiles wasted (he resists spells) until ordered to blows; his breath killed BRAM, CEDRIC
+    (at 25,11, two squares from him) and ELWEN; ARN's blow at 5 HP; 0x4ABA = 254: `p2start/p46k3_s46won`. *seen*
+  - **Measure:** the guards 2 of 2 with none dead under the chat's orders (p46k2 none even down); him 1 of 1. The
+    breath still kills two or three: in p46k3 the members standing at him or two squares off died, LIRA (kept 6+
+    squares off, off his lines) and Genheeris lived. *seen*

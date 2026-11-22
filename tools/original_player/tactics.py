@@ -81,6 +81,7 @@ def helpless(f):
 
 
 _RANGES = None
+_NAMES = []          # Player 46: the 56 spell names in START.EXE's order (a memorized id is its index + 1)
 
 
 def spell_range(spell, f):
@@ -100,6 +101,7 @@ def spell_range(spell, f):
             for k in range(56):
                 o = i + 41 * k
                 nm = img[o + 1:o + 1 + img[o]].decode("latin1").upper()
+                _NAMES.append(nm)
                 _RANGES.setdefault(nm, []).append(tuple(img[i + 56 * 41 + 16 * k:i + 56 * 41 + 16 * k + 16]))
         except Exception:
             pass
@@ -308,6 +310,14 @@ GOTO = [tuple(int(v) for v in q.split(",")) for q in os.environ.get("OP_GOTO", "
 # Player 40 (p40t1: a troll rose on the corner 26,10 of a fallen troll whose second cell 26,11 ARN held): OP_HOLDCORNER=1
 # holds the fallen figure's corner square only
 HOLDCORNER = os.environ.get("OP_HOLDCORNER", "0") == "1"
+# Player 46 (Gold Box Guide 12's step 2: the field read and the chat's key turns): `keyturns on [r1] [contact] [every]
+# [dir=<path>]` / `keyturns off` (plans.py): at a key turn (a fight's round 1; the first round the two sides touch;
+# or every round) the member's menu waits: the field read (field.py) is written to <dir>/f<fight>_r<round>.txt (and
+# .json), and the round's orders are read from f<fight>_r<round>.orders once the Player chat writes it (field.py
+# ORDER_HELP: cast at cells by MANUAL, use an item at a cell, move to a cell, attack the figure on a cell, guard,
+# quick); members not named, and every turn after a key turn's, by the rules. OP_ORDERWAIT seconds (3600) with no
+# orders file: the rules. {} = off.
+KEYTURNS = {}
 
 # Player 38 (p38e3: the throne room's second wave began with the party at 49 HP; the tool answered CONTINUE BATTLE NO;
 # the book: "between waves, Continue Combat for a round or two to heal"): when the last enemy falls, CONTINUE BATTLE
@@ -357,6 +367,7 @@ class Tactics:
         # cleared at CONTINUE BATTLE NO
         self.prep_cast = set()
         self.prep_round = -1
+        self.fight_no = 0        # Player 46: fights seen (key turns' file names)
         self.reset()
 
     def reset(self):
@@ -387,6 +398,12 @@ class Tactics:
         self.round = 1           # Player 45: the fight's round (a member's second menu starts the next)
         self.rseen = set()
         self.item_aim = None     # Player 45: an item's aim under way: (spell, aim word)
+        self.fight_no = getattr(self, "fight_no", 0) + 1
+        self.kt_asked = set()    # Player 46: (fight, round) key turns asked
+        self.orders = {}         # Player 46: member -> his order from the last key turn, until used (field.parse_orders)
+        self.contact_seen = False
+        self.cell_aim = {}       # Player 46: member -> the cells his ordered spell or item aims at, in turn
+        self.menus = set()       # Player 46: members whose menus came this fight
 
     def _edge_path(self, p, me, bad=()):
         """Player 42 (OP_FLIGHT): the shortest walk from the member's cell to any cell on the field's border (x 0 or
@@ -772,7 +789,15 @@ class Tactics:
                 self.round += 1
                 self.rseen = set()
             self.rseen.add(member)
+            self.menus = getattr(self, "menus", set()) | {member}    # Player 46: members whose menus came (the NPC's don't)
         items = b.split()
+        if KEYTURNS:
+            # (p46k3: DORN's Javelin left item_aim set, and LIRA's ordered cloud was aimed as LIGHTNING BOLT: its cells
+            # kept out of no walk) a new menu: no item's or scroll's aim under way
+            self.use, self.item_aim, self.scroll_aim = None, None, None
+            k = self._keyturn(member, items, p)
+            if k:
+                return k
         if QUICKKINDS and "QUICK" in items:
             # Player 42 (Plan 2's bands: 7:26's stirge swarms took ~6 min each by hand for ~230 XP a member): when every
             # foe standing is of the listed kinds, the member goes QUICK (the computer plays him for the fight)
@@ -1204,12 +1229,29 @@ class Tactics:
             # Player 38: onto a fallen focus figure's square (OP_HOLDDOWN): past the others, then stop there
             goal = {"n": mv["goal"], "x": mv["square"][0], "y": mv["square"][1], "name": "fallen", "hp": 0}
             if me is not None and (me["x"], me["y"]) in mv.get("cells", [mv["square"]]):
+                if mv.get("order"):
+                    self.log("TACTICS %s on the ordered square %d,%d" % (mv["member"], me["x"], me["y"]))
+                    self.move = None
+                    return "enter", "tactics: move: on the ordered square: Enter (keeps the walk)"
                 self.holding.add(mv["member"])
                 self.log("TACTICS %s stands on fallen figure %d's square %d,%d" % (mv["member"], mv["goal"],
                                                                                   me["x"], me["y"]))
                 self.move = None
                 return "enter", "tactics: move: on the fallen figure's square: Enter (keeps the walk)"
         mv["tries"] += 1
+        if mv.get("route") and me is not None:
+            # Player 46: an ordered walk along its route (_route); at its end the old rules (the step into the goal)
+            pos, route = (me["x"], me["y"]), mv["route"]
+            if mv["last"] and mv["last"][0] == pos or pos not in route or mv["tries"] > 24:
+                self.log("TACTICS %s's ordered route left at %d,%d" % (mv["member"], pos[0], pos[1]))
+                mv["route"] = []
+            elif pos != route[-1]:
+                nxt = route[route.index(pos) + 1]
+                k = next(k for k, a, b in DIRS if (pos[0] + a, pos[1] + b) == nxt)
+                mv["last"] = (pos, k)
+                return k, "tactics: %s steps %s to %d,%d (the ordered route)" % (mv["member"], k, nxt[0], nxt[1])
+            else:
+                mv["route"], mv["last"] = [], None
         if mv.get("path") and me is not None:
             # Player 42 (OP_FLIGHT): along the path; on the border, a step off the field
             pos = (me["x"], me["y"])
@@ -1487,6 +1529,18 @@ class Tactics:
         caster = lst[0] if lst else None
         me = next((f for f in figs if f["n"] == caster), None)
         member = me["name"] if me else "?"
+        if member in self.cell_aim and (self.scan is None or self.scan.get("spell") != (caster, spell)):
+            # Player 46: an ordered aim (a key turn's `at x,y ...`): MANUAL to each cell
+            self.scan = {"spell": (caster, spell), "ok": set(), "steps": 0, "goal": None, "picked": set(),
+                         "targets": [], "scan0": 0, "cells": list(self.cell_aim.pop(member)), "cur0": cur}
+            self.log("TACTICS %s's %s: ordered at %s" % (member, spell, " ".join("%d,%d" % c for c in self.scan["cells"])))
+        if self.scan is not None and self.scan.get("cells") is not None and not self.scan.get("cellfail") \
+                and self.scan.get("spell") == (caster, spell) and me:
+            self.scan["steps"] += 1
+            k = self._manual_cell(st, p, self.scan, me, member, spell, figs)
+            if k:
+                return k
+            self.scan = None              # the ordered cells gave nothing: the rules' aim from here
         if self.scan is None or self.scan.get("spell") != (caster, spell):
             t = self.targets(spell, me, party, foes) if me else []
             if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
@@ -1564,6 +1618,273 @@ class Tactics:
         if cur == sc["goal"] and can:
             return self._take(member, spell, cur)
         return "n", "tactics: to figure %d (at %s)" % (sc["goal"], cur)
+
+    def _manual_cell(self, st, p, sc, me, member, spell, figs):
+        """Player 46 (key turns): the ordered aim: MANUAL, the cursor to each ordered cell in turn, TARGET there (the
+        figure on it, or the cell itself for an area spell). The cursor opens where the aim is (the caster at the aim's
+        start and after each pick: _manual's reading); on a figure's cell the panel must name it, else the count is
+        off. A cell with no TARGET (out of reach or sight) is skipped. Returns None when no cell took (the rules' aim
+        goes on) or a key."""
+        b = st["bottom"]
+        inman = b.startswith("(USE CURSOR KEYS)")
+        occ = {}
+        for f in figs:
+            for c in cells(f):
+                if _up(f) or c not in occ:
+                    occ[c] = f
+        if sc["steps"] > 160:
+            sc["cells"] = []
+        if not inman:
+            if sc.get("min"):
+                sc["min"] = False
+                # (p46k2: after a Hold Person pick the aim is back on the AIM menu, the caster aimed: on to the next
+                # ordered cell, MANUAL again; an EXIT there ended LIRA's aim before her third pick)
+                if sc["picked"] and not sc["cells"]:
+                    return "e", "tactics: %s %s: the ordered cells done: EXIT" % (member, spell)
+                if not sc["picked"]:
+                    sc["cellfail"] = True
+                    p.note("tactics", "%s: %s: no ordered cell took: the rules' aim" % (member, spell))
+                    return None
+                sc["cur0"] = None              # after a pick the aim opens on the caster
+            if not sc["cells"]:
+                if sc["picked"]:
+                    return "e", "tactics: %s %s: the ordered cells done: EXIT" % (member, spell)
+                sc["cellfail"] = True
+                return None
+            byn = {f["n"]: f for f in figs}
+            start = byn.get(sc.get("cur0")) or me
+            sc["cursor"] = (start["x"], start["y"])
+            sc["min"] = True
+            self.log("TACTICS %s's %s: MANUAL from %d,%d to the ordered %s" % (
+                member, spell, sc["cursor"][0], sc["cursor"][1], " ".join("%d,%d" % c for c in sc["cells"])))
+            return "m", "tactics: %s %s: MANUAL (ordered cells)" % (member, spell)
+        if not sc["cells"]:
+            return "e", "tactics: %s %s: MANUAL: the ordered cells done: EXIT" % (member, spell)
+        name = st["rows"][1].strip("? ").strip()
+        if sc.get("cursor") is None:
+            if name == me["name"]:
+                sc["cursor"] = (me["x"], me["y"])
+            else:
+                self.log("TACTICS ordered MANUAL after a pick: the panel shows %r: EXIT" % name)
+                sc["cells"] = []
+                return "e", "tactics: MANUAL with no cursor count: EXIT"
+        cx, cy = sc["cursor"]
+        gx, gy = sc["cells"][0]
+        dx, dy = (gx > cx) - (gx < cx), (gy > cy) - (gy < cy)
+        if (dx, dy) != (0, 0):
+            sc["cursor"] = (cx + dx, cy + dy)
+            k = next(k for k, a, b2 in DIRS if (a, b2) == (dx, dy))
+            return k, "tactics: MANUAL cursor to %d,%d (ordered %d,%d)" % (cx + dx, cy + dy, gx, gy)
+        t = occ.get((gx, gy))
+        if spell == "STINKING CLOUD" and {(gx + a, gy + c) for a in (0, 1) for c in (0, 1)} & self.clouds:
+            # (p46k2: LIRA's ordered cell was out of reach, the rules' aim laid her cloud where ELWEN's was ordered)
+            sc["cells"].pop(0)
+            p.note("tactics", "%s: the ordered cloud at %d,%d overlaps one laid since: skipped" % (member, gx, gy))
+            if sc["cells"]:
+                return self._manual_cell(st, p, sc, me, member, spell, figs)
+            return "e", "tactics: %s %s: the ordered cloud overlaps: EXIT" % (member, spell)
+        if t is not None and name and name not in {f["name"] for f in figs} and sc.get("repoll", 0) < 3:
+            sc["repoll"] = sc.get("repoll", 0) + 1
+            return "c", "tactics: MANUAL: the panel unread (%r): CENTER and read again" % name
+        sc["repoll"] = 0
+        if t is not None and name and name != t["name"]:
+            self.log("TACTICS ordered MANUAL count off at %d,%d: the panel shows %r, the cell holds %r" % (
+                gx, gy, name, t["name"]))
+            sc["cells"] = []
+            return "e", "tactics: MANUAL count off: EXIT"
+        sc["cells"].pop(0)
+        if "TARGET" in b.split():
+            n = t["n"] if t is not None else 0
+            if spell == "STINKING CLOUD":
+                self.clouds |= {(gx + a, gy + c) for a in (0, 1) for c in (0, 1)}
+            k = self._take(member, spell, n) if n else None
+            if k is None:
+                sc["picked"].add((gx, gy))
+                sc["goal"] = None
+                sc["scan0"], sc["ok"] = sc["steps"], set()
+                self.log("TACTICS %s's %s at the cell %d,%d" % (member, spell, gx, gy))
+                self.order = None
+                k = ("t", "tactics: %s %s at %d,%d" % (member, spell, gx, gy))
+            sc["cursor"] = None
+            return k
+        p.note("tactics", "%s: %s: no TARGET at the ordered %d,%d" % (member, spell, gx, gy))
+        if sc["cells"]:
+            return self._manual_cell(st, p, sc, me, member, spell, figs)
+        return "e", "tactics: %s %s: MANUAL: no TARGET at the ordered cells: EXIT" % (member, spell)
+
+    def _keyturn(self, member, items, p):
+        """Player 46 (key turns, KEYTURNS): at a key turn the field read is written and the round's orders waited
+        for; then this member's order, if any (once: the rest of his turns by the rules). Returns a key or None."""
+        import field
+        try:
+            figs, party, foes = self._sides(p)
+        except Exception as e:
+            self.log("TACTICS key turn: the field unreadable: %s" % e)
+            return None
+        if not foes:
+            return None
+        # (p46k1: the round count ticks at a member's second menu, and BRAM's menu came up twice in his first turn:
+        # LIRA's and CEDRIC's orders were wiped with the round) an order holds until that member's next menu uses it
+        # or the next key turn's orders replace it
+        contact = any(_dist(a, f) <= 1 for a in party if _up(a) for f in foes)
+        when = KEYTURNS.get("when", ("r1", "contact"))
+        key = (self.fight_no, self.round)
+        if key not in self.kt_asked and ("every" in when or ("r1" in when and self.round == 1)
+                                         or ("contact" in when and contact and not self.contact_seen)):
+            self.kt_asked.add(key)
+            self.contact_seen = self.contact_seen or contact
+            self.orders = self._ask(figs, party, foes, member, p)
+        o = self.orders.pop(member, None)
+        if not o or o["do"] == "rules":
+            return None
+        return self._do_order(member, o, items, p, figs, party, foes)
+
+    def _memorized(self, f):
+        """Player 46: 'NAME xN (range R)' for the spells in a figure's memory (record +0x17-0x2B: ids, START.EXE's
+        order + 1), its ranges by spell_range."""
+        spell_range("BLESS", None)             # loads _NAMES
+        counts = {}
+        for b in f.get("memo", b""):
+            if 0 < b <= len(_NAMES):
+                counts[_NAMES[b - 1]] = counts.get(_NAMES[b - 1], 0) + 1
+        out = []
+        for nm, k in counts.items():
+            r = spell_range(nm, f)
+            out.append("%s x%d (%s)" % (nm.title(), k, "touch" if r == 1 else ("range %d" % r if r else "self")))
+        return ", ".join(out)
+
+    def _ask(self, figs, party, foes, member, p):
+        import field, json, time
+        try:
+            p.goal_key = p.g.nkeys     # (p46k2: a fight under orders ran past the 300-key stall guard) a key turn is progress
+        except Exception:
+            pass
+        d = KEYTURNS.get("dir") or os.path.join(os.environ.get("OP_LAB", "/home/aaron/gbr/player_lab"), "logs",
+                                                "%s.field" % getattr(p, "run", "run"))
+        os.makedirs(d, exist_ok=True)
+        base = os.path.join(d, "f%02d_r%02d" % (self.fight_no, self.round))
+        try:
+            ws = sorted(walls(p.g.mem))
+        except Exception:
+            ws = []
+        nomenu = [f["name"] for f in party if _up(f) and f["name"] not in getattr(self, "menus", set())]
+        title = "Fight %d, round %d: %s's turn (acted this round: %s)%s%s" % (
+            self.fight_no, self.round, member, ", ".join(sorted(self.rseen - {member})) or "none",
+            "; in contact" if self.contact_seen else "",
+            ("\nno menu seen yet for %s (an NPC is played by the computer: no orders for him)" % ", ".join(nomenu))
+            if nomenu and self.round > 1 else "")
+        try:
+            spells = {f["n"]: self._memorized(f) for f in party if _up(f)}
+        except Exception as e:
+            spells = {}
+            self.log("KEYTURN spells unreadable: %s" % e)
+        snap = {"title": title, "figs": [{k: v for k, v in f.items() if k != "memo"} for f in figs],
+                "party_n": self.party_n, "walls": ws, "clouds": sorted(self.clouds),
+                "spells": {str(k): v for k, v in spells.items()}}
+        json.dump(snap, open(base + ".json", "w"))
+        open(base + ".txt", "w").write(field.render(figs, self.party_n, ws, self.clouds, title, spells) + "\n" +
+                                       field.ORDER_HELP + "\n")
+        self.log("KEYTURN fight %d round %d at %s's menu: the field read %s.txt; waiting for %s.orders" % (
+            self.fight_no, self.round, member, base, base))
+        p.note("keyturn", "fight %d round %d: %s.txt" % (self.fight_no, self.round, base))
+        limit = float(os.environ.get("OP_ORDERWAIT", "3600"))
+        t0, seen = time.monotonic(), None
+        orders = {}
+        while time.monotonic() - t0 < limit:
+            if os.path.exists(base + ".orders"):
+                m = os.path.getmtime(base + ".orders")
+                if m != seen:
+                    seen = m
+                    time.sleep(1.0)       # the file written whole
+                    try:
+                        orders = field.parse_orders(open(base + ".orders").read())
+                        names = {f["name"] for f in party}
+                        bad = [n for n in orders if n not in names]
+                        if bad:
+                            raise ValueError("not in the party: %s" % ", ".join(bad))
+                        break
+                    except ValueError as e:
+                        open(base + ".error", "w").write("%s\n" % e)
+                        self.log("KEYTURN orders refused: %s (write the file again)" % e)
+                        orders = {}
+            time.sleep(2.0)
+        else:
+            self.log("KEYTURN no orders in %d s: the rules" % limit)
+        try:
+            p.g.stale = None          # the wait is no stalemate
+        except Exception:
+            pass
+        self.log("KEYTURN orders: %s" % ("; ".join("%s %s %s %s" % (m, o["do"], o["what"], " ".join(
+            "%d,%d" % c for c in o["cells"])) for m, o in orders.items()) or "none (the rules)"))
+        return orders
+
+    def _route(self, p, me, goals):
+        """Player 46 (p46k3: ELWEN's and CEDRIC's ordered walks went the wrong way round the wall): the shortest walk
+        (8 directions; no wall, no other figure's cell, no cloud) from the member's cell to any of the goal cells;
+        [] if none (or already there)."""
+        figs = figures(p.g.mem)
+        block = walls(p.g.mem) | {c for f in figs if f["name"] != me["name"] and (_up(f) or f["n"] <= self.party_n)
+                                  for c in cells(f)} | self.clouds
+        start = (me["x"], me["y"])
+        goals = set(goals) - block
+        prev, q = {start: None}, [start]
+        for c in q:
+            if c in goals:
+                path = []
+                while c:
+                    path.append(c)
+                    c = prev[c]
+                return path[::-1]
+            for _k, dx, dy in DIRS:
+                n = (c[0] + dx, c[1] + dy)
+                if 0 <= n[0] < 50 and 0 <= n[1] < 25 and n not in prev and n not in block:
+                    prev[n] = c
+                    q.append(n)
+        return []
+
+    def _do_order(self, member, o, items, p, figs, party, foes):
+        """Player 46: carry out one member's key-turn order (field.parse_orders) at his menu."""
+        do, what, cs = o["do"], o["what"], o["cells"]
+        self.log("TACTICS %s's order: %s %s %s" % (member, do, what, " ".join("%d,%d" % c for c in cs)))
+        if do == "quick" and "QUICK" in items:
+            return "q", "tactics: %s on QUICK (ordered)" % member
+        if do == "guard" and "DONE" in items:
+            self.guard = member
+            return "d", "tactics: %s guards (ordered): DONE" % member
+        me = next((f for f in party if f["name"] == member), None)
+        if do == "move" and "MOVE" in items:
+            q = cs[0]
+            self.moved.add(member)
+            self.move = {"member": member, "goal": 0, "tries": 0, "blocked": set(), "last": None,
+                         "square": q, "cells": [q], "flee": True, "order": True,
+                         "route": self._route(p, me, [q]) if me else []}
+            return "m", "tactics: %s MOVEs to %d,%d (ordered)" % (member, q[0], q[1])
+        if do == "attack" and "MOVE" in items:
+            t = next((f for f in foes if cs[0] in cells(f)), None)
+            if t is not None:
+                self.moved.add(member)
+                near = {(c[0] + dx, c[1] + dy) for c in cells(t) for _k, dx, dy in DIRS}
+                self.move = {"member": member, "goal": t["n"], "tries": 0, "blocked": set(), "last": None,
+                             "focus": True, "route": self._route(p, me, near) if me else []}
+                return "m", "tactics: %s MOVEs to strike figure %d at %d,%d (ordered)" % (member, t["n"], *cs[0])
+            p.note("tactics", "%s: no standing foe on the ordered %d,%d: the rules" % (member, cs[0][0], cs[0][1]))
+            return None
+        if do == "cast" and "CAST" in items:
+            self.order = [member, what, 0]
+            self.scan = None
+            if cs:
+                self.cell_aim[member] = list(cs)
+            return "c", "tactics: %s casts %s (ordered)" % (member, what)
+        if do == "use" and "USE" in items:
+            u = {"member": member, "item": what, "when": "r", "round": 1, "vs": "", "aim": "", "swap": o.get("swap", ""),
+                 "hurt": 0, "ready": False, "done": False}
+            self.use = {"member": member, "item": u, "word": what, "phase": "use", "n": 0, "readied": 0,
+                        "swapped": False}
+            if cs:
+                self.cell_aim[member] = list(cs)
+            return "u", "tactics: %s USEs %s (ordered)" % (member, what)
+        p.note("tactics", "%s: the order %s isn't on his menu (%s): the rules" % (member, do, " ".join(items)))
+        return None
 
     def _manual(self, st, p, sc, me, member, spell, figs, foes, cur, can):
         """Player 43 (Gold Box Guide 10's (b), Jeremy 15:22 / 15:46: aim by MANUAL, no NEXT/PREV scans): M, then the
