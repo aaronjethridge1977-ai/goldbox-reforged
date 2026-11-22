@@ -72,8 +72,15 @@ JEREMY = __import__("os").environ.get("OP_RELOAD") == "1"
 MISSILE_WORDS = ("ARROW", "QUARREL", "DART", "BOLT", "SLING STONE")
 
 
+# Player 43 (Plan 5's (b), Jeremy 15:22: before Tyranthraxus only weightless items from the guards' pile): plan step
+# `lightloot on|off`; while on, only rings, gems, jewellery or items of weight 1 or less, and no SHARE of the coins
+LIGHT = {"on": False}
+
+
 def worth_taking(it):
     up = it["name"].upper()
+    if LIGHT["on"] and not (it["weight"] <= 1 or any(w in up for w in ("RING", "GEM", "JEWEL", "NECKLACE"))):
+        return False
     if it["plus"] != 0 or "+" in up or it["type"] in QUEST_ITEM_TYPES or any(w in up for w in LOOT_WORDS):
         return True
     if JEREMY:

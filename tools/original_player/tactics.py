@@ -267,6 +267,13 @@ MOVETEST = os.environ.get("OP_MOVETEST", "")
 # only with every member OP_FBCLEAR (4) squares or more from the target figure; nobody walks while a member stands
 # next to a foe that isn't helpless; a held foe out of reach may take a missile (it slays: GAME.OVR 0x13C01).
 PLAN4 = os.environ.get("OP_PLAN4") == "1"
+# Player 43 (Guide 10's Plan 5 for the finale's guards, Jeremy 13:50 / 15:22): OP_PLAN5=1: a member with cleric levels
+# Holds Person first (guards in contact with a member first, none helpless, none picked in the last 10 member turns:
+# a failed save is held again), a pure magic-user Stinking Clouds first (no cloud overlapping one laid, nobody of ours
+# inside); fighters (OP_ADVANCE) strike the standing guards, the others the helpless; a caster next to a standing foe
+# steps back first when the spell goes off at the next turn (its delay / 3 above 0: Hold Person, Fireball, Haste)
+PLAN5 = os.environ.get("OP_PLAN5") == "1"
+DELAYED = ("HOLD PERSON", "FIREBALL", "HASTE", "CURE LIGHT WOUNDS", "SLOW", "LIGHTNING BOLT", "PRAYER", "BLESS")
 FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
 # Player 42 (Plan 3/4's flight from Tyranthraxus): OP_FLIGHT=<name words>: while a foe of that name is on the field,
 # every member with MOVE walks the shortest way (8 directions, walls and figures avoided) to the field's edge and
@@ -407,6 +414,9 @@ class Tactics:
         prio = ("HASTE",) + tuple(s for s in prio if s != "HASTE")
         if PLAN4:
             prio = ("STINKING CLOUD", "HOLD PERSON") + tuple(s for s in prio if s not in ("STINKING CLOUD", "HOLD PERSON"))
+        if PLAN5:
+            first = ("HOLD PERSON", "STINKING CLOUD") if me.get("cl") else ("STINKING CLOUD", "HOLD PERSON")
+            prio = first + tuple(s for s in prio if s not in first)
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
@@ -454,6 +464,15 @@ class Tactics:
             foes = [f for f in foes if not _is_undead(f)]
             mages = [f for f in mages if not _is_undead(f)]
             persons = [f for f in persons if not _is_undead(f)]
+        if spell == "HOLD PERSON" and PLAN5:
+            # Plan 5: every guard, those in contact with a member first, then the nearest; not the helpless, nor one
+            # picked in the last 10 member turns (its hold not gone off yet, or its save not seen yet)
+            mt = getattr(self, "mturns", 0)
+            pk = getattr(self, "held_at", {})
+            up = [a for a in party if _up(a)]
+            ok = [f for f in persons if not helpless(f) and mt - pk.get(f["n"], -99) >= 10]
+            return [f["n"] for f in sorted(ok, key=lambda f: (min((_dist(a, f) for a in up), default=99) > 1,
+                                                              _dist(me, f) if me else 0))]
         if spell == "HOLD PERSON":     # the mages first, then other persons (not large creatures)
             return [f["n"] for f in mages if f["n"] not in self.held] + \
                 [f["n"] for f in persons if f["n"] not in self.held and not _is_mage(f)]
@@ -477,7 +496,9 @@ class Tactics:
                 area = {(f["x"] + dx, f["y"] + dy) for dx in (0, 1) for dy in (0, 1)}
                 if any(_up(a) and area & set(cells(a)) for a in party) or (me and _dist(me, f) > 6):
                     continue
-                inside = [g for g in foes if area & set(cells(g))]
+                if PLAN5 and area & getattr(self, "clouds", set()):
+                    continue           # Plan 5: no two clouds overlapping
+                inside = [g for g in foes if area & set(cells(g)) and not (PLAN5 and helpless(g))]
                 k = len(inside)
                 kf = sum(1 for g in inside if _focus(g) and not helpless(g))
                 if k >= 2 or kf:
@@ -638,6 +659,8 @@ class Tactics:
             self.moved.discard(member)
             self.move = None            # Player 35: a MOVE that ended the turn (a blow struck by a step)
             self.last_member = member
+            self.mturns = getattr(self, "mturns", 0) + 1     # Player 43: member turns this fight (Plan 5's holds)
+            self.stepped = set()
         items = b.split()
         if QUICKKINDS and "QUICK" in items:
             # Player 42 (Plan 2's bands: 7:26's stirge swarms took ~6 min each by hand for ~230 XP a member): when every
@@ -693,6 +716,10 @@ class Tactics:
                 return "u", "tactics: %s USEs a scroll (%s)" % (member, left[0])
         if "CAST" in items:
             o = self.choose(member, p)
+            if o and PLAN5 and o in DELAYED and "MOVE" in items and member not in getattr(self, "stepped", set()):
+                k = self._step_back(member, o, p)
+                if k:
+                    return k
             if o:
                 self.order = [member, o, 0]
                 self.scan = None
@@ -887,6 +914,36 @@ class Tactics:
         self.mt_after = mt["member"]
         return MOVETEST, "tactics: MOVETEST: %s" % MOVETEST
 
+    def _step_back(self, member, spell, p):
+        """Player 43 (Plan 5): a caster next to a standing foe steps back one square (no standing foe next to the new
+        square; no wall, cloud or figure on it), then casts from there (the menu comes back after MOVE's Enter)."""
+        figs, party, foes = self._sides(p)
+        me = next((f for f in party if f["name"] == member), None)
+        if me is None:
+            return None
+        standing = [f for f in foes if not helpless(f)]
+        if not any(_dist(me, f) <= 1 for f in standing):
+            return None
+        self.stepped = getattr(self, "stepped", set()) | {member}
+        taken = {c for f in figs if (_up(f) or f["n"] <= self.party_n) and f is not me for c in cells(f)}
+        taken |= walls(p.g.mem) | getattr(self, "clouds", set())
+        best = None
+        for k, dx, dy in DIRS:
+            q = (me["x"] + dx, me["y"] + dy)
+            if q in taken or not (0 <= q[0] < 50 and 0 <= q[1] < 25):
+                continue
+            if any(_dist({"x": q[0], "y": q[1]}, f) <= 1 for f in standing):
+                continue
+            d = min(_dist({"x": q[0], "y": q[1]}, f) for f in standing)
+            if best is None or d > best[0]:
+                best = (d, k, q)
+        if best is None:
+            self.log("TACTICS %s can't step back before %s (no free square out of reach)" % (member, spell))
+            return None
+        self.move = {"member": member, "stepback": best[2], "key": best[1], "tries": 0}
+        self.log("TACTICS %s steps back to %d,%d before %s" % (member, best[2][0], best[2][1], spell))
+        return "m", "tactics: %s MOVEs back before %s" % (member, spell)
+
     def _move_step(self, st, p):
         """Player 35: one MOVE key toward the goal figure. In the original's MOVE/ATTACK a step into an enemy attacks
         it, so next to an enemy's corner cell (the goal's, or any enemy's: walking off would give it a free blow) the
@@ -898,6 +955,12 @@ class Tactics:
         mv = self.move
         figs, party, foes = self._sides(p)
         me = next((f for f in party if f["name"] == mv["member"]), None)
+        if mv.get("stepback"):
+            mv["tries"] += 1
+            if me is None or (me["x"], me["y"]) == mv["stepback"] or mv["tries"] > 1:
+                self.move = None
+                return "enter", "tactics: stepped back (or refused): Enter"
+            return mv["key"], "tactics: %s steps %s back" % (mv["member"], mv["key"])
         goal = next((f for f in foes if f["n"] == mv["goal"]), None)
         if mv.get("square"):
             # Player 38: onto a fallen focus figure's square (OP_HOLDDOWN): past the others, then stop there
@@ -1039,6 +1102,9 @@ class Tactics:
                 if not PLAN4:
                     cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
                 cand.sort(key=lambda c: (not _focus(c[1]), not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
+            elif PLAN5 and member.upper() in ADVANCE:
+                # Plan 5: the fighters strike the guards still standing (the others slay the helpless)
+                cand.sort(key=lambda c: (helpless(c[1]), c[1]["hp"]))
             else:
                 cand.sort(key=lambda c: (not _focus(c[1]), not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]),
                                          c[1]["hp"]))
@@ -1178,7 +1244,7 @@ class Tactics:
             if t is None:      # on the caster (Prayer, Bless): the aim opens on the caster; else a party member
                 t = [caster] + [f["n"] for f in party if f["n"] != caster]
             near = [f["n"] for f in sorted(foes, key=lambda f: _dist(me, f))] if me else [f["n"] for f in foes]
-            if spell not in ("PRAYER", "BLESS", "HASTE"):
+            if spell not in ("PRAYER", "BLESS", "HASTE") and not (PLAN5 and spell == "HOLD PERSON"):
                 # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]
@@ -1319,6 +1385,11 @@ class Tactics:
         if os.environ.get("OP_AIMDEBUG"):
             self.log("AIMDEBUG manual at %s on figure %d %r panel %r bottom %r" % (sc["cursor"], t["n"], t["name"], name,
                                                                                   b))
+        if name and name not in {f["name"] for f in figs} and sc.get("repoll", 0) < 3:
+            # (p43b2: the panel read '\\' on BRAM's cell: read mid-redraw) CENTER redraws, the cursor stays
+            sc["repoll"] = sc.get("repoll", 0) + 1
+            return "c", "tactics: MANUAL: the panel unread (%r): CENTER and read again" % name
+        sc["repoll"] = 0
         if name and name != t["name"]:
             self.log("TACTICS MANUAL count off: the panel shows %r, figure %d is %r: the scan takes over" % (
                 name, t["n"], t["name"]))
@@ -1361,6 +1432,8 @@ class Tactics:
         sc["scan0"], sc["ok"] = sc["steps"], set()      # Player 35: the aim is back on the caster: scan again
         if spell == "HOLD PERSON":
             self.held.add(target)
+            self.held_at = getattr(self, "held_at", {})
+            self.held_at[target] = getattr(self, "mturns", 0)
         if spell == "SLEEP":
             self.slept[target] = self.slept.get(target, 0) + 1
         if spell == "STINKING CLOUD":

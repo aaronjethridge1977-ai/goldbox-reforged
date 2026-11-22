@@ -1141,6 +1141,20 @@ class BandsStep:
         return True, None, ""
 
 
+class LightLoot:
+    """Player 43: `lightloot on|off` (loot.LIGHT: Plan 5's weightless take before Tyranthraxus)."""
+    def __init__(self, on):
+        self.on = on
+
+    def __repr__(self):
+        return "lightloot %s" % ("on" if self.on else "off")
+
+    def next(self, p):
+        loot.LIGHT["on"] = self.on
+        p.note("take", "light loot %s" % ("on" if self.on else "off"))
+        return True, None, ""
+
+
 class XpGoal:
     """Player 43: `xpgoal <NAME>=<xp>,... <checkpoint>`: once every listed member has at least that XP (the record's
     0xAC), the plan skips ahead to just before the named checkpoint (a band loop ends itself at the levels' goal)."""
@@ -1464,7 +1478,7 @@ class Plan:
         if kind == "treasure":
             if self.defaults.get("treasure") == "stop":     # Player 4: lab probes (`default treasure stop`)
                 raise_stop(p, "treasure: stop asked by the plan")
-            if not p.shared and "SHARE" in scr["bottom"].split():
+            if not p.shared and "SHARE" in scr["bottom"].split() and not loot.LIGHT["on"]:
                 p.shared = True
                 return "s", "treasure: SHARE the coins"
             pk = taking and "TAKE" in scr["bottom"].split() and not p.take.get("done") and self._pick(p)
@@ -2401,6 +2415,8 @@ def load(path):
             pl.goals[-1].look = getattr(pl, "look", False)
         elif cmd == "step":
             pl.goals.append(Step(rest.strip().upper()))
+        elif cmd == "lightloot":
+            pl.goals.append(LightLoot(rest.strip() == "on"))
         elif cmd == "xpgoal":
             pl.goals.append(XpGoal(rest))
         elif cmd == "checkpoint":

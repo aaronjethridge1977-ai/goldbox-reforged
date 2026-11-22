@@ -158,6 +158,18 @@ class Player:
             self.fights += 1
             self.note("fight", "fight %d ended at %d,%d %s, all on QUICK (no menu seen)" % ((self.fights,) + self.where()))
         if scr["kind"] in ("walking", "treasure", "continue"):   # Player 2: waves fought back to back
+            if self.in_fight and os.environ.get("OP_FIGHTDEATH") == "1":
+                # Player 43 (Plan 5's (c), decision 2026-11-20 10:22: a death in the finale's guards' fight is a
+                # reload, not a march into Tyranthraxus short-handed; the guards, the vote and he come in one step,
+                # with no walking screen between): a member dead at a fight's end stops the run as a reload
+                ms = plans.members(self.g.mem)
+                self.note("fight", "fight %d over: %s" % (self.fights, ", ".join(
+                    "%s %d/%d%s" % (m["name"], m["hp"], m["max"], "" if m["status"] < 5 else " status %d" % m["status"])
+                    for m in ms)))
+                dead = [m["name"] for m in ms if m["status"] >= 6]
+                if dead:
+                    raise Stop("RELOAD: %s dead in fight %d (a death in the fight is a reload)" % (", ".join(dead),
+                                                                                                    self.fights))
             self.in_fight = False
             self.g.magic_sent = False      # Player 15: OP_MAGIC: the next fight gets its Alt-M
             if self.g.control_sent:
