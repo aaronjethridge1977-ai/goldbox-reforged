@@ -202,6 +202,7 @@ func _ready() -> void:
 	_party_menu.visible = false
 	_party_menu.closed.connect(_on_party_menu_closed)
 	_party_menu.save_requested.connect(_save_original)
+	_party_menu.load_requested.connect(_on_party_menu_load)
 	add_child(_party_menu)
 	_temple = TempleScreen.new()
 	_temple.visible = false
@@ -2812,6 +2813,17 @@ func _run_program() -> void:
 		_:
 			_vm.close_program()
 			_after_vm()
+
+
+## The hall's LOAD SAVED GAME (an empty party; main chat 103, DOSBox at 3:11, check 384): the slot loads straight into
+## the adventure; a letter with no save leaves the hall open.
+func _on_party_menu_load(letter: String) -> void:
+	_starting_party = false
+	_party_menu.visible = false
+	if not load_original_save(letter):
+		_party_menu.visible = true
+		return
+	_show()
 
 
 func _on_party_menu_closed() -> void:

@@ -29,6 +29,8 @@ extends Control
 
 signal closed
 signal save_requested(letter: String)
+## LOAD SAVED GAME with an empty party (main chat 103): the game loads the slot and closes the hall.
+signal load_requested(letter: String)
 ## Set by the game while handling save_requested when the save couldn't be written.
 var save_failed := false
 
@@ -94,6 +96,10 @@ func _build() -> void:
 
 
 func _items() -> Array:
+	# An empty party (every member removed, or PARTY CREATION's start): the original's hall offers only these four
+	# (main chat 103, DOSBox at 3:11 after REMOVE x6; check 384).
+	if party.is_empty():
+		return ["CREATE NEW CHARACTER", "ADD CHARACTER TO PARTY", "LOAD SAVED GAME", "EXIT TO DOS"]
 	var out := ["CREATE NEW CHARACTER", "DROP CHARACTER", "MODIFY CHARACTER"]
 	if hall_mask > 0:
 		out.append("TRAIN CHARACTER")
@@ -118,6 +124,8 @@ func _frame() -> void:
 
 
 func _draw_party() -> void:
+	if party.is_empty():          # the original draws no heading over an empty party (main chat 103)
+		return
 	_scr.text(1, 2, "NAME", GameScreen.WHITE)
 	_scr.text(33, 2, "AC", GameScreen.WHITE)
 	_scr.text(37, 2, "HP", GameScreen.WHITE)
@@ -203,6 +211,9 @@ func _refresh() -> void:
 					_scr.menu_line(24, YES_NO, 12, _pick)
 				"save":
 					_scr.text(0, 24, "SAVE WHICH GAME:", MAGENTA)
+					_scr.menu_line(24, LETTERS, 17, -1)
+				"load":
+					_scr.text(0, 24, "LOAD WHICH GAME:", MAGENTA)
 					_scr.menu_line(24, LETTERS, 17, -1)
 	_scr.update()
 
@@ -368,6 +379,14 @@ func _unhandled_input(event: InputEvent) -> void:
 					"quit": get_tree().quit()
 			elif no:
 				_show_menu()
+		"load":
+			if esc:
+				_show_menu()
+				return
+			for l in LETTERS:
+				if String(l).unicode_at(0) == key:
+					load_requested.emit(l)
+					return
 		"save":
 			if esc:
 				_show_menu()
@@ -409,7 +428,8 @@ func _function(item: String) -> void:
 			if game_path != "":
 				_create()
 		"DROP CHARACTER":
-			if party.size() > 1:
+			# The original drops the last one too (main chat 103, DOSBox at 3:11: REMOVE x5, DROP, YES, YES: empty).
+			if not party.is_empty():
 				_pick = 1
 				_mode = "confirm_drop"
 				_refresh()
@@ -428,12 +448,16 @@ func _function(item: String) -> void:
 				_mode = "add"
 				_refresh()
 		"REMOVE CHARACTER FROM PARTY":
-			if party.size() > 1:
+			# The original removes the last one too (main chat 103, DOSBox at 3:11: REMOVE x6 empties the party).
+			if not party.is_empty():
 				roster.append(party[_sel])
 				party.remove_at(_sel)
 				# Chat 88 (DOSBox): as after DROP, the member before the removed one is lit.
-				_sel = clampi(_sel - 1, 0, party.size() - 1)
+				_sel = clampi(_sel - 1, 0, maxi(party.size() - 1, 0))
 				_show_menu()
+		"LOAD SAVED GAME":
+			_mode = "load"
+			_refresh()
 		"SAVE CURRENT GAME":
 			if SaveListScreen.on() and game_path != "":
 				_open_save_list()
