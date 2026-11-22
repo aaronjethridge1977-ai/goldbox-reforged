@@ -43,6 +43,8 @@ const COIN_VALUE := [1, 10, 100, 200, 1000]
 const RACE_ELF := 2
 ## Item types an elf gets +1 to hit with: long and short swords and bows.
 const ELF_WEAPONS := [36, 37, 41, 42, 43, 44]
+## The polearms the item table leaves without the melee bit (0x04): the Bill-Guisarme and the Guisarme-Voulge (bug #22).
+const STRENGTHLESS_POLEARMS := [5, 17]
 
 var name := ""
 var race_id := 0
@@ -936,7 +938,11 @@ func recalculate(types: ItemTypes) -> void:
 		damage_large = types.damage(t, true)
 		if f & ItemTypes.FLAG_DEX_TO_HIT:
 			hit_60 += dex_missile_bonus()
-		if f & ItemTypes.FLAG_MELEE:
+		# Bug #22 (Combat Chat 47, Jeremy's P99; the Lead, 2026-11-22 18:16): the game's item table leaves the melee
+		# bit off two polearms, the Bill-Guisarme (type 5, flags 0x01) and the Guisarme-Voulge (type 17, 0x00), so
+		# the original adds no STR with them (DOSBox: a fighter with 18/00 and a Bill-Guisarme +2, THAC0 16, 2D4+2).
+		# With ORIGINAL'S BUGS off they get STR like every other melee weapon.
+		if f & ItemTypes.FLAG_MELEE or (t in STRENGTHLESS_POLEARMS and not OriginalBugs.on()):
 			hit_60 += strength_hit_bonus()
 			damage[2] += strength_damage_bonus()
 			damage_large[2] += strength_damage_bonus()
