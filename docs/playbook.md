@@ -966,3 +966,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- A fighter's sweep against weak foes (under 1 HD, one blow per level) comes only from his first blow of the round: any blow he strikes clears the sweep for the rest of the round; and Haste cast in the middle of a round doubles a QUICK or computer-run figure's blows at its next turn if it hasn't struck yet that round. *code* (GAME.OVR 0x13FCC, 0xC3C7 -> 0x1351E; Combat Chat 44, the throne room with MAGIC on)
