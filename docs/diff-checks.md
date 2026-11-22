@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW (checks 393-398)
+## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
 - **393 (1:18, check 67's rest fight with the hired SWORDSMAN; main path, matched at once on the state):** check 373's
   start jumped to 12,8 E (`jump.py ... 12 8 E 1 18`), ENCAMP REST eight hours, the orcs, QUICK, CONTINUE BATTLE NO:
@@ -201,8 +201,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   HALVE JOIN ID EXIT. 397: camp VIEW, T, ITEMS, End (LONG BOW), T, DROP, YES; 398: the arms shop (`data/c103/s383`),
   the same with S. Ours traded and sold. Ready: `npc_trade.py`. **The sheet's "(NPC)"** (0x210CC: after the name,
   column length + 3, light green; screen only): ready `npc_tag.py`.
+- **399, 400 (3:11's hall with the hired SWORDSMAN; differences, main path, Combat's party_menu.gd):** `data/c103/s387`,
+  REMOVE PHINEAS (399) or SWORDSMAN (400), ADD him back, BEGIN ADVENTURING: GAME.OVR 0x1CB26-0x1CBF5 counts player
+  characters (0x84 below 0x80) apart from the party: a player character joins while fewer than six, an NPC while fewer
+  than eight in all, and the list closes at six player characters or eight in all. Ours counted SWORDSMAN among six and
+  refused both. In `add_close.py`.
 - Breaks: 393 SWORDSMAN's silver, 394 THRENDER's gold, 395 cell 0x4A00 and ZED's HP, 396 RHIANNON's HP, 397-398
-  SWORDSMAN's HP and starts with his 0x84 = 0 (`brk397s`, `brk398s`). Lab `~/gbr/lab/data/c104/chk393`-`chk398`.
+  SWORDSMAN's HP, 399-400 THRENDER's HP, and starts with SWORDSMAN's 0x84 = 0 (`brk397s`-`brk400s`). Lab `~/gbr/lab/data/c104/chk393`-`chk400`.
 
 ## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-392)
 
