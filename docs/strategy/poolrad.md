@@ -16,6 +16,12 @@ Lead folds them in daily.
 - **The cluebook's one marker:** a party that can clear the Slums' troll-and-ogre room can handle the rest. *book*
 - **Races:** humans can't multi-class in Pool, so let humans be the single-class characters and demi-humans the
   multi-classes; a half-elf cleric stops at level 5. *book* (Cluebook, Manual) + *Jeremy*
+- **Creating a party: no racial ability adjustments, and a young character loses 1 WIS.** The original's roll never adds
+  the race's adjustments (a dwarf gets no CON +1, an elf no DEX +1: GAME.OVR 0x1ABB5 tests a loop counter, not the race;
+  bug 20), and Wisdom loses 1 at or below the race's first age mark (a human of 20 or less; dwarves 50, elves 175,
+  half-elves 40, halflings 33, gnomes 90). Ability rolls are the best of six 3d6 each, so a reroll (NO at KEEP THIS
+  CHARACTER?) is cheap. MODIFY can still set every ability within the race's and class's limits before the character's
+  first experience. *code* (main chat 100, checks 344-350)
 
 ## 2. The route
 
@@ -77,7 +83,7 @@ CEDRIC cleric, ELWEN C/F/MU, LIRA F/MU, DORN F/T)
 8. **Nomads, Bane:** the feast, lodging, the kobold waves (STAY, DESTROY), the shaman's reward. Bane: goblin slaves
    KILL; hay beds SEARCH; the trap door at 10,9 needs a find roll.
 9. **Kovel Mansion:** traps AVOID (or clear them if the loot is worth it); locks PICK once, then BREAK.
-10. **The kobold caves:** enter by the large wyvern cave and rest there; free Princess Fatima (she joins); tell the
+10. **The kobold caves:** enter by the large wyvern cave and rest there (only while the wyvern lives: section 3); free Princess Fatima (she joins); tell the
     efreeti the truth (*book*). The throne room: section 3.
 11. **Sorcerer's Island and the pyramid:** round the poisoned river's west side to the rowboat (6,14); password NOKNOK;
     the fountain: MOVE QUICKLY AWAY; the dial on BLUE; MOVE ON at the rocks; cures only in 7:22; the ruined castle is
@@ -208,7 +214,10 @@ files); results *seen* unless marked.
   minotaurs, thri-kreen, and the beasts that can't be talked to) when the party is rested with its spells; flee them
   when it isn't and movement allows. The spokesman: the member with the best Charisma, lit before PARLAY.
 - Results (all with COMBAT, the route's old rule): p25a3 destroyed by 51 kobolds at 7:26 5,21, p25l2 destroyed at 7:26
-  12,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen*
+  12,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen* Under the rule: a cheap band met with a sure manner left
+  at once on PARLAY ABUSIVE (kobolds, 7:26 12,23); a band that SURPRISED the party took FLEE straight into a fight
+  (lizard men, 8:27 6,18). *seen* (Player 39, p39f9, p39f10) 7:26's driders that surprise a level-5/6 party destroy it
+  in their first round (two of five band cycles, p42w3/p42w4: 300 HP to ~35; no FLEE when surprised). *seen* (Player 42)
 
 **Valjevo Castle (5:3-5:5)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
 - **The barracks giants (5:4 9,1):** 4 fire giants (59 HP, AC 3, THAC0 9, 3,644 experience each: 14,576), immune to
@@ -238,34 +247,67 @@ files); results *seen* unless marked.
 **The finale (5:7)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
 - **Genheeris** (the robed man at the desk, 2,5): agree to his deal and he **joins** (a 7th-level magic-user, 22 HP,
   carrying a **Wand of Lightning Bolt with 56 charges** (MON5ITM 88: byte 60; the 10 is its plus): the finale's wand),
-  unless the party already has 8. *code* (ECL5 block 7, NPC_ADD 88; charges Gold Box Guide 4)
-- **The 12 guards (3,8):** 8th-level fighters (87 HP each, about 1,044 in all; 1,370 experience each); no PARLAY;
-  **FLEE gets away** with the party's slowest at movement 9 (to 3,6; come back later). They are human: **Hold Person and
-  Stinking Cloud take them**, and a held guard dies to one blow (a fighter 8 fails the save about 60%; a cast picks up to
-  three, about 1.8 held; CEDRIC's and ELWEN's 2nd-level slots and the magic-user Hold Person, about 6 casts, hold about
-  10 of 12); the wands and the clouds for the rest; Fireball hardly matters against 87 HP. *code* + *Jeremy*
-- **Tyranthraxus follows at once, no camp between** (80 HP, AC 0, THAC0 5, two attacks, a lightning breath, fear). In
-  the original he resists every spell (the original's bug #7): only blows count. So **Haste, Prayer and Bless are cast
-  in the guards' last rounds**, once most are held, to be fresh for him (Haste lasts 3 + level rounds: cast in camp
-  before the guards it may run out). **An effect carries into the next fight with the rounds it has left** (a fight's
-  end clears nothing; Combat Chat 36, *code*), and **5:7's script passes no time between the two fights** (ECL5 block 7,
-  0xA614 to 0xA802: flag tests, his speech with two PRESS BUTTON pauses, the vote, the next fight's setup cells; no
-  REST, clock step or effect clear; *code*, Gold Box Guide 5). The guards' experience and treasure screens come at
-  their fight's end, before his speech, so the rings are taken then. **The guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his
-  fight: USE, End to the ring, R, EXIT; **its AC counts at once and the member's turn is kept** (*seen*: Combat Chat 38
-  in DOSBox, a Ring of Protection +2 readied in a fight, AC 4 to 2; folded by Gold Box Guide 6). **Only the better ring counts**, and
+  unless the party already has 8. *code* (ECL5 block 7, NPC_ADD 88; charges Gold Box Guide 4) **He is played by the
+  computer:** no menu and no orders for him; he carries Sleep, Magic Missile x3, Stinking Cloud x2 and Fireball x2 and
+  casts them himself. *seen* (Gold Box Player 46, p46k3)
+- **The 12 guards (3,8):** 8th-level fighters (87 HP each, about 1,044 in all; 1,370 experience each); no PARLAY; **FLEE
+  gets away** with the party's slowest at movement 9 (to 3,6; come back later). They are human: **Hold Person and
+  Stinking Cloud take them**, and a held guard dies to one blow (a fighter 8 fails the save about 60%; a cast picks up
+  to three, about 1.8 held; CEDRIC's and ELWEN's 2nd-level slots and the magic-user Hold Person, about 6 casts, hold
+  about 10 of 12); the wands and the clouds for the rest; Fireball hardly matters against 87 HP. *code* + *Jeremy*
+  **They come at distance 0** with a 2-cell doorway (24-25,10) behind the party's back row: fight through it, two guards
+  at a time. *code* (Gold Box Guide 8; stuck-fights.md section 5)
+- **Tyranthraxus follows at once, no camp between** (80 HP, AC 0, THAC0 5, three attacks (corrected 2026-11-22 from two:
+  Combat Chat 42), a lightning breath, fear). In the original he resists every spell (the original's bug #7): only blows
+  count. "STARTS TO COUGH" in his Stinking Cloud prints before his resistance roll, so it doesn't mean the cloud took:
+  spend the spells on the guards (*code* / *seen*: Combat Chat 42, regress orig_B_tyr1 draw for draw, GAME.OVR 0x2BAA1).
+  So **Haste, Prayer and Bless are cast in the guards' last rounds**, once most are held, to be fresh for him (Haste
+  lasts 3 + level rounds: cast in camp before the guards it may run out). **An effect carries into the next fight with
+  the rounds it has left** (a fight's end clears nothing; Combat Chat 36, *code*), and **5:7's script passes no time
+  between the two fights** (ECL5 block 7, 0xA614 to 0xA802: flag tests, his speech with two PRESS BUTTON pauses, the
+  vote, the next fight's setup cells; no REST, clock step or effect clear; *code*, Gold Box Guide 5). The guards'
+  experience and treasure screens come at their fight's end, before his speech, so the rings are taken then. **The
+  guards' 12 Rings of Protection +3** come on their pile: TAKE them and READY one on every member in his fight: USE, End
+  to the ring, R, EXIT; **its AC counts at once and the member's turn is kept** (*seen*: Combat Chat 38 in DOSBox, a
+  Ring of Protection +2 readied in a fight, AC 4 to 2; folded by Gold Box Guide 6). **Only the better ring counts**, and
   **magic body armour cancels a ring's AC**; its +3 to saves counts either way (Combat Chat 36: START.EXE 0xE22). So
   every member gains +3 against his fear and breath, and those **without magic body armour** (DORN in the Bracers, the
   magic-users, plain armour) also gain AC 3: Tyranthraxus (THAC0 5) hits AC -1 75% of the time and AC -4 60%. Armour
   stays as it is (*Jeremy*, 2026-11-20 20:14): plain plate with a ring would be AC 1 better than Plate Mail +2, but the
-  rings come only with the guards. **The vote:**
-  everyone ATTACK (a JOIN vote makes that member his, as do evil-aligned NPCs; Genheeris doesn't vote). *code*
+  rings come only with the guards. **The vote:** everyone ATTACK (a JOIN vote makes that member his, as do evil-aligned
+  NPCs; Genheeris doesn't vote). *code*
+- **Tyranthraxus can wait, on paper:** win the guards, run from his fight (back to 3,6; the guards stay beaten: 0x4A6D
+  bit 4), camp and ready the rings, then come back to him alone. *code* (Gold Box Guide 8; stuck-fights.md section 5,
+  Plan 3) **In play the flight failed:** it needs movement 9+ (at 3 the party fell on the way to the edge: p42f1,
+  p42f7); leaving the pile's coins (one POOL there takes every member's coins but an NPC's) lifted the party from
+  movement 3 to 12, but he acts first, his opening turn can drop two members and the edge is 11-13 squares off: 3 of 3
+  failed. *seen* (Player 42; Player 43, p43f1-f6)
+- **The finale's loadout, as Jeremy would have gone in** (the worked example for the loadout review, guide section 4;
+  docs/strategy/player-capability.md section 3): cleric level 1 all Cure Light Wounds; magic-user level 1 Charm Person;
+  Stinking Cloud and Hold Person; magic-user level 3 a Haste per caster (Tyranthraxus) and the rest Fireball or
+  Lightning Bolt (the guards); cleric level 3 all Prayer. The Potion of Giant Strength on the best fighter for
+  Tyranthraxus (blows alone), the Potion of Speed (5:3), the Necklace of Missiles and the Javelin of Lightning on the
+  guards, healing potions with the front line. *Jeremy* (Gold Box Guide 12, 2026-11-21 20:56-21:01)
 - **Rings of Protection before the finale** (main's gear map): the Slums' hobgoblins' valuables (+1, 2:20 0,2-0,3); the
   east tower's level 6 magic-user at Stojanow (+2, 2:9 11,7); the graveyard's level 6 magic-user (+2, 4:10 8,9);
   the false Tyranthraxus in 5:5 (+3, 3,1; only if fought: the cluebook parleys past him). The city watch's (3:0) and City Hall's (3:8) +3s come only from fighting
   the city. *code*
 - Results: guards 1 win in 5 at levels 4-6 (Player 29), Tyranthraxus 0 of 7 after them; main's bot (7 members,
   levels 6-7) beat him with one death. *seen*
+- **Plan 5 on the guards** (holds three a cast from the clerics, guards in contact first; clouds not overlapping;
+  fighters on the standing, the rest on the helpless): won 5 of 6, 4 with nobody dead; their pile is twelve Rings +3
+  (weight 0). *seen* (Player 43, p43f1-f6) Under the chat's key turns (5 tries from the ready save): the guards fell
+  with none dead in 4 of 5 (round 1 the clouds on those touching the fighters, holds on those touching LIRA and DORN,
+  then holds on the free and a blow each on the held); the one loss came from Hold Person saves, not from the start
+  positions. *seen* (Player 47, stuck-fights.md section 5)
+- **Tyranthraxus won by blows (Plan 2 chain):** Hold Person and clouds on the guards; once no guard stands, CONTINUE
+  BATTLE for Haste, Prayer, Bless, the Shields and the Speed and Giant Strength potions, then stop (idle cure rounds run
+  Haste down); READY a guard's Ring of Protection +3 on everyone in his fight. Won twice in two tries (p45i3, p45i5),
+  two members dead to his breath each time. *seen* (Gold Box Player 45) **His breath killed the members standing at him
+  and two squares off** (BRAM, CEDRIC, ELWEN in p46k3); LIRA, walked out through the wall gap to 23,8 off his lines,
+  lived: keep anyone low or not striking well away from him. *seen* (Gold Box Player 46, p46k3) Never send ELWEN to
+  strike him (she died both times); his first breath may come before any menu, and the wins were ARN's and BRAM's hasted
+  blows. *seen* (Player 47)
 
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
@@ -283,11 +325,17 @@ files); results *seen* unless marked.
 - **The throne room (event 9, 4,3):** three fights with no camp between: the horde (56 figures, **4 trolls Sleep
   doesn't touch**), the ballista, the envoys. *code* + *seen*
   - Works: enter by the large wyvern cave and rest there; free Princess Fatima (she joins and fights); tell the efreeti
-    the truth (he helps in a later fight); between waves, Continue Combat for a round or two to heal. *book*
+    the truth (he helps in a later fight); between waves, Continue Combat for a round or two to heal. *book* **The camp
+    holds only while the party came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0)**, the
+    cluebook's "rest in the wyvern cave": once the wyvern is woken (the rubble slope) or killed, no camp before the
+    throne is beaten, so spells for the throne are memorized before the caves. *code* (ECL8 block 13 0xB428, 0xB388;
+    ECL8 block 27 0x9DB5; Gold Box Guide 6) + *seen* (Player 39: "8:13 allows no camp")
   - Failed: every try (Players 2, 7, 9, 23, 28, 30, 31; main's bot seven times). Sleep and blows at sleeping kobolds
     cleared 15-35 kobolds, then the trolls finished the party; walking in cost HP and spells (123-193 of ~197 HP at the
     door); a camp at the door draws kobolds bombarding the party with rocks. The cluebook route (wyvern cave, Fatima,
-    the efreeti) is untried.
+    the efreeti) is untried. Player 39 (p39a1-c2): Haste in round 1 took 5 figures within 2 of its point (1-2 casters
+    always among them) and still lost 5 of 5, the killed trolls rising at full HP while the fighters were spread over
+    the kobolds. *seen* (stuck-fights.md section 3)
   - (Gold Box Guide 2, 2026-11-20) **The waves** (ECL8 block 13): 4 trolls, 35 kobolds, 11 leaders; a ballista volley,
     then 5 wild boars, 45 kobolds, 8 leaders; then 2 trolls, 2 boars, 8 kobolds and 2 envoys (F6/MU6, 45 HP). The
     trolls do the killing (kobolds hit AC -1 only on a 20): at every wipe they stood at 25-36 HP while the blows went
@@ -310,6 +358,29 @@ files); results *seen* unless marked.
     trolls rise on their own corner (top-left) square unless a standing member is on it; one on the second cell
     doesn't stop it, and the troll rises once the member on it falls. *seen* (Player 38, p38e1, p38e3; Player 40,
     p40t1-t3)
+  - **Where to stand** (*code* + *players*, Gold Box Guide 8; stuck-fights.md section 3): the waves start at distance 0,
+    on the party's square; event 9 lies on 4,3, 5,3 and 6,3, and 6,3 puts the east wall on the party's right with all
+    four trolls on the left (our placement code on GEO8 13). The ballista is script damage from sealed cells (7 x 2d6,
+    0xA1A4): cure to 20+ HP before wave 1 ends. The drunk kobold's escort (12,9 WAKE IT, YES) skips 10,9's and 11,9's
+    traps.
+  - **Wave 3's two trolls are the script's own, not wave 1's survivors** (ECL8 block 13: 0xA286 CLEAR_MON, then 0xA287
+    LOAD_MON 31, 2 with 2 boars, 8 kobolds and the 2 envoys; ours the same, 2 trolls in all 58 wave-3 fields): burning
+    every troll in wave 1 doesn't remove them, so keep fire (a Fireball, Burning Hands) for wave 3 whatever wave 1
+    burned. *code* (main chat 99; the Player's `p44/ecl8_b13.txt`) p44g1 met them at 23 and 30 HP with boars, kobolds
+    and ENVOYs at 45 / 34 HP after waves 1 and 2 were won; five members went down in about three rounds. *seen* (Gold
+    Box Player 44, p44g1) (corrected 2026-11-22: Player 44 read them as wave 1's unburnt trolls coming back)
+  - **Plan runs in ours from 6,3** (Plan 2 chain's party, Player 44's door save, 20 seeds; ours, not the original):
+    round-1 Fireballs on the trolls also burn our own front line (the trolls start in contact). Wave 1 alone: Plan 2
+    (Prayer, two Fireballs, the scroll) won 20 of 20 but lost 203 HP (5 with nobody dead, PRINCESS FATIMA dead in 11);
+    MAGIC-ON QUICK won 20 of 20 for 138 HP (5 with nobody dead; 13 rounds against 5); Haste for one Fireball no better
+    (201 HP). *seen* (main chat 98, `~/gbr/lab/data/c98/plans_throne44_main.log`) All three waves: members down at wave
+    1's end stay out of waves 2 and 3 (no camp, only the ballista between), so wave 3 is fought by whoever stood after
+    wave 1. Plan 2 then QUICK with MAGIC ON won all three 4 of 20; MAGIC-ON QUICK throughout 10 of 20 (140 HP lost in
+    wave 1 against 203); a round-1 Fireball in wave 3 (trolls in contact again) 0 of 19. **Spend less in wave 1, cure
+    before it ends.** *seen* (main chat 99, `~/gbr/lab/data/c99/plans_throne44_w3_waves.txt`)
+  - **Leaving the caves with members at 0 HP:** no rest in 8:13 (its rocks hit members at random and cut every rest
+    short); round 8,12's one-time deadfall (no thief awake: 20 kobolds) by 5,7, 3,7, 4,10. *seen* + *code* (Gold Box
+    Player 45; ECL8 block 13)
 
 **Valhingen Graveyard (4:10)** (Gold Box Guide 2 with Jeremy, 2026-11-20)
 - **The two spectres at the brass doors (event 23, 9,1) are optional:** they guard only the knight's tomb (8,2), the one
@@ -334,12 +405,13 @@ files); results *seen* unless marked.
   only), move 30 (on the party in round 1), magic weapons only; immune to Sleep, charm, Hold, poison and cold; about
   2,030 experience each. *code* **TURN:** a spectre needs a d20 of 20 at cleric 5, 16 at cleric 6 (Pool's cap), so
   never reliable here; they are turned, never destroyed. *code* (the turning table, DS:0x447)
-- **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed
-  (every try drained). *seen* **Player 37 won** (p37i1: both dead, no drain, nobody hurt): when the clerics' TURN
-  works the spectres flee to the far side and don't fight back, and hasted fighters walk after them and kill them;
-  p37g1, where the party waited, lost four members' levels when they came back. LIRA's scroll Fireball there did 6d6
-  (a scroll casts at level 6). The Haste and Restorations came from the Kovel scroll cabinet (3:14 3,13) and the
-  marble chest (7,6, SEARCH on). *seen* (Player 37, p37g1, p37i1, p37a1, p37d1)
+- **Results:** Player 32, 0 of 18 (BRAM's +3 vs undead sword not readied); Player 33, 0 of 5 trained and buffed (every
+  try drained). *seen* **Player 37 won** (p37i1: both dead, no drain, nobody hurt): when the clerics' TURN works the
+  spectres flee to the far side and don't fight back, and hasted fighters walk after them and kill them; p37g1, where
+  the party waited, lost four members' levels when they came back. LIRA's scroll Fireball there did 6d6 (a scroll casts
+  at level 6). The Haste and Restorations came from the Kovel scroll cabinet (3:14 3,13) and the marble chest (7,6,
+  SEARCH on). *seen* (Player 37, p37g1, p37i1, p37a1, p37d1) So: TURN, then chase them with the advance fighters while
+  Haste lasts; don't guard. *seen* (Player 37; stuck-fights.md section 4, Gold Box Guide 6)
 - **Still open in the Player's run** (Gold Box Guide 3, 2026-11-20): at `p33f3_mopup1`, the save the current chain
   grew from, 0x4A41 = 0 (the vampire never fought), 0x4A18 = 0 (9,1 not beaten), 0x4AF8 = 0 (the tomb not opened);
   only the coffin sanctified (0x4A43 = 251). So the plan starts from the current chain (`p35e2_mopup2`, LIRA at MU5
@@ -417,9 +489,11 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 **Valjevo Castle**
 - **The alarm:** while it holds, patrols interrupt camps and wander at 17% a step; camps were interrupted three times
   and wiped the party. Use memorized cures and rest at the inn. *seen* (Players 3, 27)
-- Under the alarm, each step off a "safe" square (info bit 64) may draw a patrol; resting on one draws none. *code*
-  (ECL 5:4 0x9AB5, 0x9B32; untried) Safe rests during an alarm: the smokehouse, the officers' quarters, the armoury,
-  the old building, the maze towers. *book*
+- Under the alarm, each step off a "safe" square (info bit 64) may draw a patrol; resting on one draws none. *code* (ECL
+  5:4 0x9AB5, 0x9B32; untried) Safe rests during an alarm: the smokehouse, the officers' quarters, the armoury, the old
+  building, the maze towers. *book* Two safe camps in the outer court (info bit 64): the NE room (13-15,0-3, behind
+  14,3's five giant snakes) and the SW room (9-10,14-15, by 10,14's 2d6 cave-in). *code* (ECL5 blocks 3 and 6; Gold Box
+  Player 44)
 - **The gate (5:3 12,7/12,8):** the password is asked on a **bump west** from 12,7, not on stepping onto it (the
   on-move script runs before a step, with the new facing); the word is RHODIA (from the captured Cadorna or the gnoll
   overseer). *seen* + *code* (Player 28, p28a1; ECL 5:3 0x9A80) + *book*
@@ -429,7 +503,19 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
   four giants of 5,2 away (0x4A66 bit 16; *code*).
 - **The records (5:4 14,9):** reading them during an alarm draws a patrol half the time; answer NO on later visits.
   *seen* (Player 28, p28c3)
-- Stay out of the Bane chapel's coins and swords. *book*
+- **The fight at 5:3 12,12 rings the alarm** on the way to the gate (map 5:5's event 14; 0x4A64 0 -> 15): at the gate's
+  bump west from 12,7 "A VOLLEY OF BOULDERS ARE THROWN AT YOU" and a LOCKED door, no password asked, and every rest in
+  5:6 drew a patrol. *seen* (Player 43, p43w1, p43g1, p43x3) Without the theft below, 12,12 is PARLAY (MEEK / NICE / SLY
+  / ABUSIVE: "TELL ME PASSWORD", HARASH; HAUGHTY: "WHO SENT YOU?", TYRANTHRAXUS) and the gate takes RHODIA. *code* (ECL5
+  blocks 3 and 6)
+- **Stay out of the Bane chapel's coins and swords** (*book*): **leave the altar's TWO CROSSED SWORDS (5:6 1,0: NO).**
+  Taking them sets 0x4A6A bit 2 (the offering box's change sets bit 1, the same): from then on 12,12's two giants attack
+  on sight with no PARLAY (and ring the alarm), the gate (12,7 / 12,8 W) answers "THIEF! YOU STOLE FROM LORD BANE!" for
+  good (boulders, the alarm, no password; only its LOCKED door's PICK / BASH gets through) and patrols cry BLASPHEMERS;
+  and the two Long Swords +3 (power 0x52) are alignment 2 only: ARN and BRAM took 5 HP each and could not READY them.
+  *code* (ECL5 blocks 3 and 6) + *seen* (Gold Box Player 44, p44v1-v2, p44a1, p44w1) (corrected 2026-11-22: Player 43
+  saw taking the swords and 5:6's cleric leave the alarm alone; the theft does no harm at once but turns 12,12 and the
+  gate)
 - **The finale:** parley past the false Tyranthraxus (Meek / Nice); avoid the medusa room and the upstairs trap door
   (stone); rest anywhere upstairs before. *book*
 - **Tyranthraxus's fear:** party members of levels 0-3 are paralysed and 4-5 weakened, whether they save or not.
@@ -442,6 +528,10 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
   *seen* (main chats 79-80, checks 179-187: LIRA at magic-user 1 and 8 read Protection from Good, 12 minutes, power 6
   both times; her Potion of Speed: haste power 12; START.EXE 0xBA:0x26C2) A Potion of Neutralize Poison drunk by a
   member who isn't poisoned heals 1d4 + 8. *seen* (check 188)
+- **An aligned sword of another alignment** (item byte 62 0x84; LIRA's Long Sword +2 in the Plan 2 chain, byte 61 0xF0)
+  hurts its bearer for 15 when readied and won't stay readied; on QUICK the original never picks it (GAME.OVR 0xBF3E
+  rates it 0) and keeps the next best weapon: give it to a member of its alignment or sell it. *code* (main chat 97, the
+  throne room's draw compare, 2026-11-22)
 - **A camp Haste** reaches only the first members in party order (as many as the caster's level) and ages each a year:
   put the fighters first. **Friends** in camp adds 2d4 Charisma (at most 25) for 1 minute a level: cast it just before
   a talk. *code* + *seen* (main chat 81, checks 199, 204-205: LIRA at magic-user 5 hasted five of six; at 3 the first
@@ -479,10 +569,10 @@ Resistance, Long Sword +2, Plate Mail +2); the Wand of Lightning Bolt and the Po
 for" column** (Jeremy's magic-item rule 4, guide section 2: each wand, scroll and potion with the fight it's kept
 for) is to come; Gold Box Guide 2 fills it in with Jeremy. *code* (Gold Box Guide 2)
 
-**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Never sell them.**
+**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Keep them while a level drainer lies ahead:** no drainer is listed after Valhingen Graveyard (the Kovel and library spectres, the graveyard's wights, spectres and vampire), so once it is cleared they are sold (*Jeremy*, Gold Box Guide 12, 2026-11-21 20:56; corrected 2026-11-22 from "never sell them"); **unconfirmed** until the monster data is checked for drainers in Valjevo, the finale and the late wilderness (board).
 
-**Consumable magic** (from the table below; Gold Box Guide 6, 2026-11-21; *code*). **Fire** (the only way to keep a troll
-down, as the killing blow): MU scrolls with Fireball at 1:24 (Fireball, Ray of Enfeeblement, Stinking Cloud), 3:14 x2
+**Consumable magic** (from the table below; Gold Box Guide 6, 2026-11-21; *code*). **Fire** (with acid, the only way to keep a troll
+down, as the killing blow; lightning doesn't: GAME.OVR 0x11434, Gold Box Guide 6): MU scrolls with Fireball at 1:24 (Fireball, Ray of Enfeeblement, Stinking Cloud), 3:14 x2
 (Fireball, Haste, Hold Person; Fireball, Detect Invisibility, Reduce), 4:2 (Fireball, Detect Invisibility, Reduce: the
 same list as 3:14's, to check that it isn't one scroll counted twice); Burning Hands on 3:14's (Blink, Burning Hands,
 Mirror Image) and 4:2's; the **Necklace of Missiles** (5:6, Fireball's handler). **Wands:** Magic Missiles x5 (1:24,
@@ -495,6 +585,11 @@ Charm Person, Protection from Evil, Strength and Friends, Invisibility, Protecti
 scrolls:** Cure Light Wounds x2 (2:20); Animate Dead, Cure Blindness; Snake Charm, Silence, Bless; Animate Dead, Cause
 Disease, Prayer (1:24); Hold Person, Cure Blindness, Bestow Curse; Prayer, Remove Curse, Animate Dead (3:14); 5 at the
 vampire's trove (4:10); the Restorations above. Plus the random items (the dice) listed under the coins table.
+
+**Found in play** (*seen*, Player 41, p41b1, p41c11): 1:24 (Temple of Bane) with SEARCH on, the bodies' jewelry at
+14,5 and a trap door at 12,6 (a clerical scroll, a potion, a Ring +3); 4:2's Grishnak temple (3,11) holds the
+Fireball scroll (Fireball, Detect Invisibility, Reduce), a second MU scroll (Blink, Burning Hands, Mirror Image)
+and the Cursed Necklace.
 
 | Area | Where (squares; how) | Magic and valuables | Who uses it |
 |---|---|---|---|
@@ -610,27 +705,3 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- The kobold throne room (8:13): 8:13 allows no camp, so a spell for the throne must be memorized before the caves; Haste in round 1 took 5 figures within 2 of its point (1-2 casters always among them) and still lost 5 of 5: the killed trolls rise again at full HP while the fighters are spread over the kobolds. *seen* (Player 39, p39a1-c2; stuck-fights.md section 3)
-- The wilderness bands: a cheap band met with a sure manner left at once on PARLAY ABUSIVE (kobolds, 7:26 12,23); a band that SURPRISED the party took FLEE straight into a fight (lizard men, 8:27 6,18). *seen* (Player 39, p39f9, p39f10)
-- Valhingen's spectres (4:10 9,1): the clerics' TURN sends both away (21 squares); chase them with the advance fighters while Haste lasts, don't guard: p37g1 guarded and lost, p37i1 chased and won with no drain. *seen* (Player 37; stuck-fights.md section 4, Gold Box Guide 6)
-- The kobold caves (8:13): the camp and the wandering kobolds leave the party be only while it came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0): the cluebook's "rest in the wyvern cave"; once the wyvern is woken (the rubble slope) or killed, no camp before the throne is beaten. *code* (ECL8 block 13 0xB428, 0xB388; ECL8 block 27 0x9DB5; Gold Box Guide 6)
-- A killed troll stays down only when the killing blow is fire or acid (Fireball, Burning Hands; not lightning). *code* (GAME.OVR 0x11434; Gold Box Guide 6)
-- The kobold throne room (8:13): its waves start at distance 0, on the party's square; event 9 lies on 4,3, 5,3 and 6,3, and 6,3 puts the east wall on the party's right with all four trolls on the left (our placement code on GEO8 13); the ballista is script damage from sealed cells (7 x 2d6, 0xA1A4), so cure to 20+ HP before wave 1 ends; the drunk kobold's escort (12,9 WAKE IT, YES) skips 10,9's and 11,9's traps. *code* + *players* (Gold Box Guide 8; stuck-fights.md section 3)
-- The finale (5:7 3,8): the guards come at distance 0 with a 2-cell doorway (24-25,10) behind the party's back row: fight through it, two guards at a time; and Tyranthraxus can wait: win the guards, run from his fight (back to 3,6, the guards stay beaten: 0x4A6D bit 4), camp and ready the rings, then come back to him alone. *code* (Gold Box Guide 8; stuck-fights.md section 5, Plan 3)
-- 1:24 (Temple of Bane) with SEARCH on: the bodies' jewelry at 14,5 and a trap door at 12,6 (a clerical scroll, a potion, a Ring +3); 4:2's Grishnak temple (3,11) holds the Fireball scroll (Fireball, Detect Invisibility, Reduce), a second MU scroll (Blink, Burning Hands, Mirror Image) and the Cursed Necklace (*seen*, Player 41, p41b1, p41c11).
-- 7:26's driders that surprise a level-5/6 party destroy it in their first round (two of five band cycles, p42w3/p42w4: 300 HP to ~35; no FLEE when surprised); the flight from Tyranthraxus (5:7) needs movement 9+: at 3 the party falls on the way to the edge (p42f1, p42f7). *seen* (Player 42)
-- The finale's guards (5:7 3,8) with Plan 5 (holds three a cast from the clerics, guards in contact first; clouds not overlapping; fighters on the standing, the rest on the helpless): won 5 of 6 fights, 4 with nobody dead; their pile is twelve Rings +3 (weight 0). At the pile one POOL takes every member's coins but an NPC's, and leaving them there lifts the party from movement 3 to 12; even so Tyranthraxus acts first and his opening turn can drop two members, and the edge is 11-13 squares off: the flight failed 3 of 3. *seen* (Player 43, p43f1-f6)
-- **The finale's loadout, as Jeremy would have gone in** (the worked example for the loadout review; docs/strategy/player-capability.md section 3): cleric level 1 all Cure Light Wounds; magic-user level 1 Charm Person; Stinking Cloud and Hold Person; magic-user level 3 a Haste per caster (Tyranthraxus) and the rest Fireball or Lightning Bolt (the guards); cleric level 3 all Prayer. The Potion of Giant Strength on the best fighter for Tyranthraxus (blows alone), the Potion of Speed (5:3), the Necklace of Missiles and the Javelin of Lightning on the guards, healing potions with the front line. *Jeremy* (Gold Box Guide 12, 2026-11-21 20:56-21:01)
-- **Restoration scrolls after the graveyard:** no level drainer is listed after Valhingen Graveyard (the Kovel and library spectres, the graveyard's wights, spectres and vampire), so once it is cleared they are sold (Jeremy's rule, playbook Inbox); **unconfirmed** until the monster data is checked for drainers in Valjevo, the finale and the late wilderness (board). *Jeremy* (Gold Box Guide 12, 2026-11-21 20:56)
-- Tyranthraxus (5:7) makes three attacks a round, not two, and with ORIGINAL'S BUGS on resists every spell, damage included; "STARTS TO COUGH" in his Stinking Cloud prints before his resistance roll, so it does not mean the cloud took: spend the spells on the guards (*code* / *seen*: Combat Chat 42, regress orig_B_tyr1 draw for draw, GAME.OVR 0x2BAA1).
-- Valjevo (5:3): the fight at 12,12 on the way to the gate (map 5:5's event 14) rang the alarm (0x4A64 0 → 15): at the gate's bump west from 12,7 "A VOLLEY OF BOULDERS ARE THROWN AT YOU" and a LOCKED door, no password asked, and every rest in 5:6 drew a patrol; 5:6's cleric (1,2) and the Bane altar's two Long Swords +3 (1,0, TWO CROSSED SWORDS: YES, no fight) left the alarm alone. *seen* (Player 43, p43w1, p43g1, p43x3)
-- **An aligned sword of another alignment** (item byte 62 0x84; LIRA's Long Sword +2 in the Plan 2 chain, byte 61 0xF0) hurts its bearer for 15 when readied and won't stay readied; on QUICK the original never picks it (GAME.OVR 0xBF3E rates it 0) and keeps the next best weapon: give it to a member of its alignment or sell it. *code* (main chat 97, the throne room's draw compare, 2026-11-22)
-- **Valjevo: leave the Bane altar's TWO CROSSED SWORDS (5:6 1,0: NO).** Taking them sets 0x4A6A bit 2 (the offering box's change sets bit 1, the same): from then on 12,12's two giants attack on sight with no PARLAY (and ring the alarm), the gate (12,7 / 12,8 W) answers "THIEF! YOU STOLE FROM LORD BANE!" for good (boulders, the alarm, no password; only its LOCKED door's PICK / BASH gets through) and patrols cry BLASPHEMERS; and the two Long Swords +3 (power 0x52) are alignment 2 only: ARN and BRAM took 5 HP each and could not READY them. Without the theft 12,12 is PARLAY (MEEK / NICE / SLY / ABUSIVE: "TELL ME PASSWORD", HARASH; HAUGHTY: "WHO SENT YOU?", TYRANTHRAXUS) and the gate takes RHODIA. Safe camps during an alarm in the outer court (info bit 64): the NE room (13-15,0-3, behind 14,3's five giant snakes) and the SW room (9-10,14-15, by 10,14's 2d6 cave-in). *code* (ECL5 blocks 3 and 6) + *seen* (Gold Box Player 44, p44v1-v2, p44a1, p44w1)
-- **The throne room (8:13): trolls not finished by fire in wave 1 come back in wave 3** with the two envoys (p44g1: trolls at 23 and 30 HP, boars, kobolds and ENVOYs at 45 / 34 HP after waves 1 and 2 were won; five members down to none in about three rounds). Keep a Fireball for wave 3, or burn every troll in wave 1 (Plan 2's CONTINUE rule). *seen* (Gold Box Player 44, p44g1)
-- **The throne room (8:13) from 6,3, wave 1, Plan 2 chain's party (ours, 20 seeds, main chat 98):** round-1 Fireballs on the trolls also burn our own front line (the trolls start in contact): Plan 2 (Prayer, two Fireballs, the scroll) won 20 of 20 but lost 203 HP, 5 runs with nobody dead, PRINCESS FATIMA dead in 11; MAGIC-ON QUICK won 20 of 20 for 138 HP, also 5 with nobody dead (13 rounds against 5); Haste in place of one Fireball no better (201 HP). Fire stops the troll's return in wave 3, so the trade is HP now against trolls later. *seen* (ours' plan runs, not the original; `~/gbr/lab/data/c98/plans_throne44_main.log`).
-- **The finale won by blows (Plan 2 chain):** Hold Person and clouds on the guards; once no guard stands, CONTINUE BATTLE for Haste, Prayer, Bless, the Shields and the Speed and Giant Strength potions, then stop (idle cure rounds run Haste down); READY a guard's Ring of Protection +3 on everyone in his fight. Won twice in two tries (p45i3, p45i5), two members dead to his breath each time. And leaving the kobold caves with members at 0 HP: no rest in 8:13 (its rocks hit members at random and cut every rest short) and round 8,12's one-time deadfall (no thief awake: 20 kobolds) by 5,7, 3,7, 4,10. *seen* + *code* (Gold Box Player 45; ECL8 block 13)
-- **The throne room (8:13): wave 3's two trolls are the script's own, not wave 1's survivors** (ECL8 block 13: 0xA286 CLEAR_MON, then 0xA287 LOAD_MON 31, 2 with 2 boars, 8 kobolds and the 2 envoys): burning every troll in wave 1 doesn't remove them, so keep fire (a Fireball, Burning Hands) for wave 3 whatever wave 1 burned; the line above on p44g1 has the cause wrong. Ours the same (2 trolls in every one of 58 wave-3 fields). *code* (main chat 99; the Player's `p44/ecl8_b13.txt`)
-- **The throne room (8:13), all three waves in ours (Player 44's door save, 20 seeds, main chat 99):** members down at wave 1's end stay out of waves 2 and 3 (no camp in 8:13, only the ballista's 2d6 x 7 between), so wave 3 is fought by whoever stood after wave 1. Plan 2 then QUICK with MAGIC ON: waves 20, 19, 4 of 19 won (all three 4 of 20); MAGIC-ON QUICK throughout: 20, 20, 10 of 20 (10 of 20; 140 HP lost in wave 1 against 203); a round-1 Fireball in wave 3 (trolls in contact again) did worse: 0 of 19. Spend less in wave 1, cure before it ends. *seen* (ours' plan runs, not the original; `~/gbr/lab/data/c99/plans_throne44_w3_waves.txt`)
-- **The finale's NPC Genheeris is played by the computer** (he gets no menu: no orders for him; he carries Sleep, Magic Missile x3, Stinking Cloud x2 and Fireball x2 and casts them himself); **Tyranthraxus' breath killed the members standing at him and two squares off** (BRAM, CEDRIC, ELWEN in p46k3); LIRA, walked out through the wall gap to 5:7's 23,8 off his lines, lived: keep anyone low or not striking well away from him. *seen* (Gold Box Player 46, p46k3, 2026-11-22)
-- **Creating a party in Pool: no racial ability adjustments, and a young character loses 1 WIS.** The original's roll never adds the race's adjustments (a dwarf gets no CON +1, an elf no DEX +1: GAME.OVR 0x1ABB5 tests a loop counter, not the race; bug 20), and Wisdom loses 1 at or below the race's first age mark (a human of 20 or less; dwarves 50, elves 175, half-elves 40, halflings 33, gnomes 90); ability rolls are the best of six 3d6 each, so a reroll (NO at KEEP THIS CHARACTER?) is cheap. MODIFY can still set every ability within the race's and class's limits before the character's first experience. *code* (main chat 100, checks 344-350)
-- **The finale under the chat's key turns (5 tries from the ready save, Player 47):** the guards fell with none dead in 4 of 5 (round 1 the clouds on those touching the fighters, holds on those touching LIRA and DORN, then holds on the free and a blow each on the held); the one loss came from Hold Person saves, not from the start positions. Against Tyranthraxus never send ELWEN to strike him (she died both times); his first breath may come before any menu, and the wins were ARN's and BRAM's hasted blows. *seen* (Player 47, stuck-fights.md section 5)

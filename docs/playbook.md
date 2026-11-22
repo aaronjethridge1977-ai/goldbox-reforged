@@ -149,7 +149,12 @@ Five in the line, three bows, two clerics, two magic-users and a thief. A party 
 - **Re-equip on the battlefield when the fight changes:** VIEW, ITEMS, READY works in combat; TRADE doesn't. *book*
   (Pool Manual) **READY (or unready) in a fight is free:** it leaves the member's turn as it was, so a member can switch
   from bow to sword (or back) and still attack; USE of an item does end the turn. *code* (GAME.OVR 0x222DF: READY
-  0x2250A sets no turn flag, USE 0x22AC4 does; Combat Chat 35)
+  0x2250A sets no turn flag, USE 0x22AC4 does; Combat Chat 35) In a fight READY is reached from USE's item list (End to
+  the item, R, then EXIT): a Ring of Protection +2 readied there lowered AC at once (4 to 2) and the member's menu came
+  back with the turn unspent. *seen* (Combat Chat 38, the spell lab's ring_kob in DOSBox; Gold Box Guide 4's question)
+  **Items in a fight are USEd from the items page and must be readied first:** a one-handed potion or wand needs a free
+  hand (unready the shield, drink, ready it again next turn); the Javelin of Lightning (a weapon) needs the sword
+  unreadied. *seen* (Gold Box Player 45, p45c1 in the original)
 - When the readied arrows run out the original puts the sword back: ready the spare stack. A bow needs both hands
   (unready a Brass Mirror too). *seen* (Player 35)
 - (Pool) **Bracers AC 6 are body armour that weighs nothing:** the game counts only the best body armour readied, so worn
@@ -177,7 +182,8 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   junk; never carry it back to town.
 - Keep the arrows, quarrels and darts found in treasure; buy ammunition only when you run out. Darts are the exception:
   scarce as loot, so buy plenty for the magic-users on every town trip (section 9).
-- Never sell Restoration scrolls.
+- Never sell Restoration scrolls while a level drainer lies ahead; after the last one they are sold. *Jeremy*
+  (Gold Box Guide 12, 2026-11-21 20:56; corrected 2026-11-22: it was "never sell")
 - Keep gems and jewellery as items rather than cash: they weigh far less than coins. *book* (Manual)
 - Monsters' ordinary weapons and armour don't appear as loot; leftover missiles are stacked. *book* (Manual)
 
@@ -189,6 +195,11 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   3: drop the plain spares before a hard fight. Stojanow's west tower room was lost 5 of 5 at movement 3 and won at
   once at 9-12. *seen* (Player 35, p34e1-e5, p35b1) (Pool) The allowance at STR 18/100 is 3000 coins' weight: over by
   more than 1024 is movement 3, 768 is 6, 512 is 9. *code* (START.EXE 0xF40; ours party_member.gd)
+- **Before a fight that needs speed, leave the heavy loot:** at a pile just before a flight or a long walk, take only
+  weightless items (rings); gold and armour after (the finale's guards' pile: Plate Mail +2 at 450 and the gold left
+  everyone at movement 3 for Tyranthraxus' flight, p42f1-f7). *seen* + *Jeremy* (Gold Box Guide 10, 2026-11-21 15:22)
+  The take rule stands, but going into the final battle (or any fight decided by speed or weight) the party carries only
+  what it needs to win it; the rest is collected after. *Jeremy* (Gold Box Guide 12, 2026-11-21 20:29)
 - A member carries 16 items at most. A 17th item, or one over the weight limit, is refused with no message. *seen*
   (Player 10) TRADE to a member holding 16 items fails silently: drop first. *seen* (Player 35)
 
@@ -209,8 +220,12 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
 3. **Identify before selling.** Readying an item and comparing the stats shows who should have it; it is identified
    (a shop, 200 gp) before any sale.
 4. **Wands, scrolls and potions are reserved for named fights** (the game's strategy file names the fight for each);
-   charges left after their fight go to other hard fights, never to an easy one.
-5. **Restoration scrolls** are never sold, and are spent on the drain that can't be reloaded around.
+   charges left after their fight go to other hard fights, never to an easy one. **Use every consumable that wins
+   a hard fight:** potions (Giant Strength on the best fighter where only blows count), wands, the Javelin of
+   Lightning, the Necklace of Missiles; unused potions and an unread scroll went into Pool's finale (slot H).
+   *Jeremy* + *seen* (Gold Box Guide 12, 2026-11-21 21:01; Guide 11's read of slot H)
+5. **Restoration scrolls** are kept while a level drainer lies ahead (sold after the last one: Gold Box Guide 12),
+   and are spent on the drain that can't be reloaded around.
 6. **Movement 6 or better for everyone, always:** junk goes first; magic items stay unless rule 2 sells them.
 7. **Cursed items** are marked and never readied outside a lab.
 8. **Magic-user scrolls:** copy each spell the magic-users don't know into the spellbook first; we want every spell
@@ -220,14 +235,17 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   *seen* (Player 32)
 - To read a clerical scroll: VIEW, ITEMS, READY it (both hands free: weapon and shield off), then USE, CAST, and pick
   the target. USE does nothing on a scroll that isn't readied. *seen* (Player 32, p32s1-s4)
+- **A cleric can't READY a magic-user's scroll** (READY does nothing, no message): hand scrolls to a member of the
+  scroll's class before a fight. *seen* (main chat 85, DOSBox, check 243)
 - Clerics cast from cleric scrolls with no preparation; magic-users need Read Magic first. *book* (Manual) A scroll is
   held in both hands, so a fighter-mage puts the weapon away to read one in a fight. *seen* (Player 37)
 - (Pool) **USE casts any scroll's spell** for a cleric or magic-user, with no level test (a level-1 magic-user can read
   a Fireball scroll). *code* (GAME.OVR 0x22AC4; Combat Chat 35) **A scroll's spell goes off at caster level 6, whoever
-  reads it;** potions and other item spells (Speed, Giant Strength, Healing...) at level 12. So a low-level
-  magic-user gets a level-6 buff or Fireball (6d6) from a scroll, a higher one no more. *seen* + *code* (Combat Chat 38,
-  p37i1's spectres, draws 744-749; main chats 79-80, checks 179-187; START.EXE 0xBA:0x26C2) (Combat Chat 35's "at the
-  reader's own level" was wrong.)
+  reads it;** potions and other item spells (Speed, Giant Strength, Healing...) at level 12. So a low-level magic-user
+  gets a level-6 buff or Fireball (6d6) from a scroll, a higher one no more. *seen* + *code* (Combat Chat 38, p37i1's
+  spectres, draws 744-749; main chats 79-80, checks 179-187; START.EXE 0xBA:0x26C2) (Combat Chat 35's "at the reader's
+  own level" was wrong.) **A wand's spell goes off at level 6 too:** a 1st-level magic-user's Wand of Lightning Bolt
+  does 6d6 a bolt. *seen* (Combat Chat 38, the spell lab's wand_kob in DOSBox, three bolts)
 - (Pool) **SCRIBE** (copying a magic-user scroll into the book):
   - copies only a spell of a level the magic-user already has slots for ("YOU CAN NOT SCRIBE THAT SPELL": a level-1
     magic-user can't copy Stinking Cloud). *code* (GAME.OVR 0x1838D; Combat Chat 35)
@@ -242,6 +260,11 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   READY refuses it, with no message: unready the shield first. USE then drinks it without a message. (Pool) Healing
   heals 2d4+2; Giant Strength gives STR 21/00 for (d4 x 10) + 40 minutes; Neutralize Poison drunk by a member who
   isn't poisoned heals 1d4+8. *seen* (main chats 73, 77, 80; checks 137, 164-168, 188)
+- (Pool) **Combat items:** a Javelin of Lightning (USE in a fight) hits the aimed figure for 1d6+20 and the next figures
+  on the line beyond it (3 squares' worth) for a flat 20 each, a save halving each: aim so the line runs on through the
+  crowd. *seen* (Combat Chat 39, the spell lab's jav_kob in DOSBox: 24, 20, 20) A Potion of Speed works at once (the
+  drinker struck twice); the Necklace of Missiles' fireball goes off at once on the aimed square and catches your own
+  beside it: aim it as a Fireball. *seen* (Gold Box Player 45, p45c1)
 - (Pool) **Cloak of Displacement:** the first attack roll above 1 against its wearer in each fight misses, once a
   fight; the rest of the fight it does nothing. *code* (effect 0x59, GAME.OVR 0x110EB; Combat Chat 35) + *seen* (on
   Tyranthraxus, Player 6's draw 860)
@@ -336,6 +359,13 @@ book (section 2). *code* + *seen* (Combat Chats 35, 38)
   0xBA:0x148B.) It loses the spell but not the turn: at its next turn it still has its full movement and attacks, so a
   spoiled cleric can still walk up and fight. *seen* (Combat Chat 37, Player 35's p35i6; GAME.OVR 0x14CFE)
 - A caster hit recently can't choose CAST: guard casters with fighters. *book* (Manual)
+- **Casters in melee:** stepping back gives a free blow, so casters don't step back; magic-users stay out of melee;
+  clerics may begin spells in melee, a calculated risk (a hit before it goes off spoils it; keep their AC good), or cast
+  an at-once spell. *Jeremy* (Gold Box Guide 12, 2026-11-21 20:29-20:38; corrected 2026-11-22: Gold Box Guide 9's "a
+  caster in contact steps back before casting")
+- **Aim by MANUAL, straight to the cell wanted**, not by NEXT/PREV scans; for area spells pick the cell so no ally is
+  inside and so a second cloud sits beside the first, not on it (two Stinking Clouds side by side cover 8 cells,
+  overlapped only 6). *Jeremy* (Gold Box Guide 9, p41g1's video)
 - In a fight's CAST list Home moves the highlight up and End down; it opens on the last spell, and long lists page with
   NEXT. EXIT from a spell's aim asks ABORT SPELL? *seen* (Player 30)
 - Magic resistance is rolled for each target after its save; a creature's spell can catch the creature itself. *code*
@@ -353,6 +383,10 @@ book (section 2). *code* + *seen* (Combat Chats 35, 38)
 - QUICK still throws Hold Person and Sleep at monsters they can't affect (ettins). *seen* (Player 27, p27a1)
 - QUICK suits weak hordes, not boss fights; QUICK members always use readied magic items and shoot readied bows when no
   enemy is adjacent. *book* (Manual, Cluebook)
+- A member on QUICK chooses his own weapon each turn and may put a magic one away for another weapon (with no enemy next
+  to him, a missile weapon rates higher): a Two-Handed Sword +1 (+3 vs Undead) put away loses its undead bonus until
+  READYed again, so keep fighters with such a weapon off QUICK against undead, or re-READY after the fight. *seen*
+  (Combat Chat 40, Player 37's p37i1, BRAM on QUICK at the spectres: his effect 3 gone; GAME.OVR 0x11B35)
 - The computer's choice: each turn it tries spells by priority: 7 Sleep, Stinking Cloud, the cleric's Hold Person,
   Fireball, Lightning Bolt; 6 Magic Missile, Charm Person, the magic-user's Hold Person, Prayer; 5 Slow, the cleric's
   Dispel Magic; down to 1 Protection from Evil. *code* (START.EXE spell table byte 13; Combat Chat 33)
@@ -392,18 +426,26 @@ the spell's class)
   *Jeremy:* great for taking out annoying enemies with poorer saves. The cleric's lasts 4 + 1/level rounds, the
   magic-user's 2/level. A held figure is slain by any blow and loses its guard and any spell it was casting. Use it on
   enemy casters (they are persons). **By hand:** after each TARGET the aim starts again on the caster, so press NEXT to
-  the next figure; a figure picked twice costs no pick; EXIT uses up a pick; when the picks run out the spell goes off on
-  those taken. *seen* (Combat Chat 34) It never held trolls (7 casts) or spectres (8): they aren't persons. *seen*
-  (Combat Chat 34)
+  the next figure; a figure picked twice costs no pick; EXIT uses up a pick; when the picks run out the spell goes off
+  on those taken. *seen* (Combat Chat 34) It never held trolls (7 casts) or spectres (8): they aren't persons. *seen*
+  (Combat Chat 34) **Three different figures:** TARGET three and the aim closes by itself; TARGET on a figure already
+  picked keeps the aim up and adds nothing, so among look-alikes (twelve 8TH LVL FIGHTERs) count your NEXTs from the
+  caster to know whom you picked. *seen* (Player 41, p41x2 at 5:7's guards)
 - **Magic Missile** (magic-user 1; at once). *Jeremy:* the first-level spell once Sleep no longer serves. Never misses
   (no roll, no save), ignores most resistances (good on undead), interrupts enemy casting; Shield cancels it. *book*
   **In the original Pool a level-1 magic-user's does nothing** (level / 2 missiles, rounded down: *code*, GAME.OVR
   0x28451; an original bug: ours fixes it unless SETTINGS ORIGINAL'S BUGS is on). Enemy mages' Magic Missiles finish
   wounded members: kill the mages first. *seen* (Stojanow report)
-- **Charm Person** (magic-user 1; at once). *Jeremy:* can turn the tide in some battles.
+- **Charm Person** (magic-user 1; at once). *Jeremy:* can turn the tide in some battles. **A charmed monster fights to
+  the end:** its morale is set to 100, so it never runs or surrenders, and it hits with the party's difficulty bonus;
+  Bless (+5) and Curse (-5) also shift a computer-run figure's morale test. *code* (GAME.OVR 0xF05B, 0xED68, 0x2BBEF;
+  Combat Chat 43, the spell matrix's chk1)
 - **Fireball** (magic-user 3; next turn). *Jeremy:* loosens up large groups, best on many low-HP enemies. The caster's
   level in d6, half on a save; 7x7 indoors (radius 3), radius 2 outdoors; a caster aiming within 3 squares burns
-  himself.
+  himself. **It reaches about 3 squares from its aim** (a circle: dx² + dy² <= 10), so aim it with every ally 4 or more
+  squares off: LIRA's at a guard two squares from our front row did 15 to ARN and 15 to BRAM. Where allies are that
+  close, use Stinking Cloud or Hold Person. *seen* (p41g1's video, Gold Box Guide 9; Player 42's read of the p41g1
+  replay)
 - **Lightning Bolt** (magic-user 3; next turn). *Jeremy:* great if you can get it bouncing round right; it depends on the
   map. It bounces off walls: mind your own party. *book* From the aim square it runs 8 squares' worth (a diagonal step
   costs 1.5); each wall turns it back along its line, and the first bounce costs 4 squares more when the caster stands
@@ -543,6 +585,12 @@ below movement 6; undead ahead without magic weapons for the fighters or Restora
 docs/strategy/stuck-fights.md (Sokal Keep: DORN owed fighter 2, ELWEN and LIRA within 354 and 170 of a level;
 Stojanow: LIRA 452 from magic-user 5, i.e. Fireball).
 
+**The loadout review: before each stretch and each hard fight** (*Jeremy*, Gold Box Guide 9, 2026-11-21 14:54; Gold Box
+Guide 12, 20:56-21:05): each member's spells chosen for the fights ahead, not the default fill (otherwise the example
+lists in section 3 stand); each scroll, potion and wand with the member who uses it and the round it is used; what to
+sell or leave. **Think long term: spend nothing a later fight needs.** For the finale's twelve guards: as many Hold
+Persons as the slots allow (Pool's whole loadout: poolrad.md section 3; docs/strategy/player-capability.md section 3).
+
 **A failed audit** means fixing it first: earn levels on mop-up fights and train, then plan the tactics by hand. Cheats
 (save edits, auto-level, teleports) are a last resort. *Jeremy*
 
@@ -576,9 +624,16 @@ round is a minute; "a level" is the caster's level)
 **Before any fight**
 - **Press Alt-M (MAGIC ON)** at the start of every fight if anyone is on QUICK (section 3). *code* + *seen*
 - **Marching order:** four in front to protect the back, one shooting from the back, the magic-user held in reserve
-  (section 5). *Jeremy* Archers in the back: a missile can't be fired with an enemy adjacent. *book* (Manual)
+  (section 5). *Jeremy* Archers in the back: a missile can't be fired with an enemy adjacent. *book* (Manual) **The
+  marching order is the fight's front row:** the order's first four start in contact when a fight opens on the party
+  (5:7's guards); put the casters after the fighters with camp ALTER, ORDER before a known fight. *seen* (Player 40,
+  p40e0)
 - **Judge back-to-back fights together:** a fight that follows another with no camp between is fought with the first
   fight's damage and without its loot readied. *seen* (Player 29, p29b2: Tyranthraxus after his guards)
+- **Where a fight starts can be chosen:** an event often lies on several squares (a row of a room), and the battlefield
+  is built around the square the party stands on (13 x 5 map squares); a square beside a wall closes that flank, and
+  with a distance-0 wave (monsters anchored on the party's square) it decides where the enemy starts. Check the area map
+  for the event's squares before a hard fight. *code* (Gold Box Guide 8: the kobold throne, 8:13 4,3 / 5,3 / 6,3)
 
 **The game isn't a straight line.** Knock out what you can, move forward, and come back to what's too hard. *Jeremy*
 Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23)
@@ -587,8 +642,10 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 **The line**
 - **Four in front to protect the back; one shooting from the back; the magic-user held in reserve.** *Jeremy*
-- **Fighters GUARD only when no enemy can be reached;** otherwise they move toward the enemy and form a line of four,
-  or three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19)
+- **Fighters GUARD only when no enemy can be reached;** otherwise they move toward the enemy and form a line of four, or
+  three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19) **A fighter with an enemy in
+  reach attacks it, never GUARDs,** above all while a caster beside him is being hit (p39c2's video 44:00-45:30: BRAM
+  guarded at 35 HP while two trolls took ELWEN from 30 to 4). *seen* + *Jeremy* (Gold Box Guide 10, 2026-11-21 15:46)
 - Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps.
   Spread out against breath weapons and area spells. *book* (Cluebook)
 - Keep archers and dart-throwers out of reach: a missile can't be fired with an enemy adjacent. *book* (Manual)
@@ -602,12 +659,22 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 **Attacking**
 - **Gang up:** the first two attackers strike a defender's front; the third and later strike its rear, at a much worse
   AC. Put three or four on the dangerous enemy. *book* (Manual)
-- **Kill the casters first:** enemy mages' Magic Missiles finish wounded members; Hold Person or Stinking Cloud them
-  (section 3). *seen* (Stojanow report)
+- **Disablers go on the enemies in contact first** (Hold Person, Stinking Cloud), then the casters, then the far ones:
+  holds on far guards while the ones in contact hit us lost fights (p42f6). *Jeremy* (Gold Box Guide 12, 2026-11-21
+  20:38) **Then the casters:** enemy mages' Magic Missiles finish wounded members; Hold Person or Stinking Cloud them
+  (section 3). *seen* (Stojanow report) (corrected 2026-11-22: "kill the casters first" now comes after those in
+  contact, Gold Box Guide 12)
 - **Finish the helpless before they can act.** A sleeping or held enemy dies to any one blow, so you can keep killing
   the others until just before it wakes, then finish it. *Jeremy* + *book* + *seen* (Player 30) How long they stay
   helpless: Sleep 5 rounds a caster level; Hold Person 4 + 1 a level (cleric) or 2 a level (magic-user); Stinking
   Cloud's nausea d4+1 rounds. *code* (START.EXE spell table; GAME.OVR 0xF6C0)
+- **Against a line of men-at-arms** (Pool's finale guards): round 1, Hold Person those in contact (three a cast, from
+  the clerics) and Stinking Clouds (2x2, range 3) on the ranks behind them, no two overlapping and no ally inside; then
+  every fighter strikes a clouded or held figure (one blow slays it) before any standing one. Twelve 8th-level guards
+  fell in five rounds with nobody of ours down. Never walk into your own cloud's cells. *Jeremy* (Gold Box Guide 9:
+  "extremely easy with the current setup") + *seen* (Gold Box Player 46, p46k2, 2026-11-22) (corrected 2026-11-22: Guide
+  9 had the fighters on the standing ones while the others killed the helpless; Player 46's win struck the helpless
+  first)
 - **Backstab** (section 1): a fighter attacks first, then the thief attacks from the square directly opposite (Delay
   until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8. *book* (Manual, Cluebook)
 - A melee AIM offers only figures next to you, and the aim list runs nearest first. *seen* (Player 31, p31a2/p31b1)
@@ -627,6 +694,8 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   (Stojanow report)
 - Space during a QUICK member's turn hands every QUICK member back to you; each gets its menu at its next turn. *seen*
   (Player 30, p30a1)
+- In MOVE with MOVE LEFT = 1 (2 half-moves), only a straight step is left: a diagonal (3) ends the movement with no step
+  and the menu comes back without MOVE. *code* (GAME.OVR 0x12F0D) + *seen* (Player 39's p37i1: ARN's Home)
 
 **Healing in the fight**
 - Keep members conscious: a member down at the fight's end gets none of its experience (section 6), and too big a gap
@@ -640,8 +709,12 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 **Enemies**
 - Some monsters never run (morale 255). *code* (MON2CHA.DAX; Stojanow report)
 - Some fights' monsters have fixed hit points, so every try faces the same total. *seen* (Stojanow report)
-- **Killed trolls rise again** on their own square unless a figure stands on it (any of the troll's cells): a fighter
-  stands on each fallen troll. *seen* (Player 38, p38e1/p38e3, Pool's kobold throne room)
+- **Killed trolls rise again** at full HP on their corner (top-left) square unless a figure stands on it: a fighter
+  stands on each fallen troll's corner square. A member on its second cell doesn't hold it, and it rises as soon as the
+  member on it falls. **End the MOVE with Enter:** Esc undoes the whole MOVE (the figure goes back where it began),
+  which is why the steps in Players 38-39's logs never held (32 of 32). *seen* (Player 38, p38e1/p38e3, Pool's kobold
+  throne room; corrected 2026-11-22: Gold Box Guide 6 from Players 38-39's logs, and Player 40, p40t1-t3 in DOSBox, the
+  Slums' trolls)
 - A tiger rakes (two more 2d4) only when both front claws hit in one attack; the bite doesn't count. *code* (Combat
   Chat 37, GAME.OVR 0x13EED / 0x161CD)
 
@@ -650,8 +723,12 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   the next wave (the book's "Continue Combat to heal"). *seen* (Player 38, p38e1/p38e3)
 
 **Fleeing**
-- Fleeing the map works only for a member whose movement is at least the fastest enemy's: unready heavy armour to raise
-  it, and retreat early. *book* (Manual, Cluebook)
+- **Fleeing:** MOVE into the field's edge asks FLEE: YES NO; YES gets the member away at once if no enemy can see him,
+  else only if his movement halved beats the fastest enemy's (a d2 on a tie), otherwise ESCAPE IS BLOCKED and he can go
+  on moving. Unready heavy armour to raise movement, and retreat early. The enemies still finish the round after the
+  last member is gone (8:27's eighteen kobolds took their turns before THE PARTY HAS FLED). *book* (Manual, Cluebook) +
+  *code* (GAME.OVR 0xA413 / 0x13465, Combat Chat 40) + *seen* (Combat Chat 41, DOSBox: ARN at movement 9 got away from
+  kobolds at 6) (corrected 2026-11-22: the book's "movement at least the fastest enemy's")
 - If the whole party flees, every unconscious or dead member is lost for good. Never flee and leave bodies: bandage the
   dying, or reload. *book* (Manual)
 
@@ -677,8 +754,10 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - (Pool) **No experience for the downed:** a fight's experience is divided among the members still standing and given
   only to them, so an unconscious or dying member at the fight's end gets none. *code* (Combat Chat 34; GAME.OVR
   0x58A0, 0x58D3) + *seen* (main chat 73, check 141's gnolls: DIRTEN unconscious at 23435 before and after)
-- (Pool) A single-class member with a high prime requisite gets 10% more (93 -> 102); a multi-class member's share is
-  split between the classes. *seen* (main chat 73, check 141)
+- (Pool) **The experience split:** a single-class cleric, fighter, magic-user or thief with the prime requisite over 15
+  gets 10% more (93 -> 102; no bonus for paladins or rangers); a multi-class member's share is halved (two classes, the
+  magic-user/thief too) or thirded (three) even once one class is capped, so the capped part is lost. *seen* (main chat
+  73, check 141) + *code* (GAME.OVR 0x58D3, main chat 96)
 
 **The dying**
 - Bandage the dying at once; heal anyone unconscious before the last enemy falls if you can (section 5). *book* (Manual)
@@ -730,6 +809,10 @@ Card panel 6)
 
 **Where to rest**
 - **When a rest is interrupted, go to the inn instead of camping again.** *seen* (Player 14, p14b3)
+- **On the way to a fight in an area with no camp, cast no cures:** the healing memorized for the fight is all the fight
+  gets. Heal on the way only by resting where a camp is allowed. *seen* (Gold Box Player 44, p44r1, p44f2: Pool's throne
+  room, 8:13, six Cure Light Wounds spent on the trip, no cure left for wave 2's CONTINUE BATTLE, and wave 3 destroyed
+  the party)
 - **Some places are only safe to rest at the inn:** camps there were interrupted 4-5 times and members died. *seen*
   (Players 15, 19, 25; Pool's list is in poolrad.md)
 - **While an alarm holds,** patrols come to camps and wander more: use memorized cures and rest at the inn. *seen*
@@ -883,35 +966,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- A cleric can't READY a magic-user's scroll (READY does nothing, no message): hand scrolls to a member of the scroll's class before a fight. *seen* (main chat 85, DOSBox, check 243)
-- READY works in a fight from USE's item list (End to the item, R, then EXIT): a Ring of Protection +2 readied there lowers AC at once (4 to 2) and the member's menu comes back with the turn unspent (*seen*: Combat Chat 38, the spell lab's ring_kob in DOSBox; Guide 4's question). (Folded into poolrad.md section 3, the finale: Gold Box Guide 6.)
-- A wand's spell goes off at level 6 too: a 1st-level magic-user's Wand of Lightning Bolt does 6d6 a bolt (*seen*: Combat Chat 38, the spell lab's wand_kob in DOSBox, three bolts; adds to section 1's scroll line).
-- **Correction to "killed trolls rise again ... a fighter stands on each fallen troll" (*seen*, Player 38):** in the original logs the step never held: 32 of 32 times the figure was on another square at its next menu (p38e3, p38e5, p39a1, p39b4, p39c2), and p39c2's troll rose on the "held" square. Not yet known whether the original forbids it or the tool's step is wrong (Player and Combat asked); until then, finish trolls with fire. *seen* (Gold Box Guide 6, from Players 38-39's logs)
-- **Standing on a fallen troll does hold it, on its corner square** (*seen*, Player 40, DOSBox: the Slums' trolls, p40t1-t3; answers the correction above): the earlier steps failed because Esc ends a MOVE by undoing it (the figure back where MOVE began; Enter keeps the walk). A fallen troll rises at full HP on its corner (top-left) square; a member standing there kept one down 115 s to the fight's end, a member on its second cell didn't, and one rose as soon as the member on it fell.
-- **The marching order is the fight's front row:** the order's first four start in contact when a fight opens on the party (5:7's guards); put the casters after the fighters with camp ALTER, ORDER before a known fight (*seen*, Player 40, p40e0).
-- A Javelin of Lightning (USE in a fight) hits the aimed figure for 1d6+20 and the next figures on the line beyond it (3 squares' worth) for a flat 20 each, a save halving each: aim so the line runs on through the crowd (*seen*: Combat Chat 39, the spell lab's jav_kob in DOSBox: 24, 20, 20).
-- In MOVE with MOVE LEFT = 1 (2 half-moves), only a straight step is left: a diagonal (3) ends the movement with no step and the menu comes back without MOVE (*code* GAME.OVR 0x12F0D, *seen* in Player 39's p37i1: ARN's Home).
-- **Where a fight starts can be chosen:** an event often lies on several squares (a row of a room), and the battlefield is built around the square the party stands on (13 x 5 map squares); a square beside a wall closes that flank, and with a distance-0 wave (monsters anchored on the party's square) it decides where the enemy starts. Check the area map for the event's squares before a hard fight. *code* (Gold Box Guide 8: the kobold throne, 8:13 4,3 / 5,3 / 6,3)
-- **Hold Person takes three different figures:** TARGET three of them and the aim closes by itself; TARGET on a figure already picked keeps the aim up and adds nothing, so among look-alikes (twelve 8TH LVL FIGHTERs) count your NEXTs from the caster to know whom you picked (*seen*, Player 41, p41x2 at 5:7's guards).
-- A member on QUICK chooses his own weapon each turn and may put a magic one away for another weapon (with no enemy next to him, a missile weapon rates higher): a Two-Handed Sword +1 (+3 vs Undead) put away loses its undead bonus until READYed again, so keep fighters with such a weapon off QUICK against undead, or re-READY after the fight (*seen*: Combat Chat 40, Player 37's p37i1, BRAM on QUICK at the spectres: his effect 3 gone, GAME.OVR 0x11B35).
-- MOVE into the field's edge asks FLEE: YES NO; YES gets the member away at once if no enemy can see him, else only if he is faster than the fastest enemy (a coin toss when as fast), otherwise ESCAPE IS BLOCKED and he can go on moving (*code* GAME.OVR 0xA413 / 0x13465, Combat Chat 40).
-- **A Fireball aimed at an enemy beside our line burns our own:** LIRA's at the guard on 28,14 (two squares from our front row) did 15 to ARN and 15 to BRAM. Aim it where no member is within its reach, or use Stinking Cloud / Hold Person there. *seen* (p41g1's video, Gold Box Guide 9)
-- **Aim by MANUAL, straight to the cell wanted**, not by NEXT/PREV scans; for area spells pick the cell so no ally is inside and so a second cloud sits beside the first, not on it (two Stinking Clouds side by side cover 8 cells, overlapped only 6). *Jeremy* (Gold Box Guide 9, p41g1's video)
-- **A caster in contact steps back before casting** (a next-turn spell begun in melee is spoilt by any hit), or casts an at-once spell. *Jeremy* (Gold Box Guide 9)
-- **Against many men-at-arms: the clerics Hold Person everyone (three a cast), the magic-users Stinking Cloud the rest, the fighters fight the ones still standing while the others kill the helpless** (one blow each). *Jeremy* (Gold Box Guide 9, the finale's twelve guards: "extremely easy with the current setup")
-- **Hard fights get a spell-list review before them;** otherwise the example cleric lists (section "Example spell lists") stand. For the finale's twelve guards: as many Hold Persons as the slots allow. *Jeremy* (Gold Box Guide 9, 2026-11-21 14:54)
-- **A fighter with an enemy in reach attacks it, never GUARDs,** above all while a caster beside him is being hit (p39c2's video 44:00-45:30: BRAM guarded at 35 HP while two trolls took ELWEN from 30 to 4). *seen* + *Jeremy* (Gold Box Guide 10, 2026-11-21 15:46)
-- **Before a fight that needs speed, leave the heavy loot:** at a pile just before a flight or a long walk, take only weightless items (rings); gold and armour after (the finale's guards' pile: Plate Mail +2 at 450 and the gold left everyone at movement 3 for Tyranthraxus' flight, p42f1-f7). *seen* + *Jeremy* (Gold Box Guide 10, 2026-11-21 15:22)
-- **A flight off the field's edge (MOVE into the edge, FLEE: YES) gets that member away at once when no enemy sees him or his movement halved beats the fastest enemy's (a d2 on a tie; else ESCAPE IS BLOCKED), and the enemies still finish the round after the last member is gone** (*seen*, Combat Chat 41: DOSBox, 8:27's kobolds, ARN at movement 9 against kobolds' 6 got away; then the eighteen kobolds took their turns before THE PARTY HAS FLED; *code*: GAME.OVR 0x13465).
-- **A Fireball reaches about 3 squares from its aim** (a circle of radius ~3: dx² + dy² <= 10): aim it with every ally 4 or more squares off. *seen* (Player 42, the p41g1 replay read at LIRA's Fireball: ARN and BRAM three rows off took 15 each)
-- **A loadout review before each stretch and each hard fight:** each member's spells chosen for the fights ahead (not the default fill), each scroll, potion and wand with the member who uses it and the round it is used, and what to sell or leave. **Think long term: spend nothing a later fight needs.** *Jeremy* (Gold Box Guide 12, 2026-11-21 20:56-21:05; docs/strategy/player-capability.md section 3)
-- **Restoration scrolls are kept only while a level drainer lies ahead;** after the last one they are sold (amends "never sold", section 2). *Jeremy* (Gold Box Guide 12, 2026-11-21 20:56)
-- **Loot before the last battle:** the take rule stands (some loot must be taken), but going into the final battle (or any fight decided by speed or weight) the party carries only what it needs to win it; the rest is collected after. *Jeremy* (Gold Box Guide 12, 2026-11-21 20:29)
-- **Casters in melee (corrects Gold Box Guide 9's "a caster in contact steps back"):** stepping back gives a free blow, so casters don't; magic-users stay out of melee; clerics may begin spells in melee, a calculated risk (a hit before it goes off spoils it; keep their AC good). *Jeremy* (Gold Box Guide 12, 2026-11-21 20:29-20:38)
-- **Disablers go on the enemies in contact first** (Hold Person, Stinking Cloud), then casters, then the far ones: holds on far guards while the ones in contact hit us lost fights (p42f6). *Jeremy* (Gold Box Guide 12, 2026-11-21 20:38; general form of Plan 5's rule)
-- **Use every consumable that wins a hard fight:** potions (Giant Strength on the best fighter where only blows count), wands, the Javelin of Lightning, the Necklace of Missiles; unused potions and an unread scroll went into Pool's finale (slot H). *Jeremy* + *seen* (Gold Box Guide 12, 2026-11-21 21:01; Guide 11's read of slot H)
-- **(Pool) Experience split ignores level limits:** a multi-class's share is halved (two classes, the magic-user/thief too) or thirded (three) even once one class is capped, so the capped half is lost; only a single-class cleric, fighter, magic-user or thief with the prime requisite over 15 gets +10% (no bonus for paladins or rangers). *code* (GAME.OVR 0x58D3, main chat 96)
-- **On the way to a fight in an area with no camp, cast no cures:** the healing memorized for the fight is all the fight gets (Pool's throne room, 8:13: p44r1's `cure` steps on the trip spent all six Cure Light Wounds; wave 2 then ended with no cure to CONTINUE BATTLE on and wave 3 destroyed the party). Heal on the way only by resting where a camp is allowed. *seen* (Gold Box Player 44, p44r1, p44f2)
-- **A charmed monster fights to the end:** Charm Person's effect sets its morale to 100, so it never runs or surrenders, and it hits with the party's difficulty bonus; Bless (+5) and Curse (-5) also shift a computer-run figure's morale test. *code* (GAME.OVR 0xF05B, 0xED68, 0x2BBEF; Combat Chat 43, the spell matrix's chk1)
-- **Items in a fight are USEd from the items page and must be readied first; READY in a fight keeps the turn:** a one-handed potion or wand needs a free hand (unready the shield, drink, ready it again next turn); the Javelin of Lightning (a weapon) needs the sword unreadied; the Potion of Speed works at once (the drinker struck twice); the Necklace of Missiles' fireball goes off at once on the aimed square and catches your own beside it: aim it as a Fireball. *seen* (Gold Box Player 45, p45c1 in the original)
-- **Clouds on the back ranks first, then blows on the helpless:** against a line of fighters in contact, lay round 1's Stinking Clouds (2x2, range 3 squares) on the ranks behind the ones touching you, no two overlapping, and Hold Person the ones in contact; then every fighter strikes a clouded or held figure (one blow slays it) before any standing one: twelve 8th-level guards fell in five rounds with nobody of ours down. Never walk into your own cloud's cells. *seen* (Gold Box Player 46, Pool's finale guards, p46k2, 2026-11-22)
