@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW (checks 393-398)
+
+- **393 (1:18, check 67's rest fight with the hired SWORDSMAN; main path, matched at once on the state):** check 373's
+  start jumped to 12,8 E (`jump.py ... 12 8 E 1 18`), ENCAMP REST eight hours, the orcs, QUICK, CONTINUE BATTLE NO:
+  GAME.OVR 0x6866 (from the fight's end 0x6AD7, after the experience 0x5A47, before the results 0x5E94) takes each
+  conscious hireling's (0x84 bit 7) `0x85 & 7` shares (SWORDSMAN 3, the six player characters 1 each) of every coin
+  kind, gems and jewellery: 120 silver -> 39 gone, SHARE gives the 81 left to the player characters only. Ours had the
+  rule (main.gd `_hirelings_take_shares`) but glued its line to THE PARTY HAS WON (a newline drawn as a glyph, cut);
+  the original gives "SWORDSMAN TAKES AND HIDES HIS SHARE." its own page (row 5 + 2 x i, column 5, wrapped at 34),
+  Enter, then the results. Ready for Combat: `~/gbr/lab/data/c104/hide_page.py` (treasure_screen.gd + main.gd's call).
+- **394 (a difference, main path when a hireling meets a big pile; bug 21, fixed in main.gd):** 393 with PHINEAS on the
+  monsters' side (record 0x10E = 1) carrying 3000 gold: the share's size is kept in a byte (0x6928 `mov [bp-7],al`):
+  3000 / 8 = 375 taken as 119, SWORDSMAN hid 357, the five shared 2643 (ours took 1125). Also seen with 3000 gold
+  poked into the pile (DS:0x6800; `data/c104/dswrite.py`): 231 taken. As the original with ORIGINAL'S BUGS on (every
+  lab run), the whole share off (the Lead's choice: board).
+- **395 (a fresh game; main path, the first thing every player does; no check before):** the start menu's PARTY
+  CREATION (ours' key `create`), tpseed 11111111, CREATE (a male elf fighter, ZED), ADD, ADD, EXIT, BEGIN ADVENTURING,
+  Rolf's eight texts: 0,4 W 00:00 in 3:0. Matches with add_close.py (below); everything else matched at once.
+- **396 (3:11's hall):** check 103's start, REMOVE THRENDER GRONE, DROP BAKSHI, ADD THRENDER GRONE (five, no one
+  waiting): the list stays open ("* THRENDER GRONE"), EXIT, BEGIN ADVENTURING. **A difference (main path, Combat's
+  party_menu.gd):** Combat Chat 46's add_list.py closed the list when no one was left waiting (chat 102's guess; 374
+  closed only because the party was six); 395 shows the same. Ready: `~/gbr/lab/data/c104/add_close.py` (374, 375,
+  395, 396 match with it).
+- **397, 398 (a hired NPC's VIEW; differences, main path, Combat's character_sheet.gd):** GAME.OVR 0x21BFE / 0x22034
+  / 0x22107: TRADE (money and items) and SELL are offered only to a record with 0x84 below 0x80, 0x10D clear or status 1
+  (ANIMATED): SWORDSMAN's VIEW is VIEW:ITEMS DROP EXIT, his items READY USE DROP HALVE JOIN EXIT, in a shop READY DROP
+  HALVE JOIN ID EXIT. 397: camp VIEW, T, ITEMS, End (LONG BOW), T, DROP, YES; 398: the arms shop (`data/c103/s383`),
+  the same with S. Ours traded and sold. Ready: `npc_trade.py`. **The sheet's "(NPC)"** (0x210CC: after the name,
+  column length + 3, light green; screen only): ready `npc_tag.py`.
+- Breaks: 393 SWORDSMAN's silver, 394 THRENDER's gold, 395 cell 0x4A00 and ZED's HP, 396 RHIANNON's HP, 397-398
+  SWORDSMAN's HP and starts with his 0x84 = 0 (`brk397s`, `brk398s`). Lab `~/gbr/lab/data/c104/chk393`-`chk398`.
+
 ## Chat 103: the list top and Home / End on the page (p17a6); the hall's SAVE and its empty party's LOAD; a hired NPC at the inn and at a shop's SHARE (checks 378-392)
 
 - **p17a6, the match's last item, is the shared list top (a difference, main path; Combat's shop_screen.gd):**
