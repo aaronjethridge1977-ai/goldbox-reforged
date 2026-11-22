@@ -719,3 +719,40 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
 - **The throne room's video (Jeremy's rule, five losses):** p39c2 (Player 39's Haste try from `p39a1_s39door`, seed
   39030002, lost) replayed exactly (1177 keys, 0 drifts) at the same human pace:
   `.lab/stuck/kobold_king/p42/p39c2_video_dosbox.mkv` (about 48 min) with its replay log.
+- **Read (Gold Box Guide 11, 2026-11-21 19:15): Jeremy beat the game from slot H (`p40c1_s40hall`) in ours,
+  0.1.7-test3, ORIGINAL'S BUGS off** (recording `.lab/stuck/finale_guards/jeremy/2026-11-21-182145_finale.gbrrec`, his
+  log `godot.log` of that session). **His way (Jeremy):** keep Genheeris far enough back to bolt the guards' whole front
+  line with the wand every round; hold and nauseate the rest with Hold Person and Stinking Cloud. *Jeremy*
+  - **The guards: won in 9 rounds, nobody dead.** Round 1 LIRA's cloud, CEDRIC's holds (2), the wand (4 guards);
+    round 2 LIRA's Fireball on 10 guards and none of ours; all 12 down by round 7 (the helpless slain); rounds 8-9 he
+    answered CONTINUE BATTLE YES and healed in the fight (the original's own prompt once no enemy stands: GAME.OVR
+    0xA163). Nothing in it rests on a fixed original bug (the guards have no magic resistance): **the method carries
+    to the original**; only the dice and the Fireball's placement need a run. *seen* + *code*
+  - **Tyranthraxus: won in 4 rounds, BRAM and DORN killed by the round-1 breath (80 each, saves failed), ELWEN down
+    by the round-4 breath (40, saved), CEDRIC by blows.** He took 92: **38 from blows** (4 hits in 14 swings) and
+    **54 from the wand** (10, 11, 11, 22, the last the kill). **In the original he resists every spell and effect**
+    (bug #7: 15 - 5 x (11 - 3) wraps to 231 in a byte: every d100 resists; GAME.OVR 0x11570), so the wand's bolts do
+    nothing there; ours (bugs off) gives him 40% against a wand's level 6, and all four got through (about 13%).
+    Without the wand he ends round 4 at 42 of 80 with a breath left: **this half would not have worked in the
+    original.** *code*
+  - **For the Player (Jeremy, 19:12): the Player must be able to beat the original.** Judge every finale plan by the
+    original's rule: **Tyranthraxus by blows alone**; no wand, cloud or hold counted on him.
+  - **His numbers (MON5CHA 66, read in the game's data):** AC 0 (rear 2), 80 HP, THAC0 5; effects 0x18 (sees
+    invisible), 0x4F (a hit burns 2d10 more: the "TAKES n FROM FIRE" after each of his hits), 0x51, 0x58 (the breath),
+    0x59 (**the first attack roll against him each fight misses**), 0x6A (magic resistance). He made three attacks a
+    round in ours (rounds 2, 3); poolrad.md says two: to Combat. The -4 Jeremy saw on his look panel while he coughed
+    is the desk's P87 (b). *code*
+  - **The breath, plainly (ours' reading of GAME.OVR 0x2A0F1):** always 80 (his maximum HP, not what he has left:
+    hurting him first doesn't weaken it); a save vs breath halves it to 40; round 1 always, then on a 50% roll each
+    round, three breaths a fight at most; the bolt starts beside him and runs on in a line, hitting each figure in its
+    path (BRAM and DORN in round 1). Nothing the party can get resists electricity; Prayer and the magic-user's
+    Shield add 1 to the save. Whether the original's breath uses his maximum or current HP is the desk's P87 (c).
+    *code*
+  - **The party in slot H** (Guide 11's item read: every record's bytes, the hidden name words shown): most magic
+    unidentified; BRAM with no shield on the Flail +1 while the Two-Handed Sword +1 +3 vs Undead sat in his pack; DORN's
+    Quarrels +2 readied with no crossbow and Bracers AC 6 over Ring Mail +1 (AC 6 both: whether the original counts
+    bracers over armour is a check); the Potion of Giant Strength on CEDRIC and the Potion of Healing unused (ELWEN);
+    LIRA's Short Bow +1 not readied and a clerical scroll (Prayer, Remove Curse, Animate Dead) she can't use; about
+    800 coins of dead weight (ARN's Leather +1, CEDRIC's Long Sword +1, ELWEN's spare Chain Mail +1 and Shield, LIRA's
+    second Broad Sword). Valjevo's 5:3-5:6 were left out (Player 40): 5:6's altar (2 Long Swords +3, Mace +3, the
+    Necklace of Missiles) never taken. *code*
