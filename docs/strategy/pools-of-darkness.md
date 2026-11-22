@@ -152,15 +152,204 @@ Jeremy, 2026-11-21: the pick comes once all four games are processed)
 
 ## 2. The route
 
-*(Next.)*
+**The shape** *book* (Cluebook pp.1-10): start in Phlan, then east; once Vala is helped, west, going round the
+overland map roughly counter-clockwise; do the small "mini" adventures as they turn up, not in the synopsis' order.
+Phlan is torn from the Realms early (Bane hides it under Marcus' Tower) and Elminster takes the party into **Limbo**,
+the hub between the Pools of Darkness: from there the Realms overland, then three outer dimensions (Moander, the Web
+Dimension, Bane's Dark Dimension) are reached through the Pools.
+
+**What gates what** *book* (Cluebook pages as marked)
+- **The Horn of Doom** (Thorne, after his second blast, before the third: p.29) passes Manshoon's questioning (p.32),
+  summons a sentinel's dragons in the Cave of the Beholder (p.67) and cracks Dark Phlan's Iron Wall: blow it once for
+  each party member (p.70).
+- **The Crystal Ring** (Kalistes, the Web Dimension: pp.46-48) is needed in the Palace of Gothmenes to raise Bane's
+  Crystal from the Pool of Death; without it Gothmenes never appears (pp.71-72).
+- **The Talisman of Bane** (Tanetal, Moander's heart: pp.60-63) opens the last sentinel hall's fist to the Pool of
+  Darkness and Dark Phlan (p.67).
+- **The four Aerie keys** (one per dragon nest) open the doors to the dracolich and the gate to Thorne's Cave (pp.27-28).
+- **Aeghwaet's two potions** (the Moander mini-adventures, for clearing his wound) are required before entering the
+  heart (pp.58-60). **The Ward of Safe Passage** (the Testing Ground) or the slave's secret way gets into Kalistes'
+  Parlor; otherwise the party arrives bound in the larder (pp.43, 47).
+- **Phlan** can't be entered until Marcus' Tower falls (p.13); the Tower of Marcus rejoins the party to its city.
+
+**Levels:** none in the books (new characters start at about 14, imported ones at 15-16: section 1). Levels per
+stretch come from players and our own runs: **unconfirmed** (step 6).
+
+| # | Stretch | Areas (Cluebook pages) | Rest | Ends with |
+|---|---|---|---|---|
+| 1 | Phlan | the city (13-14) | free at every inn | Sasha's escort accepted (3 clerical scrolls); Phlan torn away |
+| 2 | Limbo; the Realms' minis | Limbo (15), overland minis (15-17) | Limbo safe; most minis safe once cleared, some interrupted | gear stored with Elminster; the minis' news |
+| 3 | Sasha and the Lands of Thar | Taydome's Keep (18-19) | nowhere safe while Kimarr can "see" the party; anywhere once he is dead | Kimarr dead; Sasha freed; the keep a safe base (if she isn't angered) |
+| 4 | Vala vs. Vaasa | the cave (20) | safe in Vala's office and the rooms at 12 | the four items; the Vaasans turned back |
+| 5 | The Temple of Tyr | the temple (21-22) | only the scribe's office until the braziers are lit and the bell rung | the armoury; the temple freed |
+| 6 | The Hill Giant Steading; the Fire Giant Cave | (23-26) | cleared barracks and private rooms; the cave's rooms at 13 | the Shaman and Ungleow dead; the way to the Aerie |
+| 7 | The Dragons' Aerie | (27-28) | rooms at 9 | four keys; Modthryth and the dracolich; the gate to Thorne |
+| 8 | Thorne's Cave | (29-30) | only at 14 | **the Horn of Doom** |
+| 9 | Zhentil Keep; Manshoon's Tower | (31-33) | the tavern; in the tower once after each big battle | Manshoon driven off; the way down |
+| 10 | The Descent; Silk and the slave pens; Kalistes' Temple | (34-39) | the Drow allow fewer and fewer long rests; cleared barracks | the Fire of Night destroyed; the teleporters to the Realms broken; the portal to the Web |
+| 11 | The Web Dimension: minis, Testing Ground, Kalistes' Parlor | (40-48) | none in the minis; cleared barracks and finished trials; the Parlor's guard rooms | the Ward; Kalistes dead; **the Crystal Ring** |
+| 12 | Myth Drannor; the Tower of Marcus | (49-56) | rooms at 17; the tower's small side rooms | Tyranthraxus stopped; Marcus dead; Phlan restored; onto the Vessel of Moander |
+| 13 | Moander's minis and heart | (57-62) | the Ear, the heart's entrance, Aeghwaet's; the heart: avoid | Tanetal dead; **the Talisman of Bane** |
+| 14 | Mulmaster; the Cave of the Beholder | (63-68) | the Mulmaster inn; the cave's small side rooms | the arena won; Arcam dead; the Pool to the Dark Dimension |
+| 15 | Dark Phlan; the Palace of Gothmenes | (69-72) | Dark Phlan's inn; the outer palace only | Sasha rescued; Gothmenes dead: the end |
+| - | Dave's Challenge (optional) | (73) | one place only | the boat from Phlan's docks after the ending; always Champion |
+
+The Chancellor in the Cave of the Beholder sends the party back out to "good heroes" still under attack; each finished
+errand thins his army (pp.65-66), so stretch 14 may loop back to the overland. After the ending, the weapons left in
+Limbo are given back at Phlan's docks (p.13). **No point of no return** is printed, but two areas are one-way at
+moments: the heart flushes the party out, and the Tower of Marcus collapses after Marcus (pp.56, 60). *book*
+
+**Notes by stretch** (*book*, the Cluebook unless marked; hard fights in section 3; riddle answers, code words and
+passwords in `.lab`)
+1. **Phlan** (pp.13-14): temples and the training hall on the east side, the shops on the west (Ohlo's for magic,
+   Smithy's armour, the Bowyer, the Old Guild Armory); the fortune teller (16) gives hints all game; the library's old
+   man is Elminster. Train before leaving with Sasha (section 1).
+2. **Limbo and the minis** (pp.15-17): store magic items with Elminster before passing to the Realms or another
+   dimension (section 4). The huntsman's answer is PHLAN or NO ONE; the farmhouse's bodies (1) spare a surprise; save
+   the crossroad's storekeeper for his +3 gear and potions of speed.
+3. **Thar** (pp.18-19): Ruoln is Kimarr; Bostell (9) helps in the last fight; please Sasha at 20.
+4. **Vala** (p.20): tell the hill giants you are there for the "Silver Lady"; take Vala along or the giants fight.
+5. **Tyr** (pp.21-22): chase the guard at once; erase the hand after the vampire priest (a blessing); leave the plunder
+   at 9 (the curse); don't kill Laurellin or Brimwulf; the ritual's third option (Journal entry 11) means fewer
+   elementals.
+6. **The Steading** (pp.23-24): bluff in as mercenaries; train free at 6; Kardal's tip (beat the cloud giants at 10)
+   opens the inner steading; buy or sell at the store (23) or lose money. **The Fire Giant Cave** (pp.25-26): never
+   wear Ungleow's ring; throw the skull's ring down the endless corridor.
+7. **The Aerie** (pp.27-28): a key in each nest; burning the dragon bodies (14) stops a new dracolich but draws dragons.
+8. **Thorne** (pp.29-30): free the prisoners, take Raizel, and refuse her detours (go north) until Thorne is dead.
+9. **Zhentil Keep and Manshoon** (pp.31-33): grovel or bluff at the gate; training costs 10 gems; Mabril's secret way
+   (4) skips the questioning; the taxation takes 10 gems a head (3 will do); bring Traned up for the sentinel.
+10. **The Descent, the pens, the temple** (pp.34-39): find Traned (6) and let her go with the slaves at the Winnowing;
+    LOOK in the barracks (8); help Silk (her amulet, a safe pass, Drow weapons); the temple's secret door from the pens
+    is the safe entry; a thief steals the antidote; destroy the teleporter statue's hands before the portal.
+11. **The Web** (pp.40-48): befriend Cynthia first (spiders from the fireflies' cavern, Drow prisoners; then kill her
+    as she asks); take Storm and Dennia; save often. The Parlor: destroy the eggs to draw Kalistes out.
+12. **Myth Drannor; Marcus** (pp.49-56): ready mirrors or silver shields; blessed bolts for the rakshasas; leave the
+    elf's grave (XP) or rob it (the Girdle). Rescue Shal from the dungeon and keep her alive (the vorpal sword; she
+    reunites with Petra); the Pincer's trick (16-17).
+13. **Moander** (pp.57-62): rescue the priestess (the amphora slows the heart); clear Aeghwaet's wound (his potions,
+    Elixirs of Youth); the hermit trains (22). In the heart follow the Cluebook's order: arrow weapons, the Watcher,
+    the cornucopia, the tuning fork, the magnetized weapons.
+14. **Mulmaster and the Beholder** (pp.63-68): offend the officials as little as possible (fewer arena rounds); the
+    training hall wants a 100-platinum bribe; the Banite chant (Journal entry 46) is the labyrinth's route.
+15. **Dark Phlan and the Palace** (pp.69-72): rescue Sasha before the wedding; burn the gown (14); in the palace give
+    the Objects of Power out before the inner doors; race the Tantalus Clock to the Pool of Death.
 
 ## 3. Hard fights
 
-*(Next.)*
+From the books only (*book*: the Cluebook unless marked; the monster notes from the Journal's bestiary, pp.13-18);
+nothing here has been seen in play. The general rules as before: buff before set fights, spread out against breath,
+ready **mirrors or silver shields** against gazes, missiles and spells against what melee can't touch.
+
+**The new monsters** (Journal pp.15-17)
+- **Bane minions** (Gothmenes' servants: Dark Phlan, the Palace, the Cave of the Beholder): all see invisible things and
+  ignore fear, poison, death magic and charm. **Black** breathe acid and cast cold, hold and slow spells; **blue** breathe
+  lightning and **return double the damage to anyone striking them** (the Cluebook: don't melee them, use magic and
+  missiles, p.65); **red** breathe fire and add 2d6 fire to each hit.
+- **Pets of Kalistes:** AC -1, 85% magic resistance, a poison bite saved at -2 or death, Death Spell and Disintegrate
+  once a day, blink. **Enormous spiders:** save or die. **Gaze spiders** paralyze (mirrors reflect), **stone spiders**
+  petrify, **electric spiders** breathe lightning.
+- **Large iron golems** (27 HD, poison breath; only electricity slows them, fire heals them), **greater margoyles**
+  (normal weapons useless), **giant cockatrices** (petrify), **walking trees**, **greater otyughs**, hill giant shamans.
+- **Rakshasas** (Myth Drannor): spells under 8th level don't affect them; ordinary ones need magic weapons and take half
+  from +1 and +2; stronger ones ignore +1 and take half from +2 and +3; **blessed bolts kill them**; Detect Magic shows
+  the disguised ones (pp.49-50).
+
+**The Realms**
+- **Phlan's gate (W23):** nine Black Mages and a Bit o' Moander hold a family; the gates stay shut until they fall
+  (p.14).
+- **Kimarr** (Thar) ends as a black dragon in his chambers, after his monsters at 15 (p.19).
+- **Vala's cave:** the Lindenwood Staff's coffins wake wraiths, skeletons and a lich; the Crucible's fire elementals;
+  the vampires' crypt (p.20).
+- **The Temple of Tyr:** the vampire priest and marauders (warned, he meets the party with a blade barrier: wait outside
+  the door); earth and fire elementals at the ritual (fewer with the third option) (pp.21-22).
+- **The Steading:** the guard room's ogres, ogre mages and a **large iron golem** (2); the cloud giants with shamans and
+  mages (10); the treasury's white and red dragons (17); the Shaman's hall of giants, ogres and ogre mages (20)
+  (pp.23-24). **The Fire Giant Cave:** fire giants and elementals waiting in ambush at 12 (take the initiative to
+  surprise them); Ungleow's fire giants and assassins (11) (pp.25-26).
+- **The Aerie:** Modthryth and the **dracolich** at the gate (17); wandering monsters always include a dragon (pp.27-28).
+- **Thorne:** red dragons all through; Thorne with his attendants at 16. Each detour lets more dragons gather (11-13,
+  18) (pp.29-30).
+
+**Under Zhentil Keep**
+- **Manshoon's Tower:** spiders drop from the ceiling at 12 (many); the beholder adjutant with fire giants, ettins and
+  salamanders (16: "a tough fight"); the **gelt's** damaging gaze (17): invisible members are spared, a Power Word can
+  blind it, Traned's silver shield turns it on itself; Manshoon is immune to missiles, but hitting his book burns it
+  (pp.32-33).
+- **The Descent:** three waves at the wagon room (2); the Drow barracks' ambush (LOOK first, 8); the abbess's guards
+  (9-10); hit-and-run archers (14) (pp.34-35).
+- **Kalistes' Temple:** the inner chamber (15): Drow, Pets of Kalistes, giant and phase spiders (p.39).
+
+**The Web Dimension**
+- **Random fights in the minis vary wildly:** save often; no safe rest (p.40).
+- **The Testing Ground:** trial 4, high-level Drow mages ("a tough fight": Prayer and other protections first); trial 3,
+  driders; the last room, Daris' guards and then **Shest**, a Pet, with enormous spiders (pp.44-46).
+- **Kalistes' Parlor:** the weapons room's driders and spiders on every entry (5); the nursery's battles (16); Kalistes
+  herself once her eggs are destroyed; then the slave's earth elemental (17) (pp.46-48).
+
+**Moander and the end**
+- **Myth Drannor:** medusae and basilisks in ambush (8); spectres at the grave (11); the Maharajah's temple (16)
+  (pp.49-51).
+- **The Tower of Marcus:** the sortie force with many mages (22); the Red Wizards' manufactory (14: "a tough battle");
+  the circle's Bane minions (16); Marcus' waves (spectres, Moander bits, minions, then Bane minions and Black Circle
+  mages with Marcus); Petra, if Shal is dead (pp.51-56).
+- **Moander's heart:** the magnetic iron golems (3); Tanetal and his minions (10); fights in the pumping chambers end
+  with a flush (pp.60-63). Weapons made from the arrow are needed against Tanetal (p.61).
+- **The arena (Mulmaster):** black dragons, displacer beasts, purple worms, salamanders, ettins and more, rounds by how
+  much the city was offended (p.63). **The Chancellor** (a lich) with mercenary squads, margoyles and iron golems; Arcam's
+  defenders (fewer the less the party rested since 8); **Arcam** (pp.65-68).
+- **Dark Phlan:** the treasury's vampires (6); the wedding (11) (pp.69-70).
+- **Gothmenes' finale** (17): a huge force of Moander bits, dracoliches, Bane minions and Pets of Kalistes; the
+  Crystal's holder drives off about half but drops to almost no HP; then the elder beholder Xoham; then Gothmenes,
+  **with Bane's power stopping the party's magic**: fighters and missiles carry it (pp.72-73).
 
 ## 4. Pools-only rules
 
-*(Next.)*
+*book* unless marked; nothing here has been seen in play. Where a rule matches Silver Blades', it isn't repeated.
+
+**Limbo and the Pools**
+- **Limbo's menu:** REPAIR (temple healing), TRAIN, STORAGE, ENCAMP, MOVE ON (Elminster's list of destinations)
+  (Manual p.10).
+- **Most magic items are destroyed** on the full passage between the Realms and an outer dimension, either way; going
+  from an outer dimension into Limbo and back keeps them. Store items and money with Elminster (STORAGE: DEPOSIT, TAKE,
+  POOL, MONEY) (Manual p.10; Cluebook p.15). Drow gear passes into the Web Dimension (p.39); Shal's vorpal sword survives
+  Limbo (p.56). Which items survive, exactly: **unconfirmed** (request).
+- **Overland maps:** the Realms, Moander's body and the Web Dimension each have an overland of mini-adventures (pp.15,
+  40, 57).
+
+**Services**
+- **Temples are free;** Phlan's inns are free (the party's fame); identifying costs **100 platinum** (Manual p.9;
+  Cluebook p.13).
+- **Training:** Phlan, Taydome's Keep, the Steading (free), Zhentil Keep (10 gems), Moander's hermit, Mulmaster (a
+  100-platinum bribe), and Limbo's TRAIN (Cluebook pp.13, 19, 23, 31, 57, 63; Manual p.10). A **purple name** means the
+  character can train (Card panel 6).
+- **Tolls in gems:** Zhentil Keep's training hall and its mace +4 (10 gems), Manshoon's taxation (pp.31-32).
+
+**Camp and difficulty**
+- **FIX only heals** (no time for memorizing: use REST); **REST and FIX are missing in some areas** (Card panel 6).
+- **ALTER, LEVEL** as Silver Blades (Novice to Champion; Veteran by default; harder gives more XP) (Manual p.7). The
+  Cluebook tells parties with demi-humans or a magic-user under Int 18 to play Novice or Squire (p.1). **Dave's
+  Challenge** is always Champion (p.73).
+
+**Area rules** (the Cluebook)
+- **The Temple of Tyr:** erasing the black hand gives -2 AC and +1 to hit inside the temple; taking the marauders'
+  plunder curses the party (+2 AC, -2 to hit there) (pp.21-22).
+- **Moander's heart:** LUB flushes a party standing in a ventricle out of the heart, DUB drains one in an atrium into a
+  ventricle; fights in the pumping system end with the next one; the gold cornucopia weighs the whole party down;
+  resting is dangerous (Tanetal kills sleepers) (pp.60-63).
+- **The Cave of the Beholder:** the Chancellor's errands send the party back to the overland, and each one finished
+  thins his army (pp.65-66); three sentinel halls summon monsters for each Object of Power carried (the Horn, the
+  Ring, the Talisman) (p.67).
+- **Dark Phlan's Iron Wall:** blow the Horn once per party member (p.70).
+- **The Palace of Gothmenes:** a ticking clock (the Tantalus Clock) after the inner doors; no rest in the inner palace;
+  the Objects of Power are handed out at the secret doors (LOOK) and change hands there; reaching into the Pool of
+  Death costs terrible damage; a word repeated in the finale is a lethal trap (in `.lab`); the party can't cast
+  against Gothmenes (pp.71-73).
+- **The ending** turns time back: nobody in the Realms remembers; a ship of treasure waits; the weapons stored in Limbo
+  come back at the docks (pp.10, 13).
+
+**Interface** (Manual pp.5-12; Card panels 4-6) as Silver Blades': mouse and joystick, ESC takes back a combat move,
+ALT Q, ALT M, Space, CTRL S; DISPLAY shows the effects on the party; AREA isn't available everywhere.
 
 ## 5. The magic-gear map
 
