@@ -411,9 +411,32 @@ Speed double movement; the Periapt of Health stops disease; the Stone of Good Lu
 Charming cast Charm Person without running out; the Ring of Wizardry doubles a magic-user's 5th-level spells (Curse's:
 levels 1-3, **unconfirmed**); the silver shields reflect basilisk and medusa gazes.
 
+## 6. The Journal's false entries
+
+The Journal has entries 1-72 and no tavern tales; some entries are false, and an entry is read when the game names it
+(Journal p.27). **The Cluebook lists the true ones** (p.60): 1-7, 12, 13, 15-23, 25, 29-33, 35, 37-41, 43-45, 47, 49-58,
+60, 62-71. *book* So these are false, with what each would mislead about:
+- **8** (a glowing mouse), **34** (the Flaming One, an old demon, hides in the ruins), **48** (the mouse claims to be the
+  Pool's old foe, possessing it) and **59** (a squeaking voice leads the mines' monsters): a red herring about a
+  possessing demon. Nothing in the Cluebook's maps supports it.
+- **9** (the Well's teleporters curse frequent users into the Black Circle): use them freely.
+- **10** (the Temple of Tyr is a demon's trap): the Temple is safe and Derf is an ally (Cluebook pp.12-13).
+- **11** and **46** (Mulmaster's Beholder Corps guards the Dungeon): not in the Cluebook's Dungeon.
+- **14** (touching the Well's gems withers the hand) and **24** (Grimdra steals the Well's gems).
+- **26** (avoid the Amulet of Eldamar; it wakes the Dreadlord): the Amulet is needed for the Dungeon's keys (section 2).
+- **27** (the rescued maiden's story) and **28** (the old man's vorpal blade).
+- **36** (the map bought from the storm giants): false; the true map is entry 66, on the giants' bodies (Cluebook p.47).
+- **42** (the medusa's grudge against the Black Circle) and **61** (the mayor serves Hillsfar and turns on the party).
+- **72** (a map to Grimdra's hoard) is in neither list; its subject is entry 24's, which is false: **unconfirmed**.
+
 ## For the lanes
 
-[Next review.]
+- **main:** the low-priority request on the board (the hall's level limits, FIX's spells, training's spare XP, the
+  gear map from the data). Silver Blades' character file is 439 bytes; the ready-made party showed class at 0x6C,
+  levels at 0x111-0x118 (cleric, druid, fighter, paladin, ranger, magic-user, thief, monk) and max HP at 0x70; the race
+  byte (0x6B) read 6 for humans and 3 for the fighter/thief. *code* (Gold Box Sources 2, from CHRDATA1-6.SAV)
+- **Player and guide chats:** set the play level first (ALTER, LEVEL): it changes rests, flights and XP. The copy
+  protection is a word from the Rule Book or Journal (answers in `.lab`, never in a repo).
 
 ## Inbox
 
