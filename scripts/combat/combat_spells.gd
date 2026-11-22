@@ -780,8 +780,8 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				# power 33 to the fight's end): the handler also makes a player character's control byte +0x84 0xB3
 				# (0xF0E4), so he is run as an NPC, in this fight and after it, until the charm is removed (0xF07E).
 				SpellCaster.add_affect(t, EFFECT_CHARM, id, 0, (me.team << 7) | (own_team << 6) | 0x20 | 1)
-				if t.npc <= 0x7F:
-					t.npc = 0xB3
+				if t.morale <= 0x7F:
+					SpellCaster.set_control(t, 0xB3)
 				c.combatants[j].team = me.team
 				c.combatants[j].quick = true
 				c.combatants[j].target = -1
@@ -994,6 +994,9 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 					if c.roll(1, 100, "dispel %s's effect %d (needs %d)" % [t.name, int(a.effect), chance & 0xFF]) <= (chance & 0xFF):
 						t.affects.erase(a)
 						SpellCaster.ended(t, a, PackedStringArray())
+						if int(a.effect) == EFFECT_CHARM:
+							# The removal runs the charm's handler with its end flag (0xF05B): the side back from bit 6.
+							c.combatants[who].team = (int(a.value) >> 6) & 1
 						gone = true
 				if gone:
 					c.message.emit("%s IS AFFECTED" % t.name)

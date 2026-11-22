@@ -342,6 +342,7 @@ const FRIENDS := 14
 
 
 const SPIRITUAL_HAMMER := 23
+const CHARM := 0x0B           # Charm Person's effect (CombatSpells.EFFECT_CHARM)
 
 
 static func _is_hammer(it: GameItem) -> bool:
@@ -416,6 +417,13 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 	match int(a.effect):
 		Strength.ENLARGE, Strength.STRENGTH:
 			Strength.ended(m, a)
+		CHARM:
+			# The charm's handler with its end flag (GAME.OVR 0xF05B -> 0xF07E): a control byte of 0xB3 (the charm's,
+			# a charmed member run as an NPC) back to 0, so Dispel Magic in camp gives the member back (Combat Chat 46;
+			# in a fight the side comes back from the power's bit 6 too: combat_spells.gd's Dispel Magic). Nothing else
+			# ends it outside a fight: it is added for 0 minutes, which the effect clock passes over.
+			if m.morale == 0xB3:
+				set_control(m, 0)
 		SPIRITUAL_HAMMER:
 			# 0xF420 with its end flag: the hammer the effect made goes.
 			for it in m.items:
@@ -451,6 +459,18 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 				m.stats[4] += 1
 				if m.raw.size() > 0x14:
 					m.raw[0x14] = m.stats[4]
+
+
+## A member's record byte +0x84 (who controls him; morale for a monster), kept in ours' npc and morale and in the
+## record saved: the charm makes a player character's 0xB3 (GAME.OVR 0xF0E4) and its end puts it back to 0 (0xF07E).
+## Seen (Combat Chat 46, chm2): BAKSHI charmed by his own Charm Person beside THRENDER GRONE, the party won: the save
+## holds +0x84 0xB3 and the charm (0x0B, power 0x21, byte +4 = 1: its handler runs at removal); after the fight
+## "BAKSHI TAKES AND HIDES HIS SHARE." (an NPC's share); Dispel Magic in camp on him: the charm gone, +0x84 0.
+static func set_control(m: PartyMember, v: int) -> void:
+	m.npc = v
+	m.morale = v
+	if m.raw.size() > 0x84:
+		m.raw[0x84] = v
 
 
 ## As the original's common add (GAME.OVR 0x2C540): the member's first record of the type (0xba:0x2199) is

@@ -2838,8 +2838,8 @@ func _went_down(j: int) -> void:
 			# The removal (0x2AF10) runs the charm's handler (0xF05B) with its flag: the side back from bit 6, and a
 			# control byte of 0xB3 (the charm's) back to 0 (0xF07E).
 			t.team = (int(a.value) >> 6) & 1
-			if tm.npc == 0xB3:
-				tm.npc = 0
+			if tm.morale == 0xB3:
+				SpellCaster.set_control(tm, 0)
 	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
 	t.regen_in = 0      # 0x3B
 	t.dies_in = 0       # 0x5F
@@ -2943,8 +2943,8 @@ func _act_powers(i: int) -> void:
 			# + 0x20 + the figure's own side x 64), and a player character's control byte 0xB3 (0xF0E4); it stays
 			# on a member after the fight (Combat Chat 45, as Charm Person's: the spell matrix, chs1).
 			SpellCaster.add_affect(tm, CombatSpells.EFFECT_CHARM, 0, 0, (c.team << 7) | (t.team << 6) | 0x20 | 12)
-			if tm.npc <= 0x7F:
-				tm.npc = 0xB3
+			if tm.morale <= 0x7F:
+				SpellCaster.set_control(tm, 0xB3)
 			t.team = c.team
 			t.quick = true
 			t.target = -1
