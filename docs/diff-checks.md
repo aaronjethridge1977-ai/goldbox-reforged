@@ -215,6 +215,12 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   main menu: no money left), EXIT, NO. **In the original Down doesn't move the coin list's light** (the second TAKE
   took 1 platinum); ours' Down moved to GEMS: ours' ARROWS IN LISTS names WHO, spell and creation lists only, so this
   is put to the Lead (board): the checks use End, which both games take.
+- **405, 406 (3:8 City Hall, the council clerk; main path, every new party's first commissions; no check before;
+  both matched at once):** check 57's start (the jump to 4,5 S), Left, Up onto 5,5 (event 29, 0x9B91): AT YOUR ENTRY,
+  THE COUNCIL CLERK ... I MUST SEE IF YOU ARE DUE A CURRENT REWARD; then THE CLERK SHUFFLES ..., the Slums, Sokal
+  Keep, the books (0x4A01 = 1, 0x4A06 = 1). 406: the start with quest counters 0x4A39 = 5 and 0x4A3A = 3 (paid
+  0x4A8F.. still 0): WE HAVE BEEN INFORMED YOU HAVE ELIMINATED SOME UNDEAD ..., the reward as a treasure (its
+  experience page, SHARE, EXIT), then the commissions; the paid counters copied.
 
 ## Chat 104: a hireling's share after a fight; a fresh game's start; the ADD list's close; a hired NPC's VIEW and ADD (checks 393-400)
 
