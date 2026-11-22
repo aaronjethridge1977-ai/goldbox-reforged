@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 101: character creation of more kinds, EXIT at the creation lists (checks 351-358)
+## Chat 101: character creation of more kinds, EXIT at the creation lists, the icon's SIZE, an NPC's portrait (checks 351-360)
 
 All at 3:11 from check 103's start and tpseed 11111111, main path, as chat 100's 344 (the four steps, YES, REMOVE
 PHINEAS, CREATE, KEEP, a name, K, EXIT, YES, ADD the new one, BEGIN ADVENTURING; ours' keys Down where the original's
@@ -188,7 +188,22 @@ the levels, age and abilities; the 348 gate checks unchanged). Every break of th
   or E) at the race, sex, class or alignment list goes back to the hall menu; ours stepped back to the list before. The
   check: EXIT at the sex list, E at the class list, Esc at the alignment list, Esc at the race list, then ADD PHINEAS
   back and BEGIN ADVENTURING (ours unfixed never leaves the creator). Ready `~/gbr/lab/data/c101/creator_exit.py`
-  (`c101_creator_exit.diff`); with it 358 matches 3 of 3. Break: PHINEAS's max HP.
+  (`c101_creator_exit.diff`); with it 358 matches 3 of 3. Break: PHINEAS's max HP. **Landed (Combat Chat 44, 7fbd1e9):
+  358 in the gate.** With Combat Chat 44's Home / End in the creation lists, **344-358 press End as the original** (keys
+  from the original's steps: `data/c101/o2k.py`; re-sealed, 3 of 3).
+- **The matched portraits (a QoL addition, on by default) are off in the gate:** the original starts every new
+  character on head 1, body 1; statediff now compares the portrait and the combat icon too (0xBB-0xC6 but 0xBF).
+- **359, 360 (the icon editor's SIZE): a difference, fixed in Combat's file (waits for it):** in the original SIZE opens
+  SMALL KEEP EXIT (or LARGE KEEP EXIT): the word is the size to switch to, its letter switches and flips it (the other
+  letter does nothing), KEEP keeps, EXIT drops; ours toggled at once. 359: check 351's creation with S, L, S, KEEP, S, L,
+  KEEP, S, S, EXIT, EXIT, YES at the icon (human: large); 360: ENCAMP, ALTER, ICON on THRENDER GRONE (dwarf: small) with
+  S, KEEP, S, S, KEEP, S, L, EXIT, S, L, KEEP, EXIT, YES. Ready `data/c101/icon_size.py` (`c101_icon_size.diff`); with it
+  both match 3 of 3, without it both differ (icon size).
+- **NPC_ADD's portrait (checks 54, 216; a difference found by the new statediff fields, fixed, main path):** the original
+  draws Random(256) for byte 0xAB, one of the record's classes, the body from that class's table and the head by sex
+  (GAME.OVR 0x1F248; START.EXE DS 0x8C7 heads, 0x8D7 / 0x8E1 / 0x8EB / 0x8F5 bodies; traced on MAD MAN: 11, 5); ours kept
+  the record's (35, 3). `CreationRules.npc_join` from main.gd's `_add_npcs`; DIRTEN (0x18) keeps his record's 0, 4 as
+  in 610 of the original's saves (how he skips it isn't read).
 
 ## Chat 100: training and money, a magic-user's racial limit, a three-class member, character creation and MODIFY (checks 336-350)
 
