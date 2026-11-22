@@ -159,6 +159,35 @@ func outcome() -> int:
 	return 0
 
 
+## The field log (Guide 11's request, Jeremy approved 2026-11-21 19:20; Combat Chat 42): in play (not a lab --keys
+## or --play run, unless GBR_FIELDLOG is set) each turn's start writes the field to the game's log, one line a figure
+## (cell, HP, status, effects), and combat_screen.gd writes the menu choice made; nothing on screen. So a tester's
+## log carries every turn and no replay is needed.
+static var _field_log := -1
+
+
+static func field_log() -> bool:
+	if _field_log < 0:
+		_field_log = 1
+		if not OS.has_environment("GBR_FIELDLOG"):
+			for a in OS.get_cmdline_user_args():
+				if a.begins_with("--keys=") or a.begins_with("--play="):
+					_field_log = 0
+	return _field_log == 1
+
+
+func _write_field(turn: int) -> void:
+	print("FIELD R%d turn %s" % [round_no, (combatants[turn].who as PartyMember).name])
+	for k in combatants.size():
+		var f: Dictionary = combatants[k]
+		var fm := f.who as PartyMember
+		var fx := PackedStringArray()
+		for a in fm.affects:
+			fx.append("%02x:%d" % [int(a.get("effect", 0)), int(a.get("minutes", 0))])
+		print("FIELD  %d %s team %d cell %d,%d hp %d st %d%s%s fx %s" % [k, fm.name, int(f.team), f.cell.x, f.cell.y,
+			fm.hp, fm.status, " down" if f.down else "", " fled" if f.get("fled", false) else "", " ".join(fx)])
+
+
 ## Lab (the fxlog key): print every figure's effects at each round's start.
 static var lab_print_effects := false
 ## Lab (the fxwatch key, Combat Chat 42, the spell matrix): print a figure's status, HP and effects whenever they
@@ -324,6 +353,8 @@ func next_turn() -> int:
 			_lab_fx_watch("turn")
 		if c.down:
 			continue
+		if field_log():
+			_write_field(active)
 		if lab_print_effects:
 			var fx := PackedStringArray()
 			for a in (c.who as PartyMember).affects:

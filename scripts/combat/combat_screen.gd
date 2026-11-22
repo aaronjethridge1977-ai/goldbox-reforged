@@ -1610,6 +1610,11 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 			_refresh()
 		"TARGET":
 			var me: int = _combat.active
+			if Combat.field_log():     # the field log (Combat Chat 42): the aim taken
+				var tj := _combat.occupant(_aim_cell)
+				print("CHOICE R%d %s TARGET %s at %d,%d%s" % [_combat.round_no, (_combatants[me].who as PartyMember).name,
+					_combat.magic.table.name_of(_spell_id) if _aim_for == "spell" else _aim_for, _aim_cell.x, _aim_cell.y,
+					(" on %d %s" % [tj, (_combatants[tj].who as PartyMember).name]) if tj >= 0 else ""])
 			if _aim_for == "spell":
 				_spell_target()
 				return
@@ -2464,6 +2469,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	if choice == "":
 		return
 	_pick = items.find(choice)
+	if Combat.field_log() and _combat.active >= 0:     # the field log (Combat Chat 42): the menu choice made
+		print("CHOICE R%d %s %s %s" % [_combat.round_no, (_combatants[_combat.active].who as PartyMember).name, _cmode, choice])
 	if _cmode == "speed":
 		# The original's DONE -> SPEED (lab): "GAMESPEED (n) : SLOWER FASTER EXIT", 0 fastest
 		# to 9 slowest, the same setting as ALTER's; EXIT goes back to DONE's menu.
