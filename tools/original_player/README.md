@@ -1346,6 +1346,16 @@ SEARCH on only**: `p2start/p44t1_s44c8`). The fire giants at 5,2: 3 wins in 5 (p
 +1 gear dropped for weight (ARN Leather +1, Chain +1, Broad Sword +1; ELWEN Chain +1, Shield; CEDRIC Long Sword +1;
 BRAM Flail +1; LIRA Broad Sword +1): movement 9+ for all at s44c8. The Flame Tongue's square is still unknown.
 
+**Home and training** (`p44/home44.plan` from `s44c8`): the fire giants' alarm was still ringing; walks out by the
+barracks met a patrol every few squares and rests after fights drew more (p44h1-h2, p44i1, p44j1 BRAM, p44k1 ARN and
+CEDRIC, p44l1 DORN: losses to patrols on the way out). Fixed: `restuntil 23` on 0,2 (a safe square), `norest`, and out
+by **map 5:3's south edge (3,15 S into 5:6's 3,0)**, 17 squares, no fight (p44m1, `s44o1`); then 2:9, 1:18, 8:29,
+2:20 (a `map` line per area: a `map` line holds for every later walk, p44m1's "no route" in 2:9), Phlan's inn and
+train5's round: **LIRA magic-user 6, LIGHTNING BOLT learnt** (p44n1, `p2start/p44n1_s44trained`, 3:0 the inn).
+**The party ledger** (`ledger.py <save dir>`; `LEDGER.txt` beside every checkpoint since p44n1) and **`review <file>`**
+(the audit as a stop: the run halts there until the loadout review file exists; Guide 12's step 1 (a), (b)); the
+first review, for the throne room: lab `p44/reviews/throne.md`.
+
 **`noshare on|off`** (plans.py, loot.NOSHARE): a pile's coins are left, not SHAREd (the party carries ~8,700 pp).
 
 Lab: `p44/` (valjevo4-8.plan, audit44.plan, home44.plan, ecl5_b3-b7.txt: the disassembly); runs p44v1-v3, p44a1,
