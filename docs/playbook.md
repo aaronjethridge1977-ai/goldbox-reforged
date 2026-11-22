@@ -24,6 +24,9 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
 - **Build for the game at hand;** before importing a party into the next game, check that game's race and level limits.
   Carrying one party through the whole series is not the goal; importing a finished party is a feature to test. *Jeremy*
   (2026-11-20)
+- **The series party** (Jeremy, 2026-11-22, a curiosity run): two human fighters (one becomes a paladin in Curse), two
+  human clerics, two human magic-users, no thief; scores, the paladin's timing and each game's cost in
+  `docs/strategy/series-party.md`.
 - **Roles to cover within the six:** about four members who can fight in the line, two cleric casters, two magic-user
   casters, two bows and a thief. Multi-classes let one member fill two roles. Give one member exceptional Strength.
   *book* (Cluebook)
