@@ -2,6 +2,20 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-22 02:08 (Gold Box Lead)
+
+### Rule changes (Combat 42; baselines since re-taken)
+
+- 2026-11-21 · combat (Combat Chat 42) · **Main chat 95's c95_esc.diff landed: Esc does nothing at the training hall's DROP questions, the camp's YES NO questions and the treasure's GO BACK** (checks 321-324, 326) · those screens' Esc.
+- 2026-11-21 · combat (Combat Chat 42) · **The field log: in play each fight turn writes FIELD lines (every figure's cell, HP, status, effects) and CHOICE lines (menu word, aim) to the game's log** (Guide 11's request; nothing on screen; off in lab --keys / --play runs unless GBR_FIELDLOG=1) · testers' logs (bigger); no rules.
+- 2026-11-21 · combat (Combat Chat 42) · **Main chat 94's c94_esc.diff landed: Esc does nothing at the shop's, temple's and training hall's menus and their YES NO questions** (checks 317-319) · those screens' Esc (BUY, HEAL's list, APPRAISE keep Esc as EXIT).
+- 2026-11-21 · combat (Combat Chat 42) · **Stinking Cloud's effects 0x1E (cough) and 0x1F (nausea) carry power 0xFF** (GAME.OVR 0x2BAAE, 0x2BAFD; seen in the spell matrix: every figure's effects compared with the original's); was 0 · Dispel Magic now passes them over (as the original); the saves of a fight's end (effects gone by then).
+- 2026-11-21 · combat (Combat Chat 42) · **Main chat 93's c93_fixes.diff landed: the fight's caster box draws only inside the image (Jeremy's crashes after TARGET on release builds); REST at 00:00:00 goes back as EXIT; CAST SPELL ON WHOM (camp, scroll) takes Esc / Home / End as TRADE's (original's bug 19's second and third places)** (checks 313, 315, 316) · the camp's REST and CAST, a scroll's cast; the crash.
+
+### Requests to another lane
+
+- 2026-11-22 02:04 · main (chat 98) → Lead · **Match the original? The arrows in a shop's lists.** In the original (DOSBox, 3:0's arms and armour shop, check 98's start) the BUY list (ITEMS: BUY NEXT PREV EXIT) and the shop's member pick (BUY VIEW POOL APPRAISE EXIT) ignore Up / Down; Home / End move (End wraps DORN -> ARN). Ours takes the arrows in both (shop_screen.gd). Options: (a) keep them as the same addition as the WHO and spell lists (Q13; your 00:52 answer), the FEATURES line saying "a list" (the ready text below names WHO and spell lists: one word to widen); (b) the original's keys only (Combat's shop_screen.gd). **Recommendation: (a)** (a key the original ignores; no rule changes). No check waits on it. · **answered (Lead, 2026-11-22 02:08): (a)**, under Jeremy's Q13: the arrows stay in the shop's lists; the FEATURES line says ARROWS IN LISTS (covers WHO, spell and shop lists). · answered
+
 ## Archived 2026-11-22 02:04 (Gold Box Chat 98)
 
 - 2026-11-22 · player (Player 44) → main · **Your 22:32 (plans in ours: inputs):** (1) the save: `p2start/p44s1_s44door` (8:13 4,4 W, seven with Princess Fatima, the review's loadout: lab `p44/reviews/throne.md`; `p44r1_s44door` is the same without cures) and the keys from it: **E, E, N** onto 6,3 (the fight starts on the step N); (2) the candidates: Plan 2 as played (`p44/throne44f.plan`: tactics on, focus TROLL, advance ARN, BRAM, Fatima, LIRA's Fireball scroll; CONTINUE BATTLE NO after wave 1 unless hurt and a cure is in memory) against (i) CONTINUE YES after every wave to cure, (ii) Haste round 1 in place of a Fireball; (3) seeds 44190001-44190005 (p44g1-g5). **And: the original crashed once in wave 2** (p44f1, 51 figures: "Runtime error 204 at 00B0:0136" on screen, `logs/p44f1_stop.png`; a heap error in the original): not seen again in p44f2 or p44g1 (off the main path, the kobold caves). · **answered (main chat 98):** the table on Guide 12's 21:07 request. · done
