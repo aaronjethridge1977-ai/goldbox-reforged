@@ -737,11 +737,21 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     original.** *code*
   - **For the Player (Jeremy, 19:12): the Player must be able to beat the original.** Judge every finale plan by the
     original's rule: **Tyranthraxus by blows alone**; no wand, cloud or hold counted on him.
-  - **His numbers (MON5CHA 66, read in the game's data):** AC 0 (rear 2), 80 HP, THAC0 5; effects 0x18 (sees
-    invisible), 0x4F (a hit burns 2d10 more: the "TAKES n FROM FIRE" after each of his hits), 0x51, 0x58 (the breath),
-    0x59 (**the first attack roll against him each fight misses**), 0x6A (magic resistance). He made three attacks a
-    round in ours (rounds 2, 3); poolrad.md says two: to Combat. The -4 Jeremy saw on his look panel while he coughed
-    is the desk's P87 (b). *code*
+  - **His numbers (MON5CHA 66, read in the game's data):** the record says AC 0 (rear 2), 80 HP, THAC0 5, **DEX 19**;
+    the record worked out as a fight does (PartyMember.recalculate, run on every monster at the fight's load) adds
+    DEX 19's -4: **AC -4 in play** (rear 2), as the original's look panel showed in p41d4's video and the speedrunner's
+    "AC -4 to 4". **Coughing makes it 4** (rear 2 + 2, GAME.OVR 0xF71D) for the round the cough lasts; a "STARTS TO
+    COUGH" with no "IS COUGHING" after it is a cough he resisted (ours prints the words before his resistance roll),
+    so AC -4 still. Effects 0x18 (sees invisible), 0x4F (a hit burns 2d10 more: the "TAKES n FROM FIRE" after each of
+    his hits), 0x51 (fear at the fight's start: levels 0-3 paralysed, 4-5 Curse, -1 to hit), 0x58 (the breath), 0x59
+    (**the first attack roll against him each fight misses**), 0x6A (magic resistance). He made three attacks a round
+    in ours (rounds 2, 3); poolrad.md says two: to Combat. *code* + *seen*
+  - **Jeremy's swings against the odds** (12 after the free miss; Prayer +1 from round 1, ELWEN's Curse -1): round 1
+    ARN (AC -4) 0/1; round 2 (coughing from round 1's end, AC 4 if it lasted) 1/4; round 3 (his cough resisted: AC -4)
+    0/4; round 4 (coughing: AC 4) 3/3. **4 of 12 fits AC -4 with coughs in rounds 2 and 4** (expected 4.3 to 5.9);
+    at AC 0 throughout it would be 5.5, at AC 2 6.7, at AC 4 7.8 (4 or fewer: 29%, 10%, 2%). Needs at AC -4 with
+    Prayer: ARN 14, LIRA 16, ELWEN 17, CEDRIC 18; at AC 4: 6, 8, 9, 10. **In the original (bug #7) he resists every
+    cough: AC -4 all fight.** *code*
   - **The breath, plainly (ours' reading of GAME.OVR 0x2A0F1):** always 80 (his maximum HP, not what he has left:
     hurting him first doesn't weaken it); a save vs breath halves it to 40; round 1 always, then on a 50% roll each
     round, three breaths a fight at most; the bolt starts beside him and runs on in a line, hitting each figure in its
@@ -756,3 +766,10 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
     800 coins of dead weight (ARN's Leather +1, CEDRIC's Long Sword +1, ELWEN's spare Chain Mail +1 and Shield, LIRA's
     second Broad Sword). Valjevo's 5:3-5:6 were left out (Player 40): 5:6's altar (2 Long Swords +3, Mace +3, the
     Necklace of Missiles) never taken. *code*
+- **Plan 5 additions (2), Jeremy approved 2026-11-21 19:34 (Gold Box Guide 11):** **Haste, Prayer and Bless in the
+  guards' CONTINUE BATTLE rounds** (once no guard stands: the original's prompt, GAME.OVR 0xA163; his fight follows
+  with no time passing, effects keep their rounds): LIRA memorizes Haste for it (her book has it; it doubles attacks,
+  GAME.OVR 0xF8A6). Against AC -4 by blows alone the party's slot-H blows come to about 16 a round with Prayer
+  (ARN and BRAM hit 35%, the rest 15-25%): about 5 rounds for his 80, so Haste is the plan's core, the gear trip
+  (the board) its second half. *code*
+
