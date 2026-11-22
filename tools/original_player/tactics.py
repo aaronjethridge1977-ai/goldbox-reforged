@@ -459,6 +459,10 @@ class Tactics:
         for spell in prio:
             if (member, spell) in self.refused or (known is not None and spell not in known):
                 continue
+            if spell in PREP and spell in PER_CASTER + ("BLESS",):
+                continue           # Player 45 (p45i1: LIRA's one Haste went on the guards in round 1): kept for prep
+            # (Plan 5 (2): Haste, Bless, Shield in the CONTINUE BATTLE rounds; Prayer also in the fight, the clerics
+            # carry several)
             if spell in ONCE and self.cast.get(spell):
                 continue           # once a fight
             if spell in STANDING and any(STANDING[spell] in f.get("fx", ()) for f in party if _up(f)):
@@ -487,9 +491,11 @@ class Tactics:
         return [(f["name"], s) for f in party if _up(f) for s in PREP
                 if PREP_IDS.get(s) in f.get("memo", b"") and (f["name"], s) not in self.refused and self._prep_ok(f["name"], s)]
 
-    def _due_use(self, member, foes, me=None):
-        """Player 45: this member's first `uses` line due now (see USES), or None."""
+    def _due_use(self, member, foes, me=None, skip=()):
+        """Player 45: this member's first `uses` line due now (see USES), or None (skip: lines passed over this turn)."""
         for u in USES:
+            if id(u) in skip:
+                continue
             if u["done"] or u["member"] != member:
                 continue
             if u.get("hurt") and (me is None or me["hp"] > u["hurt"]):
@@ -807,7 +813,24 @@ class Tactics:
                 self.use = {"member": member, "item": None, "word": REREADY[member], "phase": "reready", "n": 0}
                 self.log("TACTICS %s readies %s again" % (member, REREADY[member]))
                 return "u", "tactics: %s USE: ready %s again" % (member, REREADY[member])
-            u = self._due_use(member, foes, me0)
+            u, passed = self._due_use(member, foes, me0), set()
+            while u and not u.get("ready"):
+                # (p45i1: DORN's Necklace had no clear aim all fight and kept his Javelin from its turn: a line with
+                # no aim worth it is passed over this turn, the next due line tried)
+                kind, spell = _item_kind(u["item"])
+                if spell in ("POTION", None) or not foes:
+                    break
+                try:
+                    fs, party, foes2 = self._sides(p)
+                    me = next((f for f in party if f["name"] == member), None)
+                    t = self.targets(spell, me, party, foes2) if me else []
+                except Exception:
+                    t = [1]
+                if t:
+                    break
+                self.log("TACTICS %s's %s: no aim worth it yet (%s)" % (member, u["item"], spell))
+                passed.add(id(u))
+                u = self._due_use(member, foes, me0, passed)
             if u and u.get("ready"):
                 # Player 45 (`uses ... ready`: the guards' Rings of Protection +3 in Tyranthraxus' fight, poolrad.md:
                 # USE, the ring lit, READY, EXIT; its AC counts at once and the turn is kept)
@@ -815,17 +838,6 @@ class Tactics:
                 self.log("TACTICS %s readies %s (round %d)" % (member, u["item"], self.round))
                 return "u", "tactics: %s USE: ready %s" % (member, u["item"])
             if u:
-                kind, spell = _item_kind(u["item"])
-                if spell not in ("POTION", None) and foes:
-                    try:
-                        fs, party, foes2 = self._sides(p)
-                        me = next((f for f in party if f["name"] == member), None)
-                        t = self.targets(spell, me, party, foes2) if me else []
-                    except Exception:
-                        t = [1]
-                    if not t:
-                        self.log("TACTICS %s's %s: no aim worth it yet (%s)" % (member, u["item"], spell))
-                        u = None
                 if u:
                     self.use = {"member": member, "item": u, "word": u["item"], "phase": "use", "n": 0,
                                 "readied": 0, "swapped": False}
@@ -1334,7 +1346,8 @@ class Tactics:
         sc = self.scan
         sc["steps"] += 1
         at = sc["pos"]
-        if not sc["cand"] or sc["steps"] > n_ent + 12:
+        # (p45i1: ELWEN's NEXT on an unchanged screen 20 times tripped the stall guard: 16 at most)
+        if not sc["cand"] or sc["steps"] > min(n_ent + 12, 16):
             self.order = None
             self.reach[member] = "none"
             return "e", "tactics: %s: no enemy in reach: EXIT" % member
