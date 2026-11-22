@@ -1526,8 +1526,10 @@ func _quick_save() -> void:
 	# _save_original does: the original's saves hold it there (chat 78, check 172).
 	_vm.mem[SPEED_CELL] = CampScreen.speed
 	_vm.hi.erase(SPEED_CELL)
+	_pics_to_mem()
 	cfg.set_value("script", "memory", _vm.mem)
 	cfg.set_value("qol", "speed", CampScreen.speed)
+	cfg.set_value("qol", "pics", _vm.mem[PICS_CELL])
 	cfg.set_value("script", "memory_hi", _vm.hi)
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
@@ -1647,6 +1649,19 @@ func _battle_check(spec: String) -> void:
 ## (GAME.OVR 0x1FECE, the first array's +0x1F8) and LOAD puts it back (0x1F8F6); a new game starts
 ## at 1 (0xE999). Ours started every game at 4 and never saved it (Combat Chat 22).
 const SPEED_CELL := 0x49FC
+## ALTER PICS (chat 102, DOSBox, check 376): the original keeps it in this cell and its saves: 2 monsters
+## on, 1 portraits on (3 both, a new game's; 0 both off).
+const PICS_CELL := 0x49FF
+
+
+func _pics_to_mem() -> void:
+	_vm.mem[PICS_CELL] = (2 if CampScreen.show_monsters else 0) | (1 if CampScreen.show_portraits else 0)
+	_vm.hi.erase(PICS_CELL)
+
+
+func _pics_from(v: int) -> void:
+	CampScreen.show_monsters = v & 2 != 0
+	CampScreen.show_portraits = v & 1 != 0
 
 
 func _save_original(letter: String) -> bool:
@@ -1679,6 +1694,7 @@ func _save_original(letter: String) -> bool:
 	# Load3DMap" (then "...wallset in LoadWallSet"); with 4 and 1, 5, 9 it loads and plays.
 	# GAME.OVR 0x1FECE writes the speed into the live script memory, not just the file's copy.
 	_vm.mem[SPEED_CELL] = CampScreen.speed
+	_pics_to_mem()
 	var mem := _vm.mem.duplicate()
 	mem[EclVM.FILE_SET] = _vm_file
 	# Ours keeps the door menu's flags in these cells; the original keeps them elsewhere (DS
@@ -1847,6 +1863,7 @@ func load_original_save(letter: String) -> bool:
 	# GAME.OVR 0x1F8F6: the load zeroes the party-size cell (ours counts the party).
 	_vm.mem[EclVM.PARTY_SIZE] = 0
 	CampScreen.speed = clampi(_vm.mem[SPEED_CELL], 0, 9)
+	_pics_from(_vm.mem[PICS_CELL])
 	# The map the save names (GAME.OVR 0x1FBB3, in LOAD before the init): in a 3D area (view
 	# byte 0x49FA below 2) the original loads GEO<data set> block [0x49C5], the map last loaded,
 	# then the wall sets of 0x4AFA-0x4AFF. Inits that see 0x49F2 already naming their block skip
@@ -1950,6 +1967,8 @@ func _quick_load() -> void:
 		_vm.hi = cfg.get_value("script", "memory_hi", {})
 	if cfg.has_section_key("qol", "speed"):
 		CampScreen.speed = clampi(int(cfg.get_value("qol", "speed")), 0, 9)
+	# Chat 102: the save's PICS (ours' saves before it carry the cell as loaded from the original's).
+	_pics_from(int(cfg.get_value("qol", "pics", _vm.mem[PICS_CELL])))
 	var wild: Array = cfg.get_value("script", "overland", [false, 0])
 	_vm.on_overland = wild[0]
 	_vm.overland_band = wild[1]
