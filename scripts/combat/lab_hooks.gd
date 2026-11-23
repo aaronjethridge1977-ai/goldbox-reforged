@@ -297,6 +297,8 @@ static func _handcast(main: Node, arg: String) -> void:
 	# offers it, each time End <down> times on the item list, then U (the lit item), then the aim as a spell's.
 	var uses_max := int(a[5]) if a.size() > 5 and a[5] != "" else 0
 	var use_down := int(a[6]) if a.size() > 6 and a[6] != "" else 0
+	# Combat Chat 50 (combat50/handcast3.py): :1 eighth, each pick one NEXT deeper, so several picks take different figures.
+	var deeper := a.size() > 7 and a[7] == "1"
 	var uses := 0
 	var downs := 0
 	var casts := 0
@@ -365,7 +367,7 @@ static func _handcast(main: Node, arg: String) -> void:
 				aim_n = 0
 				picks = 0
 		elif st.begins_with("aim:"):
-			if "TARGET" in st.split(":")[1].split(",") and aim_n >= aim_skip:
+			if "TARGET" in st.split(":")[1].split(",") and aim_n >= aim_skip + (picks if deeper else 0):
 				k = "t"
 				var tj: int = cs._aim_list[cs._aim_index] if cs._aim_index < cs._aim_list.size() else -1
 				why = "target %s %s" % [cs._combatants[tj].who.name if tj >= 0 else "-", str(cs._combatants[tj].cell) if tj >= 0 else ""]

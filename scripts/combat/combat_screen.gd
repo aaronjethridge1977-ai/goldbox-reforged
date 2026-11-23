@@ -587,13 +587,7 @@ func _draw_original(field: Image) -> void:
 		# START.EXE 0x16A0: a blank row under the weapon (or AC), then in white a figure out of the fight's status
 		# (+0x10D clear: the table DS:0x1047) or, standing, "(Helpless)" under any of effects 0x33, 0x34, 0x35,
 		# 0x1F (DS:0x286B: snake charm, hold, sleep, helpless). Jeremy's play (2026-11-21) and p41g1's video.
-		var state := ""
-		if gave_up:
-			state = ""
-		elif e.get("down", false):
-			state = PANEL_STATUS[clampi(m.status, 0, PANEL_STATUS.size() - 1)]
-		elif CombatSpells.held(m):
-			state = "(HELPLESS)"
+		var state := _kept_state if _panel_kept else _panel_state(e, gave_up)
 		if state != "":
 			g.text(23, last_row + 2, state, GameScreen.WHITE)
 	# The last action, as the original prints it from row 10: each name on its own line
@@ -1219,6 +1213,7 @@ func _show_messages() -> void:
 	if _posed >= 0:
 		_posed = -1
 		_refresh()
+	_panel_kept = false
 	messages_shown.emit()
 
 
@@ -1322,6 +1317,7 @@ func _advance() -> void:
 			_after_result()
 		return
 	_selected = i
+	_panel_kept = false
 	_cmode = "menu"
 	_aiming = false
 	_aim_rows_kept = false
@@ -1814,6 +1810,11 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	var to := cell
 	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
 		to = _combatants[targets[0]].cell
+		if id == 23 or id == 49:
+			# Hold Person: the cast's spark goes to the last figure aimed, the first its loop takes (P108's film,
+			# Combat Chat 50: DOSBox hpk15, three kobolds: the spark flew from BAKSHI to the third aimed, then its
+			# line; the second and first aimed each got their own spark after).
+			to = _combatants[targets[targets.size() - 1]].cell
 	_hit_pic = [10, 138] if id in [CombatSpells.FIREBALL, CombatSpells.LIGHTNING, 60] else [9, 137]
 	_bolt_on = id in [CombatSpells.LIGHTNING, 60]
 	_bolt_started = false
@@ -2077,7 +2078,7 @@ func _spell_target() -> void:
 		_spell_picks.append(who)
 		_picks_left -= 1
 		if _picks_left <= 0:
-			_finish_cast()
+			_finish_cast(true)
 		else:
 			_restart_pick_aim()
 
@@ -2114,7 +2115,25 @@ func _abort_spell() -> void:
 	_advance()
 
 
-func _finish_cast() -> void:
+## The last pick's panel kept through the cast's lines (see _finish_cast), with no box drawn and its status line as
+## it was at TARGET (the original doesn't redraw it: no "(HELPLESS)" under a kobold just held, hpk15).
+var _panel_kept := false
+var _kept_state := ""
+
+
+## The panel's status line for combatant `e` (START.EXE 0x16A0, see _draw_original).
+func _panel_state(e: Dictionary, gave_up: bool) -> String:
+	var m: PartyMember = e.who
+	if gave_up:
+		return ""
+	if e.get("down", false):
+		return PANEL_STATUS[clampi(m.status, 0, PANEL_STATUS.size() - 1)]
+	if CombatSpells.held(m):
+		return "(HELPLESS)"
+	return ""
+
+
+func _finish_cast(by_target := false) -> void:
 	var me: int = _combat.active
 	var announced := _announced
 	_announced = false
@@ -2127,6 +2146,13 @@ func _finish_cast() -> void:
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
+	if by_target and paced() and not _spell_picks.is_empty():
+		# The aim ends on the last figure picked and the panel stays on it, with no box, through the spell's
+		# lines (P108's film, Combat Chat 50: DOSBox hpk15, Hold Person on three kobolds: KOBOLD HITPOINTS 3
+		# from the third TARGET to the last line; after EXIT the aim has gone back to the caster, hp_orc1).
+		_selected = int(_spell_picks[_spell_picks.size() - 1])
+		_kept_state = _panel_state(_combatants[_selected], false)
+		_panel_kept = true
 	if _spell_resolving:
 		_combatants[me].resolving = true
 	_cast_announced = announced
@@ -2255,7 +2281,7 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)):
+		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)) and not _panel_kept:
 			_bevel(img, at)
 		if i == _posed:
 			icon = _attack_icon(e)
