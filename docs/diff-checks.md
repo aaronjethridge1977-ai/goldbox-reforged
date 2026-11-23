@@ -172,6 +172,37 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 109: script runes (main path, display); 440 (4:21 the dead elf); RECORD MY GAME's replays
+
+- **None of Pool's rune texts was ever seen in ours (main path, display; fixed in ecl_vm.gd and main.gd).**
+  PRINT_RUNES sites: 4:21's dead elf (SEARCH: the scroll), 5:3 Cadorna's gate password, 5:4 the gnoll's paper and the
+  giants' list (PARLAY: TODAY'S PASSWORD IS, THE GATE PASSWORD IS), 7:23 the dwarvish sign; all five put the runes up between LOAD_AREA_MAP 255,16,255 and
+  LOAD_AREA_MAP 255,2,255, then a press. DOSBox: (a) 5:4 (check 60's start, KILL THE OVERSEER): "YOU LOOK AT THE
+  WRITING..." on row 17 and the six dwarvish runes (codes 0x8A 0x80 0x87 0x7C 0x81 0x79) on row 18 from column 1, white,
+  under PRESS BUTTON OR <RETURN>; the 3D view untouched; (b) 4:21 the elf, SEARCH (vertical menu: End): CLEAR_BOX empties
+  the whole view window (no inner frame) and the three rune lines stand at screen (16, 40), (8, 56), (8, 72) beside
+  "...THE LAST PART IS EATEN AWAY." and its press; after the press the view is its inner frame, black, until the party
+  turns or steps. The glyph for code c is glyph c + 1 of 8X8D1 block 201 (all 34 glyphs of the elf's lines and the
+  paper's six pixel-exact against the captures); drawn at once (the elf's "...THE LAST PART" starts typing 0.24 s
+  after the Enter). Ours drew a page in the 3D view's square, each glyph one off, 12 pixels a line, and cleared it at
+  LOAD_AREA_MAP mode 2, before the press: never on screen (ours' window filmed: the skeleton picture throughout). Now:
+  runes print where the text cursor is (inline in the text box) unless a CLEAR_BOX came first (then into the view
+  window); that page stays until the press is answered, then the empty view until a turn or step. Seen in ours' window
+  after the fix: pixel-exact against both captures (text rows 17-19 of the paper; the elf's three lines). Check 440
+  guards the elf's script (state only: SEARCH, LEAVE, ATTACK 0x4A00 = 255, the remains; the runes change no state).
+- **Check 440 in the gate** (`~/gbr/lab/data/c109/chk440`, start chat 108's `s426`; break 0x4A00 255 -> 0 DIFFERS;
+  three runs MATCH): DIFFCHECKS 437/437.
+- **RECORD MY GAME's replays (the Lead's question).** Jeremy's 21:42 session (quick-save start, 2093 keys, 34
+  minutes; build 0.1.6 = b865613) replayed key by key (`--keys`, as chat 108 did) parts at 1:18 8,10 on his own build
+  as on main (a random hobgoblin question meets his walking keys; then camp): a key-by-key replay acts on every key,
+  where his game dropped or typed ahead the keys he pressed while a text was up. Replayed at the recorded times
+  (`timed=`, windowed, `--anim`) on b865613 it follows his play: Podol, the Slums, the inn, the clerk's rewards and
+  commissions, the hidden temple's YES at 1:18 1,15 (P110), on to the frogs at 4:2 (P112). On main the same timed
+  replay parts 6 s in at the auction: chat 107's typing-time wait shows a text his build never showed, so his keys
+  land on other screens. So recordings replay on the build they were made on, timed; not on a later build whose text
+  pacing changed. `tools/lab/treplay.sh` now takes quick-save sessions too (it assumed a slot start), and a timed
+  replay prints where each key finds the game ("   at ...").
+
 ## Chat 108: Sokal Keep (4:21) and the Slums (2:20) on the main path; 426-439; a text before a fight or treasure (432)
 
 - **A text printed just before a fight, a treasure, a shop or a temple was never seen (main path, display/timing;

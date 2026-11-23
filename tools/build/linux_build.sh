@@ -82,6 +82,9 @@ fi
 had=$(sed -nE 's/^config\/version="(.*)"$/\1/p' "$T/src/project.godot")
 [ "$had" = "$V" ] || echo "NOTE: the commit's project.godot says $had: bump config/version to $V in the repo with this release (P84)"
 sed -i -E "s/^config\/version=.*/config\/version=\"$V\"/" "$T/src/project.godot"
+# The commit, for RECORD MY GAME's header (chat 109: a recording names the build it can replay on; editor runs
+# read .git instead). After config/version, in [application].
+sed -i -E "/^config\/version=/a config\/build_commit=\"$COMMIT\"" "$T/src/project.godot"
 grep -q "^config/version=\"$V\"$" "$T/src/project.godot" || fail "version not stamped in project.godot"
 echo "version: $V"
 
