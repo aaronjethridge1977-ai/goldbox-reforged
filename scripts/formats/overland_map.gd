@@ -32,6 +32,9 @@ var cells := PackedByteArray()
 var band_left := PackedByteArray()   # left edge of each band (LOAD_AREA_MAP 4, 5, 6)
 var overrides: Array[Vector3i] = []  # entry 1..9 -> (x, y, byte); index 0 unused
 var tiles: Array[Image] = []         # 256 tiles, RGBA8
+## The party's mark (chat 120): ICON.DAX's galloping rider, 24x24, six frames in the order drawn
+## (blocks 0, 128, 1, 129, 2, 130), RGBA8 with colour 0 see-through. Empty if the file is missing.
+var rider: Array[Image] = []
 
 static var _shared: OverlandMap = null
 static var _shared_path := ""
@@ -79,7 +82,32 @@ static func load_from(game_path: String) -> OverlandMap:
 			var t: Image = f.duplicate()
 			t.convert(Image.FORMAT_RGBA8)
 			o.tiles.append(t)
+	o.rider = _load_rider(game_path)
 	return o
+
+
+## GAME.OVR 0x17285 loads ICON blocks 0-2 (and 128-130 beside them) into picture slots 9-11 before the
+## wilderness is drawn; 0x2DB87 draws slot 9 + n / 2, picture n % 2, for a counter n (DS:0x6DDC) that steps
+## 0..5 at each draw of the view. Colour 0 isn't drawn (lab, chat 120: the original's screen matched pixel
+## for pixel at 56,56 with it left out).
+static func _load_rider(game_path: String) -> Array[Image]:
+	var out: Array[Image] = []
+	var dax := DaxFile.open(game_path.path_join("ICON.DAX"))
+	if dax == null:
+		return out
+	for id in [0, 128, 1, 129, 2, 130]:
+		var pic := EgaPicture.decode(dax.blocks.get(id, PackedByteArray()))
+		if pic == null or pic.frames.is_empty():
+			return [] as Array[Image]
+		var t: Image = pic.frames[0].duplicate()
+		t.convert(Image.FORMAT_RGBA8)
+		for y in t.get_height():
+			for x in t.get_width():
+				var c := t.get_pixel(x, y)
+				if c.r8 == 0 and c.g8 == 0 and c.b8 == 0:
+					t.set_pixel(x, y, Color(0, 0, 0, 0))
+		out.append(t)
+	return out
 
 
 func band_x(band: int) -> int:
@@ -127,13 +155,20 @@ func tile(x: int, y: int, mem: Callable) -> int:
 	return t & 0xFF
 
 
-## The 120x120 view around map square (cx, cy), the party's square in the middle.
+## The view's top-left square: two up and left of the party's, kept inside the map (GAME.OVR 0x2DDBF: x 0..39,
+## y 0..31). At the map's edges the party is drawn off the middle (0x2DB87 places it the same way).
+static func view_origin(cx: int, cy: int) -> Vector2i:
+	return Vector2i(clampi(cx - 2, 0, WIDTH - 5), clampi(cy - 2, 0, HEIGHT - 5))
+
+
+## The 120x120 view around map square (cx, cy): 5x5 squares from view_origin.
 func view(cx: int, cy: int, mem: Callable) -> Image:
 	var img := Image.create(120, 120, false, Image.FORMAT_RGBA8)
 	img.fill(Color.BLACK)
+	var o := view_origin(cx, cy)
 	for row in 5:
 		for col in 5:
-			var t := tile(cx - 2 + col, cy - 2 + row, mem)
+			var t := tile(o.x + col, o.y + row, mem)
 			if t < tiles.size():
 				img.blit_rect(tiles[t], Rect2i(0, 0, 24, 24), Vector2i(col * 24, row * 24))
 	return img

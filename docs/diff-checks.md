@@ -172,6 +172,37 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 120: the wilderness's party mark is ICON.DAX's rider; the bands' arrivals; checks 463-465 (main path, display)
+
+- **The wilderness's party mark (found, fixed; main path, display):** the original draws a galloping rider on the
+  party's square, not a box (ours' stand-in since the wilderness was built: "where it keeps that picture is not found
+  yet"). From the code: GAME.OVR 0x17285 loads ICON.DAX blocks 0, 1, 2 (and 128, 129, 130 beside them) into picture
+  slots 9-11 before the wilderness is drawn; the view's routine (0x2DD-) draws the 5x5 tiles (0x2DE38) and then 0x2DB87,
+  which draws slot 9 + n / 2, picture n % 2, for a counter n at DS:0x6DDC that steps 0..5 at each call. Facing (DS:0x6AAF,
+  0/2/4/6) above 3 mirrors it (0x31FD2 -> 0x464:0x15C7). Colour 0 isn't drawn. DOSBox (6:25's band, speed 4): the
+  screenshot matches ICON 1 mirrored at 56,56 pixel for pixel (facing S); then E 129, E 2, N 130, W 0 mirrored: one
+  frame per step; LOOK, ENCAMP, its EXIT and VIEW's EXIT each step it too, SEARCH doesn't; a load shows 128 (the counter
+  is 2 after it). Now `OverlandMap.rider` and `main.gd _overland_view` (`_rider_n`, `_rider_step`); ours' screens
+  after a load, a step, camp in and out and VIEW's EXIT show the original's frames (`screen=` matched by
+  `data/c120/icmatch.py`). **Also from the code:** the view's top-left square is the party's less two, kept inside the
+  map (x 0..39, y 0..31, 0x2DDBF), and the party drawn where it falls (0x2DB87): ours' view now keeps inside the map
+  too (no band edge square tried in DOSBox).
+- **Seen, matching (DOSBox at speed 4 against ours' films with the save's speed 0x49FC = 4):** 8:27's boat at overland
+  9,29 (check 34's walk): the text over CAST VIEW ENCAMP SEARCH LOOK (3.6 s), TAKE BOAT STAY; TAKE BOAT: New Phlan's
+  dock 15,1 S 00:50, an empty box, AREA CAST VIEW ENCAMP SEARCH LOOK. 7:26's rowboat (check 37's walk): YES: the band
+  view moves to 19,16 S (no mark during the DELAY in either), the old text and a blank row 24 for the DELAY (0.9 s),
+  then the pyramid's picture and text (4.2 s), ENTER GO BACK; ENTER: 7:22, "S 06:33" (no square), A SECRET DOOR IS
+  FOUND BEHIND YOU. (1.2 s), PRESS BUTTON OR <RETURN> TO CONTINUE, then an empty box and the full walking menu. 8:27's
+  ruined castle (check 31's walk): ENTER: 8:16, "N 12:50", YOU SENSE AN ANTI-MAGIC SHELL AROUND YOU. (1.5 s), PRESS
+  <ENTER>/<RETURN> TO CONTINUE, then the walking menu. 6:25's dragon cave (check 32's walk): ENTER CAVE: YOU ENTER THE
+  CAVE. over the mountains' picture (0.6 s), then 6:19's cave picture with the band's place line kept (10,9 W 18:33),
+  the magic mouth's text (6.0 s), STATE NAME AND INTENT LEAVE; LEAVE: the band's question again; IGNORE CAVE.
+  (Ours' DELAY with no text runs at the save's game speed: a check start at speed 0 shows no DELAY at all, as the
+  original would at 0.)
+- **Checks 463-465 (coverage):** 463 the boat's TAKE BOAT (break: check 34's STAY end DIFFERS), 464 the rowboat, YES,
+  ENTER, PRESS (break: check 37's GO BACK end), 465 the castle's ENTER, PRESS (break: check 31's LEAVE end). Three runs
+  MATCH each; `~/gbr/lab/data/c120/chk463`-`chk465`.
+
 ## Chat 119: a step through the map's edge keeps the place line of the square left; the wilderness's walking menu under its text and the empty box after it; checks 459-462 (main path, display)
 
 - **An arrival through the map's edge (found, fixed):** DOSBox at speed 4, 4:2 4,0 N (a real save: check 456's start

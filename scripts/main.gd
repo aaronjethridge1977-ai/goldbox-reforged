@@ -1338,6 +1338,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_L:
 			# LOOK: searches the square you stand on once.
 			if _vm.ecl != null and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+				_rider_step()     # chat 120: LOOK redraws the wilderness's view
 				_pass_time(GameClock.TEN_MINUTES, 1)
 				_vm.write_byte(SEARCH_FLAG, 1)
 				_sync_position_to_vm(_facing)
@@ -1950,6 +1951,9 @@ func load_original_save(letter: String) -> bool:
 	_sync_position_to_vm(_facing)
 	_vm.state = EclVM.State.DONE
 	_vm.typewriter = true    # chat 118: the original loads through its start (GAME.OVR 0xE974 sets DS:0x4A00)
+	_rider_n = 1             # chat 120: the wilderness's rider as after an original load
+	_rider_at = []
+	_rider_away = false
 	_status.text = "Loaded saved game %s." % letter.to_upper()
 	_show()
 	return true
@@ -2066,6 +2070,9 @@ func _quick_load() -> void:
 	_status.text = "Loaded."
 	_note_24("GAME LOADED.")
 	_vm.typewriter = true    # chat 118: as an original load (through the start)
+	_rider_n = 1             # chat 120: the wilderness's rider as after an original load
+	_rider_at = []
+	_rider_away = false
 	_show()
 
 
@@ -2416,17 +2423,43 @@ func _overland_step(direction: int) -> void:
 		_after_vm()
 
 
-## The wilderness screen's view: the 5x5 squares around the party and the party's mark.
+## The wilderness's party mark (chat 120, GAME.OVR 0x2DB87): ICON.DAX's rider, frame _rider_n (DS:0x6DDC, 0..5), which
+## steps at each draw of the view in the original: a step, LOOK, ENCAMP and its EXIT, back from VIEW, back from a 3D
+## area; SEARCH doesn't (DOSBox, 6:25's band). A load shows frame 1 (the original's counter is 2 after it).
+var _rider_n := 1
+var _rider_at := []         # [x, y, facing] the frame was drawn for; [] after a load: drawn as it is
+var _rider_away := false    # a 3D screen was drawn since: the view is drawn anew on the way back
+
+
+## A redraw of the wilderness's view in the original (see _rider_n) that ours can't tell from the party's square.
+func _rider_step() -> void:
+	if _vm.on_overland:
+		_rider_n = (_rider_n + 1) % 6
+
+
+## The wilderness screen's view: the 5x5 squares around the party (kept inside the map) and the party's mark.
 func _overland_view() -> Image:
 	var ov := _vm.overland
 	var x := _vm.read_byte(EclVM.OVERLAND_X) + ov.band_x(_vm.overland_band)
-	var img := ov.view(x, _vm.read_byte(EclVM.OVERLAND_Y), _vm.read_byte)
-	# The party's mark. The original draws a mounted party here; where it keeps that
-	# picture is not found yet, so a plain marker stands in.
-	for k in range(4, 20):
-		for p in [Vector2i(48 + k, 52), Vector2i(48 + k, 67), Vector2i(52, 48 + k), Vector2i(67, 48 + k)]:
-			if p.x >= 52 and p.x <= 67 and p.y >= 52 and p.y <= 67:
-				img.set_pixelv(p, GameScreen.EGA[15])
+	var y := _vm.read_byte(EclVM.OVERLAND_Y)
+	var img := ov.view(x, y, _vm.read_byte)
+	var cell := (Vector2i(x, y) - OverlandMap.view_origin(x, y)) * 24
+	var at := [x, y, int(_facing)]
+	if _rider_away or (not _rider_at.is_empty() and at != _rider_at):
+		_rider_n = (_rider_n + 1) % 6
+	_rider_away = false
+	_rider_at = at
+	if ov.rider.size() == 6:
+		# Facing south or west the rider is mirrored (0x31FD2: the facing 0/2/4/6 above 3 goes through 0x464:0x15C7).
+		var r: Image = ov.rider[_rider_n]
+		if _facing == DungeonView.Dir.SOUTH or _facing == DungeonView.Dir.WEST:
+			r = r.duplicate()
+			r.flip_x()
+		img.blend_rect(r, Rect2i(0, 0, 24, 24), cell)
+	else:
+		for k in range(4, 20):      # no ICON.DAX: a plain mark
+			for p in [Vector2i(k, 4), Vector2i(k, 19), Vector2i(4, k), Vector2i(19, k)]:
+				img.set_pixelv(cell + p, GameScreen.EGA[15])
 	return img
 
 
@@ -3037,6 +3070,7 @@ func _make_camp() -> void:
 	# DARKSTAR).
 	_camp._sel = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 	_sync_shell()
+	_rider_step()     # chat 120: ENCAMP redraws the wilderness's view (DS:0x6DDC steps), as does its EXIT
 	_camp.open(_party, _vm.read_byte(REST_PERIOD), _vm.read_byte(REST_PERCENT))
 	_dev_reseed([_camp._rng, _camp._rng2])
 
@@ -3065,6 +3099,7 @@ func _on_walk_view_closed() -> void:
 	_walk_view_open = false
 	_event_image = null
 	_vm.sprite_id = -1
+	_rider_step()     # chat 120: back from VIEW the wilderness's view is drawn again
 	_show()
 
 
@@ -3082,6 +3117,7 @@ func _on_camp_closed() -> void:
 		_event_image = null
 		_vm.sprite_id = -1
 	_cast_keeps_view = false
+	_rider_step()
 	_show()
 
 
@@ -3842,6 +3878,7 @@ func _show() -> void:
 	if _walls == null or _walls.walls.is_empty():
 		_status.text = "WALK  %s — no wall graphics found" % area
 		return
+	_rider_away = true      # chat 120: a 3D screen: the wilderness's view is drawn anew on the way back
 	_ensure_area_script()
 	e = _maps[_map_index]
 	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
