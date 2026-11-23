@@ -172,6 +172,37 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 111: the walking menu after a script's move; LOOK empties the text; SEARCH kept in a save (main path); 446
+
+- **Chat 110's assumption, checked in DOSBox (4:10's tower, DO YOU LEAVE? YES, one fresh run per key from a camp save
+  at 15,5 S, `~/gbr/lab/data/c111/sTwG`, `tow2.sh`): not every walking-menu word redraws the view.** AREA (the map, then
+  14,6 W at the second A), LOOK, ENCAMP and VIEW (at their EXIT), and a CAST that opens the spell list (BROTHER SEAN,
+  EXIT) redraw the whole screen on the real square. **SEARCH (both presses), Home/End (the selected member) and a CAST
+  by a member with no spell list (THRENDER) redraw only the place line** ("14,6 W 11:44 SEARCH"): the tower door
+  stays in the view, and DO YOU LEAVE? stays in the box (the no-spell CAST empties the box). A key that is no menu
+  word (X) changes nothing. Ours redrew the view at all six words: fixed in main.gd (`_stale_line_done`). Filmed
+  in ours after the fix: SEARCH and End keep the door with 14,6 W; LOOK shows the corridor. (Main path, display.)
+- **LOOK empties the text box even when the square's script prints nothing** (DOSBox: the tower above, LOOK at 14,6:
+  DO YOU LEAVE? gone; 2:20's storage room, YOU HAVE ENTERED A SMALL STORAGE ROOM. gone at LOOK, 11:07). Ours kept
+  the tower's question after LOOK (the box only changes when a script prints); now LOOK clears it. (Main path,
+  display.)
+- **SEARCH carries over in a save** (cell 0x6DCA is in SAVGAM): check 441's end, saved while searching, loads in the
+  original with SEARCH on the place line and 1-minute steps after S turns it off; ours loaded with SEARCH off (S
+  turned it on, 10-minute steps: check 446 DIFFERED on d674ceb by two hours). Fixed in `load_original_save`.
+  (Main path: any save made while searching.)
+- **446** (4:21 Sokal Keep, from check 441's original end at 11,11 S, SEARCH on, in slot G: `~/gbr/lab/data/c111/s446`):
+  S (off), the stable at 13,10 (UNWHOLESOME MOLD AND FUNGI ...), the undead patrol at 11,10 (event 3's 1-in-5:
+  PARLAY, NICE, SAMOSUD: THE UNDEAD LEAVE.), the empty hall at 8,5, west to 6,2, S (on), pacing the barracks (event
+  7: with SEARCH on each step rolls 1-in-10; the haunts' text at 0xA3D2 is dead code, jumped over): BENEATH A
+  FLOORBOARD ... JOURNAL AS ENTRY 3., DO YOU TAKE THE GEMS? YES (208 XP each), SHARE, EXIT; 6,2 E 13:16, 0x4A29 =
+  255. Break 0x4A29 255 -> 0 DIFFERS; three runs MATCH; texts compared by hand. The fungus room (event 5, 2,8) is
+  reachable only through the insects' room (event 8, a fight): not made.
+- **Not confirmed: 4:2's YOU ARE CHASED OUT INTO THE STREETS** (0x9CDD, after the courtyard's COMBAT with 0x6DC7 =
+  129, the party fled). It needs the whole party to run off the combat map: a strong party (`mksave.py ... strong`,
+  the courtyard's LOAD_MONs patched to one hobgoblin and one leader in a camp save, `data/c111/sCoG`) tried four
+  rounds with DARKSTAR and found only walls (the courtyard's map is closed on three sides: north wall, NW diagonal).
+  Ours still redraws at once there. Open.
+
 ## Chat 110: a script's move with no redraw (main path, display); 441-443; the coach's replay partings
 
 - **A script that moves the party by writing its square or facing, with no redraw after it, leaves the old square on
