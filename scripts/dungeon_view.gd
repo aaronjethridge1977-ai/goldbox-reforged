@@ -27,6 +27,10 @@ const VIEW_ORIGIN := 3
 ## Backdrop colours (EGA indices). Provisional: the real values come from the area scripts.
 var sky_color := 11
 var ground_color := 6
+## Chat 121 (GAME.OVR 0x2DC4E, 0x2DC82): the horizon's top line and its two grey lines, from the area's line code
+## (EclVM.backdrop_line); ground_color from its ground code (0x2DCB6). See set_backdrop.
+var line_top := 15
+var line_grey := 7
 ## Chat 121: off-map squares read the map's other edge (GAME.OVR 0x2ED72: every block but 0 and 10).
 var wrap := false
 
@@ -98,6 +102,16 @@ func wall_at(map: GeoMap, p: Vector2i, side: int) -> int:
 	return map.wall(p.x, p.y, side)
 
 
+## The backdrop's colours from the original's two codes (GAME.OVR 0x2DC4E / 0x2DC82 / 0x2DCB6).
+func set_backdrop(ground_code: int, line_code: int) -> void:
+	line_top = 0 if line_code in [8, 0x41] else 15
+	line_grey = 8 if line_code == 8 else 7
+	match ground_code:
+		0x0B: ground_color = 8
+		0x06: ground_color = 1
+		_: ground_color = 6
+
+
 ## Converts colour indices to an RGB image.
 static func to_image(px: PackedByteArray) -> Image:
 	var rgb := PackedByteArray(EgaPicture.PALETTE_RGB)
@@ -116,9 +130,9 @@ func _backdrop(px: PackedByteArray) -> void:
 	for row in SIZE:
 		var c := sky_color
 		if row == 43:
-			c = 15
+			c = line_top
 		elif row == 44 or row == 45:
-			c = 7
+			c = line_grey
 		elif row > 45:
 			c = ground_color
 		for col in SIZE:
