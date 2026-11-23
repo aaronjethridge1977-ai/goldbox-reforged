@@ -1118,6 +1118,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				and (key in [KEY_A, KEY_V, KEY_E, KEY_L, KEY_C, KEY_S, KEY_HOME, KEY_END] or event.is_action("ui_up") \
 				or event.is_action("ui_down") or event.is_action("ui_left") or event.is_action("ui_right")):
 			_place_left = []      # chat 119: as the blank line's (DOSBox: SEARCH after Podol Plaza's arrival)
+		if not _vm.place_drawn.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
+				and key in [KEY_A, KEY_V, KEY_E, KEY_L, KEY_C, KEY_S, KEY_HOME, KEY_END]:
+			_vm.place_drawn = {}  # chat 121: these words draw the place line anew (its time, 0x49FB as now)
 		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			# The walking menu's other words (main chat 111, DOSBox 4:10's tower after YES): AREA, LOOK, ENCAMP,
 			# VIEW and a CAST that opens the spell list redraw the whole screen on the real square; SEARCH,
@@ -3115,6 +3118,7 @@ var _cast_keeps_view := false
 
 func _on_camp_closed() -> void:
 	GameClock.add_minutes(_vm, _camp.minutes_passed)   # the camp has already run the effects
+	_vm.place_drawn = {}     # chat 121: leaving camp draws the screen anew (the time and sky as now)
 	if not _party.is_empty():
 		_vm.selected = clampi(_camp._sel, 0, _party.size() - 1)
 	# Leaving camp redraws the 3D view (P63, lab chat 29: the inn at New Phlan 6,12, PICTURE 24 then
@@ -3383,6 +3387,7 @@ func _on_event_fight_finished(result: int) -> void:
 ## stands the cured fallen up: Combat Chat 53); null elsewhere: every member able to fight.
 func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem] = [], paid: Variant = null) -> void:
 	_place_left = []     # the walking screen after a fight is drawn whole
+	_vm.place_drawn = {}
 	var coins := []
 	var list_id := 255
 	if _fight_treasure.size() >= 8:
@@ -3905,7 +3910,11 @@ func _show() -> void:
 	# itself (DOSBox, New Phlan at 20:56 with 0x49FD = 8: a black sky; ours drew dark grey; 8:13 with 0x49FE = 8:
 	# black, ours cyan).
 	var sky_cell := EclVM.SKY_INDOORS if e.map.flag(_pos.x, _pos.y) & 0x80 else EclVM.SKY_OUTDOORS
-	_dungeon.sky_color = SKY_COLOURS[_vm.read_byte(sky_cell) & 15]
+	var sky_code := _vm.read_byte(sky_cell)
+	if _vm.place_drawn.has("sky") and _vm.place_drawn["at"] == [_pos.x, _pos.y, _facing]:
+		# Chat 121: the sky as CALL 0x2C90 drew it, until the next redraw (see EclVM.place_drawn).
+		sky_code = int(_vm.place_drawn["sky"][1 if sky_cell == EclVM.SKY_INDOORS else 0])
+	_dungeon.sky_color = SKY_COLOURS[sky_code & 15]
 	# Chat 121 (GAME.OVR 0x2ED72): the view reads off-map squares at the map's other edge but in blocks 0 and 10.
 	_dungeon.wrap = int(e.id) != 0 and int(e.id) != 10
 	_dungeon.set_backdrop(_vm.backdrop_ground, _vm.backdrop_line)
@@ -4303,17 +4312,20 @@ func _place_line() -> String:
 		if _place_left[1] == [_pos, _facing, _map_index] and _vm.place_drawn.is_empty():
 			return String(_place_left[0])
 		_place_left = []
+	var clock := GameClock.text(_vm)
 	if not _vm.place_drawn.is_empty():
-		# The line as CALL 0x2C90 drew it, until the party turns or steps (EclVM.place_drawn; main chat 109).
+		# The line as CALL 0x2C90 drew it, until the party turns or steps (EclVM.place_drawn; main chat 109), its
+		# time too (chat 121).
 		if _vm.place_drawn["at"] == [_pos.x, _pos.y, _facing]:
 			hide = int(_vm.place_drawn["hide"]) != 0
+			clock = String(_vm.place_drawn.get("time", clock))
 		else:
 			_vm.place_drawn = {}
 	if hide:
 		# Where an area's script sets 0x49FB (Valjevo's castle, the pyramid, the graveyard,
 		# Sokal Keep...) the original shows no square (START.EXE 0x35A6, lab chat 6).
-		return "%s %s" % ["NESW"[_facing], GameClock.text(_vm)]
-	return "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], GameClock.text(_vm)]
+		return "%s %s" % ["NESW"[_facing], clock]
+	return "%d,%d %s %s" % [_pos.x, _pos.y, "NESW"[_facing], clock]
 
 
 ## A rest in camp is done: the clock moves on (the camp has already run the effects).
