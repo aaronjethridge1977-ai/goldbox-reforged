@@ -1487,7 +1487,7 @@ func _capture() -> void:
 	img.save_png(base + ".png")
 	var f := FileAccess.open(base + ".txt", FileAccess.WRITE)
 	if f:
-		f.store_string("%s block %d (%s)\n" % [e.file, e.id, GeoMap.AREA_NAMES.get(e.id, "unnamed area")])
+		f.store_string("%s block %d (%s)\n" % [e.file, e.id, _area_name(e)])
 		f.store_string(_dungeon.report(e.map, _walls, _pos.x, _pos.y, _facing) + "\n")
 	_status.text = "Captured %s.png / .txt" % base.get_file()
 
@@ -3690,7 +3690,7 @@ func _show() -> void:
 		return
 	var e: Dictionary = _maps[_map_index]
 	_map_view.map = e.map
-	var area: String = GeoMap.AREA_NAMES.get(e.id, "unnamed area")
+	var area: String = _area_name(e)
 	if _mode == Mode.MAPS:
 		var hint: String = _area_text.get(e.id, "")
 		if hint.length() > 70:
@@ -4031,3 +4031,21 @@ func _place_line() -> String:
 func _on_camp_rested(minutes: int) -> void:
 	GameClock.add_minutes(_vm, minutes)
 	_camp.place = _place_line()
+
+
+## A decoded map's area name: the areas table (content/poolrad/areas.json) by the running script's data set
+## and block when walking, else by the map's (GEO<n>.DAX, block), else the old short table, else "unnamed area" (P111, Jeremy: the full map's title said
+## UNNAMED AREA in Podol Plaza; the table names all 29 areas). Our addition.
+func _area_name(e: Dictionary) -> String:
+	if _mode == Mode.WALK and _vm_file > 0:
+		# Walking: the running script's area (a block may draw another block's map: 8:29's catacombs are
+		# GEO8 block 32).
+		var w := AreaNames.lookup(_vm_file, _vm_block)
+		if String(w.get("name", "")) != "":
+			return w.name
+	var digits := String(e.get("file", "")).to_upper().trim_prefix("GEO").get_slice(".", 0)
+	if digits.is_valid_int():
+		var a := AreaNames.lookup(int(digits), int(e.id))
+		if String(a.get("name", "")) != "":
+			return a.name
+	return GeoMap.AREA_NAMES.get(e.id, "unnamed area")
