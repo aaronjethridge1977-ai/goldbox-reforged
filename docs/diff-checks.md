@@ -172,6 +172,36 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 116: the walking menu's words after a DAMAGE and with a picture up; 8:13's roof; check 452 (main path, display)
+
+- **AREA, LOOK, ENCAMP, VIEW, CAST after 4:10's fumes (the Lead's gate item; chat 115 had only seen SEARCH and a turn):**
+  DOSBox from `~/gbr/lab/data/c115/sFm` (one fresh run a word, lab `data/c116/fm.sh`): every one brings the place line
+  back (1,13 S). AREA keeps the text (DAMAGE. ...) under the map, and Esc doesn't leave AREA (both games); LOOK empties
+  the box and adds ten minutes; **VIEW, ENCAMP and a CAST empty the text box** (a CAST with no spells after its HAS NO
+  SPELLS MEMORIZED moment, one with the spell list after EXIT); the same after 1,12's tower text (VIEW). Ours kept
+  DAMAGE. after VIEW, ENCAMP and CAST, and **drew nothing after the walking menu's VIEW** (the sheet's `closed` was
+  not connected), so the place line stayed blank. Fixed (main.gd: the three words clear the box; `_on_walk_view_closed`).
+- **A picture a stopped script left up** (`data/c116/picexit.py`: the scripts where a PICTURE can reach EXIT with no
+  PICTURE 255 / CALL / COMBAT / NEW_ECL between; few: 2:20's rope booth after a wrong word, 3:0's Tyr temple after the
+  guards were attacked): DOSBox 2:20's rope booth (check 435's start, SPEAK XYZ: I CANNOT HELP YOU., PICTURE 9 up):
+  **VIEW drops it** (the 3D view after EXIT), ENCAMP and a CAST with the spell list drop it, SEARCH, End, LOOK and **a
+  CAST with no spells keep it**. Ours kept it after VIEW and dropped it after a CAST with no spells (the camp's close
+  drops pictures, P63). Fixed. A figure the same: 4:2's chained man (check 59's start, LEAVE): VIEW shows the 3D view
+  (ours now too).
+- **8:13's roof collapse** (the truce kobold at 8,12, 0x9B78; check 42's start jumped to 6,12 E, three Ups, REFUSE):
+  THE KOBOLD RETREATS, THEN STRIKES THE WALL. (press), THE ROOF COLLAPSES. with DAMAGE (two pages), then the kobold's
+  figure (SPRITE_START 0, 0, 0: one small frame, then close up), BEFORE YOU RECOVER, KOBOLDS ARRIVE. types, A BATTLE
+  BEGINS..., the fight. **Through the text the place line stays blank and row 24 keeps PRESS <ENTER>/<RETURN> TO
+  CONTINUE** (GAME.OVR 0x37CD draws it, nothing clears it). Ours showed the place line again (the VM cleared
+  `place_blank` when it first met the COMBAT, before waiting for the text to type) and an empty row 24. Fixed:
+  `place_blank` and `row24_left` clear when the fight or NEW_ECL really starts; main draws `row24_left` while the
+  script runs with no menu. Not changed: the one small frame before the close-up (as 6:1's, chat 115).
+- **Check 452 (8:13, the truce kobold, AGREE, FOLLOW, NO):** the escorted walk by CALL 0x2C90 and DELAY (8,12 to 12,9),
+  THE KOBOLD PAUSES, IDLY TAPS THE WALL (press), the boulder's YES/NO, NO: THE KOBOLD DISAPPEARS BEYOND THE BOULDER.
+  (0x4A03 = 1). In the original the first Enter at the tap's press is lost: the keys give two (an Enter at YES/NO does
+  nothing in either game). YES leads to a wyvern (a level-1 party dies). `~/gbr/lab/data/c116/chk452`; three runs
+  MATCH, the break (0x4A03 1 -> 2) DIFFERS.
+
 ## Chat 115: a place line a DAMAGE blanked stays blank; 6:1's guard after the slave pen (main path, display)
 
 - **The place line after DAMAGE (found, fixed):** chat 114 left open what the original shows after a DAMAGE's last
