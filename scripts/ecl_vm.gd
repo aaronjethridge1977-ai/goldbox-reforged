@@ -1369,8 +1369,11 @@ func _exec(ins: Dictionary) -> void:
 					# CALL leaves a blanked place line blank (chat 115, DOSBox: 5:5's hedge, check 121's keys).
 					if not step_fresh:
 						place_blank = []
+					# Chat 121: with the clock and the sky as drawn then (6:28's init calls this at the hour it found,
+					# then sets the hour to 0, and its on-move turns 0x49FD to day; DOSBox: the escort's PRESS page
+					# shows 20:56 under a black sky, ours 00:56 under cyan).
 					place_drawn = {"hide": read_byte(0x49FB), "at": [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15,
-						read_byte(PARTY_DIR) & 3]}
+						read_byte(PARTY_DIR) & 3], "time": GameClock.text(self), "sky": [read_byte(0x49FD), read_byte(0x49FE)]}
 					# The redraw also wipes an approaching figure: City Hall's guard (3:8 0xB3D9)
 					# walks up, YES to "DO YOU LEAVE?" puts the party outside and calls this;
 					# ours kept drawing the guard over the street (Jeremy, 2026-11-13).
