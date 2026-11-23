@@ -205,6 +205,7 @@ func open_test(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 	_distance = Placement.encounter_distance(_field, px, py, facing)
 	_combat = null
 	_result = 0
+	_drain_notes = []
 	_event_fight = false
 	_messages.clear()
 	if _picture == null:
@@ -664,6 +665,8 @@ func _draw_original(field: Image) -> void:
 		# Magenta, YES straight after the colon (main's cold-open capture of the original).
 		g.text(0, 24, "CONTINUE BATTLE:", MAGENTA)
 		g.menu_line(24, ["YES", "NO"], 16)
+	elif _combat != null and _result != 0 and not _drain_notes.is_empty():
+		g.text(0, 24, String(_drain_notes[0]), GameScreen.YELLOW)     # QoL DRAIN REMINDER
 	elif _combat != null and _result != 0 and not (paced() and _event_fight and _result == 1):
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
@@ -915,6 +918,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_pending_msgs.clear()
 	_row24_msg = ""
 	_result = 0
+	_drain_notes = []
 
 
 var _asking_continue := false
@@ -1243,6 +1247,51 @@ func _weapon_text(m: PartyMember) -> String:
 	return wn.to_upper()
 
 
+## QoL DRAIN REMINDER (Jeremy approved 2026-11-22 23:07, the coach's restart read: two wight drains
+## in 4:2 went by as one scroll line each, he saved over them): at a won or fled fight's end, row 24
+## tells each party member a drain took levels from, a key each, before the results. Only when
+## paced (a person playing); the lab's runs don't stop. The original says it once, mid-fight.
+const DRAIN_KEY := "drain_reminder"
+var _drain_notes: Array = []
+
+
+static func drain_reminder_on() -> bool:
+	var c := ConfigFile.new()
+	if c.load(GameData.SETTINGS_PATH) != OK:
+		return true
+	return bool(c.get_value("qol", DRAIN_KEY, true))
+
+
+static func save_drain_reminder(value: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", DRAIN_KEY, value)
+	c.save(GameData.SETTINGS_PATH)
+
+
+## The notes for `drained` (Combat.drained: member -> levels), none when the party fell.
+static func drain_notes(drained: Dictionary, result: int) -> Array:
+	var out: Array = []
+	if result == 2:
+		return out
+	for m in drained:
+		var n := int(drained[m])
+		out.append("%s LOST %s." % [String(m.name), "A LEVEL" if n == 1 else "%d LEVELS" % n])
+	return out
+
+
+## What follows THE PARTY WINS / HAS FLED (after any drain notes): an event fight won goes straight
+## on to the results; the rest wait for Esc or Enter.
+func _after_result() -> void:
+	if _event_fight and _result == 1:
+		# Straight on to the results (the original's "Continue Battle?" is skipped). Paced,
+		# as the original: no line on row 24, the results ~0.1 s after the last line or the
+		# NO (Combat Chat 12, main's cold-open capture).
+		await get_tree().create_timer(0.1 if paced() else 1.0).timeout
+		if visible and _event_fight and _result == 1:
+			_leave()
+
+
 ## Moves on to whoever acts next; computer-controlled turns play out on a timer.
 func _advance() -> void:
 	if _dev_win_now:
@@ -1265,14 +1314,12 @@ func _advance() -> void:
 		_result = _combat.outcome()
 		_combat.finish()
 		_on_message(["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result])
+		_drain_notes = drain_notes(_combat.drained, _result) if paced() and drain_reminder_on() else []
+		for n in _drain_notes:
+			print(n)
 		_refresh()
-		if _event_fight and _result == 1:
-			# Straight on to the results (the original's "Continue Battle?" is skipped). Paced,
-			# as the original: no line on row 24, the results ~0.1 s after the last line or the
-			# NO (Combat Chat 12, main's cold-open capture).
-			await get_tree().create_timer(0.1 if paced() else 1.0).timeout
-			if visible and _event_fight and _result == 1:
-				_leave()
+		if _drain_notes.is_empty():
+			_after_result()
 		return
 	_selected = i
 	_cmode = "menu"
@@ -2290,6 +2337,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_flash_timer.stop()
 		_flash_timer.timeout.emit()
 		get_viewport().set_input_as_handled()
+		return
+	if not _drain_notes.is_empty():
+		# QoL DRAIN REMINDER: any key takes the next note; after the last, the fight's end goes on.
+		get_viewport().set_input_as_handled()
+		_drain_notes.pop_front()
+		_refresh()
+		if _drain_notes.is_empty():
+			_after_result()
 		return
 	if _asking_flee:
 		if key == KEY_Y or key == KEY_N:

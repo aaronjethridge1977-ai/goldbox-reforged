@@ -73,6 +73,7 @@ var flee_dir := 0            # where the monsters run: the party's facing on the
 var enemy_health := 100      # the monsters' remaining HP, percent in fives
 var types: ItemTypes = null  # for re-readying weapons (missiles, the computer's choices)
 var dropped: Array[GameItem] = []   # thrown weapons left on the field (found after a win)
+var drained := {}                    # QoL (DRAIN REMINDER): a party member -> the levels this fight drained
 var magic_on := false                # Alt-M: the party's QUICK members cast (the original's DS:0x6E30)
 ## Lab (Combat Chat 25): `magicat=<draw>` turns MAGIC ON at the first computer turn opening at or
 ## after that draw: a replay's Alt-M lands in the original when its harness's key arrives, a real-time
@@ -1715,6 +1716,8 @@ func _save(m: PartyMember, kind: int, bonus: int) -> bool:
 func drain(j: int, levels: int) -> void:
 	var t: Dictionary = combatants[j]
 	var m: PartyMember = t.who
+	if int(t.team) == 0:
+		drained[m] = int(drained.get(m, 0)) + levels
 	var ct := ClassTables.shared(CharacterSheet.game_path) if CharacterSheet.game_path != "" else null
 	if ct == null or m.raw.size() <= LevelDrain.DRAINED_HP:
 		message.emit("%s IS DRAINED %s" % [m.name, "A LEVEL" if levels == 1 else "%d LEVELS" % levels])

@@ -491,6 +491,7 @@ static func setting_value(id: String) -> int:
 		"savelist": return int(SaveListScreen.on())
 		"originalbugs": return int(OriginalBugs.on())
 		"recordgame": return int(GameRecorder.enabled())
+		"drainreminder": return int(CombatScreen.drain_reminder_on())
 	return 0
 
 
@@ -516,6 +517,7 @@ static func change_setting(id: String) -> void:
 		"savelist": SaveListScreen.save_on(not SaveListScreen.on())
 		"originalbugs": OriginalBugs.save(not OriginalBugs.on())      # main chat 70's switch (Jeremy, 07:40)
 		"recordgame": GameRecorder.save(not GameRecorder.enabled())
+		"drainreminder": CombatScreen.save_drain_reminder(not CombatScreen.drain_reminder_on())
 
 
 ## QoL 5 (Q10): LOAD SAVED GAME opens the saved games' list (with the quick save) in place of the letter prompt.
