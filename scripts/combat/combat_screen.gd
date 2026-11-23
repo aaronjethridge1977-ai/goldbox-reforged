@@ -97,6 +97,7 @@ const MESSAGE_GAP := 0.2
 const TURN_START := 0.05
 var _panel_msgs := PackedStringArray()      # paced: the messages now on the right
 var _pending_msgs := PackedStringArray()    # paced: still to be shown
+var _pending_subj: Array[int] = []           # each one's Combat.fx_subject when it was said
 var _row24_msg := ""
 # A player's aimed spell (Combat Chat 23, DOSBox, save E's Bakshi, Sleep; GAME.OVR 0x27D60): "<NAME> CASTS A SPELL"
 # first, rows 23-24 empty, for a message's time (_announcing), then the aim; after TARGET no second line: the
@@ -910,6 +911,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_messages.clear()
 	_panel_msgs.clear()
 	_pending_msgs.clear()
+	_pending_subj.clear()
 	_row24_msg = ""
 	_result = 0
 	_drain_notes = []
@@ -995,6 +997,7 @@ func _on_combat_message(text: String) -> void:
 	_on_message(text)
 	if paced() and not _muted and not text.begins_with("ROUND "):
 		_pending_msgs.append(text)
+		_pending_subj.append(_combat.fx_subject)
 		if not _draining:
 			# Start once the action has queued all its messages (a volley's later darts, the
 			# missile's flight): shown at once, a dart's miss went up before its volley's hits
@@ -1085,6 +1088,7 @@ func _show_messages() -> void:
 	while not _pending_msgs.is_empty() and is_inside_tree():
 		var msg := _pending_msgs[0]
 		_pending_msgs.remove_at(0)
+		var subj: int = _pending_subj.pop_front() if not _pending_subj.is_empty() else -1
 		var who := _attacker(msg)
 		if _skip_miss(msg, who):
 			continue
@@ -1151,7 +1155,19 @@ func _show_messages() -> void:
 			_row24_msg = msg
 		else:
 			_panel_msgs.append(msg)
-			for k in _bolt_order(_spell_hits, who):
+			# The sparkles go on the figure whose line it is (Combat.fx_subject): exactly for the cloud's saves (Jeremy,
+			# 2026-11-23: a Stinking Cloud's sparkles on the wrong troll), by name only inside a spell's own lines
+			# (-2), never on a line outside a spell (a guard's, a turn's IS COUGHING; ours had paired those by name).
+			var cands: Array[int] = []
+			if subj >= 0:
+				cands = [subj]
+				if not _spell_hits.has(subj):
+					_hit_pic = [9, 137]      # a cloud's save in a later round: the sparkles
+					_bolt_on = false
+					_spell_hits.append(subj)
+			elif subj == -2:
+				cands = _bolt_order(_spell_hits, who)
+			for k in cands:
 				if (_combatants[k].who as PartyMember).name.to_upper() == who and not msg.contains(" ATTACKS "):
 					_spell_hits.erase(k)
 					_sparkle = k
@@ -1192,6 +1208,8 @@ func _show_messages() -> void:
 			if not _pending_msgs.is_empty() and _pending_msgs[0].begins_with("SPELL: "):
 				_row24_msg = "SPELL:" + _pending_msgs[0].substr(7)
 				_pending_msgs.remove_at(0)
+				if not _pending_subj.is_empty():
+					_pending_subj.pop_front()
 			_refresh()
 			_fly(sf.from, sf.to, [5, 133], 240.0)
 			await flight_done
@@ -1247,6 +1265,28 @@ func _weapon_text(m: PartyMember) -> String:
 ## tells each party member a drain took levels from, a key each, before the results. Only when
 ## paced (a person playing); the lab's runs don't stop. The original says it once, mid-fight.
 const DRAIN_KEY := "drain_reminder"
+## QoL FALLEN MONSTERS (P101; Jeremy said yes 2026-11-23 07:33, off by default): a monster that is down but will get up
+## (a troll waiting to rise, Combat.revive_in) is drawn as a dim skull on its squares. The original shows a downed
+## monster only while its GOES DOWN line is up (DOSBox, Combat Chat 47), then bare floor.
+const FALLEN_KEY := "fallen_monsters"
+static var _fallen_cache := -1
+
+
+static func fallen_monsters_on() -> bool:
+	if _fallen_cache < 0:
+		var c := ConfigFile.new()
+		_fallen_cache = 0
+		if c.load(GameData.SETTINGS_PATH) == OK:
+			_fallen_cache = 1 if bool(c.get_value("qol", FALLEN_KEY, false)) else 0
+	return _fallen_cache == 1
+
+
+static func save_fallen_monsters(value: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", FALLEN_KEY, value)
+	c.save(GameData.SETTINGS_PATH)
+	_fallen_cache = 1 if value else 0
 var _drain_notes: Array = []
 
 
@@ -1826,6 +1866,7 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if _cast_announced and not _muted:
 		# No line after the aim: the cast's sound and its flight go first, before the spell's lines.
 		_pending_msgs.append(CAST_MARK)
+		_pending_subj.append(-1)
 		if not _draining:
 			_draining = true
 			_show_messages.call_deferred()
@@ -2090,7 +2131,8 @@ func _restart_pick_aim() -> void:
 	if _aim_list.is_empty():
 		return
 	_aim_index = 0
-	_show_aim()
+	_cmode = "aim"      # back to AIM:, not MANUAL (Player 48's p45i5 log: after a MANUAL pick's TARGET the original's
+	_show_aim()         # next pick opened on AIM:NEXT PREV MANUAL TARGET CENTER EXIT; Combat Chat 52)
 
 
 ## YES at ABORT SPELL? (GAME.OVR 0x27F19): "SPELL ABORTED", the spell is forgotten as if
@@ -2269,6 +2311,27 @@ func _refresh() -> void:
 		var mc := (_aim_cell - _view) * CELL
 		if mc.x >= 0 and mc.y >= 0 and mc.x < size and mc.y < size:
 			_bevel(img, mc)
+	# P101 (FALLEN MONSTERS): the dim skulls first, under any figure standing there.
+	for i in _combatants.size():
+		var e: Dictionary = _combatants[i]
+		if not e.get("down", false) or _skulls.has(i) or _lingering.has(i):
+			continue
+		if e.team == 1 and not e.get("fled", false) and int(e.get("revive_in", 0)) > 0 and fallen_monsters_on():
+			var dim := _art.sprite(11)
+			if dim != null:
+				dim = dim.duplicate() as Image
+				var bg := dim.get_pixel(0, 0)      # the sprite's ground: left out, the floor shows
+				for y in dim.get_height():
+					for x in dim.get_width():
+						var px := dim.get_pixel(x, y)
+						if px.is_equal_approx(bg):
+							dim.set_pixel(x, y, Color(0, 0, 0, 0))
+						else:
+							dim.set_pixel(x, y, Color(px.r * 0.5, px.g * 0.5, px.b * 0.5, px.a * 0.7))
+				for p in _combat.cells(e):
+					var at2: Vector2i = (p - _view) * CELL
+					if at2.x >= 0 and at2.y >= 0 and at2.x < size and at2.y < size:
+						img.blend_rect(dim, Rect2i(Vector2i.ZERO, dim.get_size()), at2)
 	# The art faces right; combatants facing a westward direction are drawn mirrored.
 	for i in _combatants.size():
 		var e: Dictionary = _combatants[i]
@@ -2455,12 +2518,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			toggle_magic()
 			return
 		if key == KEY_SPACE:
+			# Read at the next computer turn's opening, where the one whose turn it is goes back to the
+			# order pick and takes it by hand (Combat.hand_back; Combat Chat 52).
 			get_viewport().set_input_as_handled()
-			for c in _combatants:
-				var w: PartyMember = c.who
-				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80) and w.status != 1:
-					c.quick = false
-					Combat.set_record_quick(w, false)   # GAME.OVR 0xBC26
+			_combat.control_pending = true
 			return
 	if (_event_fight or _cmode == "move") and _result == 0 and _combat != null:
 		_fight_input(event, key)     # (a test fight's Esc leaves it, but not from inside MOVE)

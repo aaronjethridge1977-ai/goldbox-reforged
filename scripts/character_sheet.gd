@@ -115,7 +115,9 @@ var in_combat := false
 var grey := false
 ## The lit menu item's place when the sheet closed (it carries over to the next menu).
 var last_pick := 0
-var _cast_cursor := 0
+var _cast_cursor := 0      # CAST: the lit row of _spell_rows (a spell's row, not a level's)
+var _cast_top := 0         # CAST: the list's first row on the page (NEXT / PREV)
+const CAST_PAGE := 18      # rows 5-22
 
 var _scr: GameScreen
 var _timer: Timer
@@ -179,7 +181,12 @@ func open_combat(people: Array[PartyMember], index: int, what: String, pick: int
 	elif what == "cast":
 		_mode = "cast"
 		_pick = 0
-		_cast_cursor = maxi(_spell_ids().size() - 1, 0)
+		# The original opens the list on the page's last spell, the page being the list's first 18 rows (rows
+		# 5-22; DOSBox, Combat Chat 52: ELWEN's 19 spells, 22 rows with the level lines, opened lit on the second
+		# STINKING CLOUD at row 22, FIREBALL on the NEXT page; Player 48's p45i5: Home, Home took HOLD PERSON).
+		_cast_top = 0
+		var vis := _cast_visible()
+		_cast_cursor = vis[vis.size() - 1] if not vis.is_empty() else 0
 	_refresh()
 
 
@@ -433,28 +440,58 @@ func _draw_spells(m: PartyMember) -> void:
 	_frame(2)
 	_heading(m, "SPELLS IN MEMORY")
 	var rows := _spell_rows(m)
-	for i in rows.size():
-		if 5 + i > 22:
+	var top := _cast_top if _mode == "cast" else 0
+	for i in range(top, rows.size()):
+		var y := 5 + i - top
+		if y > 22:
 			break
 		if rows[i][1] == 0:
-			_t(1, 5 + i, rows[i][0], MAGENTA)
+			_t(1, y, rows[i][0], MAGENTA)
 		else:
-			var lit := i == rows.size() - 1 if _mode != "cast" else i == _cast_row()
-			_t(3, 5 + i, String(rows[i][0]).to_upper(), GameScreen.WHITE if lit else GameScreen.GREEN)
+			var lit := i == rows.size() - 1 if _mode != "cast" else i == _cast_cursor
+			_t(3, y, String(rows[i][0]).to_upper(), GameScreen.WHITE if lit else GameScreen.GREEN)
 	if _mode != "cast":
 		_t(1, 24, "EXIT", GameScreen.WHITE)
 
 
-## The page row of the spell CAST has chosen (_cast_cursor counts spells only).
-func _cast_row() -> int:
+## CAST's page: the spell rows of _spell_rows shown (rows _cast_top .. _cast_top + 17).
+func _cast_visible() -> Array[int]:
 	var rows := _spell_rows(_who())
-	var k := 0
-	for i in rows.size():
+	var out: Array[int] = []
+	for i in range(_cast_top, mini(_cast_top + CAST_PAGE, rows.size())):
 		if rows[i][1] != 0:
-			if k == _cast_cursor:
-				return i
-			k += 1
-	return -1
+			out.append(i)
+	return out
+
+
+## CAST's menu: NEXT while rows lie below the page, PREV while above (the original's CAST NEXT EXIT / CAST PREV EXIT).
+func _cast_menu() -> Array:
+	var out := ["CAST"]
+	var n := _spell_rows(_who()).size()
+	if _cast_top + CAST_PAGE < n:
+		out.append("NEXT")
+	if _cast_top > 0:
+		out.append("PREV")
+	out.append("EXIT")
+	return out
+
+
+## NEXT / PREV: the page moves (NEXT so far that the list's end is the page's last row at most; DOSBox, Combat
+## Chat 52: 22 rows, NEXT showed rows 4-21) and the lit line keeps its place on the screen (the second STINKING
+## CLOUD's row 21 became the second PRAYER's; PREV took the first STINKING CLOUD's row 17 to a HOLD PERSON).
+func _cast_page(down: bool) -> void:
+	var n := _spell_rows(_who()).size()
+	var at := _cast_cursor - _cast_top
+	_cast_top = mini(_cast_top + CAST_PAGE, maxi(n - CAST_PAGE, 0)) if down else maxi(_cast_top - CAST_PAGE, 0)
+	var vis := _cast_visible()
+	if vis.is_empty():
+		return
+	var want := _cast_top + at
+	_cast_cursor = vis[vis.size() - 1]
+	for i in vis:
+		if i >= want:     # a level's line there: the spell below it (not yet seen in the original)
+			_cast_cursor = i
+			break
 
 
 func _spell_ids() -> Array[int]:
@@ -546,7 +583,7 @@ func _current_menu() -> Array:
 		"spells", "coin":
 			return ["EXIT"]
 		"cast":
-			return ["CAST", "EXIT"]
+			return _cast_menu()
 		"order":
 			return SmartQuick.ORDER_NAMES + ["EXIT"]
 		"whom", "coin_whom":
@@ -603,7 +640,7 @@ func _refresh() -> void:
 		"cast":
 			_draw_spells(m)
 			_t(0, 24, "CHOOSE SPELL:", MAGENTA)
-			_menu(["CAST", "EXIT"], 14)
+			_menu(_cast_menu(), 14)
 		"order":
 			_draw_page(m)
 			_t(0, 24, "ORDER:", MAGENTA)
@@ -1185,16 +1222,24 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cast_scroll(m, _people[_target])
 			_refresh()
 		"cast":
-			var ids := _spell_ids()
-			if key == KEY_HOME and not ids.is_empty():
-				_cast_cursor = (_cast_cursor - 1 + ids.size()) % ids.size()
-			elif key == KEY_END and not ids.is_empty():
-				_cast_cursor = (_cast_cursor + 1) % ids.size()
+			# Home / End step through the page's spells and wrap on the page (DOSBox, Combat Chat 52: Home from
+			# BLESS, the page's first, lit its last).
+			var vis := _cast_visible()
+			var k := vis.find(_cast_cursor)
+			if key == KEY_HOME and not vis.is_empty():
+				_cast_cursor = vis[(k - 1 + vis.size()) % vis.size()] if k >= 0 else vis[vis.size() - 1]
+			elif key == KEY_END and not vis.is_empty():
+				_cast_cursor = vis[(k + 1) % vis.size()] if k >= 0 else vis[0]
+			elif choice == "NEXT":
+				_cast_page(true)
+			elif choice == "PREV":
+				_cast_page(false)
 			elif choice == "EXIT" or cancel:
 				_close()
 				return
-			elif choice == "CAST" and not ids.is_empty():
-				var id: int = ids[clampi(_cast_cursor, 0, ids.size() - 1)]
+			elif choice == "CAST" and not vis.is_empty():
+				var rows := _spell_rows(_who())
+				var id: int = rows[clampi(_cast_cursor, 0, rows.size() - 1)][1]
 				_close()
 				spell_chosen.emit(id)
 				return

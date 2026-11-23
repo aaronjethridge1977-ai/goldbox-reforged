@@ -81,6 +81,17 @@ var magic_on := false                # Alt-M: the party's QUICK members cast (th
 ## Combat Chat 26: a queue, in draw order, so a replay can send every fight's key before the fights
 ## (ours plays in real time: a key sent at the Alt-M's place could reach ours after its draw, p19d1).
 static var magic_at_draws: Array[int] = []
+## Lab (`controlat=<draw>`): the replay's Space (the party's QUICK members handed back), read at the first computer
+## turn's opening poll from that draw on, as magic_at_draws (Combat Chat 52, Player 48's p45i5).
+static var control_at_draws: Array[int] = []
+## Space pressed while the computer runs a turn: read at the next computer turn's opening (GAME.OVR 0xBB81).
+var control_pending := false
+## Whose line a message is, for the screen's sparkles (Combat Chat 52, Jeremy's troll and cloud): the figure an effect
+## is being added to (>= 0; the original shows the sparkles from its add-effect routine, START.EXE 0x2B8B from GAME.OVR
+## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
+## pairs by name there), -1 outside a spell (no sparkles).
+var fx_subject := -1
+var handed_back := -1      # a member whose computer turn Space ended: next_turn gives it back for the menu
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
 ## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
 ## spells (0xB105) are not stopped.
@@ -335,6 +346,12 @@ func start_round() -> void:
 ## Advances to the next combatant who can act; starts new rounds as needed.
 ## Returns their index, or -1 if the fight is over.
 func next_turn() -> int:
+	if handed_back >= 0:
+		var h := handed_back
+		handed_back = -1
+		if outcome() == 0 and not combatants[h].down:
+			active = h
+			return h
 	while outcome() == 0:
 		if order.is_empty():
 			# The original's end of round (GAME.OVR 0xA163): with no enemy left in the fight
@@ -2497,6 +2514,26 @@ func _approach(i: int) -> String:
 	return "moved" if what == "moved" else "end"
 
 
+## Space at a computer turn's opening poll (GAME.OVR 0xBB81, from 0xABDC): every party member that isn't an NPC
+## (record +0x84 below 0x80) and whose status isn't 1 comes off QUICK (+0x10F = 0); if the one whose turn it is
+## is no longer on QUICK, the computer turn ends there (0xACC6 -> 0xADBD: no morale, no action; its +0x108 byte 3
+## = 20 keeps its turn) and it takes the same turn by hand, with no new order pick (Combat Chat 52: Player 48's
+## p45i5, the original's ELWEN had her menu at draw 990, the RNG state the Player's log shows there, where ours ran
+## her by the computer). True when the turn went to the menu (next_turn gives it back: handed_back).
+func hand_back() -> bool:
+	for k in combatants.size():
+		var o: Dictionary = combatants[k]
+		var w: PartyMember = o.who
+		if o.team == 0 and not w.is_monster and not (w.npc >= 128 or w.script_team == 0x80) and w.status != 1:
+			o.quick = false
+			set_record_quick(w, false)       # GAME.OVR 0xBC26
+	var c: Dictionary = combatants[active]
+	if c.team != 0 or c.get("quick", false):
+		return false      # a monster's or an NPC's turn goes on (the original restarts it, drawing nothing)
+	handed_back = active
+	return true
+
+
 ## One action of a computer-controlled turn. Returns false when the turn is over.
 ## Lab (PlayBot): a player's call for a computer-run party member at the start of its turn:
 ## party_judge(combat, i) returns "flee" to run for the edge, as a player would.
@@ -2515,6 +2552,13 @@ func ai_act() -> bool:
 		if not magic_at_draws.is_empty() and TpDice.on and TpDice.calls >= magic_at_draws[0]:
 			magic_at_draws.pop_front()
 			magic_on = true
+		if not control_at_draws.is_empty() and TpDice.on and TpDice.calls >= control_at_draws[0]:
+			control_at_draws.pop_front()
+			control_pending = true
+		if control_pending:
+			control_pending = false
+			if hand_back():
+				return false
 		c.powers_done = false
 		_ai_begin(active)
 		_turn_start_powers(active)
