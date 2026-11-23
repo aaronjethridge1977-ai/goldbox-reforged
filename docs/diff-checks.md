@@ -172,6 +172,40 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 110: a script's move with no redraw (main path, display); 441-443; the coach's replay partings
+
+- **A script that moves the party by writing its square or facing, with no redraw after it, leaves the old square on
+  screen (main path, display; fixed in main.gd, ecl_vm.gd's `view_redrawn`).** DOSBox, 4:10 Valhingen's tower (check
+  443: check 64's start, 47 steps to 15,6 S): YOU STAND BEFORE A HUGE TOWER..., the warning voices, DO YOU LEAVE? YES:
+  0xA20D writes 0xC04B = 14 and 0xC04D = 3 and exits. The original keeps the tower door in the view and "15,6 S 11:30"
+  on the place line (8 s and more), DO YOU LEAVE? still up; Left then shows 14,6 S (the turn from W), Right 14,6 W,
+  Up 13,6 W 11:31 (the text gone). Ours redrew at once (14,6 W, the wall ahead). Now a position write that no CALL
+  0x2C90, NEW_ECL, LOAD_AREA_MAP / LOAD_AREA_DECO, PICTURE or COMBAT follows in the script (and not in an init) keeps
+  the drawn view and place line until the party turns or steps (or takes another walking-menu word: assumed, not
+  seen); the party's square itself moves at once (saves, LOOK, the automap). Filmed in ours after the fix: 15,6 S and
+  the door after YES, 14,6 S / W at the turns, 13,6 W at the step. The scan of every block for writes to 0xC04B-D
+  (`data/c110` notes): nearly all go on to CALL 0x2C90 (5:5's and the others' "put back, turned round", the Slums'
+  booth, Rolf's tour) and are unchanged; the plain-write sites are the tower and 4:2's YOU ARE CHASED OUT INTO THE
+  STREETS (0x9CDD, after a COMBAT: left as it was, not seen in DOSBox).
+- **441** (4:21 Sokal Keep's smithy, from check 429's original end at 12,0 W): the route by the illusionary wall and
+  the armory to 14,5, 14,6 (A BROKEN HEARTH AND BELLOWS..., the smithy's counter 0x4A0E = 1), SEARCH on, 15,6: the
+  hammer (DO YOU TAKE IT? YES, the treasure page, TAKE, TAKE, EXIT; 0x4A28 = 255), back to 14,6 (2), 14,7: THE
+  CROAKING RISES IN VOLUME. COMBAT WAIT FLEE ADVANCE (the third smithy step; both games' menu the same), FLEE: the
+  random spot 11,11 S 12:18. Break 0x4A28 255 -> 0 DIFFERS.
+- **442** (2:20 the Slums, check 45's start jumped to 1,1 N): 1,0, 0,0: YOU HAVE STUMBLED INTO A TREASURE ROOM. (typed
+  before the treasure page, chat 108's rule), 1173 XP each, SHARE, TAKE the 20 arrows and the short bow, EXIT; back
+  east to 3,0 and south: YOU HAVE ENTERED A SMALL STORAGE ROOM. (0x4A0F = 255) at 11:02. Break 0x4AD6 DIFFERS. The
+  Slums' other two text-before-fight sites (the arguing orcs 0x9E2A, the grain sack 0xB077) stop at PRESS RETURN
+  before their COMBAT: no typing wait there.
+- **443** (4:10 the tower, above): ends 14,6 W 11:30; break (the original's x 14 -> 15) DIFFERS.
+- **The coach's (4), Jeremy's 14:03 and 14:17 replays: replay faults, not differences.** Replayed at their recorded
+  times at real speed on his build b865613 (`data/c110/trep.sh`, windowed): the 14:03 session's SHARE runs (the
+  treasure menu takes S 1.2 s after the Enter) and its F2 save is byte-identical to the quick save his 14:17 session
+  starts from; the 14:17 session goes through the arms shop's typed amounts (288, 6, 1, 88, 4, 2), APPRAISE and EXIT
+  as he did, then on to the training hall, and its 566 combat lines (8 fights) match his game log line for line to the
+  session's end. The coach's replays ran with `GBR_TSCALE` 2, 6 and 11 (the engine and the keys sped up together): a
+  key that lands in a typing or results wait at a different moment is taken differently there.
+
 ## Chat 109: script runes (main path, display); 440 (4:21 the dead elf); RECORD MY GAME's replays
 
 - **None of Pool's rune texts was ever seen in ours (main path, display; fixed in ecl_vm.gd and main.gd).**

@@ -1106,6 +1106,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_type_ahead = event as InputEventKey
 			get_viewport().set_input_as_handled()
 			return
+		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
+				and key in [KEY_A, KEY_C, KEY_V, KEY_E, KEY_S, KEY_L]:
+			_stale_view = []   # the walking menu's other words redraw the screen too (assumed; turns and steps seen)
 		if _door_options != "":
 			var letter := OS.get_keycode_string(key).to_upper()
 			if letter.length() == 1:
@@ -1394,6 +1397,13 @@ func _jump_file(step: int) -> void:
 
 var _font_glyphs := PackedByteArray()
 var _blank_at := []    # where the party stood when the view went blank after a rune page (EclVM.view_blank)
+## A script that moves or turns the party by writing its cells (0xC04B-0xC04D) with no redraw after (no CALL 0x2C90,
+## NEW_ECL, area load, PICTURE or COMBAT) leaves the original's view and place line on the old square until the party
+## acts (main chat 110, DOSBox: 4:10's tower, DO YOU LEAVE? YES writes 14,6 W and exits: 15,6 S and the tower door stay
+## up; a turn then shows 14,6 S, a step goes on from 14,6). _stale_view: [square, facing] still shown; _stale_at:
+## [square, facing, map] the party really has, which ends it once it changes.
+var _stale_view := []
+var _stale_at := []
 
 
 func _on_typed(text: String) -> void:
@@ -2452,6 +2462,10 @@ func _script_square_info(x: int, y: int) -> int:
 
 func _adopt_position_from_vm() -> void:
 	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
+	var redrawn := _vm.view_redrawn or _vm.running_entry == 4   # an area's init: the area is drawn after it
+	_vm.view_redrawn = false
+	if redrawn:
+		_stale_view = []
 	if now == _synced or _vm.state == EclVM.State.NEW_ECL or _vm.redraw_pending:
 		return   # (redraw_pending: the move shows when CALL 0x2C90 runs, after its text has typed; main chat 109)
 	var moved := now.x != _synced.x or now.y != _synced.y
@@ -2461,6 +2475,18 @@ func _adopt_position_from_vm() -> void:
 		return
 	var target := Vector2i(now.x, now.y)
 	var walk := moved and not _jump_next and _mode == Mode.WALK and _vm_map == _map_index
+	if (moved or turned) and not redrawn and _mode == Mode.WALK and _vm_map == _map_index and not _vm.on_overland:
+		# No redraw in the script: the old square stays on screen (see _stale_view). (_jump_next can be left over
+		# from the last area entry, which its init's redraw already covers.)
+		_jump_next = false
+		if _stale_view.is_empty():
+			_stale_view = [_pos, _facing]
+		if moved:
+			_pos = target
+		if turned:
+			_facing = now.z as DungeonView.Dir
+		_stale_at = [_pos, _facing, _map_index]
+		return
 	_jump_next = false
 	if walk:
 		var path := _find_path(_pos, target)
@@ -3716,6 +3742,14 @@ func _show() -> void:
 			_blank_at = []
 	elif not _blank_at.is_empty():
 		_blank_at = []
+	var vpos := _pos
+	var vface := _facing
+	if not _stale_view.is_empty():
+		if _stale_at != [_pos, _facing, _map_index]:
+			_stale_view = []
+		else:
+			vpos = _stale_view[0]
+			vface = _stale_view[1]
 	if _vm.view_blank and _event_image == null:
 		var v := DungeonView.to_image(_dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing))
 		_view_img = Image.create(v.get_width(), v.get_height(), false, Image.FORMAT_RGBA8)
@@ -3725,7 +3759,7 @@ func _show() -> void:
 		_view_img = _event_image
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	else:
-		var view := _dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing)
+		var view := _dungeon.render(e.map, _walls, vpos.x, vpos.y, vface)
 		if _vm.sprite_id >= 0 and CampScreen.show_monsters:
 			var frames := _sprite_frames(_vm.sprite_id)
 			if not frames.is_empty():
@@ -4038,6 +4072,13 @@ func _place_line() -> String:
 	if _vm.on_overland:
 		return _overland_place()
 	var hide := _vm.read_byte(NO_COORDINATES) != 0
+	if not _stale_view.is_empty() and _stale_at == [_pos, _facing, _map_index]:
+		# The square the original still shows (see _stale_view).
+		var sp: Vector2i = _stale_view[0]
+		var sf := int(_stale_view[1])
+		if hide:
+			return "%s %s" % ["NESW"[sf], GameClock.text(_vm)]
+		return "%d,%d %s %s" % [sp.x, sp.y, "NESW"[sf], GameClock.text(_vm)]
 	if not _vm.place_drawn.is_empty():
 		# The line as CALL 0x2C90 drew it, until the party turns or steps (EclVM.place_drawn; main chat 109).
 		if _vm.place_drawn["at"] == [_pos.x, _pos.y, _facing]:

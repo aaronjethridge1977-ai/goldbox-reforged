@@ -317,6 +317,7 @@ var runes_closing := false
 ## party is elsewhere); {} for the live cell.
 var place_drawn := {}
 var redraw_pending := false   # a CALL 0x2C90 waits for its text to type: main keeps the old square till then
+var view_redrawn := false   # the script ran something that redraws the view (main's _stale_view; main chat 110)
 var view_blank := false
 var _runes_to_box := false
 
@@ -1010,6 +1011,8 @@ func _exec(ins: Dictionary) -> void:
 	_prev_op = op
 	if op in QUIET:
 		return
+	if op in ["PICTURE", "NEW_ECL", "LOAD_AREA_MAP", "LOAD_AREA_DECO", "COMBAT"]:
+		view_redrawn = true
 	match op:
 		"EXIT":
 			_restore_pick()
@@ -1145,6 +1148,7 @@ func _exec(ins: Dictionary) -> void:
 					# ... and the place line as 0x49FB is now: a script that sets it after this call (1:18's FLEE,
 					# 0x9E62) still shows the square until the party turns or steps (main chat 109, DOSBox: 9,4 W
 					# 10:56, then S 10:56 at the first turn; ours hid it at once). See main's _place_line.
+					view_redrawn = true
 					place_drawn = {"hide": read_byte(0x49FB), "at": [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15,
 						read_byte(PARTY_DIR) & 3]}
 					# The redraw also wipes an approaching figure: City Hall's guard (3:8 0xB3D9)
