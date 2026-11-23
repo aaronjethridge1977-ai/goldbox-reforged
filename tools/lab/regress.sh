@@ -123,6 +123,40 @@ run orig_A_c44_mx_hak1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.s
 # Combat Chat 44: Slow (slk1): draws and effects (the original run with FXWATCH and HOLDN=27, the 26 figures: with the
 # default 32 the watch stalled from 6897 to 8861 in two runs; one draw lost in this run).
 run orig_A_c44_mx_slk1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh slk1 11111111 mx_slk1 up up 1 1
+# Combat Chat 45: Charm Person on the caster himself (chk1, aim 0): the save before the half-elf's d100, the charm kept on a
+# member (0x0B power 33, control byte 0xB3: he casts with MAGIC off), the movement modifier by side, the party destroyed with
+# no player character standing (two more original runs: the same draws). The trace stops at the fight's end (the
+# original's after-fight treasure d10s, 0x56B1, and its freed records' FX lines cut).
+run orig_A_c45_mx_chs1 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 ./combat42/mx.sh chk1 11111111 mx_chs1 up up 0 1
+# Combat Chat 45: the set aims, beside an ally: fbk2 (BAKSHI Fireball x21, THRENDER GRONE alive on QUICK; the aim on the
+# nearest kobold): THRENDER caught once, BAKSHI in his own; two original runs identical.
+run orig_A_c45_mx_fbk2b 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:1 ./combat42/mx.sh fbk2 11111111 mx_fbk2b up up 1 1
+# Combat Chat 45: fbk2 with the aim on the sixth kobold out (the area's edge in the pack): THRENDER caught 3 times; two runs identical.
+run orig_A_c45_mx_fbk2e 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:1 ./combat42/mx.sh fbk2 11111111 mx_fbk2e up up 6 1
+# Combat Chat 45: Sleep (slk2, save C) and Stinking Cloud (sck2, save E, the orcs) with THRENDER GRONE alive beside BAKSHI:
+# BAKSHI caught in his own each time; two original runs each identical.
+run orig_A_c45_mx_slk2a 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:1 ./combat42/mx.sh slk2 11111111 mx_slk2a up up 1 1
+run orig_A_c45_mx_sck2b 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:1 ./combat42/mx.sh sck2 12345678 mx_sck2b up,up enter 2 1
+# Combat Chat 46, the spell matrix's last set aim: figures on all eight sides of the aim (fixtures fbk2, slk2: THRENDER GRONE
+# beside BAKSHI; seed cafef00d puts kobold 17 at 29,13 with eight kobolds around it at BAKSHI's round-2 cast, aim skip 11;
+# five casts (handuse.py CASTS=5: the sixth press in the original landed on a stale screen). Two original runs each, identical.
+run orig_A_c46_mx_fbk8c 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:5:1 ./combat42/mx.sh fbk2 cafef00d mx_fbk8c up up 11 1
+run orig_A_c46_mx_slk8a 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:5:1 ./combat42/mx.sh slk2 cafef00d mx_slk8a up up 11 1
+# Combat Chat 46: a member's charm after the fight (fixture chm2 = fbk2's recipe with mem2=10x21): BAKSHI charms himself (aim 0)
+# beside THRENDER GRONE, the party wins; the original's save then holds +0x84 0xB3 and the charm (Dispel Magic in camp ends
+# both, seen). 8999 draws; the trace without the FX lines after the last draw (freed records).
+run orig_A_c46_mx_chm2a 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:1 ./combat42/mx.sh chm2 cafef00d mx_chm2a up up 0 1
+# Combat Chat 46, Jeremy's P89: RHIANNON unconscious at 5 HP (+0x10D 0) before the Slums' orcs (fixture uc4f: mkfix.py E uc4f
+# clear mem2=21x21 dead4=1 dead5=1 dead6=1 strong1=1 strong2=1 speed=0, then her status 4, HP 5): 1594 draws; the original's
+# trace without her FX lines (ours' watch skips a body on the field). Her OKAY after the fight is seen, not checked here.
+run orig_A_c46_uc4f 0 env ORIG=skip GBR_PLAYOUT=1 HANDX=0:5:1 ./combat42/mx.sh uc4f 12345678 mx_uc4f up,up enter 1 1
+# Combat Chat 46: a Potion of Speed (fixture spd_kob: combat38/mkitem.py lb_kob1 spd_kob tmp/rp_fb/game/CHRDATF3.ITM Potion 61=80
+# 60=1, readied): BAKSHI drinks it (USE, End x2, U): the 5d4 once, the half-elf's d100, the mark at once. 15195 draws, two runs.
+run orig_A_c46_mx_spd2 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:0:1:2 ./combat42/mx.sh spd_kob 33333333 mx_spd2 up up 0 1
+# Combat Chat 51: 2:20's trolls with the QUICK party (k220): a guard felling the one stepping up keeps its move and attacks
+# (troll 10, draw 2636), and troll 8's rise held by BRAM on its second cell; THRENDER steps onto a slain kobold (disp_kob).
+run orig_A_c51_k220 0 ./combat51/regline.sh k220 33333333 "" "up,enter,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
+run orig_A_c51_body 0 ./combat51/regline.sh disp_kob 33333333 up "up,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,m,Up,wait,Enter,fightmenu,a,n,t,fightmenu,a,n,t,fightmenu,a,n,t,quickall,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
 # Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
 # has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
 run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
