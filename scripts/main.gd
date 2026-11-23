@@ -3974,8 +3974,11 @@ func _draw_screen() -> void:
 		# GAME.OVR 0x37CD, colour 15; the printer's own PRESS ANY KEY TO CONTINUE is colour 13 (chat 114, DOSBox: 8:13's rocks)
 		_screen.text(0, 24, prompt, 13 if prompt == EclVM.PRESS_ANY_KEY else GameScreen.WHITE)
 		_screen.update()
-	if not press24 and not note24 and not vertical.is_empty() and _vm.row24_left != "":
-		_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)   # chat 114: DAMAGE's prompt left there (5:4's kitchen)
+	if not press24 and not note24 and _vm.row24_left != "" and (not vertical.is_empty() or (menu.is_empty() \
+			and who_label == "" and _vm.state not in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR, EclVM.State.INPUT, EclVM.State.MENU])):
+		# chat 114: DAMAGE's prompt left there (5:4's kitchen); chat 116: also while the script goes on with no menu
+		# (DOSBox 8:13's roof: it stays while BEFORE YOU RECOVER, KOBOLDS ARRIVE. types, until A BATTLE BEGINS...)
+		_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU

@@ -1117,8 +1117,6 @@ func _exec(ins: Dictionary) -> void:
 		return
 	if op in ["PICTURE", "NEW_ECL", "LOAD_AREA_MAP", "LOAD_AREA_DECO", "COMBAT"]:
 		view_redrawn = true
-	if op in ["COMBAT", "NEW_ECL"]:
-		place_blank = []
 	if op == "COMBAT":
 		picture_up = false      # GAME.OVR 0x24E1 clears DS:0x84C8-9 after the fight (0x261F)
 	match op:
@@ -1531,6 +1529,8 @@ func _exec(ins: Dictionary) -> void:
 				typing_wait = true
 				state = State.WAIT
 				return
+			place_blank = []      # once the text has typed (see COMBAT's)
+			row24_left = ""
 			new_ecl = _value(a[0])
 			state = State.NEW_ECL
 			# Combat Chat 28, GAME.OVR 0x404E: entering the new block clears the script-pick flag (0x4430), so
@@ -1586,6 +1586,11 @@ func _exec(ins: Dictionary) -> void:
 				typing_wait = true
 				state = State.WAIT
 				return
+			# The fight brings the place line back, not the COMBAT before its text has typed (chat 116, DOSBox
+			# 8:13's truce kobold, REFUSE: the roof's DAMAGE, then BEFORE YOU RECOVER, KOBOLDS ARRIVE. types with
+			# the place line still blank; ours showed it again during the text).
+			place_blank = []
+			row24_left = ""       # the fight's screen redraws row 24
 			if read_byte(TEMPLE_FLAG) == 1:
 				state = State.TEMPLE
 			elif read_byte(SHOP_FLAG) == 1:
