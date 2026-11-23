@@ -3,6 +3,10 @@
 # (main chat 93): a RECORD MY GAME session played windowed (DISPLAY, default :95) and paced (--anim), its keys at their
 # recorded times (main.gd's timed= item, main chat 93); log in <work>/ours.log. <patched checkout>: a checkout with
 # timed= (from chat 93 on; for an older build's commit, ~/gbr/lab/data/c93/timed.py <checkout> adds it).
+# Replay a session on the commit it was recorded with: keys timed to one build's text pacing part on a build whose
+# waits changed (chat 109: Jeremy's 21:42 session on b865613 played as he played it; on main, after chat 107's
+# typing-time waits, it parted at the auction 6 s in). A key-by-key replay (keys=) parts even on the same build: his
+# walking keys typed ahead during texts are all acted on.
 # REL=<release binary beside its .pck> runs that instead of the editor binary on <work>/proj (a release template
 # plays what Jeremy's build does: no bounds checks; chat 93's crash only showed there). Audio: ALSA (to the null
 # device through an .asoundrc in <work>/alsa: no sound out loud), PulseAudio (out loud through WSLg) or Dummy.
@@ -19,11 +23,18 @@ if [ -z "${REL:-}" ]; then   # REL runs its own .pck: no project to copy or impo
 	(cd "$W/proj" && XDG_DATA_HOME=$W/xdg timeout 120 "$G" --headless --path . --import >/dev/null 2>&1)
 fi
 cp -r /home/aaron/gbr/checks/data/game "$W/game"
-cp "$R"/start/* "$W/game/"
 mkdir -p "$W/xdg/godot/app_userdata/Gold Box Reforged"
 cp "$R/settings.cfg" "$W/xdg/godot/app_userdata/Gold Box Reforged/settings.cfg"
-cp /home/aaron/gbr/checks/data/134/ours.cfg "$W/ours.cfg"
-PRE=$(cut -d, -f1-3 "$R/keys")
+if [ "$(cut -d, -f2 "$R/keys")" = F3 ]; then
+	# A quick-save session (chat 109): its quick.cfg is the --save and F3 loads it; the timed keys follow seed=, F3
+	# (a slot session's prefix is seed=, vm=, load=: three items).
+	cp "$R/start/quick.cfg" "$W/ours.cfg"
+	PRE=$(cut -d, -f1-2 "$R/keys")
+else
+	cp "$R"/start/* "$W/game/"
+	cp /home/aaron/gbr/checks/data/134/ours.cfg "$W/ours.cfg"
+	PRE=$(cut -d, -f1-3 "$R/keys")
+fi
 KEYS="$PRE,timed=$REC$(printf ',wait%.0s' $(seq 1 "$NW"))"
 cd "$W"
 H=$HOME

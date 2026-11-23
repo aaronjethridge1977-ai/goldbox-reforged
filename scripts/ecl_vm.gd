@@ -289,6 +289,7 @@ var running_entry := -1    # the entry point start() last ran (4: the init)
 ## Runs an entry point to completion or until a menu.
 func start(entry: int) -> State:
 	running_entry = entry
+	_runes_to_box = false
 	pc = entry_offset(entry)
 	stack.clear()
 	if pc < 0:
@@ -299,9 +300,21 @@ func start(entry: int) -> State:
 
 
 ## Continues after a menu: writes the chosen index (0-based) and resumes.
+## PRINT_RUNES (main chat 109, DOSBox): the original prints a rune string where the text cursor is, at once (not
+## typed), each code c as glyph c + 1 of the game's font (8X8D1 block 201), white: 5:4's gnoll's paper puts the six
+## dwarvish runes on the text box's row 18 under "YOU LOOK AT THE WRITING...", the 3D view untouched. Ours keeps them
+## in the text as RUNE_BASE + c (drawn by main.gd). After a CLEAR_BOX (the view window cleared, no inner frame) they go
+## into the view window instead, from row 5, two rows a PRINT_RETURN (4:21's elf scroll: three lines at screen y 40,
+## 56, 72): rune_lines, shown while runes_shown. That page stays up after LOAD_AREA_MAP's mode 2 until the script's
+## next stop is answered (the press after "...THE LAST PART IS EATEN AWAY."), then the view is empty (its inner frame,
+## black) until the party turns or steps (view_blank). Ours had drawn the page in the 3D view's square a glyph off
+## and dropped it at the mode 2, before the press: none of Pool's four rune texts was ever seen.
+const RUNE_BASE := 0xE000
 var rune_lines: Array[String] = []
 var runes_shown := false
-var runes_changed := false
+var runes_closing := false
+var view_blank := false
+var _runes_to_box := false
 
 
 ## INPUT_STRING / INPUT_NUMBER: the script waits for typed text (passwords, "TYPE A SINGLE
@@ -447,6 +460,11 @@ func resume() -> State:
 func run(max_steps: int = 20000) -> State:
 	var steps := 0
 	print_chars = 0
+	if runes_closing:
+		runes_closing = false
+		runes_shown = false
+		rune_lines = []
+		view_blank = true
 	while state == State.RUNNING:
 		steps += 1
 		if steps > max_steps:
@@ -975,7 +993,7 @@ func _note(message: String) -> void:
 
 
 ## Opcodes with no visible effect here yet (sprites, sound, party checks...).
-const QUIET := ["CLEAR_BOX",
+const QUIET := [
 	"SOUND", "UNUSED_1F", "UNUSED_42", "UNKNOWN_44", "UNKNOWN_48",
 	"UNKNOWN_49", "UNKNOWN_4A", "UNKNOWN_4B", "FOR_START", "FOR_REPEAT", "PICTURE2"]
 
@@ -1208,6 +1226,7 @@ func _exec(ins: Dictionary) -> void:
 			# GAME.OVR 0x1BA7: the cell at the address plus a byte offset, whatever the source's type.
 			_write(a[2], read_var(int(a[0].value) + (_value(a[1]) & 0xFF)))
 		"PRINT":
+			_runes_to_box = false
 			text += _string(a[0])
 			print_chars += _string(a[0]).length()
 			text_changed = true
@@ -1224,13 +1243,19 @@ func _exec(ins: Dictionary) -> void:
 				typing_wait = true
 				state = State.WAIT
 				return
+			_runes_to_box = false
 			text = _string(a[0])
 			print_chars += _string(a[0]).length()
 			text_changed = true
 			_note_shown()
 		"PRINT_RETURN":
-			text += "\n"
-			text_changed = true
+			if _runes_to_box and runes_shown:
+				rune_lines.append("")
+			else:
+				text += "\n"
+				text_changed = true
+		"CLEAR_BOX":
+			_runes_to_box = true
 		"SPRITE_START":
 			# A figure walks up: sprite id, starting distance, the portrait it ends on.
 			sprite_id = _value(a[0])
@@ -1332,12 +1357,8 @@ func _exec(ins: Dictionary) -> void:
 			elif area_map[0] < 127 and area_map[1] in [0, 2]:
 				on_overland = false
 			# Mode 16 turns the view into a page for PRINT_RUNES; mode 2 brings the view back.
-			if area_map[1] == 16:
-				rune_lines = []
-				runes_shown = true
-			elif area_map[1] == 2 and runes_shown:
-				runes_shown = false
-				rune_lines = []
+			if area_map[1] == 2 and runes_shown:
+				runes_closing = true
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
 		"SURPRISE":
@@ -1459,10 +1480,19 @@ func _exec(ins: Dictionary) -> void:
 			_input_dest = a[1]
 			state = State.INPUT
 		"PRINT_RUNES":
-			# Rune text: each character code is drawn with that glyph of the game's font
-			# (codes 0x40-0x7F are the rune glyphs, two to a rune).
-			rune_lines.append(_string(a[0]))
-			runes_changed = true
+			# Rune text where the cursor is (see RUNE_BASE): two codes to a rune, not typed (no print_chars).
+			var runes := ""
+			for ch in _string(a[0]):
+				runes += char(RUNE_BASE + ch.unicode_at(0))
+			if _runes_to_box:
+				if not runes_shown:
+					rune_lines = [""]
+					runes_shown = true
+					view_blank = false
+				rune_lines[-1] += runes
+			else:
+				text += runes
+				text_changed = true
 		_:
 			_note("unhandled " + op)
 

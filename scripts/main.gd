@@ -562,6 +562,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 				if kn.length() == 1:
 					tev.unicode = kn.unicode_at(0)
 				tev.pressed = true
+				print("   at ", _state_line())   # where the key finds the game (chat 109: where a replay parts)
 				print("timed %d %s" % [int(d["t"]), kn])
 				Input.parse_input_event(tev)
 				await get_tree().process_frame
@@ -1392,30 +1393,7 @@ func _jump_file(step: int) -> void:
 
 
 var _font_glyphs := PackedByteArray()
-
-
-## The view as a page of runes (PRINT_RUNES): white glyphs of the game's own 1-bit font
-## (8X8D1 block 201, 8 bytes a glyph, indexed by character code) on black.
-func _rune_page() -> Image:
-	if _font_glyphs.is_empty():
-		var dax := DaxFile.open(_game_path.path_join("8X8D1.DAX"))
-		if dax != null and dax.blocks.has(201):
-			_font_glyphs = dax.blocks[201]
-	var view := DungeonView.to_image(_dungeon.render(_maps[_map_index].map, _walls, _pos.x, _pos.y, _facing))
-	var img := Image.create(view.get_width(), view.get_height(), false, Image.FORMAT_RGBA8)
-	img.fill(Color.BLACK)
-	for row in _vm.rune_lines.size():
-		var line: String = _vm.rune_lines[row]
-		for col in line.length():
-			var g := line.unicode_at(col)
-			for y in 8:
-				var bits := _font_glyphs[g * 8 + y] if g * 8 + y < _font_glyphs.size() else 0
-				for x in 8:
-					var px := 8 + col * 8 + x
-					var py := 8 + row * 12 + y
-					if bits >> (7 - x) & 1 and px < img.get_width() and py < img.get_height():
-						img.set_pixel(px, py, Color.WHITE)
-	return img
+var _blank_at := []    # where the party stood when the view went blank after a rune page (EclVM.view_blank)
 
 
 func _on_typed(text: String) -> void:
@@ -3728,8 +3706,20 @@ func _show() -> void:
 	e = _maps[_map_index]
 	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
 	_dungeon.sky_color = sky if sky > 0 and sky < 16 else 11
-	if _vm.runes_shown and not _vm.rune_lines.is_empty():
-		_view_img = _rune_page()
+	if _vm.view_blank:
+		# After a rune page, an empty view until the party turns or steps (EclVM.view_blank; DOSBox, main chat 109).
+		var here := [_pos, _facing, _map_index]
+		if _blank_at.is_empty():
+			_blank_at = here
+		elif _blank_at != here:
+			_vm.view_blank = false
+			_blank_at = []
+	elif not _blank_at.is_empty():
+		_blank_at = []
+	if _vm.view_blank and _event_image == null:
+		var v := DungeonView.to_image(_dungeon.render(e.map, _walls, _pos.x, _pos.y, _facing))
+		_view_img = Image.create(v.get_width(), v.get_height(), false, Image.FORMAT_RGBA8)
+		_view_img.fill(Color.BLACK)
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	elif _event_image != null:
 		_view_img = _event_image
@@ -3841,6 +3831,7 @@ func _draw_screen() -> void:
 	if who_label != "":
 		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	_draw_runes(lines)
 	if who_label != "":
 		_screen.party_clickable(_party.size(), lit)   # Combat Chat 13, mouse step 2: a WHO list's lines (Up / Down)
 	if _battle_begins:   # over any row-24 note (Combat Chat 12: a load's GAME LOADED. hid it)
@@ -3860,6 +3851,32 @@ func _draw_screen() -> void:
 	if who_label != "":
 		_screen.text(0, 24, who_label, 13)
 		_screen.menu_line(24, ["SELECT"], who_label.length() + 1, 0)
+		_screen.update()
+
+
+## PRINT_RUNES (EclVM.RUNE_BASE): the text box's runes over the blanks GameScreen.text_box left for them, and a
+## CLEAR_BOX's rune page over the whole view window (rows 1-15, no inner frame), white, glyph code + 1 (main chat 109,
+## DOSBox: 5:4's paper on row 18 from column 1; 4:21's elf scroll from screen (16, 40), then (8, 56), (8, 72)).
+func _draw_runes(lines: PackedStringArray) -> void:
+	var drawn := false
+	var start := maxi(lines.size() - 6, 0)
+	for i in range(start, lines.size()):
+		var line := lines[i]
+		for col in line.length():
+			var c := line.unicode_at(col)
+			if c >= EclVM.RUNE_BASE and c < EclVM.RUNE_BASE + 0x100:
+				_screen.put_glyph_px((1 + col) * 8, (17 + i - start) * 8, c - EclVM.RUNE_BASE + 1, GameScreen.WHITE)
+				drawn = true
+	if _vm.runes_shown:
+		_screen.img.fill_rect(Rect2i(8, 8, 120, 120), Color.BLACK)
+		for row in _vm.rune_lines.size():
+			var r: String = _vm.rune_lines[row]
+			for col in r.length():
+				var x := (16 if row == 0 else 8) + col * 8   # the first line one column in (DOSBox, the elf's scroll)
+				if x + 8 <= 128:
+					_screen.put_glyph_px(x, 40 + row * 16, r.unicode_at(col) - EclVM.RUNE_BASE + 1, GameScreen.WHITE)
+		drawn = true
+	if drawn:
 		_screen.update()
 
 
