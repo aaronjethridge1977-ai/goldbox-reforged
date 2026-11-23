@@ -2452,8 +2452,8 @@ func _script_square_info(x: int, y: int) -> int:
 
 func _adopt_position_from_vm() -> void:
 	var now := Vector3i(_vm.read_byte(EclVM.PARTY_X), _vm.read_byte(EclVM.PARTY_Y), _vm.read_byte(EclVM.PARTY_DIR))
-	if now == _synced or _vm.state == EclVM.State.NEW_ECL:
-		return
+	if now == _synced or _vm.state == EclVM.State.NEW_ECL or _vm.redraw_pending:
+		return   # (redraw_pending: the move shows when CALL 0x2C90 runs, after its text has typed; main chat 109)
 	var moved := now.x != _synced.x or now.y != _synced.y
 	var turned := now.z != _synced.z and now.z < 4
 	_synced = now
@@ -4037,7 +4037,14 @@ func dev_restore(s: Dictionary) -> bool:
 func _place_line() -> String:
 	if _vm.on_overland:
 		return _overland_place()
-	if _vm.read_byte(NO_COORDINATES) != 0:
+	var hide := _vm.read_byte(NO_COORDINATES) != 0
+	if not _vm.place_drawn.is_empty():
+		# The line as CALL 0x2C90 drew it, until the party turns or steps (EclVM.place_drawn; main chat 109).
+		if _vm.place_drawn["at"] == [_pos.x, _pos.y, _facing]:
+			hide = int(_vm.place_drawn["hide"]) != 0
+		else:
+			_vm.place_drawn = {}
+	if hide:
 		# Where an area's script sets 0x49FB (Valjevo's castle, the pyramid, the graveyard,
 		# Sokal Keep...) the original shows no square (START.EXE 0x35A6, lab chat 6).
 		return "%s %s" % ["NESW"[_facing], GameClock.text(_vm)]

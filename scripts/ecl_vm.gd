@@ -313,6 +313,10 @@ const RUNE_BASE := 0xE000
 var rune_lines: Array[String] = []
 var runes_shown := false
 var runes_closing := false
+## The place line CALL 0x2C90 drew: {"hide": 0x49FB then, "at": [x, y, facing]} (main's _place_line keeps it until the
+## party is elsewhere); {} for the live cell.
+var place_drawn := {}
+var redraw_pending := false   # a CALL 0x2C90 waits for its text to type: main keeps the old square till then
 var view_blank := false
 var _runes_to_box := false
 
@@ -460,6 +464,7 @@ func resume() -> State:
 func run(max_steps: int = 20000) -> State:
 	var steps := 0
 	print_chars = 0
+	redraw_pending = false
 	if runes_closing:
 		runes_closing = false
 		runes_shown = false
@@ -1118,6 +1123,18 @@ func _exec(ins: Dictionary) -> void:
 				0x0806:
 					pass    # the wilderness view gives way to the picture frame (main does it)
 				0x2C90:
+					if print_chars > 0 and running_entry != 2 and text.strip_edges() != "":
+						# The text before it types first, over the old view (main chat 109, DOSBox: 1:18's FLEE, THE
+						# PARTY RUNS AND ESCAPES. typed in 1.0 s beside the orc at 14,5, then 9,4 W with the text
+						# still up; ours moved at once). As at COMBAT and NEW_ECL: wait, then run the CALL again. The
+						# view and the place line stay where they were until it runs (redraw_pending: 14,5 S while it types).
+						redraw_pending = true
+						pc = _at
+						delay_chars = print_chars
+						print_chars = 0
+						typing_wait = true
+						state = State.WAIT
+						return
 					# Redraws the view after the script moved the party, and with it the new
 					# square's info byte (0xC04F), which the step script then reads for its
 					# event: the Slums' booth (event 19) puts the party out at 14,12 and runs
@@ -1125,6 +1142,11 @@ func _exec(ins: Dictionary) -> void:
 					# (ours looped there; the original doesn't).
 					if square_info.is_valid():
 						write_byte(SQUARE_INFO, int(square_info.call(read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15)))
+					# ... and the place line as 0x49FB is now: a script that sets it after this call (1:18's FLEE,
+					# 0x9E62) still shows the square until the party turns or steps (main chat 109, DOSBox: 9,4 W
+					# 10:56, then S 10:56 at the first turn; ours hid it at once). See main's _place_line.
+					place_drawn = {"hide": read_byte(0x49FB), "at": [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15,
+						read_byte(PARTY_DIR) & 3]}
 					# The redraw also wipes an approaching figure: City Hall's guard (3:8 0xB3D9)
 					# walks up, YES to "DO YOU LEAVE?" puts the party outside and calls this;
 					# ours kept drawing the guard over the street (Jeremy, 2026-11-13).
@@ -1333,6 +1355,17 @@ func _exec(ins: Dictionary) -> void:
 					stack.append(pc)
 				_jump(a[index + 2])
 		"NEW_ECL":
+			if print_chars > 0 and running_entry != 2 and text.strip_edges() != "":
+				# As at COMBAT (main chat 108): the original types the text printed since the script last stopped
+				# before the next instruction runs (START.EXE 0x7782), so it is up for its typing time before the
+				# new block loads and its init prints over it (main chat 109: 5:5's YOU GO UPSTAIRS. before NEW_ECL
+				# 7, 6:28's YOU ESCAPE FROM THE OUTPOST., 8:13's princess; six sites). Wait, then run it again.
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
 			new_ecl = _value(a[0])
 			state = State.NEW_ECL
 			# Combat Chat 28, GAME.OVR 0x404E: entering the new block clears the script-pick flag (0x4430), so
