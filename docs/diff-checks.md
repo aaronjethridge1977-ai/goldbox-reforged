@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 113: a dismissed or joining NPC and a script's PICTURE wait for the text before them (main path); 450, 451
+
+- **The original's printer types a script's text before the next instruction runs** (chat 109's rule), so whatever
+  the instructions after it change on screen changes only once the text has typed. Three more kinds found (DOSBox,
+  lab speed 4; `~/gbr/lab/data/c113`): **(a) a member dismissed by LOAD_CHAR** (8:13's exit, DO YOU WANT TO LEAVE?
+  YES with PRINCESS FATIMA, start `sPr` = check 370's end jumped to 6,14 S: her farewell types in 3.6 s with her
+  still in the party list, then the overland with six; ours dropped her at the text's first character, `p2.png`,
+  `vid/pr1.mp4`); **(b) a member joining by NPC_ADD** (4:2's SKULLCRUSHER, check 369's keys: GREAT! MY NAME IS
+  SKULLCRUSHER... types with six in the list, he shows with the press; ours showed him with the text, `k1.png`,
+  `k2.png`, `vid/sk1.mp4`); **(c) PICTURE** (2:20's patrol, check 72's start, PAY 100: THEY PAW THROUGH YOUR COINS
+  AND LEAVE. types over the kobold, then the view comes back with the text up; ours changed the picture at once,
+  `py1.png`, `py2.png`, `vid/pay1.mp4`). Fixed in ecl_vm.gd as NEW_ECL and CALL 0x2C90 already were: LOAD_CHAR (when
+  it dismisses), NPC_ADD and PICTURE wait the typing time of the text printed since the script last stopped, then
+  run (films after the fix `vid/pr2.mp4`, `vid/sk2.mp4`, `vid/pay2.mp4`). Display only (main path: every NPC that
+  joins or leaves with a text: Skullcrusher, Dirten, the mystic, Genheeris, the princess, and 18 PICTURE sites).
+  ROB after a text (check 72's SURRENDER) changes nothing on screen in the original (the AC column stays): no wait.
+- **5:5's YOU GO UPSTAIRS. (NEW_ECL 7) and 5:7's stairs down (NEW_ECL 5), seen in DOSBox:** match. The text types in
+  0.63 s over the stepped square's view (place line "E 10:57": 5:5's init hides the square), then 5:7's arrival
+  asks at once DO YOU WANT TO GO DOWN THESE STAIRS? (5,7 E is the stairs to 11,7; a step into 5,7's wall from W asks
+  for the way down to 5:5 13,15). A step onto 5:7 5,7 from the east finds the secret door first (no question); a
+  blocked step runs the square's script again. **Check 450** (start `sUp` = check 58's start jumped to 5:7 6,7 W;
+  Up, Up (the secret door), Enter, Up (the question), Y (5:5 13,15 W), Right, Right, Up (YOU GO UPSTAIRS.: 5:7 5,7 E,
+  the question again), N (the secret door to the left), Enter; F2). Break of the square DIFFERS; three runs MATCH.
+- **Check 451** (start `sPr`; Up, Up, DO YOU WANT TO LEAVE? Y: the princess's farewell, the overland 26,0 S, F2;
+  the end has six members). Break of cell 0x4A01 DIFFERS; three runs MATCH.
+- **Seen, not changed (artificial starts only):** a jump save's wall set stays the old area's in the original (5:7's
+  init loads no deco: wood from 2:20) where ours draws the area's own; check 72's start (2:20 saved with the init still
+  to run) keeps "14,5 S" on the place line through the first step's patrol in the original, ours shows 3,4 S.
+- **Lead's question (3:14's drainer):** none. Every fixed and table LOAD_MON in ECL1-8 read: drainers only in 2:15,
+  4:2 and 4:10; MON3CHA has no drainer at all. The route table's "spectre on the way out" (row 14, `library2` ->
+  `kovel`) was the library's spectre (2:15). Poolrad Inbox line.
+
 ## Chat 112: a fled fight's results page and treasure menu (main path); 4:2's chased-out confirmed; 447-449
 
 - **4:2's YOU ARE CHASED OUT INTO THE STREETS, confirmed in DOSBox** (chat 111's open item). The courtyard's way out is

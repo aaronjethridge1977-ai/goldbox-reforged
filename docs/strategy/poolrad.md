@@ -738,3 +738,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- Level drainers load only in 2:15 (Mendor's Library: the spectre, MON2 17), 4:2 (the Textile House: wights) and 4:10 (the graveyard: wights, a wraith, spectres, vampires): every fixed and table LOAD_MON in ECL1-8 read, and MON3CHA (all of ECL3's monsters, Kovel Mansion 3:14's included) has no drainer at all; so the route table's row 14 (`library2` -> `kovel`, "spectre on the way out") and the trips table's row 9 drain happened leaving the library (2:15), not in Kovel: Restoration can go once 4:10 is cleared. *code* (Chat 113, data/c109/dis + MON1-8CHA, for the Lead's 05:04 note)

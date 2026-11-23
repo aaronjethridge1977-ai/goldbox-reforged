@@ -1024,7 +1024,19 @@ func _exec(ins: Dictionary) -> void:
 			program = _value(a[0])
 			state = State.PROGRAM
 		"LOAD_CHAR":
-			_load_char(_value(a[0]))
+			var lc := _value(a[0])
+			if lc & 0x80 and _dismiss and selected_member() != null and print_chars > 0 and running_entry != 2 \
+					and text.strip_edges() != "":
+				# Chat 113 (DOSBox, 8:13's exit with PRINCESS FATIMA): the original types its text before the next
+				# instruction runs, so a member dismissed after it stays in the party list while it types (her
+				# farewell, then she leaves). Ours dropped her at once. Wait the typing time, then run it again.
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
+			_load_char(lc)
 		"WHO":
 			# The prompt, then a party member is picked; the window shows them.
 			text = _string(a[0])
@@ -1079,6 +1091,16 @@ func _exec(ins: Dictionary) -> void:
 		"PARTY_CHECK":
 			_party_check(a)
 		"NPC_ADD":
+			if print_chars > 0 and running_entry != 2 and text.strip_edges() != "":
+				# Chat 113 (DOSBox, 4:2's SKULLCRUSHER): the original types the text before NPC_ADD runs, so the
+				# member joins the party list once it has typed (with the press after it); ours showed him with
+				# the text's first character. Wait the typing time, then run it again (as LOAD_CHAR, NEW_ECL).
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
 			# The game loads the monster record as a party member (see EclVM.npc_requests).
 			npc_requests.append([_value(a[0]), _value(a[1])])
 			party_changed = true
@@ -1329,6 +1351,16 @@ func _exec(ins: Dictionary) -> void:
 			delay_chars = print_chars
 			print_chars = 0
 		"PICTURE":
+			if print_chars > 0 and running_entry != 2 and text.strip_edges() != "":
+				# Chat 113 (DOSBox, 2:20's patrol, PAY: THEY PAW THROUGH YOUR COINS AND LEAVE. types over the kobold,
+				# then PICTURE 255 brings the view back with the text up): the old picture stays while the text types.
+				# Ours changed it with the text's first character. Wait the typing time, then run it again.
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
 			picture = _value(a[0])
 			picture_head = read_byte(PICTURE_HEAD)
 			if picture == 255:
