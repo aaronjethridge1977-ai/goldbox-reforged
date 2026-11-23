@@ -1090,12 +1090,15 @@ func _show_messages() -> void:
 		var who := _attacker(msg)
 		if _skip_miss(msg, who):
 			continue
-		if msg.ends_with(" IS GUARDING"):
+		if msg.ends_with(" IS GUARDING") or msg == "ESCAPE IS BLOCKED":
 			# The original has no "<name> is guarding": a computer-run figure's guard prints "Guarding" (START.EXE
 			# 0x32E2) on row 24 under its own panel, the panel's lines kept (DOSBox, Combat Chat 49, tu_spec5: a
 			# turned SPECTRE's run counts MOVE LEFT down to 4, then GUARDING; none of the lab's original screen logs
 			# has the panel line). Jeremy's P113 read ours' "GHOUL IS GUARDING" as turned ghouls not running.
-			_row24_msg = "GUARDING"
+			# A runner's "Escape is blocked" likewise: the getaway (0x68:0x39, called by the player's flee at
+			# 0xA440 and by the computer's run at 0xB52D) prints it through the row-24 routine 0xBA:0x1693 (the
+			# player's seen in DOSBox, Combat Chat 47's flee_k6).
+			_row24_msg = "GUARDING" if msg.ends_with(" IS GUARDING") else msg
 			_move_label = ""
 			_refresh()
 			await get_tree().create_timer(message_hold()).timeout
