@@ -88,6 +88,13 @@ var picture_head := 255
 ## and the portrait it turns into once close (picture id, head id or 255).
 var sprite_id := -1
 var sprite_distance := 0
+## Chat 114: a picture is up (the original's DS:0x84C9: set by PICTURE n and by a figure that became its picture,
+## cleared by PICTURE 255 and when the script stops, GAME.OVR 0x159C / 0xD47). While it is, a figure at a distance
+## isn't drawn at all (GAME.OVR 0x7A21 skips the sprite, 0x7A4B): the view a CALL 0x2C90 drew stays as it is
+## (DOSBox: 6:28's tour, after the commandant's PICTURE 50 the guard's SPRITE_START 16, 1, 6 at the barracks, the
+## watch towers and the quarters shows nothing; ours drew the guard). The figure's distance still counts.
+var picture_up := false
+var sprite_hidden := false
 ## Monsters loaded for the next COMBAT: [[monster id, count, picture id], ...].
 var monsters: Array = []
 ## Each creature LOAD_MON loaded, in order: its 0x6C0C (0x80 fights for the party). LOAD_CHAR
@@ -166,6 +173,16 @@ var tables: ClassTables          # set by the game (thief skills)
 var party_changed := false       # an NPC joined or left: the game redraws the party
 var duel := 0                    # CALL 0x8000 (1, the arena) / 0x8001 (2): the next COMBAT is a duel
 var _dismiss := false
+## Chat 114: the member whose name a script blanked (WRITE_MEM 0, [6B00]), as a party index (-1: none). The original's
+## write goes to the record, but the party list on screen changes only at the next LOAD_CHAR's redraw (DOSBox: 3:0's
+## SKULLCRUSHER SPEAKS, 'I MUST GO TO MY MASTER NOW.' types with his name in the list; ours showed an empty row
+## while it typed). Reads see the blank name at once; the list keeps it until LOAD_CHAR.
+var _blank_name := -1
+## Chat 114: the member lit in the party list as the original last drew it: the pick when the script started, or
+## the one a LOAD_CHAR with 0x80 (a redraw) points at. A LOAD_CHAR without it moves the window, not the list's
+## highlight (DOSBox: 3:0's farewell types with THRENDER GRONE lit while the script has SKULLCRUSHER picked).
+## main.gd lights it during a typing wait, the one time a script's mid-run pick shows.
+var list_lit := -1
 
 ## Minutes the script moved the clock on (CLOCK); the game runs spell effects down by them.
 var minutes_passed := 0
@@ -223,6 +240,10 @@ func copy_from(src: EclVM) -> void:
 	menu_question = src.menu_question
 	_menu_kind = src._menu_kind
 	_press_queue = src._press_queue.duplicate(true)
+	_blank_name = src._blank_name
+	picture_up = src.picture_up
+	sprite_hidden = src.sprite_hidden
+	list_lit = src.list_lit
 	_enc = src._enc.duplicate(true)
 	_enc_waited = src._enc_waited
 	print_chars = src.print_chars
@@ -289,6 +310,8 @@ var running_entry := -1    # the entry point start() last ran (4: the init)
 ## Runs an entry point to completion or until a menu.
 func start(entry: int) -> State:
 	running_entry = entry
+	picture_up = false
+	list_lit = selected
 	_runes_to_box = false
 	pc = entry_offset(entry)
 	stack.clear()
@@ -359,8 +382,7 @@ func choose(index: int) -> State:
 	if _menu_kind == "press":
 		if not _press_queue.is_empty():
 			var page: Array = _press_queue.pop_front()
-			text = page[0]
-			text_changed = true
+			_show_page(page)
 			menu = [page[1]]
 			return state
 		_menu_kind = ""
@@ -588,6 +610,8 @@ func _char_get(off: int, whole := false) -> int:
 	if m == null:
 		return -1 if off >= 0x200 else 0
 	if off < 0x10:
+		if selected == _blank_name:
+			return 0
 		return m.name.unicode_at(off) if off < m.name.length() else 0
 	if off >= 0xBB and off <= 0xC4:
 		var base := off - ((off - 0xBB) & 1)
@@ -626,7 +650,7 @@ func _char_set(off: int, v: int, whole := false) -> bool:
 		return false
 	if off == 0:
 		if v == 0:
-			m.name = ""
+			_blank_name = selected
 		return true
 	if off == 0x100:
 		# GAME.OVR 0x803F: 0 dismisses; 0x87 turns the member to stone (the trap door in
@@ -723,6 +747,9 @@ func _wait_typing() -> bool:
 
 func _load_char(v: int) -> void:
 	_script_pick = true
+	if _blank_name >= 0 and _blank_name < party.size():
+		(party[_blank_name] as PartyMember).name = ""
+	_blank_name = -1
 	if v & 0x80 and _dismiss and selected_member() != null:
 		party.remove_at(selected)
 		party_changed = true
@@ -739,6 +766,8 @@ func _load_char(v: int) -> void:
 	elif k < monster_teams.size():
 		selected = -1
 		selected_creature = k
+	if v & 0x80:
+		list_lit = selected
 
 
 ## The text box as the original's printer fills it during a DAMAGE (chat 43, DOSBox at 5:6's
@@ -764,7 +793,7 @@ func _box_start() -> void:
 
 
 func _box_page(prompt: String) -> void:
-	_box_pages.append(["\n".join(_box_rows), prompt])
+	_box_pages.append(["\n".join(_box_rows), prompt, _party_snap()])
 	_box_rows = PackedStringArray([""])
 	_box_row = 0
 
@@ -787,6 +816,27 @@ func _box_line(line: String) -> void:
 		_box_rows[_box_row] = parts[i]
 		if parts[i].length() >= 38:
 			_box_row += 1
+
+
+## Chat 114: the original prints each hit and redraws the party's HP column before the next hit is rolled, so a
+## page of hits waiting for its key shows the HP as they stood when that page filled (DOSBox: 8:13's rocks, check
+## 87: page 1 RHIANNON and THRENDER GRONE hit, BROTHER SEAN still 10 and PHINEAS 4; ours showed every member's
+## end HP on page 1). A page keeps the party's HP and status as they stood ([hp, status] each); the last page
+## the end values. Shown by _show_page.
+func _party_snap() -> Array:
+	var s := []
+	for m in party:
+		s.append([(m as PartyMember).hp, (m as PartyMember).status])
+	return s
+
+
+func _show_page(page: Array) -> void:
+	text = page[0]
+	text_changed = true
+	if page.size() > 2 and (page[2] as Array).size() == party.size():
+		for i in party.size():
+			(party[i] as PartyMember).hp = page[2][i][0]
+			(party[i] as PartyMember).status = page[2][i][1]
 
 
 ## Damage from a script (traps, green slime, falling...), as the original applies it:
@@ -885,10 +935,10 @@ func _damage(a: Array) -> void:
 	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
 	# 0x709:0xBF5; chat 43, 5:3's boulders); full boxes before it wait the same way.
 	_press_queue = _box_pages
-	_press_queue.append([text, PRESS_TO_CONTINUE])
+	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap()])
 	_box_pages = []
 	var page: Array = _press_queue.pop_front()
-	text = page[0]
+	_show_page(page)
 	_pause_for_menu({}, [page[1]])
 	_menu_kind = "press"
 
@@ -1029,6 +1079,8 @@ func _exec(ins: Dictionary) -> void:
 		return
 	if op in ["PICTURE", "NEW_ECL", "LOAD_AREA_MAP", "LOAD_AREA_DECO", "COMBAT"]:
 		view_redrawn = true
+	if op == "COMBAT":
+		picture_up = false      # GAME.OVR 0x24E1 clears DS:0x84C8-9 after the fight (0x261F)
 	match op:
 		"EXIT":
 			_restore_pick()
@@ -1335,6 +1387,7 @@ func _exec(ins: Dictionary) -> void:
 			sprite_distance = read_byte(APPROACH_DISTANCE)
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
+			sprite_hidden = picture_up and sprite_distance > 0
 			# A figure that starts at distance 0 is the picture at once: START (GAME.OVR 0x1188) and ADVANCE
 			# (0x158C) draw through the same routine with the distance, and at 0 it draws the picture (P102,
 			# main chat 107, DOSBox: 2:15's mad man, START 15, 0, 25, shows picture 25 with his text; ours drew
@@ -1348,6 +1401,7 @@ func _exec(ins: Dictionary) -> void:
 			if read_byte(APPROACH_DISTANCE) > 0:
 				write_byte(APPROACH_DISTANCE, read_byte(APPROACH_DISTANCE) - 1)
 			sprite_distance = read_byte(APPROACH_DISTANCE)
+			sprite_hidden = picture_up and sprite_distance > 0
 			# Reaching the party it becomes their picture at once (chat 40, DOSBox: the Slums'
 			# orcs, 2:20 0x9E22 START at 1, ADVANCE, PRINT: the orc's picture with the text and
 			# under A BATTLE BEGINS...; ours drew the nearest figure frame, then the corridor).
@@ -1385,6 +1439,7 @@ func _exec(ins: Dictionary) -> void:
 				return
 			picture = _value(a[0])
 			picture_head = read_byte(PICTURE_HEAD)
+			picture_up = picture != 255
 			if picture == 255:
 				write_byte(PICTURE_HEAD, 255)
 		"MENU_HORIZONTAL":
@@ -1519,6 +1574,7 @@ func _exec(ins: Dictionary) -> void:
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
 			sprite_distance = encounter_distance
+			sprite_hidden = picture_up and sprite_distance > 0
 			_arrived()
 			_show_encounter_menu()
 		"TREASURE":
@@ -1543,6 +1599,10 @@ func _exec(ins: Dictionary) -> void:
 						monster_teams.append(0)
 						monster_morale.append(-1)
 		"DAMAGE":
+			# Chat 114: the hit lines and the HP column change once the text before has typed (DOSBox: 8:13's
+			# rocks, KOBOLDS APPEAR AND BOMBARD YOU WITH ROCKS. types with the HP as they were).
+			if _wait_typing():
+				return
 			_damage(a)
 		"GIVE_EXP":
 			_note("experience")
@@ -1656,6 +1716,7 @@ func _close_in() -> bool:
 		encounter_advances += 1
 		write_byte(APPROACH_DISTANCE, encounter_distance)
 		sprite_distance = encounter_distance
+		sprite_hidden = picture_up and sprite_distance > 0
 		_arrived()
 		return true
 	return false
@@ -1670,6 +1731,7 @@ func _arrived() -> void:
 		picture = sprite_picture
 		picture_head = sprite_head
 		sprite_id = -1
+		picture_up = true
 
 
 ## Resolves a choice; returns false when the menu should be shown again.

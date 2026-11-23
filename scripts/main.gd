@@ -3783,7 +3783,7 @@ func _show() -> void:
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	else:
 		var view := _dungeon.render(e.map, _walls, vpos.x, vpos.y, vface)
-		if _vm.sprite_id >= 0 and CampScreen.show_monsters:
+		if _vm.sprite_id >= 0 and not _vm.sprite_hidden and CampScreen.show_monsters:
 			var frames := _sprite_frames(_vm.sprite_id)
 			if not frames.is_empty():
 				# A figure can't stand beyond a wall right in front of you.
@@ -3885,6 +3885,8 @@ func _draw_screen() -> void:
 	if note24 or _battle_begins:
 		menu = []
 	var lit := clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
+	if _vm.typing_wait and _vm.state == EclVM.State.WAIT and _vm.list_lit >= 0:
+		lit = clampi(_vm.list_lit, 0, maxi(_party.size() - 1, 0))      # chat 114: the list as last drawn
 	if who_label != "":
 		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)

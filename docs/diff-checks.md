@@ -172,6 +172,41 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 114: DAMAGE's hit lines and HP, a farewell's name and highlight, figures after a picture (main path, display)
+
+- **Spot-checks of chat 113's waits (DOSBox, lab speed 4; `~/gbr/lab/data/c114/g`):** all match. Genheeris (5:7,
+  check 371's start: GOOD. types in 0.28 s, he joins the list at 0.40 s); 1:18's Ilmater temple (check 439's start:
+  the woman's picture stays while 'YOU CAN REST HERE ...' types, then PICTURE 255 brings the view back, `jsheet.png`);
+  1:18's overhear event (check 424's start, tpseed 7171000a: the far orc steps up once AS YOU MOVE YOU OVERHEAR SOME
+  has typed, becomes the picture after ORCS SAY, `osheet.png`; ours `vid/ov1.mp4`). Ours prints a text whole and
+  waits its typing time (by design), so these compare when the screen changes, not letter by letter.
+- **DAMAGE after a text (found, fixed):** 8:13's rocks on an interrupted rest (check 87's start, tpseed 61610001):
+  KOBOLDS APPEAR AND BOMBARD YOU WITH ROCKS. types with the HP column as it was, then the hit lines; ours showed the
+  hit lines and the HP at once (`ksheet.png`; ours `vid/rk1.mp4`). DAMAGE now waits for the text (`_wait_typing`).
+  The hedge's DAMAGE (5:5, check 121) runs in the square's on-move entry, where the original prints at once: no wait.
+- **DAMAGE's pages show the HP as they stood (found, fixed):** the original redraws the HP column after each hit, so
+  page 1 (RHIANNON and THRENDER GRONE hit) shows BROTHER SEAN 10 and PHINEAS 4; page 2 their hits. Ours showed every
+  member's end HP on page 1. Each page keeps the party's HP and status (`_party_snap`, `_show_page`); the last page
+  the end values (ours after the fix `vid/rk2.mp4`). End states unchanged.
+- **A farewell's name and highlight (found, fixed):** 3:0's SKULLCRUSHER SPEAKS, 'I MUST GO TO MY MASTER NOW.'
+  (start `data/c114/sSk` = check 369's original end jumped to 3:0 4,2 S; Down, Up, Down, Up, Up onto 4,3, event 26):
+  the original types it with SKULLCRUSHER in the list and THRENDER GRONE lit, then drops him and types HE LEAVES.
+  (`ssheet.png`). Ours waited (chat 113) but blanked his name at the script's WRITE_MEM 0, [6B00] (an empty row
+  with AC 8, HP 39) and lit him (the script's LOAD_CHAR pick). The name now changes at the next LOAD_CHAR
+  (`_blank_name`; every Pool site has one right after: 1:24 Dirten, 3:0, 5:7, 8:13 the princess); during a typing
+  wait the list lights the member lit when the script started or at its last LOAD_CHAR with 0x80 (`list_lit`).
+  Ours after the fix `vid/sk5.mp4`.
+- **A figure after a picture in the same script (found, fixed):** 6:28's tour (check 55's start): the original
+  shows no guard at the barracks (5,4 W), the watch towers (7,2 N) or the quarters (5,0 E) (`wsheet.png`,
+  `tsheet.png`); ours drew sprite 16 at each (`vid/tour1.mp4`). GAME.OVR 0x7A21 (the sprite draw) skips the figure
+  while DS:0x84C9 is set: PICTURE n sets it (0x15F3), PICTURE 255 clears it (0x1689), so do the script's stop
+  (0xD47), COMBAT (0x24E1) and an area entry (0x7689); CALL 0x2C90 doesn't. The commandant's PICTURE 50 leaves it
+  set for the whole tour. Ours: `picture_up` / `sprite_hidden` (the figure's distance still counts); ours after the
+  fix `vid/tour2.mp4`. Other same-path sites by the same code, not seen: 6:1 0x9DC8 -> 0x9FE8, 3:11 0x9B97 -> 0x9BEE
+  (`data/c114/picscan.py`, a rough code-order scan).
+- **Not changed:** 5:7's trap door petrification (WRITE_MEM 135 to the status before the text, LOAD_CHAR with 0x80
+  after it): the original would show the stone member only at the LOAD_CHAR; not seen (no seed petrifies; a reload).
+
 ## Chat 113: a dismissed or joining NPC, a script's PICTURE and its figures wait for the text before them (main path); 450, 451
 
 - **The original's printer types a script's text before the next instruction runs** (chat 109's rule), so whatever
