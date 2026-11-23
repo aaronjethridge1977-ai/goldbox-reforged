@@ -86,12 +86,34 @@ static func begin(kind: String, letter: String, files: Dictionary, extra: Dictio
 	if cf.load(GameData.SETTINGS_PATH) == OK and cf.has_section("qol"):
 		for k in cf.get_section_keys("qol"):
 			qol[k] = cf.get_value("qol", k)
-	_file.store_line(JSON.stringify({"format": 1, "build": str(ProjectSettings.get_setting("application/config/version", "")),
-		"date": Time.get_datetime_string_from_system(), "seed": seed_value, "start": kind, "letter": letter,
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	var commit := build_commit()
+	_file.store_line(JSON.stringify({"format": 1, "build": version if commit == "" else "%s (%s)" % [version, commit],
+		"commit": commit, "date": Time.get_datetime_string_from_system(), "seed": seed_value, "start": kind, "letter": letter,
 		"files": saved, "qol": qol}.merged(extra)))
 	_file.flush()
 	_t0 = Time.get_ticks_msec()
 	return seed_value
+
+
+## The commit the game runs from (main chat 109, the coach's request: editor runs and test builds all said "0.1.6", so a
+## recording didn't say which build it replays on): a build's is stamped into its project.godot by tools/build's scripts
+## (application/config/build_commit); a run from a checkout reads .git. "" when neither is there.
+static func build_commit() -> String:
+	var c := str(ProjectSettings.get_setting("application/config/build_commit", ""))
+	if c != "":
+		return c
+	var git := ProjectSettings.globalize_path("res://").path_join(".git")
+	var head := FileAccess.get_file_as_string(git.path_join("HEAD")).strip_edges()
+	if not head.begins_with("ref: "):
+		return head.left(7)
+	var ref := head.trim_prefix("ref: ")
+	var sha := FileAccess.get_file_as_string(git.path_join(ref)).strip_edges()
+	if sha == "":
+		for line in FileAccess.get_file_as_string(git.path_join("packed-refs")).split("\n"):
+			if line.ends_with(" " + ref):
+				sha = line.get_slice(" ", 0)
+	return sha.left(7)
 
 
 ## Each key pressed (the Tap's _input), the keys a click makes included.
