@@ -27,6 +27,8 @@ const VIEW_ORIGIN := 3
 ## Backdrop colours (EGA indices). Provisional: the real values come from the area scripts.
 var sky_color := 11
 var ground_color := 6
+## Chat 121: off-map squares read the map's other edge (GAME.OVR 0x2ED72: every block but 0 and 10).
+var wrap := false
 
 
 ## Returns the view as colour indices (88 * 88 bytes).
@@ -45,16 +47,55 @@ func render(map: GeoMap, walls: WallSet, x: int, y: int, facing: int) -> PackedB
 				if w > 0 and w <= walls.walls.size():
 					var wall: Dictionary = walls.walls[w - 1]
 					_blit_part(px, wall, distance * 3 + placement, tx, slot)
-					# Far walls ahead are one tile wide, with the wall's filler in the gap on the
-					# side away from the centre (the centre wall: both sides), whether or not a
-					# wall stands beyond it (lab, chat 11: 23 views in the Slums and New Phlan;
-					# at 9,7 W the gap left of the centre shows the centre wall's filler).
-					if distance == 0 and placement == 0 and i <= 3 and i > 0:
-						_blit_part(px, wall, WallSet.FILLER, tx - 1, slot)
-					if distance == 0 and placement == 0 and i >= 3 and i + 1 < values.size():
-						_blit_part(px, wall, WallSet.FILLER, tx + 1, slot)
 				tx += SPACING[slot]
+			if distance == 0 and placement == 0:
+				_far_fillers(px, map, walls, x, y, facing, values)
 	return px
+
+
+## Chat 121 (GAME.OVR 0x2EF7D): the far row's fillers. From the centre outward on each side, a far wall's
+## filler goes in the gap between it and the next far wall out; when the next square has no far wall, only if
+## the wall's own square has a side wall on that side. A square off the map clears it unless its side toward
+## the centre has a wall (wall_at). (Chat 11 drew a filler at every far wall's outer side; DOSBox, New Phlan
+## 14,4 W: two far walls side by side show one filler between them and none outside.)
+func _far_fillers(px: PackedByteArray, map: GeoMap, walls: WallSet, x: int, y: int, facing: int, far: Array) -> void:
+	for d in [-1, 1]:
+		var toward := 2 if d < 0 else 1     # the face toward the centre (the right side, going left)
+		var away := 1 if d < 0 else 2
+		var pending := 0
+		for k in 4:
+			var i: int = 3 + d * k
+			var w: int = far[i]
+			var here: Vector2i = _cell_for(x, y, facing, [2, d * k, 0])[0]
+			if not _inside(here):
+				var back: Array = _cell_for(x, y, facing, [2, d * k, toward])
+				if wall_at(map, back[0], back[1]) == 0:
+					pending = 0
+			var tile: int = START_X[0] + SPACING[0] * i - d
+			if w != 0:
+				if pending > 0 and pending <= walls.walls.size():
+					_blit_part(px, walls.walls[pending - 1], WallSet.FILLER, tile, 0)
+				pending = w
+			else:
+				if pending > 0 and pending <= walls.walls.size():
+					var side: Array = _cell_for(x, y, facing, [2, d * (k - 1), away])
+					if wall_at(map, side[0], side[1]) != 0:
+						_blit_part(px, walls.walls[pending - 1], WallSet.FILLER, tile, 0)
+				pending = 0
+
+
+static func _inside(p: Vector2i) -> bool:
+	return p.x >= 0 and p.y >= 0 and p.x < GeoMap.SIZE and p.y < GeoMap.SIZE
+
+
+## A wall as the original's view reads it (GAME.OVR 0x2ED72): off the map, nothing in blocks 0 and 10 (wrap
+## false); in every other block a coordinate past 15 reads 0 and one under 0 reads 15 (the map's other edge).
+func wall_at(map: GeoMap, p: Vector2i, side: int) -> int:
+	if not _inside(p):
+		if not wrap:
+			return 0
+		p = Vector2i(0 if p.x > 15 else (15 if p.x < 0 else p.x), 0 if p.y > 15 else (15 if p.y < 0 else p.y))
+	return map.wall(p.x, p.y, side)
 
 
 ## Converts colour indices to an RGB image.
@@ -141,10 +182,7 @@ func _visible_walls(map: GeoMap, x: int, y: int, facing: int) -> Array:
 		for c in cells:
 			var info := _cell_for(x, y, facing, c)
 			var p: Vector2i = info[0]
-			var value := 0
-			if p.x >= 0 and p.y >= 0 and p.x < GeoMap.SIZE and p.y < GeoMap.SIZE:
-				value = map.wall(p.x, p.y, info[1])
-			values.append(value)
+			values.append(wall_at(map, p, info[1]))
 		slots.append(values)
 	return slots
 
