@@ -105,6 +105,8 @@ func _init(battlefield: Battlefield, people: Array, seed_value: int = 0) -> void
 		c["acted"] = false
 		c["received"] = 0     # attacks received since its own turn (or last step)
 		c["second"] = 0       # of this round's attacks, how many are the second kind (used first)
+		c["ctr"] = 0          # the round's attack counters as the original keeps them (record +0x113 and +0x114:
+		c["ctr2"] = 0         # all, and the second kind): spent only by blows, not by a turn's end (see free_attacks)
 		c["guarding"] = false # guarding until its next turn
 		c["bleeding"] = 0     # points past 0 while dying
 		c["target"] = -1
@@ -303,6 +305,8 @@ func start_round() -> void:
 		c.attacks = attacks_for(m)
 		c.second = second_for(m)
 		c.attacks += c.second
+		c.ctr = c.attacks
+		c.ctr2 = c.second
 		c.acted = false
 		c.struck = false           # record +0x108 byte 8 (0x12829), set by the attack (0x13C01)
 		if magic:
@@ -818,12 +822,15 @@ func shoot(i: int, j: int) -> void:
 		if CombatSpells.held(tm) and am.shots_left() > 0:
 			_spend_shot(am)
 			a.attacks = 0
+			a.ctr = 0
+			a.ctr2 = 0
 			message.emit("%s SLAYS HELPLESS %s WITH ONE CRUEL BLOW" % [am.name, tm.name])
 			_hurt(j, tm.hp + 5)
 			return
 	var how := " (FROM BEHIND)" if behind else ""
 	while a.attacks > 0 and not t.down and am.shots_left() > 0:
 		a.attacks -= 1
+		a.ctr = maxi(int(a.get("ctr", 0)) - 1, 0)
 		var gone := _spend_shot(am)
 		var need: int = am.thac0 - ac - bonus
 		need -= SpecialAffects.hit_bonus(am, tm)
@@ -1010,6 +1017,8 @@ func choose_weapon(i: int) -> void:
 			c.attacks = attacks_for(m)
 			c.second = second_for(m)
 			c.attacks += c.second
+			c.ctr = c.attacks
+			c.ctr2 = c.second
 			return
 	# Changed or not, the choice ends in the attack count (GAME.OVR 0xC333 jumps to 0xC3C7, then 0xC3D8 ->
 	# 0x1351E): its category 0x12 runs Haste's handler (the mark, "ages") and doubling, and a figure that hasn't
@@ -1020,6 +1029,8 @@ func choose_weapon(i: int) -> void:
 		magic.haste_mark(m)
 	if not c.get("struck", false):
 		c.attacks = attacks_for(m) + c.second
+		c.ctr = c.attacks
+		c.ctr2 = c.second
 
 
 ## Hands held by `m`'s readied items (record 0x100: ITEMS byte 1 of each, START.EXE 0xBA:0xBB8).
@@ -1385,17 +1396,20 @@ func guard_attacks(i: int) -> void:
 		# a troll guarding from round 9 felled LIRA as she stepped up in round 10 and later ran with its full
 		# movement, draw 2636; ours had zeroed both and struck again).
 		var fresh: bool = not e.get("acted", false)
-		var n: int = int(e.attacks) if fresh else int(e.get("guard_attacks", 0))
+		var n: int = int(e.attacks) if fresh else int(e.get("ctr", 0))     # the counters as they stand (a free blow spends them)
 		if n <= 0:
 			continue
 		var moves: int = e.moves
 		e.attacks = n
+		if not fresh:
+			e.second = int(e.get("ctr2", 0))
 		e.guard_attacks = 0
 		attack(j, i)
 		if fresh and e.attacks > 0:
 			e.moves = moves
 		elif not fresh:
 			e.attacks = 0
+			e.second = 0
 
 
 ## Free attacks on combatant `i` as it leaves its cell for `to` (see the rules above).
@@ -1428,11 +1442,30 @@ func free_attacks(i: int, to: Vector2i) -> void:
 		# left but never acted, and ours gave it a blow at a runner from behind).
 		if int(e.get("init", 0)) <= 0 and e.received > 0 and not seen:
 			continue
+		# GAME.OVR 0x13372: the blow uses the attack counters (record +0x113, +0x114) as they stand, the last
+		# hand with any left first, and sets the hand's counter to 1 only when it is 0 (hand 2 for a figure with
+		# no attacks of the first kind, record +0xA1 = 0); 0x1407F then strikes with every attack left. The
+		# counters are spent only by blows: a turn's end (START.EXE 0xBA:0x2637) clears initiative, guard and
+		# movement, not them, so a figure whose turn ended with attacks unspent (DONE, a walk that didn't reach,
+		# a spell) strikes a leaver with all of them; ours zeroes its attacks at a turn's end, so they come back
+		# from ctr here (Combat Chat 52).
+		var raised := false
 		if e.attacks <= 0:
-			e.attacks = 1
+			raised = true
+			if int(e.get("ctr", 0)) > 0:
+				e.attacks = int(e.ctr)
+				e.second = int(e.get("ctr2", 0))
+			else:
+				e.attacks = 1
+				e.second = 1 if int((e.who as PartyMember).half_attacks) == 0 else 0
+				e.ctr = 1
+				e.ctr2 = e.second
 		var moves: int = e.moves
 		attack(j, i, true)
 		e.moves = moves        # a free attack doesn't cost the attacker its movement
+		if raised:
+			e.attacks = 0      # its turn stays over (or still to come with none, as before)
+			e.second = 0
 
 
 ## Counts an attack on `t` from `a` the way the original does (attacks received this round
@@ -1486,6 +1519,8 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		bonus = magic.hit_bonus(am, tm)
 		if CombatSpells.held(tm):
 			a.attacks = 0
+			a.ctr = 0
+			a.ctr2 = 0
 			message.emit("%s SLAYS HELPLESS %s WITH ONE CRUEL BLOW" % [am.name, tm.name])
 			_hurt(j, tm.hp + 5)
 			return
@@ -1494,9 +1529,11 @@ func attack(i: int, j: int, free: bool = false) -> void:
 	a["hits"] = 0     # the slot hit counts start at each attack call (GAME.OVR 0x13C14)
 	while a.attacks > 0 and not t.down:
 		a.attacks -= 1
+		a.ctr = maxi(int(a.get("ctr", 0)) - 1, 0)
 		var second: bool = int(a.get("second", 0)) > 0
 		if second:
 			a.second -= 1
+			a.ctr2 = maxi(int(a.get("ctr2", 0)) - 1, 0)
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var free_miss := _free_miss(t, d20)     # to-hit category 16, on every roll above 1
@@ -1600,6 +1637,8 @@ func sweep(i: int, j: int) -> bool:
 		low -= 1
 	a.attacks = 0
 	a.second = 0
+	a.ctr = 0
+	a.ctr2 = 0
 	return true
 
 
