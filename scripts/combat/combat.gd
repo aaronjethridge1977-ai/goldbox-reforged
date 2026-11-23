@@ -2475,6 +2475,9 @@ func ai_act() -> bool:
 			var sm: PartyMember = c.who
 			c.down = true
 			c.surrendered = true
+			# The panel keeps what it showed as the turn began (Jeremy's P105; DOSBox prayer_kob5: "KOBOLD
+			# SURRENDERS" under HITPOINTS 3, no status line): the HP is kept here for it.
+			c.surrender_hp = sm.hp
 			sm.status = PartyMember.STATUS_UNCONSCIOUS
 			sm.hp = 0
 			# Counted among the enemies left until the next recount, as one that got away

@@ -370,14 +370,17 @@ func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
 	_t(15, 18, PartyMember.dice_text(m.damage).to_upper(), G)
 	_t(25, 18, "MOVEMENT", W)
 	_t(34, 18, str(m.movement), G)
+	# The two lines come from the item-line routine too (GAME.OVR 0x21489, 0x214E3: START.EXE 0xBA:0x442 at
+	# column 8), which puts "* " before a magic item's name while any member has Detect Magic.
+	var detect := PartyMember.party_detects_magic(_people)
 	var weapon := _readied_in(m, ItemTypes.SLOT_WEAPON)
 	if weapon != null:
 		_t(1, 20, "WEAPON", W)
-		_t(8, 20, item_label(weapon).to_upper(), G)
+		_t(8, 20, ("* " if detect and weapon.detect_magic_marks() else "") + item_label(weapon).to_upper(), G)
 	var armor := _readied_in(m, ItemTypes.SLOT_ARMOR)
 	if armor != null:
 		_t(2, 21, "ARMOR", W)
-		_t(8, 21, item_label(armor).to_upper(), G)
+		_t(8, 21, ("* " if detect and armor.detect_magic_marks() else "") + item_label(armor).to_upper(), G)
 	_t(1, 22, "STATUS", W)
 	_t(8, 22, m.status_name(), G)
 	if _orders_on(m):

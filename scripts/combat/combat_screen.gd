@@ -560,8 +560,13 @@ func _draw_original(field: Image) -> void:
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
 		g.text(23, 1, m.name.left(16), GameScreen.CYAN if e.team == 0 else GameScreen.YELLOW)
+		# A figure that surrenders (GAME.OVR 0xBE31: 0xB0:0x57 makes it UNCONSCIOUS with 0 HP, off the field) is not
+		# drawn again: its own turn's panel keeps the HP it began with and no status line under "SURRENDERS"
+		# (Jeremy's P105; DOSBox prayer_kob5, Combat Chat 48).
+		var gave_up: bool = e.get("surrendered", false) and _turn_weapon_of == _selected
+		var hp_shown: int = int(e.get("surrender_hp", m.hp)) if gave_up else m.hp
 		g.text(23, 3, "HITPOINTS", GameScreen.GREEN)
-		g.text(33, 3, str(m.hp), GameScreen.YELLOW if m.hp < m.hp_max else GameScreen.GREEN)
+		g.text(33, 3, str(hp_shown), GameScreen.YELLOW if hp_shown < m.hp_max else GameScreen.GREEN)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
 		var wn := _weapon_text(m)
 		if paced() and _turn_weapon_of == _selected and e.get("quick", false):
@@ -582,7 +587,9 @@ func _draw_original(field: Image) -> void:
 		# (+0x10D clear: the table DS:0x1047) or, standing, "(Helpless)" under any of effects 0x33, 0x34, 0x35,
 		# 0x1F (DS:0x286B: snake charm, hold, sleep, helpless). Jeremy's play (2026-11-21) and p41g1's video.
 		var state := ""
-		if e.get("down", false):
+		if gave_up:
+			state = ""
+		elif e.get("down", false):
 			state = PANEL_STATUS[clampi(m.status, 0, PANEL_STATUS.size() - 1)]
 		elif CombatSpells.held(m):
 			state = "(HELPLESS)"
