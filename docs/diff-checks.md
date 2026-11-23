@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 113: a dismissed or joining NPC and a script's PICTURE wait for the text before them (main path); 450, 451
+## Chat 113: a dismissed or joining NPC, a script's PICTURE and its figures wait for the text before them (main path); 450, 451
 
 - **The original's printer types a script's text before the next instruction runs** (chat 109's rule), so whatever
   the instructions after it change on screen changes only once the text has typed. Three more kinds found (DOSBox,
@@ -183,10 +183,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   SKULLCRUSHER... types with six in the list, he shows with the press; ours showed him with the text, `k1.png`,
   `k2.png`, `vid/sk1.mp4`); **(c) PICTURE** (2:20's patrol, check 72's start, PAY 100: THEY PAW THROUGH YOUR COINS
   AND LEAVE. types over the kobold, then the view comes back with the text up; ours changed the picture at once,
-  `py1.png`, `py2.png`, `vid/pay1.mp4`). Fixed in ecl_vm.gd as NEW_ECL and CALL 0x2C90 already were: LOAD_CHAR (when
-  it dismisses), NPC_ADD and PICTURE wait the typing time of the text printed since the script last stopped, then
-  run (films after the fix `vid/pr2.mp4`, `vid/sk2.mp4`, `vid/pay2.mp4`). Display only (main path: every NPC that
-  joins or leaves with a text: Skullcrusher, Dirten, the mystic, Genheeris, the princess, and 18 PICTURE sites).
+  `py1.png`, `py2.png`, `vid/pay1.mp4`); **(d) SPRITE_START** (1:18's tavern, check 74's start: YOU HAVE ENTERED A
+  CROWDED TAVERN. types over the old view, then the drunk's picture, then YOU OPENED THE DOOR INTO A DRUNK BUCCANEER.;
+  ours showed the drunk with both texts at once, `t1.png`, `t2.png`, `vid/tv1.mp4`). Fixed in ecl_vm.gd as NEW_ECL and
+  CALL 0x2C90 already were (`_wait_typing`): LOAD_CHAR (when it dismisses), NPC_ADD, PICTURE and SPRITE_START /
+  SPRITE_ADVANCE / SPRITE_OFF (the last two by the same printer rule, not filmed) wait the typing time of the text printed since the script last stopped, then
+  run (films after the fix `vid/pr2.mp4`, `vid/sk2.mp4`, `vid/pay2.mp4`, `vid/tv2.mp4`). Display only (main path: every NPC that
+  joins or leaves with a text: Skullcrusher, Dirten, the mystic, Genheeris, the princess; 18 PICTURE sites; 50 sprite
+  sites, `scan.py SPRITE_START SPRITE_ADVANCE SPRITE_OFF`).
   ROB after a text (check 72's SURRENDER) changes nothing on screen in the original (the AC column stays): no wait.
 - **5:5's YOU GO UPSTAIRS. (NEW_ECL 7) and 5:7's stairs down (NEW_ECL 5), seen in DOSBox:** match. The text types in
   0.63 s over the stepped square's view (place line "E 10:57": 5:5's init hides the square), then 5:7's arrival

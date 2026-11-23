@@ -705,6 +705,22 @@ func _restore_pick() -> void:
 
 ## LOAD_CHAR n: selects party member n & 0x7F. With the high bit the original redraws the
 ## party, and a member dismissed through the window (0x6C00 = 0) leaves now.
+## Chat 113: the original types a script's text before the next instruction runs (START.EXE 0x7782), so an
+## instruction that changes the screen after it (a figure walking up, a picture, a member joining or leaving) waits
+## for the text printed since the script last stopped (DOSBox: 1:18's tavern, YOU HAVE ENTERED A CROWDED TAVERN.
+## types over the old view, then the drunk's picture, then the next text). True: wait that typing time, then the
+## instruction runs again (print_chars is spent, so it runs on).
+func _wait_typing() -> bool:
+	if print_chars <= 0 or running_entry == 2 or text.strip_edges() == "":
+		return false
+	pc = _at
+	delay_chars = print_chars
+	print_chars = 0
+	typing_wait = true
+	state = State.WAIT
+	return true
+
+
 func _load_char(v: int) -> void:
 	_script_pick = true
 	if v & 0x80 and _dismiss and selected_member() != null:
@@ -1305,6 +1321,8 @@ func _exec(ins: Dictionary) -> void:
 		"CLEAR_BOX":
 			_runes_to_box = true
 		"SPRITE_START":
+			if _wait_typing():
+				return
 			# A figure walks up: sprite id, starting distance, the portrait it ends on.
 			sprite_id = _value(a[0])
 			encounter_max = _value(a[1])
@@ -1324,6 +1342,8 @@ func _exec(ins: Dictionary) -> void:
 			if sprite_distance == 0:
 				_arrived()
 		"SPRITE_ADVANCE":
+			if _wait_typing():
+				return
 			encounter_advances += 1
 			if read_byte(APPROACH_DISTANCE) > 0:
 				write_byte(APPROACH_DISTANCE, read_byte(APPROACH_DISTANCE) - 1)
@@ -1334,6 +1354,8 @@ func _exec(ins: Dictionary) -> void:
 			if sprite_distance == 0:
 				_arrived()
 		"SPRITE_OFF":
+			if _wait_typing():
+				return
 			sprite_id = -1
 		"CLEAR_MON":
 			# GAME.OVR 0x1FA3: the creature count (0x4435) back to 0, the coin pile (0x67F4) and the item
