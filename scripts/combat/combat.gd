@@ -323,6 +323,8 @@ func start_round() -> void:
 		c.struck = false           # record +0x108 byte 8 (0x12829), set by the attack (0x13C01)
 		if magic:
 			magic.adjust_round(c)
+		if _stirge_on(i):
+			c.moves = 0          # effect 0x3A's handler in the movement routine (see _stirge_on)
 		# A held figure still draws its initiative (GAME.OVR 0x1289F tests only record +0x10d,
 		# the figure in the fight; lab, Combat Chat 2: Brother Sean paralysed by Yarash's wand
 		# in 7:23) and is picked in the turn order (next_turn passes it by).
@@ -2290,6 +2292,9 @@ func _speed(m: PartyMember) -> int:
 ## spell matrix, hak1, Combat Chat 43).
 func _movement_value(m: PartyMember) -> int:
 	var v := (_round_movement(m) * 2) & 0xFF
+	for k in combatants.size():
+		if combatants[k].who == m and _stirge_on(k):
+			return 0
 	if magic:
 		if m.has_affect(CombatSpells.EFFECT_HASTE):
 			magic.haste_mark(m)
@@ -2573,6 +2578,9 @@ func ai_act() -> bool:
 			if hand_back():
 				return false
 		c.powers_done = false
+		if _stirge_drink(active):
+			c.ai = true
+			return false
 		_ai_begin(active)
 		_turn_start_powers(active)
 		if c.down:
@@ -3021,11 +3029,10 @@ func stone(j: int) -> void:
 	_went_down(j)
 
 
-## At the start of a computer-run turn: a mantis's grip and a stirge's drinking (the gazes,
-## spit and breath are _act_powers, before each step or blow).
+## At the start of a computer-run turn: a mantis's grip (a stirge's drinking is _stirge_drink, before the pattern;
+## the gazes, spit and breath are _act_powers, before each step or blow).
 func _turn_start_powers(i: int) -> void:
 	var c: Dictionary = combatants[i]
-	var m: PartyMember = c.who
 	var gripping: int = c.get("gripping", -1)
 	c["hits"] = 0
 	if gripping >= 0:
@@ -3038,25 +3045,54 @@ func _turn_start_powers(i: int) -> void:
 			c.attacks = 0
 			c["drank"] = true
 			return
+
+
+## Is a stirge that is still in the fight latched on figure j? Its hit (0x4C) gives the victim effect 0x3A, taken off
+## with the stirge's 0x4B (when it lets go, is sated, or falls). 0x3A's handler (GAME.OVR 0x100AD, category 0x12: the
+## movement routine 0x1291E and the round's attack setup 0x127FB / 0x1351E) clears the figure's movement byte (+6)
+## and makes the movement value 0, so a figure a stirge hangs on at the round's start doesn't move that round
+## (Combat Chat 54, DOSBox, the Player's 7:26 stirges, seed b871d583: a stirge latched on DORN at draw 4862; at
+## round 4's start his +6 was 0 with 0x3A on him, and at his turn (5110) the original guarded where he stood; ours
+## walked him two squares).
+func _stirge_on(j: int) -> bool:
+	for c in combatants:
+		if int(c.get("latched", -1)) == j and not c.down:
+			return true
+	return false
+
+
+## A stirge's drinking (effect 0x4B, set by its hit's 0x4C; GAME.OVR 0x103CB): the effect's handler at the start of
+## the stirge's turn, before the computer's pattern draws (0xABF0). With its victim still in the fight it SUCKS SOME
+## BLOOD, 1d4, and the turn ends there (0xBA:0x2637); when that drink reaches what is left of its fill (about 12: the
+## effect's 207 >> 4) the effect goes, and its removal, the stirge and the victim both still in the fight, sets the
+## stirge's combat byte +0x10: sated, it is forced to flee every turn after (as a turned figure). A victim who falls
+## (or is gone) ends it with no flag, and the turn goes on as usual. Combat Chat 54, DOSBox (the Player's 7:26 13,22
+## band, seed b871d583): the original drew the drink's d4 and went to the next turn; ours drew the pattern first,
+## and showed no damage line.
+## Returns true when the turn is over.
+func _stirge_drink(i: int) -> bool:
+	var c: Dictionary = combatants[i]
 	var latched: int = c.get("latched", -1)
-	if latched >= 0:
-		# A stirge (0x4C/0x4B, GAME.OVR 0x10510 / 0x103CA) that has latched on drinks 1d4 at
-		# the start of each of its turns instead of attacking, until it has had about 12
-		# (its effect's 207 >> 4) or one of them falls.
-		if combatants[latched].down:
-			c.latched = -1
-		else:
-			message.emit("%s SUCKS SOME BLOOD" % m.name)
-			var d := roll(1, 4, "blood")
-			hurt(latched, d)
-			if int(c.drink) > d:
-				c.drink = int(c.drink) - d
-			else:
-				c.latched = -1
-			c.moves = 0
-			c.attacks = 0
-			c["drank"] = true
-			return
+	if latched < 0:
+		return false
+	if combatants[latched].down:
+		c.latched = -1
+		return false
+	message.emit("%s SUCKS SOME BLOOD" % (c.who as PartyMember).name)
+	var d := roll(1, 4, "blood")
+	# The damage routine (0xB0:0x7F, with DS:0x6819 cleared at 0x10498) words it "FROM MAGIC" (0x2C392: the type
+	# byte & 8 == itself, so 0 too): DOSBox, "BRAM TAKES 1 POINT OF DAMAGE FROM MAGIC" after the drink.
+	message.emit(SpecialAffects.damage_words(combatants[latched].who.name, d, SpecialAffects.MAGIC))
+	hurt(latched, d)
+	if not combatants[latched].down and int(c.drink) > d:
+		c.drink = int(c.drink) - d
+	else:
+		c.latched = -1
+		if not combatants[latched].down and not c.down:
+			c.turned_undead = true      # +0x10: forced to flee (_morale_check)
+	c.moves = 0
+	c.attacks = 0
+	return true
 
 
 ## Category 14 (GAME.OVR 0xB6FC calls it first, each time the computer's turn loop has found
