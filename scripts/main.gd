@@ -1874,6 +1874,9 @@ func load_original_save(letter: String) -> bool:
 	_vm.mem[EclVM.PARTY_SIZE] = 0
 	CampScreen.speed = clampi(_vm.mem[SPEED_CELL], 0, 9)
 	_pics_from(_vm.mem[PICS_CELL])
+	# SEARCH carries over in the save (0x6DCA is one of its cells): DOSBox, main chat 111, check 441's end saved
+	# while searching loads with SEARCH on the place line and 10-minute steps; ours had dropped it.
+	_searching = _vm.mem[SEARCH_FLAG] != 0
 	# The map the save names (GAME.OVR 0x1FBB3, in LOAD before the init): in a 3D area (view
 	# byte 0x49FA below 2) the original loads GEO<data set> block [0x49C5], the map last loaded,
 	# then the wall sets of 0x4AFA-0x4AFF. Inits that see 0x49F2 already naming their block skip
