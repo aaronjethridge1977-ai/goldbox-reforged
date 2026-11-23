@@ -172,6 +172,46 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 118: the Lead's spot-check of chat 117's typing wait (a shop, a temple, a question); spaces type free; the walking menu under an on-move text and a vertical menu; a vertical menu's title types after a load; checks 457-458 (main path, display and timing)
+
+- **Spot-check of chat 117's fourth fix (Lead, chat 118):** DOSBox at speed 4 against ours filmed: 3:0's arms and armour
+  shop (check 26's start: THE SHOP SPECIALIZES IN ARMS AND ARMOR. ... types 2.3 s over the walking menu, then YES NO),
+  the temple of Tempus (check 110's walk: THE PRIESTS OF TEMPUS BID YOU WELCOME. / ' DO YOU SEEK HEALING?' 2.1 s, then
+  YES NO), 6:1's slave pen (check 40, RESCUE BOY: YOU IGNORE THE SLEAZY MERCHANT ... 2.3 s, then the vertical menu HOW
+  WILL YOU RESCUE THE BOY?): the order and the row-24 contents as ours. **Lab note:** many checks' starts carry game
+  speed 0 (DS:0x49E2 = 0: the original then prints at once, check 26's start, check 40's, check 24's); poke 0x49E2 = 4
+  (`data/c82/dspoke.py 49E2 4`) after the boot before timing the original.
+- **Spaces cost no typing time (found, fixed):** START.EXE 0x77A4 steps over spaces without 0x7737's per-character wait
+  (game speed x 10 ms); the shop's text types its 56 other characters in 2.33 s (41.6 ms each; with spaces it would be
+  34.8 ms), 6:1's RESCUE BOY text 2.26 s for 57. Ours counted every character (since chat 107): its texts stayed up about
+  15 % too long before a DELAY's end, a menu, a fight or the walking menu. `EclVM.typed_chars` (PRINT, PRINT_CLEAR, BOTH
+  SIDES WAIT.). Ours now: the locked door's text 1.4 s to YES NO (the original 1.46 s).
+- **The walking menu under an on-move script's text (found, fixed):** 3:0 at night, check 46's locked shop door (Up, Right,
+  Up into the door at 14,8 E): THE DOOR IS LOCKED.  DO YOU WANT TO BREAK IN? (the area's on-move script, entry 0) types
+  over AREA CAST VIEW ENCAMP SEARCH LOOK, then YES NO; ours blanked row 24 (chat 117 set it only for entry 1's scripts).
+  The jump step of a jump save is different in both (row 24 blank): not a game case.
+- **A vertical menu leaves the walking menu on row 24 (found, fixed; chat 117's "not seen"):** 5:3's gate (check 24's start
+  and walk): A DEEP VOICE CALLS DOWN, 'WHAT IS THE PASSWORD?' with GIVE THE PASSWORD / FORCE THE GATE OPEN over the walking
+  menu; after the choice it stays while AN ALARM STARTS RINGING ... and A VOLLEY OF BOULDERS ... type, until DAMAGE's
+  prompt; after GIVE THE PASSWORD until the input (WHAT PASSWORD DO YOU GIVE? types 0.9 s, then row 24 clears). Ours
+  cleared it at the menu.
+- **A vertical menu's title types while the typewriter switch is on (found, fixed):** DS:0x4A00 (START.EXE 0x777B) is set by
+  the game's start (GAME.OVR 0xE974; a load comes through it) and by PRINT / PRINT_CLEAR (0x1763) and the encounter menu
+  (0x2C4F), each clearing it after (0x17DC, 0x32E0); polled in DOSBox, walking, AREA, VIEW, ENCAMP (and its EXIT), LOOK
+  and SEARCH leave it. So only from a load or a new game until the first text does a vertical menu's title type: 5:3's
+  gate right after loading check 24's start types the title 1.6 s, then the items; poked to 0 the menu comes at once (as
+  6:1's HOW WILL YOU RESCUE THE BOY? after its text). Ours: `EclVM.typewriter` (true at a load, a quick load and a new
+  game; false after PRINT, PRINT_CLEAR, ENCOUNTER_MENU); MENU_VERTICAL shows the title alone for its typing time first
+  (ours 1.5 s). ECL cell 0x4A00 is not this byte (the cells are words at DS:0x49D2's far pointer, `eclread.py`).
+- **Seen, matching:** 3:14's scything blade (check 65's start, tpseed 11111111: the text, DELAY, BROTHER SEAN IS HIT FOR 1
+  POINTS OF DAMAGE., HP 10 -> 9 and the place line blank with the prompt); 5:3's boulders (FORCE THE GATE OPEN: the
+  four hit lines, the place line blank with the prompt).
+- **For Combat (QoL, the board):** with the mini-map up, its window (cols 29-39) hides the place line's 13th character when x
+  and y both have two digits (3:14's "11,10 S 10:57" shows "11,10 S 10:5"); the original has no window there.
+- **Checks 457-458 in the gate:** 5:3's gate password, RHODIA (through the gate into 5:5, 11,8 W) and a wrong word (HAH!
+  HAH! YOU'RE DUMB!, then the locked gate's menu, EXIT); `~/gbr/lab/data/c118/chk457`, `chk458`; three runs MATCH, each
+  one's keys against the other's end DIFFER (4). DIFFCHECKS 455/455.
+
 ## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; a NEW_ECL keeps a blank place line; EXIT waits for the text; checks 453-456 (main path, display)
 
 - **The walking menu stays on row 24 while a step's script runs (found, fixed):** DOSBox, 2:15's garden (check 54's
