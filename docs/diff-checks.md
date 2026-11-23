@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 107: WAIT in an encounter (P106), a figure starting at distance 0 (P102), a text's typing time (P104); 417-418
+## Chat 107: WAIT in an encounter (P106), a figure starting at distance 0 (P102), a text's typing time (P104, the auction's wand); 417-425
 
 - **WAIT on COMBAT WAIT FLEE PARLAY (P106; main path, display; fixed in ecl_vm.gd).** DOSBox, 1:18 Podol Plaza
   (check 417's start, tpseed 61610002, a random encounter at distance 2): each WAIT closes in a square (STAND READY
@@ -196,6 +196,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (`EclVM.delay_chars`). Lab note: a `timed=` replay of an older recording may drift where a key fell inside a
   DELAY. Check 418 guards the stacks' roll. Mendor's library meets random monsters only in the garden (event 1,
   0x9BAF: RANDOM 25 <= 6 per step, while 0x4A32 <= 7); its rest has none (0x6DD2 = 0).
+- **A text cleared by the next PRINT_CLEAR with no stop between was never seen (main path, display; fixed in
+  ecl_vm.gd / main.gd).** DOSBox, 1:18 Podol Plaza's auction, MOVE IN CLOSER (check 425): 0xA713 PRINT_CLEARs "YOU
+  NOW SEE THE WAND ISN'T A MAJOR ARTIFACT, IT'S ONLY A WAND OF FEAR!" and GOTOs 0xA38A, whose PRINT_CLEAR replaces it:
+  the original types it (2.2 s at speed 4) and then the next text; ours replaced it at once. A PRINT_CLEAR over text
+  the script printed since it last stopped now waits that text's typing time (speed x 10 ms a character, no DELAY of
+  its own; `EclVM.typing_wait`), then clears (not in the rest entry; blank texts don't count). Seen in ours' window
+  (ffmpeg on :98, `~/gbr/lab/data/c107/vid.sh`).
+- **More of the main path checked, all matching (419-425):** 3:8 the clerk's remaining paths (Bivant's cost, the
+  library's and Cadorna's rewards, THE PARTY HAS FOUND TREASURE! pages as in DOSBox), 1:18 the auction (STAND AND
+  LISTEN / LISTEN TO COMMENTS / WAIT FOR WINNER; MAKE A BID / LOOK FOR THE MAN; MOVE IN CLOSER / TRY TO LEAVE) and
+  the overhear event, 8:29 the bandits' treasure after Norris and an eight-hour rest in the hideout. Six texts
+  `origwrap.txt` lists (1:18 0xA2B4, 0xA38A, 0xA49C, 0xA637, 0xA79F; 2:15 0xA7B8) seen in DOSBox: the original's rows
+  are the model's.
 
 ## Chat 106: the printer's rows (START.EXE 0x77F8); P97's picture at TRADE TO?; the clerk's rewards (410-411)
 

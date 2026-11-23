@@ -2609,6 +2609,8 @@ func _script_delay() -> float:
 	# speed x 225 ms (0x709:0xDBE). Ours prints at once, so the text printed before this DELAY gets its typing
 	# time added: up as long as in the original (P104, main chat 107: Mendor's library's books, DOSBox).
 	var chars := _vm.delay_chars if _vm.state == EclVM.State.WAIT and not _vm._enc_waited else 0
+	if _vm.typing_wait:      # a PRINT_CLEAR over a text not yet seen: its typing time only (no DELAY)
+		return maxf(CampScreen.speed * chars * 0.010, 0.001)
 	return maxf(CampScreen.speed * (0.225 + chars * 0.010), 0.001)
 
 

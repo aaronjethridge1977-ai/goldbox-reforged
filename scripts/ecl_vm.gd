@@ -123,7 +123,9 @@ var _enc_waited := false
 ## Characters PRINTed since the script last stopped, and those before the DELAY now running: the original types
 ## each one at game speed x 10 ms (START.EXE 0x7782) before a DELAY's own wait (main.gd _script_delay, P104).
 var print_chars := 0
-var delay_chars := 0         # BOTH SIDES WAIT. is up; the menu comes back after one DELAY (P106)
+var delay_chars := 0
+## A PRINT_CLEAR waits while the text it replaces "types" (no DELAY of its own), then clears (chat 107).
+var typing_wait := false         # BOTH SIDES WAIT. is up; the menu comes back after one DELAY (P106)
 var _parlay_values: Array = []
 var encounter_distance := 0      # squares between party and monsters, as the menu sees it
 var notes: Array[String] = []    # things the engine would do but can't yet
@@ -225,6 +227,7 @@ func copy_from(src: EclVM) -> void:
 	_enc_waited = src._enc_waited
 	print_chars = src.print_chars
 	delay_chars = src.delay_chars
+	typing_wait = src.typing_wait
 	_menu_dest = src._menu_dest.duplicate()
 	_parlay_values = src._parlay_values.duplicate()
 	encounter_distance = src.encounter_distance
@@ -436,6 +439,7 @@ func resume() -> State:
 		_enc_waited = false
 		_show_encounter_menu()
 		return state
+	typing_wait = false
 	state = State.RUNNING
 	return run()
 
@@ -1209,6 +1213,17 @@ func _exec(ins: Dictionary) -> void:
 			text_changed = true
 			_note_shown()
 		"PRINT_CLEAR":
+			if print_chars > 0 and running_entry != 2 and text.strip_edges() != "":
+				# The text printed since the script last stopped hasn't been seen: the original types it at game
+				# speed x 10 ms a character before this one clears it (1:18 0xA713 "... ONLY A WAND OF FEAR!",
+				# then 0xA38A's PRINT_CLEAR: up 2.2 s at speed 4 in DOSBox; ours never showed it). Wait for that,
+				# then run this PRINT_CLEAR again (main chat 107).
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
 			text = _string(a[0])
 			print_chars += _string(a[0]).length()
 			text_changed = true
