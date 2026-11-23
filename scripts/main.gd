@@ -3893,6 +3893,8 @@ func _show() -> void:
 	# black, ours cyan).
 	var sky_cell := EclVM.SKY_INDOORS if e.map.flag(_pos.x, _pos.y) & 0x80 else EclVM.SKY_OUTDOORS
 	_dungeon.sky_color = SKY_COLOURS[_vm.read_byte(sky_cell) & 15]
+	# Chat 121 (GAME.OVR 0x2ED72): the view reads off-map squares at the map's other edge but in blocks 0 and 10.
+	_dungeon.wrap = int(e.id) != 0 and int(e.id) != 10
 	if _vm.view_blank:
 		# After a rune page, an empty view until the party turns or steps (EclVM.view_blank; DOSBox, main chat 109).
 		var here := [_pos, _facing, _map_index]
