@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; checks 453-455 (main path, display)
+
+- **The walking menu stays on row 24 while a step's script runs (found, fixed):** DOSBox, 2:15's garden (check 54's
+  start jumped to 7,9 W, `~/gbr/lab/data/c117/sGd`; tpseed 77777777, four Ups: the slime at 3,9): YOU SEE WHAT ONCE
+  WAS A GARDEN, AS YOU MOVE THROUGH THE GARDEN, YOU STEP INTO A STRANGE GREEN PLANT GROWTH... and their DELAYs type
+  over AREA CAST VIEW ENCAMP SEARCH LOOK on row 24 (AREA lit, as the idle menu: `g/gw.png`); the same at 8:13's
+  truce kobold (the figure, both texts, until AGREE REFUSE KILL IT) and after LOOK (2:9's bugbears coming over).
+  Nothing clears row 24 until a menu, a prompt or a fight draws there; after a horizontal menu's choice row 24 is
+  empty (as ours). Ours left row 24 empty while any script ran. Now a step attempt's and a LOOK's square script
+  start with `row24_left = EclVM.WALK_MENU_LEFT`, drawn as the walking menu (not clickable); a vertical menu clears
+  it (not seen in the original). Films `vid/gs1.mp4` (before), `gs3.mp4` (after).
+- **The green slime (DAMAGE then more text):** DAMAGE 160, 1, 4 with no hit lines: PRESS <ENTER>/<RETURN> under the
+  slime text, the place line up (no party redraw), one Enter; YOU NOW CAREFULLY AVOID THE GREEN SLIME. types with
+  the prompt still on row 24 (chat 116's rule), its DELAY, then the walking menu with the text kept: ours the same.
+  In the original a key pressed while the slime text typed was kept and answered DAMAGE's prompt at once (the BIOS
+  buffer; ours' replays can't press early: not compared).
+- **A hit page cut inside the first hit line (found, fixed):** 2:9's bugbears at the wall (check 54's start jumped
+  to 2,11 N with 0x4A78 = 2, `sBb`; Up, TAKE THE PUNCH): the box is full, so THRENDER GRONE IS HIT FOR 2 POINTS OF
+  ends the page with the printer's PRESS ANY KEY TO CONTINUE; **the place line stays up and HP still 11** (the party
+  redraw comes after the line); the next page DAMAGE. with PRESS <ENTER>/<RETURN>, place line blank, HP 9; then
+  'NOW BEAT IT BEFORE WE GET SERIOUS.' types under the prompt with the place line blank, and SPRITE_OFF / CALL
+  0x2C90 bring the view, the place line and the walking menu (`g/bb.png`). Ours blanked the place line on the first
+  page. Now a page counts the hit lines finished when it was cut (`_box_hits`); the place line blanks only after one.
+- **Check 453** (2:15 the garden's slime, seed 77777777: the description, AS YOU MOVE ..., the slime's d4, YOU NOW
+  CAREFULLY AVOID; 0x4A32 = 2), **454** (8:13 the truce kobold with 0x4A8E = 1, `sKy`: AGREE, FOLLOW, the tap (two
+  Enters, as 452), the boulder YES, YOU CLAMBER NOISILY, the treasure line, LET IT GO), **455** (2:9 the bugbears,
+  TAKE THE PUNCH: THRENDER GRONE hit for 2, 0x4A78 = 3). Three runs MATCH each; the breaks (0x4A32 2 -> 3, 0x4A03
+  1 -> 2, 0x4A78 3 -> 2) DIFFER.
+
 ## Chat 116: the walking menu's words after a DAMAGE and with a picture up; 8:13's roof; check 452 (main path, display)
 
 - **AREA, LOOK, ENCAMP, VIEW, CAST after 4:10's fumes (the Lead's gate item; chat 115 had only seen SEARCH and a turn):**

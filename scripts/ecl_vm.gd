@@ -125,6 +125,9 @@ var party: Array = []
 var open_ahead: Callable
 var _menu_kind := ""             # "", "encounter", "parlay", "who" or "press" (a key to go on)
 const PRESS_TO_CONTINUE := "PRESS <ENTER>/<RETURN> TO CONTINUE"
+## row24_left when a step's script runs: the walking menu the step left on row 24 (chat 117, DOSBox: 2:15's garden;
+## the original types the square's text and waits its DELAY over AREA CAST VIEW ENCAMP SEARCH LOOK, AREA lit).
+const WALK_MENU_LEFT := "\u0001WALK"
 var _enc := {}                   # the ENCOUNTER_MENU's operands while it is open
 var _enc_waited := false
 ## Characters PRINTed since the script last stopped, and those before the DELAY now running: the original types
@@ -319,7 +322,8 @@ func start(entry: int) -> State:
 	step_fresh = step_next
 	step_next = false
 	picture_up = false
-	row24_left = ""
+	row24_left = WALK_MENU_LEFT if walk_menu_next else ""
+	walk_menu_next = false
 	list_lit = selected
 	_runes_to_box = false
 	pc = entry_offset(entry)
@@ -792,6 +796,9 @@ var _box_rows := PackedStringArray()
 var _box_row := 0
 var _box_pages: Array = []
 var _box_white := -1      # the page's first row a hit line went to (-1: none yet)
+## Hit lines finished (the party's redraw after each, which blanks the place line) when a page was cut (chat 117,
+## DOSBox: 2:9's bugbears, TAKE THE PUNCH: a page cut inside the first hit line keeps the place line and the HP).
+var _box_hits := 0
 ## Chat 114 (DOSBox, 8:13's rocks): the original prints DAMAGE's hit lines in white under the script's green text,
 ## the printer's PRESS ANY KEY TO CONTINUE in colour 13, and its party redraw after a hit blanks the place line.
 ## white_from: the shown text's first white row (-1 none); damage_page: a page with hits is up.
@@ -804,6 +811,8 @@ var place_blank := []
 ## Main sets step_next before the square's script after a step (_finish_move); start() moves it to step_fresh for
 ## that run. A DAMAGE page in it sets a redraw flag again (step_fresh false).
 var step_next := false
+## Main sets walk_menu_next before a step attempt's square script (entry 1): start() leaves row24_left = WALK_MENU_LEFT.
+var walk_menu_next := false
 var step_fresh := false
 ## Chat 114 (DOSBox, 5:4's kitchen, check 60): DAMAGE's last PRESS <ENTER>/<RETURN> TO CONTINUE stays on row 24 after
 ## its key (GAME.OVR 0x37CD draws it, nothing clears it); a vertical menu after it leaves row 24 alone, a horizontal
@@ -820,10 +829,11 @@ func _box_start() -> void:
 		_box_row += 1
 	_box_pages = []
 	_box_white = -1
+	_box_hits = 0
 
 
 func _box_page(prompt: String) -> void:
-	_box_pages.append(["\n".join(_box_rows), prompt, _party_snap(), _box_white])
+	_box_pages.append(["\n".join(_box_rows), prompt, _party_snap(), _box_white, _box_hits])
 	_box_rows = PackedStringArray([""])
 	_box_row = 0
 	_box_white = -1
@@ -867,7 +877,7 @@ func _show_page(page: Array) -> void:
 	text = page[0]
 	text_changed = true
 	white_from = int(page[3]) if page.size() > 3 else -1
-	damage_page = white_from >= 0
+	damage_page = white_from >= 0 and (page.size() < 5 or int(page[4]) > 0)
 	if damage_page:
 		place_blank = [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3]
 		step_fresh = false
@@ -897,6 +907,7 @@ func _hurt(m: PartyMember, damage: int) -> void:
 		m.status = PartyMember.STATUS_DYING
 	elif m.hp == 0:
 		m.status = PartyMember.STATUS_UNCONSCIOUS
+	_box_hits += 1
 
 
 ## The original's saving throw (GAME.OVR 0x2BC4D, the same one fights use: Combat's `_save`): a natural 1
@@ -973,7 +984,7 @@ func _damage(a: Array) -> void:
 	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
 	# 0x709:0xBF5; chat 43, 5:3's boulders); full boxes before it wait the same way.
 	_press_queue = _box_pages
-	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap(), _box_white])
+	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap(), _box_white, _box_hits])
 	_box_pages = []
 	var page: Array = _press_queue.pop_front()
 	_show_page(page)
@@ -1505,7 +1516,7 @@ func _exec(ins: Dictionary) -> void:
 				items.append(_string(a[i]))
 			var left := row24_left
 			_pause_for_menu(a[0], items)
-			row24_left = left
+			row24_left = left if left != WALK_MENU_LEFT else ""   # the walking menu under one: not seen
 			menu_vertical = true
 			menu_question = _string(a[1])
 		"ON_GOTO", "ON_GOSUB":

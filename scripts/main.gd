@@ -1345,6 +1345,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				# tests it after a PRESS RETURN: the pouch's scroll; ours put it back at the first stop).
 				_look_flag_after = 1 if _searching else 0
 				_deferred_then_arrive = _deferred_arrival
+				_vm.walk_menu_next = true   # chat 117 (DOSBox, 2:9's bugbears after LOOK): the walking menu stays on row 24
 				_vm.start(1)
 				_after_vm()
 				# P67 (chat 35, DOSBox 7:17 6,14: L on a square with nothing shows nothing new
@@ -2285,6 +2286,7 @@ func _finish_move(direction: int) -> void:
 			_sync_position_to_vm(_facing)
 			var keep := _vm.text
 			_vm.step_next = true
+			_vm.walk_menu_next = true
 			_vm.start(1)
 			if _vm.text == "" and not _vm.text_changed:
 				_vm.text = keep
@@ -2318,6 +2320,7 @@ func _event_after_refused_step() -> void:
 	if _vm.ecl == null or _vm.on_overland:
 		return
 	_vm.clear_output()
+	_vm.walk_menu_next = true
 	_vm.start(1)
 	_after_vm()
 
@@ -2338,6 +2341,7 @@ func _step_into(next: Vector2i) -> void:
 		_sync_position_to_vm(_facing)
 		_write_wall_ahead()   # GAME.OVR 0x16E71: the new square's wall
 		_vm.clear_output()
+		_vm.walk_menu_next = true   # chat 117: the walking menu stays on row 24 while the square's text types
 		_vm.start(1)
 		_after_vm()
 
@@ -3978,7 +3982,12 @@ func _draw_screen() -> void:
 			and who_label == "" and _vm.state not in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR, EclVM.State.INPUT, EclVM.State.MENU])):
 		# chat 114: DAMAGE's prompt left there (5:4's kitchen); chat 116: also while the script goes on with no menu
 		# (DOSBox 8:13's roof: it stays while BEFORE YOU RECOVER, KOBOLDS ARRIVE. types, until A BATTLE BEGINS...)
-		_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)
+		if _vm.row24_left == EclVM.WALK_MENU_LEFT:
+			# chat 117: the walking menu a step left there, as drawn (AREA lit), not clickable while the script runs
+			_screen.menu_line(24, ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"], 0, 0)
+			_screen.forget_menu(24)
+		else:
+			_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU
