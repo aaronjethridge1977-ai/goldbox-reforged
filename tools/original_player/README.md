@@ -1350,7 +1350,8 @@ Result: **draws identical, 6563 of 6563**; statediff leaves only the experience 
 +11074 in the original, +9229 in ours (5/6); ELWEN +3356 / +2796 (5/6); GENHEERIS 2018 more than the fighters in both;
 LIRA +917 / +5112; DORN 0 in both. The positions block (13 figures) is the CONTINUE battles' new figures under new
 indices in ours' trace, not a difference in play. Stage 1 stays **68 of 70** (2 game: p17a6, p45i5).
-Lab: `p51/` (match_p45i5*.out: the four reruns); `match/p45i5.cmpdraws.txt`.
+p19d1 rerun with the new keys (fightmenu, fightaim): still identical.
+Lab: `p51/` (match_p45i5*.out: the four reruns; match_p19d1.out); `match/p45i5.cmpdraws.txt`.
 
 ## Player 49 (2026-11-23): Q34's finishing blows (the game 4 of 5); p45i5's parting is the replay tool (CONTROL space)
 
