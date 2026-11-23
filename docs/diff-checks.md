@@ -190,6 +190,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   window); that page stays until the press is answered, then the empty view until a turn or step. Seen in ours' window
   after the fix: pixel-exact against both captures (text rows 17-19 of the paper; the elf's three lines). Check 440
   guards the elf's script (state only: SEARCH, LEAVE, ATTACK 0x4A00 = 255, the remains; the runes change no state).
+- **A text before NEW_ECL or CALL 0x2C90 types first (main path, display/timing; ecl_vm.gd).** Chat 108's COMBAT
+  wait, carried to the other screen changes its scan found (`scan.py`: NEW_ECL 6 sites, CALL 0x2C90 25). DOSBox, 1:18
+  (check 78's start, FLEE): "THE PARTY RUNS AND ESCAPES." types in 1.02 s over the orc's picture and the old square,
+  then 1.07 s the party stands at 9,4 W with the text still up (the CALL ran only after the typing: the printer is
+  synchronous). Ours moved at once (text and new square together). Now ours waits the typing time with the old view
+  and square (`redraw_pending`), then runs the CALL; NEW_ECL likewise (5:5's YOU GO UPSTAIRS., 6:28's escapes,
+  8:13's princess: there the new block's init could print over the text at once; not seen in DOSBox: by the printer
+  above). **The place line after CALL 0x2C90:** 1:18 0x9E62 writes 0x49FB = 1 (no square) after the call; the
+  original's line still reads "9,4 W 10:56" until the first turn ("S 10:56"); ours read 0x49FB live and hid the square
+  at once. Now the line CALL 0x2C90 drew stays until the party turns or steps (`place_drawn`). Seen in ours' window
+  (vid/fl2.mp4): the orc and "THE PARTY RUNS AND ESCAPES." about 1 s, then 9,4 W, S after Left.
 - **Check 440 in the gate** (`~/gbr/lab/data/c109/chk440`, start chat 108's `s426`; break 0x4A00 255 -> 0 DIFFERS;
   three runs MATCH): DIFFCHECKS 437/437.
 - **RECORD MY GAME's replays (the Lead's question).** Jeremy's 21:42 session (quick-save start, 2093 keys, 34
