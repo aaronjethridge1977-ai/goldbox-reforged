@@ -78,6 +78,20 @@ def control_draws(run, a):
     return out
 
 
+def seed_draws(run, limit=200000):
+    """Player 51: {seed: draw} for the run's RNG from its `SEED set` value (Turbo Pascal: seed x 0x08088405 + 1)."""
+    for line in open(os.path.join(LOGS, "%s.log" % run)):
+        m = re.search(r" SEED set ([0-9a-fA-F]+)", line)     # hex, as the KEY lines' seed field
+        if m:
+            x, out = int(m.group(1), 16) & 0xFFFFFFFF, {}
+            out.setdefault(x, 0)
+            for i in range(1, limit + 1):
+                x = (x * 0x08088405 + 1) & 0xFFFFFFFF
+                out.setdefault(x, i)
+            return out
+    return {}
+
+
 def keys_between(run, a, b, magic, tplog=False, extra=None):
     """The original's keys after checkpoint a's save until checkpoint b's ENCAMP, as ours' --keys.
     extra (Player 5): {n: [keys]} ours-only keys sent after the segment's n-th original key (1-based), for a screen
@@ -87,6 +101,11 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
     extra, n = extra or {}, 0
     magicat, magic_slot = magic_draws(run, a), 0
     controlat, n_ctl = control_draws(run, a), 0
+    # Player 51 (Combat Chat 52's ask (1)): with no OP_CONTROLAT and no trace line, a CONTROL line's draw is the draw of
+    # the next logged seed (a KEY line's or a NOTE's): the RNG stepped from the run's SEED (seed x 0x08088405 + 1).
+    # The Space is read at a computer turn's opening poll, the member whose turn it is then takes it by hand with no
+    # draw, so that seed is the opening's draw (p45i5: ELWEN's menu at 990). draws[seed] = the count.
+    draws, ctl_wait, prev_bottom = None, [], ""
     for line in open(os.path.join(LOGS, "%s.log" % run)):
         if "GOAL done: checkpoint %s" % a in line or (a == "begin" and line.split()[1:2] == ["RUN"]):
             on = True
@@ -113,9 +132,23 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
             else:
                 out += ["magic"] + (["tplog"] if tplog else [])
             continue
+        sd = re.search(r"\bseed ([0-9a-f]{8})\b", line) if ctl_wait else None
+        if sd:
+            if draws is None:
+                draws = seed_draws(run)
+            at = draws.get(int(sd.group(1), 16))
+            for slot in reversed(ctl_wait):
+                if at is not None:
+                    out.insert(slot, "controlat=%d" % at)
+                    magic_slot += 1
+            ctl_wait = []
         if " CONTROL space " in line:
             # Player 49 (p45i5): the original's hand-back of the QUICK members, read at a computer turn's opening
             # poll as the Alt-M: ours' `controlat=<draw>` at the same slot as magicat= (the walk to this fight)
+            if n_ctl >= len(controlat) and a == "begin":
+                ctl_wait.append(magic_slot)     # Player 51: the draw from the next logged seed (above)
+                n_ctl += 1
+                continue
             at = controlat[n_ctl] if n_ctl < len(controlat) else None
             n_ctl += 1
             if at:
@@ -162,12 +195,29 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
         tk = float(line.split()[0])
         if ("QUICK" in bottom.split() and "DONE" in bottom.split()) and last_t is not None and tk - last_t > 1.5:
             out += ["wait"] * int((tk - last_t) / 0.25)
+        # Player 51 (p45i5's last draw, 6563): the closing text after Tyranthraxus took 28 s in the original before its
+        # PRESS BUTTON key; ours' F2 came first. Before such a key after a gap of 5 s or more: twice the gap in waits
+        if bottom.startswith("PRESS BUTTON") and last_t is not None and tk - last_t >= 5:
+            out += ["wait"] * int((tk - last_t) / 0.25)
         last_t = tk
         # Player 41 (Combat Chat 39's answer on p37i1: ours' spectre turn still ran when DORN's "m" came, 0.5 s after the
         # key before in the original, too short for the waits above): OP_FIGHTMENU=1 puts ours' lab key `fightmenu` (waits
         # up to 60 s for a member's fight menu) before each fight menu's key; opt-in, so the match's other runs keep theirs
-        if os.environ.get("OP_FIGHTMENU") == "1" and "QUICK" in bottom.split() and "DONE" in bottom.split():
+        # Player 51 (Combat Chat 52's ask (2)): always now (OP_FIGHTMENU=0 turns it off); and the lab key `fightaim`
+        # (waits for a member's AIM) before an AIM's first key after a screen that wasn't an AIM: a begun spell going
+        # off (p45i5: ELWEN's MANUAL key reached ours during a guard's turn, her Hold Person fell on herself); not
+        # after a MANUAL's cursor screen (the next pick of the same spell opens at once)
+        if os.environ.get("OP_FIGHTMENU") != "0" and "QUICK" in bottom.split() and "DONE" in bottom.split():
             out.append("fightmenu")
+        if os.environ.get("OP_FIGHTMENU") != "0" and bottom.startswith("AIM:") \
+                and not prev_bottom.startswith(("AIM:", "(USE CURSOR KEYS)")):
+            out.append("fightaim")
+        prev_bottom = bottom
+        # Player 51 (p45i5 at draw 6467): the CONTINUE BATTLE answer came 0.4 s after the fight's last turn in the
+        # original ("NOTE fight ... over", not "ended": no fightend above) and reached ours mid-turn, lost; ours'
+        # `fightend` (waits for the question; at once when it's up) before each CONTINUE BATTLE key
+        if bottom.startswith("CONTINUE BATTLE"):
+            out.append("fightend")
         if k == "m" and re.match(r"(memorize|heal): (MEMORIZE )?[A-Z][A-Z ]+$", why):
             spells += 1      # Player 14: a spell to be memorized at the next REST
         out.append(GKEY.get(k, k))

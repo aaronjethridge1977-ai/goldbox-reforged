@@ -1329,6 +1329,29 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 51 (2026-11-23): p45i5 replayed draw for draw (6563 of 6563); the parting is the experience (game)
+
+Combat Chat 52's asks for **segment.py**, and three more found on the way (each rerun of p45i5 ~22 min):
+- **`controlat=<draw>`** for each `CONTROL space` line with no OP_CONTROLAT and no trace line: the draw of the next
+  logged seed (a KEY line's or a NOTE's), the RNG stepped from the run's `SEED set` (hex) by `seed_draws()`. The
+  member whose turn it is takes it by hand with no draw, so that seed is the computer turn's opening (p45i5: 990 and
+  6466; Combat's file had 980 and no second one).
+- **`fightmenu` always** before a key at a member's fight menu (`OP_FIGHTMENU=0` turns it off), and the new
+  **`fightaim`** before an AIM's first key after a screen that was neither an AIM nor a MANUAL's cursor screen (61 in
+  p45i5, as Combat's keys file).
+- **`fightend` before every CONTINUE BATTLE key** (draw 6467: the YES came 0.4 s after the last turn, logged as
+  `fight N over`, not `ended`, so no fightend; it reached ours mid-turn and was lost).
+- **Waits before a PRESS BUTTON key 5 s or more after the key before** (twice the gap; draw 6563: the closing text
+  after Tyranthraxus took 28 s and ours' F2 came first).
+- `match/replay.txt`: **p45i5 GBR_PLAYOUT=1** (draw 6534: Tyranthraxus bled to death in CONTINUE round 2; ours' QoL
+  ended the battle on the next YES, the original played the round).
+
+Result: **draws identical, 6563 of 6563**; statediff leaves only the experience (game, to Combat): ARN, BRAM, CEDRIC
++11074 in the original, +9229 in ours (5/6); ELWEN +3356 / +2796 (5/6); GENHEERIS 2018 more than the fighters in both;
+LIRA +917 / +5112; DORN 0 in both. The positions block (13 figures) is the CONTINUE battles' new figures under new
+indices in ours' trace, not a difference in play. Stage 1 stays **68 of 70** (2 game: p17a6, p45i5).
+Lab: `p51/` (match_p45i5*.out: the four reruns); `match/p45i5.cmpdraws.txt`.
+
 ## Player 49 (2026-11-23): Q34's finishing blows (the game 4 of 5); p45i5's parting is the replay tool (CONTROL space)
 
 **Q34 (Jeremy 07:33: "casters never strike Tyranthraxus" is a guideline, not a rule):** tactics.py `BOSS_FINISH`
