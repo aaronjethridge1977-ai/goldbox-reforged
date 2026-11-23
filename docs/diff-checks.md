@@ -199,6 +199,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   the magic mouth's text (6.0 s), STATE NAME AND INTENT LEAVE; LEAVE: the band's question again; IGNORE CAVE.
   (Ours' DELAY with no text runs at the save's game speed: a check start at speed 0 shows no DELAY at all, as the
   original would at 0.)
+- **A key typed while a script's text types, then a menu (found, fixed; main path, input):** chat 105's P90 rule
+  dropped the held key when the script stopped at a menu or page ("not seen in DOSBox"). DOSBox: 6:25's dragon text
+  (check 32's walk), E typed 1 s into it: the ENTER CAVE IGNORE CAVE menu takes it as soon as the text has typed (YOU
+  ENTER THE CAVE.); "E I": IGNORE CAVE (the last key, as P90 found on the walking screen); 8:16's arrival (check 31's
+  walk, ENTER), Enter typed while YOU SENSE AN ANTI-MAGIC SHELL AROUND YOU. types: its PRESS page goes on to the
+  walking menu. Now `main.gd _type_ahead_go` hands the held key to the menu or page the script stops at (an INPUT still
+  drops it). Tested with `timed=` keys (`data/c120/tcast.rec`, `tdr1.rec`, `tdr2.rec`): the three as the original;
+  the code before kept the page up. No check: a check's keys wait for the engine.
+- **Feather Fall at 4:2's thieves' well (not found):** the script (0xACF5) looks for 27 in cells 0x4900-0x493F and the
+  climber ([0x6DB4]) in 0x4940 + the same index; no script writes those cells. DOSBox, check 456's start with THRENDER
+  GRONE given effect 0x1B (FEATHER FALL under camp DISPLAY): the cells stay 0 and he falls (15d6, dies), as ours.
+  What fills the table (a cast spell?) isn't found: not tried with a Feather Fall cast in camp.
 - **Checks 463-465 (coverage):** 463 the boat's TAKE BOAT (break: check 34's STAY end DIFFERS), 464 the rowboat, YES,
   ENTER, PRESS (break: check 37's GO BACK end), 465 the castle's ENTER, PRESS (break: check 31's LEAVE end). Three runs
   MATCH each; `~/gbr/lab/data/c120/chk463`-`chk465`.

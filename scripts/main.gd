@@ -2688,14 +2688,16 @@ func _on_timer() -> void:
 	_type_ahead_go()
 
 
-## The key typed during the DELAY (P90): acted on once the script has ended on the walking screen; a script
-## that stops for a menu or a page instead drops it.
+## The key typed during the DELAY (P90): acted on once the script has ended on the walking screen, or by the menu
+## or page the script stops at (chat 120, DOSBox: 6:25's dragon text, E typed while it types: ENTER CAVE IGNORE CAVE
+## takes it, YOU ENTER THE CAVE.; "E I": IGNORE CAVE, the last key; 8:16's YOU SENSE AN ANTI-MAGIC SHELL ..., Enter
+## while it types: its PRESS page goes on to the walking menu). An INPUT still drops it.
 func _type_ahead_go() -> void:
 	if _type_ahead == null or _busy:
 		return
 	var ev := _type_ahead
 	_type_ahead = null
-	if _mode == Mode.WALK and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] and _door_options == "" \
+	if _mode == Mode.WALK and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.MENU] and _door_options == "" \
 			and not (_shop.visible or _sheet.visible or _combat.visible or _treasure.visible or _camp.visible \
 			or _temple.visible or _party_menu.visible or _battle_begins):
 		_unhandled_input(ev)
