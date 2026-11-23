@@ -172,6 +172,31 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 107: WAIT in an encounter (P106), a figure starting at distance 0 (P102), a text's typing time (P104); 417-418
+
+- **WAIT on COMBAT WAIT FLEE PARLAY (P106; main path, display; fixed in ecl_vm.gd).** DOSBox, 1:18 Podol Plaza
+  (check 417's start, tpseed 61610002, a random encounter at distance 2): each WAIT closes in a square (STAND READY
+  at distance 2: its own text is empty, so the next one round shows; PREPARE at 1; STAND READY and PARLAY at 0), as
+  in ours. At distance 0 the original types BOTH SIDES WAIT. (about 0.2 s at speed 4), then types the menu's text
+  again; ours replaced it at once, so it never showed: WAIT looked dead. Ours now holds BOTH SIDES WAIT. for one
+  script delay, then shows the menu again (`_enc_waited`). Check 417 guards the path.
+- **A SPRITE_START at distance 0 is the picture at once (P102; main path, display: 74 STARTs at distance 0 in
+  Pool's scripts; fixed in ecl_vm.gd).** START (GAME.OVR 0x1188) and ADVANCE (0x158C) draw through the same far
+  call with the distance, and at 0 it draws the picture (chat 40: ADVANCE to 0). DOSBox, 2:15's mad man (11,12 W,
+  START 15, 0, 25): picture 25 with his text, through IGNORE's two DELAYs; ours drew figure 15's nearest frame
+  until a DELAY ended, so IGNORE flashed the picture up (Jeremy: "a portrait seemed to flash up"). The rest of P102
+  is the script: insist NO goes back to PARLAY (2:15 0xA9BE GOTO 0xA8F0), invite NO to the encounter menu.
+- **A script's text before a DELAY was up a fraction of the original's time (P104; main path, display; fixed in
+  ecl_vm.gd / main.gd).** The original types a script's text at game speed x 10 ms a character (START.EXE 0x7782,
+  while DS:0x4A00 is set), then DELAY waits speed x 225 ms (0x709:0xDBE reads DS:0x49E2, the game speed; a script's
+  write to cell 0x49FC, as 2:15's 0x9948 does, doesn't change it). DOSBox, 2:15's PHILOSOPHY stacks with SEARCH
+  on: "YOU FIND WORKS ON NATURAL PHILOSOPHY ... VERY BORING." (104 characters) types in 3.7 s and stays 0.9 s at
+  speed 4; at speed 1 (Jeremy's), 1.0 s and 0.2 s, then the script clears it. Ours printed at once and waited only
+  the 0.225 s. `_script_delay` now adds the typing time of the characters PRINTed since the script last stopped
+  (`EclVM.delay_chars`). Lab note: a `timed=` replay of an older recording may drift where a key fell inside a
+  DELAY. Check 418 guards the stacks' roll. Mendor's library meets random monsters only in the garden (event 1,
+  0x9BAF: RANDOM 25 <= 6 per step, while 0x4A32 <= 7); its rest has none (0x6DD2 = 0).
+
 ## Chat 106: the printer's rows (START.EXE 0x77F8); P97's picture at TRADE TO?; the clerk's rewards (410-411)
 
 - **The original printer's rows (a difference, main path: every text; fixed in main's files).** DOSBox: Rolf's

@@ -119,6 +119,11 @@ var open_ahead: Callable
 var _menu_kind := ""             # "", "encounter", "parlay", "who" or "press" (a key to go on)
 const PRESS_TO_CONTINUE := "PRESS <ENTER>/<RETURN> TO CONTINUE"
 var _enc := {}                   # the ENCOUNTER_MENU's operands while it is open
+var _enc_waited := false
+## Characters PRINTed since the script last stopped, and those before the DELAY now running: the original types
+## each one at game speed x 10 ms (START.EXE 0x7782) before a DELAY's own wait (main.gd _script_delay, P104).
+var print_chars := 0
+var delay_chars := 0         # BOTH SIDES WAIT. is up; the menu comes back after one DELAY (P106)
 var _parlay_values: Array = []
 var encounter_distance := 0      # squares between party and monsters, as the menu sees it
 var notes: Array[String] = []    # things the engine would do but can't yet
@@ -217,6 +222,9 @@ func copy_from(src: EclVM) -> void:
 	_menu_kind = src._menu_kind
 	_press_queue = src._press_queue.duplicate(true)
 	_enc = src._enc.duplicate(true)
+	_enc_waited = src._enc_waited
+	print_chars = src.print_chars
+	delay_chars = src.delay_chars
 	_menu_dest = src._menu_dest.duplicate()
 	_parlay_values = src._parlay_values.duplicate()
 	encounter_distance = src.encounter_distance
@@ -424,12 +432,17 @@ func end_combat(result: int) -> State:
 func resume() -> State:
 	if state != State.WAIT:
 		return state
+	if _enc_waited:
+		_enc_waited = false
+		_show_encounter_menu()
+		return state
 	state = State.RUNNING
 	return run()
 
 
 func run(max_steps: int = 20000) -> State:
 	var steps := 0
+	print_chars = 0
 	while state == State.RUNNING:
 		steps += 1
 		if steps > max_steps:
@@ -1192,10 +1205,12 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], read_var(int(a[0].value) + (_value(a[1]) & 0xFF)))
 		"PRINT":
 			text += _string(a[0])
+			print_chars += _string(a[0]).length()
 			text_changed = true
 			_note_shown()
 		"PRINT_CLEAR":
 			text = _string(a[0])
+			print_chars += _string(a[0]).length()
 			text_changed = true
 			_note_shown()
 		"PRINT_RETURN":
@@ -1214,6 +1229,12 @@ func _exec(ins: Dictionary) -> void:
 			sprite_distance = read_byte(APPROACH_DISTANCE)
 			sprite_picture = _value(a[2])
 			sprite_head = read_byte(PICTURE_HEAD)
+			# A figure that starts at distance 0 is the picture at once: START (GAME.OVR 0x1188) and ADVANCE
+			# (0x158C) draw through the same routine with the distance, and at 0 it draws the picture (P102,
+			# main chat 107, DOSBox: 2:15's mad man, START 15, 0, 25, shows picture 25 with his text; ours drew
+			# figure 15's nearest frame until a DELAY ended, so IGNORE flashed the picture up).
+			if sprite_distance == 0:
+				_arrived()
 		"SPRITE_ADVANCE":
 			encounter_advances += 1
 			if read_byte(APPROACH_DISTANCE) > 0:
@@ -1239,6 +1260,8 @@ func _exec(ins: Dictionary) -> void:
 			PartyMember.colours_drawn.clear()
 		"DELAY":
 			state = State.WAIT
+			delay_chars = print_chars
+			print_chars = 0
 		"PICTURE":
 			picture = _value(a[0])
 			picture_head = read_byte(PICTURE_HEAD)
@@ -1513,17 +1536,18 @@ func _encounter_choice(choice: int) -> bool:
 	var reaction: int = _enc.reactions[choice] if choice < _enc.reactions.size() else 0
 	var moves := _party_moves()
 	var outcome := -1
+	var both_wait := false
 	match reaction:
 		0:
 			outcome = 2 if choice == 2 and moves.x >= int(_enc.flee_need) else 1
 		1:
 			match choice:
 				0: outcome = 1
-				1: _say("BOTH SIDES WAIT.")
+				1: both_wait = true
 				2: outcome = 2
 				3:
 					if not _close_in():
-						_say("BOTH SIDES WAIT.")
+						both_wait = true
 				4:
 					if not _close_in():
 						outcome = 3
@@ -1538,7 +1562,7 @@ func _encounter_choice(choice: int) -> bool:
 				0: outcome = 1
 				1, 3:
 					if not _close_in():
-						_say("BOTH SIDES WAIT.")
+						both_wait = true
 				2: outcome = 2
 				4:
 					if not _close_in():
@@ -1551,6 +1575,14 @@ func _encounter_choice(choice: int) -> bool:
 					if not _close_in():
 						outcome = 3
 	if outcome < 0:
+		if both_wait:
+			_say("BOTH SIDES WAIT.")
+			# The original prints BOTH SIDES WAIT. (GAME.OVR 0x2D8D's loop), then the menu's text again at
+			# once: at speed 4 it is up for about 0.2 s while it types (DOSBox, P106). Ours prints at once, so
+			# it holds the line for one script delay (as a DELAY) before the menu comes back.
+			_enc_waited = true
+			state = State.WAIT
+			return false
 		_show_encounter_menu()
 		return false
 	_write(_enc.dest, outcome)

@@ -2605,7 +2605,11 @@ func _type_ahead_go() -> void:
 ## A script DELAY: the original waits game speed x 225 ms, no key (GAME.OVR 0x3465, opcode 0x3A,
 ## START.EXE 0x709:0xDBE). A Timer can't start at 0, hence the floor.
 func _script_delay() -> float:
-	return maxf(CampScreen.speed * 0.225, 0.001)
+	# The original types a script's text at game speed x 10 ms a character (START.EXE 0x7782), then DELAY waits
+	# speed x 225 ms (0x709:0xDBE). Ours prints at once, so the text printed before this DELAY gets its typing
+	# time added: up as long as in the original (P104, main chat 107: Mendor's library's books, DOSBox).
+	var chars := _vm.delay_chars if _vm.state == EclVM.State.WAIT and not _vm._enc_waited else 0
+	return maxf(CampScreen.speed * (0.225 + chars * 0.010), 0.001)
 
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
