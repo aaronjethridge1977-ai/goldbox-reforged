@@ -168,7 +168,14 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 		57:                 # Potion of Speed: haste, unless slowed
 			var t: PartyMember = targets[0]
 			if not t.has_affect(42):
-				add_affect(t, 39, id, special_duration(table, id, lvl, rng, false), lvl)
+				# The 5d4 minutes (0x27826), then the add (0x2C540) runs the race handlers: a half-elf's or an
+				# elf's d100 (0x11A4D), as every effect laid outside a fight (Combat Chat 48, DOSBox spd_kob:
+				# BAKSHI drinks it from VIEW, ITEMS: the 5d4, then the d100; ours had no d100).
+				var minutes := special_duration(table, id, lvl, rng, false)
+				if SpecialAffects.blocks(t, 39, func(): return _roll(rng, 1, 100), table.level(id)):
+					out.append("%s IS UNAFFECTED" % t.name)
+					return out
+				add_affect(t, 39, id, minutes, lvl)
 				out.append("%s IS SPEEDY" % t.name)
 			return out
 		41, 46:             # Dispel Magic: GAME.OVR 0x293A0
