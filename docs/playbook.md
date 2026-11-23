@@ -792,7 +792,12 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
   Raise Dead costs 1 Constitution and, at CON 14 and up, the hit points that came from the old Constitution bonus.
   *code* (Combat Chat 34; main chat 26's lab) + *seen* (RHIANNON CON 14 -> 13, up at 1 HP; check 111, main chats
   66/73)
-- **A win with a member dead counts as a loss.** Several "wins" in the original were losses by this rule. *seen*
+- **The Manual of Bodily Health makes one death cheap:** while it is unread and 5,500 is in hand, raise a member
+  killed in a won fight instead of reloading, then have them read it (CON back after 31 days). A cleric or magic-user
+  at CON 18 loses no HP to Raise Dead; a fighter about 1 a level. Reading it at CON 18 gains nothing. Two deaths, or
+  the Manual read: reload. *Jeremy* (2026-11-23 06:57) + *code* (party_member.gd raised_from_dead, con_hp_bonus;
+  spell_caster.gd Manual) (Pool)
+- **A win with a member dead counts as a loss** (but for the Manual exception above). Several "wins" in the original were losses by this rule. *seen*
   (Players 7, 8, 13)
 - **Unconscious is not dead:** 0 HP with status UNCONSCIOUS (4) heals; DEAD (6) is dead. *seen* (Player 8)
 - **Reload and change something** (a different seed, a different plan): the same seed and the same keys can replay the
@@ -1021,5 +1026,4 @@ Lanes append new lessons here, one line each, with the source tag (*seen* / *cod
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 - Sleep in round 1 on the 3x3 with the most sleepable enemies, even far back, not the nearest: in Jeremy's opening, fights where Sleep landed in round 1-2 had bigger bands and cost less (5.1 HP against 7.6), e.g. 15 of 30 orcs asleep from two round-1 casts. *Jeremy* (his play 2026-11-22)
 - Disable first the enemy with the most attacks, not the biggest crowd: at Podol Plaza (1:18) Jeremy's two round-1 Sleeps took 18 orcs but no leader, the four orc leaders (two attacks each) reached the magic-users and SHAZAM went down in round 3; in the 44-orc fight a Sleep on the leaders put two down. *Jeremy* (his play 2026-11-22)
-- (Pool) **The Manual of Bodily Health makes one death cheap:** while it is unread and 5,500 is in hand, raise a member killed in a won fight instead of reloading, then have them read it (CON back after 31 days). A cleric or magic-user at CON 18 loses no HP to Raise Dead; a fighter about 1 a level. Reading it at CON 18 gains nothing. Two deaths, or the Manual read: reload. *Jeremy* (2026-11-23 06:57) + *code* (party_member.gd raised_from_dead, con_hp_bonus; spell_caster.gd Manual)
 - A healing potion held for a hit-point mark (drink at 20 HP or less) never fires against a breath that takes a member from full to 0 in one blow: drink before the breath fight or not at all. *seen* (Gold Box Player 48, p48t3/p48t5: ARN, BRAM, CEDRIC fell to Tyranthraxus with their potions unspent)
