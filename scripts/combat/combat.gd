@@ -1377,12 +1377,25 @@ func guard_attacks(i: int) -> void:
 		if CombatSpells.held(e.who):
 			continue       # asleep or held: no strike (GAME.OVR 0x13263, see free_attacks)
 		e.guarding = false
-		if int(e.get("guard_attacks", 0)) <= 0:
+		# The guard strike (GAME.OVR 0x12E22) clears the guard flag (+7) and runs the attack routine (0x1407F) on
+		# the attack counters as they stand: the round's own (0x127FB) when its turn hasn't come yet this round,
+		# else what it kept when it guarded. Its turn ends (START.EXE 0xBA:0x2637: initiative, movement, guard
+		# flag) only when every attack is spent (0x13FB7, 0x142AB); a target that falls with attacks left ends
+		# nothing, so it keeps its movement and attacks for its own turn (Combat Chat 51, DOSBox k220 seed 33333333:
+		# a troll guarding from round 9 felled LIRA as she stepped up in round 10 and later ran with its full
+		# movement, draw 2636; ours had zeroed both and struck again).
+		var fresh: bool = not e.get("acted", false)
+		var n: int = int(e.attacks) if fresh else int(e.get("guard_attacks", 0))
+		if n <= 0:
 			continue
-		e.attacks = e.guard_attacks
+		var moves: int = e.moves
+		e.attacks = n
 		e.guard_attacks = 0
 		attack(j, i)
-		e.attacks = 0
+		if fresh and e.attacks > 0:
+			e.moves = moves
+		elif not fresh:
+			e.attacks = 0
 
 
 ## Free attacks on combatant `i` as it leaves its cell for `to` (see the rules above).
