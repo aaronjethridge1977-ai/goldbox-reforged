@@ -13,11 +13,13 @@ extends Control
 ## it, where (only once the offer was heard) and the start of the offer.
 ## VIEW on a quest: its page: title, giver, where, state, the steps done so far ("*" each; a
 ## step not yet done isn't shown, Jeremy's spoiler rule), then the offer, or the clerk's words
-## once reported.
+## once reported. P116 (Jeremy, 2026-11-22 23:05): SETTINGS SHOW ALL QUEST STEPS (default OFF)
+## lists every step instead, the done ones marked "*", the rest plain.
 
 signal closed
 
 const KEY := "quests"
+const STEPS_KEY := "quest_steps"
 const PER_PAGE := 12
 const STATE_WORD := {"open": "OPEN", "done": "DONE", "failed": "FAILED", "reported": "REPORTED"}
 const MENU_LIST := ["VIEW", "EXIT"]
@@ -42,6 +44,21 @@ static func save_on(value: bool) -> void:
 	var c := ConfigFile.new()
 	c.load(GameData.SETTINGS_PATH)
 	c.set_value("qol", KEY, value)
+	c.save(GameData.SETTINGS_PATH)
+
+
+## P116: SHOW ALL QUEST STEPS, default OFF (the spoiler rule).
+static func all_steps_on() -> bool:
+	var c := ConfigFile.new()
+	if c.load(GameData.SETTINGS_PATH) != OK:
+		return false
+	return bool(c.get_value("qol", STEPS_KEY, false))
+
+
+static func save_all_steps(value: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(GameData.SETTINGS_PATH)
+	c.set_value("qol", STEPS_KEY, value)
 	c.save(GameData.SETTINGS_PATH)
 
 
@@ -220,13 +237,16 @@ func _draw_page(g: GameScreen) -> void:
 			if row <= 22:
 				g.text(2, row, l, GameScreen.GREEN)
 			row += 1
-	var done_steps: Array = q.get("steps", []).filter(func(s): return bool(s.get("done", false)))
-	if not done_steps.is_empty():
+	var all_steps := all_steps_on()
+	var shown: Array = q.get("steps", []).filter(func(s): return all_steps or bool(s.get("done", false)))
+	if not shown.is_empty():
 		row += 1
-		for s in done_steps:
-			for l in GameScreen.wrap("* " + String(s.text).to_upper(), 36):
+		for s in shown:
+			if bool(s.get("done", false)) and row <= 22:
+				g.text(2, row, "*", GameScreen.WHITE)
+			for l in GameScreen.wrap(String(s.text).to_upper(), 34):
 				if row <= 22:
-					g.text(2, row, l, GameScreen.WHITE)
+					g.text(4, row, l, GameScreen.WHITE)
 				row += 1
 	var words := String(q.get("report", "")) if st == "reported" else String(q.get("offer", ""))
 	if words != "":
