@@ -172,6 +172,40 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 121: the 3D view's far row, its edge wrap and backdrop codes; the arrival's place line; CALL 0x2C90's time and sky (main path, display)
+
+- **The far row's fillers (found, fixed; main path, display):** GAME.OVR 0x2EF7D draws the far row from the centre
+  outward on each side (four squares a side) and puts a wall's filler (part 9) in the gap to the next square out only
+  when that square also has a far wall, or, when it hasn't, when the wall's own square has a side wall on that side; a
+  square off the map clears it unless its side toward the centre has a wall. Ours (chat 11) drew a filler at every far
+  wall's outer side. DOSBox, New Phlan 14,4 W at 20:56 (chat 120's jump save `data/c120/sNP`): the two far walls show
+  three panels; ours now matches pixel for pixel (`dungeon_view.gd _far_fillers`).
+- **The view's edge wrap (found, fixed; main path, display):** the view's wall lookup (GAME.OVR 0x2ED72) reads a
+  square off the map at the map's other edge (a coordinate past 15 reads 0, one under 0 reads 15) in every block but 0
+  and 10 (DS:0x84DC); ours drew nothing there. `tools/lab/wrapscan.gd` renders every square and facing both ways: most
+  3D areas differ at their edge squares (8:13 3,0 N by 3,004 pixels, the Slums 4,1 E by 54). DOSBox jump saves at both
+  match ours now pixel for pixel (`DungeonView.wrap`, set from the block in main).
+- **The backdrop's codes (found, fixed; main path, display):** a script's write to 0xC059 / 0xC05F (GAME.OVR 0x82B0)
+  sets DS:0x6F68 / 0x6F69, which the view turns into the ground colour and the horizon's top and grey lines (0x2DC4E,
+  0x2DC82, 0x2DCB6); each area entry resets them to 0x41 / 9 (0x7689 from 0x40A3: ours' white, grey and brown).
+  Valhingen Graveyard (4:10) writes 8 and 11 (black top line, dark-grey lines and ground), 8:29 65 or 8 (black top line).
+  DOSBox matched pixel for pixel (4:10 0,4 E after its intro; 8:29 10,5 N); ours drew white, grey and brown everywhere.
+- **The arrival's place line (found, fixed; main path, display; chat 120's open item):** GAME.OVR 0x403E sets DS:0x4432
+  before an area's init; the LOAD_AREA_MAP / LOAD_AREA_DECO handler (0x19BA, both opcodes) redraws the whole screen
+  (START.EXE 0xBA:0x27D9, the place line by 0x34AB) as soon as both have run under it, else 0x403E redraws after the
+  init. 8:13's init loads both before it sets 0x49FB, so its arrival from the band shows "6,15 N 12:50" and a turn "W
+  12:50" (DOSBox, chat 120); the pyramid and Valjevo's castle set 0x49FB first. Ours now keeps that line
+  (`EclVM.arrival_hide`, main's `_place_left`) as chat 119's edge steps do.
+- **CALL 0x2C90's time and sky (found, fixed; main path, display):** the redraw keeps the clock and sky as they were
+  then: 6:28's init calls it at the hour it found, sets the hour to 0, and its on-move turns 0x49FD to day; DOSBox
+  (a jump save at 20:56): the escort's PRESS page shows "7,0 S 20:56" under a black sky, then "7,2 S 00:56" under
+  cyan; ours showed 00:56 under cyan at once. `place_drawn` now holds "time" and "sky"; a walking-menu word, a fight or
+  camp drops it, as the kept edge line.
+- **Seen, matching (view sweep, jump saves at 20:56 and 12:50, after a turn and back; `data/c121/views.sh`, `vcmp.sh`):**
+  the Slums (3 squares), 1:18, 1:24, 2:9, 2:15, 3:14, 4:2, 4:21 (Sokal Keep's landing), 5:4's edge, 5:5, 5:6, 7:17, 8:16,
+  8:29, all pixel for pixel. 7:23's init loads no walls (the original keeps the last area's; its only way in is the
+  pyramid, whose walls ours shows). 1:31, 8:30, 8:32 have no script block (not game cases).
+
 ## Chat 120: the wilderness's party mark is ICON.DAX's rider; the bands' arrivals; checks 463-465 (main path, display)
 
 - **The wilderness's party mark (found, fixed; main path, display):** the original draws a galloping rider on the
