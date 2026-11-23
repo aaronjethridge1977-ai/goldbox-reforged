@@ -684,6 +684,16 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
   20:38) **Then the casters:** enemy mages' Magic Missiles finish wounded members; Hold Person or Stinking Cloud them
   (section 3). *seen* (Stojanow report) (corrected 2026-11-22: "kill the casters first" now comes after those in
   contact, Gold Box Guide 12)
+- **Which line first depends on which is more dangerous** (*Jeremy*, 2026-11-23 07:33: "Both can be true under
+  different circumstances. It depends on how dangerous the enemy front line is or how dangerous the back line is"; he
+  says watching him play teaches it better than a rule). The contact-first rule above is the default; when the back
+  line is the bigger danger, these two come first:
+  - Sleep in round 1 on the 3x3 with the most sleepable enemies, even far back, not the nearest: in Jeremy's opening,
+    fights where Sleep landed in round 1-2 had bigger bands and cost less (5.1 HP against 7.6), e.g. 15 of 30 orcs
+    asleep from two round-1 casts. *Jeremy* (his play 2026-11-22)
+  - Disable first the enemy with the most attacks, not the biggest crowd: at Podol Plaza (1:18) Jeremy's two round-1
+    Sleeps took 18 orcs but no leader, the four orc leaders (two attacks each) reached the magic-users and SHAZAM went
+    down in round 3; in the 44-orc fight a Sleep on the leaders put two down. *Jeremy* (his play 2026-11-22)
 - **Every disabler in round 1 on the boss's group;** clerics with Hold Person are round-1 disablers (three a cast on
   the humanoids in contact). (Pool) Norris the Gray, 5 lizardmen and 9 kobold leaders for 2 HP: Hold Person on Norris
   and two lizardmen, Stinking Cloud on his square (slain helpless at once), Sleep on the leaders; 27 orcs for 0 HP with
@@ -1024,7 +1034,5 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- Sleep in round 1 on the 3x3 with the most sleepable enemies, even far back, not the nearest: in Jeremy's opening, fights where Sleep landed in round 1-2 had bigger bands and cost less (5.1 HP against 7.6), e.g. 15 of 30 orcs asleep from two round-1 casts. *Jeremy* (his play 2026-11-22)
-- Disable first the enemy with the most attacks, not the biggest crowd: at Podol Plaza (1:18) Jeremy's two round-1 Sleeps took 18 orcs but no leader, the four orc leaders (two attacks each) reached the magic-users and SHAZAM went down in round 3; in the 44-orc fight a Sleep on the leaders put two down. *Jeremy* (his play 2026-11-22)
 - A healing potion held for a hit-point mark (drink at 20 HP or less) never fires against a breath that takes a member from full to 0 in one blow: drink before the breath fight or not at all. *seen* (Gold Box Player 48, p48t3/p48t5: ARN, BRAM, CEDRIC fell to Tyranthraxus with their potions unspent)
 - Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).
