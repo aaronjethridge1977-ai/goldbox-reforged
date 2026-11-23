@@ -1138,6 +1138,11 @@ func _exec(ins: Dictionary) -> void:
 		picture_up = false      # GAME.OVR 0x24E1 clears DS:0x84C8-9 after the fight (0x261F)
 	match op:
 		"EXIT":
+			# Chat 117 (DOSBox, 8:13's boulder NO, 4:2's well): the text printed since the script last stopped types
+			# before the walking menu comes back; row 24 keeps what was left there meanwhile (blank after a menu's
+			# choice, DAMAGE's prompt, the walking menu after a step). Ours showed the walking menu at once.
+			if _wait_typing():
+				return
 			_restore_pick()
 			state = State.DONE
 		"GOTO":

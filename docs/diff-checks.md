@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; a NEW_ECL keeps a blank place line; checks 453-455 (main path, display)
+## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; a NEW_ECL keeps a blank place line; EXIT waits for the text; checks 453-456 (main path, display)
 
 - **The walking menu stays on row 24 while a step's script runs (found, fixed):** DOSBox, 2:15's garden (check 54's
   start jumped to 7,9 W, `~/gbr/lab/data/c117/sGd`; tpseed 77777777, four Ups: the slime at 3,9): YOU SEE WHAT ONCE
@@ -204,6 +204,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (`g/cw.png`). Ours brought it back at the NEW_ECL (chat 115 had assumed a new area redraws it). Now NEW_ECL keeps
   `place_blank` and sets `place_back_at_rest`: the walking screen after the arrival's script brings it back
   (`vid/fb.mp4` before, `fb2.mp4` after).
+- **The last text before EXIT types before the walking menu comes back (found, fixed):** 8:13's boulder, NO (check
+  452's keys): THE KOBOLD DISAPPEARS BEYOND THE BOULDER. types with row 24 blank (the menu's choice cleared it) and
+  AREA CAST VIEW ... appears only when it has typed (1.5 s); 4:2's thieves' well: YOUR FRIEND FLOATS OUT OF THE WELL.
+  types over DAMAGE's left PRESS <ENTER>/<RETURN> after CALL 0x2C90's redraw (`g/wl.png`). Ours showed the walking
+  menu with the text at once. Now EXIT waits the text's typing time first (`_wait_typing`, as NEW_ECL and COMBAT);
+  a key pressed meanwhile is kept (`_type_ahead`), as the original's keyboard buffer (`vid/kn.mp4` before, `kn2.mp4`
+  after).
+- **Check 456** (4:2 the thieves' well at 1,3: check 59's start jumped to 1,2 S, `sWl`; Up, CLIMB DOWN, THRENDER
+  GRONE (no climbing skill): YOU BEGIN A LONG FALL., YOU HIT AN UNYIELDING STONE FLOOR., 15d6: THRENDER GRONE DIES.
+  (status 6), CALL 0x2C90 back to 1,3 W, YOUR FRIEND FLOATS OUT OF THE WELL.). Three runs MATCH; the break (his
+  status 6 -> 5) DIFFERS.
 - **Seen, matching:** a refused step's script keeps the walking menu too (2:9 3,10 N, Up into the wall: the bugbears,
   no time passing; `sWb`); chat 116's open item, a figure left up then a CAST with no spells (4:2's chained man,
   check 59's keys, LEAVE, C): THRENDER GRONE HAS NO SPELLS MEMORIZED, the man's figure stays, the box empties, as
