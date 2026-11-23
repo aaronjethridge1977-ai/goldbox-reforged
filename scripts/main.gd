@@ -1106,9 +1106,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				_type_ahead = event as InputEventKey
 			get_viewport().set_input_as_handled()
 			return
-		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
-				and key in [KEY_A, KEY_C, KEY_V, KEY_E, KEY_S, KEY_L]:
-			_stale_view = []   # the walking menu's other words redraw the screen too (assumed; turns and steps seen)
+		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+			# The walking menu's other words (main chat 111, DOSBox 4:10's tower after YES): AREA, LOOK, ENCAMP,
+			# VIEW and a CAST that opens the spell list redraw the whole screen on the real square; SEARCH,
+			# Home/End and a CAST with no spells list redraw only the place line (the old view and the text stay);
+			# any other key, nothing.
+			var sel_m: PartyMember = null if _party.is_empty() \
+					else _party[clampi(_vm.selected, 0, _party.size() - 1)] as PartyMember
+			if key in [KEY_A, KEY_V, KEY_E, KEY_L] or (key == KEY_C and sel_m != null \
+					and sel_m.status == PartyMember.STATUS_OKAY and not sel_m.ready_spells().is_empty()):
+				_stale_view = []
+			elif key in [KEY_S, KEY_HOME, KEY_END] or (key == KEY_C and sel_m != null \
+					and sel_m.status == PartyMember.STATUS_OKAY):
+				_stale_line_done = true
 		if _door_options != "":
 			var letter := OS.get_keycode_string(key).to_upper()
 			if letter.length() == 1:
@@ -1310,6 +1320,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_vm.write_byte(SEARCH_FLAG, 1)
 				_sync_position_to_vm(_facing)
 				_vm.clear_output()
+				# The original's LOOK redraws the screen: the text box is emptied even when the square's script
+				# prints nothing (main chat 111, DOSBox: 2:20's storage room, 4:10's tower after DO YOU LEAVE? YES).
+				_message.text = ""
 				# GAME.OVR 0x4136-0x416D: the flag is 1 for the whole of the square's script, menus and
 				# texts too, and goes back to SEARCH's bit when it ends (chat 63: 4:21's elf skeleton
 				# tests it after a PRESS RETURN: the pouch's scroll; ours put it back at the first stop).
@@ -1404,6 +1417,7 @@ var _blank_at := []    # where the party stood when the view went blank after a 
 ## [square, facing, map] the party really has, which ends it once it changes.
 var _stale_view := []
 var _stale_at := []
+var _stale_line_done := false   # the place line already shows the real square (SEARCH, Home/End: main chat 111)
 
 
 func _on_typed(text: String) -> void:
@@ -2481,6 +2495,7 @@ func _adopt_position_from_vm() -> void:
 		_jump_next = false
 		if _stale_view.is_empty():
 			_stale_view = [_pos, _facing]
+			_stale_line_done = false
 		if moved:
 			_pos = target
 		if turned:
@@ -4072,7 +4087,7 @@ func _place_line() -> String:
 	if _vm.on_overland:
 		return _overland_place()
 	var hide := _vm.read_byte(NO_COORDINATES) != 0
-	if not _stale_view.is_empty() and _stale_at == [_pos, _facing, _map_index]:
+	if not _stale_view.is_empty() and not _stale_line_done and _stale_at == [_pos, _facing, _map_index]:
 		# The square the original still shows (see _stale_view).
 		var sp: Vector2i = _stale_view[0]
 		var sf := int(_stale_view[1])
