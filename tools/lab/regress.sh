@@ -164,6 +164,10 @@ run orig_A_c52_free 0 ./combat51/regline.sh k220z 10203040 "" "up,enter,fightmen
 # a latched stirge drinks at its turn's start, before the pattern draws, and its turn ends there (GAME.OVR 0x103CB, draw
 # 5134); a figure a stirge hangs on at the round's start gets no movement (0x3A, 0x100AD: DORN at draw 5110).
 run orig_A_c54_stirge 0 ./combat51/regline.sh stirge b871d583 "" "up,wait,wait,wait,wait,wait,wait,c,quickall,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
+# Combat Chat 54: Player 23's p23a4 (8:13's throne room horde from p23a3_s17door, seed 23230004; the party loses): an
+# attacker turns to its target from the two figures' own cells (0x1407F), so BRAM was not "from behind" at draw 16203.
+# Ours only (~5 min, combat54/p23a4.sh, its own game copy game54a); compared with the Player's trace (logs/p23a4.trace.txt).
+[ $WHAT = ours ] && run orig_F_c54_p23a4 0 combat54/p23a4.sh /home/aaron/gbr/combat_lab/tmp/c54_reg_p23a4.txt proj
 # Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
 # has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
 run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
