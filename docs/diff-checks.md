@@ -198,6 +198,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Slums' other two text-before-fight sites (the arguing orcs 0x9E2A, the grain sack 0xB077) stop at PRESS RETURN
   before their COMBAT: no typing wait there.
 - **443** (4:10 the tower, above): ends 14,6 W 11:30; break (the original's x 14 -> 15) DIFFERS.
+- **444** (2:20 the arguing orcs, check 45's start jumped to 14,1 W): 13,1: SEVERAL ORCS ARE ARGUING OVER SOME PAPERS.,
+  the press, the fight on QUICK (won, 77 XP each), the pile: SHARE, TAKE the clerical scroll, EXIT; 0x4ACA = 255 at
+  13,1 W 11:00. Break 0x4ACA DIFFERS.
+- **445** (4:10 the mystic, check 367's start and walk): SEND HIM AWAY: 'THEN DIE YOU SCUM,' THE MAN SPITS. (typed
+  before the fight), the fight on QUICK (217 XP each), SHARE, TAKE the ring, EXIT; 0x4A42 = 255 at 8,9 S 11:14. Break
+  0x4A42 -> 3 DIFFERS.
+- **Not made:** the Slums' grain sack (0xB05C at 0,14): its trolls and ogres destroyed every party tried on QUICK in
+  DOSBox (check 45's, 327's and 64's, each jumped to 0,13 S): THE END, no save to compare. Its text and press were
+  seen in DOSBox only.
 - **The coach's (4), Jeremy's 14:03 and 14:17 replays: replay faults, not differences.** Replayed at their recorded
   times at real speed on his build b865613 (`data/c110/trep.sh`, windowed): the 14:03 session's SHARE runs (the
   treasure menu takes S 1.2 s after the Enter) and its F2 save is byte-identical to the quick save his 14:17 session
