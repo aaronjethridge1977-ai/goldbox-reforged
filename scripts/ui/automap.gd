@@ -121,6 +121,7 @@ func from_save(d: Dictionary) -> void:
 
 
 var _shown := ""                   # what the overlay shows now: it is repainted only when this changes
+static var mini_shown := false     # P78: the mini-map's window is up (GameScreen.draw_walk moves SEARCH above it)
 
 
 func _draw() -> void:
@@ -132,6 +133,7 @@ func _draw() -> void:
 		return
 	_shown = what
 	_g.img.fill(Color(0, 0, 0, 0))
+	mini_shown = false
 	if enabled and map != null and visible:
 		if full_open:
 			_draw_full()
@@ -145,6 +147,7 @@ func _draw_mini() -> void:
 	var top := maxi(4 + maxi(party_rows, 6), 10)        # the first free row under the list
 	if top > 12:
 		return
+	mini_shown = true
 	_rope_box(29, top, 39, 16)
 	var inner := Rect2i(30 * 8, (top + 1) * 8, 9 * 8, (15 - top) * 8)
 	_g.img.fill_rect(inner, Color.BLACK)

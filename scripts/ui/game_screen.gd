@@ -255,6 +255,11 @@ func draw_walk(view: Image, party: Array, selected: int, place: String, lines: P
 			v.resize(88, 88, Image.INTERPOLATE_NEAREST)
 		img.blit_rect(v, Rect2i(0, 0, 88, 88), Vector2i(24, 24))
 	party_list(party, selected)
+	if Automap.mini_shown and not wild and place.ends_with(" SEARCH"):
+		# P78 (Jeremy, 2026-11-17, low): the mini-map's window (cols 29-39) covers the place line's SEARCH; while it
+		# shows, SEARCH stands on the row above, left of the window.
+		place = place.left(place.length() - 7)
+		text(17, 14, "SEARCH", GREEN)
 	text(17, 15, place, GREEN)
 	text_box(lines, GREEN, white_line)
 	if not menu.is_empty():
