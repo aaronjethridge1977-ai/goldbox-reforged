@@ -1356,6 +1356,13 @@ HP, p48t2 at 80 (no blow landed). Chat minutes: 0. Unspent in both wins: 23 of t
 scrolls, the cursed Necklace; the Necklace of Missiles (no aim), the wand, the healing potions, 8 other scrolls). Details: stuck-fights.md section 5, "The measure for Guide 13". (p48r1, p48s1: tool stops: the 300-key
 stall guard; a try begun before the casters' rule.)
 
+**The reload rule's Manual of Bodily Health exception** (Jeremy 2026-11-23 06:57; the coach's request 07:00):
+`plans.manual_exception`: one death in a won fight is not a reload while the Manual is unread (`OP_MANUAL_READ=1`
+or plan line `manualread` once it is) and 5,500 gp (gold + 5 x platinum) is in hand; a member with no fighter class
+(record 0x98-0x9A: fighter, paladin, ranger; ELWEN and LIRA count as fighters) always, a fighter only with
+`OP_RAISE_FIGHTER=1` (the plan says the replay would be long); a second death, or one after the Manual is read, is
+a reload. The run notes the raise owed and goes on (the plan takes the party to the temple and the Manual).
+
 Lab: `p48/` (measure.sh, measure.txt, rules48.plan, reviews/finale_door.md, spent.py, score.md, p45i5_run1.*);
 runs p48t1-t5.
 

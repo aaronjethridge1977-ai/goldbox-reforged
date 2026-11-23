@@ -775,7 +775,7 @@ def reload_rule(p):
                 return reload_rule(p)
             why.append("%s gone from the party" % n)
             continue
-        if s["status"] >= 6:
+        if s["status"] >= 6 and not (s["status"] == 6 and n in getattr(p, "raise_owed", ())):
             why.append("%s %s" % (n, {6: "dead", 7: "stoned", 8: "gone"}.get(s["status"], "status %d" % s["status"])))
         if s["drained"] > b["drained"] or s["lev"] < b["lev"]:
             why.append("%s drained (levels %d -> %d)" % (n, b["lev"], s["lev"]))
@@ -811,9 +811,43 @@ def reload_rule(p):
             return
     if why and getattr(p, "restoring", False) and all(" drained (" in w for w in why):
         return                           # the Restorations under way
+    if why and len(why) == 1 and why[0].endswith(" dead") and manual_exception(p, why[0][:-5], now):
+        return
     if why:
         p.note("loss", "the reload rule: " + "; ".join(why))
         raise_stop(p, "RELOAD: %s (Jeremy's reload rule: reload from the last checkpoint)" % "; ".join(why))
+
+
+# Player 48 (Jeremy 2026-11-23 06:57, the coach's request 07:00): the Manual of Bodily Health exception: one death in a
+# won fight is raised instead of reloaded while the Manual is unread (OP_MANUAL_READ=1 or plan line `manualread` once
+# it is) and Raise Dead's 5,500 gp is in hand (gold and platinum counted, 5 gp each); a member with no fighter class
+# (fighter, paladin, ranger: record 0x98-0x9A) always, a fighter only with OP_RAISE_FIGHTER=1 (the plan's say: the
+# replay would be long); a second death, or one after the Manual is read, is still a reload. The run notes the
+# raise owed (the plan takes the party to a temple's Raise Dead and the Manual) and goes on.
+MANUAL_READ = os.environ.get("OP_MANUAL_READ") == "1"
+RAISE_FIGHTER = os.environ.get("OP_RAISE_FIGHTER") == "1"
+RAISE_GP = 5500
+
+
+def manual_exception(p, name, now):
+    """Player 48: True when <name>'s death falls under the Manual exception (noted; the run goes on)."""
+    if MANUAL_READ or getattr(p, "raise_owed", ()):
+        return False
+    if any(s["status"] >= 6 for n, s in now.items() if n != name):
+        return False
+    gp, fighter = 0, False
+    for m in members(p.g.mem):
+        r = m["rec"]
+        c = struct.unpack_from("<7H", r, 0x88)
+        gp += c[3] + 5 * c[4]
+        if m["name"] == name:
+            fighter = any(r[0x98:0x9B])
+    if gp < RAISE_GP or (fighter and not RAISE_FIGHTER):
+        return False
+    p.raise_owed = {name}
+    p.note("rule", "the Manual exception (Jeremy 2026-11-23): %s dead in a won fight, raised instead of reloaded "
+                   "(Raise Dead %d gp of %d in hand; the Manual unread): the raise is owed" % (name, RAISE_GP, gp))
+    return True
 
 
 RESTORER = os.environ.get("OP_RESTORER", "")            # Player 32: the cleric who reads the Restoration scroll
@@ -1319,6 +1353,18 @@ def door_check(path, save_dir):
         if have < n:
             bad.append("no line for %s: %s%s" % (who, tag, " (%d of %d)" % (have, n) if n > 1 else ""))
     return bad
+
+
+class ManualRead:
+    """Player 48: `manualread`: the Manual of Bodily Health has been read (the reload rule's exception ends)."""
+    def __repr__(self):
+        return "manualread"
+
+    def next(self, p):
+        global MANUAL_READ
+        MANUAL_READ = True
+        p.note("rule", "the Manual of Bodily Health read: every death is a reload again")
+        return True, None, ""
 
 
 class NoShare:
@@ -2689,6 +2735,8 @@ def load(path):
             pl.goals.append(Step(rest.strip().upper()))
         elif cmd == "lightloot":
             pl.goals.append(LightLoot(rest.strip() == "on"))
+        elif cmd == "manualread":    # Player 48: the Manual of Bodily Health is read: deaths are reloads again
+            pl.goals.append(ManualRead())
         elif cmd == "review":
             pl.goals.append(Review(rest.strip()))
         elif cmd == "noshare":
