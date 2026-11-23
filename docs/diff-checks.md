@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 119: a step through the map's edge keeps the place line of the square left; the wilderness's walking menu under its text and the empty box after it; checks 459-461 (main path, display)
+## Chat 119: a step through the map's edge keeps the place line of the square left; the wilderness's walking menu under its text and the empty box after it; checks 459-462 (main path, display)
 
 - **An arrival through the map's edge (found, fixed):** DOSBox at speed 4, 4:2 4,0 N (a real save: check 456's start
   jumped there, then ENCAMP SAVE in the original), Up through the north edge into Podol Plaza (1:18, 4,15 N): the new area's
@@ -199,6 +199,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   routine at 0x6AA5, which frees the party (the list at DS:0x6810) on the way back to the start menu, through "The END!" /
   "The monsters rejoice for the party has been destroyed" when the party is wiped; so in play only the start (a load or a
   new game) turns 0x4A00 on. Polled in DOSBox: a rest (ENCAMP, REST one hour on the wilderness) leaves it 0.
+- **Seen, matching:** 2:20 15,4 E east through the edge into New Phlan (a real save): 3:0 0,4's YOU ARE BY THE GATEWAY TO
+  THE UNSETTLED AREAS. ... types 3.0 s (ours 2.9 s) with row 24 blank, the place line still 15,4 E 10:56 (ours, with the
+  edge rule), then the walking menu; the wilderness's BOAT (Phlan's east edge) into 3:0 15,1 W: an empty box (both); AREA
+  after an edge arrival redraws the place line (both). 8:13's KILL IT runs REFUSE's code with its own text (0x9C9C:
+  THE KOBOLD CRIES OUT, 'I'LL NOT GO ALONE!', then 0xB4ED and the roof): not filmed.
+- **Check 462 in the gate:** the gateway above (`~/gbr/lab/data/c119/sG2`), Up, Up; three runs MATCH, the break (0x49F2)
+  DIFFERS; DIFFCHECKS 459/459.
 - **Checks 460-461 in the gate:** 460 check 127's start, two steps east, the edge's text, NORTH (3:14 15,4 W); 461 from
   460's end saved by the original (`~/gbr/lab/data/c119/sOV`): two turns, Up out through the east edge, the text, LEAVE
   (26,27 E); three runs each MATCH, breaks (0x49F2) DIFFER; DIFFCHECKS 458/458.
