@@ -3113,6 +3113,7 @@ func _start_event_fight() -> void:
 
 var _duelist: PartyMember = null
 var _arena := false
+var _fled := false   # the party ran from the fight: the treasure menu's EXIT ends it with 0x6DC7 = 129
 var _look_flag_after := -1     # a LOOK's script is running: 0x6DCA's value for when it ends
 ## Q26 (Jeremy, (a)): a NEW_ECL from the rest-interrupted script loads the block and stops; the arrival
 ## (init, on-move, event) waits for the next step or LOOK (GAME.OVR 0x3B19 returns without testing 0x442F).
@@ -3211,12 +3212,15 @@ func _on_event_fight_finished(result: int) -> void:
 		_after_fight([], "YOU HAVE LOST THE DUEL.\n\nTHE DUELIST RECEIVES 0\n\nEXPERIENCE POINTS.")
 		return
 	if result == 3:
-		# The party ran: the script goes on with 0x6DC7 = 129.
-		_duelist = null
+		# The party ran: the results page and the treasure menu, as after a win, then the script goes on
+		# with 0x6DC7 = 129. Chat 112 (DOSBox, 4:2's courtyard fled south, twice): THE PARTY HAS FLED. /
+		# EACH CHARACTER RECEIVES 0 EXPERIENCE POINTS. (PRESS <ENTER>/<RETURN> TO CONTINUE), then VIEW POOL
+		# EXIT with nothing to take (a splint mail dropped on the field wasn't in it), then YOU ARE CHASED OUT
+		# INTO THE STREETS. Ours went straight to the script. A flee after kills: assumed the same (not seen).
 		_fight_treasure = []
-		_vm.end_combat(129)
-		_after_vm()
-		_show()
+		_fight_made = []
+		_fled = true
+		_after_fight([], "THE PARTY HAS FLED.")
 		return
 	# GAME.OVR 0x5A47: with ECL 0x6DE6 = 1 (only New Phlan's tavern brawl, 3:0 0xA76D) every player
 	# character counts as standing (0x5B0F), so the party is never destroyed: the fight ends as won
@@ -3288,7 +3292,8 @@ func _on_treasure_closed() -> void:
 	# the next camp's Home lights CEDRIC; ours went back to the first).
 	if _treasure._who >= 0 and _treasure._who < _party.size():
 		_vm.selected = _treasure._who
-	_vm.end_combat(0)
+	_vm.end_combat(129 if _fled else 0)
+	_fled = false
 	_after_vm()
 	_show()
 

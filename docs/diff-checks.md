@@ -172,6 +172,27 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 112: a fled fight's results page and treasure menu (main path); 4:2's chased-out confirmed
+
+- **4:2's YOU ARE CHASED OUT INTO THE STREETS, confirmed in DOSBox** (chat 111's open item). The courtyard's way out is
+  south past the bottom-left wall's corner (the way the party came in): a member who steps off the field there gets
+  FLEE: YES NO. A member slower than the hobgoblins (BROTHER SEAN, splint mail, movement 6) gets ESCAPE IS BLOCKED at
+  every try; with the armour dropped (movement 12) he gets away. Start `~/gbr/lab/data/c112/sCo2` (chat 111's strong
+  camp save `sCoG`, the courtyard's LOAD_MONs cut, SEAN's splint mail dropped in camp; 4,11 N), `autoflee.py` (each
+  member: MOVE, down-right then down to the edge, Y), `runflee.sh` (tpseed 11111111; end `oFl`, keys `fkeys.txt`).
+- **The original after a fled fight (two runs, one with an item dropped on the field):** THE PARTY HAS FLED. / EACH
+  CHARACTER RECEIVES 0 / EXPERIENCE POINTS. on the results page (PRESS <ENTER>/<RETURN> TO CONTINUE), then the
+  treasure menu VIEW POOL EXIT with the chest and nothing to take (the dropped splint mail wasn't in it), then at
+  EXIT the script (0x6DC7 = 129): YOU ARE CHASED OUT INTO THE STREETS. over the courtyard's view with "4,10 N" on the
+  place line and the walking menu at once; the script has moved the party to 4,2 (or 12,2, a d2) with no redraw
+  (chat 110's rule): ENCAMP shows 4,2 N. **Ours went from THE PARTY HAS FLED straight to the script** (no results
+  page, no treasure menu): fixed in main.gd (`_fled`: `_after_fight` with no spoils, the treasure's EXIT ends the
+  fight with 129). Filmed in ours after the fix (scratch copy with the dev flee shortcut, `vid/fl.png`): the same
+  pages and the chased-out text over the courtyard at 4,10 N; ENCAMP 12,2. (Main path: every fled fight.)
+  **Assumed, not seen:** a flee after some monsters fell still gives 0 experience and an empty pile.
+- **No check:** ours' fight from the same keys drifts (the original's keys were chosen from its screen each turn);
+  a flee check needs the fight tools (Combat's), not a key list.
+
 ## Chat 111: the walking menu after a script's move; LOOK empties the text; SEARCH kept in a save (main path); 446
 
 - **Chat 110's assumption, checked in DOSBox (4:10's tower, DO YOU LEAVE? YES, one fresh run per key from a camp save
