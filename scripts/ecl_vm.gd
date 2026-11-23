@@ -329,6 +329,23 @@ func clear_output() -> void:
 var running_entry := -1    # the entry point start() last ran (4: the init)
 
 
+## Before an area's init (see arrival_hide).
+func begin_arrival() -> void:
+	_arrival_loads = 0
+	arrival_hide = -1
+	arrival_at = []
+
+
+func _arrival_load(bit: int) -> void:
+	if _arrival_loads < 0:
+		return
+	_arrival_loads |= bit
+	if _arrival_loads == 3:
+		_arrival_loads = -1
+		arrival_hide = read_byte(0x49FB)
+		arrival_at = [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3]
+
+
 ## Runs an entry point to completion or until a menu.
 func start(entry: int) -> State:
 	running_entry = entry
@@ -365,6 +382,13 @@ var runes_closing := false
 ## The place line CALL 0x2C90 drew: {"hide": 0x49FB then, "at": [x, y, facing]} (main's _place_line keeps it until the
 ## party is elsewhere); {} for the live cell.
 var place_drawn := {}
+## Chat 121 (GAME.OVR 0x403E, 0x19BA): entering an area, the original redraws the whole screen, place line and all
+## (START.EXE 0x34AB), as soon as the init has run both a LOAD_AREA_MAP and a LOAD_AREA_DECO (flags DS:0x4433/0x4434
+## under 0x4432), else after the init. begin_arrival() before the init; arrival_hide is 0x49FB at that redraw
+## (-1: after the init), arrival_at the party's square then. 8:13's init loads both before it sets 0x49FB.
+var arrival_hide := -1
+var arrival_at := []
+var _arrival_loads := -1
 var redraw_pending := false   # a CALL 0x2C90 waits for its text to type: main keeps the old square till then
 var view_redrawn := false   # the script ran something that redraws the view (main's _stale_view; main chat 110)
 var view_blank := false
@@ -1623,8 +1647,10 @@ func _exec(ins: Dictionary) -> void:
 			# Mode 16 turns the view into a page for PRINT_RUNES; mode 2 brings the view back.
 			if area_map[1] == 2 and runes_shown:
 				runes_closing = true
+			_arrival_load(1)
 		"LOAD_AREA_DECO":
 			area_deco = [_value(a[0]), _value(a[1]), _value(a[2])]
+			_arrival_load(2)
 		"SURPRISE":
 			# As the original: a d6 for each side against (d + 2 - a) and (b + 2 - c); the
 			# monsters' surprise wins when both come up (names from ssi-engine: the result
