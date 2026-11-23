@@ -2539,6 +2539,11 @@ func ai_act() -> bool:
 			_act_powers(active)
 			if c.down or (c.moves <= 0 and c.attacks <= 0):
 				return false
+		if c.get("fleeing", false):
+			# The runner's line ("IS FORCED TO FLEE", "FLEES IN PANIC") shows for its time with the turn
+			# box up, then the first step (DOSBox tu_spec5, Combat Chat 49's frames): the step comes at
+			# the next call, after the screen's message pause. No dice move.
+			return true
 	if c.get("fleeing", false):
 		var fr := _flee_step(active)
 		if fr == "moved" or fr == "retry":
