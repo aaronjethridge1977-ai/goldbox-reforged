@@ -3928,6 +3928,10 @@ func _draw_screen() -> void:
 		place += " SEARCH"
 	if _vm.damage_page and press24:
 		place = ""      # chat 114: the original's party redraw after a hit blanks the place line (DOSBox: 8:13's rocks)
+	elif not _vm.place_blank.is_empty() and _vm.place_back_at_rest and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE] \
+			and not _busy:
+		_vm.place_blank = []      # chat 117: the walking screen after a NEW_ECL's arrival script redraws it
+		_vm.place_back_at_rest = false
 	elif not _vm.place_blank.is_empty():
 		# ... and nothing but a redraw brings it back (chat 115, DOSBox: 4:10's fumes, 5:6's altar; EclVM.place_blank).
 		if _vm.place_blank == [_pos.x, _pos.y, _facing]:

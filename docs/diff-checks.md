@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; checks 453-455 (main path, display)
+## Chat 117: the walking menu left on row 24 while a square's script types; a hit page cut mid-line; a NEW_ECL keeps a blank place line; checks 453-455 (main path, display)
 
 - **The walking menu stays on row 24 while a step's script runs (found, fixed):** DOSBox, 2:15's garden (check 54's
   start jumped to 7,9 W, `~/gbr/lab/data/c117/sGd`; tpseed 77777777, four Ups: the slime at 3,9): YOU SEE WHAT ONCE
@@ -195,6 +195,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   'NOW BEAT IT BEFORE WE GET SERIOUS.' types under the prompt with the place line blank, and SPRITE_OFF / CALL
   0x2C90 bring the view, the place line and the walking menu (`g/bb.png`). Ours blanked the place line on the first
   page. Now a page counts the hit lines finished when it was cut (`_box_hits`); the place line blanks only after one.
+- **A NEW_ECL keeps a blanked place line (found, fixed):** 6:19's silver dragon, ATTACK (check 47's keys): the story page
+  ends with the printer's PRESS ANY KEY (place line up, HP 200: no hit yet), the hit page (BAKSHI's 38-character line
+  leaves row 18 blank, as ours), AFTER RECOVERING FROM THE FIREBALL ... types under PRESS <ENTER>/<RETURN> with the
+  place line blank, then NEW_ECL 25: row 24 clears, and **the place line stays blank** through the cave's AS YOU HIKE
+  ... text and its ENTER CAVE / IGNORE CAVE menu; IGNORE CAVE's band view brings it back (`g/fc.png`). Without the
+  DAMAGE (check 2's keys: ENTER CAVE, the dragon's two pages, back by NEW_ECL) the place line is up at the cave
+  (`g/cw.png`). Ours brought it back at the NEW_ECL (chat 115 had assumed a new area redraws it). Now NEW_ECL keeps
+  `place_blank` and sets `place_back_at_rest`: the walking screen after the arrival's script brings it back
+  (`vid/fb.mp4` before, `fb2.mp4` after).
+- **Seen, matching:** a refused step's script keeps the walking menu too (2:9 3,10 N, Up into the wall: the bugbears,
+  no time passing; `sWb`); chat 116's open item, a figure left up then a CAST with no spells (4:2's chained man,
+  check 59's keys, LEAVE, C): THRENDER GRONE HAS NO SPELLS MEMORIZED, the man's figure stays, the box empties, as
+  ours; 8:29's arrows (check 30's seed): every arrow misses, so no hit page (the slime's case).
 - **Check 453** (2:15 the garden's slime, seed 77777777: the description, AS YOU MOVE ..., the slime's d4, YOU NOW
   CAREFULLY AVOID; 0x4A32 = 2), **454** (8:13 the truce kobold with 0x4A8E = 1, `sKy`: AGREE, FOLLOW, the tap (two
   Enters, as 452), the boulder YES, YOU CLAMBER NOISILY, the treasure line, LET IT GO), **455** (2:9 the bugbears,

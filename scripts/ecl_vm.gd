@@ -249,6 +249,7 @@ func copy_from(src: EclVM) -> void:
 	row24_left = src.row24_left
 	damage_page = src.damage_page
 	place_blank = src.place_blank.duplicate()
+	place_back_at_rest = src.place_back_at_rest
 	sprite_hidden = src.sprite_hidden
 	list_lit = src.list_lit
 	_enc = src._enc.duplicate(true)
@@ -808,6 +809,10 @@ var damage_page := false
 ## script goes on or stops (PRINT_CLEAR, a YES/NO menu, the walking menu) until something redraws it: a CALL
 ## 0x2C90, a fight, a new area, a step or turn, SEARCH (main). [x, y, facing] where it went blank; [] none.
 var place_blank := []
+## Chat 117 (DOSBox, 6:19's dragon fireball, then NEW_ECL 25): a NEW_ECL doesn't redraw the place line: it stays blank
+## through the new area's arrival text and menu (the cave's ENTER CAVE / IGNORE CAVE) and comes back with the walking
+## screen once that script ends (main clears place_blank at IDLE / DONE while this is set).
+var place_back_at_rest := false
 ## Main sets step_next before the square's script after a step (_finish_move); start() moves it to step_fresh for
 ## that run. A DAMAGE page in it sets a redraw flag again (step_fresh false).
 var step_next := false
@@ -880,6 +885,7 @@ func _show_page(page: Array) -> void:
 	damage_page = white_from >= 0 and (page.size() < 5 or int(page[4]) > 0)
 	if damage_page:
 		place_blank = [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3]
+		place_back_at_rest = false
 		step_fresh = false
 	if page.size() > 2 and (page[2] as Array).size() == party.size():
 		for i in party.size():
@@ -1540,7 +1546,7 @@ func _exec(ins: Dictionary) -> void:
 				typing_wait = true
 				state = State.WAIT
 				return
-			place_blank = []      # once the text has typed (see COMBAT's)
+			place_back_at_rest = not place_blank.is_empty()   # kept blank into the new area (chat 117)
 			row24_left = ""
 			new_ecl = _value(a[0])
 			state = State.NEW_ECL
