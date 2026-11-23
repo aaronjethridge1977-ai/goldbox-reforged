@@ -207,6 +207,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   walking menu. Now `main.gd _type_ahead_go` hands the held key to the menu or page the script stops at (an INPUT still
   drops it). Tested with `timed=` keys (`data/c120/tcast.rec`, `tdr1.rec`, `tdr2.rec`): the three as the original;
   the code before kept the page up. No check: a check's keys wait for the engine.
+- **The 3D view's sky (found, fixed; main path, display):** GAME.OVR 0x2DD1A takes the party square's info byte
+  (0x2EE71: the map's +0x200 byte); with bit 7 set (indoors: 8:13's caves, New Phlan's buildings) the sky cell is
+  0x49FE, else 0x49FD, and the cell's value indexes a colour table at DS:0x0C26 (read in DOSBox: 0 15 12 11 13 10 9 14,
+  twice). Ours drew 0x49FD's value as the colour (8 dark grey, 15 white; 0 shown as cyan) and never used 0x49FE.
+  DOSBox: New Phlan 14,4 W at 20:56 (0x49FD = 8, a jump save from check 46's start): a black sky, ours dark grey;
+  8:13 6,15 N (0x49FE = 8): black, ours cyan. Now `main.gd SKY_COLOURS`; ours' New Phlan view matches but for the
+  far row below.
+- **Open (main path, display), not fixed:** (1) **the farthest wall row** (New Phlan 14,4 W at night, the far shop
+  front): the original draws three panels (24 px), ours five (40 px) (`~/gbr/lab/data/c120/npsign.png`,
+  `np2.png` / `w4/np.png`). (2) **8:13's arrival from the band (SMALL)**: the original's place line shows
+  "6,15 N 12:50" though 8:13's init sets 0x49FB (no square); a turn then shows "W 12:50"; ours shows "N 12:50" at
+  once. Other arrivals differ: the castle (8:16, its init stops at a PRESS) and the pyramid show no square at once; the
+  dragon's cave (6:19) keeps the band's own line (10,9 W). The rule isn't found yet.
 - **Feather Fall at 4:2's thieves' well (not found):** the script (0xACF5) looks for 27 in cells 0x4900-0x493F and the
   climber ([0x6DB4]) in 0x4940 + the same index; no script writes those cells. DOSBox, check 456's start with THRENDER
   GRONE given effect 0x1B (FEATHER FALL under camp DISPLAY): the cells stay 0 and he falls (15d6, dies), as ours.

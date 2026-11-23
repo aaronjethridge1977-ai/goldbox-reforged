@@ -2423,6 +2423,10 @@ func _overland_step(direction: int) -> void:
 		_after_vm()
 
 
+## The 3D view's sky colours by the sky cell's value (DS:0x0C26, read in DOSBox; chat 120).
+const SKY_COLOURS := [0, 15, 12, 11, 13, 10, 9, 14, 0, 15, 12, 11, 13, 10, 9, 14]
+
+
 ## The wilderness's party mark (chat 120, GAME.OVR 0x2DB87): ICON.DAX's rider, frame _rider_n (DS:0x6DDC, 0..5), which
 ## steps at each draw of the view in the original: a step, LOOK, ENCAMP and its EXIT, back from VIEW, back from a 3D
 ## area; SEARCH doesn't (DOSBox, 6:25's band). A load shows frame 1 (the original's counter is 2 after it).
@@ -3883,8 +3887,12 @@ func _show() -> void:
 	_rider_away = true      # chat 120: a 3D screen: the wilderness's view is drawn anew on the way back
 	_ensure_area_script()
 	e = _maps[_map_index]
-	var sky := _vm.read_byte(EclVM.SKY_OUTDOORS)
-	_dungeon.sky_color = sky if sky > 0 and sky < 16 else 11
+	# Chat 120 (GAME.OVR 0x2DD1A): the sky is DS:0x0C26's colour for the area's sky cell: 0x49FE on a square whose
+	# info byte has bit 7 (indoors: 8:13's caves, New Phlan's buildings), 0x49FD elsewhere. The cell isn't the colour
+	# itself (DOSBox, New Phlan at 20:56 with 0x49FD = 8: a black sky; ours drew dark grey; 8:13 with 0x49FE = 8:
+	# black, ours cyan).
+	var sky_cell := EclVM.SKY_INDOORS if e.map.flag(_pos.x, _pos.y) & 0x80 else EclVM.SKY_OUTDOORS
+	_dungeon.sky_color = SKY_COLOURS[_vm.read_byte(sky_cell) & 15]
 	if _vm.view_blank:
 		# After a rune page, an empty view until the party turns or steps (EclVM.view_blank; DOSBox, main chat 109).
 		var here := [_pos, _facing, _map_index]
