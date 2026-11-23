@@ -1106,6 +1106,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_type_ahead = event as InputEventKey
 			get_viewport().set_input_as_handled()
 			return
+		if not _vm.place_blank.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
+				and (key in [KEY_A, KEY_V, KEY_E, KEY_L, KEY_C, KEY_S, KEY_HOME, KEY_END] or event.is_action("ui_up") \
+				or event.is_action("ui_down") or event.is_action("ui_left") or event.is_action("ui_right")):
+			# The words that redraw the place line (main chat 111; chat 115: SEARCH at 5:6), and any step or turn,
+			# a refused step too (chat 115, DOSBox: 5:5, Up into the next hedge shows N 12:44 with its question).
+			_vm.place_blank = []
 		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			# The walking menu's other words (main chat 111, DOSBox 4:10's tower after YES): AREA, LOOK, ENCAMP,
 			# VIEW and a CAST that opens the spell list redraw the whole screen on the real square; SEARCH,
@@ -2267,6 +2273,7 @@ func _finish_move(direction: int) -> void:
 			_step_from = Vector2i(-1, -1)
 			_sync_position_to_vm(_facing)
 			var keep := _vm.text
+			_vm.step_next = true
 			_vm.start(1)
 			if _vm.text == "" and not _vm.text_changed:
 				_vm.text = keep
@@ -3883,6 +3890,12 @@ func _draw_screen() -> void:
 		place += " SEARCH"
 	if _vm.damage_page and press24:
 		place = ""      # chat 114: the original's party redraw after a hit blanks the place line (DOSBox: 8:13's rocks)
+	elif not _vm.place_blank.is_empty():
+		# ... and nothing but a redraw brings it back (chat 115, DOSBox: 4:10's fumes, 5:6's altar; EclVM.place_blank).
+		if _vm.place_blank == [_pos.x, _pos.y, _facing]:
+			place = ""
+		else:
+			_vm.place_blank = []
 	# A DAMAGE page keeps its leading blank row (the original's cursor starts the first hit a row down).
 	# The original printer's rows (START.EXE 0x77F8: PrintWrap; main chat 106, DOSBox: Rolf's and the clerk's texts).
 	var lines := PrintWrap.lines(body.strip_edges(not press24, true), 38)

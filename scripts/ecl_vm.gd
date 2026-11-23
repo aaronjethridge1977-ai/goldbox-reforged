@@ -245,6 +245,7 @@ func copy_from(src: EclVM) -> void:
 	white_from = src.white_from
 	row24_left = src.row24_left
 	damage_page = src.damage_page
+	place_blank = src.place_blank.duplicate()
 	sprite_hidden = src.sprite_hidden
 	list_lit = src.list_lit
 	_enc = src._enc.duplicate(true)
@@ -315,6 +316,8 @@ var running_entry := -1    # the entry point start() last ran (4: the init)
 ## Runs an entry point to completion or until a menu.
 func start(entry: int) -> State:
 	running_entry = entry
+	step_fresh = step_next
+	step_next = false
 	picture_up = false
 	row24_left = ""
 	list_lit = selected
@@ -794,6 +797,14 @@ var _box_white := -1      # the page's first row a hit line went to (-1: none ye
 ## white_from: the shown text's first white row (-1 none); damage_page: a page with hits is up.
 var white_from := -1
 var damage_page := false
+## Chat 115 (DOSBox: 4:10's fumes, 5:6's altar): the place line a page with hits blanked stays blank after the
+## script goes on or stops (PRINT_CLEAR, a YES/NO menu, the walking menu) until something redraws it: a CALL
+## 0x2C90, a fight, a new area, a step or turn, SEARCH (main). [x, y, facing] where it went blank; [] none.
+var place_blank := []
+## Main sets step_next before the square's script after a step (_finish_move); start() moves it to step_fresh for
+## that run. A DAMAGE page in it sets a redraw flag again (step_fresh false).
+var step_next := false
+var step_fresh := false
 ## Chat 114 (DOSBox, 5:4's kitchen, check 60): DAMAGE's last PRESS <ENTER>/<RETURN> TO CONTINUE stays on row 24 after
 ## its key (GAME.OVR 0x37CD draws it, nothing clears it); a vertical menu after it leaves row 24 alone, a horizontal
 ## menu, a question or the walking menu redraws it. The row as left ("" when redrawn).
@@ -857,6 +868,9 @@ func _show_page(page: Array) -> void:
 	text_changed = true
 	white_from = int(page[3]) if page.size() > 3 else -1
 	damage_page = white_from >= 0
+	if damage_page:
+		place_blank = [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15, read_byte(PARTY_DIR) & 3]
+		step_fresh = false
 	if page.size() > 2 and (page[2] as Array).size() == party.size():
 		for i in party.size():
 			(party[i] as PartyMember).hp = page[2][i][0]
@@ -1103,6 +1117,8 @@ func _exec(ins: Dictionary) -> void:
 		return
 	if op in ["PICTURE", "NEW_ECL", "LOAD_AREA_MAP", "LOAD_AREA_DECO", "COMBAT"]:
 		view_redrawn = true
+	if op in ["COMBAT", "NEW_ECL"]:
+		place_blank = []
 	if op == "COMBAT":
 		picture_up = false      # GAME.OVR 0x24E1 clears DS:0x84C8-9 after the fight (0x261F)
 	match op:
@@ -1211,6 +1227,10 @@ func _exec(ins: Dictionary) -> void:
 					var d := read_byte(PARTY_DIR) & 3
 					write_byte(PARTY_X, (read_byte(PARTY_X) + [0, 1, 0, -1][d]) & 0x0F)
 					write_byte(PARTY_Y, (read_byte(PARTY_Y) + [-1, 0, 1, 0][d]) & 0x0F)
+					# A place line a DAMAGE blanked stays blank on the new square (chat 115, DOSBox: 5:5's hedge, check
+					# 121's keys: the view at 11,5, no place line until the party turns).
+					if not place_blank.is_empty():
+						place_blank = [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15, d]
 					# ... and reads the new square's info byte and wall ahead on the map up
 					# (GAME.OVR 0x8F1F, 0x8F33; chat 61).
 					if wall_info.is_valid() and not on_overland:
@@ -1263,6 +1283,11 @@ func _exec(ins: Dictionary) -> void:
 					# 0x9E62) still shows the square until the party turns or steps (main chat 109, DOSBox: 9,4 W
 					# 10:56, then S 10:56 at the first turn; ours hid it at once). See main's _place_line.
 					view_redrawn = true
+					# The original's handler (GAME.OVR 0x3A3F) redraws only with a redraw flag set (DS:0x84E0/E3/E5/E6/E8);
+					# a step clears 0x84E0 after its own redraw, before the square's script (0x421E), so the step script's
+					# CALL leaves a blanked place line blank (chat 115, DOSBox: 5:5's hedge, check 121's keys).
+					if not step_fresh:
+						place_blank = []
 					place_drawn = {"hide": read_byte(0x49FB), "at": [read_byte(PARTY_X) & 15, read_byte(PARTY_Y) & 15,
 						read_byte(PARTY_DIR) & 3]}
 					# The redraw also wipes an approaching figure: City Hall's guard (3:8 0xB3D9)
