@@ -1329,6 +1329,13 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 52 (2026-11-23): p17a6 identical on today's origin/main (Stage 1: 69 of 70)
+
+p17a6 (segment 8, `p17a2_s8t` -> `s8shop`) rerun on origin/main 203f024 (main chat 103's and Combat Chat 45's shared
+list top and Home / End wrap, checks 378-379, landed 2026-11-22): **statediff 0 differences**, so its known.txt line
+("a coin of a kind apart ... waits on main and design") is dropped. `match.py score`: **69 of 70** (the one left:
+p45i5 game, the experience after Tyranthraxus, with Combat). Lab: `p52/match_p17a6.out`, `p52/score.md`.
+
 ## Player 51 (2026-11-23): p45i5 replayed draw for draw (6563 of 6563); the parting is the experience (game)
 
 Combat Chat 52's asks for **segment.py**, and three more found on the way (each rerun of p45i5 ~22 min):
