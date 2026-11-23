@@ -30,4 +30,3 @@ label p26a1 game: one NOMAD figure more in ours' initiative (Player 30's request
 label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the original asks first (Player 30's request, to combat)
 label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
-label p45i5 game: every draw identical (6563 of 6563, Player 51); the experience after Tyranthraxus's battle differs: the share of ARN, BRAM, CEDRIC 11074 in the original, 9229 in ours (5/6), ELWEN 3356 / 2796 (5/6), GENHEERIS's own 2018 more in both, LIRA (F6/M6) 917 / 5112, DORN 0 in both (to Combat, 2026-11-23)

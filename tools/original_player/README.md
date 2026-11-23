@@ -1329,6 +1329,20 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 53 (2026-11-23): p45i5 identical on Combat Chat 53's experience fix (Stage 1: 70 of 70); the stirge checkpoint
+
+**p45i5** (segment 34, Tyranthraxus's finale) rerun on origin/main 6d42d32 (Combat Chat 53's c792aa4: a won fight's
+experience goes to the members still in it): draws 6563 of 6563, **statediff 0 after known.txt's ignores** (the three
+lines left are the 4AFA-4AFF counters, `ignore ^memory 4AF[A-F]`); its known.txt line dropped. `match.py score`:
+**70 of 70 recordings identical** (0 game, 0 replay tool, 0 known shortcut). Lab: `p53/match_p45i5.out`, `p53/score.md`.
+
+**The stirge checkpoint for Combat** (Combat Chat 53's request, the sated stirge): `p53/stirge.plan` is `p37/king5.plan`
+cut at 7:26 (p37n1's audit, the trip, `walk 11,24`, `step E`, `step N`, `step E`, `checkpoint s37stirge`, `step N`),
+run p53a1 from `p37k1_s37tombinn`, seed 37130001, `OP_MAGIC=0`: every key and seed as p37n1's to the save. The save
+`.lab/player/saves/p53a1/s37stirge` (also `p2start/p53a1_s37stirge`, slot H's files): **7:26 13,23 facing E, seed
+b871d583**, all six at full HP, ARN lit. From it, one step N (`up`) with seed b871d583 meets the band at 13,22, seed
+f0122bdd: YOU SURPRISE A GROUP OF STIRGES, COMBAT WAIT FLEE PARLAY (p53a1 KEY #340, as p37n1's #335; p37n1 chose WAIT).
+
 ## Player 52 (2026-11-23): p17a6 identical on today's origin/main (Stage 1: 69 of 70)
 
 p17a6 (segment 8, `p17a2_s8t` -> `s8shop`) rerun on origin/main 203f024 (main chat 103's and Combat Chat 45's shared
