@@ -128,6 +128,8 @@ const PRESS_TO_CONTINUE := "PRESS <ENTER>/<RETURN> TO CONTINUE"
 ## row24_left when a step's script runs: the walking menu the step left on row 24 (chat 117, DOSBox: 2:15's garden;
 ## the original types the square's text and waits its DELAY over AREA CAST VIEW ENCAMP SEARCH LOOK, AREA lit).
 const WALK_MENU_LEFT := "\u0001WALK"
+## The ops that wait for the text printed before them to type (see _exec).
+const WAITS_FOR_TEXT := ["MENU_HORIZONTAL", "MENU_VERTICAL", "WHO", "ENCOUNTER_MENU", "PARLAY", "INPUT_NUMBER", "INPUT_STRING"]
 var _enc := {}                   # the ENCOUNTER_MENU's operands while it is open
 var _enc_waited := false
 ## Characters PRINTed since the script last stopped, and those before the DELAY now running: the original types
@@ -1128,6 +1130,11 @@ const QUIET := [
 func _exec(ins: Dictionary) -> void:
 	var a: Array = ins.args
 	var op := String(ins.op)
+	# Chat 117 (DOSBox, 8:13's boulder: YES NO comes 3.3 s after A BOULDER BLOCKS OFF THE PASSAGE. starts, once it has
+	# typed, with row 24 as left meanwhile): the original types a PRINT before the next op runs, so a menu, a question
+	# or an input after a text waits that text's typing time; ours showed the menu with the text at once.
+	if op in WAITS_FOR_TEXT and _wait_typing():
+		return
 	var prev_op := _prev_op
 	_prev_op = op
 	if op in QUIET:

@@ -211,6 +211,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   menu with the text at once. Now EXIT waits the text's typing time first (`_wait_typing`, as NEW_ECL and COMBAT);
   a key pressed meanwhile is kept (`_type_ahead`), as the original's keyboard buffer (`vid/kn.mp4` before, `kn2.mp4`
   after).
+- **A menu after a text waits for it too (found, fixed):** 8:13's boulder (check 452's keys): A BOULDER BLOCKS OFF THE
+  PASSAGE. ... DO YOU? types for 3.3 s with row 24 blank and YES NO appears only then; ours showed YES NO with the
+  text. The original types a PRINT before the next op runs, so now MENU_HORIZONTAL, MENU_VERTICAL, WHO,
+  ENCOUNTER_MENU, PARLAY and INPUT wait the typing time of the text before them (`EclVM.WAITS_FOR_TEXT`; `vid/kn4.mp4`).
 - **Check 456** (4:2 the thieves' well at 1,3: check 59's start jumped to 1,2 S, `sWl`; Up, CLIMB DOWN, THRENDER
   GRONE (no climbing skill): YOU BEGIN A LONG FALL., YOU HIT AN UNYIELDING STONE FLOOR., 15d6: THRENDER GRONE DIES.
   (status 6), CALL 0x2C90 back to 1,3 W, YOUR FRIEND FLOATS OUT OF THE WELL.). Three runs MATCH; the break (his
