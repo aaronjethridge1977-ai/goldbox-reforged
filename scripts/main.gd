@@ -2668,7 +2668,7 @@ func _script_delay() -> float:
 	if _vm.typing_wait:      # a PRINT_CLEAR over a text not yet seen: its typing time only (no DELAY)
 		return maxf(TEXT_SPEED * chars * 0.010, 0.001)
 	if _vm.state == EclVM.State.WAIT and _vm._enc_waited:
-		return TEXT_SPEED * (0.225 + "BOTH SIDES WAIT.".length() * 0.010)
+		return TEXT_SPEED * (0.225 + EclVM.typed_chars("BOTH SIDES WAIT.") * 0.010)
 	if chars > 0:
 		return TEXT_SPEED * (0.225 + chars * 0.010)
 	return maxf(CampScreen.speed * 0.225, 0.001)

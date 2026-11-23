@@ -745,6 +745,13 @@ func _restore_pick() -> void:
 		selected_creature = -1
 
 
+## Chat 118 (START.EXE 0x77A4: the printer steps over spaces without 0x7737's per-character wait; DOSBox at speed 4:
+## THE SHOP SPECIALIZES IN ARMS AND ARMOR. 'CAN I SHOW YOU OUR WARES?' types its 56 other characters in 2.33 s):
+## a text's typing time counts its characters other than spaces.
+static func typed_chars(s: String) -> int:
+	return s.length() - s.count(" ")
+
+
 ## LOAD_CHAR n: selects party member n & 0x7F. With the high bit the original redraws the
 ## party, and a member dismissed through the window (0x6C00 = 0) leaves now.
 ## Chat 113: the original types a script's text before the next instruction runs (START.EXE 0x7782), so an
@@ -1420,7 +1427,7 @@ func _exec(ins: Dictionary) -> void:
 		"PRINT":
 			_runes_to_box = false
 			text += _string(a[0])
-			print_chars += _string(a[0]).length()
+			print_chars += typed_chars(_string(a[0]))
 			text_changed = true
 			_note_shown()
 		"PRINT_CLEAR":
@@ -1438,7 +1445,7 @@ func _exec(ins: Dictionary) -> void:
 			_runes_to_box = false
 			text = _string(a[0])
 			white_from = -1
-			print_chars += _string(a[0]).length()
+			print_chars += typed_chars(_string(a[0]))
 			text_changed = true
 			_note_shown()
 		"PRINT_RETURN":
