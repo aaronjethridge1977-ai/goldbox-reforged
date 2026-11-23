@@ -1316,6 +1316,29 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 49 (2026-11-23): Q34's finishing blows (the game 4 of 5); p45i5's parting is the replay tool (CONTROL space)
+
+**Q34 (Jeremy 07:33: "casters never strike Tyranthraxus" is a guideline, not a rule):** tactics.py `BOSS_FINISH`
+(`OP_BOSS_FINISH=20`, 0 off): a member with cleric or magic-user levels **and fighter levels** (record +0x98-0x9A,
+now the figure's `fi`; ELWEN F5, LIRA F6) walks to him past the others and strikes by stepping in (a `focus` move)
+once he is at 20 HP or less or is the last foe standing (he comes alone, so from his first round); CEDRIC and
+GENHEERIS still step away and guard. `targets()` carries the Lead's note on Jeremy's two lessons (front or back line
+first). **The measure** (lab `p49/measure.sh`, `measure.txt`; seeds 47010001-05 from `p45i1_s45ready`, plan
+`p49/rules48.plan`; the plan path must be absolute, the 07:40 false start): **the guards 5 of 5, none dead; the game
+4 of 5** (Player 48's rules alone: 2 of 5); deaths in wins 5 in 4; LIRA's blows landed in four tries, ELWEN's never.
+Not tried in ours first (no lane tool runs tactics.py against ours). Details: stuck-fights.md section 5, "Q34's
+finishing blows".
+
+**Stage 1, p45i5 (parts at 991): the replay tool.** The original's run sent `MAGIC alt+m` and then `CONTROL space`
+(game.py: the QUICK members handed back) in the guards' fight; segment.py carried the Alt-M as `magicat=` and
+dropped the Space, so ours' ELWEN stayed QUICK. Labelled `replay tool` in match/known.txt; the only recording of the
+70 with a CONTROL line. segment.py now has `control_draws()` (`OP_CONTROLAT=<draw>,...` or the trace's `CONTROL
+between draws` lines) and emits `controlat=<draw>` at the magicat slot; nothing is emitted until one of those
+exists, since ours has no such key yet (asked of Combat with the trace line; board). Score: 68 of 70 (p17a6 game,
+p45i5 tool, NOT RUN).
+
+Lab: `p49/` (measure.sh, measure.txt, rules48.plan, score.md); runs p49t1-t5.
+
 ## Player 48 (2026-11-23): the score without the shortcuts and with p45i5; the door review; the guards' orders as the general rules (OP_PLAN5 retired); the measure, rules alone
 
 **Stage 1:** Jeremy (2026-11-22 08:37): p45i5, the win without shortcuts, meets the full-run item, so the two shortcut

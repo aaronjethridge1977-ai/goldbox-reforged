@@ -921,3 +921,32 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   fight), the Wand of Magic Missiles (ARN, a fighter: should go to LIRA at the inn), the Potions of Healing and
   Extra Healing (`hurt=20` never came before a member fell from higher HP in one breath), 8 other scrolls (two hands
   each; the memorized spells won the guards). *seen*
+
+### Q34's finishing blows: the casters with fighter levels strike him (Player 49, 2026-11-23)
+
+- **Setup:** as Player 48's measure (from `p45i1_s45ready`, lab `p49/rules48.plan`, the general rules, no key turns,
+  `OP_FIGHTDEATH=1 OP_MANUAL=1 OP_STUCK_KEYS=1500`, seeds 47010001-05) with **Jeremy's Q34 answer (07:33) in
+  tactics.py** (`OP_BOSS_FINISH=20`): "casters never strike him" is a guideline; ELWEN and LIRA (the casters with
+  fighter levels) walk to him past the others and strike once he is at 20 HP or less **or is the last foe standing**;
+  CEDRIC and GENHEERIS (no fighter levels) still stand back. He comes alone after the CONTINUE rounds, so the "last
+  foe" half sends them at him from his first round. Not tried in ours first: no lane tool runs tactics.py against
+  ours (main's "try in ours" step is not built for the Player). *seen*
+
+  | try | guards | him | who died | his HP under LIRA's / ELWEN's blows | the chat's minutes |
+  |---|---|---|---|---|---|
+  | p49t1 | won, none dead (DORN 0 HP) | **won** (BRAM 21 -> 0) | ARN | LIRA 80 -> 64; ELWEN missed twice | 0 |
+  | p49t2 | won, none dead (DORN 0 HP) | lost at his 44 HP | the party | LIRA 58 -> 44; ELWEN missed twice | 0 |
+  | p49t3 | won, none dead (DORN 0 HP) | **won** (BRAM 25 -> 0) | **none** | LIRA 47 -> 25; ELWEN missed | 0 |
+  | p49t4 | won, none dead | **won** (ARN 32 -> 0) | BRAM | LIRA missed twice | 0 |
+  | p49t5 | won, none dead | **won** (LIRA 2 -> 0) | BRAM, DORN, ELWEN | LIRA 32 -> 16, 2 -> 0 | 0 |
+
+- **Against Player 48's rules alone (the same seeds):** the guards 5 of 5 both; **the game 4 of 5 against 2 of 5**
+  (seeds 1 and 4, lost at his 15 and 10 HP with the casters standing back, now won; seed 2 lost at 44 instead of 80);
+  deaths in wins 5 in 4 (1.25 a win: ARN; none; BRAM; BRAM, DORN, ELWEN) against 3 in 2 (1.5). **LIRA (F6) landed a
+  blow in four of five tries** (14-22 HP each, and p49t5's killing blow); **ELWEN (F5) never hit him** (AC -4) in
+  five swings. ELWEN died once (p49t5).
+- **Unspent at the end of the four wins** (`p49/spent.py`): as Player 48's: 23 of the door's 26 (with Genheeris' wand
+  24); p49t4 drank one Potion of Healing more (DORN). Same causes (the Necklace with no clear aim, ARN's wand, the
+  `hurt=20` potions, the scrolls).
+- **Next (to the guide):** keep it as the rule; whether ELWEN, who never hits, should rather stand back (or cure) while
+  LIRA strikes is one question for the guide, not needed for Stage 1.

@@ -58,6 +58,26 @@ def magic_draws(run, a):
     return out
 
 
+def control_draws(run, a):
+    """Player 49 (p45i5): the draw from which the original's QUICK members were handed back (game.py's CONTROL space),
+    one per CONTROL line in turn, for ours' `controlat=` (asked of Combat, 2026-11-23). OP_CONTROLAT=<draw>,... wins;
+    else, from the run's start, the trace's `CONTROL between draws <a> and <b>` lines as magic_draws(). None: the
+    line is left out (ours has no other way to take the Space at the right turn)."""
+    env = os.environ.get("OP_CONTROLAT")
+    if env is not None:
+        return [int(x) if x.strip() not in ("", "-") else None for x in env.split(",")]
+    tr = os.path.join(LOGS, "%s.trace.txt" % run)
+    if a != "begin" or not os.path.exists(tr):
+        return []
+    out = []
+    for line in open(tr, errors="replace"):
+        m = re.match(r"CONTROL between draws (\d+) and (\d+)", line)
+        if m:
+            a0, b0 = int(m.group(1)), int(m.group(2))
+            out.append(a0 if a0 == b0 else a0 + 1)
+    return out
+
+
 def keys_between(run, a, b, magic, tplog=False, extra=None):
     """The original's keys after checkpoint a's save until checkpoint b's ENCAMP, as ours' --keys.
     extra (Player 5): {n: [keys]} ours-only keys sent after the segment's n-th original key (1-based), for a screen
@@ -66,6 +86,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
     last_t = None
     extra, n = extra or {}, 0
     magicat, magic_slot = magic_draws(run, a), 0
+    controlat, n_ctl = control_draws(run, a), 0
     for line in open(os.path.join(LOGS, "%s.log" % run)):
         if "GOAL done: checkpoint %s" % a in line or (a == "begin" and line.split()[1:2] == ["RUN"]):
             on = True
@@ -91,6 +112,15 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
                 magic_slot += 1      # Player 48 (p45i5: two Alt-Ms in one battle came out as magicat=6380,911)
             else:
                 out += ["magic"] + (["tplog"] if tplog else [])
+            continue
+        if " CONTROL space " in line:
+            # Player 49 (p45i5): the original's hand-back of the QUICK members, read at a computer turn's opening
+            # poll as the Alt-M: ours' `controlat=<draw>` at the same slot as magicat= (the walk to this fight)
+            at = controlat[n_ctl] if n_ctl < len(controlat) else None
+            n_ctl += 1
+            if at:
+                out.insert(magic_slot, "controlat=%d" % at)
+                magic_slot += 1
             continue
         if re.match(r"\s*[\d.]+ SHORTCUT win at ", line):
             # Player 34: the original's logged shortcut win (Q27 (a), plan line `shortcutwin`) as ours' lab key

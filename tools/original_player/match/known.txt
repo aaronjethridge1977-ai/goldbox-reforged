@@ -31,3 +31,4 @@ label p27d3 game: New Phlan's tavern brawl: ours goes into the fight where the o
 label p16a2 game: Sokal Keep's courtyard fight (4:21 8,5): ours ends in camp with ARN, CEDRIC, LIRA, DORN at 0 HP (no trace; Player 33 on today's main)
 label p15c5 game: one electrum between ARN and ELWEN after four SHAREs (no trace)
 label p17a6 game: a coin of a kind apart for ARN, BRAM, CEDRIC after the shop (the stale load word: Combat Chat 27, waits on main and design)
+label p45i5 replay tool: the original's CONTROL space (game.py's hand-back of the QUICK members, 19.7 s, read by the original at a computer turn's opening poll; ELWEN's menu at draw 991) has no counterpart in ours' keys: segment.py translates Alt-M as magicat= but drops the space, so ours runs ELWEN by the computer from 991 (Player 49; the first and only recording with a CONTROL line; to Combat: a trace line and a controlat= lab key)
