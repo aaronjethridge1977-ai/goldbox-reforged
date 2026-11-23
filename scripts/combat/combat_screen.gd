@@ -134,7 +134,7 @@ var _flying := false
 var _flight := {}          # {img: Image, at: Vector2i} while a missile is drawn
 var _spell_flight := {}
 var _cast_sound := 0         # the sound of the spell whose CASTS / USES line is still to show
-var _hold_flights := {}      # Hold Person's further targets (name: cell), each flown to before its line
+var _hold_seq: Array = []    # Hold Person's targets as taken, last aimed first: [name, cell, flown to before its line]
 var _hold_from := Vector2i.ZERO
 var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
 var _sparkle := -1                 # the figure showing a spell's sparkles
@@ -1127,11 +1127,11 @@ func _show_messages() -> void:
 			if _flying:
 				await flight_done
 				await get_tree().create_timer(0.13).timeout
-		if who != "" and _hold_flights.has(who):
-			var to: Vector2i = _hold_flights[who]
-			_hold_flights.erase(who)
-			_fly(_hold_from, to, [5, 133], 240.0, Speaker.SPELL)
-			await flight_done
+		if who != "" and not _hold_seq.is_empty() and _hold_seq[0][0] == who:
+			var hs: Array = _hold_seq.pop_front()
+			if hs[2]:
+				_fly(_hold_from, hs[1], [5, 133], 240.0, Speaker.SPELL)
+				await flight_done
 		_sound_for(msg)
 		if dying:
 			_panel_msgs.clear()
@@ -1762,13 +1762,16 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 		_spell_hits.append(int(t))
 	# Hold Person (GAME.OVR 0x286E9): the targets last to first; every one but the first taken
 	# gets the cast's sound again (id 2, played out) and a spark flown from the caster to it
-	# before its save and line.
-	_hold_flights = {}
+	# before its save and line. The lines are paired with their figures in that order, not by name
+	# alone (Jeremy's P108: three ORCs aimed, ours sparked the first aimed under the last one's line).
+	_hold_seq = []
 	if (id == 23 or id == 49) and targets.size() > 1:
 		_hold_from = _combatants[i].cell
-		for n in targets.size() - 1:
+		_spell_hits.reverse()
+		for n in range(targets.size() - 1, -1, -1):
 			var t: int = targets[n]
-			_hold_flights[(_combatants[t].who as PartyMember).name.to_upper()] = _combatants[t].cell
+			_hold_seq.append([(_combatants[t].who as PartyMember).name.to_upper(), _combatants[t].cell,
+					n < targets.size() - 1])
 
 
 ## Lightning Bolt's crackle (P86; DOSBox, Combat Chat 42's film lb1 at 30 fps): the bolt's walk is drawn by the

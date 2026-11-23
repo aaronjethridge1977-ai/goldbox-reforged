@@ -3,7 +3,8 @@ extends Control
 ## The way into the game. On first launch, as the original: the SSI / AD&D logo, the title
 ## picture (each drawn in from the top), the game's own credits; then a menu in the original's
 ## font and frame. A key moves on at once.
-##   CONTINUE        the quick save (F2), when there is one
+##   CONTINUE        the newest save: a lettered slot or the quick save (F2), whichever was saved last,
+##                   named beside it (Jeremy's P107)
 ##   LOAD SAVED GAME the original's own saves (SAVGAMA..J.DAT in the game folder)
 ##   NEW GAME        the ready-made party (CHRDATA1-6) from the start of the adventure
 ##   PARTY CREATION  the original's way in: create characters, add them, begin
@@ -25,6 +26,7 @@ var _stage := "title"
 var _items: Array = []
 var _sel := 0
 var _saves: Array[String] = []
+var _continue_slot := ""   # P107: what CONTINUE loads, the newest save: "QUICK", a letter, or "" (none)
 # Lab, 2026-11-13 (DOSBox at GOG's speed, cycles=auto = 3000): TITLE.DAX block 1 (SSI presents,
 # AD&D) draws top to bottom in about 0.4 s and stays about 7 s, then block 2 (the title) draws the
 # same way. A key cuts the logo's wait short.
@@ -78,6 +80,7 @@ func open(path: String, quick: bool) -> void:
 	for c in "ABCDEFGHIJ":
 		if GameData.exists(game_path.path_join("SAVGAM%s.DAT" % c)):
 			_saves.append(c)
+	_continue_slot = _newest_save()
 	_title.visible = true
 	_screen.visible = false
 	visible = true
@@ -184,7 +187,7 @@ func _show_menu() -> void:
 	_title.visible = false
 	_screen.visible = true
 	_items = []
-	if has_quick_save:
+	if _continue_slot != "":
 		_items.append("CONTINUE")
 	if not _saves.is_empty():
 		_items.append("LOAD SAVED GAME")
@@ -229,6 +232,9 @@ func _draw() -> void:
 			var s: String = _items[i]
 			g.text(12, 7 + i * 2, s.substr(0, 1), GameScreen.WHITE)
 			g.text(13, 7 + i * 2, s.substr(1), GameScreen.WHITE if i == _sel else GameScreen.GREEN)
+			if s == "CONTINUE":
+				g.text(22, 7 + i * 2, "(QUICK SAVE)" if _continue_slot == "QUICK" else "(SAVE %s)" % _continue_slot,
+						GameScreen.CYAN)
 			g.list_line(7 + i * 2, i)
 		g.list_chosen(_sel)
 		g.text(2, 20, "YOUR OWN COPY OF THE GAME'S FILES", GameScreen.CYAN)
@@ -402,11 +408,31 @@ func _unhandled_input(event: InputEvent) -> void:
 	_draw()
 
 
+## P107 (Jeremy, 2026-11-22): the save written last, by its file's time: the quick save ("QUICK") or one of
+## the original's lettered slots (its SAVGAMx.DAT); "" when there is none. A tie goes to the quick save.
+func _newest_save() -> String:
+	var best := ""
+	var best_t := -1
+	if has_quick_save:
+		best = "QUICK"
+		if SaveListScreen.quick_path != "":
+			best_t = FileAccess.get_modified_time(SaveListScreen.quick_path)
+	for c in _saves:
+		var t := FileAccess.get_modified_time(GameData.real_path(game_path.path_join("SAVGAM%s.DAT" % c)))
+		if t > best_t:
+			best = c
+			best_t = t
+	return best
+
+
 func _pick(item: String) -> void:
 	match item:
 		"CONTINUE":
 			visible = false
-			chosen.emit("continue", "")
+			if _continue_slot == "QUICK":
+				chosen.emit("continue", "")
+			else:
+				chosen.emit("load", _continue_slot)
 		"LOAD SAVED GAME":
 			if SaveListScreen.on():
 				_open_load_list()
