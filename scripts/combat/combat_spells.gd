@@ -172,7 +172,13 @@ func armour(tm: PartyMember, ac: int) -> int:
 func cough(j: int) -> void:
 	var cb: Dictionary = c.combatants[j]
 	if not cb.get("no_items", false):
+		# No sparkles on this line, even straight after STARTS TO COUGH (the sparkles come with the add-effect
+		# routine, START.EXE 0x2B8B, before the handler prints it; DOSBox sc_troll5, Combat Chat 53: the
+		# troll's sparkles with STARTS TO COUGH, none while IS COUGHING shows; ours had them on both).
+		var was := c.fx_subject
+		c.fx_subject = -1
 		c.message.emit("%s IS COUGHING" % cb.who.name)
+		c.fx_subject = was
 	cb.no_spells = true
 	cb.no_items = true
 
