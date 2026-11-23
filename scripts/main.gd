@@ -467,6 +467,7 @@ func _new_game() -> void:
 	_mode = Mode.WALK
 	# A fresh start: no flags or places from an earlier game.
 	_vm.mem.fill(0)
+	_vm.typewriter = true    # chat 118: DS:0x4A00 as the game's start sets it
 	_vm.hi.clear()
 	_vm.shown_texts.clear()
 	_wall_slots_reset()
@@ -1938,6 +1939,7 @@ func load_original_save(letter: String) -> bool:
 	_facing = ((s[0x3203] / 2) & 3) as DungeonView.Dir
 	_sync_position_to_vm(_facing)
 	_vm.state = EclVM.State.DONE
+	_vm.typewriter = true    # chat 118: the original loads through its start (GAME.OVR 0xE974 sets DS:0x4A00)
 	_status.text = "Loaded saved game %s." % letter.to_upper()
 	_show()
 	return true
@@ -2053,6 +2055,7 @@ func _quick_load() -> void:
 	Rememorize.from_save(_party, cfg.get_value("qol", "rememorize", {}))   # combat lane (C11-2)
 	_status.text = "Loaded."
 	_note_24("GAME LOADED.")
+	_vm.typewriter = true    # chat 118: as an original load (through the start)
 	_show()
 
 

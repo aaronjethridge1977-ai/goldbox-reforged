@@ -137,6 +137,14 @@ var _enc_waited := false
 var print_chars := 0
 var delay_chars := 0
 ## A PRINT_CLEAR waits while the text it replaces "types" (no DELAY of its own), then clears (chat 107).
+## Chat 118: DS:0x4A00, the printer's typewriter switch (START.EXE 0x777B waits game speed x 10 ms a character while it is
+## set). The game's start sets it (GAME.OVR 0xE974; a load comes through the start), PRINT and PRINT_CLEAR set it for
+## their text and clear it after (0x1763, 0x17DC), the encounter menu likewise (0x2C4F, 0x32E0); walking, AREA, VIEW,
+## ENCAMP, LOOK and SEARCH leave it (DOSBox, polled). So a vertical menu's title types only until the first text after a
+## load (5:3's gate from check 24's start: A DEEP VOICE CALLS DOWN, 'WHAT IS THE PASSWORD?' types 1.6 s, then the items;
+## with 0x4A00 poked to 0 it comes at once, as 6:1's HOW WILL YOU RESCUE THE BOY? after its text).
+var typewriter := true
+var _title_keep = null           # the text a vertical menu's typing title stands over (null: no title wait)
 var typing_wait := false         # BOTH SIDES WAIT. is up; the menu comes back after one DELAY (P106)
 var _parlay_values: Array = []
 var encounter_distance := 0      # squares between party and monsters, as the menu sees it
@@ -259,6 +267,8 @@ func copy_from(src: EclVM) -> void:
 	print_chars = src.print_chars
 	delay_chars = src.delay_chars
 	typing_wait = src.typing_wait
+	typewriter = src.typewriter
+	_title_keep = src._title_keep
 	_menu_dest = src._menu_dest.duplicate()
 	_parlay_values = src._parlay_values.duplicate()
 	encounter_distance = src.encounter_distance
@@ -1428,6 +1438,7 @@ func _exec(ins: Dictionary) -> void:
 			_runes_to_box = false
 			text += _string(a[0])
 			print_chars += typed_chars(_string(a[0]))
+			typewriter = false
 			text_changed = true
 			_note_shown()
 		"PRINT_CLEAR":
@@ -1446,6 +1457,7 @@ func _exec(ins: Dictionary) -> void:
 			text = _string(a[0])
 			white_from = -1
 			print_chars += typed_chars(_string(a[0]))
+			typewriter = false
 			text_changed = true
 			_note_shown()
 		"PRINT_RETURN":
@@ -1536,12 +1548,30 @@ func _exec(ins: Dictionary) -> void:
 				items[0] = PRESS_TO_CONTINUE
 			_pause_for_menu(a[0], items)
 		"MENU_VERTICAL":
+			var title := _string(a[1])
+			if _title_keep == null and typewriter and running_entry != 2 and typed_chars(title) > 0:
+				# Chat 118: with the typewriter on, the title types before the items show (see typewriter).
+				_title_keep = text
+				text = title
+				text_changed = true
+				pc = _at
+				delay_chars = typed_chars(title)
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
+			if _title_keep != null:
+				text = _title_keep
+				_title_keep = null
 			var items := []
 			for i in range(3, a.size()):
 				items.append(_string(a[i]))
 			var left := row24_left
 			_pause_for_menu(a[0], items)
-			row24_left = left if left != WALK_MENU_LEFT else ""   # the walking menu under one: not seen
+			# Chat 118 (DOSBox, 5:3's gate from check 24's start): a vertical menu leaves row 24 alone, the walking menu a
+			# step left there too; it stays after the choice while the next texts type (AN ALARM ..., A VOLLEY OF
+			# BOULDERS ...; WHAT PASSWORD DO YOU GIVE?) until DAMAGE's prompt or the input clears it.
+			row24_left = left
 			menu_vertical = true
 			menu_question = _string(a[1])
 		"ON_GOTO", "ON_GOSUB":
@@ -1644,6 +1674,7 @@ func _exec(ins: Dictionary) -> void:
 				write_byte(COMBAT_RESULT, 0)
 				_clear_fight_mods()
 		"ENCOUNTER_MENU":
+			typewriter = false      # GAME.OVR 0x32E0, at the menu's end
 			_enc = {"dest": a[3], "reactions": [], "texts": [],
 				"flee_need": _value(a[12]), "mon_speed": _value(a[13])}
 			for i in range(4, 9):
