@@ -92,6 +92,7 @@ var control_pending := false
 ## pairs by name there), -1 outside a spell (no sparkles).
 var fx_subject := -1
 var handed_back := -1      # a member whose computer turn Space ended: next_turn gives it back for the menu
+var paid: Array = []       # the party members a won fight's experience goes to (finish(): still in the fight)
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
 ## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
 ## spells (0xB105) are not stopped.
@@ -1146,6 +1147,18 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 ## unconscious, else unconscious with HP -> okay; DS:0x443B, a member running and none okay, takes only the first;
 ## Jeremy's P89, Combat Chat 46, DOSBox: RHIANNON unconscious at 5 HP before the Slums' orcs, OKAY at the fight's end).
 func finish() -> void:
+	# Who the won fight's experience goes to, taken before the fixes below: the original's award (GAME.OVR 0x58D3,
+	# divisor 0x58A0) runs before them (0x5B9B, then 0x5BB5) and pays each party member still in the fight (record
+	# +0x10D, cleared when a figure falls, START.EXE 0xBA:0x2E81, or runs, and set again only by a revival 0x2C792)
+	# and not animated (status 1). A member who fell and was cured in the fight is unconscious with hit points
+	# until the fixes: no share (Player 51's p45i5, Combat Chat 53: LIRA, bandaged and cured in the guards' fight,
+	# got none in the original, a sixth in ours; the others' shares 6/5 of ours).
+	paid = []
+	for c in combatants:
+		var w: PartyMember = c.who
+		if c.team == 0 and not w.is_monster and not c.down and not c.get("fled", false) \
+				and w.status != PartyMember.STATUS_ANIMATED:
+			paid.append(w)
 	var got_away := false
 	for c in combatants:
 		if c.team == 0 and not c.who.is_monster and c.who.status == PartyMember.STATUS_RUNNING:

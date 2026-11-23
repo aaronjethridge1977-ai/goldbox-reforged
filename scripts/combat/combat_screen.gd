@@ -433,10 +433,7 @@ func run_fight(seed_value: int, plan: String = "") -> void:
 		print("  %s %s HP %d" % [m.name, m.status_name(), m.hp])
 	if _combat.outcome() == 1:
 		var sp := Spoils.gather(defeated(), [], [])
-		var standing := []
-		for m in _party:
-			if m.can_fight():
-				standing.append(m)
+		var standing := _combat.paid.duplicate()      # still in the fight (Combat.finish(); Combat Chat 53)
 		var before := {}
 		for m in _party:
 			before[m.name] = m.experience

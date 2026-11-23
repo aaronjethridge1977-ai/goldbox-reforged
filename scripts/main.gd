@@ -3308,12 +3308,15 @@ func _on_event_fight_finished(result: int) -> void:
 		_party.erase(m)
 		_vm.party_changed = true
 	_vm.selected = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
-	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items())
+	# A duel keeps its own rule (Spoils.award's `only`: the share over every standing member, Player 18's p18a3).
+	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items(), _combat.paid if _duelist == null else null)
 
 
 ## Experience and treasure: from the defeated monsters and the event's TREASURE, then the
 ## results and treasure screens; the script carries on when they close.
-func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem] = []) -> void:
+## `paid`: a won fight's members still in it (Combat.paid; GAME.OVR 0x58D3 pays only those, before the fight's end
+## stands the cured fallen up: Combat Chat 53); null elsewhere: every member able to fight.
+func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem] = [], paid: Variant = null) -> void:
 	var coins := []
 	var list_id := 255
 	if _fight_treasure.size() >= 8:
@@ -3329,7 +3332,7 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	var hidden := _hirelings_take_shares(spoils)
 	var standing: Array = []
 	for m in _party:
-		if m.can_fight():
+		if m.can_fight() if paid == null else (paid as Array).has(m):
 			standing.append(m)
 	var share := spoils.award(standing, _duelist)
 	_duelist = null
