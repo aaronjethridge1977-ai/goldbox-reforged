@@ -2,7 +2,7 @@ class_name LabHooks
 ## The side lane's lab keys for main.gd's `--keys` replay (moved out of main.gd, decided 2026-11-14,
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
-const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "partyhp", "monsters", "outcome", "who", "temple",
+const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "fightaim", "partyhp", "monsters", "outcome", "who", "temple",
 		"ending", "fxlog", "fxwatch"]
 const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee=", "controlat="]
 
@@ -59,6 +59,20 @@ static func handle(main: Node, n: String) -> bool:
 			var up: bool = combat._cmode == "menu" and combat._combat.active >= 0 \
 					and not combat._combatants[combat._combat.active].get("quick", false) and not combat._announcing \
 					and combat._flash == "" and combat._row24_msg == "" and not main._busy and not combat._asking_continue
+			steady = steady + 1 if up else 0
+			if steady >= 3:
+				break
+			await main.get_tree().process_frame
+		return true
+	elif n == "fightaim":               # waits (up to 60 s) for a member's AIM (a begun spell going off), steady 3 frames
+		# Combat Chat 52, Player 48's p45i5: ELWEN's MANUAL key for her begun Hold Person reached ours while a guard's
+		# turn still ran, and her first pick fell on herself; a replay puts this before an AIM's first key.
+		var t_end := Time.get_ticks_msec() + 60000
+		var steady := 0
+		while combat.visible and combat._combat != null and Time.get_ticks_msec() < t_end:
+			var up: bool = combat._cmode == "aim" and combat._combat.active >= 0 \
+					and not combat._combatants[combat._combat.active].get("quick", false) and not combat._announcing \
+					and combat._flash == "" and not main._busy
 			steady = steady + 1 if up else 0
 			if steady >= 3:
 				break

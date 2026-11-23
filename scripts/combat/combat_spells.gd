@@ -319,6 +319,13 @@ func _lay_cloud(i: int, cell: Vector2i, lvl: int) -> void:
 ## A figure in the cloud saves (GAME.OVR 0x2B9D1), unless already coughing or sick. `by`: the figure whose
 ## turn it is (Protection from Evil against an evil caster).
 func cloud_save(j: int, by: PartyMember = null) -> void:
+	var was := c.fx_subject
+	c.fx_subject = j        # its lines are its own (the add-effect's sparkles go on it)
+	_cloud_save(j, by)
+	c.fx_subject = was
+
+
+func _cloud_save(j: int, by: PartyMember) -> void:
 	var e: Dictionary = c.combatants[j]
 	if e.down:
 		return
@@ -697,7 +704,9 @@ var _cast_cell := Vector2i.ZERO      # the aim point of the spell being resolved
 func _resolve(i: int, id: int, targets: Array[int]) -> void:
 	_resolving = id
 	_resolving_caster = level_of(c.combatants[i].who as PartyMember, id)
+	c.fx_subject = -2
 	_resolve_spell(i, id, targets)
+	c.fx_subject = -1
 	_resolving = 0
 	_resolving_caster = -1
 
@@ -884,8 +893,9 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				var v := Strength.enlarge_target(lvl) if id == 12 else Vector2i(21, 0)
 				if id == 35:
 					v = Strength.spell_target(t, func(n, d): return c.roll(n, d, "strength"))
-				var minutes := SpellTable.special_duration(id, func(n, d): return c.roll(n, d, "duration"), true)
-				if Strength.add(t, table.effect(id), id, v.x, v.y, minutes if minutes >= 0 else dur):
+				# Giant Strength's 1d4 x 10 + 40 minutes is the one roll above (GAME.OVR 0x2783D; Combat Chat 52, Player 48's
+				# p45i5 draw 4307: BRAM's potion, one d4 in the original, ours rolled it again here).
+				if Strength.add(t, table.effect(id), id, v.x, v.y, dur):
 					c.message.emit("%s IS STRONGER" % t.name)
 				if c.types != null:
 					t.recalculate(c.types)
@@ -1071,8 +1081,11 @@ func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 	dmg = SpecialAffects.efreeti_fire(t, kind, dmg, dice)
 	if (id == 15 or id == 65) and t.has_affect(0x5B):
 		dmg = 0                 # juju zombies ignore Magic Missile
-	# Magic resistance against magic damage (DS:0x6819 bit 8; category 6, after the elements).
-	if dmg > 0 and (kind & SpecialAffects.MAGIC) and SpecialAffects.magic_resists(t, table.level(id),
+	# Magic resistance against magic damage (DS:0x6819 bit 8; category 6, after the elements). A lightning bolt's
+	# squares are electricity and magic (GAME.OVR 0x29936: 0x6819 = 0x0C), so it is tried there too (Combat Chat 52,
+	# Player 48's p45i5 draw 6028: TYRANITHRAXUS's d100 after his save against GENHEERIS's bolt; ours drew none).
+	var magic_kind := (kind & SpecialAffects.MAGIC) != 0 or id in [20, 51, 60]
+	if dmg > 0 and magic_kind and SpecialAffects.magic_resists(t, table.level(id),
 			func(): return c.roll(1, 100, "%s resists" % t.name), _resolving_caster):
 		dmg = 0
 	if image_takes_it(t, id):

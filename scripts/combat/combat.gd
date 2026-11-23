@@ -86,6 +86,11 @@ static var magic_at_draws: Array[int] = []
 static var control_at_draws: Array[int] = []
 ## Space pressed while the computer runs a turn: read at the next computer turn's opening (GAME.OVR 0xBB81).
 var control_pending := false
+## Whose line a message is, for the screen's sparkles (Combat Chat 52, Jeremy's troll and cloud): the figure an effect
+## is being added to (>= 0; the original shows the sparkles from its add-effect routine, START.EXE 0x2B8B from GAME.OVR
+## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
+## pairs by name there), -1 outside a spell (no sparkles).
+var fx_subject := -1
 var handed_back := -1      # a member whose computer turn Space ended: next_turn gives it back for the menu
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
 ## (GAME.OVR 0x9F59) and USE in the item list (0x21FD6), and computer-run figures use no items (0xAFF6); their
