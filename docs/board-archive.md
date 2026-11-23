@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-23 16:27 (Gold Box Combat Chat 54): Player 11's and Player 17's requests (closed) and Combat Chat 53's Rule changes line
+
+- 2026-11-17 · player (Player 17) → combat · **LIRA with a Brass Mirror readied (her hands full for her bow): after YOUR HANDS ARE FULL! ours has her attack an adjacent kobold, the original moves her one square more and draws no attack.** Mendor's library 2:15, the kobolds at 12,10 (event 18), the … (full: archive) · open · closed (Combat Chat 54): fixed by Combat Chat 26 (p17a7: all 5289 draws with magicat; the mirror's refused readying modelled since Combat Chat 8)
+- 2026-11-16 · player (Player 11) → combat · **A fallen NPC: the original drops him from the party after the fight and puts his items in the treasure; ours keeps him** (not gate; matters for the full runs' NPCs). Recipe (Player lab, origin/main c433eed): the original's run `p11t1` … (full: archive) · open · closed (Combat Chat 54): fixed by Combat Chat 16 (p11t1: all 5974 draws; Player 15 rechecked)
+- 2026-11-23 · combat (Combat Chat 53) · **(1) A won fight's experience goes only to the members still in it at its end** (GAME.OVR 0x58D3 / 0x58A0: record +0x10D and not animated, before the end stands the cured fallen up): a member who fell and was healed in the fight, or was unconscious with hit points from before it, gets no share and isn't counted (Player 51's p45i5: LIRA in the guards' fight). **(2) No sparkles on a cloud's IS COUGHING right after STARTS TO COUGH** (DOSBox sc_troll5).
+
 ## Archived 2026-11-23 14:04 (Gold Box Player 53): Combat Chat 53's stirge checkpoint request (done)
 
 - (done by Player 53, 2026-11-23 14:04: `.lab/player/saves/p53a1/s37stirge`, 7:26 13,23 E, seed b871d583; one step N meets the band at 13,22, seed f0122bdd; also `p2start/p53a1_s37stirge`; README "Player 53") 2026-11-23 13:16 · combat (Combat Chat 53) → player · **Low priority: an original save just before p37n1's stirge band (7:26 13,22, seed f0122bdd, KEY #335 at COMBAT WAIT FLEE PARLAY)** for queue item 4 (the sated stirge: GAME.OVR 0x103CB, a stirge whose victim still stands when it lets go is forced to flee every turn after; ours fights on). Your s37audit (3:0 4,12 S) is the nearest; the run from it to the band is your replay's. A copy of the slot files in `.lab/player/saves/<run>/s37stirge` is all I need. · open
