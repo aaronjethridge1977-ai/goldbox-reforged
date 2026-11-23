@@ -816,7 +816,7 @@ func shoot(i: int, j: int) -> void:
 	if t.received < 3:
 		t.dir = face_dir(t, a)
 	var behind: bool = t.received > 1 and face_dir(a, t) == t.dir and t.turned > 4
-	a.dir = dir_between(a, t)
+	a.dir = face_dir(a, t)       # as attack(): 0x1407F turns the attacker by 0x14E38 from the two figures' own cells
 	a.moves = 0
 	var reach: int = range_of(a, t)
 	var third: int = (am.missile_range) / 3
@@ -1537,7 +1537,12 @@ func attack(i: int, j: int, free: bool = false) -> void:
 			t.dir = face_dir(t, a)
 		if t.received > 1 and face_dir(a, t) == t.dir and t.turned > 4:
 			behind = true
-	a.dir = dir_between(a, t)
+	# The attacker turns to its target as 0x1407F turns it (its second 0x14E38 call: attacker, target), from the two
+	# figures' own cells (a large figure's anchor), not their closest cells (Combat Chat 54, Player 23's p23a4: BRAM's
+	# blow at the troll on 29,12 left him facing north-east in the original, east in ours; eight attacks later his
+	# turned sum was 4 there, 5 here, and the leader's arrow at draw 16203 struck him from behind only in ours; the
+	# original's record held at each of the eight: facing, count and turned sum as these rules give them).
+	a.dir = face_dir(a, t)
 	a.moves = 0
 	var stab := not free and _can_backstab(a, t)
 	var ac: int = tm.rear_ac if behind else tm.ac
