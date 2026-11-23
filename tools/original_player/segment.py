@@ -88,6 +88,7 @@ def keys_between(run, a, b, magic, tplog=False, extra=None):
                 # (Combat.magic_at_draw, static) until a computer turn reaches it, so send it where the walk to this
                 # fight began: after the previous fight's end, or at the segment's start.
                 out.insert(magic_slot, "magicat=%d" % at)
+                magic_slot += 1      # Player 48 (p45i5: two Alt-Ms in one battle came out as magicat=6380,911)
             else:
                 out += ["magic"] + (["tplog"] if tplog else [])
             continue

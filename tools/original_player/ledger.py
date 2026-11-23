@@ -62,6 +62,42 @@ def band(over):
     return "12/9" if over <= 512 else "6" if over <= 768 else "3" if over <= 1024 else "under 3"
 
 
+_SLOTS = None
+
+
+def _slot(t):
+    """The item type's slot from the game's ITEMS file (record byte 0; 2 = body armour), None if unread."""
+    global _SLOTS
+    if _SLOTS is None:
+        _SLOTS = {}
+        for g in (os.environ.get("OP_GAME", ""), os.path.expanduser("~/gbr/player_lab/game")):
+            f = os.path.join(g, "ITEMS")
+            if g and os.path.exists(f):
+                d = open(f, "rb").read()
+                _SLOTS = {i: d[2 + 16 * i] for i in range((len(d) - 2) // 16)}
+                break
+    return _SLOTS.get(t)
+
+
+def movement(base, its, over):
+    """Player 48 (Guide 13's (1): the ledger's "over 412: movement 12/9" was a band, not the figure): the member's
+    movement as the game works it out (party_member.gd, START.EXE 0xDF4-0xF40): the record's base (0x72); readied body
+    armour over 150 coins of weight gives 9 (under 400) or 6, a magic one +3 when 9 or less; then the load over the
+    allowance (a word tested signed: negative is no limit) caps it at 9 (over 0x200), 6 (0x300) or 3 (0x400)."""
+    mv = base
+    arm = [it for it in its if it["ready"] and _slot(it["type"]) == 2]
+    if arm:
+        w = arm[0]["weight"]
+        if w > 150:
+            mv = 9 if w < 400 else 6
+        if arm[0]["plus"] != 0 and mv <= 9:
+            mv += 3
+    o = over & 0xFFFF
+    o = 0 if o >= 0x8000 else o
+    cap = 3 if o > 0x400 else 6 if o > 0x300 else 9 if o > 0x200 else mv
+    return min(mv, cap)
+
+
 def items(path):
     out = []
     if not os.path.exists(path):
@@ -86,7 +122,7 @@ def members(save_dir):
         load = struct.unpack_from("<H", r, 0x102)[0]
         its = items(f[:-4] + ".ITM")
         out.append({"name": name, "coins": coins, "load": load, "allow": allowance(r[0x10], r[0x16]),
-                    "hp": r[0x11B] if len(r) > 0x11B else None, "items": its})
+                    "hp": r[0x11B] if len(r) > 0x11B else None, "items": its, "base": r[0x72]})
     return out
 
 
@@ -97,8 +133,8 @@ def ledger(save_dir, md=False):
         c = m["coins"]
         over = m["load"] - m["allow"]
         lines.append("%s: HP %s; coins cp %d sp %d ep %d gp %d pp %d, gems %d, jewellery %d; load %d, allowance %d,"
-                     " over %d: movement %s" % (m["name"], m["hp"], c[0], c[1], c[2], c[3], c[4], c[5], c[6],
-                                                m["load"], m["allow"], over, band(over)))
+                     " over %d: movement %d" % (m["name"], m["hp"], c[0], c[1], c[2], c[3], c[4], c[5], c[6],
+                                                m["load"], m["allow"], over, movement(m["base"], m["items"], over)))
         for it in m["items"]:
             tag = "%s%s" % (it["name"], " (+%d)" % it["plus"] if it["plus"] and "+" not in it["name"] else "")
             lines.append("  %s %-38s weight %4d  price %5d  charges %3d  effect %s" % (

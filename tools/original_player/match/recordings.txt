@@ -73,3 +73,4 @@
 32 p28i3 p28i1_s32in valjevo5
 33 p29a2 p28j1_s33in valjevo6
 34 p29f2 p29b2_s34h valjevo7 shortcut
+34 p45i5 p45i1_s45ready s45won   # Player 48: the finale won without shortcuts (Jeremy 2026-11-22 08:37: meets the full-run item); seed 45070005

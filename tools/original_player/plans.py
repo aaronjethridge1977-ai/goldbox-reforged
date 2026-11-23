@@ -1262,19 +1262,63 @@ class Review:
     """Player 44 (Gold Box Guide 12's step 1 (b), the audit as a stop): `review <file>`: the run goes on only once the
     Player chat has written the loadout review <file> (from the checkpoint's LEDGER.txt: each member's spells for the
     fights ahead, each scroll, potion, wand, javelin and the Necklace with its user and round, what to sell or leave;
-    nothing spent that a later fight needs); else it stops here, a tool stop, not a loss."""
-    def __init__(self, path):
-        self.path = os.path.expanduser(path)
+    nothing spent that a later fight needs); else it stops here, a tool stop, not a loss.
+
+    Player 48 (Gold Box Guide 13's (1), Jeremy 2026-11-22 09:00): `review <file> door [ledger=<save dir>]`: the review
+    checked again at the fight's door against that day's ledger (the run's last checkpoint, or the save dir given):
+    every consumable in the ledger needs a line in <file> naming its carrier and the item as the ledger lists it
+    ("ELWEN: Clerical Scroll With 2 Spells (+1)"; "x<N>" on the line covers N alike), and every member up needs
+    movement 9 or more (ledger.movement); anything left out or slower stops the run here (a tool stop) with the list."""
+    def __init__(self, rest):
+        w = rest.split()
+        self.path = os.path.expanduser(w[0])
+        self.door = "door" in w[1:]
+        self.ledger = next((os.path.expanduser(x[7:]) for x in w[1:] if x.startswith("ledger=")), None)
 
     def __repr__(self):
-        return "review %s" % self.path
+        return "review %s%s" % (self.path, " door" if self.door else "")
 
     def next(self, p):
         if not os.path.exists(self.path):
             raise_stop(p, "audit: the loadout review %s is not written yet (the Player chat writes it from the "
                           "checkpoint's LEDGER.txt)" % self.path)
+        if self.door:
+            d = self.ledger or getattr(p, "last_cp_dir", None)
+            if not d:
+                raise_stop(p, "audit: the door review has no ledger (no checkpoint this run: give ledger=<save dir>)")
+            bad = door_check(self.path, d)
+            if bad:
+                raise_stop(p, "audit: the door review %s: %s" % (self.path, "; ".join(bad)))
+            p.note("review", "the door review %s checked against %s: every consumable has its line, movement 9+"
+                   % (self.path, d))
+            return True, None, ""
         p.note("review", "the loadout review %s read" % self.path)
         return True, None, ""
+
+
+def door_check(path, save_dir):
+    """Player 48: what the door review <path> leaves out against the ledger of <save_dir> ([] = none)."""
+    import ledger
+    lines = [l.upper() for l in open(path)]
+    need, bad = {}, []
+    for m in ledger.members(save_dir):
+        if m["hp"] and ledger.movement(m["base"], m["items"], m["load"] - m["allow"]) < 9:
+            bad.append("%s movement %d (under 9: leave or drop coins and loot first)" % (
+                m["name"], ledger.movement(m["base"], m["items"], m["load"] - m["allow"])))
+        for it in m["items"]:
+            if any(w in it["name"].upper() for w in ledger.CONSUMABLE):
+                tag = "%s%s" % (it["name"], " (+%d)" % it["plus"] if it["plus"] and "+" not in it["name"] else "")
+                k = (m["name"].upper(), tag.upper())
+                need[k] = need.get(k, 0) + 1
+    for (who, tag), n in sorted(need.items()):
+        have = 0
+        for l in lines:
+            if who in l and tag in l:
+                x = re.search(r"\bX(\d+)\b", l)
+                have += int(x.group(1)) if x else 1
+        if have < n:
+            bad.append("no line for %s: %s%s" % (who, tag, " (%d of %d)" % (have, n) if n > 1 else ""))
+    return bad
 
 
 class NoShare:

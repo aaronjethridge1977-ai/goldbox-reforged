@@ -114,6 +114,7 @@ class Player:
         try:      # Player 44 (Guide 12's step 1 (a)): the party ledger beside every checkpoint
             import ledger
             open(os.path.join(d, "LEDGER.txt"), "w").write(ledger.ledger(d))
+            self.last_cp_dir = d       # Player 48: the door review's ledger
         except Exception as e:
             self.log("NOTE ledger not written: %s" % e)
         self.saving = None

@@ -269,7 +269,11 @@ def state_at(o, n):
 
 def score(md=None):
     ign, lab = known()
-    rs = recordings()
+    # Player 48: Jeremy (2026-11-22 08:37): the win without shortcuts (p45i5) meets the full-run item; the
+    # recordings flagged `shortcut` leave the score (still frozen and listed, never counted)
+    allrs = recordings()
+    dropped = [r for r in allrs if "shortcut" in r["flags"]]
+    rs = [r for r in allrs if "shortcut" not in r["flags"]]
     res = [(r, ) + result(r, ign, lab) for r in rs]
     done = [x for x in res if x[1] not in ("missing", "notrun")]
     notrun = [x for x in res if x[1] == "notrun"]
@@ -282,6 +286,9 @@ def score(md=None):
                  sum(1 for x in done if x[2].startswith("[replay tool")),
                  sum(1 for x in done if x[2].startswith("[known shortcut")),
                  "as frozen" if not verify(quiet=True) else "CHANGED (match.py verify)"), "",
+             ] + (["Dropped from the score (shortcut wins; Jeremy 2026-11-22 08:37: p45i5, the win without"
+                   " shortcuts, meets the full-run item): %s." % ", ".join(
+                       "%s (segment %d)" % (r["run"], r["seg"]) for r in dropped), ""] if dropped else []) + [
              "| Segment | Identical | Recordings |", "|---|---|---|"]
     for s in sorted(set(r["seg"] for r in rs)):
         xs = [x for x in res if x[0]["seg"] == s]

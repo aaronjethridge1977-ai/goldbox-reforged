@@ -70,3 +70,4 @@ p28a2 | 30 | p27k2_v3probe -> valjevo3 | log=b87d92bdda5417f0 trace=e3b0c44298fc
 p28i3 | 32 | p28i1_s32in -> valjevo5 | log=da966706d4801433 trace=e3b0c44298fc1c14 start=086414106807aa09 checkpoint=675d04034f587c74
 p29a2 | 33 | p28j1_s33in -> valjevo6 | log=17b3368275dffd5a trace=1fff4fff4341a8e5 start=68643456155189c6 checkpoint=6b7e5a9e25d74e54
 p29f2 | 34 | p29b2_s34h -> valjevo7 | log=ad46fecb1c6f9dec trace=dd1f08858373fc68 start=404e5f2516c0c6e9 checkpoint=0473f23d487896ca
+p45i5 | 34 | p45i1_s45ready -> s45won | log=7aa2ba60c4dce228 trace=c567cef807c20872 start=c724efaae92096b0 checkpoint=bace93d4261740a6

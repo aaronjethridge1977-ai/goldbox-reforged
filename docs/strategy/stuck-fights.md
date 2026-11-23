@@ -894,3 +894,30 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
 - **The tool:** the new triggers fired as meant (`fall`, `wake`; `wake` also fires when a cloud's helplessness ends;
   `caster` never fired: neither guards nor Tyranthraxus showed memorized spells spent). Round 1 of his fight is now the
   first round with him on the field (he comes at the second fight's round 6-8, after the CONTINUE rounds).
+
+### The measure for Guide 13: the guards' orders as the rules, five tries without the chat (Player 48, 2026-11-23)
+
+- **Setup:** from `p45i1_s45ready`, lab `p48/rules48.plan` (finale45.plan with the door review after `s45ready`:
+  `p48/reviews/finale_door.md`, every consumable a line, movement 9+), the general rules of tactics.py (Player 47's
+  winning orders written as rules; OP_PLAN5 retired; casters never strike Tyranthraxus), no key turns,
+  `OP_FIGHTDEATH=1 OP_MANUAL=1 OP_STUCK_KEYS=1500`, seeds 47010001-05 (Player 47's). *seen*
+
+  | try | guards | him | who died | the chat's minutes |
+  |---|---|---|---|---|
+  | p48t1 | won, none dead (DORN 0 HP) | lost at his 15 HP | the party | 0 |
+  | p48t2 | won, none dead (DORN 0 HP) | lost at his 80 HP (no blow landed) | the party | 0 |
+  | p48t3 | won, none dead (DORN 0 HP) | **won** | ARN | 0 |
+  | p48t4 | won, nobody down | lost at his 10 HP | the party | 0 |
+  | p48t5 | won, none dead (DORN 0 HP) | **won** | BRAM, CEDRIC | 0 |
+
+- **Against the chat (Player 47, the same seeds):** the guards 5 of 5 against 4 of 5 (seed 4, which the chat lost, won
+  with nobody down); the game 2 of 5 both ways; deaths in wins 1 and 2 (the chat's 1 and 1). **The rules carry the
+  guards without the chat**; the chat's time can go to his fight.
+- **His fight:** the casters stepped away and guarded (the rule), the fighters struck; two losses came at his 15 and 10
+  HP with the casters alive and standing back, a third with no blow landed. The breath still decides it; casters'
+  blows might have finished the two close ones (question to the guide on the board).
+- **Unspent at the end of both wins** (`p48/spent.py`): 23 of the door's 26 consumables (and Genheeris' wand): 9
+  Restoration scrolls (no drainer), the cursed Necklace, and 13 that could have been used: the Necklace of Missiles (no clear aim all
+  fight), the Wand of Magic Missiles (ARN, a fighter: should go to LIRA at the inn), the Potions of Healing and
+  Extra Healing (`hurt=20` never came before a member fell from higher HP in one breath), 8 other scrolls (two hands
+  each; the memorized spells won the guards). *seen*

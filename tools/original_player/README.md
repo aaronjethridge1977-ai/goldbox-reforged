@@ -1316,6 +1316,49 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 48 (2026-11-23): the score without the shortcuts and with p45i5; the door review; the guards' orders as the general rules (OP_PLAN5 retired); the measure, rules alone
+
+**Stage 1:** Jeremy (2026-11-22 08:37): p45i5, the win without shortcuts, meets the full-run item, so the two shortcut
+recordings leave the score: `match.py score` lists recordings flagged `shortcut` (p27c2, p29f2) as dropped, never
+counted. **p45i5 added as a recording** (segment 34, `p45i1_s45ready` -> `s45won`, seed 45070005), the finale won
+in the original: **68 of 70 identical** (p17a6 waits on main / design; p45i5 differs). **p45i5 in ours parts at draw
+991 of 6563** (the guards' fight, ours' fourth "who acts next" series done): ours runs ELWEN by the computer (pattern
+d8, a walk 25,10 to 32,9) where the original's draw is another d100 at OVR:09969 (its overlay segment 2130 -> 21a3 at
+that draw); ours' messages show ELWEN GUARDING in round 1 where the original's ELWEN cast Hold Person by MANUAL (KEY
+#30-#45). The first recording with MANUAL aims (OP_MANUAL=1, cursor keys after `m`): the replay of those keys may be
+the cause; to Combat (board). Files: lab `logs/p45i5.segment_begin-s45won.txt`, `match/p45i5.cmpdraws.txt`,
+`p48/p45i5_run1.*` (the first replay). **segment.py fix:** two Alt-Ms in one battle were inserted at the same slot
+and came out reversed (`magicat=6380,911`; ours queues them in draw order, so MAGIC stayed off till 6380); the
+second replay with the order fixed parts at 991 all the same (and stopped before F2: NOT RUN).
+
+**Guide 13's (1), the door review:** `review <file> door [ledger=<save dir>]` (plans.Review, door_check): the review
+read again at the fight's door against the day's ledger (the run's last checkpoint, or the dir given): every
+consumable in the ledger needs a line naming its carrier and the item as the ledger lists it ("x<N>" covers N
+alike), every member up movement 9+, else a tool stop listing what's missing. `ledger.py` now prints the movement
+itself (base 0x72; readied body armour over 150 coins 9 / 6, magic +3; the load over the allowance caps 9 / 6 / 3, the
+signed word: party_member.gd's rule): **the ledger's "over 412: movement 12/9" was a band, not a disagreement**
+(BRAM at `s45ready` moves 9; at `s44throne` BRAM, CEDRIC and DORN 3, ELWEN 6). The finale's door review:
+lab `p48/reviews/finale_door.md`; plan `p48/rules48.plan` (finale45.plan + the door review after `s45ready`).
+
+**Guide 13's (3), the guards' orders as the general rules (tactics.py; OP_PLAN5 retired):** while 3 or more standing
+persons Sleep can't take are on the field, a member with cleric levels Holds Person first, a pure magic-user Stinking
+Clouds first; Hold Person on the standing persons in contact with a member first (then mages, then the nearest; none
+helpless, none picked in the last 10 member turns); clouds on the foes touching our members first, no two
+overlapping, the helpless not counted; every member's blow on a helpless foe beside him first (Plan 5's fighters on
+the standing retired); Plan 5's step back before a delayed spell dropped (the chat cast in contact). **Casters never
+strike Tyranthraxus** (`BOSS`): a member with cleric or magic-user levels and nothing to cast steps to the free square
+within 3 farthest from him, then GUARDs; never AIMs at him.
+
+**The measure (rules alone, no key turns, `OP_FIGHTDEATH=1 OP_MANUAL=1 OP_STUCK_KEYS=1500`, seeds 47010001-05; lab
+`p48/measure.sh`, `measure.txt`):** **the guards 5 of 5, none dead in any** (the chat 4 of 5); **the game 2 of 5**
+(p48t3: ARN dead; p48t5: BRAM and CEDRIC dead), as the chat's 2 of 5; p48t1 and p48t4 lost to him at his 15 and 10
+HP, p48t2 at 80 (no blow landed). Chat minutes: 0. Unspent in both wins: 23 of the door's 26 consumables (9 Restoration
+scrolls, the cursed Necklace; the Necklace of Missiles (no aim), the wand, the healing potions, 8 other scrolls). Details: stuck-fights.md section 5, "The measure for Guide 13". (p48r1, p48s1: tool stops: the 300-key
+stall guard; a try begun before the casters' rule.)
+
+Lab: `p48/` (measure.sh, measure.txt, rules48.plan, reviews/finale_door.md, spent.py, score.md, p45i5_run1.*);
+runs p48t1-t5.
+
 ## Player 47 (2026-11-22): the Lead's key turns in the tool; the finale five times under them (Guide 12's measure)
 
 **Stage 1:** 68 of 71, nothing new from main or Combat to re-score (p17a6 waits on main / design). Guide 12 (d), the

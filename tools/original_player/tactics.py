@@ -296,7 +296,15 @@ PLAN4 = os.environ.get("OP_PLAN4") == "1"
 # a failed save is held again), a pure magic-user Stinking Clouds first (no cloud overlapping one laid, nobody of ours
 # inside); fighters (OP_ADVANCE) strike the standing guards, the others the helpless; a caster next to a standing foe
 # steps back first when the spell goes off at the next turn (its delay / 3 above 0: Hold Person, Fireball, Haste)
-PLAN5 = os.environ.get("OP_PLAN5") == "1"
+# Player 48 (Gold Box Guide 13's (3), Jeremy 2026-11-22 09:00): OP_PLAN5 retired; the orders that won the guards
+# under the Player chat (Player 47, p47k1/k5) are the general rules in every fight: while 3 or more standing persons
+# Sleep can't take are on the field (HARD_PERSONS), a member with cleric levels Holds Person first and a pure
+# magic-user Stinking Clouds first; Hold Person on the standing persons in contact with a member first (none
+# helpless, none picked in the last 10 member turns); clouds on foes touching our members first, no two overlapping,
+# the helpless not counted; each member's blow on a helpless (held or clouded) foe beside him first. Plan 5's step
+# back before a delayed spell is dropped (the chat's winning orders cast in contact).
+HARD_PERSONS = 3
+BOSS = "TYRAN"     # Player 48: the figure casters never strike (Tyranthraxus)
 DELAYED = ("HOLD PERSON", "FIREBALL", "HASTE", "CURE LIGHT WOUNDS", "SLOW", "LIGHTNING BOLT", "PRAYER", "BLESS")
 FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
 # Player 42 (Plan 3/4's flight from Tyranthraxus): OP_FLIGHT=<name words>: while a foe of that name is on the field,
@@ -474,7 +482,7 @@ class Tactics:
         prio = ("HASTE",) + tuple(s for s in prio if s != "HASTE")
         if PLAN4:
             prio = ("STINKING CLOUD", "HOLD PERSON") + tuple(s for s in prio if s not in ("STINKING CLOUD", "HOLD PERSON"))
-        if PLAN5:
+        if self._hard_persons(foes):
             first = ("HOLD PERSON", "STINKING CLOUD") if me.get("cl") else ("STINKING CLOUD", "HOLD PERSON")
             prio = first + tuple(s for s in prio if s not in first)
         for spell in prio:
@@ -497,6 +505,11 @@ class Tactics:
             if spell in ("PRAYER", "BLESS") or self.targets(spell, me, party, foes):
                 return spell
         return None
+
+    def _hard_persons(self, foes):
+        """Player 48: 3 or more standing persons Sleep can't take (the finale's guards): the guards' rules."""
+        return sum(1 for f in foes if not helpless(f) and not _is_large(f) and f.get("fp", 1) == 1
+                   and not _is_undead(f) and not _sleepable(f)) >= HARD_PERSONS
 
     def _prep_ok(self, member, spell):
         """Player 45: a `prep` spell not begun yet in these CONTINUE rounds (Haste once per caster, the rest once)."""
@@ -564,18 +577,16 @@ class Tactics:
             foes = [f for f in foes if not _is_undead(f)]
             mages = [f for f in mages if not _is_undead(f)]
             persons = [f for f in persons if not _is_undead(f)]
-        if spell == "HOLD PERSON" and PLAN5:
-            # Plan 5: every guard, those in contact with a member first, then the nearest; not the helpless, nor one
-            # picked in the last 10 member turns (its hold not gone off yet, or its save not seen yet)
+        if spell == "HOLD PERSON":
+            # Player 48 (the guards' rules, from Plan 5): every person, those in contact with a member first, then
+            # the mages, then the nearest; not the helpless, nor one picked in the last 10 member turns (its hold not
+            # gone off yet, or its save not seen yet)
             mt = getattr(self, "mturns", 0)
             pk = getattr(self, "held_at", {})
             up = [a for a in party if _up(a)]
             ok = [f for f in persons if not helpless(f) and mt - pk.get(f["n"], -99) >= 10]
             return [f["n"] for f in sorted(ok, key=lambda f: (min((_dist(a, f) for a in up), default=99) > 1,
-                                                              _dist(me, f) if me else 0))]
-        if spell == "HOLD PERSON":     # the mages first, then other persons (not large creatures)
-            return [f["n"] for f in mages if f["n"] not in self.held] + \
-                [f["n"] for f in persons if f["n"] not in self.held and not _is_mage(f)]
+                                                              not _is_mage(f), _dist(me, f) if me else 0))]
         if spell == "FIREBALL":        # Player 35: the biggest bunch (2 or more), no party member within 2 of it
             best = []
             for f in foes:
@@ -596,13 +607,15 @@ class Tactics:
                 area = {(f["x"] + dx, f["y"] + dy) for dx in (0, 1) for dy in (0, 1)}
                 if any(_up(a) and area & set(cells(a)) for a in party) or (me and _dist(me, f) > 6):
                     continue
-                if PLAN5 and area & getattr(self, "clouds", set()):
-                    continue           # Plan 5: no two clouds overlapping
-                inside = [g for g in foes if area & set(cells(g)) and not (PLAN5 and helpless(g))]
+                if area & getattr(self, "clouds", set()):
+                    continue           # Player 48 (the guards' rules): no two clouds overlapping
+                inside = [g for g in foes if area & set(cells(g)) and not helpless(g)]
                 k = len(inside)
-                kf = sum(1 for g in inside if _focus(g) and not helpless(g))
+                kf = sum(1 for g in inside if _focus(g))
+                # Player 48 (the guards' rules): the foes touching our members first
+                kt = sum(1 for g in inside if any(_up(a) and _dist(a, g) <= 1 for a in party))
                 if k >= 2 or kf:
-                    best.append((-kf, -k, f["n"]))
+                    best.append((-kf, -kt, -k, f["n"]))
             return [b[-1] for b in sorted(best)]
         if spell == "SLOW":            # Player 33 (spell sheet): no save; the strongest not slowed yet, so its
             # reach (the caster's level in figures nearest the aim point) takes the big hitters
@@ -898,10 +911,6 @@ class Tactics:
                 return "u", "tactics: %s USEs a scroll (%s)" % (member, left[0])
         if "CAST" in items:
             o = self.choose(member, p)
-            if o and PLAN5 and o in DELAYED and "MOVE" in items and member not in getattr(self, "stepped", set()):
-                k = self._step_back(member, o, p)
-                if k:
-                    return k
             if o:
                 self.order = [member, o, 0]
                 self.scan = None
@@ -943,6 +952,39 @@ class Tactics:
                     self.log("TACTICS %s flees: %d steps to the edge at %d,%d" % (member, len(path) - 1, *path[-1]))
                     return "m", "tactics: %s MOVEs to the field's edge (OP_FLIGHT)" % member
                 self.log("TACTICS %s: no way to the field's edge" % member)
+        if any(BOSS in f["name"].upper() for f in self._sides(p)[2]):
+            # Player 48 (Gold Box Guide 13's (3), Jeremy 2026-11-22 09:00: casters never strike Tyranthraxus; Player
+            # 47: ELWEN died in both wins, ordered to strike him): a member with cleric or magic-user levels and
+            # nothing to cast steps away from him (the free square within 3 farthest from him), then GUARDs; never AIM
+            figs, party, foes = self._sides(p)
+            me = next((f for f in party if f["name"] == member), None)
+            if me is not None and (me.get("cl") or me.get("mu")):
+                boss = [f for f in foes if BOSS in f["name"].upper()]
+                if "MOVE" in items and member not in self.moved:
+                    taken = {c for f in figs if f is not me and (_up(f) or f["n"] <= self.party_n) for c in cells(f)}
+                    bad = taken | walls(p.g.mem) | getattr(self, "clouds", set())
+                    here = min(_dist(me, b) for b in boss)
+                    opts = []
+                    for dx in range(-3, 4):
+                        for dy in range(-3, 4):
+                            q = (me["x"] + dx, me["y"] + dy)
+                            if q in bad or q[0] < 0 or q[1] < 0:
+                                continue
+                            d = min(_dist({"x": q[0], "y": q[1]}, b) for b in boss)
+                            opts.append((d, -max(abs(dx), abs(dy)), q))
+                    best = max(opts) if opts else None
+                    self.moved.add(member)
+                    if best and best[0] > here:
+                        q = best[2]
+                        self.move = {"member": member, "goal": 0, "tries": 0, "blocked": set(), "last": None,
+                                     "square": q, "cells": [q], "flee": True}
+                        self.log("TACTICS %s (a caster) steps away from him to %d,%d (%d -> %d squares)" % (
+                            member, q[0], q[1], here, best[0]))
+                        return "m", "tactics: %s MOVEs away from %s" % (member, boss[0]["name"])
+                if "DONE" in items:
+                    self.guard = member
+                    self.log("TACTICS %s (a caster) guards: no blow sought at him" % member)
+                    return "d", "tactics: %s guards (casters never strike him): DONE" % member
         if GOTO and "MOVE" in items and member not in self.moved:
             # Player 41 (Guide 8's Plan 3: the finale's doorway gap and Tyranthraxus by the flight): OP_GOTO="x,y;..."
             # every member with MOVE walks (once a round, no blow on the way) to the nearest free square of the list
@@ -1386,10 +1428,9 @@ class Tactics:
                 if not PLAN4:
                     cand = [c for c in cand if not helpless(c[1]) or ent[c[0]][1] <= 3]
                 cand.sort(key=lambda c: (not _focus(c[1]), not _is_mage(c[1]), not _is_leader(c[1]), c[1]["hp"]))
-            elif PLAN5 and member.upper() in ADVANCE:
-                # Plan 5: the fighters strike the guards still standing (the others slay the helpless)
-                cand.sort(key=lambda c: (helpless(c[1]), c[1]["hp"]))
             else:
+                # (Player 48, the guards' rules: every member, fighters too, the helpless beside him first; Plan 5's
+                # fighters on the standing guards retired)
                 cand.sort(key=lambda c: (not _focus(c[1]), not helpless(c[1]), not _is_drainer(c[1]), not _is_mage(c[1]),
                                          c[1]["hp"]))
             self.scan = {"spell": (member, "ATTACK"), "cand": cand, "steps": 0, "pos": 0}
@@ -1556,7 +1597,7 @@ class Tactics:
                 byn = {f["n"]: f for f in foes}
                 t = [n for n in t if n in byn and w in byn[n]["name"].upper()] + \
                     [n for n in t if not (n in byn and w in byn[n]["name"].upper())]
-            if spell not in ("PRAYER", "BLESS", "HASTE", "POTION", "SHIELD") and not (PLAN5 and spell == "HOLD PERSON"):
+            if spell not in ("PRAYER", "BLESS", "HASTE", "POTION", "SHIELD") and spell != "HOLD PERSON":
                 # (Hold Person too: its picks must be distinct, the original keeps the aim up on a figure picked
                 # again, p30h1; so the persons first, then anyone in reach)
                 t = t + [n for n in near if n not in t]

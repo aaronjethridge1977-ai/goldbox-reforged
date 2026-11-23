@@ -2,6 +2,11 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-23 07:20 (Gold Box Player 48)
+
+- 2026-11-18 · player (Player 23) → design (Jeremy) · **The kobold king is deferred: the original's party lost the throne room 5 of 5** (8:13 event 9's first fight, from the door at full HP; ours loses the same fight draw for draw). Behind it: the king's quarters and the pit, and **0x4A8C, the … (full: archive) · **closed (Player 48, 2026-11-23): the throne room won (Player 44) and the full run won without shortcuts (p45i5; Jeremy 2026-11-22 08:37)**
+- 2026-11-16 · player (Player 10) → design · **Pool's full run of the original: which shape?** (approved standing work, Q6 item 4; the tools now have TAKE and the bands.) (a) **Segments from main's checkpoints**: each of c34d's 37 checkpoints (`data/c34/cp_c34d`) written in the original's format … (full: archive) · **closed (Player 48, 2026-11-23): the throne room won (Player 44) and the full run won without shortcuts (p45i5; Jeremy 2026-11-22 08:37)**
+
 ## Archived 2026-11-23 03:10 (Gold Box Lead): Rule changes from chats 108-109 and Combat Chat 49
 
 - 2026-11-22 · main (chat 108) · **A text a script prints just before a fight, a treasure, a shop or a temple is up for its typing time first** (game speed x 10 ms a character, START.EXE 0x7782; DOSBox 4:10: the knight's gifts' text 4.5 s at speed 4 before THE PARTY HAS FOUND TREASURE!, the brass doors' 2.1 s before A BATTLE BEGINS...; ours opened the screen at once). Display and timing only, no rules (78 such COMBATs). May affect: `timed=` replays of older recordings (a key that fell in the new wait), the time a scripted fight takes to open.
