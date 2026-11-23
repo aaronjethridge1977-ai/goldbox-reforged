@@ -2223,6 +2223,13 @@ func _morale_check(i: int) -> String:
 	# (Combat Chat 9: DIRTEN, an NPC with the party, 0x84 = 0xFF, surrenders on his first turn
 	# at 4:10 9,1 and Tyranthraxus). The side's morale (0xBDA5) can hold only a monster-side
 	# figure (record 0x10E != 0); the enemies' speed is the other side's (0x15103).
+	# A turned figure (combat byte +0x10, set by TURN's "is turned", GAME.OVR 0x13A84) never takes the test: 0xBCC1
+	# marks it running (+0x14) and prints "is forced to flee" (string 0xBC7A), each of its turns; the turn then
+	# skips "flees in panic" (0xAC9F). So turned undead never surrender (Jeremy's P113: ours tested a turned GHOUL
+	# at 1 HP, cornered at the field's edge, and it surrendered).
+	if c.get("turned_undead", false):
+		message.emit("%s IS FORCED TO FLEE" % m.name)
+		return "flee"
 	if m.morale < 0x80 or m.hp_max <= 0:
 		return ""
 	var own := (m.morale & 0x7F) * 2

@@ -1090,6 +1090,18 @@ func _show_messages() -> void:
 		var who := _attacker(msg)
 		if _skip_miss(msg, who):
 			continue
+		if msg.ends_with(" IS GUARDING"):
+			# The original has no "<name> is guarding": a computer-run figure's guard prints "Guarding" (START.EXE
+			# 0x32E2) on row 24 under its own panel, the panel's lines kept (DOSBox, Combat Chat 49, tu_spec5: a
+			# turned SPECTRE's run counts MOVE LEFT down to 4, then GUARDING; none of the lab's original screen logs
+			# has the panel line). Jeremy's P113 read ours' "GHOUL IS GUARDING" as turned ghouls not running.
+			_row24_msg = "GUARDING"
+			_move_label = ""
+			_refresh()
+			await get_tree().create_timer(message_hold()).timeout
+			_row24_msg = ""
+			_refresh()
+			continue
 		if who != "":
 			_shown_by[who] = true
 		var dying := msg == "YOUR TEAMMATE IS DYING"
