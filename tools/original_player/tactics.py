@@ -50,7 +50,7 @@ def figures(mem):
             continue
         out.append({"n": n, "name": nm, "hp": r[0x11B], "status": r[0x10C],
                     "x": pos[4 * (n - 1)], "y": pos[4 * (n - 1) + 1], "fx": effects(mem, r),
-                    "cl": r[0x96], "mu": r[0x9B],
+                    "cl": r[0x96], "mu": r[0x9B], "fi": max(r[0x98], r[0x99], r[0x9A]),
                     "fp": max(1, min(4, r[0x6C] & 7)),
                     "max": r[0x32], "memo": bytes(r[0x17:0x2C])})   # Player 35: the footprint (record +0x6C, ours' combat.gd)   # Player 33: cleric and magic-user levels (record +0x96, +0x9B)
     return out
@@ -305,6 +305,11 @@ PLAN4 = os.environ.get("OP_PLAN4") == "1"
 # back before a delayed spell is dropped (the chat's winning orders cast in contact).
 HARD_PERSONS = 3
 BOSS = "TYRAN"     # Player 48: the figure casters never strike (Tyranthraxus)
+# Player 49 (Jeremy 2026-11-23 07:33, Q34: "never strike him" is a guideline, not a rule: when victory is on the line
+# the casters attack, above all in the last fight, where a lucky blow can win): the casters with fighter levels
+# (ELWEN F5, LIRA F6; record +0x98-0x9A) walk to him and strike once he is at OP_BOSS_FINISH HP or less (20; 0: off)
+# or is the last foe standing; the pure casters (CEDRIC) still stand back
+BOSS_FINISH = int(os.environ.get("OP_BOSS_FINISH", "20"))
 DELAYED = ("HOLD PERSON", "FIREBALL", "HASTE", "CURE LIGHT WOUNDS", "SLOW", "LIGHTNING BOLT", "PRAYER", "BLESS")
 FBCLEAR = int(os.environ.get("OP_FBCLEAR", "4"))
 # Player 42 (Plan 3/4's flight from Tyranthraxus): OP_FLIGHT=<name words>: while a foe of that name is on the field,
@@ -563,6 +568,11 @@ class Tactics:
 
     def targets(self, spell, me, party, foes):
         """Figures to aim at, best first ([] none worth it; None: on the caster)."""
+        # Player 49 (Jeremy 2026-11-23 07:33, his two lessons, playbook as folded by the Lead): Sleep the biggest 3x3
+        # and disable the most attacks first both hold; which line comes first depends on whether the enemy's front
+        # or back line is the more dangerous. The disablers below (HOLD PERSON: those in contact first; STINKING
+        # CLOUD: those touching us first; SLEEP: the biggest bunch) favour the front line; a back line of casters
+        # worse than the front would want its own order (no rewrite yet)
         if spell in ("PRAYER", "BLESS", "POTION", "SHIELD"):
             return None
         if spell == "HASTE":
@@ -958,8 +968,19 @@ class Tactics:
             # nothing to cast steps away from him (the free square within 3 farthest from him), then GUARDs; never AIM
             figs, party, foes = self._sides(p)
             me = next((f for f in party if f["name"] == member), None)
-            if me is not None and (me.get("cl") or me.get("mu")):
-                boss = [f for f in foes if BOSS in f["name"].upper()]
+            boss = [f for f in foes if BOSS in f["name"].upper()]
+            finish = me is not None and (me.get("cl") or me.get("mu")) and me.get("fi") and BOSS_FINISH > 0 and (
+                any(b["hp"] <= BOSS_FINISH for b in boss) or len(foes) == len(boss))
+            if finish and "MOVE" in items and member not in self.moved:
+                # Player 49 (Q34): the finishing blows: walk to him past the others, strike by stepping in
+                goal = min(boss, key=lambda b: (b["hp"], _dist(me, b)))
+                self.moved.add(member)
+                self.move = {"member": member, "goal": goal["n"], "tries": 0, "blocked": set(), "last": None,
+                             "focus": True}
+                self.log("TACTICS %s (a caster, fighter levels) goes for %s at %d HP (%d squares, %d foes): "
+                         "the finishing blows" % (member, goal["name"], goal["hp"], _dist(me, goal), len(foes)))
+                return "m", "tactics: %s MOVEs to strike %s (finishing blows)" % (member, goal["name"])
+            if me is not None and (me.get("cl") or me.get("mu")) and not finish:
                 if "MOVE" in items and member not in self.moved:
                     taken = {c for f in figs if f is not me and (_up(f) or f["n"] <= self.party_n) for c in cells(f)}
                     bad = taken | walls(p.g.mem) | getattr(self, "clouds", set())
