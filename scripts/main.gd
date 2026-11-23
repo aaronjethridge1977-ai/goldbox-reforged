@@ -3309,7 +3309,7 @@ func _on_event_fight_finished(result: int) -> void:
 		_vm.party_changed = true
 	_vm.selected = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
 	# A duel keeps its own rule (Spoils.award's `only`: the share over every standing member, Player 18's p18a3).
-	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items(), _combat.paid if _duelist == null else null)
+	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items(), _combat.paid_members() if _duelist == null else null)
 
 
 ## Experience and treasure: from the defeated monsters and the event's TREASURE, then the

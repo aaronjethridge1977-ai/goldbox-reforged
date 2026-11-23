@@ -33,6 +33,7 @@ var _monsters: Array[PartyMember] = []
 var _combatants: Array = []      # [{who: PartyMember, team: 0 party / 1 monsters, cell: Vector2i, icon: Image}]
 var _selected := 0
 var _last_dropped: Array[GameItem] = []
+var _last_paid: Array = []       # Combat.paid of the fight just left (main's award; Combat Chat 53)
 var _last_rounds := 0          # rounds() after _leave: main adds them to the clock (finished)
 var _aiming := false          # AIM: choosing a target
 var _aim_list: Array[int] = []
@@ -298,6 +299,11 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 ## Thrown weapons left lying on the field (found with the treasure after a win).
 func dropped_items() -> Array[GameItem]:
 	return _combat.dropped if _combat != null else _last_dropped
+
+
+## The party members a won fight's experience goes to: those still in it at its end (Combat.finish()).
+func paid_members() -> Array:
+	return _combat.paid if _combat != null else _last_paid
 
 
 ## Testing aid: the encounter's morale for the next fight.
@@ -2565,6 +2571,7 @@ func _leave() -> void:
 	var was_event := _event_fight
 	var result := _result
 	_last_dropped = _combat.dropped if _combat != null else ([] as Array[GameItem])
+	_last_paid = _combat.paid if _combat != null else []
 	_last_rounds = _combat.round_no if _combat != null else 0
 	_combat = null
 	_event_fight = false
