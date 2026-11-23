@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 108: Sokal Keep (4:21) and the Slums (2:20) on the main path; 426-438; a text before a fight or treasure (432)
+## Chat 108: Sokal Keep (4:21) and the Slums (2:20) on the main path; 426-439; a text before a fight or treasure (432)
 
 - **A text printed just before a fight, a treasure, a shop or a temple was never seen (main path, display/timing;
   fixed in ecl_vm.gd).** The original's printer types a script's text before the next instruction runs (START.EXE
@@ -196,6 +196,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   437 a jump save to 3,4 S: the fortune teller, PAY (no money taken), the reading by 0x4A80, LEAVE: YOU LEAVE THE
   SHOP. (typed, then cleared by the step's PRINT_CLEAR ""); 438 437's original end walked to 2,7: the hemp market,
   two DELAYs, RANDOM 2: the temple rumour.
+- **1:18 Podol Plaza's hidden temple of Ilmater, NO (439; P110):** check 51's start jumped to 1,14 S, the approach menu's DISGUISE, 1,15: A YOUNG WOMAN COMES FORWARD ... ARE YOU IN NEED OF HEALING?, NO: 'YOU CAN REST HERE AS LONG AS YOU WISH.' SHE THEN LEAVES. (0x4A1A = 4), no temple, in DOSBox and ours alike.
 - **4:10's arrival scene (THE SKY DARKENS. ..., PRESS, UNTIL AN EXPLOSION OF LIGHTNING ...) matches by eye, but no
   check:** the init copies ECL 0xC059 into 0x4A16 (and back on leaving, 0x992B). The original's variable read
   (GAME.OVR 0x82DF) maps 0xC04B-0xC04F only; 0xC059 (offset 0xE) has a compare and no branch, so it returns an
