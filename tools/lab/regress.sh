@@ -160,6 +160,10 @@ run orig_A_c51_body 0 ./combat51/regline.sh disp_kob 33333333 up "up,fightmenu,a
 # Combat Chat 52: the free blow uses the attack counters as they stand; a turn's end (START.EXE 0xBA:0x2637) leaves them, so
 # ARN (fighter 7, 3/2: tyr's ARN and BRAM in k220 = k220z), guarding by hand, strikes a fleeing troll twice in round 18 (draw 3314).
 run orig_A_c52_free 0 ./combat51/regline.sh k220z 10203040 "" "up,enter,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,d,g,fightmenu,q,fightmenu,q,quickall,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
+# Combat Chat 54: the Player's 7:26 13,22 stirges (Player 53's p53a1_s37stirge as fixture stirge; QUICK party, seed b871d583):
+# a latched stirge drinks at its turn's start, before the pattern draws, and its turn ends there (GAME.OVR 0x103CB, draw
+# 5134); a figure a stirge hangs on at the round's start gets no movement (0x3A, 0x100AD: DORN at draw 5110).
+run orig_A_c54_stirge 0 ./combat51/regline.sh stirge b871d583 "" "up,wait,wait,wait,wait,wait,wait,c,quickall,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
 # Combat Chat 43: main chat 97's throne room (s39door in slot G, seed 39600001, all QUICK; draws only: main's trace
 # has no positions); the aligned sword's rating 0 (GAME.OVR 0xBF3E). Slot G is the Yarash save again after it.
 run orig_G_c43_throne 0 bash -c "python3 combat43/putg.py combat43/saves/s39door G >/dev/null && DRAWS_ONLY=1 ./cmpfight3.sh G 39600001 '' right,up,enter $WHAT; python3 combat43/putg.py combat43/saves/slotG_yarash G >/dev/null"
