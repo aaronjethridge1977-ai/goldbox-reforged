@@ -203,6 +203,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   6:1's HOW WILL YOU RESCUE THE BOY? after its text). Ours: `EclVM.typewriter` (true at a load, a quick load and a new
   game; false after PRINT, PRINT_CLEAR, ENCOUNTER_MENU); MENU_VERTICAL shows the title alone for its typing time first
   (ours 1.5 s). ECL cell 0x4A00 is not this byte (the cells are words at DS:0x49D2's far pointer, `eclread.py`).
+  Not identified: GAME.OVR 0x6BAF (in the routine at 0x6AA5) also sets it; an encounter menu holds it at 1 while up
+  (1:18's plaza: 1 at COMBAT WAIT FLEE PARLAY), 0 during the fight after; whether a fight's end or something else turns it
+  on again in play is not seen (pl.py can't drive the original's fight quickly).
 - **Seen, matching:** 3:14's scything blade (check 65's start, tpseed 11111111: the text, DELAY, BROTHER SEAN IS HIT FOR 1
   POINTS OF DAMAGE., HP 10 -> 9 and the place line blank with the prompt); 5:3's boulders (FORCE THE GATE OPEN: the
   four hit lines, the place line blank with the prompt).
