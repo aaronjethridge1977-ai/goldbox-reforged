@@ -4,7 +4,7 @@ class_name LabHooks
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "partyhp", "monsters", "outcome", "who", "temple",
 		"ending", "fxlog", "fxwatch"]
-const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee="]
+const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee=", "controlat="]
 
 
 ## Whether `n` is one of these keys.
@@ -26,6 +26,9 @@ static func handle(main: Node, n: String) -> bool:
 			combat._combat.smart_quick = true
 	elif n.begins_with("magicat="):     # magicat=<draw>: MAGIC ON at the first computer turn from that draw on (Combat Chat 25)
 		Combat.magic_at_draws.append(int(n.trim_prefix("magicat=")))     # queued in draw order (Combat Chat 26)
+		return true
+	elif n.begins_with("controlat="):   # controlat=<draw>: Space (QUICK handed back) at the first computer turn from that draw on (Combat Chat 52)
+		Combat.control_at_draws.append(int(n.trim_prefix("controlat=")))
 		return true
 	elif n.begins_with("order="):       # order=<member>:<0-4>: B3's standing order (SmartQuick.ORDER_NAMES)
 		var a := n.trim_prefix("order=").split(":")

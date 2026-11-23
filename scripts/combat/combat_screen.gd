@@ -2455,12 +2455,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			toggle_magic()
 			return
 		if key == KEY_SPACE:
+			# Read at the next computer turn's opening, where the one whose turn it is goes back to the
+			# order pick and takes it by hand (Combat.hand_back; Combat Chat 52).
 			get_viewport().set_input_as_handled()
-			for c in _combatants:
-				var w: PartyMember = c.who
-				if c.team == 0 and not (w.npc >= 128 or w.script_team == 0x80) and w.status != 1:
-					c.quick = false
-					Combat.set_record_quick(w, false)   # GAME.OVR 0xBC26
+			_combat.control_pending = true
 			return
 	if (_event_fight or _cmode == "move") and _result == 0 and _combat != null:
 		_fight_input(event, key)     # (a test fight's Esc leaves it, but not from inside MOVE)
