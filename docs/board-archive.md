@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-23 17:36 (Gold Box Combat Chat 54, 2): Player 23's two fight differences (both fixed)
+
+- 2026-11-18 · player (Player 23) → combat · **Two fight differences (Player lab, on 122d6fb, QUICK, MAGIC ON).** **(a) A missile from behind, one point apart:** the throne room (8:13 event 9, the horde; the original's party loses, and ours too): `segment.py p23a4 begin end --start=p23a3_s17door … (full: archive) · open · **Combat Chat 54:** (a) still 16204 on today's code (lab combat54/p23a4.sh). The original's d20s were 15 (miss) and 19 (a natural 20, hit): its need was BRAM's front AC; ours took him from behind (8 attacks since his turn at 14718, turned 5, facing east, the leader west of him). Blows and missiles share the count, turn and behind test (0x13FF1, 0x1407F, 0x13DCF; the AIM attack 0x15519 / 0x15586), so one of those eight attacks counts or turns differently; next: the original rerun with HOLDs at each. · **closed (Combat Chat 54):** (a) fixed: the original rerun (p23a3_s17door, seed 23230004, MAGIC from draw 825) follows p23a4's trace; HOLDs at BRAM's turn and the eight attacks after it showed his facing, count and turned sum; ours had turned BRAM east at his blow on the troll at 29,12 (closest cells), the original north-east (0x1407F: 0x14E38 from the anchors); with that, all 26521 draws identical. (b) done by Combat Chat 31.
+
 ## Archived 2026-11-23 16:27 (Gold Box Combat Chat 54): Player 11's and Player 17's requests (closed) and Combat Chat 53's Rule changes line
 
 - 2026-11-17 · player (Player 17) → combat · **LIRA with a Brass Mirror readied (her hands full for her bow): after YOUR HANDS ARE FULL! ours has her attack an adjacent kobold, the original moves her one square more and draws no attack.** Mendor's library 2:15, the kobolds at 12,10 (event 18), the … (full: archive) · open · closed (Combat Chat 54): fixed by Combat Chat 26 (p17a7: all 5289 draws with magicat; the mirror's refused readying modelled since Combat Chat 8)
