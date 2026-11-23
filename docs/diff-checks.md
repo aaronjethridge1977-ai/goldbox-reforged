@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 119: a step through the map's edge keeps the place line of the square left; check 459 (main path, display)
+## Chat 119: a step through the map's edge keeps the place line of the square left; the wilderness's walking menu under its text and the empty box after it; checks 459-461 (main path, display)
 
 - **An arrival through the map's edge (found, fixed):** DOSBox at speed 4, 4:2 4,0 N (a real save: check 456's start
   jumped there, then ENCAMP SAVE in the original), Up through the north edge into Podol Plaza (1:18, 4,15 N): the new area's
@@ -187,7 +187,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   24 blank under it (both); the time 10:56 at the arrival and 10:57 after the next step (both). A jump save's jump step
   turned 0x4A00 off in the original (1 after the load, 0 after the jump; a real edge step after a load leaves it 1): the
   jump isn't a game case, but it means a check started from a jump save never types a title.
-- **Not seen:** an arrival from the wilderness map (check 7's start is a jump save) or into it.
+- **The wilderness (found, fixed; main path, display):** check 127's start (a real save on the wilderness map, 24,27 W),
+  two steps east onto Phlan's east edge (26,27 E): YOU ARE ON THE EASTERN EDGE OF THE CITY. ... types (6.3 s) **over
+  CAST VIEW ENCAMP SEARCH LOOK**, then NORTH SOUTH BOAT LEAVE; ours blanked row 24 (a wilderness step's scripts now leave
+  the walking menu there, without AREA, as a 3D step's). **NORTH (or SOUTH) into 3:14 (15,4 W) shows an empty text
+  box**; ours kept the edge's text (now cleared when an arrival's init brings the party off the wilderness map and prints
+  nothing). **Back out through 3:14's east edge** (15,4 E, Up): the wilderness picture and the edge's text (row 24 blank
+  while it types, as ours), the place line still **15,4 E 00:10** (ours showed 26,27 E: the edge rule above covers the
+  wilderness too); LEAVE redraws the whole screen (26,27 E, CAST VIEW ENCAMP SEARCH LOOK), as ours.
+- **The typewriter switch's other setter (chat 118's "not identified"), from the code:** GAME.OVR 0x6BAF is the end of the
+  routine at 0x6AA5, which frees the party (the list at DS:0x6810) on the way back to the start menu, through "The END!" /
+  "The monsters rejoice for the party has been destroyed" when the party is wiped; so in play only the start (a load or a
+  new game) turns 0x4A00 on. Polled in DOSBox: a rest (ENCAMP, REST one hour on the wilderness) leaves it 0.
+- **Checks 460-461 in the gate:** 460 check 127's start, two steps east, the edge's text, NORTH (3:14 15,4 W); 461 from
+  460's end saved by the original (`~/gbr/lab/data/c119/sOV`): two turns, Up out through the east edge, the text, LEAVE
+  (26,27 E); three runs each MATCH, breaks (0x49F2) DIFFER; DIFFCHECKS 458/458.
 - **Check 459 in the gate:** the start above with 0x4AB0 = 1 (`~/gbr/lab/data/c119/sE1`), Up across the edge, STRIDE
   BOLDLY FORWARD (0x4A35 = 255), Up onto 4,14; three runs MATCH, the break (0x4A35 255 -> 1) DIFFERS; DIFFCHECKS
   456/456.

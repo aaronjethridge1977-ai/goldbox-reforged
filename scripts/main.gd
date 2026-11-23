@@ -2376,6 +2376,7 @@ func _overland_move(direction: int) -> void:
 		_overland_step(direction)
 		return
 	_vm.clear_output()
+	_vm.walk_menu_next = true    # chat 119: as in a 3D area (see _overland_step)
 	_vm.start(0)
 	_pending_move = direction
 	_after_vm()
@@ -2395,6 +2396,7 @@ func _overland_step(direction: int) -> void:
 	if OverlandMap.water(v) or (OverlandMap.river(v) and _vm.read_byte(0x4AA2) == 0):
 		if _vm.ecl != null:
 			_vm.clear_output()
+			_vm.walk_menu_next = true
 			_vm.start(1)
 			_after_vm()
 		return
@@ -2407,6 +2409,9 @@ func _overland_step(direction: int) -> void:
 	_pass_time(GameClock.HOUR, 12)
 	if _vm.ecl != null:
 		_vm.clear_output()
+		# Chat 119 (DOSBox, check 127's start, a step onto Phlan's east edge: YOU ARE ON THE EASTERN EDGE OF THE CITY. ...
+		# types over CAST VIEW ENCAMP SEARCH LOOK, then NORTH SOUTH BOAT LEAVE): the walking menu stays on row 24.
+		_vm.walk_menu_next = true
 		_vm.start(1)
 		_after_vm()
 
@@ -3524,7 +3529,12 @@ func _init_and_arrive(block_id: int, follow_map: bool, arrive: bool, loading: bo
 	_jump_next = true
 	_vm.clear_output()
 	_vm.area_map = []
+	var from_wild := _vm.on_overland and arrive
 	_vm.start(4)
+	if from_wild and not _vm.on_overland and not _vm.text_changed:
+		# Chat 119 (DOSBox, check 127's start: Phlan's east edge on the wilderness map, NORTH or SOUTH into 3:14 at
+		# 15,4 W): the 3D screen comes up with an empty text box; ours kept the wilderness's text there.
+		_message.text = ""
 	# The original writes the area's block number to 0x49F2 once its init has run (GAME.OVR
 	# 0x192F, 0x40D6); many inits test it ("already here": a loaded game) and then skip
 	# placing the party, resetting the clock and the like. A LOAD leaves the saved value (chat 61,
@@ -3940,6 +3950,7 @@ func _draw_screen() -> void:
 		if wild_mode and _vm.on_overland and not _menu_was_wild:
 			body = ""
 			_message.text = ""
+			_place_left = []     # chat 119: the whole screen is drawn again (DOSBox: LEAVE shows 26,27 E)
 		_menu_was_wild = wild_mode
 	var view := _view_img
 	if _area_view and not _vm.on_overland:
@@ -4012,7 +4023,10 @@ func _draw_screen() -> void:
 		# (DOSBox 8:13's roof: it stays while BEFORE YOU RECOVER, KOBOLDS ARRIVE. types, until A BATTLE BEGINS...)
 		if _vm.row24_left == EclVM.WALK_MENU_LEFT:
 			# chat 117: the walking menu a step left there, as drawn (AREA lit), not clickable while the script runs
-			_screen.menu_line(24, ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"], 0, 0)
+			var words := ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
+			if _vm.on_overland:
+				words.erase("AREA")      # chat 119: the wilderness's (DOSBox, Phlan's east edge)
+			_screen.menu_line(24, words, 0, 0)
 			_screen.forget_menu(24)
 		else:
 			_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)
@@ -4209,6 +4223,8 @@ func dev_restore(s: Dictionary) -> bool:
 
 ## The place line under the view: square, facing and time ("14,5 S 10:56").
 func _place_line() -> String:
+	if not _place_left.is_empty() and _place_left[1] == [_pos, _facing, _map_index] and _vm.on_overland:
+		return String(_place_left[0])     # chat 119: into the wilderness too (3:14 15,4 E: "15,4 E 00:10" over the city)
 	if _vm.on_overland:
 		return _overland_place()
 	var hide := _vm.read_byte(NO_COORDINATES) != 0
