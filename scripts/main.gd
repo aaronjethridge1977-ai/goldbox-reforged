@@ -1323,6 +1323,9 @@ func _unhandled_input(event: InputEvent) -> void:
 					menu.erase("AREA")
 				_camp.spells = SpellTable.shared(_game_path)
 				_sync_shell()
+				# HAS NO SPELLS MEMORIZED redraws only the place line: a picture or figure stays (chat 116, DOSBox
+				# 2:20's rope booth after a wrong word, PICTURE 9); a CAST that opens the spell list drops it.
+				_cast_keeps_view = (_party[clampi(_vm.selected, 0, _party.size() - 1)] as PartyMember).ready_spells().is_empty()
 				_camp.open_cast(_party, clampi(_vm.selected, 0, _party.size() - 1), menu)
 				_dev_reseed([_camp._rng2])
 			get_viewport().set_input_as_handled()
@@ -3027,11 +3030,19 @@ var _walk_view_open := false
 
 ## Leaving the walking menu's VIEW redraws the screen: the place line comes back even where a DAMAGE page
 ## blanked it (main chat 116, DOSBox 4:10's fumes: 1,13 S after EXIT; ours drew nothing until the next key).
+## The picture or figure a stopped script left up goes too (DOSBox 2:20's rope booth after a wrong word: the 3D view
+## after EXIT; SEARCH, Home/End, LOOK and a CAST with no spells keep it, ENCAMP drops it as here).
 func _on_walk_view_closed() -> void:
 	if not _walk_view_open:
 		return
 	_walk_view_open = false
+	_event_image = null
+	_vm.sprite_id = -1
 	_show()
+
+
+## A walking CAST whose member has no spells in memory (see the KEY_C branch).
+var _cast_keeps_view := false
 
 
 func _on_camp_closed() -> void:
@@ -3040,8 +3051,10 @@ func _on_camp_closed() -> void:
 		_vm.selected = clampi(_camp._sel, 0, _party.size() - 1)
 	# Leaving camp redraws the 3D view (P63, lab chat 29: the inn at New Phlan 6,12, PICTURE 24 then
 	# PROGRAM 9; after EXIT the original shows the street at 6,13 N, not the innkeeper).
-	_event_image = null
-	_vm.sprite_id = -1
+	if not _cast_keeps_view:
+		_event_image = null
+		_vm.sprite_id = -1
+	_cast_keeps_view = false
 	_show()
 
 
