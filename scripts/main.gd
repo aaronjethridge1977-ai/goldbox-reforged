@@ -1237,7 +1237,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_quest_screen.open(quest_view())
 			get_viewport().set_input_as_handled()
 			return
-		elif key == KEY_F and _automap.enabled and not _vm.on_overland:
+		elif key == KEY_F and _automap.enabled and not _vm.on_overland \
+				and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			_automap.full_open = not _automap.full_open
 			_automap.queue_redraw()
 			get_viewport().set_input_as_handled()
@@ -2617,6 +2618,11 @@ func _script_delay() -> float:
 ## Shows what a script run produced and carries on with whatever it was waiting for.
 func _after_vm() -> void:
 	_follow_area_map()
+	if _automap.full_open and _vm.state not in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR, EclVM.State.NEW_ECL]:
+		# P109 (Jeremy): a script's text, menu or fight (a random encounter) closes the full map, so what it asks
+		# is seen before a key answers it (the map took no keys: C started the battle unseen). Our QoL.
+		_automap.full_open = false
+		_automap.queue_redraw()
 	if not _vm.npc_requests.is_empty():
 		_add_npcs()
 	if _vm.party_changed:
