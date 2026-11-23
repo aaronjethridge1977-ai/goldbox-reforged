@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 112: a fled fight's results page and treasure menu (main path); 4:2's chased-out confirmed
+## Chat 112: a fled fight's results page and treasure menu (main path); 4:2's chased-out confirmed; 447-449
 
 - **4:2's YOU ARE CHASED OUT INTO THE STREETS, confirmed in DOSBox** (chat 111's open item). The courtyard's way out is
   south past the bottom-left wall's corner (the way the party came in): a member who steps off the field there gets
@@ -192,6 +192,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   **Assumed, not seen:** a flee after some monsters fell still gives 0 experience and an empty pile.
 - **No check:** ours' fight from the same keys drifts (the original's keys were chosen from its screen each turn);
   a flee check needs the fight tools (Combat's), not a key list.
+- **447-449 (2:20 the Slums' fights; all matched at once):** check 45's start jumped beside each room; every room's
+  door is locked (BASH opens it at the first try in both). **447** the goblin instructor (10,2 N, Up, Up, B: A
+  HEALTHY-LOOKING GOBLIN IS INSTRUCTING ..., the press, the fight on QUICK: 109 XP each, the six end with the same
+  HP in both (PHINEAS 0), SHARE, the loot is armour and short swords: EXIT, THERE IS STILL TREASURE LEFT: NO; 10,1 N
+  11:04, 0x4ACB = 255). **448** the monster leaders (0,8 N with 0x4ACF = 255 so the guard room passes; the party at
+  200 HP and AC -10, as mksave's `strong`: the shipped party falls there): B, through the guard room, Right, Up: YOU
+  INTRUDE ON A GATHERING OF MONSTER LEADERS., the fight on QUICK (63 XP each), SHARE, the loot left; 1,5 E 11:10,
+  0x4AD0 = 255. **449** YOU HAVE ALERTED THE GUARDS (the same party at 2,11 E, B; 33 monsters, 65 XP each); 3,11 E
+  11:08, 0x4AD8 = 255. Breaks of each cell DIFFER; three runs MATCH. F2 saves only in walk mode (the original saved
+  in camp; statediff doesn't mind). **Not made:** the guard room itself (event 13: 34 monsters, 19 rounds, 6.5 minutes
+  in ours on QUICK: too long for the gate).
 
 ## Chat 111: the walking menu after a script's move; LOOK empties the text; SEARCH kept in a save (main path); 446
 
