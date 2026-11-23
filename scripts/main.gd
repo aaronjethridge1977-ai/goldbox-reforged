@@ -185,6 +185,7 @@ func _ready() -> void:
 	add_child(_shop)
 	_sheet = CharacterSheet.new()
 	_sheet.visible = false
+	_sheet.closed.connect(_on_walk_view_closed)
 	add_child(_sheet)
 	_shop.sheet = _sheet
 	_vm.square_info = _script_square_info
@@ -1217,7 +1218,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_V:
 			for m in _party:
 				m.recalculate(_types)
+			# VIEW, ENCAMP and CAST redraw the whole screen on the way back: the text box is empty
+			# (main chat 116, DOSBox 4:10: after the fumes' DAMAGE. and after 1,12's tower text; AREA keeps it).
+			_message.text = ""
 			_sync_shell()
+			_walk_view_open = true
 			_sheet.open(_party, "PARTY", clampi(_vm.selected, 0, maxi(_party.size() - 1, 0)), false, 2)
 			get_viewport().set_input_as_handled()
 			return
@@ -1283,6 +1288,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				_area_view = not _area_view
 		elif key == KEY_E:
+			_message.text = ""    # as VIEW's (chat 116)
 			_make_camp()
 			get_viewport().set_input_as_handled()
 			return
@@ -1308,6 +1314,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			var sel_ok: bool = not _party.is_empty() and (_vm.on_overland \
 					or (_party[clampi(_vm.selected, 0, _party.size() - 1)] as PartyMember).status == 0)
 			if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and sel_ok:
+				# As VIEW's: the box is empty after, HAS NO SPELLS MEMORIZED's moment too (chat 116, DOSBox 4:10).
+				_message.text = ""
 				for m in _party:
 					m.recalculate(_types)
 				var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
@@ -3010,6 +3018,19 @@ func _on_temple_closed() -> void:
 		_vm.selected_creature = -1
 	_vm.close_temple()
 	_after_vm()
+	_show()
+
+
+## The walking menu's VIEW is open (the shop shares _sheet).
+var _walk_view_open := false
+
+
+## Leaving the walking menu's VIEW redraws the screen: the place line comes back even where a DAMAGE page
+## blanked it (main chat 116, DOSBox 4:10's fumes: 1,13 S after EXIT; ours drew nothing until the next key).
+func _on_walk_view_closed() -> void:
+	if not _walk_view_open:
+		return
+	_walk_view_open = false
 	_show()
 
 
