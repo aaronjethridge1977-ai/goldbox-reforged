@@ -188,6 +188,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   page 1 (RHIANNON and THRENDER GRONE hit) shows BROTHER SEAN 10 and PHINEAS 4; page 2 their hits. Ours showed every
   member's end HP on page 1. Each page keeps the party's HP and status (`_party_snap`, `_show_page`); the last page
   the end values (ours after the fix `vid/rk2.mp4`). End states unchanged.
+- **DAMAGE's colours and the place line (found, fixed):** the same pages in the original print the hit lines in
+  white under the script's green text, the printer's PRESS ANY KEY TO CONTINUE in colour 13 (PRESS <ENTER>/<RETURN>
+  stays white), and the place line is blank from the first hit until the script's CALL 0x2C90 redraws the view
+  (`msheet.png`); ours had green lines, a white PRESS ANY KEY and the place line up. Ours now: a page keeps its
+  first hit row (`white_from`, drawn white over the text box), colour 13 for PRESS ANY KEY, no place line while a
+  page with hits waits for its key (`damage_page`); ours after the fix `vid/rk4.mp4`. After the last page ours
+  shows the place line again at once (the rocks redraw right after; a DAMAGE with no redraw after it: not seen).
+- **DAMAGE's last prompt stays on row 24 (found, fixed):** 5:4's kitchen (check 60's keys: TALK twice, the
+  boiling oil misses): the original shows the empty page with PRESS <ENTER>/<RETURN> TO CONTINUE, and after the key
+  the script's WHAT DO YOU DO? vertical menu comes up with that line still on row 24 (`xsheet.png`; the first
+  visit's menu, after the script's own press menu, has row 24 clear). Ours cleared it. Ours now keeps it under a
+  vertical menu until a horizontal menu, a question or a new script run (`row24_left`; `vid/oil2.mp4`).
 - **A farewell's name and highlight (found, fixed):** 3:0's SKULLCRUSHER SPEAKS, 'I MUST GO TO MY MASTER NOW.'
   (start `data/c114/sSk` = check 369's original end jumped to 3:0 4,2 S; Down, Up, Down, Up, Up onto 4,3, event 26):
   the original types it with SKULLCRUSHER in the list and THRENDER GRONE lit, then drops him and types HE LEAVES.

@@ -242,6 +242,9 @@ func copy_from(src: EclVM) -> void:
 	_press_queue = src._press_queue.duplicate(true)
 	_blank_name = src._blank_name
 	picture_up = src.picture_up
+	white_from = src.white_from
+	row24_left = src.row24_left
+	damage_page = src.damage_page
 	sprite_hidden = src.sprite_hidden
 	list_lit = src.list_lit
 	_enc = src._enc.duplicate(true)
@@ -297,6 +300,8 @@ func entry_offset(index: int) -> int:
 
 func clear_output() -> void:
 	text = ""
+	white_from = -1
+	damage_page = false
 	picture = -1
 	menu = []
 	notes = []
@@ -311,6 +316,7 @@ var running_entry := -1    # the entry point start() last ran (4: the init)
 func start(entry: int) -> State:
 	running_entry = entry
 	picture_up = false
+	row24_left = ""
 	list_lit = selected
 	_runes_to_box = false
 	pc = entry_offset(entry)
@@ -385,6 +391,8 @@ func choose(index: int) -> State:
 			_show_page(page)
 			menu = [page[1]]
 			return state
+		damage_page = false
+		row24_left = PRESS_TO_CONTINUE
 		_menu_kind = ""
 		menu = []
 		state = State.RUNNING
@@ -780,6 +788,16 @@ const PRESS_ANY_KEY := "PRESS ANY KEY TO CONTINUE"
 var _box_rows := PackedStringArray()
 var _box_row := 0
 var _box_pages: Array = []
+var _box_white := -1      # the page's first row a hit line went to (-1: none yet)
+## Chat 114 (DOSBox, 8:13's rocks): the original prints DAMAGE's hit lines in white under the script's green text,
+## the printer's PRESS ANY KEY TO CONTINUE in colour 13, and its party redraw after a hit blanks the place line.
+## white_from: the shown text's first white row (-1 none); damage_page: a page with hits is up.
+var white_from := -1
+var damage_page := false
+## Chat 114 (DOSBox, 5:4's kitchen, check 60): DAMAGE's last PRESS <ENTER>/<RETURN> TO CONTINUE stays on row 24 after
+## its key (GAME.OVR 0x37CD draws it, nothing clears it); a vertical menu after it leaves row 24 alone, a horizontal
+## menu, a question or the walking menu redraws it. The row as left ("" when redrawn).
+var row24_left := ""
 ## The pages still to show after the one on screen (a "press" menu's next texts).
 var _press_queue: Array = []
 
@@ -790,12 +808,14 @@ func _box_start() -> void:
 	if _box_rows[_box_row].length() >= 38:
 		_box_row += 1
 	_box_pages = []
+	_box_white = -1
 
 
 func _box_page(prompt: String) -> void:
-	_box_pages.append(["\n".join(_box_rows), prompt, _party_snap()])
+	_box_pages.append(["\n".join(_box_rows), prompt, _party_snap(), _box_white])
 	_box_rows = PackedStringArray([""])
 	_box_row = 0
+	_box_white = -1
 
 
 func _box_line(line: String) -> void:
@@ -814,6 +834,8 @@ func _box_line(line: String) -> void:
 		while _box_rows.size() <= _box_row:
 			_box_rows.append("")
 		_box_rows[_box_row] = parts[i]
+		if _box_white < 0:
+			_box_white = _box_row
 		if parts[i].length() >= 38:
 			_box_row += 1
 
@@ -833,6 +855,8 @@ func _party_snap() -> Array:
 func _show_page(page: Array) -> void:
 	text = page[0]
 	text_changed = true
+	white_from = int(page[3]) if page.size() > 3 else -1
+	damage_page = white_from >= 0
 	if page.size() > 2 and (page[2] as Array).size() == party.size():
 		for i in party.size():
 			(party[i] as PartyMember).hp = page[2][i][0]
@@ -935,7 +959,7 @@ func _damage(a: Array) -> void:
 	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
 	# 0x709:0xBF5; chat 43, 5:3's boulders); full boxes before it wait the same way.
 	_press_queue = _box_pages
-	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap()])
+	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap(), _box_white])
 	_box_pages = []
 	var page: Array = _press_queue.pop_front()
 	_show_page(page)
@@ -1361,6 +1385,7 @@ func _exec(ins: Dictionary) -> void:
 				return
 			_runes_to_box = false
 			text = _string(a[0])
+			white_from = -1
 			print_chars += _string(a[0]).length()
 			text_changed = true
 			_note_shown()
@@ -1455,7 +1480,9 @@ func _exec(ins: Dictionary) -> void:
 			var items := []
 			for i in range(3, a.size()):
 				items.append(_string(a[i]))
+			var left := row24_left
 			_pause_for_menu(a[0], items)
+			row24_left = left
 			menu_vertical = true
 			menu_question = _string(a[1])
 		"ON_GOTO", "ON_GOSUB":
@@ -1626,6 +1653,7 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[0], ranger)
 			_write(a[1], 0)
 		"INPUT_NUMBER", "INPUT_STRING":
+			row24_left = ""
 			input_max = maxi(_value(a[0]), 1)
 			input_numeric = op == "INPUT_NUMBER"
 			_input_dest = a[1]
@@ -1838,6 +1866,7 @@ func _pause_for_menu(dest: Dictionary, items: Array) -> void:
 	# One item is a "press to continue" prompt; its choice is not stored.
 	_menu_dest = dest
 	_menu_kind = ""
+	row24_left = ""
 	menu_vertical = false
 	menu_question = ""
 	_menu_at = _at

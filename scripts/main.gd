@@ -3869,6 +3869,8 @@ func _draw_screen() -> void:
 		menu.erase("AREA")
 	if _searching:
 		place += " SEARCH"
+	if _vm.damage_page and press24:
+		place = ""      # chat 114: the original's party redraw after a hit blanks the place line (DOSBox: 8:13's rocks)
 	# A DAMAGE page keeps its leading blank row (the original's cursor starts the first hit a row down).
 	# The original printer's rows (START.EXE 0x77F8: PrintWrap; main chat 106, DOSBox: Rolf's and the clerk's texts).
 	var lines := PrintWrap.lines(body.strip_edges(not press24, true), 38)
@@ -3890,6 +3892,15 @@ func _draw_screen() -> void:
 	if who_label != "":
 		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
+	if _vm.white_from >= 0 and vertical.is_empty() and body == _message.text:
+		# Chat 114 (DOSBox, 8:13's rocks): DAMAGE's hit lines are white under the script's green text. Rows as the
+		# VM laid them out (a leading blank row stripped from `lines` shifts them).
+		var all_rows := PrintWrap.lines(body.strip_edges(false, true), 38)
+		var shift := all_rows.size() - lines.size()
+		var top := maxi(lines.size() - 6, 0)
+		for i in range(maxi(_vm.white_from - shift, top), lines.size()):
+			_screen.text(1, 17 + i - top, lines[i], GameScreen.WHITE)
+		_screen.update()
 	_draw_runes(lines)
 	if who_label != "":
 		_screen.party_clickable(_party.size(), lit)   # Combat Chat 13, mouse step 2: a WHO list's lines (Up / Down)
@@ -3900,7 +3911,12 @@ func _draw_screen() -> void:
 		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
 		_screen.update()
 	elif press24:
-		_screen.text(0, 24, String(_vm.menu[0]) if not _vm.menu.is_empty() else EclVM.PRESS_TO_CONTINUE, GameScreen.WHITE)   # GAME.OVR 0x37CD, colour 15
+		var prompt := String(_vm.menu[0]) if not _vm.menu.is_empty() else EclVM.PRESS_TO_CONTINUE
+		# GAME.OVR 0x37CD, colour 15; the printer's own PRESS ANY KEY TO CONTINUE is colour 13 (chat 114, DOSBox: 8:13's rocks)
+		_screen.text(0, 24, prompt, 13 if prompt == EclVM.PRESS_ANY_KEY else GameScreen.WHITE)
+		_screen.update()
+	if not press24 and not note24 and not vertical.is_empty() and _vm.row24_left != "":
+		_screen.text(0, 24, _vm.row24_left, GameScreen.WHITE)   # chat 114: DAMAGE's prompt left there (5:4's kitchen)
 		_screen.update()
 	if _vm.state == EclVM.State.INPUT and _typed.visible:
 		# What's typed, as the original shows it (lab, chat 23, the Slums' booth: "WHAT DO YOU
