@@ -1331,7 +1331,16 @@ func _ai_step() -> void:
 	if paced() and not actor.is_empty():
 		_after_blow(_combat.active, shown_before, weapon_before)
 	if paced() and not actor.is_empty():
-		_box_off = true
+		# The box goes at the figure's first step or blow; a guard with no step keeps it through GUARDING
+		# (DOSBox, Combat Chat 49, tu_spec5 at speed 5: a cornered turned SPECTRE's box stayed up with GUARDING;
+		# at a blow or a step it went within 0.1-0.2 s of the turn's start).
+		var blow := false
+		for k in range(maxi(0, _messages.size() - (_message_count - shown_before)), _messages.size()):
+			if String(_messages[k]).contains(" ATTACKS "):
+				blow = true
+		var waiting: bool = actor.get("guarding", false) or (more and actor.get("fleeing", false))
+		if actor.cell != before or blow or not waiting:
+			_box_off = true
 		if actor.cell != before:
 			Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)
 			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
