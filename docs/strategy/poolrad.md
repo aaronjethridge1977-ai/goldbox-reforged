@@ -112,12 +112,16 @@ files); results *seen* unless marked.
 - **The trolls and ogres (0,14):** 2 ogres and 4 trolls; the cluebook's test of the party. *code*
   - Works: two low-AC fighters hold the ogres in the narrow room so they block the trolls; everyone else shoots and
     casts at the trolls from one square back; drop the trolls together and stand on a fallen troll's square so it can't
-    rise (its corner, top-left square, and the MOVE ended with Enter: *seen*, Player 40); then the ogres. *book* Cast Sleep at the ogres twice: if it fails, little is lost. *Jeremy* (2026-11-20) In the original, on this
+    rise (either of its squares, held by a member not on QUICK, and the MOVE ended with Enter: *seen*, Player 40;
+    Combat Chat 51, guide section 5); then the ogres. *book* Cast Sleep at the ogres twice: if it fails, little is lost. *Jeremy* (2026-11-20) In the original, on this
     room: 10 Sleeps (4d4 = 7-13) put 2 ogres down and never a troll, about 1 cast in 5, so two casts give roughly a 1 in 3
     chance of at least one sleeping ogre (small sample: anywhere from about 1 in 10 to 3 in 4), and a sleeping ogre is
     slain outright. Keep the party out of the 3x3 (the caster too). *seen* (Combat Chat 34)
   - Results: at level 3, won deathless at the second try (p16e2); from an earlier save, won 2 of 2, both with deaths
-    (Player 8).
+    (Player 8). **Never on QUICK:** the grain sack (SOME MONSTERS ARE TOSSING A SACK OF GRAIN..., then a fight with no
+    menu) destroyed three different parties fought on QUICK (checks 45, 327, 64; DOSBox, tpseed 11111111). *seen* (main
+    chat 110) Come with a plan: Jeremy's win (Stinking Cloud on the contact troll, Sleeps on the ogres, every fallen
+    troll's square taken: guide section 5).
 - From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): Sleep the goblin guards' leaders. *book*
 
 **Sokal Keep (4:21)**
@@ -139,6 +143,9 @@ files); results *seen* unless marked.
   death (Player 15); rests at 8,14 and 9,5 drew undead five times, besides 13,0 (Player 35, "Sokal Keep Plan 1").
   **Rest at New Phlan's inn:** from 7,15 a step S, TAKE A BOAT BACK TO PHLAN; the pier's walk crosses the temple of
   Tyr (EXIT); the inn is 3:0 4,12. *seen* (Gold Box Guide 4, Jeremy 18:22)
+- **The barracks** (the splintered-bunks building, 4-6,2-4): pace it with SEARCH on: each step inside rolls 1 in 10
+  for a floorboard: a diary page (journal entry 3) and gems worth 208 experience each to a party of six; after Ferran
+  Martinez's truth the haunts' text there never shows. *code* + *seen* (main chat 111, 4:21 0xA3C0; DOSBox check 446)
 - **The huge scorpions (2,11):** won 4 of 4, 3 deathless (Player 9). Memorize Slow Poison first. *book*
 - From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): the patrols parley with the password SHESTNI before the
   chapel, SAMOSUD after Ferran; the armoury's secret room (its north-west corner, behind the illusionary north-east wall);
@@ -209,6 +216,9 @@ files); results *seen* unless marked.
   kobolds 8, **displacer beasts 715**, **driders 1,163** (7 platinum, 3 gems each; a gem on the pile is 250 more),
   stirges 46, lizard men 98, bandits 16; 8:27 kobolds 8, gnolls 48, lizard men 98, giant lizards 124, hippogriffs 132,
   **wyverns 1,345**, **trolls 813**, phase spiders 910, **minotaurs 664**. *code* (MON6-8CHA, MON6-8ITM)
+- **Stirges** (7:26): one that drinks its fill while its victim still stands is forced to flee every turn after, like a
+  turned undead: no need to chase it, and its victim is free at once; one whose victim falls first fights on. *code*
+  (Combat Chat 50, GAME.OVR 0x103CB / 0x10462; not yet seen in DOSBox; ours still has it fight on)
 - **The rule** (*Jeremy*, 17:26): talk to (or flee) the cheap humanoid bands (kobolds, gnolls, lizard men, bandits,
   soldiers, thieves, buccaneers): a few hundred experience and junk. **Fight the rich kinds** (driders, trolls,
   minotaurs, thri-kreen, and the beasts that can't be talked to) when the party is rested with its spells; flee them
@@ -305,9 +315,13 @@ files); results *seen* unless marked.
   Haste down); READY a guard's Ring of Protection +3 on everyone in his fight. Won twice in two tries (p45i3, p45i5),
   two members dead to his breath each time. *seen* (Gold Box Player 45) **His breath killed the members standing at him
   and two squares off** (BRAM, CEDRIC, ELWEN in p46k3); LIRA, walked out through the wall gap to 23,8 off his lines,
-  lived: keep anyone low or not striking well away from him. *seen* (Gold Box Player 46, p46k3) Never send ELWEN to
-  strike him (she died both times); his first breath may come before any menu, and the wins were ARN's and BRAM's hasted
-  blows. *seen* (Player 47)
+  lived: keep anyone low or not striking well away from him. *seen* (Gold Box Player 46, p46k3) **No caster strikes
+  him** (ELWEN died both times she was ordered to, p47k1, p47k5); his first breath may come before any menu, and the
+  wins were ARN's and BRAM's hasted blows. *seen* (Player 47; Gold Box Guide 13)
+- **His fight re-forms the party from its order** (ALTER ORDER), whatever places it took in the guards' CONTINUE
+  rounds: on 3,8 S slot 1 stands 27,12, 2 26,12, 3 28,12, 4 25,12, 5 26,11, 6 25,11, 7 27,11, with him at 27,13. His
+  first breath never caught slots 4-5 and seldom 3 in 60 seeds, but slot 2 in 55% and slot 6 in 37%: casters 3rd-5th,
+  the sturdiest fighter 2nd. *code* + *seen* (main chat 104, ours over 60 seeds; the formation seen in DOSBox)
 
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
@@ -355,8 +369,8 @@ files); results *seen* unless marked.
     leaves the party when it leaves the caves. *code* + *seen* (ECL8 block 13 0xA720, NPC_ADD 104; Player 36, p36n1;
     Player 37, p37r1)
   - Between waves the original asks CONTINUE BATTLE: YES plays rounds with no enemy up, for cures and bandages; killed
-    trolls rise on their own corner (top-left) square unless a standing member is on it; one on the second cell
-    doesn't stop it, and the troll rises once the member on it falls. *seen* (Player 38, p38e1, p38e3; Player 40,
+    trolls rise unless a standing member holds one of their two squares (the corner or the one below it; corrected
+    2026-11-23 from "the second cell doesn't stop it": Combat Chat 51, guide section 5). *seen* (Player 38, p38e1, p38e3; Player 40,
     p40t1-t3)
   - **Where to stand** (*code* + *players*, Gold Box Guide 8; stuck-fights.md section 3): the waves start at distance 0,
     on the party's square; event 9 lies on 4,3, 5,3 and 6,3, and 6,3 puts the east wall on the party's right with all
@@ -377,7 +391,11 @@ files); results *seen* unless marked.
     1's end stay out of waves 2 and 3 (no camp, only the ballista between), so wave 3 is fought by whoever stood after
     wave 1. Plan 2 then QUICK with MAGIC ON won all three 4 of 20; MAGIC-ON QUICK throughout 10 of 20 (140 HP lost in
     wave 1 against 203); a round-1 Fireball in wave 3 (trolls in contact again) 0 of 19. **Spend less in wave 1, cure
-    before it ends.** *seen* (main chat 99, `~/gbr/lab/data/c99/plans_throne44_w3_waves.txt`)
+    before it ends.** *seen* (main chat 99, `~/gbr/lab/data/c99/plans_throne44_w3_waves.txt`) Wave 3 from 6,3 with
+    CEDRIC's Prayer and LIRA's Fireball on the kobolds (off our front line) in round 1 against MAGIC-ON QUICK: alike
+    over 119 seeds (70 and 69 wins; chat 101's 40 against 36 of 60 was noise); pick either, the Fireball plan ends wave
+    3 about two rounds sooner with about 10 HP less lost. Four seeds of 59 ended the throne room after wave 1 in 3-5
+    rounds in both plans (not read). *seen* (ours, planfight; main chats 101-102)
   - **Leaving the caves with members at 0 HP:** no rest in 8:13 (its rocks hit members at random and cut every rest
     short); round 8,12's one-time deadfall (no thief awake: 20 kobolds) by 5,7, 3,7, 4,10. *seen* + *code* (Gold Box
     Player 45; ECL8 block 13)
@@ -544,7 +562,22 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
   with CON one lower and a poison effect gone. *seen* (main chat 76, check 160: RHIANNON, CON 14 -> 13) The reload rule
   still comes first (guide section 6).
 
+**NPCs and charmed members**
+- **The last player character must stay free:** at a fight's end the original counts the party alive only if a player
+  character (not a hired NPC, not a charmed member) stands on its side; with only NPCs or charmed members left the game
+  is lost even with every enemy beaten. *code* (Combat Chat 45, GAME.OVR 0x5AD8)
+- A hired NPC takes his share of every won pile before the party sees it (0x85 & 7 shares: SWORDSMAN 3 of 9) and can't
+  TRADE or SELL; SHARE never gives him coins. *code* + *seen* (main chat 104, GAME.OVR 0x6866, 0x21BFE; DOSBox, checks
+  393, 397-398)
+- A member charmed in a fight (Charm Person gone wrong, a vampire's gaze) stays charmed after it: run as an NPC, he
+  takes an NPC's share; a rest doesn't end it, Dispel Magic cast on him in camp does (75% at caster level 6 against
+  the charm's power 1). *seen* (Combat Chat 46, DOSBox: BAKSHI charmed by his own Charm Person)
+
 **Elsewhere**
+- **Mendor's library (2:15):** the journal entries are in the stacks: SEARCH on, step into a stack room (PHILOSOPHY,
+  MATHEMATICS, HISTORY, RHETORIC); each entry with SEARCH on rolls a book (PHILOSOPHY: a d12, three of the twelve give
+  an entry, then those are skipped); random monsters only in the garden (at most eight meetings), none while resting
+  there. *code* + *seen* (main chat 107, 2:15 0x9D62-0xA0BC, 0x9BAF; DOSBox, check 418)
 - **The Buccaneers' ransom (6:1):** SURRENDER costs coins and items but keeps the rescue; ATTACK, if won, captures the
   fort. *code* (Player 25, ECL 6:1)
 - **The graveyard's wights** take no harm from plain weapons (a plain mace left one untouched for five rounds): bring
@@ -569,7 +602,7 @@ Resistance, Long Sword +2, Plate Mail +2); the Wand of Lightning Bolt and the Po
 for" column** (Jeremy's magic-item rule 4, guide section 2: each wand, scroll and potion with the fight it's kept
 for) is to come; Gold Box Guide 2 fills it in with Jeremy. *code* (Gold Box Guide 2)
 
-**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Keep them while a level drainer lies ahead:** no drainer is listed after Valhingen Graveyard (the Kovel and library spectres, the graveyard's wights, spectres and vampire), so once it is cleared they are sold (*Jeremy*, Gold Box Guide 12, 2026-11-21 20:56; corrected 2026-11-22 from "never sell them"); **unconfirmed** until the monster data is checked for drainers in Valjevo, the finale and the late wilderness (board).
+**Restoration scrolls** (each a clerical scroll of 2 spells, RESTORATION x2, 1000 gp): Mendor's Library x1 (after the basilisk), **City Hall's graveyard commission x4** (3:8, with the two-handed sword), the graveyard x15 (4:10: the marble chest x4, the zombie room x2, the paladin's crypt x1, the knight's tomb x4, the vampire's trove x4). **Keep them while a level drainer lies ahead:** Pool's level drainers load only in 2:15, 4:2 and 4:10 (none in Valjevo, the finale or the late wilderness: main chat 98's catalogue), so the scrolls are sold at the first Phlan visit after Valhingen Graveyard (4:10) is cleared (*Jeremy*, Gold Box Guide 12, 2026-11-21 20:56, and Gold Box Guide 13, 2026-11-22 09:00; corrected 2026-11-22 from "never sell them"; the "unconfirmed" dropped 2026-11-23).
 
 **Consumable magic** (from the table below; Gold Box Guide 6, 2026-11-21; *code*). **Fire** (with acid, the only way to keep a troll
 down, as the killing blow; lightning doesn't: GAME.OVR 0x11434, Gold Box Guide 6): MU scrolls with Fireball at 1:24 (Fireball, Ray of Enfeeblement, Stinking Cloud), 3:14 x2
@@ -705,15 +738,3 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- The throne room's wave 3 (8:13, three waves from 6,3): CEDRIC's Prayer and LIRA's Fireball on the kobolds (off our front line) in wave 3's round 1 won 40 of 60 against MAGIC-ON QUICK's 36 of 60 in ours: no clear gain, but wave 3 ends two rounds sooner with ~10 HP less lost. *seen* (in ours, planfight, 60 seeds; main chat 101)
-- The throne room's wave 3 (8:13 from 6,3): over 119 seeds in ours the round-1 Prayer + Fireball plan and plain MAGIC-ON QUICK win alike (70 and 69 of 119; 59 more seeds 30 and 33): chat 101's 40 against 36 was noise; pick either, the Fireball plan ends wave 3 about two rounds sooner. Four seeds of 59 ended the throne room after wave 1 in 3-5 rounds in both plans (not read). *seen* (ours, planfight; main chat 102)
-- Restoration scrolls: Pool's level drainers load only in 2:15, 4:2 and 4:10 (none in Valjevo, the finale or the late wilderness), so the scrolls are sold at the first Phlan visit after Valhingen Graveyard (4:10) is cleared. *Jeremy* (Gold Box Guide 13, 2026-11-22 09:00; main chat 98's catalogue)
-- The finale: no caster strikes Tyranthraxus (ELWEN died both times she was ordered to, p47k1, p47k5); the wins came from ARN's and BRAM's hasted blows. *seen* (Player 47; Gold Box Guide 13)
-- The last player character must stay free: at a fight's end the original counts the party alive only if a player character (not a hired NPC, not a charmed member) stands on its side (GAME.OVR 0x5AD8); a party left with only NPCs or charmed members loses the game even with every enemy beaten, and a charmed member stays an NPC after the fight. *code* (Combat Chat 45, the spell matrix chs1)
-- The finale: Tyranthraxus' fight re-forms the party from its order (ALTER ORDER), whatever places it took in the guards' CONTINUE rounds; on 3,8 S the slots are 1 27,12, 2 26,12, 3 28,12, 4 25,12, 5 26,11, 6 25,11, 7 27,11 with him at 27,13. His first breath never caught slots 4-5 and seldom 3 in 60 seeds, but slot 2 in 55% and slot 6 in 37%: casters 3rd-5th, the sturdiest fighter 2nd. *code* + *seen* (main chat 104, ours over 60 seeds; the formation seen in DOSBox)
-- A hired NPC takes his share of every won pile before the party sees it (0x85 & 7 shares: SWORDSMAN 3 of 9) and can't TRADE or SELL; SHARE never gives him coins. *code* + *seen* (main chat 104, GAME.OVR 0x6866, 0x21BFE; DOSBox, checks 393, 397-398)
-- A member charmed in a fight (Charm Person gone wrong, a vampire's gaze) stays charmed after it: run as an NPC, he takes an NPC's share of the pile; a rest doesn't end it, Dispel Magic cast on him in camp does (75% at a caster level 6 against the charm's power 1). *seen* (Combat Chat 46, DOSBox: BAKSHI charmed by his own Charm Person)
-- Mendor's library: the journal entries are in the stacks: SEARCH on, step into a stack room (PHILOSOPHY, MATHEMATICS, HISTORY, RHETORIC); each entry with SEARCH on rolls a book (PHILOSOPHY: a d12, three of the twelve give an entry, then those are skipped); random monsters only in the garden (at most eight meetings), none while resting there. *code* + *seen* (main chat 107, 2:15 0x9D62-0xA0BC, 0x9BAF; DOSBox, check 418)
-- The Slums' grain sack (2:20 0,14: SOME MONSTERS ARE TOSSING A SACK OF GRAIN..., then a fight with no menu): its trolls and ogres destroyed three different parties fought on QUICK (check 45's level-1 party, check 327's, check 64's graveyard party; DOSBox, tpseed 11111111): never on QUICK; come with a plan (Jeremy's troll-room win: Stinking Cloud on the contact troll, Sleeps on the ogres, every fallen troll's square taken). *seen* (main chat 110, DOSBox)
-- A stirge (7:26's bands) that drinks its fill while its victim still stands is forced to flee every turn after, like a turned undead: no need to chase it, and a member it fed on is free at once; one whose victim falls first fights on. *code* (Combat Chat 50, GAME.OVR 0x103CB / 0x10462; not yet seen in DOSBox; ours still has it fight on)
-- Sokal Keep's barracks (the splintered-bunks building, 4:21 4-6,2-4): with SEARCH on, each step inside rolls 1 in 10 for a floorboard: a diary page (journal entry 3) and gems worth 208 XP each to a party of six; after Ferran Martinez's truth the haunts' text there never shows (jumped over in the script). Pace the room with SEARCH on. *code* + *seen* (main chat 111, 4:21 0xA3C0, DOSBox check 446).

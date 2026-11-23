@@ -424,7 +424,9 @@ the spell's class)
   - Kobolds resist 25% of the time; orcs need about 13-16. Bunched ettins in a cloud died to single blows. *seen*
     (Player 30, p30d2)
   - On ogres and trolls it works about half the time (23 saves, 13 failed, 10 made); spectres ignore it. *seen*
-    (Combat Chat 34, the spell lab on 2:20 0,14)
+    (Combat Chat 34, the spell lab on 2:20 0,14) Spectres and wights (anything with effect 0x6F) are never affected;
+    ghouls are. A coughing figure still fights: strike the ones that "CHOKE AND GAG FROM NAUSEA" first. *seen* + *code*
+    (Combat Chat 49: DOSBox sctr5, GAME.OVR 0x2B9D1)
 - **Hold Person** (cleric 2, next turn, 3 picks; magic-user 3, next turn, 4 picks; save vs spell; man-sized only).
   *Jeremy:* great for taking out annoying enemies with poorer saves. The cleric's lasts 4 + 1/level rounds, the
   magic-user's 2/level. A held figure is slain by any blow and loses its guard and any spell it was casting. Use it on
@@ -464,7 +466,8 @@ the spell's class)
   **Don't recast it on a hasted member:** with the old one's time all left it adds a record and nothing else; with less
   left, the old one goes and the member ages another year. *seen* (main chat 84, checks 235-238) (Pool) Cast in camp
   it reaches the first members in party order (as many as the caster's level): put the fighters first (poolrad.md
-  section 4).
+  section 4). Cast in the middle of a round, it doubles a QUICK or computer-run figure's blows at its next turn if it
+  hasn't struck yet that round. *code* (Combat Chat 44, GAME.OVR 0xC3C7 -> 0x1351E)
 - **Friends** (magic-user 1; camp): +2d4 Charisma (at most 25) for 1 minute a level: cast it just before a talk. A
   second Friends of equal length raises Charisma again; a longer one gives back the first one's starting Charisma.
   *seen* (main chats 81, 83)
@@ -510,6 +513,9 @@ arena):
 - **TURN every time undead appear, once per cleric per fight, in round 1, before casting or fighting.** *Jeremy*
   TURN with no undead on the field says NOTHING HAPPENS and spends the cleric's TURN for the fight. A level-5 cleric
   turned both of 4:10's spectres. *seen* (Combat Chat 34)
+- **Turned undead run** on every one of their turns ("IS FORCED TO FLEE") and never surrender; one cornered at the
+  field's edge stands and guards, and a member next to it gets a free blow when it moves off. Finish them before they
+  get away: they give no experience if they do. *code* + *seen* (Combat Chat 49: GAME.OVR 0xBCC1, DOSBox tu_spec5)
 - QUICK clerics (and paladins from level 3) turn by themselves once a fight, at their first turn with undead in sight,
   so taking control of one after its first turn leaves no TURN on the menu. *code* (GAME.OVR 0xADC3) + *seen* (the
   graveyard, Combat Chat 5; Combat Chat 34)
@@ -593,6 +599,9 @@ Guide 12, 20:56-21:05): each member's spells chosen for the fights ahead, not th
 lists in section 3 stand); each scroll, potion and wand with the member who uses it and the round it is used; what to
 sell or leave. **Think long term: spend nothing a later fight needs.** For the finale's twelve guards: as many Hold
 Persons as the slots allow (Pool's whole loadout: poolrad.md section 3; docs/strategy/player-capability.md section 3).
+**Written at the inn, checked again at the fight's door** against that day's ledger (the trip's loot can drop movement
+to 3: the throne room, `s44door`); every consumable gets a user, a later fight or a sale; before the last fight
+everything may be spent, but never by a worse tactical choice. *Jeremy* (Gold Box Guide 13, 2026-11-22 09:00)
 
 **A failed audit** means fixing it first: earn levels on mop-up fights and train, then plan the tactics by hand. Cheats
 (save edits, auto-level, teleports) are a last resort. *Jeremy*
@@ -608,7 +617,9 @@ Persons as the slots allow (Pool's whole loadout: poolrad.md section 3; docs/str
 **Train as soon as anyone qualifies.** If the funds are short, go and get them (treasure, mop-up fights), then come
 back. *Jeremy* Training cuts experience to "the level after next, less 1", so experience above that is lost: a
 multi-class left long untrained lost experience, and one party carried four untrained levels into the graveyard's
-spectres. *seen* (Player 3; Player 33)
+spectres. *seen* (Player 3; Player 33) (Pool) **The levels decide it:** the Slums' trolls (2:20 0,14) beat six tries at
+F2/F2/C2-3/C2-3/MU2-3 and fell to the seventh at F3/F3/C4/C4/MU3/MU3; training money had run out, and Kuto's Well
+(Norris) paid for the levels: clear it and train before the trolls. *Jeremy* (his play 2026-11-22)
 
 **Buffs: long ones in camp, short ones at the pivotal moment** (*Jeremy* + *code*: START.EXE spell table, bytes 4-5; a
 round is a minute; "a level" is the caster's level)
@@ -639,7 +650,9 @@ round is a minute; "a level" is the caster's level)
   for the event's squares before a hard fight. *code* (Gold Box Guide 8: the kobold throne, 8:13 4,3 / 5,3 / 6,3)
 
 **The game isn't a straight line.** Knock out what you can, move forward, and come back to what's too hard. *Jeremy*
-Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23)
+Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23) Skip fights not
+worth the time: (Pool) at Podol Plaza (1:18) DISGUISE, not STRIDE BOLDLY: its orc bands are 15 rounds for about 180
+experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 
 ## 5. In a fight
 
@@ -649,6 +662,10 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   three with the fourth covering the corner. *Jeremy* (Gold Box Guide 2, 2026-11-20 13:19) **A fighter with an enemy in
   reach attacks it, never GUARDs,** above all while a caster beside him is being hit (p39c2's video 44:00-45:30: BRAM
   guarded at 35 HP while two trolls took ELWEN from 30 to 4). *seen* + *Jeremy* (Gold Box Guide 10, 2026-11-21 15:46)
+- **No cleric in reach of an enemy with three attacks** until it is held, asleep or down: a cleric who stepped up to
+  strike the Slums' contact troll lost 14-20 HP in one turn. **No caster steps forward to cast** when that ends in reach
+  of an awake enemy (SHAZAM stepped from 31,14 to 29,11 to Sleep at Podol Plaza and fell to the orc leaders). *Jeremy*
+  (his play 2026-11-22)
 - Outnumbered: hold a short line at a doorway or corridor, focus on one target at a time, keep a reserve to fill gaps.
   Spread out against breath weapons and area spells. *book* (Cluebook)
 - Keep archers and dart-throwers out of reach: a missile can't be fired with an enemy adjacent. *book* (Manual)
@@ -667,6 +684,15 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   20:38) **Then the casters:** enemy mages' Magic Missiles finish wounded members; Hold Person or Stinking Cloud them
   (section 3). *seen* (Stojanow report) (corrected 2026-11-22: "kill the casters first" now comes after those in
   contact, Gold Box Guide 12)
+- **Every disabler in round 1 on the boss's group;** clerics with Hold Person are round-1 disablers (three a cast on
+  the humanoids in contact). (Pool) Norris the Gray, 5 lizardmen and 9 kobold leaders for 2 HP: Hold Person on Norris
+  and two lizardmen, Stinking Cloud on his square (slain helpless at once), Sleep on the leaders; 27 orcs for 0 HP with
+  two Hold Persons and two Sleeps; Grishnak (4:2) for 0 HP: the front three on him, Sleep and Stinking Cloud on the
+  hobgoblins behind (the book's party: 3 of 4, each with deaths); the basilisk (2:15): Stinking Cloud in round 1, dead
+  in round 1, 0 HP. *Jeremy* (his play 2026-11-22)
+- **Big bands: every area spell in the first three rounds,** each on a different cluster: (Pool) six (Sleep x4,
+  Stinking Cloud x2) took about 34 of 48 orcs and leaders out at Podol Plaza, won for 17 HP. *Jeremy* (his play
+  2026-11-22)
 - **Finish the helpless before they can act.** A sleeping or held enemy dies to any one blow, so you can keep killing
   the others until just before it wakes, then finish it. *Jeremy* + *book* + *seen* (Player 30) How long they stay
   helpless: Sleep 5 rounds a caster level; Hold Person 4 + 1 a level (cleric) or 2 a level (magic-user); Stinking
@@ -681,18 +707,25 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - **Backstab** (section 1): a fighter attacks first, then the thief attacks from the square directly opposite (Delay
   until the monster has moved). Damage x2 at thief levels 1-4, x3 at 5-8. *book* (Manual, Cluebook)
 - A melee AIM offers only figures next to you, and the aim list runs nearest first. *seen* (Player 31, p31a2/p31b1)
+- A fighter's sweep against weak foes (under 1 HD, one blow per level) comes only from his first blow of the round: any
+  blow he strikes clears the sweep for the rest of the round. *code* (Combat Chat 44, GAME.OVR 0x13FCC)
 
 **Missiles**
 - Bows shoot twice a round; extra shots go to the first target, then to another if it dies. *book* (Manual)
 - Shooting into a melee costs nothing and never hits a friend. Beyond a third of the weapon's range the target's AC
   counts 2 better, beyond two thirds 5. With an enemy adjacent only axes and spears (which also strike in melee) can be
   thrown. *code* (Combat Chat 32) + *seen* (side chat 2)
+- Magic-users carry a missile weapon and shoot once their spells are gone, rather than guard (Jeremy's two made 82
+  aimed missile attacks at level 1). *Jeremy* (his play 2026-11-22)
 
 **Turns**
 - Initiative is Dexterity plus a random number: high-Dex members act first. *book* (Manual)
 - Take the free round when you surprise the enemy; Guard receives a charge; Delay lets slow casters or healers act
   after the melee settles. *book* (Manual)
 - DONE in a fight opens GUARD DELAY QUIT SPEED EXIT. *seen* (Player 31)
+- A guarding figure whose first blow fells the enemy stepping up keeps its other attacks and its move for its own turn;
+  only a guard strike that spends every attack ends its turn (a guarding troll or multi-attack fighter can fell one and
+  still act). *code* + *seen* (Combat Chat 51: GAME.OVR 0x12E22 / 0x142AB, DOSBox k220 seed 33333333)
 - QUICK fighters guard when no enemy is in reach, so the first round can be lost while monsters close in. *seen*
   (Stojanow report)
 - Space during a QUICK member's turn hands every QUICK member back to you; each gets its menu at its next turn. *seen*
@@ -708,13 +741,24 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 - TURN first (section 3). Wights, wraiths, spectres and vampires drain levels, and a drained member can end "DEAD
   FOREVER". *book* (Cluebook) + *seen* (Players 7, 22) Protection from Evil doesn't stop it. *code* Bring magic
   weapons where they're needed (section 2); a spectre can't be turned below cleric level 5 (section 3).
+- (Pool, 4:2) The wight and 5 ghouls: the clerics TURN first (every ghoul turned each time, the wight twice), then
+  every blow on the wight (1-3 damage a hit, but every hit drains); Sleep and Hold Person don't touch undead. Lost or
+  drained when the wight reached a cleric or ghouls paralysed the front. *Jeremy* (his play 2026-11-22)
 
 **Enemies**
 - Some monsters never run (morale 255). *code* (MON2CHA.DAX; Stojanow report)
 - Some fights' monsters have fixed hit points, so every try faces the same total. *seen* (Stojanow report)
 - **Killed trolls rise again** at full HP on their corner (top-left) square unless a figure stands on it: a fighter
-  stands on each fallen troll's corner square. A member on its second cell doesn't hold it, and it rises as soon as the
-  member on it falls. **End the MOVE with Enter:** Esc undoes the whole MOVE (the figure goes back where it began),
+  stands on a fallen troll's square at once (casters too once the front is clear). **Either square holds it** (the
+  corner or the one below it); it rises when that square is free at the round's end. A member put on QUICK leaves the
+  body to walk to the next enemy: hold the square with a member under your control (GUARD). *seen* + *code* (Combat
+  Chat 51: DOSBox 2:20's trolls, k220 seed 33333333, a rise held by BRAM on the second cell, every draw as ours;
+  GAME.OVR 0x313F3, the footprint table DS:0x2844; corrected 2026-11-23: "a member on its second cell doesn't hold it",
+  Player 40's p40t1 rise came after ARN went on QUICK) (Pool) In the Slums' troll room Jeremy's win kept KABOOM on
+  27,11 and MISS BLESS on 25,11 and 25,9: no troll rose. **Kill the troll that starts in contact (27,11) first:**
+  blows in round 1, Stinking Cloud on it, slain helpless in round 2; in his six lost tries it lived and took the clerics,
+  in his win (deathless, 12 rounds) two Sleeps then took both ogres and the other trolls came one at a time. *Jeremy*
+  (his play 2026-11-22) **End the MOVE with Enter:** Esc undoes the whole MOVE (the figure goes back where it began),
   which is why the steps in Players 38-39's logs never held (32 of 32). *seen* (Player 38, p38e1/p38e3, Pool's kobold
   throne room; corrected 2026-11-22: Gold Box Guide 6 from Players 38-39's logs, and Player 40, p40t1-t3 in DOSBox, the
   Slums' trolls)
@@ -727,8 +771,10 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 **Fleeing**
 - **Fleeing:** MOVE into the field's edge asks FLEE: YES NO; YES gets the member away at once if no enemy can see him,
-  else only if his movement halved beats the fastest enemy's (a d2 on a tie), otherwise ESCAPE IS BLOCKED and he can go
-  on moving. Unready heavy armour to raise movement, and retreat early. The enemies still finish the round after the
+  else only if his movement halved beats the fastest enemy's (a d2 on a tie), otherwise ESCAPE IS BLOCKED and **his whole
+  turn ends**: a loaded member (movement 6 or 3) against kobolds or faster foes can lose round after round at the edge
+  (five blocked tries in a row: DOSBox flee_k6, Combat Chat 47; corrected 2026-11-23 from "he can go on moving"); shed
+  load or slow the foes first. Unready heavy armour to raise movement, and retreat early. The enemies still finish the round after the
   last member is gone (8:27's eighteen kobolds took their turns before THE PARTY HAS FLED). *book* (Manual, Cluebook) +
   *code* (GAME.OVR 0xA413 / 0x13465, Combat Chat 40) + *seen* (Combat Chat 41, DOSBox: ARN at movement 9 got away from
   kobolds at 6) (corrected 2026-11-22: the book's "movement at least the fastest enemy's")
@@ -750,7 +796,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
   (Players 7, 8, 13)
 - **Unconscious is not dead:** 0 HP with status UNCONSCIOUS (4) heals; DEAD (6) is dead. *seen* (Player 8)
 - **Reload and change something** (a different seed, a different plan): the same seed and the same keys can replay the
-  same dice and the same loss. *seen* (Player 14, p14b3/p14b4)
+  same dice and the same loss. *seen* (Player 14, p14b3/p14b4) **Judge a stuck-list try by round 1:** name what round
+  1 must achieve, reload at its end when it fails, change one thing (Jeremy reloaded three of six troll-room tries in
+  round 1, each with a different opening). *Jeremy* (his play 2026-11-22)
 - Unsure whether a human would reload? Ask Jeremy (Players: through the Lead). *Jeremy*
 
 **Experience**
@@ -768,7 +816,9 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 
 **Level drain**
 - **Never accepted:** reload, unless a Restoration scroll is in the packs: then use it at once (a second drain before
-  restoring can break the character). *Jeremy*
+  restoring can break the character). *Jeremy* **After every fight with a level drainer, check every member's level
+  before saving;** never save over the last pre-fight save until then (Jeremy missed two drains from 4:2's wight, saved
+  over them three times and lost about an hour). *Jeremy* (his play 2026-11-22)
 - **Temples don't restore levels:** Pool's temples sell no Restoration, so a drained level comes back only from a scroll.
   *code* (GAME.OVR 0x4819-0x4EEB; Combat Chat 32)
 - Each Restoration gives back one level, but to the class whose next level costs least, not the drained one, and the
@@ -969,27 +1019,5 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- A fighter's sweep against weak foes (under 1 HD, one blow per level) comes only from his first blow of the round: any blow he strikes clears the sweep for the rest of the round; and Haste cast in the middle of a round doubles a QUICK or computer-run figure's blows at its next turn if it hasn't struck yet that round. *code* (GAME.OVR 0x13FCC, 0xC3C7 -> 0x1351E; Combat Chat 44, the throne room with MAGIC on)
-- The loadout review: written at the inn, checked again at the fight's door against that day's ledger (the trip's loot can drop movement to 3: the throne room, `s44door`); every consumable gets a user, a later fight or a sale; before the last fight everything may be spent, but never by a worse tactical choice. *Jeremy* (Gold Box Guide 13, 2026-11-22 09:00)
-- Running off the field's edge works only against slower foes, or on a 1-in-2 roll against equally fast ones: a blocked try (ESCAPE IS BLOCKED) ends the member's whole turn, so a loaded member (movement 6 or 3) against kobolds or faster foes can lose round after round at the edge; shed load or slow the foes first. *seen* (Combat Chat 47, DOSBox flee_k6: five blocked tries in a row, GAME.OVR 0x13465)
-- (Pool, the Slums' trolls and ogres 2:20 0,14) Kill the troll that starts in contact (27,11) first: blows on it in round 1, Stinking Cloud on it, slay it helpless in round 2. In Jeremy's six lost tries it lived and took the clerics (14-20 HP a turn); in his win (F3/F3/C4/C4/MU3/MU3, deathless, 12 rounds) it died in round 2, two Sleeps then took both ogres, and the other trolls came one at a time. *Jeremy* (his play 2026-11-22, `.lab/jeremy/2026-11-22_restarts/`)
-- (Same room) Take every fallen troll's square at once, casters too once the front is clear: in Jeremy's win KABOOM stood on 27,11 and MISS BLESS on 25,11 and 25,9; no troll rose. *Jeremy* (his play 2026-11-22)
-- (Same room) The levels decide it: six tries lost at F2/F2/C2-3/C2-3/MU2-3, the seventh won at F3/F3/C4/C4/MU3/MU3; he went in short because training money ran out, and Kuto's Well (Norris) paid for the levels. Clear Kuto's Well and train before the trolls. *Jeremy* (his play 2026-11-22)
-- No cleric in reach of an enemy with three attacks until it is held, asleep or down (Jeremy's lost tries: a cleric stepped up to strike the contact troll and lost 14-20 HP in one turn). *Jeremy* (his play 2026-11-22)
-- Every disabler in round 1 on the boss's group: Jeremy beat Norris the Gray, 5 lizardmen and 9 kobold leaders with 2 HP lost: Hold Person on Norris and two lizardmen, Stinking Cloud on Norris's square (he failed: slain helpless at once), Sleep on the leaders. *Jeremy* (his play 2026-11-22)
 - Sleep in round 1 on the 3x3 with the most sleepable enemies, even far back, not the nearest: in Jeremy's opening, fights where Sleep landed in round 1-2 had bigger bands and cost less (5.1 HP against 7.6), e.g. 15 of 30 orcs asleep from two round-1 casts. *Jeremy* (his play 2026-11-22)
-- Magic-users carry a missile weapon and shoot once their spells are gone (Jeremy's two made 82 aimed missile attacks at level 1) rather than guard. *Jeremy* (his play 2026-11-22)
-- Judge a stuck-list try by round 1: name what round 1 must achieve, reload at its end when it fails, change one thing (Jeremy reloaded three of six troll-room tries in round 1, each with a different opening). *Jeremy* (his play 2026-11-22)
 - Disable first the enemy with the most attacks, not the biggest crowd: at Podol Plaza (1:18) Jeremy's two round-1 Sleeps took 18 orcs but no leader, the four orc leaders (two attacks each) reached the magic-users and SHAZAM went down in round 3; in the 44-orc fight a Sleep on the leaders put two down. *Jeremy* (his play 2026-11-22)
-- Big bands: every area spell in the first three rounds, each on a different cluster: Jeremy's six (Sleep x4, Stinking Cloud x2) took about 34 of 48 orcs and leaders out at Podol Plaza; won with 17 HP lost. *Jeremy* (his play 2026-11-22)
-- A caster doesn't step forward to cast when that ends in reach of an awake enemy (SHAZAM stepped from 31,14 to 29,11 to Sleep and fell to the orc leaders). *Jeremy* (his play 2026-11-22)
-- (Pool, Podol Plaza 1:18) DISGUISE, not STRIDE BOLDLY: the plaza's orc bands are 15 rounds for about 180 experience each, "not worth the time for the XP". *Jeremy* (2026-11-22 18:14, after trying it)
-- After every fight with a level drainer, check every member's level before saving; never save over the last pre-fight save until then. Jeremy missed two drains from a wight in Cadorna's Textile House (4:2), quick-saved and saved slot C over three times, played seven more fights including Grishnak, and lost about an hour. *Jeremy* (his play 2026-11-22)
-- (Pool, 4:2) The wight and 5 ghouls: the clerics TURN first (every ghoul turned each time; the wight twice), then every blow on the wight (1-3 damage a hit, but every hit drains); Sleep and Hold Person don't touch undead. Lost or drained when the wight reached a cleric or ghouls paralysed the front. *Jeremy* (his play 2026-11-22)
-- Clerics with Hold Person are round-1 disablers: three targets a cast on the humanoids in contact (Jeremy: 27 orcs with two casts and two Sleeps, 0 HP lost). *Jeremy* (his play 2026-11-22)
-- (Pool, 4:2) Grishnak: the front three on Grishnak, Sleep and Stinking Cloud on the hobgoblins behind: won with 0 HP lost (the book's party: 3 of 4, each with deaths). *Jeremy* (his play 2026-11-22)
-- (Pool, 2:15) The basilisk: Stinking Cloud in round 1, dead in round 1, 0 HP. *Jeremy* (his play 2026-11-22)
-- Turned undead run on every one of their turns ("IS FORCED TO FLEE") and never surrender; one cornered at the field's edge stands and guards, and a member next to it gets a free blow when it moves off. Finish them before they get away (they give no experience if they do). *code* + *seen* (GAME.OVR 0xBCC1; DOSBox tu_spec5, Combat Chat 49)
-- Stinking Cloud: a figure that makes its save only coughs (AC 2 worse, no spells or items that round) and still fights; only the ones that "CHOKE AND GAG FROM NAUSEA" are helpless. Strike the nauseated ones first; spectres and wights (and anything with 0x6F) are never affected, ghouls are. *seen* + *code* (DOSBox sctr5, GAME.OVR 0x2B9D1; Combat Chat 49)
-- Killed trolls: a member on either square of a fallen troll (the corner or the one below it) holds its rise; it rises when that square is free at the round's end. A member put on QUICK leaves the body to walk to the next enemy, so hold the square with a member under your own control (GUARD). (Corrects the "second cell doesn't hold it" line: Player 40's p40t1 rise came after ARN went on QUICK.) *seen* *code* (Combat Chat 51: DOSBox 2:20's trolls, k220 seed 33333333, a rise held by BRAM on the second cell, every draw as ours; GAME.OVR 0x313F3, the footprint table DS:0x2844)
-- A guarding figure whose first blow fells the enemy stepping up keeps its other attacks and its move for its own turn that round; only a guard strike that spends every attack ends its turn. A guarding troll or multi-attack fighter can fell one and still act. *code* *seen* (Combat Chat 51: GAME.OVR 0x12E22/0x142AB, DOSBox k220 seed 33333333)
