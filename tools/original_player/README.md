@@ -1316,6 +1316,19 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 50 (2026-11-23): Guide 13's (4), main's breath spread in the original: worse (the guards 2 of 5, the game 0 of 5)
+
+**Main chat 104's spread** (DORN, ARN, CEDRIC, LIRA, ELWEN, BRAM, GENHEERIS; ALTER ORDER `keys order
+e,a,o,@DORN,s,home,home,home,home,home,p,@BRAM,s,end,end,end,p,@LIRA,s,home,p,e,e,e` in lab `p50/rules48.plan`), else
+Player 49's measure: **the guards 2 of 5, the game 0 of 5** (Player 49's order: 5 of 5 and 4 of 5). No camp lies between
+the guards and him, so the order also sets the guards' start, and the spread puts DORN, CEDRIC and LIRA in their front
+row. His fight forms from the order as main found. Details: stuck-fights.md section 5, "Guide 13's (4)".
+**tactics.py** logs `TACTICS party HP: <name> <hp> @x,y, ...` whenever a member's HP or square changes (the original's
+combat text isn't in the logs); lab `p50/breath.py <log>...` prints the guards' last line, his fight's start slots and
+each change (a 40 or 80 fall marked as the breath).
+
+Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
+
 ## Player 49 (2026-11-23): Q34's finishing blows (the game 4 of 5); p45i5's parting is the replay tool (CONTROL space)
 
 **Q34 (Jeremy 07:33: "casters never strike Tyranthraxus" is a guideline, not a rule):** tactics.py `BOSS_FINISH`

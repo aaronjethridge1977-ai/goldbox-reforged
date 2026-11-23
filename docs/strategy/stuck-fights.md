@@ -950,3 +950,29 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\finale_guards\`.
   `hurt=20` potions, the scrolls).
 - **Next (to the guide):** keep it as the rule; whether ELWEN, who never hits, should rather stand back (or cure) while
   LIRA strikes is one question for the guide, not needed for Stage 1.
+
+### Guide 13's (4), his first breath: main's spread played in the original (Player 50, 2026-11-23)
+
+- **Setup:** as Player 49's measure (`OP_BOSS_FINISH=20`, seeds 47010001-05 from `p45i1_s45ready`, lab
+  `p50/rules48.plan`) with **main chat 104's spread** as the party order (ALTER ORDER before the walk in): DORN, ARN,
+  CEDRIC, LIRA, ELWEN, BRAM, GENHEERIS (casters in slots 3-5, ARN in the most-hit slot 2). tactics.py now logs each
+  member's HP and square (`TACTICS party HP`); lab `p50/breath.py` reads them (a fall of 40 or 80 is the breath). *seen*
+- **There is no camp between the guards and him** (the guards' fight with its CONTINUE rounds, the treasure, his text,
+  the vote, his COMBAT), so **the one order sets both fights' start**. His fight is formed from the order exactly as main
+  found (slot 1 27,12 ... 7 27,11, seen in p50t2-t3). *seen*
+
+  | try | guards | him | his first breath caught |
+  |---|---|---|---|
+  | p50t1 | **lost** (DORN, CEDRIC, GENHEERIS down early: DORN 27,12 and CEDRIC 28,12 in the front row) | - | - |
+  | p50t2 | won, none dead | lost | ARN (s2) 78 -> 38, BRAM (s6) 68 -> 0 |
+  | p50t3 | won, none dead (BRAM 1 HP) | lost | before any member's turn: ARN (s2) 72 -> 32, BRAM (s6) 1 -> 0 |
+  | p50t4 | **LIRA dead** (25,12, the front row): a reload | - | - |
+  | p50t5 | **lost** (only ELWEN and BRAM standing) | - | - |
+
+- **Against Player 49's order** (ARN, BRAM, DORN, CEDRIC, ELWEN, LIRA, GENHEERIS; the same seeds): the guards 2 of 5
+  against 5 of 5; the game 0 of 5 against 4 of 5. Deaths in wins and unspent: no wins. **Main's spread was measured in ours
+  for his fight alone** (the party on QUICK, from his fight's start); in the original the same order puts DORN, CEDRIC
+  and LIRA in the guards' front row, and the casters' safe slots 3-4 are the guards' front row. Both breaths seen hit
+  slots 2 and 6 (main's most-hit pair), so ARN in slot 2 took it each time. Not a difference in ours: the order's cost
+  in the guards' fight, which main's tables didn't include. No code change. Back to Player 49's order (the plan in
+  `p49/`). Question to the guide (board).

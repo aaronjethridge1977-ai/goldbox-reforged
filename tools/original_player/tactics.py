@@ -785,6 +785,11 @@ class Tactics:
                 len(foes), sum(f["hp"] for f in foes),
                 ", ".join("%d:%s %d @%d,%d/%d" % (f["n"], f["name"][:6], f["hp"], f["x"], f["y"], f["fp"])
                           for f in foes)))
+            # Player 50: each member's HP and square when they change (who a breath caught: the original's text isn't logged)
+            pline = ", ".join("%s %d @%d,%d" % (f["name"], f["hp"], f["x"], f["y"]) for f in party)
+            if pline != getattr(self, "party_logged", None):
+                self.party_logged = pline
+                self.log("TACTICS party HP: %s" % pline)
             me = next((f for f in party if f["name"] == member), None)
             if me:
                 self.log("TACTICS %s at %d,%d/%d%s" % (member, me["x"], me["y"], me["fp"], (
