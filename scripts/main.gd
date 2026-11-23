@@ -2101,6 +2101,9 @@ func _try_move(direction: int) -> void:
 		_step_off_map = off
 		_vm.clear_output()
 		_step_from = _pos
+		# Chat 118 (DOSBox, 3:0 at night, check 46's locked shop door: the on-move script's THE DOOR IS LOCKED.
+		# DO YOU WANT TO BREAK IN? types over AREA CAST VIEW ENCAMP SEARCH LOOK, then YES NO): as entry 1's.
+		_vm.walk_menu_next = true
 		_vm.start(0)
 		_pending_move = direction
 		_after_vm()
