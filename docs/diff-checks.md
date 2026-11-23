@@ -172,6 +172,26 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 119: a step through the map's edge keeps the place line of the square left; check 459 (main path, display)
+
+- **An arrival through the map's edge (found, fixed):** DOSBox at speed 4, 4:2 4,0 N (a real save: check 456's start
+  jumped there, then ENCAMP SAVE in the original), Up through the north edge into Podol Plaza (1:18, 4,15 N): the new area's
+  view is drawn, but the place line keeps the square left and its time, **4,0 N 10:56**, through the arrival's on-move
+  menu (THE PLAZA AHEAD IS CROWDED WITH MONSTERS. HOW WILL YOU PROCEDE?, row 24 blank), after the choice (the walking
+  menu back, the line still 4,0 N 10:56) and with no menu at all (0x4AB0 = 0: the line stays 4,0 N until a step shows
+  4,14 N 10:57); back south from 4,15 S into 4:2 the same (4,15 S until the next step). SEARCH redraws it (4,15 N 10:56
+  SEARCH), as does a step or turn. Ours drew the new square at once. Now `main.gd _place_left`: the line taken as the
+  step's on-move leaves the map (0x6DD5 set, a step pending), kept while the party stands on the arrival square and facing,
+  until a step, a turn, a walking-menu word (as the blank line's list), a fight or a load.
+- **Seen, matching:** the arrival menu's title types after a load (0x4A00 on: 2.2 s, then the items; ours 2.1 s), row
+  24 blank under it (both); the time 10:56 at the arrival and 10:57 after the next step (both). A jump save's jump step
+  turned 0x4A00 off in the original (1 after the load, 0 after the jump; a real edge step after a load leaves it 1): the
+  jump isn't a game case, but it means a check started from a jump save never types a title.
+- **Not seen:** an arrival from the wilderness map (check 7's start is a jump save) or into it.
+- **Check 459 in the gate:** the start above with 0x4AB0 = 1 (`~/gbr/lab/data/c119/sE1`), Up across the edge, STRIDE
+  BOLDLY FORWARD (0x4A35 = 255), Up onto 4,14; three runs MATCH, the break (0x4A35 255 -> 1) DIFFERS; DIFFCHECKS
+  456/456.
+
 ## Chat 118: the Lead's spot-check of chat 117's typing wait (a shop, a temple, a question); spaces type free; the walking menu under an on-move text and a vertical menu; a vertical menu's title types after a load; checks 457-458 (main path, display and timing)
 
 - **Spot-check of chat 117's fourth fix (Lead, chat 118):** DOSBox at speed 4 against ours filmed: 3:0's arms and armour

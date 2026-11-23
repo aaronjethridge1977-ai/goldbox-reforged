@@ -1114,6 +1114,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			# The words that redraw the place line (main chat 111; chat 115: SEARCH at 5:6), and any step or turn,
 			# a refused step too (chat 115, DOSBox: 5:5, Up into the next hedge shows N 12:44 with its question).
 			_vm.place_blank = []
+		if not _place_left.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
+				and (key in [KEY_A, KEY_V, KEY_E, KEY_L, KEY_C, KEY_S, KEY_HOME, KEY_END] or event.is_action("ui_up") \
+				or event.is_action("ui_down") or event.is_action("ui_left") or event.is_action("ui_right")):
+			_place_left = []      # chat 119: as the blank line's (DOSBox: SEARCH after Podol Plaza's arrival)
 		if not _stale_view.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			# The walking menu's other words (main chat 111, DOSBox 4:10's tower after YES): AREA, LOOK, ENCAMP,
 			# VIEW and a CAST that opens the spell list redraw the whole screen on the real square; SEARCH,
@@ -1437,6 +1441,12 @@ var _blank_at := []    # where the party stood when the view went blank after a 
 var _stale_view := []
 var _stale_at := []
 var _stale_line_done := false   # the place line already shows the real square (SEARCH, Home/End: main chat 111)
+## Chat 119 (DOSBox, 4:2 4,0 N north through the map's edge into Podol Plaza at 4,15 N, and back south): a step through
+## the edge draws the new area's view but not the place line, which keeps the square left and the time as they stood
+## ("4,0 N 10:56") through the arrival's on-move menu (THE PLAZA AHEAD ..., after the choice too) until a step, a turn
+## or a walking-menu word redraws it (SEARCH shows 4,15 N 10:56 SEARCH). [text, [square, facing, map]]; [] none.
+var _place_left := []
+var _place_left_text := ""       # the line taken as the step leaves the map (_after_vm's NEW_ECL)
 
 
 func _on_typed(text: String) -> void:
@@ -2771,6 +2781,8 @@ func _after_vm() -> void:
 				_show()
 				return
 			_by_new_ecl = true
+			if _step_off_map and _pending_move >= 0 and not _vm.on_overland and _vm.place_blank.is_empty():
+				_place_left_text = _place_line()     # chat 119: kept on the new area's square (see _place_left)
 			_step_off_map = false
 			_enter_script(set_no if set_no >= 1 and set_no <= 8 else _vm_file, _vm.new_ecl, true, true)
 			return
@@ -3323,6 +3335,7 @@ func _on_event_fight_finished(result: int) -> void:
 ## `paid`: a won fight's members still in it (Combat.paid; GAME.OVR 0x58D3 pays only those, before the fight's end
 ## stands the cured fallen up: Combat Chat 53); null elsewhere: every member able to fight.
 func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem] = [], paid: Variant = null) -> void:
+	_place_left = []     # the walking screen after a fight is drawn whole
 	var coins := []
 	var list_id := 255
 	if _fight_treasure.size() >= 8:
@@ -3533,6 +3546,8 @@ func _init_and_arrive(block_id: int, follow_map: bool, arrive: bool, loading: bo
 	_pos = Vector2i(_vm.read_byte(EclVM.PARTY_X) & 15, _vm.read_byte(EclVM.PARTY_Y) & 15)
 	_facing = (_vm.read_byte(EclVM.PARTY_DIR) & 3) as DungeonView.Dir
 	_synced = Vector3i(_pos.x, _pos.y, int(_facing))
+	_place_left = [] if _place_left_text == "" else [_place_left_text, [_pos, _facing, _map_index]]
+	_place_left_text = ""
 	_walls_for = -1
 	_pending_move = -1
 	_vm.write_byte(EclVM.LEAVING_MAP, 0)
@@ -4204,6 +4219,11 @@ func _place_line() -> String:
 		if hide:
 			return "%s %s" % ["NESW"[sf], GameClock.text(_vm)]
 		return "%d,%d %s %s" % [sp.x, sp.y, "NESW"[sf], GameClock.text(_vm)]
+	if not _place_left.is_empty():
+		# The line as it stood when the step left the last area's map (see _place_left).
+		if _place_left[1] == [_pos, _facing, _map_index] and _vm.place_drawn.is_empty():
+			return String(_place_left[0])
+		_place_left = []
 	if not _vm.place_drawn.is_empty():
 		# The line as CALL 0x2C90 drew it, until the party turns or steps (EclVM.place_drawn; main chat 109).
 		if _vm.place_drawn["at"] == [_pos.x, _pos.y, _facing]:
