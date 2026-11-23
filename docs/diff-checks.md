@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 115: a place line a DAMAGE blanked stays blank; 6:1's guard after the slave pen (main path, display)
+
+- **The place line after DAMAGE (found, fixed):** chat 114 left open what the original shows after a DAMAGE's last
+  page when nothing redraws. DOSBox (lab speed 4): **4:10's fumes** (check 443's start jumped to 1,14 N with 0x4A39 =
+  255, `~/gbr/lab/data/c115/sFm`; the arrival puts the party at 0,4 E; Up, Right, Up x8 to 1,12 S, Enter, Up onto
+  1,13: NOXIOUS FUMES TEAR AT YOUR THROAT ..., two pages): after the last PRESS <ENTER>/<RETURN> the script stops with
+  DAMAGE. in the box, the walking menu and **no place line**; a turn brings it back (1,13 E). **5:6's altar** (check
+  25's keys): the blank place line stays through PRINT_CLEAR "", the swords' YES/NO and the script's end; SEARCH
+  brings it back. **5:5's hedge** (check 121's keys): the script's CALL 0xC01E moves the party to 11,5 and the place
+  line stays blank there; the next step attempt (Up into the next hedge) shows N 12:44 with its question. Ours showed
+  the place line again after the last page. Now `EclVM.place_blank` keeps it blank until a CALL 0x2C90, a fight, a
+  new area, a step or turn (a refused step too), or AREA/LOOK/ENCAMP/VIEW/CAST/SEARCH/Home/End (SEARCH seen; the others
+  as chat 111's redraws, not seen here).
+- **Why the hedge's step script doesn't bring it back:** the original's CALL handler (GAME.OVR 0x3A3F, 0x2C90 =
+  0xAC91 + 0x7FFF) redraws only when a redraw flag is set (DS:0x84E0/E3/E5/E6/E8, then clears them); the step
+  routine clears 0x84E0 after its own redraw and before the square's script (0x421E), so a step script's CALL 0x2C90
+  (5:5's every plain square, 0x9C79) draws nothing. Seen with the rocks (8:13, check 87's start with 0x49FB = 1): the
+  rest's CALL 0x2C90 does redraw the place line (S 11:01), with 0x49FB set too (DS:0x49F3 = 4 throughout).
+  Ours' CALL 0x2C90 in the square's script right after a step leaves the blank (`step_fresh`).
+- **6:1's slave pen, PUNCH MERCHANT (seen, as the original but one frame):** check 40's start, at game speed 4 in both
+  (the save is at 0: ALTER SPEED first). The text types over the slave pen's picture; 0xB613 (SPRITE_OFF, PICTURE 255)
+  clears the picture, so the guard's SPRITE_START 16, 2, 1 is drawn: his portrait for ~2.4 s in the original, ~2 s in
+  ours, then the fight. The original shows the restored 3D view with a small figure for one frame (0.1 s at 10 fps)
+  before the portrait; ours goes straight to the portrait. A BATTLE BEGINS... shows 0.1 s in the original; ours shows
+  it in paced play only (`CombatScreen.paced()`; the --keys film had none). Not changed.
+- **8:13's spike trap** (0x9E57: PRINT_CLEAR, DAMAGE, EXIT) has the fumes' shape: covered by the same rule, not run.
+
 ## Chat 114: DAMAGE's hit lines and HP, a farewell's name and highlight, figures after a picture (main path, display)
 
 - **Jeremy's answers (07:33), main's items:** (g) **P104 built (QoL):** a script text's pauses (its typing time, a DELAY
