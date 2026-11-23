@@ -3572,6 +3572,7 @@ func _init_and_arrive(block_id: int, follow_map: bool, arrive: bool, loading: bo
 	_vm.clear_output()
 	_vm.area_map = []
 	var from_wild := _vm.on_overland and arrive
+	_vm.begin_arrival()
 	_vm.start(4)
 	if from_wild and not _vm.on_overland and not _vm.text_changed:
 		# Chat 119 (DOSBox, check 127's start: Phlan's east edge on the wilderness map, NORTH or SOUTH into 3:14 at
@@ -3600,6 +3601,18 @@ func _init_and_arrive(block_id: int, follow_map: bool, arrive: bool, loading: bo
 	_synced = Vector3i(_pos.x, _pos.y, int(_facing))
 	_place_left = [] if _place_left_text == "" else [_place_left_text, [_pos, _facing, _map_index]]
 	_place_left_text = ""
+	# Chat 121 (GAME.OVR 0x19BA): the place line as the arrival's redraw drew it, when the init then changed 0x49FB
+	# (DOSBox: 8:13 from the band shows "6,15 N 12:50" though its init sets 0x49FB, then "W 12:50" at a turn; the
+	# pyramid and Valjevo's castle set it before their LOAD_AREA_MAP and show no square at once).
+	if _place_left.is_empty() and not _vm.on_overland and _vm.arrival_hide >= 0 and _vm.arrival_at.size() == 3 \
+			and (_vm.arrival_hide != 0) != (_vm.read_byte(NO_COORDINATES) != 0):
+		var at: Array = _vm.arrival_at
+		var line := "%s %s" % ["NESW"[int(at[2])], GameClock.text(_vm)]
+		if _vm.arrival_hide == 0:
+			line = "%d,%d %s" % [int(at[0]), int(at[1]), line]
+		_place_left = [line, [_pos, _facing, _map_index]]
+		_vm.place_drawn = {}
+	_vm.arrival_hide = -1
 	_walls_for = -1
 	_pending_move = -1
 	_vm.write_byte(EclVM.LEAVING_MAP, 0)
