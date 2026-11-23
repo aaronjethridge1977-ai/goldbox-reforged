@@ -332,6 +332,8 @@ var running_entry := -1    # the entry point start() last ran (4: the init)
 ## Before an area's init (see arrival_hide).
 func begin_arrival() -> void:
 	_arrival_loads = 0
+	backdrop_ground = 0x41
+	backdrop_line = 9
 	arrival_hide = -1
 	arrival_at = []
 
@@ -387,6 +389,13 @@ var place_drawn := {}
 ## under 0x4432), else after the init. begin_arrival() before the init; arrival_hide is 0x49FB at that redraw
 ## (-1: after the init), arrival_at the party's square then. 8:13's init loads both before it sets 0x49FB.
 var arrival_hide := -1
+## Chat 121 (GAME.OVR 0x82B0): a script's write to 0xC059 / 0xC05F sets the 3D backdrop's ground / horizon codes
+## (DS:0x6F68 / 0x6F69; 0x2DD5A turns them into colours); every area entry resets them to 0x41 / 9 (0x7689 from
+## 0x40A3: a white top line, grey lines, brown ground). 4:10's init writes 8 and 11, 8:29's 65 or 8.
+const BACKDROP_GROUND := 0xC059
+const BACKDROP_LINE := 0xC05F
+var backdrop_ground := 0x41
+var backdrop_line := 9
 var arrival_at := []
 var _arrival_loads := -1
 var redraw_pending := false   # a CALL 0x2C90 waits for its text to type: main keeps the old square till then
@@ -583,6 +592,10 @@ func write_byte(addr: int, value: int) -> void:
 	mem[addr] = value & 0xFF
 	if not hi.is_empty():
 		hi.erase(addr)
+	if addr == BACKDROP_GROUND:
+		backdrop_ground = value & 0xFF
+	elif addr == BACKDROP_LINE:
+		backdrop_line = value & 0xFF
 
 
 ## The original keeps each ECL address of three windows as a 16-bit cell of its own: 0x4900-0x4CFF
