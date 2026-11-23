@@ -174,6 +174,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 114: DAMAGE's hit lines and HP, a farewell's name and highlight, figures after a picture (main path, display)
 
+- **Jeremy's answers (07:33), main's items:** (g) **P104 built (QoL):** a script text's pauses (its typing time, a DELAY
+  after it, BOTH SIDES WAIT.) run at a fixed reading pace, the original's at game speed 4 (`TEXT_SPEED`), whatever
+  SETTINGS says; a DELAY with no text before it keeps the game speed. (f) **P106: as the original.** His sessions
+  (17:36, 17:49; copied to `.lab/stuck/jeremy_run_2026-11-22/p106_*.gbrrec`) ran at game speed 1 in 1:18; there THE
+  MONSTERS STAND READY is the distance-0 text, and WAIT at distance 0 only prints BOTH SIDES WAIT. and asks again
+  (chat 107, check 417, DOSBox). The original shows it only while it types; ours held it 0.2 s at speed 1. With
+  P104 it stays up 1.5 s (`vid/bw1.mp4`, speed 1).
 - **Spot-checks of chat 113's waits (DOSBox, lab speed 4; `~/gbr/lab/data/c114/g`):** all match. Genheeris (5:7,
   check 371's start: GOOD. types in 0.28 s, he joins the list at 0.40 s); 1:18's Ilmater temple (check 439's start:
   the woman's picture stays while 'YOU CAN REST HERE ...' types, then PICTURE 255 brings the view back, `jsheet.png`);

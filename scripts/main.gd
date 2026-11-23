@@ -2625,6 +2625,11 @@ func _type_ahead_go() -> void:
 		_unhandled_input(ev)
 
 
+## P104 (Jeremy, QoL): the pace of a script text's pauses, as the original's at game speed 4 (the lab's speed:
+## 40 ms a character typed, then 0.9 s for a DELAY), whatever the game speed is set to.
+const TEXT_SPEED := 4
+
+
 ## A script DELAY: the original waits game speed x 225 ms, no key (GAME.OVR 0x3465, opcode 0x3A,
 ## START.EXE 0x709:0xDBE). A Timer can't start at 0, hence the floor.
 func _script_delay() -> float:
@@ -2632,9 +2637,16 @@ func _script_delay() -> float:
 	# speed x 225 ms (0x709:0xDBE). Ours prints at once, so the text printed before this DELAY gets its typing
 	# time added: up as long as in the original (P104, main chat 107: Mendor's library's books, DOSBox).
 	var chars := _vm.delay_chars if _vm.state == EclVM.State.WAIT and not _vm._enc_waited else 0
+	# P104 (Jeremy, 2026-11-23 07:33, QoL): the game speed never shortens a text's pause; text stays readable.
+	# A pause that holds a text up (its typing time, a DELAY after it, BOTH SIDES WAIT.) runs at TEXT_SPEED,
+	# whatever SETTINGS says; a DELAY with no text before it (a figure walking up) keeps the game speed.
 	if _vm.typing_wait:      # a PRINT_CLEAR over a text not yet seen: its typing time only (no DELAY)
-		return maxf(CampScreen.speed * chars * 0.010, 0.001)
-	return maxf(CampScreen.speed * (0.225 + chars * 0.010), 0.001)
+		return maxf(TEXT_SPEED * chars * 0.010, 0.001)
+	if _vm.state == EclVM.State.WAIT and _vm._enc_waited:
+		return TEXT_SPEED * (0.225 + "BOTH SIDES WAIT.".length() * 0.010)
+	if chars > 0:
+		return TEXT_SPEED * (0.225 + chars * 0.010)
+	return maxf(CampScreen.speed * 0.225, 0.001)
 
 
 ## Shows what a script run produced and carries on with whatever it was waiting for.
