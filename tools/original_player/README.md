@@ -1329,6 +1329,21 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 54 (2026-11-23): the ghoul fixture for Combat (P115)
+
+**Combat's ghoul checkpoint** (the Lead's item, Jeremy's cloud-on-ghouls report P115): p32a4's band at 4:10 8,8 is
+four wights, 16 zombies and **two ghouls** (figures 27 and 28, at 21,7 and 23,7 at the fight's start). `p54/ghoul.plan`
+is `p32/seg26b.plan` as p32a4 ran it (the gear lines came after p32a4), cut before the band: trip 7's walk to 9,5 as
+p32a4's legs (`walk 2,4`, `2,13`, `6,13`, `6,9`, `8,9`, all `avoid 5,28`), `keys faceN left`, `checkpoint s26ghoul`,
+`step N`. A rerun from p32a4's own start (`p32a1_s26g5`, seed 32010004) parted at the trip-6 fight (key 147: tactics.py
+has changed since Player 32), so p54a2 runs from **p32a4's own save `p2start/p32a4_s26g6` with the seed it had there,
+77d16d91**: every key, place and seed after it is p32a4's #433-#574 (the one extra key is the save's QUIT TO DOS NO),
+and the step N gives p32a4's seed 663a9927 and fight seed cd51c166, the same 22 figures. The save
+`.lab/player/saves/p54a2/s26ghoul` (also `p2start/p54a2_s26ghoul`, slot H's files): **4:10 8,9 facing N, seed
+788697a8** (the whole 4:10 walk draws nothing), all six up (257 HP), p32a4's gear (BRAM Flail +1 and shield; no
+council sword: that came after p32a4). From it, one step N (`up`) with seed 788697a8 meets the band at 8,8.
+Lab: `p54/keycmp.sh` (two runs' keys, places and seeds side by side).
+
 ## Player 53 (2026-11-23): p45i5 identical on Combat Chat 53's experience fix (Stage 1: 70 of 70); the stirge checkpoint
 
 **p45i5** (segment 34, Tyranthraxus's finale) rerun on origin/main 6d42d32 (Combat Chat 53's c792aa4: a won fight's
