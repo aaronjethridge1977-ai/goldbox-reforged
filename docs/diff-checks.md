@@ -172,6 +172,48 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 108: Sokal Keep (4:21) on the main path; 426-431; a text before a fight or treasure (432)
+
+- **A text printed just before a fight, a treasure, a shop or a temple was never seen (main path, display/timing;
+  fixed in ecl_vm.gd).** The original's printer types a script's text before the next instruction runs (START.EXE
+  0x7782, game speed x 10 ms a character), so a COMBAT right after a PRINT opens its screen only once the text has
+  typed. DOSBox, 4:10 the knight's gifts (8,2, 0xACBC "FROM THE MAGICALLY-LIT TOMB ... BEFORE THE PARTY.", then
+  TREASURE and COMBAT): the text types for about 4.5 s at speed 4, then THE PARTY HAS FOUND TREASURE!; 4:10 9,1's
+  brass doors ("SHADOWY FORMS FLOW FROM BETWEEN THE DOORS AND ATTACK.", 52 characters): typed in about 2.1 s, then A
+  BATTLE BEGINS... Ours went to the treasure screen at once (ours' window recorded at 2 fps: never a frame with the
+  text) and showed a fight's text only for A BATTLE BEGINS' 0.2 s. Ours' COMBAT now waits the typing time of the text
+  printed since the script last stopped, as chat 107's PRINT_CLEAR (`typing_wait`); seen in ours' window: the
+  knight's text up about 4 s. 78 COMBATs in Pool's scripts follow a PRINT with no stop between (3:14's treasures,
+  1:24's orcs, 6:1's waves, the wilderness ambushes). Not in the rest entry. Check 432 guards the knight's gifts
+  (check 12's start with 0x4A18 = 1: the coffin, then 12,1 -> 9,1 (the panel's text) -> 8,2; TAKE four, EXIT, NO).
+
+- **4:10's arrival scene (THE SKY DARKENS. ..., PRESS, UNTIL AN EXPLOSION OF LIGHTNING ...) matches by eye, but no
+  check:** the init copies ECL 0xC059 into 0x4A16 (and back on leaving, 0x992B). The original's variable read
+  (GAME.OVR 0x82DF) maps 0xC04B-0xC04F only; 0xC059 (offset 0xE) has a compare and no branch, so it returns an
+  uninitialized local (140 from check 45's start jumped in; ours 0). Nothing reads 0x4A16 but that write back, and a
+  write to 0xC059 goes nowhere either: no effect in play, but a check there can't match.
+
+Sokal Keep had one check (45, the boat back). Six more, each against DOSBox (tpseed 11111111, the shipped party with
+DIRTEN from check 45's start), all matching ours at once: no difference there.
+- **426:** check 45's start jumped into the keep (its init puts the party at 8,14 N, THE BOAT DISEMBARKS ...; 0x4AD7
+  = 255, the orcs and hobgoblins of the hall already beaten), the gate's text, an undead patrol at 10,11 (A PACK OF
+  UNDEAD SUDDENLY APPEARS., PARLAY NICE, the word SHESTNI: THE UNDEAD LEAVE., 0x4A19 = 1), the empty hall, the chapel,
+  Ferran Martinez at 8,10 (A PALE FORM RISES BEFORE YOU., PARLAY, LUX, TELL THE TRUTH?: his three texts, 0x4A26 =
+  255, 0x4AA7 = 254). Rows as the original's ("KEEP.TO" and "FREED," at the 38th column).
+- **427 / 428:** the same to Ferran, then LIE? ('YOU LIE,' ..., 0x4A01 = 255) and a wrong word (THE OUTLINE OF A
+  SAD-FACED MAN WAVERS AND FADES AWAY., 0x4A13 = 255: Ferran gone for good).
+- **429:** 426's original end: through the armory (its text), the illusionary wall at 15,1 (PRINT_CLEAR, then PRINT
+  THERE IS A GLOW ...), the stands' text, the equipment (YES, 333 XP each, TAKE the four items, EXIT; 0x4A21 = 255).
+- **430:** 427's original end (Ferran's lie leaves 0x4A26 at 0): the barracks' text at 6,2, the haunts on the fourth
+  barracks square (A MIST RISES ...; the menu at distance 2 has ADVANCE, one ADVANCE gives PARLAY), LUX: two texts,
+  the floorboard (journal entry 3), the gems (208 XP each, SHARE, EXIT; 0x4A27, 0x4A29 = 255).
+- **431:** 430's original end, walked to 5,7: a patrol while 0x4A19 = 1: AN UNDEAD PATROL CONFRONTS YOU. DO YOU GIVE
+  THE PASSWORD?, YES: THE UNDEAD LEAVE.
+- **Seen:** a key typed while a step's text types (the chapel at speed 4, about 6 s) is acted on when it has typed,
+  as ours' P90 rule; ours shows the text at once (kept: Jeremy, 2026-11-16). Not covered: the smithy's frogs (a fight
+  on the third smithy square) and the hammer (SEARCH at 15,6 behind them), the insects at 2,11, the patrol's wrong
+  word (a fight), the elf's runes (SEARCH at 6,13).
+
 ## Chat 107: WAIT in an encounter (P106), a figure starting at distance 0 (P102), a text's typing time (P104, the auction's wand); 417-425
 
 - **WAIT on COMBAT WAIT FLEE PARLAY (P106; main path, display; fixed in ecl_vm.gd).** DOSBox, 1:18 Podol Plaza

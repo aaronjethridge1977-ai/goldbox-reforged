@@ -1353,6 +1353,20 @@ func _exec(ins: Dictionary) -> void:
 				result = 2
 			write_byte(AMBUSH, result)
 		"COMBAT":
+			if print_chars > 0 and running_entry != 2 and text.strip_edges() != "" \
+					and (read_byte(TEMPLE_FLAG) == 1 or read_byte(SHOP_FLAG) == 1 \
+					or not monsters.is_empty() or not treasure.is_empty() or duel == 1):
+				# The original types a script's text before the next instruction runs (START.EXE 0x7782, game
+				# speed x 10 ms a character), so a text PRINTed just before a fight, a treasure, a shop or a
+				# temple is up while it types; ours went to that screen at once and the text was never seen
+				# (4:10 0xACBC, the knight's gifts: 4.5 s at speed 4 in DOSBox, then THE PARTY HAS FOUND
+				# TREASURE!). Wait as at a PRINT_CLEAR (main chat 108), then run this COMBAT again.
+				pc = _at
+				delay_chars = print_chars
+				print_chars = 0
+				typing_wait = true
+				state = State.WAIT
+				return
 			if read_byte(TEMPLE_FLAG) == 1:
 				state = State.TEMPLE
 			elif read_byte(SHOP_FLAG) == 1:
