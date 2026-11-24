@@ -1176,7 +1176,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if _busy:
-			if event is InputEventKey and not (event as InputEventKey).echo:
+			# Chat 130 (DOSBox, 7:26's river at speed 4, Right held 0.6 s into THE RIVER'S STENCH DRIVES YOU BACK. and
+			# let go during it): the BIOS keeps a held key's repeats through a script's wait like any key, and the read
+			# after it takes them: a second note, then the keys typed during that one (Up then Left: only Left). Ours
+			# dropped the repeats: one note, and Up and Left both acted.
+			if event is InputEventKey:
 				_type_ahead_add(event as InputEventKey)
 			get_viewport().set_input_as_handled()
 			return
