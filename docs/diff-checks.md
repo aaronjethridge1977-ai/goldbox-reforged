@@ -172,6 +172,31 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 127: the "full flush" drops nothing; a burst of keys read as the original's get-key reads it (main path)
+
+- **START.EXE 0x899:0x104 isn't a flush:** its first instruction after the frame (0x899:0x10A, `EB 12`) jumps to
+  the end, past the `while KeyPressed do GetKey` loop (a Pascal `Exit` before it); the live code in DOSBox is the
+  same. Its callers (15 in GAME.OVR, among them the loaders of monsters (0x1F23D), pictures (0x2E552, 0x2E75A),
+  8x8 tiles (0x32364), saved games (0x1FC9D), combat icons (0x31F5D), and START.EXE's picture loader 0x464:0x29F)
+  drop no key. Seen with `~/gbr/lab/data/c127/fltrace.py` (patches the routine in DOSBox's memory to log each
+  caller): 1:18's young woman (check 439's start, speed 4), N typed 0.15 s after the step: two calls 0.2 s after it,
+  N still answered YES / NO (NO); ours the same. Chat 126's "full flush" note is withdrawn; the only key-dropping
+  routine is 0x899:0x122 (the fight's setup).
+- **A burst of keys typed during a wait (found, fixed; input, main path, resets the streak):** the game's get-key
+  (START.EXE 0x899:0x59) reads one character; if it isn't 0 it reads every key still waiting and keeps the last
+  **byte**; if it is 0 (an extended key: arrows, Home, End, PgUp, PgDn, Ins, Del, F1-F10) the caller reads again for
+  the scan code and that read drains the rest the same way. So the first key decides plain or extended, the last
+  byte the value. DOSBox at speed 4: Rolf's approach (`mksave.py J G 3 0 15 1 W 4AC5=0`, Up), keys typed during the
+  figure's DELAYs: Enter alone and Enter then Down answered the first PRESS (Down's scan 0x50 read as 'P', PRESS's
+  letter); Down then Enter didn't (an extended key with scan 0x0D: nothing). Check 477's NOT HERE note: E then Down,
+  and Down then E: neither a turn nor ENCAMP. Ours took the last key (the opposite in both of Rolf's mixes; E Down
+  turned round). main.gd `_type_ahead_add` / `_dos_burst` now read the burst the original's way, and keys that put
+  nothing in the BIOS buffer (Shift, Ctrl) no longer replace the key typed. One kind throughout is still the last key
+  (chat 120's rule). **Check 479** (check 477's start, A then E then Down 1 ms apart: 0,15 S): MATCH x3; DIFFERS on
+  the code before (0,15 N) and with the break. Combat's type-ahead keeps (the hall's notes, the rest, the CAST note,
+  the ID reply) should read a burst the same way.
+- **Seen, matching:** Rolf's approach (game start), Enter typed during it: the first PRESS answered at once (both).
+
 ## Chat 126: keys typed during A BATTLE BEGINS..., a rest, the camp's CAST and the shop's ID (main path)
 
 - **A BATTLE BEGINS... doesn't flush the keys (found, fixed; input, main path, resets the streak; paced play only):**
