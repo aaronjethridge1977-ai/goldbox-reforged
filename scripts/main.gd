@@ -54,6 +54,17 @@ var _busy := false                  # a delay or walk is playing; input waits
 ## isn't lost: the original acts on the last one once the script is done ("Y L" looks, "L Y" does nothing).
 var _type_ahead: InputEventKey = null
 var _type_ahead_ext := false        # the first key typed since the last hand-off was an extended one (chat 127)
+## Chat 128 (DOSBox at the lab's reference speed, cycles 15000; game speed 0, 4 and 9 alike): after a turn or a step the
+## original redraws the view before its get-key reads again (~0.16 s a turn, ~0.3 s a step), and the get-key's drain
+## merges the keys typed meanwhile (chat 127's burst rule). So a held arrow turns about every 0.16 s and walks about every
+## 0.3 s, whatever the keyboard's repeat rate, and Up, Left, Right typed within a step leave the party facing right of
+## where it started (3:0 14,7 W: 13,7 N). Ours acted on every key and repeat. The walking screen now holds keys (repeats
+## too) for the redraw's time and hands on the burst after it. Ticks; --fast shortens it as it does every pause.
+var _redraw_until := 0
+var _redraw_gen := 0
+var _keys_replay := false    # a --keys replay key by key (not timed=): no hold (each key waits for the last anyway)
+const REDRAW_TURN_MS := 160
+const REDRAW_STEP_MS := 300
 var _walk_path: Array[Vector2i] = []
 var _walk_final_dir := 0
 var _held_message := ""
@@ -337,6 +348,7 @@ func _ready() -> void:
 	# Lab: --play=<plan file> plays the game from a plan (PlayBot), from the start menu on.
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--play="):
+			_keys_replay = true    # chat 128: the bot waits for each key; no redraw hold
 			var bot := PlayBot.new()
 			bot.main = self
 			add_child(bot)
@@ -502,6 +514,7 @@ const NO_COORDINATES := 0x49FB   # 1: no square on the place line, no AREA map (
 ## the clock, what is on screen and the message, one line per key; then quits.
 func _replay_keys(names: PackedStringArray) -> void:
 	print("start  ", _state_line())
+	_keys_replay = true
 	for ki in names.size():
 		var n := names[ki]
 		_replay_left = names.slice(ki + 1)   # lab: what's left if F3 restarts the scene (P56)
@@ -557,6 +570,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 			# (after seed= and load=; windowed with --anim the fight is paced as in play: Jeremy's holds_crash2 kept
 			# all 99 lines of his log, where a key-by-key replay parted at line 17; tools/lab/treplay.sh)
 			var tl := FileAccess.get_file_as_string(n.trim_prefix("timed=")).split("\n", false)
+			_keys_replay = false   # chat 128: paced as in play
 			var t0 := Time.get_ticks_msec()
 			for li in range(1, tl.size()):
 				var d: Dictionary = JSON.parse_string(tl[li])
@@ -584,6 +598,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 				tup.pressed = false
 				Input.parse_input_event(tup)
 			print("timed done")
+			_keys_replay = true
 			continue
 		elif n.begins_with("seed="):        # seed=<n>: every generator from n (a RECORD MY GAME replay, before its load)
 			_seed_all(int(n.trim_prefix("seed=")))
@@ -794,7 +809,7 @@ func _step_wait() -> void:
 	var quiet := 0
 	for i in 60:
 		await get_tree().process_frame
-		quiet = quiet + 1 if not _busy and _timer.is_stopped() else 0
+		quiet = quiet + 1 if not _busy and _timer.is_stopped() and not _redrawing() else 0
 		if quiet >= 8:
 			return
 
@@ -1131,6 +1146,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_type_ahead_add(event as InputEventKey)
 			get_viewport().set_input_as_handled()
 			return
+		if _redrawing() and event is InputEventKey:
+			_type_ahead_add(event as InputEventKey)   # chat 128: the view's redraw; a held key's repeats are keys too
+			get_viewport().set_input_as_handled()
+			return
 		if event is InputEventKey and WALK_DIGITS.has(key) and _door_options == "" \
 				and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			# Chat 122 (DOSBox, 5:3 from check 457's start): the walking screen takes the digits as the keypad's keys
@@ -1461,7 +1480,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					_try_move(d)
 					break
 		elif event.is_action("ui_up"):
+			var was := _pos
 			_try_move(_facing)
+			if _pos != was:
+				_redraw_hold(REDRAW_STEP_MS)
 		elif event.is_action("ui_down"):
 			# Down turns the party round where it stands (GAME.OVR 0x17187: scan code 0x50, the facing
 			# + 4 of 8, the wall ahead read again, no sound); chat 61 in DOSBox: 2:20 3,4 E, Down, 3,4 W.
@@ -1469,6 +1491,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_facing = ((_facing + 2) % 4) as DungeonView.Dir
 			_write_wall_ahead()
 			_vm.sprite_id = -1
+			_redraw_hold(REDRAW_TURN_MS)
 		elif event.is_action("ui_left") or event.is_action("ui_right"):
 			# A turn redraws the view from the map, as a step does: a figure an encounter left
 			# standing (THE MONSTERS FLEE, a parley's end) is gone (P38; the original draws a
@@ -1477,6 +1500,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_write_wall_ahead()   # GAME.OVR 0x171AE / 0x171F5 (chat 61)
 			_vm.sprite_id = -1
 			Speaker.play(Speaker.STEP)    # GAME.OVR 0x171DF / 0x17224 (Combat's sound)
+			_redraw_hold(REDRAW_TURN_MS)
 		else:
 			return
 	elif _mode == Mode.MAPS and event.is_action("ui_accept"):
@@ -2838,6 +2862,24 @@ static func _dos_char(ev: InputEventKey) -> int:
 	return ev.unicode if ev.unicode > 0 and ev.unicode < 127 else -1
 
 
+## Chat 128: the view's redraw after a walking-screen turn or step (see _redraw_until).
+func _redrawing() -> bool:
+	return Time.get_ticks_msec() < _redraw_until
+
+
+func _redraw_hold(ms: int) -> void:
+	if _keys_replay:
+		return
+	var real := int(ms / Engine.time_scale)
+	_redraw_until = Time.get_ticks_msec() + real
+	_redraw_gen += 1
+	var gen := _redraw_gen
+	get_tree().create_timer(real / 1000.0, true, false, true).timeout.connect(func() -> void:
+		if gen == _redraw_gen:
+			_redraw_until = 0
+			_type_ahead_go())
+
+
 ## A key typed while the walking screen is busy; the hand-off works out what the original's reader takes from them all.
 func _type_ahead_add(ev: InputEventKey) -> void:
 	var ext := DOS_SCANS.has(ev.keycode)
@@ -2878,7 +2920,7 @@ func _dos_burst(first_ext: bool, last: InputEventKey) -> InputEventKey:
 ## takes it, YOU ENTER THE CAVE.; "E I": IGNORE CAVE, the last key; 8:16's YOU SENSE AN ANTI-MAGIC SHELL ..., Enter
 ## while it types: its PRESS page goes on to the walking menu). An INPUT still drops it.
 func _type_ahead_go() -> void:
-	if _type_ahead == null or _busy:
+	if _type_ahead == null or _busy or _redrawing():
 		return
 	var ev := _dos_burst(_type_ahead_ext, _type_ahead)
 	_type_ahead = null
