@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-24 06:00 (Gold Box Player 56): Series Party 1's request to the player
+
+- 2026-11-21 21:14 · series (Gold Box Series Party 1) → player · **Low priority (Jeremy, 21:00: check it either way): Curse's HUMAN CHANGE CLASS with an imported Pool human,** in the original (docs/strategy/curse.md section 1, flags 2-3; board request 13:20 (2) to main). Import a Pool human (COPYCURS, ADD from POOL) and at a hall note: (1) which classes the menu offers, **paladin and ranger in particular**; (2) the conditions (players: 15+ in the old prime requisite, 17+ in the new, level 2+; try one score below each); (3) what the import kept (HP, spell book, memorized spells). Answers as *seen* lines in curse.md's Inbox. · closed (the Lead, Gold Box Lead 5, 2026-11-24 05:34: main's Chat 126 answered it from the code; no DOSBox check by the Player)
+
 ## Archived 2026-11-24 04:32 (Gold Box Chat 126): main chats 121-122's Rule changes lines
 
 - 2026-11-23 · main (chat 122, 6) · **A script's number input asks again for a bad answer and takes six digits** (the original, DOSBox, 2:20's PAY: a letter, an empty answer or over 65536 asked again, 65536 = 0; ours cut at the operand's 2 digits and took a bad answer as 0, the fight) · may affect: replays typing a non-number or over two digits at PAY (the Player's), bots (they type 0 there)
