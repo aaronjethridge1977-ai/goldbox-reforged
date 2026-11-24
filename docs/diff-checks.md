@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 121: the 3D view's far row, its edge wrap and backdrop codes; the arrival's place line; CALL 0x2C90's time and sky (main path, display)
+## Chat 121: the 3D view's far row, its edge wrap and backdrop codes; the arrival's place line; CALL 0x2C90's time and sky; the LOCKED. menu; check 466 (main path, display and input)
 
 - **The far row's fillers (found, fixed; main path, display):** GAME.OVR 0x2EF7D draws the far row from the centre
   outward on each side (four squares a side) and puts a wall's filler (part 9) in the gap to the next square out only
@@ -201,6 +201,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (a jump save at 20:56): the escort's PRESS page shows "7,0 S 20:56" under a black sky, then "7,2 S 00:56" under
   cyan; ours showed 00:56 under cyan at once. `place_drawn` now holds "time" and "sky"; a walking-menu word, a fight or
   camp drops it, as the kept edge line.
+- **The LOCKED. menu (found, fixed; main path, input and display):** GAME.OVR 0x17585 shows it with the menu routine
+  0x2CC8C (title "LOCKED." in colour 13) and acts only on B, P or K (0x1758D); Enter and Space leave it as EXIT (DOSBox,
+  5:3's castle gate after FORCE THE GATE OPEN's boulders: the door's tries DS:0x6DDE-0x6DE0 stay 1, the party where it
+  was); Right and End do nothing. Ours took only letters (Enter did nothing: **input**), drew "LOCKED." as a menu word and
+  blanked the text box; the original keeps the box (the boulders' hit lines white; the wrong password's 'HAH! HAH!') and
+  draws the place line again at the menu's end. Both screens now pixel for pixel. **Check 466** (FORCE THE GATE OPEN,
+  then Enter at LOCKED.: on 8c92ed6 ours never leaves the menu).
+- **Open (main path, display): the walking menu's lit word.** 0x2CC8C keeps its highlight in DS:0x6B2B across every menu
+  that uses it, clamped to the item count: after VIEW's EXIT (its fourth word) the walking menu lights ENCAMP, after SEARCH
+  SEARCH, after a door's E ENCAMP (DOSBox, 5:3's gate). Ours always lights AREA. Enter does nothing on the walking menu
+  (DOSBox), so display only; it needs camp's and VIEW's last choice (Combat's screens). For chat 122.
+- **Seen, matching:** 8:13's truce kobold, KILL IT (check 452's start, tpseed 11111111: the cry, PRESS, THE ROOF COLLAPSES,
+  three members hit for 5, BEFORE YOU RECOVER, KOBOLDS ARRIVE, the fight: the screens pixel for pixel); 5:3's bucket of sand
+  (check 63's start, tpseed 22222222: the bucket's text, the empty DAMAGE page, THE GIANTS WHO PLACED THE BUCKET THERE
+  CHARGE!: pixel for pixel; FLEE fails into the giants' fight, so no check).
 - **Seen, matching (view sweep, jump saves at 20:56 and 12:50, after a turn and back; `data/c121/views.sh`, `vcmp.sh`):**
   the Slums (3 squares), 1:18, 1:24, 2:9, 2:15, 3:14, 4:2, 4:21 (Sokal Keep's landing), 5:4's edge, 5:5, 5:6, 7:17, 8:16,
   8:29, all pixel for pixel. 7:23's init loads no walls (the original keeps the last area's; its only way in is the
