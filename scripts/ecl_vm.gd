@@ -258,6 +258,7 @@ func copy_from(src: EclVM) -> void:
 	white_from = src.white_from
 	row24_left = src.row24_left
 	damage_page = src.damage_page
+	killed_page = src.killed_page
 	place_blank = src.place_blank.duplicate()
 	place_back_at_rest = src.place_back_at_rest
 	sprite_hidden = src.sprite_hidden
@@ -465,6 +466,13 @@ func choose(index: int) -> State:
 			menu = [page[1]]
 			return state
 		damage_page = false
+		if killed_page:
+			killed_page = false
+			_menu_kind = ""
+			menu = []
+			program = 3
+			state = State.PROGRAM
+			return state
 		row24_left = PRESS_TO_CONTINUE
 		_menu_kind = ""
 		menu = []
@@ -873,6 +881,9 @@ var _box_rows := PackedStringArray()
 var _box_row := 0
 var _box_pages: Array = []
 var _box_white := -1      # the page's first row a hit line went to (-1: none yet)
+## Chat 122 (DOSBox, 7:23's lizard men: two DAMAGEs, the second one's member saves): the box as the last DAMAGE left
+## it and its first white row; a DAMAGE that prints nothing on it shows it as it stood, the hit lines still white.
+var _damage_left := []
 ## Hit lines finished (the party's redraw after each, which blanks the place line) when a page was cut (chat 117,
 ## DOSBox: 2:9's bugbears, TAKE THE PUNCH: a page cut inside the first hit line keeps the place line and the HP).
 var _box_hits := 0
@@ -880,6 +891,9 @@ var _box_hits := 0
 ## the printer's PRESS ANY KEY TO CONTINUE in colour 13, and its party redraw after a hit blanks the place line.
 ## white_from: the shown text's first white row (-1 none); damage_page: a page with hits is up.
 var white_from := -1
+const PARTY_KILLED := "THE ENTIRE PARTY IS KILLED!"
+## Chat 122: the page on show is the original's whole-party-killed screen (see _damage); its key ends the game.
+var killed_page := false
 var damage_page := false
 ## Chat 115 (DOSBox: 4:10's fumes, 5:6's altar): the place line a page with hits blanked stays blank after the
 ## script goes on or stops (PRINT_CLEAR, a YES/NO menu, the walking menu) until something redraws it: a CALL
@@ -910,6 +924,8 @@ func _box_start() -> void:
 		_box_row += 1
 	_box_pages = []
 	_box_white = -1
+	if _damage_left.size() == 2 and text == _damage_left[0]:
+		_box_white = int(_damage_left[1])
 	_box_hits = 0
 
 
@@ -955,6 +971,7 @@ func _party_snap() -> Array:
 
 
 func _show_page(page: Array) -> void:
+	killed_page = page.size() > 5 and String(page[5]) == "killed"
 	text = page[0]
 	text_changed = true
 	white_from = int(page[3]) if page.size() > 3 else -1
@@ -1058,13 +1075,24 @@ func _damage(a: Array) -> void:
 	text = "\n".join(_box_rows)
 	text_changed = true
 	if not standing and not party.is_empty():
-		text += "\nTHE ENTIRE PARTY IS KILLED!"
-		program = 3
-		state = State.PROGRAM
+		# Chat 122 (GAME.OVR 0x371B-0x37DF; DOSBox, 7:23's wrong password, DAMAGE 224 on all six): the boxes that
+		# filled wait as any DAMAGE's (PRESS ANY KEY TO CONTINUE); the last one is drawn but not waited on; then the
+		# screen is cleared to one frame, THE ENTIRE PARTY IS KILLED! at its top left, and after 3 s PRESS
+		# <ENTER>/<RETURN> TO CONTINUE waits for a key; the original then quits to DOS (ours: PROGRAM 3, the
+		# fallen party's screen). Ours skipped both screens.
+		_damage_left = []
+		_press_queue = _box_pages
+		_press_queue.append([PARTY_KILLED, PRESS_TO_CONTINUE, _party_snap(), -1, 0, "killed"])
+		_box_pages = []
+		var first: Array = _press_queue.pop_front()
+		_show_page(first)
+		_pause_for_menu({}, [first[1]])
+		_menu_kind = "press"
 		return
 	# The original always ends DAMAGE with "PRESS <ENTER>/<RETURN> TO CONTINUE" on row 24 and
 	# waits for a key (any key: GetKey), whoever was hit (GAME.OVR 0x37CD-0x37DF, START.EXE
 	# 0x709:0xBF5; chat 43, 5:3's boulders); full boxes before it wait the same way.
+	_damage_left = [text, _box_white]
 	_press_queue = _box_pages
 	_press_queue.append([text, PRESS_TO_CONTINUE, _party_snap(), _box_white, _box_hits])
 	_box_pages = []
