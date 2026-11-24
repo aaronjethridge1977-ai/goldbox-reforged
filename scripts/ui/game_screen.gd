@@ -260,6 +260,13 @@ func draw_walk(view: Image, party: Array, selected: int, place: String, lines: P
 		# shows, SEARCH stands on the row above, left of the window.
 		place = place.left(place.length() - 7)
 		text(17, 14, "SEARCH", GREEN)
+	if Automap.mini_shown and not wild and 17 + place.length() > 29 and place.rfind(" ") > 0:
+		# Main chat 118 (low, QoL): with x and y both two digits the line reaches col 29, under the window's rope; the
+		# time goes up to row 14 as SEARCH, ending at col 28 (SEARCH, when shown, ends at col 22).
+		var cut := place.rfind(" ")
+		var time := place.substr(cut + 1)
+		place = place.left(cut)
+		text(29 - time.length(), 14, time, GREEN)
 	text(17, 15, place, GREEN)
 	text_box(lines, GREEN, white_line)
 	if not menu.is_empty():
