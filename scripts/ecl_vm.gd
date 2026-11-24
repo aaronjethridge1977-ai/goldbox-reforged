@@ -1234,6 +1234,15 @@ func _string(a: Dictionary) -> String:
 	return str(_value(a))
 
 
+## PRINT's and PRINT_CLEAR's operand: a byte variable (type 0x01) prints its number, as a word's does; only 0x81 is a
+## string in memory (chat 128, DOSBox: 3:0's YOU OVERHEAR TAVERN TALE 18 and 1:18's count before RUSH TO ATTACK.,
+## PRINT [6E7E] and PRINT_CLEAR [6E79], the game's only two; ours read the byte as a string and printed nothing).
+func _print_string(a: Dictionary) -> String:
+	if int(a.type) == 0x01:
+		return str(_value(a))
+	return _string(a)
+
+
 func _write(dest: Dictionary, value: int, offset: int = 0) -> void:
 	var t: int = dest.get("type", -1)
 	var addr: int = int(dest.get("value", 0)) + offset
@@ -1564,8 +1573,8 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], read_var(int(a[0].value) + (_value(a[1]) & 0xFF)))
 		"PRINT":
 			_runes_to_box = false
-			text += _string(a[0])
-			print_chars += typed_chars(_string(a[0]))
+			text += _print_string(a[0])
+			print_chars += typed_chars(_print_string(a[0]))
 			typewriter = false
 			text_changed = true
 			_note_shown()
@@ -1582,9 +1591,9 @@ func _exec(ins: Dictionary) -> void:
 				state = State.WAIT
 				return
 			_runes_to_box = false
-			text = _string(a[0])
+			text = _print_string(a[0])
 			white_from = -1
-			print_chars += typed_chars(_string(a[0]))
+			print_chars += typed_chars(_print_string(a[0]))
 			typewriter = false
 			text_changed = true
 			_note_shown()

@@ -197,6 +197,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **A text's leading space (display, main path; fixed):** `" DOES ANYONE WANT TO GAMBLE?"` (3:0) prints from column 2 in
   the original; ours cut leading spaces. Six PRINT_CLEAR texts start with one (the gamble question, five of SKULLCRUSHER's
   lines at 4:2); some PRINTs start with spaces too (they print the same way after a cleared box).
+- **A script's number (display, main path; fixed):** 3:0's tavern, NO to the gamble: the original prints YOU OVERHEAR TAVERN TALE 18
+  (the Adventurer's Journal's tale; `PRINT [6E7E]`, a byte variable, operand type 0x01); ours read type 0x01 as a string's
+  address and printed no number. The game's other type-0x01 PRINT is 1:18's count before ... RUSH TO ATTACK. (`PRINT_CLEAR
+  [6E79]`, the random encounters' COMBAT); every other PRINT of memory is 0x81 (a string) or 0x03 (the wager's PP).
 - **Checked, matching:** Enter typed during the step into the tavern answers the text's PRESS (the original and ours
   go on to GAMBLE? YES NO); the save (SAVE WHICH GAME, a letter) is instant at the reference speed in both (no
   "Please Wait"; a key 0.09 s later meets QUIT TO DOS). **Settled from the code:** the row-24 note 0x709:0xD68's eight
