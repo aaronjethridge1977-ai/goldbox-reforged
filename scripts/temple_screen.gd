@@ -60,7 +60,13 @@ var pile := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
 var _coin := 0               # the coin page's lit line
 var _amount_coin := -1
 var _typed := ""
-var _pick := 0
+## The lit word: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl; main chat
+## 122, Combat Chat 55): what a menu here leaves lit, the next menu anywhere lights, and the other way round.
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _lines: Array = []       # the text box: [[text, colour], ...] a line each
 var _note := Label.new()     # what happened (the bot logs it)
 var _rng := RandomNumberGenerator.new()
@@ -123,7 +129,7 @@ func _refresh() -> void:
 		if _mode != "ask_leave":
 			for l in _app_text.split("\n", false):
 				lines.append_array(PrintWrap.lines(l, 38))
-		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", lines, _menu_items(), false, false, _pick)
+		_scr.draw_walk(OverlayLook.last_view, _party, _who, "", lines, _menu_items(), false, false, EclVM.menu_lit(_menu_items().size()))
 		if _mode == "ask_leave":
 			TreasureScreen.draw_ask(_scr, "AS YOU LEAVE A PRIEST SAYS, \"EXCUSE ME BUT YOU HAVE LEFT SOME MONEY HERE\"",
 				"DO YOU WANT TO GO BACK AND RETRIEVE YOUR MONEY?")
@@ -154,10 +160,10 @@ func _refresh() -> void:
 		_scr.text(1, 17 + i, _lines[i][0], _lines[i][1])
 	match _mode:
 		"list":
-			_scr.menu_line(24, LIST_MENU, 0, _pick)
+			_scr.menu_line(24, LIST_MENU, 0, EclVM.menu_lit(LIST_MENU.size()))
 		"anyway":
 			_scr.text(0, 24, "CAST CURE ANYWAY:", 13)
-			_scr.menu_line(24, YES_NO, 18, _pick)
+			_scr.menu_line(24, YES_NO, 18, EclVM.menu_lit(YES_NO.size()))
 		"pay":
 			# This menu has no hot letters lit: the chosen item white but for its first letter,
 			# the other light green (lab, two captures).
@@ -166,7 +172,7 @@ func _refresh() -> void:
 			for i in YES_NO.size():
 				var w: String = YES_NO[i]
 				_scr.text(col, 24, w.left(1), GameScreen.GREEN)
-				_scr.text(col + 1, 24, w.substr(1), GameScreen.WHITE if i == _pick else GameScreen.GREEN)
+				_scr.text(col + 1, 24, w.substr(1), GameScreen.WHITE if i == EclVM.menu_lit(YES_NO.size()) else GameScreen.GREEN)
 				col += w.length() + 1
 	_scr.update()
 
@@ -414,7 +420,7 @@ func _pool() -> void:
 
 func _share() -> void:
 	pile = CoinPile.share(_party, pile)
-	_pick = mini(_pick, _menu_items().size() - 1)
+	_pick = EclVM.menu_lit(_menu_items().size())
 	_refresh()
 
 
@@ -502,8 +508,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if (_mode in ["menu", "anyway", "pay", "ask_leave"] and key in [KEY_ENTER, KEY_KP_ENTER, KEY_LEFT, KEY_RIGHT]) \
 			or (_mode == "list" and key in [KEY_LEFT, KEY_RIGHT]):
 		return
+	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
+		_refresh()
+		return
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
-		choice = items[clampi(_pick, 0, items.size() - 1)]
+		choice = items[EclVM.menu_lit(items.size())]
 		if _mode == "coins":
 			choice = "COIN"
 	elif _mode == "value" and key in [KEY_LEFT, KEY_KP_4, KEY_RIGHT, KEY_KP_6]:

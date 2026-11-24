@@ -517,7 +517,14 @@ static var dev_seed := 0
 ## missile weapon, BANDAGE only with someone dying; GUARD says GUARDING a moment).
 ## VIEW, USE and CAST open the character sheet (CharacterSheet.open_combat).
 var _cmode := "menu"     # menu, move, done, aim, manual
-var _pick := 0
+## The lit word of a horizontal menu is the one every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B,
+## EclVM.menu_hl; main chat 122): a fight's menus light the word the walking menu, a script's menu or the sheet
+## left lit (DOSBox, Combat Chat 55: SEARCH taken on the walking menu, the fight's first menu lit QUICK, its 5th word).
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _flash := ""
 var _flash_timer: Timer
 var _after_flash := Callable()
@@ -649,20 +656,20 @@ func _draw_original(field: Image) -> void:
 		# GAME.OVR 0xA41E: "Flee:" through the question 0x2D9A0 with colour 0xD, YES straight after the colon
 		# (Combat Chat 41, DOSBox: magenta, the menu from column 5).
 		g.text(0, 24, "FLEE:", MAGENTA)
-		g.menu_line(24, ["YES", "NO"], 5)
+		g.menu_line(24, ["YES", "NO"], 5, _lit(["YES", "NO"]))
 	elif _asking_ally:
 		if not _ally_from_move:
 			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		g.text(0, 24, "ATTACK ALLY:", MAGENTA)     # 0x151C5: "Attack Ally: " with 0x2D9A0's colour 0xD, as FLEE's
-		g.menu_line(24, ["YES", "NO"], 13)
+		g.menu_line(24, ["YES", "NO"], 13, _lit(["YES", "NO"]))
 	elif _asking_abort:
 		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
 		g.text(0, 24, "ABORT SPELL?", GameScreen.YELLOW)     # 0x27EFD: colour 0xE through 0x2D9A0 (Combat Chat 41)
-		g.menu_line(24, ["YES", "NO"], 13)
+		g.menu_line(24, ["YES", "NO"], 13, _lit(["YES", "NO"]))
 	elif _asking_continue:
 		# Magenta, YES straight after the colon (main's cold-open capture of the original).
 		g.text(0, 24, "CONTINUE BATTLE:", MAGENTA)
-		g.menu_line(24, ["YES", "NO"], 16)
+		g.menu_line(24, ["YES", "NO"], 16, _lit(["YES", "NO"]))
 	elif _combat != null and _result != 0 and not _drain_notes.is_empty():
 		g.text(0, 24, String(_drain_notes[0]), GameScreen.YELLOW)     # QoL DRAIN REMINDER
 	elif _combat != null and _result != 0 and not (paced() and _event_fight and _result == 1):
@@ -1345,6 +1352,7 @@ func _advance() -> void:
 			return
 	if i == Combat.ASK_CONTINUE:
 		_asking_continue = true
+		_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
 		_on_message("CONTINUE BATTLE: YES NO")
 		_refresh()
 		return
@@ -1646,7 +1654,7 @@ func _bottom_menu() -> Array:
 
 
 func _lit(items: Array) -> int:
-	return _pick if _pick < items.size() else 0
+	return EclVM.menu_lit(items.size())     # past the last word: the first, for good (0x2CC8C)
 
 
 func _bevel(img: Image, at: Vector2i) -> void:
@@ -1734,6 +1742,7 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 					return
 				_picks_left = 1
 				_asking_abort = true
+				_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
 				_refresh()
 				return
 			_aiming = false
@@ -1754,6 +1763,7 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 			var j := _combat.occupant(_aim_cell)
 			if j >= 0 and _combatants[j].team == _combatants[me].team and not _asking_ally:
 				_asking_ally = true
+				_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
 				_ally_target = j
 				_refresh()
 				return
@@ -1973,7 +1983,31 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> 
 
 
 ## The hot letter or Enter on the lit item ("" for neither).
+## A YES / NO question's key (0x2D9A0 through the menu 0x2CC8C): 1 YES, 0 NO, -1 none. Y and N take their word,
+## Enter the lit one; ',' and '.' move the highlight. The word taken stays lit for the next menu (0x2CF4B).
+func _yes_no(event: InputEvent, key: Key) -> int:
+	if key == KEY_COMMA or key == KEY_PERIOD:
+		EclVM.menu_step(2, -1 if key == KEY_COMMA else 1)
+		get_viewport().set_input_as_handled()
+		_refresh()
+		return -1
+	if key == KEY_Y:
+		_pick = 0
+		return 1
+	if key == KEY_N:
+		_pick = 1
+		return 0
+	if event is InputEventKey and (key == KEY_ENTER or key == KEY_KP_ENTER):
+		return 1 if _lit(["YES", "NO"]) == 0 else 0
+	return -1
+
+
 func _menu_choice(event: InputEvent, key: Key, items: Array) -> String:
+	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
+		# ',' and '.' move the shared highlight left and right, wrapping (0x2CE93 / 0x2CEB7; main chat 122).
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)
+		_refresh()
+		return ""
 	if event.is_action("ui_accept") and not items.is_empty():
 		return items[_lit(items)]
 	for it in items:
@@ -2016,7 +2050,6 @@ func _active_index() -> int:
 
 
 func _after_sheet() -> void:
-	_pick = _sheet.last_pick
 	if _combat != null:
 		for c in _combatants:
 			(c.who as PartyMember).recalculate(_types)
@@ -2435,10 +2468,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_after_result()
 		return
 	if _asking_flee:
-		if key == KEY_Y or key == KEY_N:
+		var yn := _yes_no(event, key)
+		if yn >= 0:
 			get_viewport().set_input_as_handled()
 			_asking_flee = false
-			if key == KEY_N:
+			if yn == 0:
 				_refresh()       # NO: back to the MOVE loop (0xA44D)
 				return
 			var me: int = _combat.active
@@ -2454,9 +2488,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_say("ESCAPE IS BLOCKED", func() -> void: _after_player_action("escape blocked"))
 		return
 	if _asking_ally:
-		if key == KEY_Y or key == KEY_N:
+		var yn := _yes_no(event, key)
+		if yn >= 0:
 			get_viewport().set_input_as_handled()
-			if key == KEY_N:
+			if yn == 0:
 				_asking_ally = false
 				_ally_from_move = false
 				_refresh()
@@ -2490,10 +2525,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _asking_abort:
 		get_viewport().set_input_as_handled()
-		if key == KEY_N or event.is_action("ui_cancel"):
+		var yn := _yes_no(event, key)
+		if yn == 0 or event.is_action("ui_cancel"):
 			_asking_abort = false
 			_refresh()
-		elif key == KEY_Y:
+		elif yn == 1:
 			_asking_abort = false
 			_abort_spell()
 		return
@@ -2502,9 +2538,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if _asking_continue:
-		if key == KEY_Y or key == KEY_N or key == KEY_ENTER or key == KEY_KP_ENTER:
-			_asking_continue = false   # Enter takes the lit NO
-			_combat.continue_battle(key == KEY_Y)
+		var yn := _yes_no(event, key)
+		if yn >= 0:
+			_asking_continue = false   # Enter takes the lit word (NO unless ',' '.' moved it)
+			_combat.continue_battle(yn == 1)
 			_advance()
 		get_viewport().set_input_as_handled()
 		return
@@ -2656,10 +2693,12 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			var what := _combat.step(_STEP_KEYS[key])
 			if what == "edge":
 				_asking_flee = true
+				_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
 				_refresh()
 				return
 			if what == "ally":
 				_asking_ally = true          # Combat Chat 40: ATTACK ALLY: YES NO, from the MOVE loop
+				_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
 				_ally_from_move = true
 				_ally_target = _combat.step_ally
 				_refresh()
@@ -2716,8 +2755,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			"FASTER":
 				CampScreen.speed = maxi(CampScreen.speed - 1, 0)
 			"EXIT":
-				_cmode = "done"
-				_pick = maxi(_bottom_menu().find("SPEED"), 0)
+				_cmode = "done"      # the highlight stays on EXIT's place (no write but the menu's, 0x2CF4B)
 		_refresh()
 		return
 	if _cmode == "done":
@@ -2748,11 +2786,9 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 					_advance()
 			"SPEED":
 				_cmode = "speed"
-				_pick = 0
 				_refresh()
 			"MAGIC:ON", "MAGIC:OFF":
 				toggle_magic()
-				_pick = maxi(_bottom_menu().find(_magic_item()), 0)
 				_refresh()
 			"EXIT":
 				_cmode = "menu"

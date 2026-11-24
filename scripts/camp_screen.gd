@@ -113,7 +113,13 @@ var spells: SpellTable = null      # set by the game before opening
 var anti_magic := false
 var _sel := 0                      # selected character
 var _mode := "camp"   # camp save rest magic list pending confirm whom display alter order drop speed pics ask
-var _pick := 0                     # the lit menu item
+## The lit word: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl; main chat
+## 122, Combat Chat 55): what a menu here leaves lit, the next menu anywhere lights, and the other way round.
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _list_kind := ""               # memorize, cast, scribe
 var _list: Array = []              # rows: [text, spell id or 0 for a heading]
 var _cursor := 0
@@ -502,7 +508,7 @@ func _draw_walk() -> void:
 	_draw_lines()
 	match _mode:
 		"walk":
-			_scr.menu_line(24, _walk_menu, 0, 0)
+			_scr.menu_line(24, _walk_menu, 0, EclVM.menu_lit(_walk_menu.size()))
 		"camp":
 			_labelled("CAMP:", _camp_menu(), 5 if fix_on() else 6)
 		"save":
@@ -511,7 +517,7 @@ func _draw_walk() -> void:
 		"rest":
 			_draw_rest()
 		"magic":
-			_scr.menu_line(24, MAGIC_MENU, 0, _pick)
+			_scr.menu_line(24, MAGIC_MENU, 0, EclVM.menu_lit(MAGIC_MENU.size()))
 		"whom", "shown":
 			_labelled("CAST SPELL ON WHOM", ["SELECT", "EXIT"], 19)
 		"alter":
@@ -520,7 +526,7 @@ func _draw_walk() -> void:
 			_labelled("PARTY ORDER:", ["PLACE" if _ordering >= 0 else "SELECT", "EXIT"], 13)
 		"drop":
 			_scr.text(0, 24, "DROP FROM PARTY?", PROMPT)
-			_scr.menu_line(24, YES_NO, 17, _pick)
+			_scr.menu_line(24, YES_NO, 17, EclVM.menu_lit(YES_NO.size()))
 		"speed":
 			_labelled("GAME SPEED:", _speed_menu(), 12)
 		"pics":
@@ -528,11 +534,11 @@ func _draw_walk() -> void:
 				"PORTRAITS " + ("ON" if show_portraits else "OFF"), "EXIT"]
 			var col := 0
 			for i in items.size():
-				_scr.menu_line(24, [items[i]], col, 0 if i == _pick else -1)
+				_scr.menu_line(24, [items[i]], col, 0 if i == EclVM.menu_lit(items.size()) else -1)
 				col += items[i].length() + 2
 		"quit":
 			_scr.text(0, 24, "QUIT TO DOS", PROMPT)
-			_scr.menu_line(24, YES_NO, 12, _pick)
+			_scr.menu_line(24, YES_NO, 12, EclVM.menu_lit(YES_NO.size()))
 
 
 
@@ -550,7 +556,7 @@ func _draw_lines() -> void:
 
 func _labelled(label: String, items: Array, col: int) -> void:
 	_scr.text(0, 24, label, MAGENTA)
-	_scr.menu_line(24, items, col, _pick)
+	_scr.menu_line(24, items, col, EclVM.menu_lit(items.size()))
 
 
 func _draw_rest() -> void:
@@ -567,7 +573,7 @@ func _draw_rest() -> void:
 		var s: String = it[0]
 		var hot: int = it[2]
 		for k in s.length():
-			var white: bool = k >= hot if i == _pick else k == hot
+			var white: bool = k >= hot if i == EclVM.menu_lit(REST_MENU.size()) else k == hot
 			if _resting and k == 0:
 				white = true     # lab: while resting DAYS shows its D lit as well as its Y
 			_scr.text(it[1] + k, 24, s[k], GameScreen.WHITE if white else GameScreen.GREEN)
@@ -648,13 +654,13 @@ func _draw_list() -> void:
 				_labelled("CHOOSE SPELL:", _list_menu(), 14)
 		"ask":
 			_scr.text(0, 24, "LOSE IT?", MAGENTA)
-			_scr.menu_line(24, YES_NO, 9, _pick)
+			_scr.menu_line(24, YES_NO, 9, EclVM.menu_lit(YES_NO.size()))
 		"pending":
 			_scr.menu_line(24, ["EXIT"], 1, 0)
 		"confirm":
 			var ask := "SCRIBE THESE SPELLS?" if _list_kind == "scribe" else "MEMORIZE THESE SPELLS?"
 			_scr.text(0, 24, ask, PROMPT)
-			_scr.menu_line(24, YES_NO, ask.length() + 1, _pick)
+			_scr.menu_line(24, YES_NO, ask.length() + 1, EclVM.menu_lit(YES_NO.size()))
 
 
 func _list_menu() -> Array:
@@ -1392,6 +1398,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if word in items:
 			_act(word)
 		return
+	if key == KEY_COMMA or key == KEY_PERIOD:
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
+		_refresh()
+		return
 	if key == KEY_LEFT or key == KEY_RIGHT:
 		var d := 1 if key == KEY_RIGHT else -1
 		if _mode == "rest":
@@ -1402,7 +1412,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var choice := ""
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
-		choice = items[clampi(_pick, 0, items.size() - 1)]
+		choice = items[EclVM.menu_lit(items.size())]
 	elif key == KEY_ESCAPE:
 		# Esc is EXIT where the menu has one; at a YES NO question it does nothing (main chat 95, DOSBox at 3:0: DROP
 		# FROM PARTY?, QUIT TO DOS, LOSE IT?, MEMORIZE THESE SPELLS?; checks 322-324).

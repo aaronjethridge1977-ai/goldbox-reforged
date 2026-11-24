@@ -37,7 +37,13 @@ var _spoils: Spoils
 var _party: Array[PartyMember] = []
 var _who := 0
 var _mode := "results"   # hides, results, menu, take, coins, amount, items, ask_exit
-var _pick := 0
+## The lit word: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl; main chat
+## 122, Combat Chat 55): what a menu here leaves lit, the next menu anywhere lights, and the other way round.
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _cursor := 0         # the chosen coin or item
 var _top := 0            # the LOOT page's first item
 var _amount_coin := -1
@@ -204,7 +210,7 @@ func _draw_mode() -> void:
 				_scr.list_line(4 + i, k)
 			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "ITEMS:", 13)
-			_scr.menu_line(24, _list_menu(), 7, mini(_pick, _list_menu().size() - 1))
+			_scr.menu_line(24, _list_menu(), 7, EclVM.menu_lit(_list_menu().size()))
 			_scr.update()
 
 
@@ -245,9 +251,9 @@ func _walk(menu: Array, lines: PackedStringArray, label: String = "") -> void:
 		_scr.party_clickable(_party.size(), _who)
 	if label != "":
 		_scr.text(0, 24, label, 13)
-		_scr.menu_line(24, menu, label.length() + 1, _pick)
+		_scr.menu_line(24, menu, label.length() + 1, EclVM.menu_lit(menu.size()))
 	else:
-		_scr.menu_line(24, menu, 0, _pick)
+		_scr.menu_line(24, menu, 0, EclVM.menu_lit(menu.size()))
 	_scr.update()
 
 
@@ -449,8 +455,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# PgUp at TAKE is ITEMS (scan code 0x49, the letter I; main chat 91, DOSBox after check 100's kobolds, check 307).
 	if _mode == "take" and key == KEY_PAGEUP:
 		key = KEY_I
+	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
+		_refresh()
+		return
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
-		choice = items[clampi(_pick, 0, items.size() - 1)]
+		choice = items[EclVM.menu_lit(items.size())]
 		if _mode == "coins":
 			choice = "COIN"
 	elif key == KEY_LEFT or key == KEY_RIGHT:
@@ -541,7 +551,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				"NEXT", "PREV":
 					_turn_page(1 if choice == "NEXT" else -1)
 					var now := _list_menu()      # the menu may have lost the item just used
-					_pick = now.find(choice) if choice in now else mini(_pick, now.size() - 1)
+					_pick = now.find(choice) if choice in now else EclVM.menu_lit(now.size())
 					_refresh()
 				"EXIT":
 					# EXIT leaves ITEMS lit (TAKE when the list came straight from the menu).

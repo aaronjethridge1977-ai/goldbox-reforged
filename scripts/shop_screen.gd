@@ -66,7 +66,13 @@ var _jewel := false
 var _rng := RandomNumberGenerator.new()
 var _cursor := 1         # the selected item
 var _top := 1            # the first item on the page
-var _pick := 0           # the highlighted menu item
+## The lit word: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl; main chat
+## 122, Combat Chat 55): what a menu here leaves lit, the next menu anywhere lights, and the other way round.
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _note := Label.new() # the text box's message (kept as a Label: the bot reads .text)
 var _scr: GameScreen
 var _flash := ""       # QoL: row 24's message after BUY on the SHOP page
@@ -133,7 +139,7 @@ func _refresh() -> void:
 		for l in _note.text.split("\n"):
 			lines.append_array(PrintWrap.lines(l, 38))
 	_scr.draw_walk(OverlayLook.last_view, _party, _buyer, "", lines, menu,
-		false, false, _pick)
+		false, false, EclVM.menu_lit(menu.size()))
 	if _mode == "menu":
 		_scr.party_clickable(_party.size(), _buyer)
 	if _mode == "ask_leave":
@@ -249,7 +255,7 @@ func _draw_list() -> void:
 		_scr.text(0, 24, _flash, GameScreen.GREEN if _flash_green else GameScreen.YELLOW)
 	else:
 		_scr.text(0, 24, "ITEMS:", 13)
-		_scr.menu_line(24, _list_menu(), 7, mini(_pick, _list_menu().size() - 1))
+		_scr.menu_line(24, _list_menu(), 7, EclVM.menu_lit(_list_menu().size()))
 	_scr.update()
 
 
@@ -331,7 +337,7 @@ func _pool() -> void:
 
 func _share() -> void:
 	pile = CoinPile.share(_party, pile)
-	_pick = mini(_pick, _menu_items().size() - 1)
+	_pick = EclVM.menu_lit(_menu_items().size())
 	_refresh()
 
 
@@ -404,7 +410,7 @@ func _move(step: int) -> void:
 func _exit() -> void:
 	if _mode != "menu":
 		_mode = "menu"
-		_pick = clampi(_pick, 0, _menu_items().size() - 1)
+		_pick = EclVM.menu_lit(_menu_items().size())
 		_note.text = ""
 		_refresh()
 		return
@@ -639,7 +645,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	var items: Array = _list_menu() if _mode == "list" else _menu_items()
 	var choice := ""
-	_pick = mini(_pick, items.size() - 1)
+	_pick = EclVM.menu_lit(items.size())
 	# The shop's menu (BUY VIEW ... EXIT), APPRAISE's (GEMS JEWELRY EXIT) and YOU HAVE LEFT SOME MONEY's YES NO
 	# take no Enter; neither they nor the BUY list (ITEMS: BUY NEXT PREV EXIT) move the light with Left / Right;
 	# the list takes Enter for its lit word (main chat 89, DOSBox at 3:0's arms and armour shop, checks 285, 286,
@@ -648,8 +654,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			or (_mode == "list" and key in [KEY_LEFT, KEY_RIGHT]):
 		get_viewport().set_input_as_handled()
 		return
+	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
+		_refresh()
+		return
 	if key == KEY_ENTER or key == KEY_KP_ENTER:
-		choice = items[_pick]
+		choice = items[EclVM.menu_lit(items.size())]
 		if _mode == "coins":
 			choice = "COIN"
 	elif _mode == "value" and key in [KEY_LEFT, KEY_KP_4, KEY_RIGHT, KEY_KP_6]:
@@ -745,7 +755,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				"NEXT", "PREV":
 					_page(1 if choice == "NEXT" else -1)
 					var now := _list_menu()      # the menu may have lost the item just used
-					_pick = now.find(choice) if choice in now else mini(_pick, now.size() - 1)
+					_pick = now.find(choice) if choice in now else EclVM.menu_lit(now.size())
 					_refresh()
 				"EXIT": _exit()
 		"appraise":
