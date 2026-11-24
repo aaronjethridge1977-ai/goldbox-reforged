@@ -779,10 +779,13 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				c.message.emit("%s %s" % [t.name, "IS FULLY HEALED" if t.hp >= t.hp_max else "IS PARTIALLY HEALED"])
 		4, 20:      # Cause Light Wounds, Shocking Grasp: touch attacks
 			for j in targets:
-				if not _touch_hits(i, j):
+				# The handler rolls the damage first and hands it to the effect routine 0x278DB, which then rolls the
+				# touch (0x279EF: 0x2BBA1); a miss zeroes it (Combat Chat 57, the spell matrix, q4k and q20k: the
+				# original's d8 at OVR:2bd30 before the d20 at 2bbbf; ours rolled the touch first).
+				var dmg := c.roll(1, 8, "spell damage") + (lvl if id == 20 else 0)
+				if not _touch_roll(i, j):
 					c.message.emit("%s MISSES" % m.name)
 					continue
-				var dmg := c.roll(1, 8, "spell damage") + (lvl if id == 20 else 0)
 				_damage(i, id, j, dmg)
 		9:          # Burning Hands: the caster's level in damage
 			for j in targets:
@@ -1080,20 +1083,13 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictio
 func _touch_roll(i: int, j: int) -> bool:
 	var a: PartyMember = c.combatants[i].who
 	var t: PartyMember = c.combatants[j].who
-	var need: int = a.thac0 - armour(t, t.ac) - hit_bonus(a, t)
+	# As a blow's: the attacker's to-hit categories (0xA), the target's (0x10) and the side's fight modifier (0x2BBA1:
+	# [0x49D6]+0x6E2 / +0x6E0, the script's: ours' script_hit_mod) (Combat Chat 57, the spell matrix q4k, draw 5107:
+	# BAKSHI's 12 missed a kobold in the kobolds' cave, where the script gives the party -2; ours hit without it).
+	var need: int = a.thac0 - armour(t, t.ac) - hit_bonus(a, t) - SpecialAffects.hit_bonus(a, t) - c.script_hit_mod(a)
 	var d := c.roll(1, 20, "%s touches %s (needs %d)" % [a.name, t.name, need])
 	var free_miss: bool = c._free_miss(c.combatants[j], d)
 	return d != 1 and (d == 20 or d >= need) and not free_miss
-
-
-func _touch_hits(i: int, j: int) -> bool:
-	var a: PartyMember = c.combatants[i].who
-	var t: PartyMember = c.combatants[j].who
-	if held(t):
-		return true
-	var need: int = a.thac0 - armour(t, t.ac) - hit_bonus(a, t)
-	var d := c.roll(1, 20, "%s touches %s (needs %d)" % [a.name, t.name, need])
-	return d != 1 and (d == 20 or d >= need)
 
 
 func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
