@@ -1036,3 +1036,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- A caster in a fight turns to face the spell's aim, and a spell with no aim (Bless, Mirror Image, Shield and the like) turns the caster to face north: a caster with foes to its south then has them at its back (struck from behind; and once it has had its turn and taken a blow, a foe leaving from behind it gets no free blow from it); cast self spells before the line closes, or with foes north of the caster. *code* + *seen* (Gold Box Combat Chat 55: GAME.OVR 0x27DCA; DOSBox mik1, BAKSHI's facing east to north at the Mirror Image draw).
