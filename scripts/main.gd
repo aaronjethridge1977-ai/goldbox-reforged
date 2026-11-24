@@ -1141,12 +1141,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
-		if event is InputEventKey and ((event as InputEventKey).ctrl_pressed or (event as InputEventKey).alt_pressed) \
+		var kev := event as InputEventKey
+		if kev != null and kev.ctrl_pressed and not kev.alt_pressed and key == KEY_M:
+			# Chat 129 (DOSBox, 3:0's tavern from s46sp4): Ctrl+M types 0x0D, Enter's code: it continues a PRESS
+			# <ENTER> page and SELECTs the lit member at WHO WILL GAMBLE?, as Enter does (and does nothing on the
+			# walking screen, as Enter). Ctrl+Enter (0x0A), Ctrl+J and Ctrl+[ do nothing at the page. Ours dropped
+			# it with the other Ctrl keys. The event becomes Enter here (the recorder's _input has kept Ctrl+M).
+			kev.ctrl_pressed = false
+			kev.keycode = KEY_ENTER
+			kev.physical_keycode = KEY_ENTER
+			kev.key_label = KEY_ENTER
+			kev.unicode = 0
+			key = KEY_ENTER
+		elif kev != null and (kev.ctrl_pressed or kev.alt_pressed) \
 				and not (key >= KEY_F1 and key <= KEY_F12) and key != KEY_ESCAPE:
 			# Chat 128 (DOSBox, 2:20 from check 46's start): Alt+A and Ctrl+A do nothing on the walking screen (DOS
 			# types Alt+letter as an extended key with the letter's scan code and Ctrl+letter as a control code, none
 			# of them a walking word); Shift+A is AREA as A is. Ours took Alt+A and Ctrl+A as A. The arrows and digits
-			# with Ctrl or Alt are other extended codes too. Not modelled: Ctrl+M (0x0D) as Enter at a script's menu.
+			# with Ctrl or Alt are other extended codes too.
 			get_viewport().set_input_as_handled()
 			return
 		if _busy:
