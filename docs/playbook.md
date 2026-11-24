@@ -79,6 +79,7 @@ section. New lessons go in the Inbox at the end; the Lead folds them in daily.
   Change Class" at a hall: the old class stops, the new starts at level 1, both classes' abilities once the new level
   passes the old); **paladins** (human, lawful good, Cha 17+) and **rangers** (human or half-elf, good) are new.
   *book* (Curse Manual pp.4-8, 23; strategy/curse.md section 1)
+- (Curse, Silver Blades, Pools) A multi-class's share of a fight's experience is halved (two classes) or thirded (three) whatever its caps, as in Pool: a class stopped at its racial limit still takes its part, so a dwarf fighter/thief whose fighter side is capped gains thief experience at half rate. *code*: each game's award routine reads no level or limit (Curse GAME.OVR 0x5FE7-0x61D0, Silver Blades 0x6DB0-0x6F8D, Pools 0x4A3x-0x4C31: kinds 8, 10-14, 16 halved, 9 and 15 thirded; Pool 0x58D3-0x5A26), main chat 125.
 - (Silver Blades) Curse's races, classes and multi-classes unchanged. The 10% XP bonus needs **16** in the prime
   requisite (paladins Strength and Wisdom, rangers Strength, Intelligence and Wisdom); Curse's manual said 15. *book*
   (Silver Blades Journal pp.3-4)
@@ -792,6 +793,7 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 - If the whole party flees, every unconscious or dead member is lost for good. Never flee and leave bodies: bandage the
   dying, or reload. *book* (Manual)
 - Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).
+- A caster in a fight turns to face the spell's aim, and a spell with no aim (Bless, Mirror Image, Shield and the like) turns the caster to face north: a caster with foes to its south then has them at its back (struck from behind; and once it has had its turn and taken a blow, a foe leaving from behind it gets no free blow from it); cast self spells before the line closes, or with foes north of the caster. *code* + *seen* (Gold Box Combat Chat 55: GAME.OVR 0x27DCA; DOSBox mik1, BAKSHI's facing east to north at the Mirror Image draw).
 
 ## 6. After a fight
 
@@ -1036,5 +1038,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- A caster in a fight turns to face the spell's aim, and a spell with no aim (Bless, Mirror Image, Shield and the like) turns the caster to face north: a caster with foes to its south then has them at its back (struck from behind; and once it has had its turn and taken a blow, a foe leaving from behind it gets no free blow from it); cast self spells before the line closes, or with foes north of the caster. *code* + *seen* (Gold Box Combat Chat 55: GAME.OVR 0x27DCA; DOSBox mik1, BAKSHI's facing east to north at the Mirror Image draw).
-- (Curse, Silver Blades, Pools) A multi-class's share of a fight's experience is halved (two classes) or thirded (three) whatever its caps, as in Pool: a class stopped at its racial limit still takes its part, so a dwarf fighter/thief whose fighter side is capped gains thief experience at half rate. *code*: each game's award routine reads no level or limit (Curse GAME.OVR 0x5FE7-0x61D0, Silver Blades 0x6DB0-0x6F8D, Pools 0x4A3x-0x4C31: kinds 8, 10-14, 16 halved, 9 and 15 thirded; Pool 0x58D3-0x5A26), main chat 125.

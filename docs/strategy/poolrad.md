@@ -123,6 +123,7 @@ files); results *seen* unless marked.
     menu) destroyed three different parties fought on QUICK (checks 45, 327, 64; DOSBox, tpseed 11111111). *seen* (main
     chat 110) Come with a plan: Jeremy's win (Stinking Cloud on the contact troll, Sleeps on the ogres, every fallen
     troll's square taken: guide section 5).
+  - Without Stinking Cloud a level 1-3 party (129 HP, MUs at 1) lost 0 of 2 in ours, even with both Sleeps taking the ogres and the contact troll's square held: the three back trolls outlasted it. Jeremy's win used the cloud (MU3s); that party was never tried with it. *seen* (Player 56, p56t1-t2 from p16e2_s7pre20)
 - From the cluebook (merged by Gold Box Guide 8, Jeremy 09:29): Sleep the goblin guards' leaders. *book*
 
 **Sokal Keep (4:21)**
@@ -744,4 +745,3 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- (2:20 0,14, the trolls and ogres) Without Stinking Cloud a level 1-3 party (129 HP, MUs at 1) loses even when both Sleeps take the ogres and the contact troll's square is held: the three back trolls (36 HP, two attacks) outlast it; Jeremy's win needs the cloud (MU3s). *seen* (Player 56, p56t1-t2 from p16e2_s7pre20, 0 of 2)
