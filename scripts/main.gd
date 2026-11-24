@@ -574,6 +574,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 				tev.ctrl_pressed = mods.contains("ctrl")
 				if kn.length() == 1:
 					tev.unicode = kn.unicode_at(0)
+				tev.echo = int(d.get("e", 0)) == 1   # a held key's repeat (chat 128: recorded since then)
 				tev.pressed = true
 				print("   at ", _state_line())   # where the key finds the game (chat 109: where a replay parts)
 				print("timed %d %s" % [int(d["t"]), kn])

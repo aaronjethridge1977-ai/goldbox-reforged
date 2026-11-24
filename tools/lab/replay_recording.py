@@ -18,6 +18,8 @@ A slot session loads with load=<letter>; a quick-save session with F3 (--save= i
 at the start menu. Keys with Alt are written as `alt+<key>` (main.gd's replay sets Alt on the key: Alt-M in a fight).
 The mouse (main chat 73): a click a screen made into keys is in the file as those keys; a click no screen took as keys
 (PRESS ENTER, a message any key ends) is a line {"c": button} and becomes `click` (left) or `click<n>`.
+A held key's repeats (main chat 128) are lines with "e": 1: here plain keys (the walking screen acts on each);
+the timed replay (timed=, treplay.sh) sends them as repeats, which the screens that ignore repeats ignore.
 """
 import base64, json, os, sys
 

@@ -116,11 +116,15 @@ static func build_commit() -> String:
 	return sha.left(7)
 
 
-## Each key pressed (the Tap's _input), the keys a click makes included.
+## Each key pressed (the Tap's _input), the keys a click makes included. A held key's repeats too, marked "e": 1
+## (main chat 128: the walking screen steps and turns on them, so a recording without them replayed a held arrow as
+## one step).
 static func key(ev: InputEventKey) -> void:
-	if _file == null or not ev.pressed or ev.echo:
+	if _file == null or not ev.pressed:
 		return
 	var line := {"t": Time.get_ticks_msec() - _t0, "k": OS.get_keycode_string(ev.keycode)}
+	if ev.echo:
+		line["e"] = 1
 	var mods := PackedStringArray()
 	if ev.shift_pressed:
 		mods.append("shift")
