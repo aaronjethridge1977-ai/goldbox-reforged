@@ -1111,7 +1111,7 @@ func _quick_load_needs_reset() -> bool:
 func _unhandled_input(event: InputEvent) -> void:
 	if _battle_begins:
 		if _battle_keep and event is InputEventKey and event.is_pressed() and not (event as InputEventKey).echo:
-			_battle_key = event as InputEventKey   # the last one reaches the fight's first menu (chat 126)
+			_battle_keys.append(event as InputEventKey)   # they reach the fight in order (chat 126; Combat Chat 58)
 		return
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
 			or _treasure.visible or _camp.visible or _temple.visible or _party_menu.visible:
@@ -3437,7 +3437,7 @@ func _start_event_fight() -> void:
 		# 0.07-0.15 s ran the fight on QUICK). Ours dropped every key through the text.
 		_battle_begins = true
 		_battle_wait = true
-		_battle_key = null
+		_battle_keys.clear()
 		_show()
 		await get_tree().create_timer(maxf(CampScreen.speed * 0.225, 0.001)).timeout
 		_battle_wait = false
@@ -3450,10 +3450,11 @@ func _start_event_fight() -> void:
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams, _vm.monster_morale)
-	if _battle_key != null:
-		var held := _battle_key
-		_battle_key = null
-		Input.parse_input_event.call_deferred(held)
+	if not _battle_keys.is_empty():
+		# The fight takes them one at a time, and each computer-run turn's opening drops one (main chat 127's request
+		# 2: Combat's CombatScreen.queue_keys / Combat.key_queue).
+		_combat.queue_keys(_battle_keys.duplicate())
+		_battle_keys.clear()
 	# The original clears the surprise flag after every round's initiative (GAME.OVR 0x98F4: game
 	# state +0x596 = 0), so it counts for this fight's first round only and a later fight without
 	# its own SURPRISE starts even (Combat Chat 16, Player 11's p11t1 draw 3613; combat lane).
@@ -3473,7 +3474,7 @@ var _deferred_then_arrive := false   # a LOOK's event is running: the arrival fo
 var _battle_begins := false    # row 24 says A BATTLE BEGINS... for a moment before a fight (Combat)
 var _battle_wait := false      # ... after the DELAY before it (row 24 blank; chat 125)
 var _battle_keep := false      # the text's later part: a key typed now is kept for the first menu (chat 126)
-var _battle_key: InputEventKey = null
+var _battle_keys: Array = []      # the keys typed then, in order
 var _ending: EndingScreen
 
 

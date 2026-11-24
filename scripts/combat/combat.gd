@@ -86,6 +86,11 @@ static var magic_at_draws: Array[int] = []
 static var control_at_draws: Array[int] = []
 ## Space pressed while the computer runs a turn: read at the next computer turn's opening (GAME.OVR 0xBB81).
 var control_pending := false
+## Keys typed before the fight's first menu (A BATTLE BEGINS..., main's hand-off), in order: a player's menu takes them
+## one at a time (CombatScreen._feed_typed) and each computer-run turn's opening poll reads one and drops it unless it
+## is Space or Alt-M (GAME.OVR 0xBB81) (main chat 127, DOSBox at speed 4, check 84's goblins: "q d" QUICK, the d gone;
+## "q Down" and "Down q" both QUICK; "d q" DONE's menu, then QUIT: DARKSTAR's menu).
+var key_queue: Array = []
 ## Whose line a message is, for the screen's sparkles (Combat Chat 52, Jeremy's troll and cloud): the figure an effect
 ## is being added to (>= 0; the original shows the sparkles from its add-effect routine, START.EXE 0x2B8B from GAME.OVR
 ## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
@@ -2593,6 +2598,12 @@ func ai_act() -> bool:
 	if c.down:
 		return false
 	if not c.get("ai", false):
+		if not key_queue.is_empty():
+			var k: InputEventKey = key_queue.pop_front()
+			if k.keycode == KEY_SPACE:
+				control_pending = true
+			elif k.keycode == KEY_M and k.alt_pressed:
+				magic_on = not magic_on
 		# Lab (`magicat=<draw>`): the original read the replay's Alt-M at this turn's opening poll
 		# (GAME.OVR 0xABDC calls 0xBB81, before the item and spell weighing).
 		if not magic_at_draws.is_empty() and TpDice.on and TpDice.calls >= magic_at_draws[0]:
