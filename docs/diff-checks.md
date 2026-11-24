@@ -204,6 +204,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   higher in ours (the wall above clipped) and the dead THRENDER GRONE's body isn't drawn at his place (27,13).
 - **The fountain's explosion (seen, matching; 7:23 2,1):** DESTROY THE EQUIPMENT four times (tpseed 11111111): the
   whines, then THERE IS AN ENORMOUS EXPLOSION!, the facing written W, 3d10 on all: the same texts and deaths.
+- **The walking screen's digits (found, fixed; main path, input):** the original takes the digit keys there as the
+  keypad's (a DOS keypad with Num Lock on types digits): 8 steps, 2 turns round, 4 / 6 turn left / right, 7 / 1 move
+  the selected member up / down (Home / End); 3, 5, 9 and 0 do nothing (DOSBox, 5:3 from check 457's start, each key
+  alone). Ours took none of them; now each matches pixel for pixel (`main.gd WALK_DIGITS`, the keypad's digits too).
+  Script menus keep taking digits as choices (Q24).
+- **Space at a one-word script menu (found, fixed; main path, input):** PRESS BUTTON OR <RETURN> TO CONTINUE takes Enter
+  and its letter P; Space and other keys do nothing (DOSBox, 7:23's sign). Ours took Space (Godot's ui_accept). At the
+  vertical menu Space takes the lit line in both (5:3's gate); the LOCKED. menu takes it as EXIT (chat 121).
+- **The walking screen's other keys (seen, matching):** 9, 0, Escape, Tab, B D F G H I J K M N O P Q R T U W X Y Z,
+  Delete, Page Up / Down, Insert, F1-F10, BackSpace and the punctuation keys do nothing in the original (DOSBox, 44 keys);
+  ours' extra keys there are its QoL ones (M, F, Q, F2, F3).
+- **INPUT_STRING's length (found, fixed; main path, input and game state):** the original takes 39 characters (row
+  24's width) whatever the operand: 7:23's password (INPUT_STRING 6) kept ABCDEFGH whole, and of 43 typed it kept 39
+  (DOSBox). Ours cut the text at the operand, so NOKNOKX was taken as the password NOKNOK; the original's answer is
+  wrong (the monster, everyone killed). Now 39.
+- **INPUT_NUMBER (found, fixed; main path, input and game state):** 2:20's slums patrol, PAY (INPUT_NUMBER 2, TYPE IN
+  THE NUMBER OF GP YOU OFFER.): the original's field takes six characters (123456789 shows 123456), and an answer with a
+  letter (1A2B), an empty one or a number over 65536 (65537, 70000, 99999, 131072, 999999) is asked for again, the
+  field empty and the text kept; 300, 0099, 32768 and 65535 are paid, 65536 is taken as 0 (the fight). Ours cut the
+  field at the operand's 2 digits and took any bad answer as 0 (straight to the cheapskates' fight). Signs (- +) not
+  tried: ours asks again. The lab's auto answers (the tour, sweep.gd, shadow_explorer.gd, the bot's remembered words)
+  type 0 at a number input, as their "x" or "" gave before (refcheck run for bot.gd).
+- **The riders at Zhentil Outpost (seen, matching; check 467):** 6:25's event 7 at overland 3,32 (0x4A98 = 255): A GROUP
+  OF MEN ON HORSEBACK ..., YES: escorted into 6:28 from the real band (chat 121 saw 6:28 from a jump save only), the
+  commandant and the tour, the quarters at 5,0 E 00:33: all twelve screens pixel for pixel. **Check 467** (start: check
+  32's with the overland square and cells set; break 0x4AB4 DIFFERS): DIFFCHECKS 464/464.
 - **Seen, matching:** the script's vertical menu (5:3's gate) puts the shared highlight on its first word as it opens
   (DOSBox: 4 before, 1 at the menu) and takes no ',' '.' or Escape. Enter and Space at the walking menu do nothing; Escape at LOCKED. and at a script's horizontal
   menu (2:20's kobolds, COMBAT WAIT FLEE PARLAY) does nothing, nor Enter and Space there; AREA's map stays up through a

@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-23 21:27 (Gold Box Chat 122): main chat 120's Rule changes lines
+
+- 2026-11-23 · main (chat 120, 3) · **The 3D view's sky colour is the original's table (DS:0x0C26) at the sky cell, 0x49FE on indoor squares (info bit 7), 0x49FD elsewhere** (night skies black, not dark grey; caves and buildings by 0x49FE). Display only · may affect: films and screenshots of 3D views.
+- 2026-11-23 · main (chat 120, 2) · **A key typed while a script's text types is taken by the menu or page the script then stops at** (DOSBox: the dragon's ENTER CAVE IGNORE CAVE, the castle's PRESS page; the last key counts), not dropped (P90's rule kept it only for the walking screen). May affect: windowed play and paced (`timed=`) RECORD MY GAME replays; `--keys` replays and checks wait for the engine (unchanged).
+- 2026-11-23 · main (chat 120) · **The wilderness's party mark is the original's galloping rider** (ICON.DAX blocks 0/128/1/129/2/130, one frame per redraw, mirrored facing S or W), not a white box; the view stays inside the map at its edges (GAME.OVR 0x2DB87, 0x2DDBF). Display only · may affect: films and screenshots of the wilderness.
+
 ## Archived 2026-11-23 20:45 (Gold Box Combat Chat 55): main chat 118's mini-map request (done) and Combat Chat 54's Rule changes lines
 
 - 2026-11-23 14:05 · main (chat 118) → combat · **Low priority (QoL): with the mini-map up, its window (cols 29-39) hides the place line's 13th character** when x and y both have two digits (DOSBox has no window there; ours filmed at 3:14 11,10: "11,10 S 10:57" shows "11,10 S 10:5"; `~/gbr/lab/data/c118/trz.png`). P78 moved SEARCH above the window; the time's last digit needs the same kind of answer (e.g. the window one column right, or the place line as P78's SEARCH). game_screen.gd / automap.gd are yours. · **Combat Chat 55: done** (b02321e): with the window up and the line reaching col 29 the time goes to row 14, ending at col 28, as SEARCH (ours at 11,10: `combat_lab/tmp/c55_mini1.png`). **For main (your file):** the walk screen isn't redrawn when M opens or closes the window, so the split (and P78's SEARCH) shows or goes only at the next redraw. · done
