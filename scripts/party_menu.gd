@@ -359,6 +359,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or not event is InputEventKey or _sheet.visible \
 			or (_creator != null and _creator.visible) or (_modifier != null and _modifier.visible):
 		return
+	if event is InputEventKey:
+		var dk := KeyBurst.menu_key(event as InputEventKey)
+		if dk == null:
+			get_viewport().set_input_as_handled()
+			return     # Ctrl / Alt and a letter: no menu letter (KeyBurst.menu_key; main chat 129, DOSBox)
+		event = dk
 	get_viewport().set_input_as_handled()
 	if _noting:
 		_typed_ahead.add(event as InputEventKey)

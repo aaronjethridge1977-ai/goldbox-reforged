@@ -2536,6 +2536,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		_combat.typed.add(event as InputEventKey)
 		return
+	if event is InputEventKey:
+		var dk := KeyBurst.menu_key(event as InputEventKey, [KEY_M, KEY_Q])
+		if dk == null:
+			get_viewport().set_input_as_handled()
+			return     # Ctrl / Alt and a letter: no menu letter (KeyBurst.menu_key; main chat 129, DOSBox)
+		event = dk
+		key = dk.keycode
 	if _flash != "":
 		# A key ends the message at once.
 		_flash_timer.stop()

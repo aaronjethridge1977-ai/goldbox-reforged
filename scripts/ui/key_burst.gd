@@ -73,6 +73,40 @@ static func dos_byte(ev: InputEventKey) -> int:
 	return dos_char(ev)
 
 
+## What a screen's menu reads for a key typed with Ctrl or Alt (main chat 129's request, DOSBox at 3:0's camp: Ctrl+V
+## and Alt+V do nothing; main.gd's walking screen and _input_char the same): Ctrl and a letter types a control code
+## (1-26: no menu letter), except Ctrl+M (0x0D, Enter's), Ctrl+H (Backspace's) and Ctrl+[ (Escape's); Alt and a letter
+## or digit is an extended key with its own scan code (no menu letter, no arrow). Returns the key to act on: the event
+## itself (no Ctrl or Alt, or an F-key, Escape), Enter / Backspace / Escape for those three, or null (nothing). `keep`
+## lists Alt keys a screen reads itself (the fight's Alt-M MAGIC and Alt-Q QUICK).
+static func menu_key(ev: InputEventKey, keep: Array = []) -> InputEventKey:
+	if not (ev.ctrl_pressed or ev.alt_pressed):
+		return ev
+	var k := ev.keycode
+	if (k >= KEY_F1 and k <= KEY_F12) or k == KEY_ESCAPE or k in [KEY_SHIFT, KEY_CTRL, KEY_ALT]:
+		return ev
+	if ev.alt_pressed and not ev.ctrl_pressed:
+		return ev if k in keep else null
+	if ev.ctrl_pressed and not ev.alt_pressed:
+		var to := KEY_NONE
+		match k:
+			KEY_M:
+				to = KEY_ENTER
+			KEY_H:
+				to = KEY_BACKSPACE
+			KEY_BRACKETLEFT:
+				to = KEY_ESCAPE
+		if to != KEY_NONE:
+			var e := InputEventKey.new()
+			e.pressed = true
+			e.echo = ev.echo
+			e.keycode = to
+			e.physical_keycode = to
+			e.key_label = to
+			return e
+	return null
+
+
 ## A plain key's DOS character (-1: a key that types nothing).
 static func dos_char(ev: InputEventKey) -> int:
 	match ev.keycode:

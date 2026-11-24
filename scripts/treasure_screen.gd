@@ -402,6 +402,12 @@ func _close() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or not event is InputEventKey or (_sheet != null and _sheet.visible):
 		return
+	if event is InputEventKey:
+		var dk := KeyBurst.menu_key(event as InputEventKey)
+		if dk == null:
+			get_viewport().set_input_as_handled()
+			return     # Ctrl / Alt and a letter: no menu letter (KeyBurst.menu_key; main chat 129, DOSBox)
+		event = dk
 	var key := (event as InputEventKey).keycode
 	get_viewport().set_input_as_handled()
 	if _flash != "":
