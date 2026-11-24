@@ -729,6 +729,9 @@ func _load_monsters() -> void:
 					# Chat 7: 2:9's second AIDES held Long Sword, Chain Mail, Long Bow, 20 Arrows; the
 					# first the file's order), which decides the pile's d10s (no more after 8 items).
 					m.items.reverse()
+					# So do its effects (Combat Chat 58, P115: 4:2's five GHOULS, the first 6C then 44 as its MON4SPC
+					# block, the other four 44 then 6C; one WIGHT in the block's order).
+					m.affects.reverse()
 					m.recalculate(_types)
 				var k := _monsters.size()
 				m.script_team = _monster_teams[k] if k < _monster_teams.size() else 0
