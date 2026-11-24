@@ -2,13 +2,13 @@
 
 ## Download
 
-**Windows:** **[Download Gold Box Reforged 0.1.6 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.6/goldbox-reforged-0.1.6-windows.zip)**
+**Windows:** **[Download Gold Box Reforged 0.1.7 for Windows (zip)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.7/goldbox-reforged-0.1.7-windows.zip)**
 1. Unzip it (right-click, Extract All).
 2. Run `GoldBoxReforged.exe` (the build is unsigned, so Windows may warn: More info, Run anyway).
 3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`).
 
-**Linux:** **[Download Gold Box Reforged 0.1.6 for Linux (tar.gz)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.6/goldbox-reforged-0.1.6-linux.tar.gz)** (64-bit x86)
-1. Extract it (`tar xzf goldbox-reforged-0.1.6-linux.tar.gz`).
+**Linux:** **[Download Gold Box Reforged 0.1.7 for Linux (tar.gz)](https://github.com/aaronjethridge1977-ai/goldbox-reforged/releases/download/v0.1.7/goldbox-reforged-0.1.7-linux.tar.gz)** (64-bit x86)
+1. Extract it (`tar xzf goldbox-reforged-0.1.7-linux.tar.gz`).
 2. Run `./GoldBoxReforged.x86_64`.
 3. Choose your *Pool of Radiance* folder (the one with `GEO1.DAX`; upper- or lower-case file names both work).
 
