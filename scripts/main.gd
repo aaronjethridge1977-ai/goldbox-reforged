@@ -2484,13 +2484,16 @@ func _overland_step(direction: int) -> void:
 	var x := clampi(_vm.read_byte(EclVM.OVERLAND_X) + DungeonView.DELTA[direction].x, 0, 15)
 	var y := clampi(_vm.read_byte(EclVM.OVERLAND_Y) + DungeonView.DELTA[direction].y, 0, OverlandMap.HEIGHT - 1)
 	var v := ov.value(x + ov.band_x(_vm.overland_band), y)
-	# Water stops the party; so does the poisoned river until 0x4AA2 is set. The original
-	# has a line for the river ("The river's stench drives you back.") but the lab shows
-	# no text on screen, so none here either.
+	# Water stops the party; so does the poisoned river until 0x4AA2 is set. Chat 124 (DOSBox, check 33's start at
+	# speed 4, 18,20 E, Right): the river's refusal prints THE RIVER'S STENCH DRIVES YOU BACK. on row 24 through
+	# 0x709:0xD68 (colour 14, a script DELAY: about 0.9 s, then the walking menu); earlier labs ran at speed 0,
+	# where it lasts no time. Open water (0x4E, the coasts) prints nothing (GAME.OVR 0x16F86-0x16FC2).
 	# Chat 54 (Player 20's p19c2, 7:26 11,28): a refused step still runs the square's event, with
 	# no time passing: GAME.OVR's band move (0x16EE3) leaves the party where it is, and the step
 	# routine then runs ECL entry [0x49E5] whether it moved or not (0x4228), as in a 3D area.
 	if OverlandMap.water(v) or (OverlandMap.river(v) and _vm.read_byte(0x4AA2) == 0):
+		if not OverlandMap.water(v):
+			_note_24("THE RIVER'S STENCH DRIVES YOU BACK.", GameScreen.YELLOW, TEXT_SPEED * 225)
 		if _vm.ecl != null:
 			_vm.clear_output()
 			_vm.walk_menu_next = true
