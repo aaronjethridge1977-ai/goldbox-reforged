@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 125: keys typed during a timed note or a rest's interruption (main path)
+
+- **The original's timed waits (the Lead's speed-0 sweep):** every game-speed wait is START.EXE 0x709:0xDBE (a plain
+  Delay of game speed x 225 ms, no key read). GAME.OVR calls it from 24 places; through the row 24 note 0x709:0xD68
+  from 8 (the code wheel's "Sorry, that's incorrect.", the river, AREA's NOT HERE, the hall's five: all now in ours).
+  The others outside fights: THE PARTY IS RUDELY INTERRUPTED! and THE WHOLE PARTY IS HEALED (the rest, 0x24C07,
+  0x246D0), the shop's ID texts (0x23138), an item's use (0x22BF2), a camp spell's text (0x2A41B), the ending
+  (0x20D32-0x20F88); the rest are a fight's lines. Keys typed during one stay in the BIOS buffer and **the next menu
+  takes the last of them** (chat 120's rule).
+- **The river's note and AREA's NOT HERE hold the keys (found, fixed; input, main path, resets the streak):** DOSBox at
+  speed 4, check 33's start, four Rights to 18,20 E: Right (THE RIVER'S STENCH ...), Left and Up typed 0.1 s apart
+  during the note: **18,19 N** (only Up; Left Left: one step; in plain walking Left Up Left all three step); ours
+  walked during the note: 17,19 N. 5:4 (`data/c124/v_m4`), A, Left, Left during NOT HERE: one turn (S to E); ours two.
+  main.gd `_note_24_wait`: the game is busy for the note, the keys are type-ahead; the river's square event runs after
+  the note (0x16FEE before 0x4228). **Checks 477 (NOT HERE) and 478 (the river)**, the first with a `timed.txt`
+  (keys 1 ms apart under `--fast`: they land inside the note); both fail on the code before; seal.sh now hashes
+  `timed.txt`.
+- **The hall's refusal notes take only the last key (found; input, main path; Combat's file, request):** check 103's
+  start at speed 4, End, T (TRAINING COSTS 1000 GP.), End, End typed during the note, V: **RHIANNON** (one End); ours
+  (Combat Chat 57's note) took both: BROTHER SEAN lit (`data/c125/hall_o1.png`).
+- **A key typed during THE PARTY IS RUDELY INTERRUPTED! (found; input, main path; Combat's file, request):** check 84's
+  start (2:20, tpseed 20200001) at speed 4, REST 8 hours, R, F typed 0.45 s later (during the note, 0.25-0.94 s):
+  the encounter's COMBAT WAIT FLEE PARLAY takes it, THE PARTY FLEES (14,6 W); ours drops it (the menu waits). The
+  note lasts game speed x 225 ms in the original, 1.5 s in ours (text timing).
+- **Seen, matching (Combat Chat 57's answers):** the hall's 1 1 7 1 lights RHIANNON in both; camp's EXIT, EXIT at
+  check 457's start: the whole screen identical (LOOK lit).
+
 ## Chat 124: the AREA map as the original's, a key typed before a question; the second number input, the booth (main path)
 
 - **The old "Escape does nothing" claims (task: did the gate rely on a key never pressed?):** no. keys.py's table had
