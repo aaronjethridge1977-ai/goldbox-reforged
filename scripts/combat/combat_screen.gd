@@ -893,6 +893,8 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 				row.append("%02d" % _field.tile(x, y))
 			TpDice.log.append("field %02d %s" % [y, " ".join(row)])
 	_combat = Combat.new(_field, _combatants, seed_value)
+	_combat.key_queue.append_array(_typed_keys)
+	_typed_keys.clear()
 	# The members who don't fight (a duel's onlookers, anyone down, dying or dead) keep their places in the
 	# original's figure list: GAME.OVR 0x9938 rolls "who acts next" for every figure in the party list, any
 	# status (Combat Chat 16, Player 15's p15f6: DORN at 0 HP since the last fight, no initiative, a d100).
@@ -1411,6 +1413,8 @@ func _advance() -> void:
 			_combat.done()
 			_advance()
 		return
+	if not _combatants[i].get("quick", false):
+		_feed_typed.call_deferred()
 	if _combatants[i].get("quick", false):
 		if not paced():
 			_ai_timer.start(0.35)
@@ -1420,6 +1424,30 @@ func _advance() -> void:
 			# after the last line clears, the blow's line 0.2 s later; the round-1 menus there were
 			# the recorder's Q key, sent every 0.5 s).
 			_ai_timer.start(TURN_START)
+
+
+## Keys typed before the fight's first menu (main hands them on; Combat.key_queue): taken in order.
+var _typed_keys: Array = []
+
+
+func queue_keys(keys: Array) -> void:
+	if _combat != null:
+		_combat.key_queue.append_array(keys)
+		_feed_typed.call_deferred()
+	else:
+		_typed_keys.append_array(keys)
+
+
+## A player's menu takes the next typed key, then the one after while a player's menu still waits; a computer-run
+## turn stops it (its opening poll reads the next one: Combat.ai_act).
+func _feed_typed() -> void:
+	if _combat == null or _combat.key_queue.is_empty() or not visible or _result != 0 or _draining:
+		return
+	if _combat.active < 0 or _combatants[_combat.active].get("quick", false) or _announcing:
+		return
+	var ev: InputEventKey = _combat.key_queue.pop_front()
+	_unhandled_input(ev)
+	_feed_typed.call_deferred()
 
 
 func _ai_step() -> void:
