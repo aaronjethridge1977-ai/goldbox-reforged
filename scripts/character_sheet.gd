@@ -101,6 +101,8 @@ var _scroll: GameItem = null   # USE on a clerical scroll: its spell page, then 
 var _scroll_cursor := 0
 var _scroll_target: PartyMember = null
 var _said: Array = []          # the scroll spell's result lines still to show ([name, words])
+var _use_it: GameItem = null   # USE on a potion, wand or ring outside a fight: the item, while its lines and WHOM show
+var _use_id := 0               # and its spell
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 ## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
@@ -218,10 +220,14 @@ func _build() -> void:
 		var was_id := _mode == "id_reply"
 		if was_id:
 			_end_id_reply()
+		elif _mode == "item_uses":
+			_after_uses()
 		elif _mode == "scroll_said":
 			_next_said()
 		_refresh()
-		if was_id and _held_key != null:
+		# A key typed during a timed text (ID's answer, an item's USES AN ITEM, a spell's result) waits for the menu
+		# after it, which takes the last one.
+		if _held_key != null and _mode not in ["item_uses", "scroll_said"]:
 			var ev := _held_key
 			_held_key = null
 			if visible:
@@ -248,6 +254,13 @@ static func item_label(it: GameItem) -> String:
 		if named and it.name == "":
 			it.name = names.name_of(it)
 	var label := it.name if it.name != "" else "(item type %d)" % it.type
+	# The original builds the shown name from the record's words each time (START.EXE 0x1210, the stack's "S"), not
+	# from the cached text (Combat Chat 58, DOSBox: check 24's start, BRAM's ITEMS "2 JAVELINS" where the record caches
+	# "2 Javelin"; ours showed 2 JAVELIN).
+	if named and it.raw.size() >= GameItem.SIZE:
+		var built := ItemNames.shared(game_path).name_of(it).strip_edges()
+		if built != "" and not built.is_valid_int():
+			label = built
 	# The plus shows only through the name's words (lab: the orc leader's scroll, plus 1, is
 	# "CLERICAL SCROLL WITH 2 SPELLS"; an unidentified item's "+1" word stays hidden).
 	if not named and it.plus != 0 and not label.contains("+") and not label.contains("-"):
@@ -411,7 +424,7 @@ func _heading(m: PartyMember, what: String) -> void:
 	_t(m.name.length() + 4, 1, what, GameScreen.GREEN)
 
 
-func _draw_items(m: PartyMember, cursor_lit: bool) -> void:
+func _draw_items(m: PartyMember, cursor_lit: bool, last_row := 99) -> void:
 	_frame(2)
 	_heading(m, "ITEMS")
 	_t(1, 3, "READY", GameScreen.WHITE)
@@ -420,6 +433,8 @@ func _draw_items(m: PartyMember, cursor_lit: bool) -> void:
 	# "* " goes before the name of a magic item (" YES  * FLAIL" for a +1 flail).
 	var detect := PartyMember.party_detects_magic(_people)
 	for i in mini(m.items.size(), MAX_ITEMS):
+		if 5 + i > last_row:
+			break
 		var it := m.items[i]
 		var color := GameScreen.WHITE if i == _cursor and cursor_lit and _message == "" else GameScreen.GREEN
 		_t(2, 5 + i, "YES" if it.readied else "NO", color)
@@ -603,7 +618,7 @@ func _current_menu() -> Array:
 			return ["YES", "NO"]
 		"scroll":
 			return ["CAST", "EXIT"]
-		"scroll_whom", "scroll_said":
+		"scroll_whom", "scroll_said", "use_whom":
 			return ["SELECT", "EXIT"]
 	return []
 
@@ -641,10 +656,22 @@ func _refresh() -> void:
 			_draw_spells(m)
 		"scroll":
 			_draw_scroll(m)
-		"scroll_whom":
+		"scroll_whom", "use_whom":
 			_draw_whom("CAST SPELL ON WHOM", camp_look)
+		"item_uses":
+			_draw_items(m, false, 15)
+			for c in range(1, 39):
+				_scr.tile(c, 16, 22)
+			_scr.tile(0, 16, 20)
+			_scr.tile(39, 16, 20)
+			if not _said.is_empty():
+				_t(1, 18, _said[0][0], GameScreen.CYAN)
+				_t(1, 19, _said[0][1], GameScreen.GREEN)
+			if _use_it != null:
+				_t(1, 22, item_label(_use_it).to_upper(), GameScreen.GREEN)
+			_menu(_item_menu(), 0)
 		"scroll_said":
-			_draw_whom("CAST SPELL ON WHOM")
+			_draw_whom("CAST SPELL ON WHOM", camp_look)     # the result is typed over WHOM's screen, the camp's picture kept
 			if not _said.is_empty():
 				_t(1, 18, _said[0][0], GameScreen.CYAN)
 				_t(1, 19, _said[0][1], GameScreen.GREEN)
@@ -846,11 +873,45 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 		_mode = "confirm"
 		_pick = 1
 		return "\u0001"
-	var lines := PackedStringArray()
-	if not wasted:
-		lines = SpellCaster.cast_outside(spells, m, id, _people, m, _rng, true)
-	_spend(m, it, id)
-	return " / ".join(lines)
+	if wasted:
+		_spend(m, it, id)
+		return ""
+	# A potion, wand or ring (GAME.OVR 0x22B40-0x22BF7): "<NAME>" and "USES AN ITEM" on rows 18 and 19, the item on
+	# row 22, under the item list cut at row 15, then a game-speed Delay (START.EXE 0x709:0xDBE) that reads no keys:
+	# a key typed meanwhile waits for the menu after it (CAST SPELL ON WHOM, or the item list). Then the spell
+	# (0x96:0x39), with the camp's CAST SPELL ON WHOM for a one-member spell (Combat Chat 58, DOSBox at speed 4:
+	# check 24's start, BRAM's readied potion: ours cast on BRAM himself at once, all on row 24).
+	_use_it = it
+	_use_id = id
+	_said = [[m.name, "USES AN ITEM"]]
+	_held_key = null
+	_mode = "item_uses"
+	if _timer != null:
+		_timer.start(String(m.name + "USES AN ITEM").length() / 33.0 + maxf(CampScreen.speed * 0.225, 0.05))
+	return "\u0001"
+
+
+## The Delay after USES AN ITEM is over: CAST SPELL ON WHOM for a one-member spell, else the spell at once.
+func _after_uses() -> void:
+	_said.clear()
+	if SpellCaster.needs_member(spells, _use_id):
+		_mode = "use_whom"
+		_pick = 0
+		if _target < 0:
+			_target = _target_kept
+		return
+	_use_on(_who())
+
+
+## The used item's spell on `target`; its result lines as a scroll's (held for their time, keys kept).
+func _use_on(target: PartyMember) -> void:
+	var m := _who()
+	var lines := SpellCaster.cast_outside(spells, m, _use_id, _people, target, _rng, true)
+	if not lines.is_empty() and lines[0].ends_with(" USES AN ITEM"):
+		lines.remove_at(0)
+	_spend(m, _use_it, _use_id)
+	_use_it = null
+	_show_said(lines)
 
 
 ## A clerical scroll's spells, in the record's order (bytes 60-62).
@@ -914,6 +975,12 @@ func _cast_scroll(m: PartyMember, target: PartyMember) -> void:
 			lines.remove_at(0)      # "<NAME> USES AN ITEM": not shown for a scroll
 	_spend_scroll(m, it, _scroll_slot())
 	_scroll = null
+	_show_said(lines)
+
+
+## Result lines shown one at a time over the party (CAST SPELL ON WHOM's screen): "<NAME>" cyan on row 18, the
+## rest green on row 19, each held for its time; then the item list.
+func _show_said(lines: PackedStringArray) -> void:
 	_said.clear()
 	for l in lines:
 		var who := ""
@@ -1088,10 +1155,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	get_viewport().set_input_as_handled()
-	if _mode == "id_reply":
+	if _mode in ["id_reply", "item_uses", "scroll_said"]:
 		# ID's answer waits with no key read (GAME.OVR 0x23138): a key typed meanwhile stays buffered and the item
 		# menu after it takes the last one (main chat 126, DOSBox at speed 4: check 152's start, ID, then Y and E typed
 		# during IT LOOKS LIKE SOME SORT OF BROAD SWORD: the item menu took EXIT; ours ended the answer on the key).
+		# So do an item's USES AN ITEM and a spell's result lines (Combat Chat 58, DOSBox at speed 4, check 24's start:
+		# E typed during BRAM USES AN ITEM: CAST SPELL ON WHOM took EXIT; E typed during BRAM IS FULLY HEALED: the
+		# item list took EXIT; ours ended the line on the key).
 		if event is InputEventKey and not (event as InputEventKey).echo:
 			_held_key = event as InputEventKey
 		return
@@ -1099,12 +1169,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_message = ""
 		if _timer != null:
 			_timer.stop()
-	if _mode == "scroll_said":  # a key moves on, as other messages here
-		if _timer != null:
-			_timer.stop()
-		_next_said()
-		_refresh()
-		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	# P33/P45 (an exception, Jeremy 2026-11-14): Up/Down move through every list here as
 	# Home/End do (the item list, combat's CAST list, TRADE's and the coins' picks).
@@ -1210,7 +1274,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				else:
 					_cast_scroll(m, m)
 			_refresh()
-		"scroll_whom":
+		"scroll_whom", "use_whom":
 			# As TRADE's member lists (main chat 93, DOSBox: check 185's scroll): Esc takes the light off the party and
 			# stays; SELECT with no one backs out to the ITEMS page; Home from no one lights the last member; End from
 			# no one is bug 19: SELECT casts on no one, the scroll's spell used up. Check 316.
@@ -1232,12 +1296,20 @@ func _unhandled_input(event: InputEvent) -> void:
 					_target = (_target + 1) % _people.size()
 			elif choice == "EXIT" or (choice == "SELECT" and _target == -1):
 				_mode = "items"
+				_use_it = null
 			elif choice == "SELECT" and _target == -2:
-				_spend_scroll(m, _scroll, _scroll_slot())   # bug 19: cast on no one, the spell used up
-				_scroll = null
+				# bug 19: cast on no one, the spell used up
+				if _mode == "use_whom":
+					_spend(m, _use_it, _use_id)
+					_use_it = null
+				else:
+					_spend_scroll(m, _scroll, _scroll_slot())
+					_scroll = null
 				_target = _target_kept
 				_mode = "items"
 				_after_change()
+			elif choice == "SELECT" and _mode == "use_whom":
+				_use_on(_people[_target])
 			elif choice == "SELECT":
 				_cast_scroll(m, _people[_target])
 			_refresh()
