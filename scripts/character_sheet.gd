@@ -215,11 +215,17 @@ func _build() -> void:
 	_timer.one_shot = true
 	_timer.timeout.connect(func() -> void:
 		_message = ""
-		if _mode == "id_reply":
+		var was_id := _mode == "id_reply"
+		if was_id:
 			_end_id_reply()
 		elif _mode == "scroll_said":
 			_next_said()
-		_refresh())
+		_refresh()
+		if was_id and _held_key != null:
+			var ev := _held_key
+			_held_key = null
+			if visible:
+				_unhandled_input(ev))
 	add_child(_timer)
 
 
@@ -703,8 +709,12 @@ func _identify(it: GameItem) -> void:
 		_question = "IT LOOKS LIKE SOME SORT OF %s" % item_label(shown).to_upper()
 		_reveal = it
 	_note = _question
+	_held_key = null
 	if _timer != null:
-		_timer.start(MESSAGE_TIME)
+		_timer.start(maxf(CampScreen.speed * 0.225, 0.05))     # a script DELAY: game speed x 225 ms
+
+
+var _held_key: InputEventKey = null   # the last key typed during ID's answer
 
 
 func _end_id_reply() -> void:
@@ -1078,6 +1088,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed():
 		return
 	get_viewport().set_input_as_handled()
+	if _mode == "id_reply":
+		# ID's answer waits with no key read (GAME.OVR 0x23138): a key typed meanwhile stays buffered and the item
+		# menu after it takes the last one (main chat 126, DOSBox at speed 4: check 152's start, ID, then Y and E typed
+		# during IT LOOKS LIKE SOME SORT OF BROAD SWORD: the item menu took EXIT; ours ended the answer on the key).
+		if event is InputEventKey and not (event as InputEventKey).echo:
+			_held_key = event as InputEventKey
+		return
 	if _message != "":
 		_message = ""
 		if _timer != null:
@@ -1086,12 +1103,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _timer != null:
 			_timer.stop()
 		_next_said()
-		_refresh()
-		return
-	if _mode == "id_reply":    # a key ends ID's answer early, as other messages here
-		if _timer != null:
-			_timer.stop()
-		_end_id_reply()
 		_refresh()
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
