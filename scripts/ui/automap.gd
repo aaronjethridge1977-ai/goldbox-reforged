@@ -86,6 +86,9 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 	if not show:
 		full_open = false
+		# _draw doesn't run while hidden: the place line no longer makes room for the window (Combat Chat 58: the
+		# camp drew CAMPING above the time; DOSBox "E 17:04 CAMPING" on one row).
+		mini_shown = false
 
 
 ## Where the party is now; marks the square visited.

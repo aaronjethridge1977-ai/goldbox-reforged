@@ -69,7 +69,11 @@ signal time_passed(minutes: int)   # a rest is done: the caller moves the clock 
 signal start_memorized             # START MEMORIZED: every caster has had the MEMORIZE page
 
 const STEPS_PER_HEAL := 288
-const STEPS_PER_TICK := 12  # steps shown per timer tick (a day takes about 1.2 s)
+## Steps shown per timer tick (REST_TICK s): a day about 0.2 s, as the original's (main chat 127's request 4; Combat Chat 58,
+## DOSBox at speed 4, 3 days: 02:07:20 0.05 s in, a day in about 0.2 s, then THE WHOLE PARTY IS HEALED's Delay; the
+## step loop itself has no wait at any game speed). Ours took 1.2 s a day: a key typed 0.3 s in stopped 6 hours in.
+const STEPS_PER_TICK := 24
+const REST_TICK := 1.0 / 60.0
 const ANIM_UNIT := 0.11     # seconds per unit of a picture frame's delay (lab: 2 units, 0.22 s)
 const MAGENTA := 13
 const PROMPT := 14          # yellow
@@ -283,7 +287,7 @@ func _build() -> void:
 		if pic != null:
 			_fire_delays = pic.delays
 	_timer = Timer.new()
-	_timer.wait_time = 0.05
+	_timer.wait_time = REST_TICK
 	_timer.timeout.connect(_tick)
 	add_child(_timer)
 	_anim = Timer.new()
@@ -495,6 +499,7 @@ func _lit_member() -> int:
 
 
 func _draw_walk() -> void:
+	Automap.mini_shown = _walk and Automap.mini_shown     # no mini-map over the camp: its place line is whole
 	if _walk:
 		_scr.draw_walk(OverlayLook.last_view, _party, _lit_member(), OverlayLook.last_place, PackedStringArray(), [],
 			OverlayLook.last_wild, OverlayLook.last_overland)
@@ -795,7 +800,7 @@ func _start_rest() -> void:
 			# The study hours; each spell's 15 minutes a level follow (_learn_step).
 			m.learn_hours = m.learn_study_hours(spells)
 	_lines = []
-	_timer.start()
+	_rest_go()
 	_refresh()
 
 
@@ -823,8 +828,20 @@ func _back_from_rest() -> void:
 		_show_menu()
 
 
+## The rest's steps run on the clock: STEPS_PER_TICK each REST_TICK of real time, whatever the frame rate.
+var _rest_from := 0
+
+
+func _rest_go() -> void:
+	_rest_from = Time.get_ticks_msec()
+	_timer.start()
+
+
 func _tick() -> void:
-	for i in STEPS_PER_TICK:
+	var now := Time.get_ticks_msec()
+	var n := clampi(int((now - _rest_from) / (REST_TICK * 1000.0) * STEPS_PER_TICK), 1, STEPS_PER_HEAL)
+	_rest_from = now
+	for i in n:
 		if _to_rest <= 0:
 			_stop_rest()
 			return
@@ -874,7 +891,7 @@ func _notes_then(healed: bool, hit: bool) -> void:
 	if not _held.is_empty():
 		await _show_held()
 	elif _resting and visible and not hit:
-		_timer.start()
+		_rest_go()
 	if hit and _resting and visible:
 		_interrupt()
 
@@ -958,7 +975,7 @@ func _show_held() -> void:
 		_refresh()
 	_held.clear()
 	if _resting and visible:
-		_timer.start()
+		_rest_go()
 
 
 ## One 5-minute step of memorizing (see PartyMember "Spells"): the hours of study count
@@ -1425,7 +1442,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key == KEY_N:
 			_mode = "rest"
 			_refresh()
-			_timer.start()
+			_rest_go()
 		return
 	if _resting:
 		# Any key, Escape too, waits in the buffer: the next step asks STOP RESTING? (main chat 126, DOSBox: x typed
