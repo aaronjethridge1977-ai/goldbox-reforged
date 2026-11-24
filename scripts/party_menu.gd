@@ -258,7 +258,7 @@ func _say_24(text: String) -> void:
 	_row24 = text
 	_noting = true
 	_refresh()
-	await get_tree().create_timer(CampScreen.speed * 0.225).timeout
+	await get_tree().create_timer(CampScreen.TEXT_SPEED * 0.225).timeout     # P104: speed 4's pace whatever SETTINGS says
 	_noting = false
 	if _row24 == text:
 		_row24 = ""

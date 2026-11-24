@@ -745,7 +745,7 @@ func _identify(it: GameItem) -> void:
 	_note = _question
 	_held_key.clear()
 	if _timer != null:
-		_timer.start(maxf(CampScreen.speed * 0.225, 0.05))     # a script DELAY: game speed x 225 ms
+		_timer.start(CampScreen.TEXT_SPEED * 0.225)     # a script DELAY: game speed x 225 ms (P104: speed 4's)
 
 
 var _held_key := KeyBurst.new()   # the keys typed during ID's answer, USES AN ITEM or a result line
@@ -901,9 +901,10 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 ## A typed line's time (START.EXE 0x7782 types game speed x 10 ms a character other than spaces) and the Delay after
 ## it (0x709:0xDBE, game speed x 225 ms): at speed 0 none (Combat Chat 58, DOSBox: check 187's start at speed 0,
 ## LIRA's potion of Disappearance: the item list again at once; at speed 4 each line about 1.2 s).
+## P104 (Q39, A): held at speed 4's pace whatever SETTINGS says (CampScreen.TEXT_SPEED).
 static func _line_time(who: String, words: String) -> float:
 	var chars := EclVM.typed_chars(who) + EclVM.typed_chars(words)
-	return maxf(CampScreen.speed * (0.010 * chars + 0.225), 0.05)
+	return CampScreen.TEXT_SPEED * (0.010 * chars + 0.225)
 
 
 ## The Delay after USES AN ITEM is over: CAST SPELL ON WHOM for a one-member spell, else the spell at once.

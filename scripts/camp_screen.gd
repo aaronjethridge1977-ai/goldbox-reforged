@@ -163,6 +163,12 @@ static func delay_scale() -> float:
 	return (speed + 1) / 5.0
 
 
+## P104 (Jeremy, QoL; Q39 on 2026-11-24: A): the screens' own text pauses (a camp spell's result lines, USES AN ITEM and
+## a potion's or scroll's result lines, the ID answer, the hall's notes) run at the pace of the original's game speed 4
+## whatever SETTINGS says, as a script's text does (main.gd TEXT_SPEED): text stays readable. No switch.
+const TEXT_SPEED := 4
+
+
 func _init() -> void:
 	_note.visible = false
 	add_child(_note)
@@ -1276,7 +1282,7 @@ func _cast(target: PartyMember) -> void:
 			_say(lines[lines.size() - 1])
 		_mode = "shown"
 		_refresh()
-		await get_tree().create_timer(1.0 * delay_scale()).timeout
+		await get_tree().create_timer(1.0 * (TEXT_SPEED + 1) / 5.0).timeout     # P104: speed 4's pace
 		if not visible or _mode != "shown":
 			return
 	else:
@@ -1289,7 +1295,7 @@ func _cast(target: PartyMember) -> void:
 			else:
 				_say(lines[k])
 			_refresh()
-			await get_tree().create_timer(1.0 * delay_scale()).timeout
+			await get_tree().create_timer(1.0 * (TEXT_SPEED + 1) / 5.0).timeout     # P104: speed 4's pace
 			if not visible or _mode != "casting":
 				return
 	_back_to_list()
