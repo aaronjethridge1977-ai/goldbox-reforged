@@ -1850,14 +1850,10 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	# The cast's sound (GAME.OVR 0x27E05, in a fight once the aim is taken): id 11 for
 	# Fireball, 8 for Lightning Bolt, 2 for the rest.
 	_cast_sound = 11 if id == CombatSpells.FIREBALL else (8 if id == CombatSpells.LIGHTNING else 2)
-	var to := cell
-	if _combat.magic.aim_kind(id) == "pick" and not targets.is_empty():
-		to = _combatants[targets[0]].cell
-		if id == 23 or id == 49:
-			# Hold Person: the cast's spark goes to the last figure aimed, the first its loop takes (P108's film,
-			# Combat Chat 50: DOSBox hpk15, three kobolds: the spark flew from BAKSHI to the third aimed, then its
-			# line; the second and first aimed each got their own spark after).
-			to = _combatants[targets[targets.size() - 1]].cell
+	# Hold Person: the cast's spark goes to the last figure aimed, the first its loop takes (P108's film,
+	# Combat Chat 50: DOSBox hpk15, three kobolds: the spark flew from BAKSHI to the third aimed, then its
+	# line; the second and first aimed each got their own spark after).
+	var to := _combat.magic.aim_point(i, id, cell, targets)
 	_hit_pic = [10, 138] if id in [CombatSpells.FIREBALL, CombatSpells.LIGHTNING, 60] else [9, 137]
 	_bolt_on = id in [CombatSpells.LIGHTNING, 60]
 	_bolt_started = false

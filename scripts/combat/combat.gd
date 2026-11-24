@@ -1295,22 +1295,28 @@ func adjacent(a: Vector2i, b: Vector2i) -> bool:
 ## wedges call west and dir_to north-west), and so do facing and attacks from behind.
 static func wedge_dir(from: Vector2i, to: Vector2i) -> int:
 	for d in 8:
-		var n: Vector2i = from + DIRS[d]
-		if to == from or to == n:
-			return d
-		var ok := false
-		match d:
-			0: ok = n.y - to.y >= absi(to.x - n.x)
-			1: ok = to.x >= n.x and to.y <= n.y
-			2: ok = to.x - n.x >= absi(to.y - n.y)
-			3: ok = to.x >= n.x and to.y >= n.y
-			4: ok = to.y - n.y >= absi(to.x - n.x)
-			5: ok = to.x <= n.x and to.y >= n.y
-			6: ok = n.x - to.x >= absi(to.y - n.y)
-			7: ok = to.x <= n.x and to.y <= n.y
-		if ok:
+		if in_wedge(from, to, d):
 			return d
 	return 0
+
+
+## GAME.OVR 0x300CD: does `to` lie in direction d's region seen from `from` (see wedge_dir)?
+## The regions overlap (north and north-east share the squares beyond the diagonal), so "in any
+## of these wedges" is not "the first wedge is one of these".
+static func in_wedge(from: Vector2i, to: Vector2i, d: int) -> bool:
+	var n: Vector2i = from + DIRS[d]
+	if to == from or to == n:
+		return true
+	match d:
+		0: return n.y - to.y >= absi(to.x - n.x)
+		1: return to.x >= n.x and to.y <= n.y
+		2: return to.x - n.x >= absi(to.y - n.y)
+		3: return to.x >= n.x and to.y >= n.y
+		4: return to.y - n.y >= absi(to.x - n.x)
+		5: return to.x <= n.x and to.y >= n.y
+		6: return n.x - to.x >= absi(to.y - n.y)
+		7: return to.x <= n.x and to.y <= n.y
+	return false
 
 
 ## The direction (0..7) in which `to` lies from `from`, as the original works it out:
@@ -1466,8 +1472,14 @@ func free_attacks(i: int, to: Vector2i) -> void:
 		# guard attacks (Player 18, p18a5 draw 11293: a goblin guard asleep struck BRAM in ours; Jeremy's P79).
 		if CombatSpells.held(e.who):
 			continue
-		var off := (dir_between(e, c) - int(e.dir) + 8) % 8
-		var seen := off <= 2 or off >= 6    # not one of the three cells at its back
+		# Not at its back: GAME.OVR 0x132E7 tries d = facing - 2 .. facing + 2 and asks 0x300CD whether the
+		# mover lies in d's wedge from the two figures' own cells (DS:0x5F27 / 0x5F28, a large figure's
+		# anchor), as 0x14E38 does; not the first wedge from their closest cells.
+		var seen := false
+		for k in range(-2, 3):
+			if in_wedge(e.cell, c.cell, (int(e.dir) + k + 8) % 8):
+				seen = true
+				break
 		# GAME.OVR 0x132F8: it strikes if it still has initiative this round (combat byte +3), or has taken no
 		# blow (+0xF), or the mover is in front of it. Not "has had its turn" (Combat Chat 34, the spell lab's
 		# sl44 and Player 32's p19c2: a figure whose turn passed while it was asleep or sick has no initiative

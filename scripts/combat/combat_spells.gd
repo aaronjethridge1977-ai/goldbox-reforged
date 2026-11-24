@@ -508,6 +508,23 @@ func aim_kind(id: int) -> String:
 	return "pick"
 
 
+## The original's aim point (DS:0x6DB9 / 0x6DBA) once the aim is taken: the caster's own square for a spell with
+## no aim (0x148E2 starts it there), the aim square for an area, the aimed figure's own square for a pick (the
+## cursor on it, 0x1487B), the last one aimed for Hold Person (P108's film). The cast's spark flies to it
+## (0xBA:0x1A29 at 0x27E4D) and the caster turns to it.
+func aim_point(i: int, id: int, cell: Vector2i, targets: Array) -> Vector2i:
+	match aim_kind(id):
+		"self":
+			return c.combatants[i].cell
+		"pick":
+			if targets.is_empty():
+				return cell
+			if id == 23 or id == 49:
+				return c.combatants[targets[targets.size() - 1]].cell
+			return c.combatants[targets[0]].cell
+	return cell
+
+
 func radius(id: int) -> int:
 	if (id == FIREBALL or id == NECKLACE) and outdoors:
 		return 2
@@ -696,8 +713,10 @@ func cast(i: int, id: int, cell: Vector2i, picked: Array[int], item: GameItem = 
 				c.by_distance_from(cell, targets)     # the area's list, nearest the aim point first (0x14A64)
 		"pick":
 			targets = picked.duplicate()
-	if targets.size() > 0 and id != LIGHTNING:
-		me.dir = c.dir_between(me, c.combatants[targets[0]]) if targets[0] != i else me.dir
+	# The caster turns to the aim (GAME.OVR 0x27DCA: the 0x300CD wedges from its own square to DS:0x6DB9 / 0x6DBA,
+	# 0x3E0:0x57 -> 0x31232), in a fight for every spell: a spell with no aim (area code 0) leaves the aim on the
+	# caster's own square (0x148E2), whose first wedge is 0, so the caster turns north.
+	me.dir = Combat.wedge_dir(me.cell, aim_point(i, id, cell, targets))
 	spell_cast.emit(i, id, cell, targets)
 	_cast_cell = cell
 	_resolve(i, id, targets)
