@@ -435,18 +435,52 @@ var _input_dest := {}
 func answer_input(text: String) -> State:
 	if state != State.INPUT:
 		return state
-	text = text.strip_edges().to_upper().left(input_max)
+	# Chat 123 (DOSBox, 7:23's password): the original keeps spaces typed before or after the answer (" NOKNOK" and
+	# "NOKNOK " are wrong: the monster); ours stripped them and let the party through.
+	text = text.to_upper().left(input_max)
 	if input_numeric:
 		# Chat 122 (DOSBox, 2:20's patrol, PAY: TYPE IN THE NUMBER OF GP YOU OFFER.): an empty answer, one with a letter
 		# or a number over 65536 is asked for again (the field empty, the text kept); 65536 is taken as 0 (a word).
-		# Ours took any of them as 0 (the cheapskates' fight). Signs untested: taken as not digits.
-		if text == "" or not text.is_valid_int() or not text.left(1).is_valid_int() or int(text) > 65536:
+		# Ours took any of them as 0 (the cheapskates' fight). Chat 123 (DOSBox, the same PAY): the answer is read as
+		# Turbo Pascal's Val reads a number: leading spaces skipped, a sign, '$' for hex (" 5", "+5", "05", "$A",
+		# "$10000" = 65536 = 0, "-0" taken; "5 ", "-5", "5-3", "1 2", " " asked again). Ours stripped both ends.
+		var v := val_number(text)
+		if v < 0 or v > 65536:
 			return state
-		_write(_input_dest, int(text) & 0xFFFF)
+		_write(_input_dest, v & 0xFFFF)
 	else:
 		_write_string(_input_dest, text)
 	state = State.RUNNING
 	return run()
+
+
+## A typed number as Turbo Pascal's Val reads it (chat 123): spaces before it, then '+' or '-', then decimal digits
+## or '$' and hex digits, nothing after; -1 when it doesn't read (or is below 0).
+static func val_number(text: String) -> int:
+	var i := 0
+	while i < text.length() and text[i] == " ":
+		i += 1
+	var neg := false
+	if i < text.length() and text[i] in ["+", "-"]:
+		neg = text[i] == "-"
+		i += 1
+	var base := 10
+	if i < text.length() and text[i] == "$":
+		base = 16
+		i += 1
+	var digits := "0123456789ABCDEF".left(base)
+	if i >= text.length():
+		return -1
+	var v := 0
+	while i < text.length():
+		var d := digits.find(text[i].to_upper())
+		if d < 0:
+			return -1
+		v = v * base + d
+		i += 1
+	if neg:
+		v = -v
+	return v if v >= 0 else -1
 
 
 func choose(index: int) -> State:
