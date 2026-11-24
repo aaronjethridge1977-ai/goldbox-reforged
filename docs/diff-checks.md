@@ -206,6 +206,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   with light grey edges, white arrows. Every square is drawn, seen or not. Ours drew grey lines on black (chat 11).
   Now the original's: 2:20 14,5 S and 3:0 14,8 N, 15,9 E (an edge, the party in the window's last column) identical
   to DOSBox pixel for pixel, the whole screen (`data/c124/area_o*.png` / `area_s*.png`).
+- **Row 24's notes last a script DELAY (found, fixed; main path, display and text timing):** START.EXE 0x709:0xD68
+  clears row 24, prints its text in the colour given (GAME.OVR passes 14, yellow), waits a script DELAY (game speed x
+  225 ms, 0x709:0xDBE: 0.9 s at speed 4) and clears row 24. The lab runs the original at speed 0 (`dspoke.py 49E2 0`),
+  where such a note lasts no time: earlier chats saw "nothing". GAME.OVR's eight callers: AREA's NOT HERE (0x170F1;
+  ours showed it white for 1.5 s: now yellow, TEXT_SPEED x 225 ms); **the poisoned river's THE RIVER'S STENCH DRIVES
+  YOU BACK.** (0x16FEE: overland river tiles 0x66-0x6C, 0x72 while 0x4AA2 = 0; DOSBox, check 33's start at speed 4,
+  four Rights to 18,20 E, Right: the note 0.2-0.9 s, then the walking menu; ours printed nothing: now the original's,
+  row 24 identical pixel for pixel, `data/c124/riv_cmp.png`); the training hall's WE ONLY TRAIN CONSCIOUS PEOPLE,
+  TRAINING COSTS 1000 GP., WE DON'T TRAIN THAT CLASS HERE, NOT ENOUGH EXPERIENCE (0x1C359-0x1C67F) and "<name> CAN'T
+  BE MODIFIED." (0x1BA59) (DOSBox, check 103's start at speed 4, End, TRAIN: TRAINING COSTS 1000 GP. 0.2-0.9 s, then
+  CHOOSE A FUNCTION; ours' party_menu.gd shows them 1.5 s with a comment "the original says nothing": Combat's file,
+  board request); the code wheel's "Sorry, that's incorrect." (0xCEE; ours has no wheel).
 - **Open (display, main path, rare):** stepping into another area with AREA up (2:20 14,5 N, Up, into 3:0 14,8 N), the
   original draws the new area's map but leaves the place line at the old square (14,5 N) until the next key; ours
   shows 14,8 N (`data/c124/area_edge_cmp.png`).
