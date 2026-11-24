@@ -745,3 +745,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- *seen / code* A fight script's to-hit modifier for the party (the kobold caves' fights: -2) applies to touch spells too: Cause Light Wounds and Shocking Grasp roll their touch against it, so in such fights they miss more than the character sheet suggests (Combat Chat 57, the spell matrix q4k / q20k, GAME.OVR 0x2BBA1).
