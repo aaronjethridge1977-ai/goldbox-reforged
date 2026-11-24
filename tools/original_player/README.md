@@ -1329,7 +1329,7 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
-## Player 55 (2026-11-23/24): the full recheck, 70 of 70 on f12ed9f; baseline.txt to 70
+## Player 55 (2026-11-23/24): the full recheck, 70 of 70 on f12ed9f (28 of 70 again on 30db957, all identical); baseline.txt to 70
 
 **All 70 replayed** on origin/main **f12ed9f** (2026-11-23 21:42; the day's text timing, type-ahead, experience share
 and attacker's facing in), `match.py run -j 2`, 21:43-03:29 (beside main's and Combat's diffcheck runs): **70 of 70
@@ -1345,7 +1345,14 @@ lowercased and gave no key): the 70 recordings' keys to the original are all in 
 no esc, F-key, Delete or Insert), so the original got every key; none needs a look.
 **Second run on 30db957** (main and Combat landed many input changes after f12ed9f: the fight's Y / N, the shared
 menu highlight, digits and Home / End at menus, Space at a one-word menu, keys during row 24's notes), all 70 from a
-detached checkout `p55/wt` so this worktree's pushes can't change files under it: see below.
+detached checkout `p55/wt` so this worktree's pushes can't change files under it, 03:31-05:29: **28 of 70 replayed,
+all 28 identical** (p13a1 through p19a3 in recordings.txt's order; statediff the 4AFA-4AFF counters only); stopped
+there by the Lead's time cap (pid killed, no jobs left). The other 42 stand at f12ed9f (all identical); p19a10 and
+p19b1 were mid-replay, so LAB/match and LAB/logs hold no output for them (`match.py score` says "not yet"; their
+f12ed9f outputs are in `p55/match_f12ed9f_outputs/`). Lab: `p55/match_all2.out`, `p55/score_30db957_partial.md`.
+The release gate (`match_gate.sh <commit>`) replays all 70 on the release commit anyway.
+**The lab's keys.py** got main's keysym fix (only `keycode()`; main's file drops `_solve_once` and defaults to
+another display, so not copied whole); the old one is `p55/keys_before_p55.py`.
 
 ## Player 54 (2026-11-23): the ghoul fixture for Combat (P115)
 
