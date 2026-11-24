@@ -79,7 +79,13 @@ var _index := 0
 var _title := ""
 var _mode := "view"      # view, items, spells, whom, coin_whom, coin, amount, confirm
 var _cursor := 0         # the chosen item
-var _pick := 0           # the lit menu item
+## The lit menu item: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl;
+## main chat 122: after VIEW's EXIT, its 4th word, the walking menu lights ENCAMP).
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _pending := ""       # what whom/confirm/coin/amount are for: trade, drop, use, sell, coin_trade, coin_drop
 var _target := 0         # member chosen for a trade; -1 no one (after Esc), -2 past the party's end (bug 19)
 var _target_kept := 0    # the member lit when Esc took the light off: the next TRADE starts there (DOSBox)
@@ -156,8 +162,7 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 		people[_index].refresh_load_word()     # VIEW's entry works the record out again (GAME.OVR 0x2165C)
 	_mode = "view"
 	_note = ""
-	_message = ""
-	_pick = pick
+	_message = ""      # `pick`: unused; the shared highlight is as the menu that opened the sheet left it
 	# From the global generator, which RECORD MY GAME's seed (main _seed_all) sets: a replay rolls the same
 	# dice (main chat 72: a camp scroll's d8 differed); random otherwise, as Godot seeds it at start.
 	_rng.seed = randi()
@@ -521,7 +526,7 @@ func _draw_whom(prompt: String, camp: bool = false) -> void:
 
 
 func _menu(items: Array, col: int) -> void:
-	var lit := _pick if _pick < items.size() else 0
+	var lit := EclVM.menu_lit(items.size())
 	_scr.menu_line(24, items, col, lit)
 	var line: String = _rows[24]
 	_rows[24] = line.left(col) + " ".join(items)
@@ -1060,7 +1065,7 @@ func _join(m: PartyMember, it: GameItem) -> void:
 ## The menu item a key picks: its hot letter, or Enter on the lit one ("" if neither).
 func _chosen(event: InputEvent, key: int, items: Array) -> String:
 	if event.is_action("ui_accept") and not items.is_empty():
-		var lit := _pick if _pick < items.size() else 0
+		var lit := EclVM.menu_lit(items.size())
 		return items[lit]
 	for i in items.size():
 		var s: String = items[i]
@@ -1111,8 +1116,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# TRADE WITH WHOM? SELECT EXIT keeps its light on Left / Right (Enter is SELECT; main chat 90, check 302).
 	if _mode in ["whom", "coin_whom"] and (event.is_action("ui_left") or event.is_action("ui_right")):
 		return
+	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty() and _mode != "amount":
+		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
+		_refresh()
+		return
 	if (event.is_action("ui_left") or event.is_action("ui_right")) and not items.is_empty() and _mode != "amount":
-		var lit := _pick if _pick < items.size() else 0
+		var lit := EclVM.menu_lit(items.size())
 		_pick = (lit + (1 if event.is_action("ui_right") else items.size() - 1)) % items.size()
 		_refresh()
 		return

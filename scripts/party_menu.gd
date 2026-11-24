@@ -51,7 +51,13 @@ var _modifier: CharacterModify
 
 var _sel := 0
 var _mode := "menu"   # menu, confirm_train, congrats, confirm_drop, confirm_drop2, quit, save, learn, add
-var _pick := 1
+## The lit word: the highlight every horizontal menu shares (GAME.OVR 0x2CC8C's DS:0x6B2B, EclVM.menu_hl; main chat
+## 122, Combat Chat 55): what a menu here leaves lit, the next menu anywhere lights, and the other way round.
+var _pick: int:
+	get:
+		return EclVM.menu_hl
+	set(v):
+		EclVM.menu_hl = v
 var _plan: Array[int] = []
 var _cursor := 0
 # ADD's list: which waiting characters were added while it is open (shown "* NAME"; main chat 102).
@@ -156,7 +162,7 @@ func _refresh() -> void:
 				_scr.text(10 if i == 0 else 6, 5 + i, line, GameScreen.GREEN)
 			if _mode == "confirm_train":
 				_scr.text(0, 24, "DO YOU WISH TO TRAIN?", MAGENTA)
-				_scr.menu_line(24, YES_NO, 22, _pick)
+				_scr.menu_line(24, YES_NO, 22, EclVM.menu_lit(YES_NO.size()))
 			else:
 				_scr.text(0, 24, "CONGRATULATIONS...", GameScreen.GREEN)
 		"add":
@@ -205,13 +211,13 @@ func _refresh() -> void:
 				"confirm_drop":
 					var q := "DROP %s FOREVER?" % _who().name
 					_scr.text(0, 24, q, PROMPT)
-					_scr.menu_line(24, YES_NO, q.length() + 1, _pick)
+					_scr.menu_line(24, YES_NO, q.length() + 1, EclVM.menu_lit(YES_NO.size()))
 				"confirm_drop2":
 					_scr.text(0, 24, "ARE YOU SURE?", PROMPT)
-					_scr.menu_line(24, YES_NO, 14, _pick)
+					_scr.menu_line(24, YES_NO, 14, EclVM.menu_lit(YES_NO.size()))
 				"quit":
 					_scr.text(0, 24, "QUIT TO DOS", PROMPT)
-					_scr.menu_line(24, YES_NO, 12, _pick)
+					_scr.menu_line(24, YES_NO, 12, EclVM.menu_lit(YES_NO.size()))
 				"save":
 					_scr.text(0, 24, "SAVE WHICH GAME:", MAGENTA)
 					_scr.menu_line(24, LETTERS, 17, -1)
@@ -412,10 +418,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			if (up or down) and not roster.is_empty():
 				_cursor = (_cursor + (1 if down else -1) + roster.size()) % roster.size()
 				_refresh()
-			elif key == KEY_LEFT or key == KEY_RIGHT:
-				_pick = 1 - _pick
+			elif key == KEY_LEFT or key == KEY_RIGHT or key == KEY_COMMA or key == KEY_PERIOD:
+				_pick = 1 - EclVM.menu_lit(2)
 				_refresh()
-			elif key == KEY_A or (enter and _pick == 0):
+			elif key == KEY_A or (enter and EclVM.menu_lit(2) == 0):
 				# Main chat 102 (DOSBox): the list stays open, the added one marked "* NAME" and still lit;
 				# ADD on an added one does nothing. Main chat 104 (DOSBox, GAME.OVR 0x1CB26-0x1CBF5; checks 395, 396,
 				# 399): a player character joins while fewer than six are in the party, an NPC while fewer than
@@ -429,7 +435,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_close_add()
 				else:
 					_refresh()
-			elif key == KEY_E or esc or (enter and _pick == 1):
+			elif key == KEY_E or esc or (enter and EclVM.menu_lit(2) == 1):
 				_close_add()
 
 
