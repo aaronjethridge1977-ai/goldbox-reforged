@@ -4256,35 +4256,43 @@ func _draw_runes(lines: PackedStringArray) -> void:
 		_screen.update()
 
 
-## AREA: the overhead map of the block in the view window, walls as lines, the party as an
-## arrow (the original's AREA view; our automap shows only what has been seen... for now all).
+## AREA: the overhead map in the view window, as the original draws it (chat 124; GAME.OVR 0x2E8F7, reached from
+## AREA's entry 0x170B3 through the view's draw 0x2EEF4 while DS:0x6AAC is set): an 11 x 11 window of 8-pixel
+## tiles round the party, its corner (x - 5, y - 5) kept within 0..5 (the 16 x 16 map, so the party is off centre
+## near an edge); each square is symbol 0x104 + its walls (north 1, east 2, south 4, west 8: any wall nibble,
+## doors included), the party's square then symbol 0x100 + its facing (the arrows). Symbols 0x100-0x11E are
+## 8X8D1.DAX block 202 (symbol set 4, loaded at 0xEA81). Every square of the map is shown, seen or not.
 func _area_picture() -> Image:
 	var im := Image.create(88, 88, false, Image.FORMAT_RGBA8)
 	im.fill(Color.BLACK)
+	if _area_tiles.is_empty():
+		var dax := DaxFile.open(_game_path.path_join("8X8D1.DAX"))
+		if dax != null:
+			_area_tiles = WallSet._tiles_from(dax.blocks.get(202, PackedByteArray()))
+	if _area_tiles.size() < 20:
+		return im
 	var map: GeoMap = _maps[_map_index].map
-	var wall_c := GameScreen.EGA[7]
-	var door_c := GameScreen.EGA[14]
-	for y in GeoMap.SIZE:
-		for x in GeoMap.SIZE:
-			var ox := 4 + x * 5
-			var oy := 4 + y * 5
+	var left := clampi(_pos.x - 5, 0, 5)
+	var top := clampi(_pos.y - 5, 0, 5)
+	for row in 11:
+		for col in 11:
+			var bits := 0
 			for side in 4:
-				if map.wall(x, y, side) == 0:
-					continue
-				var c: Color = door_c if map.door(x, y, side) != 0 else wall_c
-				for k in 6:
-					match side:
-						0: im.set_pixel(ox + k, oy, c)
-						1: im.set_pixel(ox + 5, oy + k, c)
-						2: im.set_pixel(ox + k, oy + 5, c)
-						3: im.set_pixel(ox, oy + k, c)
-	var px := 4 + _pos.x * 5 + 2
-	var py := 4 + _pos.y * 5 + 2
-	for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
-		im.set_pixel(px + d.x, py + d.y, GameScreen.EGA[12])
-	var tip := DungeonView.DELTA[_facing]
-	im.set_pixel(clampi(px + tip.x * 2, 0, 87), clampi(py + tip.y * 2, 0, 87), GameScreen.EGA[15])
+				if map.wall(left + col, top + row, side) != 0:
+					bits |= 1 << side
+			_area_tile(im, col, row, _area_tiles[4 + bits])
+	_area_tile(im, _pos.x - left, _pos.y - top, _area_tiles[int(_facing) & 3])
 	return im
+
+
+var _area_tiles: Array[PackedByteArray] = []
+
+
+func _area_tile(im: Image, col: int, row: int, tile: PackedByteArray) -> void:
+	if col < 0 or row < 0 or col > 10 or row > 10:
+		return
+	for i in 64:
+		im.set_pixel(col * 8 + i % 8, row * 8 + i / 8, GameScreen.EGA[tile[i]])
 
 
 func _exit_tree() -> void:
