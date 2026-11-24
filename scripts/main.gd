@@ -419,6 +419,9 @@ func _back_to_start() -> void:
 	SaveListScreen.quick_path = _save_path()     # the save/load list (Combat lane, QoL 5)
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 var _who_open := false   # a WHO menu's highlight has been put on the selected member
+## The walking screen's digits as the original takes them (chat 122: the keypad's keys).
+const WALK_DIGITS := {KEY_8: KEY_UP, KEY_2: KEY_DOWN, KEY_4: KEY_LEFT, KEY_6: KEY_RIGHT, KEY_7: KEY_HOME, KEY_1: KEY_END,
+		KEY_KP_8: KEY_UP, KEY_KP_2: KEY_DOWN, KEY_KP_4: KEY_LEFT, KEY_KP_6: KEY_RIGHT, KEY_KP_7: KEY_HOME, KEY_KP_1: KEY_END}
 var _list_sel := 0   # a vertical menu's or WHO's highlight (the horizontal menus' is EclVM.menu_hl, chat 122)
 
 
@@ -1108,6 +1111,17 @@ func _unhandled_input(event: InputEvent) -> void:
 				_type_ahead = event as InputEventKey
 			get_viewport().set_input_as_handled()
 			return
+		if event is InputEventKey and WALK_DIGITS.has(key) and _door_options == "" \
+				and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+			# Chat 122 (DOSBox, 5:3 from check 457's start): the walking screen takes the digits as the keypad's keys
+			# (a DOS keypad with Num Lock on types them): 8 a step, 2 round, 4 / 6 left / right, 7 / 1 the member
+			# above / below (Home / End); 3, 5, 9 and 0 nothing. Ours took none of them.
+			var moved := InputEventKey.new()
+			moved.keycode = WALK_DIGITS[key]
+			moved.physical_keycode = WALK_DIGITS[key]
+			moved.pressed = true
+			event = moved
+			key = moved.keycode
 		if not _vm.place_blank.is_empty() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] \
 				and (key in [KEY_A, KEY_V, KEY_E, KEY_L, KEY_C, KEY_S, KEY_HOME, KEY_END] or event.is_action("ui_up") \
 				or event.is_action("ui_down") or event.is_action("ui_left") or event.is_action("ui_right")):
