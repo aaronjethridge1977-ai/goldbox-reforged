@@ -743,6 +743,10 @@ func _load_monsters() -> void:
 	_place()
 	_selected = 0
 	_centre_on_selected()
+	if _start_cell.x >= 0:
+		# The view opens on figure 1, the party's first member, down or not (main chat 122, DOSBox 7:23: the lizard
+		# men's fight opened centred on THRENDER, killed by the barrels before it; ours was a row higher).
+		_centre_on(_start_cell)
 	_refresh()
 
 
@@ -750,6 +754,8 @@ func _load_monsters() -> void:
 
 ## The whole party in order while a fight starts (its members who are down are placed too).
 var _place_order: Array = []
+var _down_cells: Array[Vector2i] = []   # the squares of members down as the fight starts, drawn as bodies
+var _start_cell := Vector2i(-1, -1)     # the party's first member's square (the view opens on it)
 
 
 ## Both sides placed by the original's rule (see Placement): the party around its own
@@ -802,6 +808,11 @@ func _place() -> void:
 	if TpDice.on:
 		for i in down:
 			TpDice.log.append("downcell %s %d,%d" % [home[i].name, party_cells[i].x, party_cells[i].y])
+	_down_cells.clear()
+	for i in down:
+		if party_cells[i].x >= 0:
+			_down_cells.append(party_cells[i])
+	_start_cell = party_cells[0] if not party_cells.is_empty() and not home.is_empty() else Vector2i(-1, -1)
 	# The creatures follow the party in the order they were loaded, whichever side each is on
 	# (the original's figure list: Combat Chat 32, main's tavern brawl, 3:0 0xA696: LOAD_CHAR 41-53
 	# sets the last 11 loaded to 0x80; its figures 6-25 are the drunks, 26-31 the patrons on the
@@ -2321,6 +2332,14 @@ func _refresh() -> void:
 				or _lingering.has(i) or _skulls.has(i) or _field.tile(e.cell.x, e.cell.y) == CLOUD_TILE:
 			continue
 		var at: Vector2i = (e.cell - _view) * CELL
+		if at.x >= 0 and at.y >= 0 and at.x < size and at.y < size:
+			img.blit_rect(body, Rect2i(0, 0, CELL, CELL), at)
+	# A member down as the fight starts lies on its square in the formation too (main chat 122, DOSBox 7:23: THRENDER,
+	# killed by the barrels before the lizard men's fight, drawn at 27,13); not a figure, it takes no square.
+	for cell in _down_cells:
+		if body == null or _field.tile(cell.x, cell.y) == CLOUD_TILE:
+			continue
+		var at: Vector2i = (cell - _view) * CELL
 		if at.x >= 0 and at.y >= 0 and at.x < size and at.y < size:
 			img.blit_rect(body, Rect2i(0, 0, CELL, CELL), at)
 	# Casting: the aim cursor and (QoL) the cells the spell will cover.
