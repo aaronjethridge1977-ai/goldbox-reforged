@@ -1973,7 +1973,11 @@ func _within(i: int, j: int, reach: int) -> bool:
 ## nobody, among all of them; each pass up to 20 tries of a die the size of the list, a figure
 ## that can't be attacked (targetable) struck off and the die rolled again (its size kept),
 ## until the list is empty. (Check 5's Tyranthraxus drew his d6 twice at 0x160DB: draw 794.)
-func find_target(i: int) -> bool:
+## `unchecked` (the callers that pass 1 as 0x15FDF's [bp+8]: the turn loop 0xAD87 and the step loop's re-pick 0xB632):
+## the second pass (all enemies) takes its pick without the can-be-attacked test 0x13880 (0x16110-0x1611F: DS:[0x6716]+6
+## is set as that pass starts and cleared at the exit), so an invisible enemy can become the target there (Combat Chat
+## 57, the spell matrix q30k: a kobold took the invisible BAKSHI and the action picked again; ours struck him off).
+func find_target(i: int, unchecked := false) -> bool:
 	var c: Dictionary = combatants[i]
 	var keep: int = c.get("target", -1)
 	if _enemy_of(c, keep) and targetable(i, keep):
@@ -2009,7 +2013,7 @@ func find_target(i: int) -> bool:
 			var k := roll(1, n, "%s picks a target" % c.who.name) - 1
 			if pool[k] < 0:
 				continue
-			if targetable(i, pool[k]):
+			if (blind and unchecked) or targetable(i, pool[k]):
 				c.target = pool[k]
 				return true
 			pool[k] = -1
@@ -2430,7 +2434,7 @@ func _step_failed(i: int) -> bool:
 		if c.fails > 2:
 			c.moves = 0
 			return true
-		if not find_target(i):
+		if not find_target(i, true):
 			guard(i)
 			return true
 	return false
@@ -2546,7 +2550,7 @@ func _approach(i: int) -> String:
 			if c.fails > 2:
 				c.moves = 0
 				return "retry"
-			if not find_target(i):
+			if not find_target(i, true):
 				guard(i)
 				return "end"
 	if k == 5:
@@ -2670,7 +2674,7 @@ func ai_act() -> bool:
 		# Chat 39, seen in DOSBox: BAKSHI on QUICK, a kobold next to him, threw his readied Javelin of Lightning
 		# where ours had readied his sword at the turn's start and had no item left to use).
 		choose_weapon(active)
-		if not find_target(active):
+		if not find_target(active, true):
 			guard(active)
 			return false
 		# The action (GAME.OVR 0xB6FC) runs the powers category (0x0E: breath, spit) before a
@@ -2713,7 +2717,7 @@ func ai_act() -> bool:
 		# (0x15FDF: kept if it still stands, else a new pick); ours did only when nothing was in
 		# reach (lab, side chat 5: Darkstar's dart killed its kobold mid-volley, and the next
 		# dart's d17 target pick was missing).
-		if not ran_out and not _enemy_of(c, c.get("target", -1)) and not find_target(active):
+		if not ran_out and not _enemy_of(c, c.get("target", -1)) and not find_target(active, true):
 			guard(active)
 			return false
 		ran_out = false
@@ -2751,6 +2755,11 @@ func ai_act() -> bool:
 			if near.is_empty():
 				if not find_target(active):
 					guard(active)
+					# The guard (0xB948 -> 0xBB0F) leaves the action's "going on" flag set, so the action returns
+					# "not done" and the turn loop (0xAD72) picks once more (0xAD87, unchecked) before its own guard
+					# ends the turn (movement 0 now): an invisible enemy costs the figure two more draws and becomes
+					# its target (Combat Chat 58, the spell matrix q30k: draws 1898-1899).
+					find_target(active, true)
 					return false
 				if SmartQuick.applies(self, active) and ((not shooting and SmartQuick.hurt(self, active))
 						or SmartQuick.stays(self, active)):
@@ -2789,7 +2798,7 @@ func ai_act() -> bool:
 			# 6:1's d23 at draw 3563) before the turn ends (initiative 0: 0xBB0F).
 			c.moves = 0
 			if not _enemy_of(c, c.get("target", -1)):
-				find_target(active)
+				find_target(active, true)
 			return false
 		var moves_left: int = c.moves
 		if shooting:
