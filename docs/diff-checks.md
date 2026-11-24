@@ -199,9 +199,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   key (the type-ahead's first key too). Check 486: the wager typed 1, Left, Enter (1K: asked again), 2, Home, Ctrl+H,
   Enter: 2 wagered (GREEN, 4 PP); the code before wagered 1 (3 PP). Not measured: Alt with an arrow or F-key.
 - **Checked, matching:** an extended key at a script's menu types no letter (check 93's IGNORE GRAB: Home ('G') and
-  PgUp ('I') do nothing in both).
-- **Open (display, no reset):** a DAMAGE page after a LOAD_CHAR pick (5:7's trap door: WHO WILL OPEN IT?, then the
-  party's DAMAGE 224): which member the original lights. Not reached this run.
+  PgUp ('I') do nothing in both); 5:7's PRESS BUTTON OR RETURN TO CONTINUE (a one-word MENU_HORIZONTAL): B, Space, Down,
+  Tab nothing, P goes on (both); the party's DAMAGE page's PRESS ANY KEY: Down goes on, Shift, Ctrl, Alt alone nothing
+  (both). Ours' Esc opens its Esc menu there (QoL, P70); Tab and the test keys act only with lab keys (`--lab` or a debug
+  run without `--player-keys`: an editor run), never in a release build.
+- **A DAMAGE page after a script's pick (display; checked, matching):** 5:7's trap door (8,5, event 4; a lab jump save
+  `mksave.py G H 5 7 8 4 S` from s46sp4, `~/gbr/lab/data/c129/s57td` for ours): YES, WHO WILL OPEN IT? with BAKSHI picked
+  (End, Enter); seed 11111111 QUICKLY LOOKING AWAY, BAKSHI SAYS ..., seed 11111114 BAKSHI TURNS TO STONE (the LOAD_CHAR
+  after it), JUMP YES, the party's DAMAGE (6 each / 14 each): both games keep BAKSHI lit on every page (`ts_cmp.png`).
+  The view's walls differ only through the jump (5:7 loads no wall set; the original kept 3:0's).
 
 ## Chat 128: a held arrow and a typed burst on the walking screen; the party list's light at a script's menus (main path)
 
