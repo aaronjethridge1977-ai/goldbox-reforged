@@ -172,6 +172,35 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 130: the keypad; Shift / Ctrl / Alt with the F-keys and grey keys in a typed answer; a held key through a script's wait (main path)
+
+- **The keypad (checked, matching):** DOSBox at 3:0's wager (`~/gbr/lab/data/c130/wprobe2.sh`), Num Lock off: keypad 4,
+  Home, Delete type K, G, S (the grey keys' scan codes), keypad 5 nothing, keypad Enter ends the answer; ours (windowed,
+  `seqk.sh`) "KGS". Num Lock on: 4, 5, +, *, /, . typed in both (the field stops at 6). The walking screen (check 457's
+  start, `kpwalk.sh` / `kpours.sh`), Num Lock off: keypad 4 turns, keypad Home moves the lit member, keypad PgUp, PgDn,
+  Insert, Delete and 5 do nothing, in both.
+- **A typed answer's reader (input, main path; fixed, check 487):** START.EXE 0x7ABB-0x7B8A: get-key 0x899:0x59 (an
+  extended key gives 0, skipped, then its scan code), characters 0x20 to 0x7A only (so '{', '|', '}', '~' do nothing;
+  '`' is typed, drawn blank), 8 takes back, 13 / 27 end; the answer put in capitals at the end (0xAF8:0x182A). DOSBox,
+  measured: Shift+F1 T, Shift+F5 X, Shift+F10 ']', Shift+Left K, Shift+Home G, Shift+Insert R; Ctrl+Left S, Ctrl+Right T,
+  Ctrl+End U, Ctrl+PgDn V, Ctrl+Home W; Ctrl+PgUp (0x84), Ctrl+Up / Down / Insert / Delete nothing; Alt+F1 H, F2 I, F3 J,
+  F4 K, F6 M, F7 N, F8 O, F9 P, F10 Q; Alt+Left / Up / Right / Home / End / Delete, F11, F12 nothing; Ctrl+F3 '`'.
+  **DOSBox-staging's own keys** (man page: Ctrl+F1 the keymapper, Ctrl+F2 not delivered either, Ctrl+F4-F12, Alt+F5
+  screenshot, Alt+F12, Alt+Enter, Alt+Pause) never reach the game: ours uses the BIOS's values there (Alt+F5 L,
+  Ctrl+F1-F10 0x5E-0x67). Ours typed Shift+F-keys as the plain F-key, dropped every Ctrl / Alt grey key and F-key, and
+  typed '{' to '~' (and Alt+4 to Alt+7's 0x7B-0x7E). Check 487: s46sp4, the wager typed 1 Ctrl+Left Enter (1S: asked
+  again), 1 Alt+F1 Enter (1H), 1 Shift+F1 Enter (1T), 2 ~ Enter: 2 wagered; the code before wagered 1 at once.
+- **A held key through a script's wait (input, main path; fixed, check 488):** 7:26's river (check 33's start at speed
+  4, 18,20 E, `rivhold.py`): Right held 0.6 s into THE RIVER'S STENCH DRIVES YOU BACK. and let go during it: the
+  original shows the note twice (the BIOS kept the repeats through the wait; held 0.3 s, no repeat yet: once); ours once
+  (`whold.py` on :98: ours dropped repeats while busy, chat 105's P90). Held 0.6 s then Up at 1.25 s and Left at 1.45 s
+  (inside the second note): the original 17,20 W (only the last key); ours stepped north first. Held 0.6 s then L at
+  0.75 s (inside the first note): the original nothing (the burst is read as an extended key, Right's kind, with L's byte:
+  no key); ours LOOKed. Check 488 is that last case as timed keys (Right, two repeats, L, 1 ms apart; the code before
+  LOOKed: the clock). With the key still held when the wait ends, both games went on alike (ours' next repeat), so only a
+  release inside the wait shows it. Not changed: the repeats typed during A BATTLE BEGINS... (main.gd `_battle_keep`, not
+  measured).
+
 ## Chat 129: the held arrow landed; Ctrl+M; a typed answer's keys (main path); the wilderness's held step
 
 - **The held arrow (input, main path; landed, the Lead's (A) at 13:13):** chat 128's `wip/main-128-heldpace-b` rebased
