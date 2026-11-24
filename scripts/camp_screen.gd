@@ -1352,6 +1352,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
+	if _mode in ["camp", "magic", "alter"]:
+		# Combat Chat 57 (DOSBox at 3:11's camp, check 103's start; main chat 123's request): these menus move the lit
+		# member on Home / End and on 7 / 1 (GAME.OVR 0x2CF60 makes the digits the keypad's keys); every other
+		# extended key (the arrows, Left / Right, PgUp / PgDn, the digits 2-6, 8, 9) lights the first member;
+		# letters off the menu and Enter do nothing.
+		up = key in [KEY_HOME, KEY_KP_7, KEY_7]
+		down = key in [KEY_END, KEY_KP_1, KEY_1]
+		if key in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_PAGEUP, KEY_PAGEDOWN, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6,
+				KEY_8, KEY_9, KEY_KP_2, KEY_KP_3, KEY_KP_4, KEY_KP_5, KEY_KP_6, KEY_KP_8, KEY_KP_9]:
+			if not _party.is_empty() and _sel != 0:
+				_sel = 0
+				_refresh()
+			return
 	if up or down:
 		var step := 1 if down else -1
 		if _mode == "rest":
@@ -1431,6 +1444,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if choice == "":
 		return
 	_pick = items.find(choice)
+	if _mode == "camp" and choice == "EXIT" and items.size() > CAMP_MENU.size():
+		# The original's camp menu has no FIX: its EXIT is the 6th word, so the walking menu after it lights LOOK
+		# (Combat Chat 57, DOSBox at 3:11; main chat 123's request). With FIX shown EXIT is the 7th, past the walking
+		# menu's end (AREA lit): EXIT keeps the original's place.
+		_pick = CAMP_MENU.find("EXIT")
 	_act(choice)
 
 

@@ -357,8 +357,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_refresh()
 	match _mode:
 		"menu":
-			if up or down:
-				_pick_member(-1 if up else 1)
+			# The hall's menu moves the lit member on Home / End and on 7 / 1 (GAME.OVR 0x2CC8C makes the digits the
+			# keypad's keys, 0x2CF60); Up / Down, 8 and 2 do nothing (Combat Chat 57, DOSBox at 3:11, check 103's
+			# start; main chat 123's request). It wraps both ways.
+			var m_up := key in [KEY_HOME, KEY_KP_7, KEY_7]
+			if m_up or key in [KEY_END, KEY_KP_1, KEY_1]:
+				_pick_member(-1 if m_up else 1)
 				return
 			for it in _items():
 				if String(it).unicode_at(0) == key:
