@@ -1206,7 +1206,8 @@ func _unhandled_input(event: InputEvent) -> void:
 						hits.append(i)
 				if hits.size() == 1:
 					choice = hits[0]
-			elif _vm.menu.size() == 1 and event.is_action("ui_accept"):
+			elif _vm.menu.size() == 1 and event.is_action("ui_accept") and key != KEY_SPACE:
+				# (Chat 122, DOSBox: 7:23's sign, PRESS BUTTON OR <RETURN> TO CONTINUE: Space does nothing there.)
 				# A script's horizontal menu (MENU_HORIZONTAL, PARLAY, ENCOUNTER_MENU) takes Enter only
 				# when it has one choice (PRESS <RETURN>), as the original (Jeremy, Q24, 2026-11-18):
 				# GAME.OVR's menu routine 0x8B57 takes 0x0D only when its argument [bp+8] is set,
