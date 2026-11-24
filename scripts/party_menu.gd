@@ -252,13 +252,26 @@ func _open_save_list() -> void:
 ## The hall's refusals (TRAIN's four, MODIFY's): START.EXE 0x709:0xD68 clears row 24, prints the text in yellow (GAME.OVR
 ## passes 14), waits a script DELAY (game speed x 225 ms, 0x709:0xDBE) and clears row 24; then CHOOSE A FUNCTION
 ## (main chat 124, DOSBox at 3:11 at speed 4: TRAINING COSTS 1000 GP. 0.2-0.9 s; at speed 0 it lasts no time).
+## The wait reads no keys (a plain Delay): one typed meanwhile stays in the BIOS buffer and the menu after takes the
+## last (main chat 125, DOSBox at 3:11, speed 4: End, End during TRAINING COSTS 1000 GP. moved the light once).
 func _say_24(text: String) -> void:
 	_row24 = text
+	_noting = true
 	_refresh()
 	await get_tree().create_timer(CampScreen.speed * 0.225).timeout
+	_noting = false
 	if _row24 == text:
 		_row24 = ""
 		_refresh()
+	if _typed_ahead != null:
+		var ev := _typed_ahead
+		_typed_ahead = null
+		if visible:
+			_unhandled_input(ev)
+
+
+var _noting := false                      # a row-24 note's wait is running
+var _typed_ahead: InputEventKey = null    # the last key typed during it
 
 
 # --- Actions (the bot calls these too) ----------------------------------------------------
@@ -349,14 +362,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			or (_creator != null and _creator.visible) or (_modifier != null and _modifier.visible):
 		return
 	get_viewport().set_input_as_handled()
+	if _noting:
+		_typed_ahead = event as InputEventKey
+		return
 	var key := (event as InputEventKey).keycode
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
 	var enter := key in [KEY_ENTER, KEY_KP_ENTER]
 	var esc := key == KEY_ESCAPE
-	if _row24 != "":                  # any key ends the refusal's moment
-		_row24 = ""
-		_refresh()
 	match _mode:
 		"menu":
 			# The hall's menu moves the lit member on Home / End and on 7 / 1 (GAME.OVR 0x2CC8C makes the digits the
