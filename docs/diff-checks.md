@@ -207,6 +207,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   other extended codes). Ours took them as the plain keys (Alt+A and Ctrl+A opened AREA). Now ignored on the walking screen
   and its script menus (F-keys and Escape aside; Ctrl+M as Enter at a menu not modelled). Ours windowed: Alt+A then A,
   Ctrl+A then A leave AREA open (`n2mod_all.png`).
+- **Combat Chat 58's fixes checked (its request 10:48 and chat 127's request):** a fight's first menu with keys typed late in A BATTLE
+  BEGINS... (ours windowed, check 84's goblins, keys 1.2 s / 1.29 s on): q, d, q d, d q, Down q, q Down as chat 127's DOSBox runs (DONE's
+  MAGIC:OFF is the SETTINGS MAGIC ON DONE QoL). **New checks 482** (the scroll's E during CEDRIC / IS PROTECTED), **483** (the potion's E
+  during BRAM / USES AN ITEM) and **485** (Down then E there: nothing): each fails on the code before Combat Chat 58; 484 (E during IS
+  FULLY HEALED) didn't (not a check).
 - **Checked, matching:** Enter typed during the step into the tavern answers the text's PRESS (the original and ours
   go on to GAMBLE? YES NO); the save (SAVE WHICH GAME, a letter) is instant at the reference speed in both (no
   "Please Wait"; a key 0.09 s later meets QUIT TO DOS). **Settled from the code:** the row-24 note 0x709:0xD68's eight
