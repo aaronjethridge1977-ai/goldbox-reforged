@@ -1138,6 +1138,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var letter := OS.get_keycode_string(key).to_upper()
 			if letter.length() == 1:
 				_door_choice(letter)
+			elif event.is_action("ui_accept") or key == KEY_SPACE:
+				# Chat 121 (DOSBox, 5:3's gate after FORCE THE GATE OPEN): Enter and Space leave the menu as EXIT
+				# (GAME.OVR 0x1758D acts only on B, P, K; the door's tries untouched); the arrows and End do nothing.
+				_door_choice("E")
 			get_viewport().set_input_as_handled()
 			_show()
 			return
@@ -2165,11 +2169,7 @@ func _locked_door(direction: int) -> void:
 		return
 	_door_options = options + "E"
 	_door_side = direction
-	var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
-	var line := "LOCKED."
-	for c in _door_options:
-		line += " " + words[c]
-	_message.text = line
+	# Chat 121 (DOSBox): the text box keeps what it shows (the gate's boulders and hits); the menu is on row 24 only.
 
 
 var _door_retry := false
@@ -2201,8 +2201,13 @@ func _door_choice(c: String) -> void:
 	var kind := map.door(_pos.x, _pos.y, _door_side)
 	var direction := _door_side
 	_door_options = ""
+	var kept_text := _message.text
+	var kept_white := _vm.white_from
 	_message.text = ""
+	_vm.place_blank = []      # chat 121 (DOSBox, 5:3's gate): the menu's end draws the place line again
 	var opened := false
+	if c == "E":
+		_message.text = kept_text     # chat 121: EXIT leaves the text box as it was (DOSBox, 5:3's gate)
 	match c:
 		"B":
 			# Every member in turn tries (strength, as the open-doors roll), until one does it.
@@ -2262,6 +2267,9 @@ func _door_choice(c: String) -> void:
 		Speaker.play(Speaker.HIT)    # a door option that fails: GAME.OVR 0x17702 (Combat's sound)
 		_show()
 		_event_after_refused_step()
+		if c == "E" and _message.text == kept_text and kept_white >= 0:
+			_vm.white_from = kept_white    # chat 121: the hit lines stay white (DOSBox, 5:3's gate)
+			_show()
 		return
 	map.set_door(_pos.x, _pos.y, direction, 1)
 	var next := _pos + DungeonView.DELTA[direction]
@@ -3985,12 +3993,7 @@ func _draw_screen() -> void:
 	if _vm._menu_kind != "who" or _vm.state != EclVM.State.MENU:
 		_who_open = false
 	if _door_options != "":
-		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
-		menu = []
-		for c in _door_options:
-			menu.append(words[c])
-		body = ""
-		menu.push_front("LOCKED.")
+		menu = []      # chat 121: drawn below as the original's title and choices (see door_words)
 	elif _vm.state == EclVM.State.MENU and not _vm.menu.is_empty() and _vm._menu_kind == "who":
 		# WHO: the question on row 24 (magenta) with SELECT, the member picked on the party
 		# list, the text box empty (lab, chat 22: the inn's WHO WILL PAY?).
@@ -4111,6 +4114,16 @@ func _draw_screen() -> void:
 	if who_label != "":
 		_screen.text(0, 24, who_label, 13)
 		_screen.menu_line(24, ["SELECT"], who_label.length() + 1, 0)
+		_screen.update()
+	if _door_options != "" and not _busy:
+		# Chat 121 (GAME.OVR 0x17585: the menu's title in colour 13; DOSBox, 5:3's gate): "LOCKED." in magenta, then
+		# the choices, the first one white; the text box as it was.
+		var words := {"B": "BASH", "P": "PICK", "K": "KNOCK", "E": "EXIT"}
+		var door_words := []
+		for c in _door_options:
+			door_words.append(words[c])
+		_screen.text(0, 24, "LOCKED.", 13)
+		_screen.menu_line(24, door_words, 8, 0)
 		_screen.update()
 
 
