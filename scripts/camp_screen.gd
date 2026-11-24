@@ -516,6 +516,11 @@ func _draw_walk() -> void:
 			_scr.menu_line(24, SAVE_LETTERS, 17, -1)
 		"rest":
 			_draw_rest()
+		"stop_ask":
+			_draw_rest()
+			_scr.text(0, 24, " ".repeat(40), GameScreen.GREEN)
+			_scr.text(0, 24, "STOP RESTING?", MAGENTA)
+			_scr.menu_line(24, YES_NO, 14, EclVM.menu_lit(YES_NO.size()))
 		"magic":
 			_scr.menu_line(24, MAGIC_MENU, 0, EclVM.menu_lit(MAGIC_MENU.size()))
 		"whom", "shown":
@@ -778,6 +783,8 @@ func _start_rest() -> void:
 	_mode = "rest"
 	_pick = 0
 	_resting = true
+	_rest_key = false
+	_heal_note = false
 	_hour_steps = 0
 	_learn_timer.clear()
 	_held.clear()
@@ -820,6 +827,15 @@ func _tick() -> void:
 		if _to_rest <= 0:
 			_stop_rest()
 			return
+		if _rest_key:
+			# GAME.OVR 0x24B1D: with a key waiting, the rest stops before the next step and asks STOP RESTING? on row
+			# 24 (magenta) with the shared Yes / No (0x2D9A0: NO lit, only Y or N answer) (main chat 126, DOSBox).
+			_rest_key = false
+			_timer.stop()
+			_mode = "stop_ask"
+			EclVM.menu_hl = 1
+			_refresh()
+			return
 		_to_rest -= 1
 		_rest_steps += 1
 		minutes_passed += 5
@@ -830,16 +846,36 @@ func _tick() -> void:
 			_heal_day()
 		_learn_step()
 		var hit := _interrupt_check()
-		if not _held.is_empty():
-			if hit:
-				_held_then_interrupt()
-			else:
-				_show_held()
+		var healed := _heal_note
+		_heal_note = false
+		if healed or not _held.is_empty():
+			_notes_then(healed, hit)
 			return
 		if hit:
 			_interrupt()
 			return
 	_refresh()
+
+
+var _rest_key := false     # a key was typed during the rest (or its notes): the next step asks STOP RESTING?
+var _heal_note := false    # this step printed THE WHOLE PARTY IS HEALED
+
+
+## A step's notes, each a script DELAY with no key read (game speed x 225 ms): THE WHOLE PARTY IS HEALED (0x246D0),
+## then the HAS MEMORIZED ones (_show_held); then an interruption if the step's roll called for it.
+func _notes_then(healed: bool, hit: bool) -> void:
+	_timer.stop()
+	if healed and _resting and visible:
+		_refresh()
+		await get_tree().create_timer(speed * 0.225 + 0.001).timeout
+		_lines = []
+		_refresh()
+	if not _held.is_empty():
+		await _show_held()
+	elif _resting and visible and not hit:
+		_timer.start()
+	if hit and _resting and visible:
+		_interrupt()
 
 
 ## The interruption check after each 5-minute step (GAME.OVR 0x24B9B, after the clock,
@@ -981,15 +1017,15 @@ func _next_learn_steps(m: PartyMember) -> int:
 
 ## A full day's rest: everyone alive gains 1 HP; the unconscious wake.
 func _heal_day() -> void:
-	var any := false
 	for m in _party:
 		if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_UNCONSCIOUS, PartyMember.STATUS_DYING] \
 				and m.hp < m.hp_max and not SpecialAffects.diseased(m):
 			m.hp += 1
 			m.status = PartyMember.STATUS_OKAY
-			any = true
-	if any:
-		_say("THE WHOLE PARTY IS HEALED")
+	# GAME.OVR 0x2463D: the line is printed (0x24699) before the any-healed test (0x246BD, which only redraws the
+	# party list), so it shows every 24 hours rested (main chat 126, by the code), and waits (0x246D0).
+	_say("THE WHOLE PARTY IS HEALED")
+	_heal_note = true
 
 
 # --- MAGIC ----------------------------------------------------------------------------------
@@ -1200,6 +1236,7 @@ var _whom_off := 0
 
 
 func _cast(target: PartyMember) -> void:
+	_held_key = null
 	var on_member := _mode == "whom"
 	if on_member:
 		_last_target = target
@@ -1234,6 +1271,20 @@ func _cast(target: PartyMember) -> void:
 			if not visible or _mode != "casting":
 				return
 	_back_to_list()
+	_hand_on()
+
+
+var _held_key: InputEventKey = null   # the last key typed during a spell's text
+
+
+## The key typed during a spell's text goes to the menu after it.
+func _hand_on() -> void:
+	if _held_key == null:
+		return
+	var ev := _held_key
+	_held_key = null
+	if visible:
+		_unhandled_input(ev)
 
 
 ## After a cast or LOSE IT?: the spell list again, or out of it when nothing is left.
@@ -1357,9 +1408,28 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not (event as InputEventKey).echo:
 			typed_ahead = event as InputEventKey
 		return
-	if _resting:
-		if key == KEY_ESCAPE and not _timer.is_stopped():
+	if _mode in ["shown", "casting"]:
+		# A spell's text waits with no key read (GAME.OVR 0x2A41B: game speed x 225 ms): a key typed meanwhile stays
+		# buffered and the spell list after it takes the last one (main chat 126, DOSBox: check 173's start, CAST on
+		# ARN, E typed during ARN / IS PROTECTED: the list took EXIT; ours dropped it).
+		if not (event as InputEventKey).echo:
+			_held_key = event as InputEventKey
+		return
+	if _resting and _mode == "stop_ask":
+		if key == KEY_Y:
+			_mode = "rest"
+			EclVM.menu_hl = 0
 			_stop_rest()
+		elif key == KEY_N:
+			_mode = "rest"
+			_refresh()
+			_timer.start()
+		return
+	if _resting:
+		# Any key, Escape too, waits in the buffer: the next step asks STOP RESTING? (main chat 126, DOSBox: x typed
+		# 0.3 s in, the question; ours stopped at once on Escape and ignored the others).
+		if not (event as InputEventKey).echo:
+			_rest_key = true
 		return
 	var items := _items()
 	if items.is_empty():
