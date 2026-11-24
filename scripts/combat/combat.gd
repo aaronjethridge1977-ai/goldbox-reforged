@@ -420,6 +420,13 @@ func next_turn() -> int:
 			magic.item_in_use = false      # DS:0x6DBF never outlives an item's use
 		return active
 	active = -1
+	if standing(0) == 0 and order.is_empty():
+		# The original ends a fight only in its end of round (GAME.OVR 0xA087: the clock 0x8c:0x25, a minute off every
+		# figure's effects; the dying's counters; category 0x13; then the end test at 0xA163): a party beaten or fled
+		# plays the round out (outcome) and then that round's end runs (Combat Chat 57; main chat 123's duel473: 1:18's
+		# duel lost by BAKSHI in round 1, the original's save has his 1-minute disguise (effect 1) gone; ours never ran
+		# round 1's end and kept it).
+		_end_round()
 	if lab_watch_effects:
 		_lab_fx_watch("end")
 	return -1
