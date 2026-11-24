@@ -1172,9 +1172,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_door_choice(letter)
 			elif key in [KEY_COMMA, KEY_PERIOD]:
 				EclVM.menu_step(_door_options.length(), -1 if key == KEY_COMMA else 1)   # chat 122 (0x2CE93 / 0x2CEB7)
-			elif event.is_action("ui_accept") or key == KEY_SPACE:
+			elif event.is_action("ui_accept") or key in [KEY_SPACE, KEY_ESCAPE]:
 				# Chat 121 (DOSBox, 5:3's gate after FORCE THE GATE OPEN): Enter and Space leave the menu as EXIT
 				# (GAME.OVR 0x1758D acts only on B, P, K; the door's tries untouched); the arrows and End do nothing.
+				# Chat 123: Escape too (DOSBox with a real Escape; chat 121's lab key never pressed it).
 				_door_choice("E")
 			get_viewport().set_input_as_handled()
 			_show()
@@ -1225,7 +1226,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
 				if key in [KEY_HOME, KEY_END, KEY_UP, KEY_DOWN]:
 					_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_DOWN] else -1), _vm.menu.size())
-				elif event.is_action("ui_accept"):
+				elif event.is_action("ui_accept") or key == KEY_ESCAPE:
+					# Chat 123 (DOSBox, 1:18's plaza with a real Escape: End then Escape took DISGUISE, 0x4A35 = 1):
+					# Escape takes the lit line as Enter does; ours did nothing.
 					choice = clampi(_list_sel, 0, _vm.menu.size() - 1)
 			elif key in [KEY_COMMA, KEY_PERIOD]:
 				# Chat 122 (GAME.OVR 0x2CE93 / 0x2CEB7): ',' and '.' move the highlight left and right, wrapping; with
