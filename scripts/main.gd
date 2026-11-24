@@ -764,6 +764,9 @@ var _tour_answers := []
 
 ## Lab: one key press as the replay sends it.
 func _press(n: String) -> void:
+	# Chat 123: the lab's bots and tours still pick a script menu's item by its number (the original's keys don't:
+	# see the menu's digits in _unhandled_input); only this lab path does, never a key typed or replayed.
+	_lab_digit = n.length() == 1 and n >= "1" and n <= "9"
 	var ev := InputEventKey.new()
 	var key_name: String = {"enter": "Enter", "esc": "Escape", "up": "Up", "down": "Down",
 		"left": "Left", "right": "Right"}.get(n, n.to_upper())
@@ -775,6 +778,10 @@ func _press(n: String) -> void:
 	Input.parse_input_event(up)
 	for i in 4:
 		await get_tree().process_frame
+	_lab_digit = false
+
+
+var _lab_digit := false
 
 
 ## Lab: up to 60 frames for a step to play out. Chat 17: over once nothing has been busy for
@@ -1183,15 +1190,32 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				_show()
 				return
-			if key >= KEY_1 and key <= KEY_9:
-				choice = key - KEY_1
+			if _lab_digit and key >= KEY_1 and key <= KEY_9:
+				choice = key - KEY_1      # the lab's _press only (chat 123)
+			elif _vm.menu_vertical and _vm._menu_kind != "who" and key in [KEY_1, KEY_7]:
+				# Chat 123 (DOSBox, 1:18's plaza menu, each digit alone): the digits are the keypad's keys there too:
+				# 1 is End (the next line), 7 Home (the line above, wrapping); 2-6, 8, 9 and 0 do nothing. Ours took
+				# a digit as the item's number (STRIDE / DISGUISE / SNEAK at once), not the original's key (Q24).
+				_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key == KEY_1 else -1), _vm.menu.size())
+			elif not _vm.menu_vertical and _vm._menu_kind != "who" and not _party.is_empty() \
+					and key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1, KEY_7, KEY_1]:
+				# Chat 123 (GAME.OVR 0x8B57: a script's horizontal menu hands the extended keys to the walking screen's
+				# handler 0x85:0x52; 0x2CF60 makes the digits keypad keys first): Home / End (7 / 1) move the selected
+				# member, as on the walking screen (DOSBox: 7:23's YES / NO; 6:1's BUY PASS, End twice: ROB 0 robs the
+				# third member). Ours did nothing (the first member robbed).
+				_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) \
+					+ (1 if key in [KEY_END, KEY_KP_1, KEY_1] else -1), _party.size())
+			elif key >= KEY_0 and key <= KEY_9 and _vm._menu_kind != "who":
+				pass
 			elif _vm._menu_kind == "who":
 				# WHO (lab, chat 22, New Phlan's inn): "WHO WILL PAY?" SELECT on row 24; Home/End
 				# move the white member on the party list, Enter (or SELECT's S) takes them.
 				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
-				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1, KEY_UP, KEY_DOWN]:
-					_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1, KEY_DOWN] else -1), _vm.menu.size())
-				elif event.is_action("ui_accept") or key == KEY_S:
+				# Chat 123 (DOSBox, 1:18's CHALLENGE, WHO WILL CHALLENGE THE BUCCANEER?): 1 / 7 move it as End / Home (the
+				# keypad's); Space, ',' and '.' do nothing (ours took Space as SELECT).
+				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1, KEY_7, KEY_1, KEY_UP, KEY_DOWN]:
+					_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1, KEY_1, KEY_DOWN] else -1), _vm.menu.size())
+				elif (event.is_action("ui_accept") and key != KEY_SPACE) or key == KEY_S:
 					choice = clampi(_list_sel, 0, _vm.menu.size() - 1)
 			elif _vm.menu_vertical:
 				# A vertical menu (lab, chat 13): Home and End move the highlight up and down,
