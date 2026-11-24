@@ -744,3 +744,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- (2:20 0,14, the trolls and ogres) Without Stinking Cloud a level 1-3 party (129 HP, MUs at 1) loses even when both Sleeps take the ogres and the contact troll's square is held: the three back trolls (36 HP, two attacks) outlast it; Jeremy's win needs the cloud (MU3s). *seen* (Player 56, p56t1-t2 from p16e2_s7pre20, 0 of 2)

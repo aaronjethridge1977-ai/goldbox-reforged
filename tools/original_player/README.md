@@ -1329,7 +1329,7 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
-## Player 56 (2026-11-24): the 4:2 ghoul fixture for Combat (P115)
+## Player 56 (2026-11-24): the 4:2 ghoul fixture for Combat (P115); Jeremy's troll-room plan, 0 of 2 at our closest save
 
 **Where 4:2's ghouls come from** (ECL 4_2, lab `data/c109/dis/4_2.txt`): a step onto a plain square (event 0) draws
 1 in 30 (0x9A08; 1 in 5 when [6DCA] is 1); then RANDOM 10 + [4AE4] picks the band (0x9A85): over 17 hobgoblins, 13-17
@@ -1350,6 +1350,23 @@ Sleep, Read Magic), CEDRIC 2 Bless, 4 Hold Person, 3 Prayer, 1 more. Checked: `p
 and seed: the same seed after the step, the same six figures on the same squares. In p56a1 and p56v1 our tactics TURNed
 in round 1 (ELWEN, then CEDRIC): four destroyed or gone, two ghouls turned and fled; Combat casts by hand instead.
 Memorized spell ids read from the save (0x17..0x2B): 1 Bless, 21 Sleep, 23 Hold Person, 34 Stinking Cloud, 42 Prayer.
+
+**The coach's 23:10 (2): Jeremy's troll-room win as a plan, 0 of 2** (the Lead's two tries). Jeremy's win (2:20 0,14,
+2 ogres and 4 trolls; F3/F3/C4/C4/MU3/MU3): Stinking Cloud on the contact troll (slain helpless round 2), two Sleeps on
+the ogres, every fallen troll's square taken. **The closest save we have is `p2start/p16e2_s7pre20`** (2:20 6,11, the
+route's only save before the room, Player 16's chain): ARN F3 37, BRAM F3 34, CEDRIC C3 25, ELWEN C1/F1/MU1 9, LIRA
+F1/MU1 9, DORN F1/T2 15 = 129 HP; memorized: ELWEN and LIRA one Sleep each, CEDRIC 2 Bless 2 CLW, ELWEN Bless 2 CLW.
+**No Stinking Cloud** (no magic-user above level 1), so the plan's first and decisive part couldn't be tried.
+`p56/troll56.plan` = `p40/troll.plan` (`focus TROLL`, `advance ARN,BRAM`, OP_HOLDDOWN) with `keyturns on r1 contact`,
+OP_MANUAL=1; round 1's orders: ELWEN Sleep at ogre 26,11, LIRA Sleep at ogre 25,11, ARN and BRAM attack the contact
+troll at 27,11, CEDRIC Bless. **p56t1** (seed 56070001): both Sleeps took (both ogres helpless, slain rounds 2-3), the
+contact troll fell and ARN stood on its square (it didn't rise), then the three back trolls (36 HP each) destroyed the
+party (176 s). **p56t2** (56070002): one ogre slept, the other fought to its death; the contact troll fell in round 2
+(ARN on its square), a second troll later; the last two destroyed the party. **Limits:** two tries, one save, a party
+about 2 levels and two Stinking Clouds short of Jeremy's (his MUs at 3); it shows only that Sleep-on-the-ogres and the
+hold-down work as he described, and that without the cloud a level 1-3 party still loses to the back trolls. A
+fair test of the whole plan needs a save at the room with MU3s (none of our saves at the room
+has one), so it stays a plan for parties that arrive as Jeremy's did.
 
 ## Player 55 (2026-11-23/24): the full recheck, 70 of 70 on f12ed9f (28 of 70 again on 30db957, all identical); baseline.txt to 70
 
