@@ -6,7 +6,11 @@ extends Control
 ## off for good in SETTINGS (start menu). The original's own AREA view is separate and stays
 ## as the original has it (off where ECL 0x49FB is set).
 ##
-## Visited squares are kept per map (GEO file and block) and saved with quick saves.
+## Visited squares are kept per map (GEO file and block) and saved with quick saves: a byte a square, 1 walked,
+## and bit 1 << (side + 1) for each side (0 N, 1 E, 2 S, 3 W) the party has stepped across.
+## P100 (Jeremy's Q37 B1, 2026-11-24): a door mark only on a side the party has stepped through; every other
+## door-bit side draws as the wall the 3D view shows (the map's door bits can't tell a secret door: Kuto's Well's
+## 5,8 N showed a door the party couldn't use; the original's AREA draws no door marks at all).
 ##
 ## The look (Jeremy, 2026-11-16 20:55, from Combat Chat 15's mockups M2 and F1, the original's own AREA view
 ## as the model): drawn on the game's 320 x 200 grid with the game's own rope, gold blocks and font. The
@@ -86,6 +90,8 @@ func _process(_delta: float) -> void:
 
 ## Where the party is now; marks the square visited.
 func place(m: GeoMap, key: String, at: Vector2i, dir: int, name: String) -> void:
+	var from := pos
+	var same := map_key == key
 	map = m
 	map_key = key
 	pos = at
@@ -96,8 +102,22 @@ func place(m: GeoMap, key: String, at: Vector2i, dir: int, name: String) -> void
 		b.resize(256)
 		visited[key] = b
 	if at.x >= 0 and at.x < 16 and at.y >= 0 and at.y < 16:
-		visited[key][at.y * 16 + at.x] = 1
+		visited[key][at.y * 16 + at.x] |= 1
+		var side := STEPS.find(at - from)
+		if same and side >= 0 and from.x >= 0 and from.x < 16 and from.y >= 0 and from.y < 16:
+			visited[key][from.y * 16 + from.x] |= 2 << side
+			visited[key][at.y * 16 + at.x] |= 2 << ((side + 2) % 4)
 	queue_redraw()
+
+
+const STEPS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]   # a step across side 0-3
+
+
+## Has the party stepped across this side of the square?
+func crossed(x: int, y: int, side: int) -> bool:
+	if x < 0 or y < 0 or x > 15 or y > 15 or not visited.has(map_key):
+		return false
+	return visited[map_key][y * 16 + x] & (2 << side) != 0
 
 
 func seen(x: int, y: int) -> bool:
@@ -203,7 +223,7 @@ func _paint(origin: Vector2i, cell: int, first: Vector2i, n: Vector2i, clip: Rec
 				var r: Rect2i = [Rect2i(p.x - 1, p.y - 1, cell + 2, 2), Rect2i(p.x + cell - 1, p.y - 1, 2, cell + 2),
 					Rect2i(p.x - 1, p.y + cell - 1, cell + 2, 2), Rect2i(p.x - 1, p.y - 1, 2, cell + 2)][side]
 				img.fill_rect(r.intersection(clip), WALL)
-				if map.door(sq.x, sq.y, side) != 0:
+				if map.door(sq.x, sq.y, side) != 0 and crossed(sq.x, sq.y, side):
 					var m := cell / 4
 					var d: Rect2i = [Rect2i(p.x + m, p.y - 1, cell - 2 * m, 2), Rect2i(p.x + cell - 1, p.y + m, 2, cell - 2 * m),
 						Rect2i(p.x + m, p.y + cell - 1, cell - 2 * m, 2), Rect2i(p.x - 1, p.y + m, 2, cell - 2 * m)][side]
