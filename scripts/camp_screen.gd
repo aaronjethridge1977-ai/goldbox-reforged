@@ -868,11 +868,21 @@ func _held_then_interrupt() -> void:
 
 ## "THE PARTY IS RUDELY INTERRUPTED!" for a moment, then the area's script takes over.
 ## Still resting until then (the bot waits on _resting).
+## The moment is a script DELAY (GAME.OVR 0x24C07: game speed x 225 ms, a plain Delay reading no keys): a key typed
+## meanwhile stays in the buffer and the encounter's menu after takes the last one (main chat 125, DOSBox at 2:20,
+## speed 4: F typed 0.45 s after R fled at COMBAT WAIT FLEE PARLAY). Main hands `typed_ahead` to its type-ahead.
+var typed_ahead: InputEventKey = null
+var _interrupting := false
+
+
 func _interrupt() -> void:
 	_timer.stop()
 	_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], ["THE PARTY IS RUDELY INTERRUPTED!", GameScreen.WHITE]])
 	_refresh()
-	await get_tree().create_timer(1.5 * delay_scale()).timeout
+	typed_ahead = null
+	_interrupting = true
+	await get_tree().create_timer(speed * 0.225).timeout
+	_interrupting = false
 	_resting = false
 	_to_rest = 0
 	_fixing = false        # an interrupted FIX heals no one
@@ -1343,6 +1353,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	var key := (event as InputEventKey).keycode
+	if _interrupting:
+		if not (event as InputEventKey).echo:
+			typed_ahead = event as InputEventKey
+		return
 	if _resting:
 		if key == KEY_ESCAPE and not _timer.is_stopped():
 			_stop_rest()

@@ -3265,12 +3265,17 @@ func _on_camp_closed() -> void:
 func _on_rest_interrupted() -> void:
 	GameClock.add_minutes(_vm, _camp.minutes_passed)
 	_camp.minutes_passed = 0
+	# A key typed during THE PARTY IS RUDELY INTERRUPTED! goes to the encounter's menu (Combat Chat 57, main chat 125).
+	if _camp.typed_ahead != null:
+		_type_ahead = _camp.typed_ahead
+		_camp.typed_ahead = null
 	if _vm.ecl != null:
 		_vm.clear_output()
 		_rest_script = true
 		_vm.start(3)
 		_after_vm()
 	_show()
+	_type_ahead_go()
 
 
 ## Open squares ahead of the party (0..2), as the encounter menu measures distance.
