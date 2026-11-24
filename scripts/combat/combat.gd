@@ -91,6 +91,12 @@ var control_pending := false
 ## is Space or Alt-M (GAME.OVR 0xBB81) (main chat 127, DOSBox at speed 4, check 84's goblins: "q d" QUICK, the d gone;
 ## "q Down" and "Down q" both QUICK; "d q" DONE's menu, then QUIT: DARKSTAR's menu).
 var key_queue: Array = []
+## Keys typed in the fight while no menu waits (a computer-run turn, a fight line, a note; CombatScreen adds them):
+## they wait as in the BIOS buffer, and the next read takes them all as one (START.EXE 0x899:0x59's drain: the last
+## byte; Combat Chat 59): a computer turn's poll (poll_keys) or a player's menu (CombatScreen._feed_typed).
+var typed := KeyBurst.new()
+## The poll's Alt-M (or 2) line: "MAGIC ON" / "MAGIC OFF" (the original's 0xBA:0x1693 note, from 0xBBD7 / 0xBBED).
+signal magic_note(text: String)
 ## Whose line a message is, for the screen's sparkles (Combat Chat 52, Jeremy's troll and cloud): the figure an effect
 ## is being added to (>= 0; the original shows the sparkles from its add-effect routine, START.EXE 0x2B8B from GAME.OVR
 ## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
@@ -2591,19 +2597,43 @@ func hand_back() -> bool:
 static var party_judge: Callable
 
 
+## The original's key poll in a computer-run turn (GAME.OVR 0xBB81: at the turn's opening, 0xABDC; each time round
+## the turn loop, 0xAD6C; before each step, 0xB409). If a key waits it reads it with the get-key, which drains every
+## key waiting and keeps the last byte (START.EXE 0x899:0x59; an extended key's 0 is followed by a second read), then
+## acts on that byte alone: 0x32 (Alt-M, or 2) switches MAGIC (DS:0x6E30) with its note; 0x20 (Space, or Alt-D) takes
+## every party member off QUICK (hand_back, read here as control_pending); 0x2D (Alt-X, or -) only with the debug
+## parameter (0x1638E); anything else is gone. The keys typed before the fight's first menu (key_queue) go one a poll.
+func poll_keys() -> void:
+	var b := -1
+	if not key_queue.is_empty():
+		b = KeyBurst.dos_byte(key_queue.pop_front())
+	elif typed.has_key():
+		b = typed.take_byte()
+	if b == 0x32:
+		magic_on = not magic_on
+		magic_note.emit("MAGIC ON" if magic_on else "MAGIC OFF")
+	elif b == 0x20:
+		control_pending = true
+
+
 func ai_act() -> bool:
 	if active < 0:
 		return false
 	var c: Dictionary = combatants[active]
 	if c.down:
 		return false
+	if c.get("ai", false):
+		# The turn loop's poll (0xAD6C) and the step's (0xB409): each further step or blow reads the keys waiting.
+		poll_keys()
+		if control_pending:
+			control_pending = false
+			if hand_back():
+				return false
 	if not c.get("ai", false):
-		if not key_queue.is_empty():
-			var k: InputEventKey = key_queue.pop_front()
-			if k.keycode == KEY_SPACE:
-				control_pending = true
-			elif k.keycode == KEY_M and k.alt_pressed:
-				magic_on = not magic_on
+		var magic_was := magic_on
+		poll_keys()
+		if magic_was != magic_on:
+			return true      # its note holds the turn (the screen waits for it), then the opening goes on
 		# Lab (`magicat=<draw>`): the original read the replay's Alt-M at this turn's opening poll
 		# (GAME.OVR 0xABDC calls 0xBB81, before the item and spell weighing).
 		if not magic_at_draws.is_empty() and TpDice.on and TpDice.calls >= magic_at_draws[0]:
