@@ -1842,6 +1842,10 @@ func _exec(ins: Dictionary) -> void:
 		"INPUT_NUMBER", "INPUT_STRING":
 			row24_left = ""
 			input_max = maxi(_value(a[0]), 1)
+			if op == "INPUT_STRING":
+				# Chat 122 (DOSBox, 7:23's password, INPUT_STRING 6): the original takes 39 characters, row 24's width,
+				# whatever the operand (ABCDEFGH stays ABCDEFGH; NOKNOKX is not NOKNOK). Ours cut at the operand.
+				input_max = 39
 			input_numeric = op == "INPUT_NUMBER"
 			_input_dest = a[1]
 			state = State.INPUT
