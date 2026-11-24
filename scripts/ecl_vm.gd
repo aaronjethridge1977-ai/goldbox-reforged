@@ -437,7 +437,12 @@ func answer_input(text: String) -> State:
 		return state
 	text = text.strip_edges().to_upper().left(input_max)
 	if input_numeric:
-		_write(_input_dest, int(text) if text.is_valid_int() else 0)
+		# Chat 122 (DOSBox, 2:20's patrol, PAY: TYPE IN THE NUMBER OF GP YOU OFFER.): an empty answer, one with a letter
+		# or a number over 65536 is asked for again (the field empty, the text kept); 65536 is taken as 0 (a word).
+		# Ours took any of them as 0 (the cheapskates' fight). Signs untested: taken as not digits.
+		if text == "" or not text.is_valid_int() or not text.left(1).is_valid_int() or int(text) > 65536:
+			return state
+		_write(_input_dest, int(text) & 0xFFFF)
 	else:
 		_write_string(_input_dest, text)
 	state = State.RUNNING
@@ -1842,6 +1847,8 @@ func _exec(ins: Dictionary) -> void:
 		"INPUT_NUMBER", "INPUT_STRING":
 			row24_left = ""
 			input_max = maxi(_value(a[0]), 1)
+			if op == "INPUT_NUMBER":
+				input_max = 6      # chat 122 (DOSBox, 2:20's PAY, INPUT_NUMBER 2): six digits, whatever the operand
 			if op == "INPUT_STRING":
 				# Chat 122 (DOSBox, 7:23's password, INPUT_STRING 6): the original takes 39 characters, row 24's width,
 				# whatever the operand (ABCDEFGH stays ABCDEFGH; NOKNOKX is not NOKNOK). Ours cut at the operand.

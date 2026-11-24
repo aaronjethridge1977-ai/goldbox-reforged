@@ -731,7 +731,8 @@ func _hook() -> bool:
 			print("   >> typed %s (the word the script expects)" % lit)
 			main._on_typed(lit)
 			return true
-	if main._vm.state == EclVM.State.INPUT and main._tour_answers.is_empty() and not _words.is_empty():
+	if main._vm.state == EclVM.State.INPUT and main._tour_answers.is_empty() and not _words.is_empty() \
+			and not main._vm.input_numeric:     # chat 122: a word at a number input is asked for again (main types 0)
 		var w: String = _words[_word_try % _words.size()]
 		_word_try += 1
 		print("   >> typed %s (remembered)" % w)

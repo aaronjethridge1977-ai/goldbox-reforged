@@ -1003,6 +1003,8 @@ func _auto_handle() -> bool:
 		return true
 	if _vm.state == EclVM.State.INPUT:
 		var said_text: String = _tour_answers.pop_front() if not _tour_answers.is_empty() else "x"
+		if _vm.input_numeric and not said_text.is_valid_int():
+			said_text = "0"     # chat 122: a number input asks again for "x" now (as the original); 0 as "x" gave before
 		print("   >> typed ", said_text)
 		_on_typed(said_text)
 		return true
@@ -1500,6 +1502,10 @@ func _on_typed(text: String) -> void:
 			dev_typed_hook.call(text)
 		_vm.answer_input(text)
 		_after_vm()
+		if _vm.state == EclVM.State.INPUT:
+			# Chat 122: an answer the original asks for again (a number with a letter, over 65536, empty): the field
+			# again, empty; editing restarts once the LineEdit has ended it after its own submit.
+			_typed.call_deferred("edit")
 		_show()
 
 

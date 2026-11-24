@@ -55,7 +55,7 @@ func _follow(vm: EclVM, depth: int) -> void:
 			EclVM.State.TEMPLE:
 				vm.close_temple()
 			EclVM.State.INPUT:
-				vm.answer_input("")
+				vm.answer_input("0" if vm.input_numeric else "")
 			EclVM.State.PROGRAM:
 				vm.close_program()
 			EclVM.State.MENU:

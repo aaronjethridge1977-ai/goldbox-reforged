@@ -139,7 +139,7 @@ func _follow(vm: EclVM, where: String, place: String, depth: int) -> void:
 			EclVM.State.TEMPLE:
 				vm.close_temple()
 			EclVM.State.INPUT:
-				vm.answer_input("")
+				vm.answer_input("0" if vm.input_numeric else "")
 			EclVM.State.PROGRAM:
 				reached[where].program[vm.program] = true
 				vm.close_program()
