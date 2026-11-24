@@ -1366,8 +1366,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not _vm.on_overland and _vm.read_byte(NO_COORDINATES) != 0:
 				# Where the place line shows no square (0x49FB set: Valjevo's castle, the pyramid,
 				# Sokal Keep...) the original's AREA prints NOT HERE on row 24 and opens no map
-				# (GAME.OVR 0x170B3: "Not Here", colour 14); chat 61, DOSBox with 0x49FB = 1.
-				_note_24("NOT HERE")
+				# (GAME.OVR 0x170B3: "Not Here", colour 14); chat 61, DOSBox with 0x49FB = 1. Chat 124: START.EXE
+				# 0x709:0xD68 clears row 24, prints it, waits a script DELAY (game speed x 225 ms, 0x709:0xDBE) and
+				# clears it again (DOSBox, 5:4 at speed 4: yellow, gone within 0.9 s); ours showed it white for 1.5 s.
+				_note_24("NOT HERE", GameScreen.YELLOW, TEXT_SPEED * 225)
 			else:
 				_area_view = not _area_view
 		elif key == KEY_E:
@@ -1685,14 +1687,16 @@ func _quick_save() -> void:
 ## P39 (QoL, an exception to the pause, Jeremy 2026-11-14): F2 / F3 say what happened on
 ## row 24 of the walking screen, in place of its menu, for a moment.
 var _row24_note := ""
+var _row24_colour: int = GameScreen.WHITE
 var _row24_until := 0
 
 
-func _note_24(text: String) -> void:
+func _note_24(text: String, colour: int = GameScreen.WHITE, ms: int = 1500) -> void:
 	_row24_note = text
-	_row24_until = Time.get_ticks_msec() + 1500
+	_row24_colour = colour
+	_row24_until = Time.get_ticks_msec() + ms
 	_show()
-	await get_tree().create_timer(1.6).timeout
+	await get_tree().create_timer(ms / 1000.0 + 0.1).timeout
 	if Time.get_ticks_msec() >= _row24_until and _row24_note == text:
 		_row24_note = ""
 		_show()
@@ -4199,7 +4203,7 @@ func _draw_screen() -> void:
 		_screen.text(0, 24, "A BATTLE BEGINS...", GameScreen.GREEN)   # GAME.OVR 0xE448 (Combat)
 		_screen.update()
 	elif note24:
-		_screen.text(0, 24, _row24_note, GameScreen.WHITE)
+		_screen.text(0, 24, _row24_note, _row24_colour)
 		_screen.update()
 	elif press24:
 		var prompt := String(_vm.menu[0]) if not _vm.menu.is_empty() else EclVM.PRESS_TO_CONTINUE
