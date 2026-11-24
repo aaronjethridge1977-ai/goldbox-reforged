@@ -218,6 +218,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   BE MODIFIED." (0x1BA59) (DOSBox, check 103's start at speed 4, End, TRAIN: TRAINING COSTS 1000 GP. 0.2-0.9 s, then
   CHOOSE A FUNCTION; ours' party_menu.gd shows them 1.5 s with a comment "the original says nothing": Combat's file,
   board request); the code wheel's "Sorry, that's incorrect." (0xCEE; ours has no wheel).
+- **The overland's keys (seen, matching):** check 33's start (6:25 14,20 W): 8, 6, 2, 4 step north, east, south,
+  west (12 hours each); 9, 3, 5, 0 nothing; 1 / End the next member, 7 / Home the one above (wrapping); Escape, Space,
+  Enter, Delete, PgUp, PgDn, Insert, F1 nothing; ',' and '.' move the lit word. Ours the same, pixel for pixel right of
+  the view (`data/c124/ovk_*.png` / `ovu_*.png`).
+- **A key typed before a vertical menu (seen, matching):** 1:18's plaza (check 474's start, speed 4): End typed 0.6 s
+  after the step, while THE PLAZA AHEAD ... types, lights DISGUISE when the menu comes up; ours with timed keys the
+  same (chat 120's type-ahead).
+- **AREA in seven more areas (seen, matching after the fix):** jump saves (`data/c124/areas.sh`, `al1.txt`): 1:18, 4:2,
+  8:29, 6:1 (4,0 N, the top edge), 4:10, 1:24, 4:21 identical to DOSBox, the whole screen; 5:4 and 7:23 (no square on
+  the place line) give NOT HERE in both.
 - **Open (display, main path, rare):** stepping into another area with AREA up (2:20 14,5 N, Up, into 3:0 14,8 N), the
   original draws the new area's map but leaves the place line at the old square (14,5 N) until the next key; ours
   shows 14,8 N (`data/c124/area_edge_cmp.png`).
