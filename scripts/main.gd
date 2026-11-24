@@ -2787,6 +2787,17 @@ func _type_ahead_go() -> void:
 		return
 	var ev := _type_ahead
 	_type_ahead = null
+	if _mode == Mode.WALK and _vm.state == EclVM.State.INPUT and _typed.visible:
+		# Chat 124 (DOSBox, 3:0's tavern wager at speed 4, keys typed while HOW MANY PLATINUM PIECES ... types): the
+		# typed answer starts with the key: "1" shows 1 in the field, "12" only 2 (the last key), "1 Enter" and Escape
+		# end the empty answer (asked again). Ours dropped it.
+		if ev.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE]:
+			_on_typed(_typed.text)
+		elif ev.unicode >= 32 and ev.unicode < 127:
+			_typed.text = String.chr(ev.unicode)
+			_typed.caret_column = _typed.text.length()
+			_show()
+		return
 	if _mode == Mode.WALK and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.MENU] and _door_options == "" \
 			and not (_shop.visible or _sheet.visible or _combat.visible or _treasure.visible or _camp.visible \
 			or _temple.visible or _party_menu.visible or _battle_begins):
