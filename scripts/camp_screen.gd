@@ -906,9 +906,11 @@ func _held_then_interrupt() -> void:
 ## Still resting until then (the bot waits on _resting).
 ## The moment is a script DELAY (GAME.OVR 0x24C07: game speed x 225 ms, a plain Delay reading no keys): a key typed
 ## meanwhile stays in the buffer and the encounter's menu after takes the last one (main chat 125, DOSBox at 2:20,
-## speed 4: F typed 0.45 s after R fled at COMBAT WAIT FLEE PARLAY). Main hands `typed_ahead` to its type-ahead.
+## speed 4: F typed 0.45 s after R fled at COMBAT WAIT FLEE PARLAY). Main hands `typed_ahead` to its type-ahead:
+## what the get-key reads from the keys typed meanwhile (KeyBurst, main chat 127).
 var typed_ahead: InputEventKey = null
 var _interrupting := false
+var _interrupt_keys := KeyBurst.new()
 
 
 func _interrupt() -> void:
@@ -916,9 +918,11 @@ func _interrupt() -> void:
 	_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], ["THE PARTY IS RUDELY INTERRUPTED!", GameScreen.WHITE]])
 	_refresh()
 	typed_ahead = null
+	_interrupt_keys.clear()
 	_interrupting = true
 	await get_tree().create_timer(speed * 0.225).timeout
 	_interrupting = false
+	typed_ahead = _interrupt_keys.take()
 	_resting = false
 	_to_rest = 0
 	_fixing = false        # an interrupted FIX heals no one
@@ -1236,7 +1240,7 @@ var _whom_off := 0
 
 
 func _cast(target: PartyMember) -> void:
-	_held_key = null
+	_held_key.clear()
 	var on_member := _mode == "whom"
 	if on_member:
 		_last_target = target
@@ -1274,16 +1278,13 @@ func _cast(target: PartyMember) -> void:
 	_hand_on()
 
 
-var _held_key: InputEventKey = null   # the last key typed during a spell's text
+var _held_key := KeyBurst.new()   # the keys typed during a spell's text (the get-key's burst rule: main chat 127)
 
 
 ## The key typed during a spell's text goes to the menu after it.
 func _hand_on() -> void:
-	if _held_key == null:
-		return
-	var ev := _held_key
-	_held_key = null
-	if visible:
+	var ev := _held_key.take()
+	if ev != null and visible:
 		_unhandled_input(ev)
 
 
@@ -1406,14 +1407,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode
 	if _interrupting:
 		if not (event as InputEventKey).echo:
-			typed_ahead = event as InputEventKey
+			_interrupt_keys.add(event as InputEventKey)
 		return
 	if _mode in ["shown", "casting"]:
 		# A spell's text waits with no key read (GAME.OVR 0x2A41B: game speed x 225 ms): a key typed meanwhile stays
 		# buffered and the spell list after it takes the last one (main chat 126, DOSBox: check 173's start, CAST on
 		# ARN, E typed during ARN / IS PROTECTED: the list took EXIT; ours dropped it).
 		if not (event as InputEventKey).echo:
-			_held_key = event as InputEventKey
+			_held_key.add(event as InputEventKey)
 		return
 	if _resting and _mode == "stop_ask":
 		if key == KEY_Y:

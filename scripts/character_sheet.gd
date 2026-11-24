@@ -225,12 +225,11 @@ func _build() -> void:
 		elif _mode == "scroll_said":
 			_next_said()
 		_refresh()
-		# A key typed during a timed text (ID's answer, an item's USES AN ITEM, a spell's result) waits for the menu
-		# after it, which takes the last one.
-		if _held_key != null and _mode not in ["item_uses", "scroll_said"]:
-			var ev := _held_key
-			_held_key = null
-			if visible:
+		# Keys typed during a timed text (ID's answer, an item's USES AN ITEM, a spell's result) wait for the menu
+		# after it, which reads them as the get-key does (KeyBurst: one kind, the last key).
+		if _held_key.has_key() and _mode not in ["item_uses", "scroll_said"]:
+			var ev := _held_key.take()
+			if ev != null and visible:
 				_unhandled_input(ev))
 	add_child(_timer)
 
@@ -744,12 +743,12 @@ func _identify(it: GameItem) -> void:
 		_question = "IT LOOKS LIKE SOME SORT OF %s" % item_label(shown).to_upper()
 		_reveal = it
 	_note = _question
-	_held_key = null
+	_held_key.clear()
 	if _timer != null:
 		_timer.start(maxf(CampScreen.speed * 0.225, 0.05))     # a script DELAY: game speed x 225 ms
 
 
-var _held_key: InputEventKey = null   # the last key typed during ID's answer
+var _held_key := KeyBurst.new()   # the keys typed during ID's answer, USES AN ITEM or a result line
 
 
 func _end_id_reply() -> void:
@@ -892,7 +891,7 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	_use_it = it
 	_use_id = id
 	_said = [[m.name, "USES AN ITEM"]]
-	_held_key = null
+	_held_key.clear()
 	_mode = "item_uses"
 	if _timer != null:
 		_timer.start(_line_time(m.name, "USES AN ITEM"))
@@ -1182,7 +1181,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		# E typed during BRAM USES AN ITEM: CAST SPELL ON WHOM took EXIT; E typed during BRAM IS FULLY HEALED: the
 		# item list took EXIT; ours ended the line on the key).
 		if event is InputEventKey and not (event as InputEventKey).echo:
-			_held_key = event as InputEventKey
+			_held_key.add(event as InputEventKey)
 		return
 	if _message != "":
 		_message = ""
