@@ -517,8 +517,9 @@ func _draw_walk() -> void:
 		"rest":
 			_draw_rest()
 		"stop_ask":
-			_draw_rest()
-			_scr.text(0, 24, " ".repeat(40), GameScreen.GREEN)
+			# Row 24 cleared first: STOP RESTING? YES NO alone (main chat 127, DOSBox data/c127/rk_x.png; ours drew it
+			# over the rest menu's words, whose glyphs a space doesn't erase).
+			_draw_rest(false)
 			_scr.text(0, 24, "STOP RESTING?", MAGENTA)
 			_scr.menu_line(24, YES_NO, 14, EclVM.menu_lit(YES_NO.size()))
 		"magic":
@@ -564,7 +565,7 @@ func _labelled(label: String, items: Array, col: int) -> void:
 	_scr.menu_line(24, items, col, EclVM.menu_lit(items.size()))
 
 
-func _draw_rest() -> void:
+func _draw_rest(with_menu := true) -> void:
 	var minutes := _to_rest * 5
 	var parts := [minutes / 1440, (minutes / 60) % 24, minutes % 60]
 	_scr.text(1, 17, "REST TIME:", GameScreen.GREEN)
@@ -573,7 +574,7 @@ func _draw_rest() -> void:
 		_scr.text(12 + 3 * i, 17, "%02d" % parts[i], GameScreen.WHITE if lit else GameScreen.GREEN)
 		if i < 2:
 			_scr.text(14 + 3 * i, 17, ":", GameScreen.GREEN)
-	for i in REST_MENU.size():
+	for i in (REST_MENU.size() if with_menu else 0):
 		var it: Array = REST_MENU[i]
 		var s: String = it[0]
 		var hot: int = it[2]
