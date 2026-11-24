@@ -172,6 +172,37 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 129: the held arrow landed; Ctrl+M; a typed answer's keys (main path); the wilderness's held step
+
+- **The held arrow (input, main path; landed, the Lead's (A) at 13:13):** chat 128's `wip/main-128-heldpace-b` rebased
+  onto main and gated (DIFFCHECKS 480/480, match_gate 70/70). Windowed again against DOSBox (3:0, check 46's start):
+  Left held ~1.3 s: the original 7 turns (the first, ~0.47 s, then ~0.17 s apart, the last after the release;
+  `~/gbr/lab/data/c129/ohold.py`), ours 8 at 0, 0.50, 0.65, 0.81, 0.97, 1.13, 1.31, 1.46 s (`heldL_t.txt`: Xvfb's 25
+  repeats a second as timed keys; a `--keys` replay skips the hold, so `hold2.sh` can't show it). The typed burst
+  (`data/c128/burst_t1.txt`): from 14,7 E the original 15,7 S, ours 15,7 S; from 14,7 W ours 13,7 N (chat 128's original).
+- **The wilderness's held step (checked, matching in kind):** 8:27 from check 31's start, seed 11111111 in both: Up held
+  1.3 s: the original 29,20 -> 29,2 (a step on every keyboard repeat, ~30 a second after the 0.5 s delay: the arrows
+  step absolutely and the overland redraws in no time), ours 29,3 (Xvfb's 25 a second); Left held: 20,20 in both. Ours'
+  wilderness branch takes every repeat, so no hold is modelled there. (Unseeded runs part on the band's encounter dice.)
+- **Ctrl+M (input, main path; fixed, check 484):** DOSBox, 3:0's tavern from s46sp4: Ctrl+M types 0x0D, Enter's code:
+  it continues PRESS <ENTER>/<RETURN> TO CONTINUE and SELECTs the lit member at WHO WILL GAMBLE?; Ctrl+Enter (0x0A),
+  Ctrl+J and Ctrl+[ do nothing at the page; Enter (and so Ctrl+M) does nothing on the walking screen and at menus with
+  no lit item (IGNORE GRAB, YES NO). Ours dropped Ctrl+M with chat 128's other Ctrl keys; now it is Enter there.
+  Check 484: tpseed 11111111, into the tavern, Ctrl+M at the page, YES, the rules page, Ctrl+M at WHO WILL GAMBLE?
+  (THRENDER GRONE), a wager of 1 (GREEN), Ctrl+M, NO; fails on the code before (stuck at the page).
+- **A typed answer's keys (input, main path; fixed, check 486):** DOSBox, the same tavern's HOW MANY PLATINUM PIECES
+  WILL YOU WAGER?: the original's reader takes an extended key's scan code as a character: Left K, Right M, Up H, Down
+  P, Home G, End O, PgUp I, PgDn Q, Insert R, Delete S, F1 ';', F10 D; Alt+B '0', Alt+N '1', Alt+1 'X', Alt+A nothing
+  (0x1E); Backspace and Ctrl+H take back a character; Enter, Escape, Ctrl+M and Ctrl+[ end the answer; Tab, Ctrl+A,
+  Ctrl+V add nothing; past the field's length (6 here) nothing. "K1" is asked again (Val). Ours' LineEdit moved its
+  caret on the arrows and Home, deleted on Delete, selected, pasted and undid. Now `main.gd _input_char` decides every
+  key (the type-ahead's first key too). Check 486: the wager typed 1, Left, Enter (1K: asked again), 2, Home, Ctrl+H,
+  Enter: 2 wagered (GREEN, 4 PP); the code before wagered 1 (3 PP). Not measured: Alt with an arrow or F-key.
+- **Checked, matching:** an extended key at a script's menu types no letter (check 93's IGNORE GRAB: Home ('G') and
+  PgUp ('I') do nothing in both).
+- **Open (display, no reset):** a DAMAGE page after a LOAD_CHAR pick (5:7's trap door: WHO WILL OPEN IT?, then the
+  party's DAMAGE 224): which member the original lights. Not reached this run.
+
 ## Chat 128: a held arrow and a typed burst on the walking screen; the party list's light at a script's menus (main path)
 
 - **A held arrow (input, main path; to the Lead):** DOSBox (cycles 15000, the lab's reference), 3:0 from check 46's
