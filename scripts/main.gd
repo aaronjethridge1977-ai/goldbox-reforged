@@ -4009,7 +4009,27 @@ func _walk_words() -> Array:
 	return ["C", "V", "E", "S", "L"] if _vm.on_overland else ["A", "C", "V", "E", "S", "L"]
 
 
+## Chat 122 (GAME.OVR 0x3761-0x37DF; DOSBox, 7:23's wrong password): the whole-party-killed screen after a DAMAGE, one
+## frame round the screen, the line in green at its top left, PRESS <ENTER>/<RETURN> TO CONTINUE on row 24.
+func _draw_killed() -> void:
+	_screen.clear()
+	for c in 40:
+		_screen.tile(c, 0, 22)
+		_screen.tile(c, 23, 22)
+	for r in range(1, 23):
+		_screen.tile(0, r, 21)
+		_screen.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		_screen.tile(p.x, p.y, 20)
+	_screen.text(1, 1, EclVM.PARTY_KILLED, GameScreen.GREEN)
+	_screen.text(0, 24, EclVM.PRESS_TO_CONTINUE, GameScreen.WHITE)
+	_screen.update()
+
+
 func _draw_screen() -> void:
+	if _vm.killed_page and _vm.state == EclVM.State.MENU:
+		_draw_killed()
+		return
 	var body := _message.text
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
 	var selected := 0
