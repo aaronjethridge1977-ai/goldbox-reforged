@@ -2912,21 +2912,44 @@ const ALT_SCANS := {KEY_Q: 0x10, KEY_W: 0x11, KEY_E: 0x12, KEY_R: 0x13, KEY_T: 0
 ## Alt+N '1', Alt+1 'X' (shown in capitals), Alt+A (0x1E) nothing. Enter, Escape, Ctrl+M and Ctrl+[ end the answer;
 ## Backspace and Ctrl+H take back a character; Tab, Ctrl+A, Ctrl+V and other control codes type nothing. Typing past
 ## the field's length does nothing. Ours' LineEdit moved its caret on the arrows, pasted, selected and undid.
+## Chat 130 (DOSBox, the same wager; the reader is START.EXE 0x7ABB-0x7B8A): it reads with the get-key 0x899:0x59 (an
+## extended key gives 0, skipped, then its scan code) and takes only characters 0x20 to 0x7A ('{', '|', '}', '~'
+## nothing; '`' is taken); 8 takes back, 13 and 27 end it; the answer is put in capitals at the end. The extended keys
+## with Shift, Ctrl or Alt give the BIOS's other scan codes: Shift+F1 T, Shift+F10 ']'; Ctrl+Left S, Ctrl+Right T,
+## Ctrl+End U, Ctrl+PgDn V, Ctrl+Home W; Alt+F1 H to Alt+F10 Q; Ctrl+PgUp (0x84), Ctrl / Alt with Up, Down, Insert,
+## Delete, Alt with the arrows, Home, End, F11 and F12: nothing. Ctrl+F1-F10 (0x5E-0x67) aren't measurable in DOSBox
+## (its own keys; Ctrl+F3 typed '`'): the BIOS's values. Ours typed '~' and the others' plain codes or nothing.
 ## Returns the character, INPUT_END, INPUT_BACK, or -1 (nothing).
 static func _input_char(ev: InputEventKey) -> int:
+	var c := _input_byte(ev)
+	return c if c < 0 or (c >= 0x20 and c <= 0x7A) else -1
+
+
+## The F-keys' BIOS scan codes with Shift, Ctrl and Alt (plain: DOS_SCANS); Ctrl with the grey keys.
+const F_KEYS := [KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10]
+const CTRL_SCANS := {KEY_LEFT: 0x73, KEY_RIGHT: 0x74, KEY_END: 0x75, KEY_PAGEDOWN: 0x76, KEY_HOME: 0x77, KEY_PAGEUP: 0x84}
+
+
+static func _input_byte(ev: InputEventKey) -> int:
 	var k := ev.keycode
+	var f := F_KEYS.find(k)
 	if ev.alt_pressed and not ev.ctrl_pressed:
+		if f >= 0:
+			return 0x68 + f
 		if DOS_SCANS.has(k):
-			return -1   # Alt+arrow / Alt+F-key: other scan codes (not measured)
-		var s: int = ALT_SCANS.get(k, -1)
-		return s if s >= 32 else -1
+			return -1   # Alt+arrow, Home, End, PgUp, PgDn, Insert, Delete: the enhanced keyboard's codes, dropped
+		return ALT_SCANS.get(k, -1)
 	if ev.ctrl_pressed:
 		match k:
 			KEY_M, KEY_BRACKETLEFT:
 				return INPUT_END
 			KEY_H:
 				return INPUT_BACK
-		return -1
+		if f >= 0:
+			return 0x5E + f
+		return CTRL_SCANS.get(k, -1)
+	if f >= 0 and ev.shift_pressed:
+		return 0x54 + f
 	if DOS_SCANS.has(k):
 		return DOS_SCANS[k]
 	match _dos_char(ev):
@@ -2934,8 +2957,7 @@ static func _input_char(ev: InputEventKey) -> int:
 			return INPUT_END
 		8:
 			return INPUT_BACK
-	var c := _dos_char(ev)
-	return c if c >= 32 and c < 127 else -1
+	return _dos_char(ev)
 
 
 ## Chat 128: the view's redraw after a walking-screen turn or step (see _redraw_until).
