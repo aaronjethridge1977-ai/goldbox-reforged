@@ -1212,6 +1212,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				# third member). Ours did nothing (the first member robbed).
 				_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) \
 					+ (1 if key in [KEY_END, KEY_KP_1, KEY_1] else -1), _party.size())
+				_vm.list_lit = _vm.selected   # chat 128: the move redraws the list (DOSBox, 3:0's IGNORE GRAB)
 			elif key >= KEY_0 and key <= KEY_9 and _vm._menu_kind != "who":
 				pass
 			elif _vm._menu_kind == "who":
@@ -3117,6 +3118,7 @@ func _add_npcs() -> void:
 		m.refresh_cache()         # ... its cached THAC0 and AC too (START.EXE 0xba:0xbb8; check 54: 41, not the record's 149)
 		_party.append(m)
 		_vm.selected = _party.size() - 1
+		_vm.list_lit = _vm.selected   # the join redraws the list
 	_vm.npc_requests = []
 
 
@@ -3192,6 +3194,7 @@ func _on_party_menu_closed() -> void:
 	# last, paid at the inn in the original; ours went back to ARN).
 	if not _party.is_empty():
 		_vm.selected = clampi(_party_menu._sel, 0, _party.size() - 1)
+		_vm.list_lit = _vm.selected
 		_vm.walk_selected = _vm.selected
 	_vm.close_program()
 	_after_vm()
@@ -3279,6 +3282,7 @@ func _on_temple_closed() -> void:
 	_message.text = ""
 	if not _party.is_empty():
 		_vm.selected = clampi(_temple.who(), 0, _party.size() - 1)
+		_vm.list_lit = _vm.selected
 		_vm.selected_creature = -1
 	_vm.close_temple()
 	_after_vm()
@@ -3312,6 +3316,7 @@ func _on_camp_closed() -> void:
 	_vm.place_drawn = {}     # chat 121: leaving camp draws the screen anew (the time and sky as now)
 	if not _party.is_empty():
 		_vm.selected = clampi(_camp._sel, 0, _party.size() - 1)
+		_vm.list_lit = _vm.selected
 	# Leaving camp redraws the 3D view (P63, lab chat 29: the inn at New Phlan 6,12, PICTURE 24 then
 	# PROGRAM 9; after EXIT the original shows the street at 6,13 N, not the innkeeper).
 	if not _cast_keeps_view:
@@ -3598,6 +3603,7 @@ func _on_event_fight_finished(result: int) -> void:
 		_party.erase(m)
 		_vm.party_changed = true
 	_vm.selected = clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
+	_vm.list_lit = _vm.selected
 	# A duel keeps its own rule (Spoils.award's `only`: the share over every standing member, Player 18's p18a3).
 	_after_fight(beaten, "THE PARTY HAS WON.", _combat.dropped_items(), _combat.paid_members() if _duelist == null else null)
 
@@ -3644,6 +3650,7 @@ func _on_treasure_closed() -> void:
 	# the next camp's Home lights CEDRIC; ours went back to the first).
 	if _treasure._who >= 0 and _treasure._who < _party.size():
 		_vm.selected = _treasure._who
+		_vm.list_lit = _vm.selected
 	_vm.end_combat(129 if _fled else 0)
 	_fled = false
 	_after_vm()
@@ -3673,6 +3680,7 @@ func _on_shop_closed() -> void:
 	# The last buyer stays selected (Combat Chat 23: the shop moves the one selected member; Player 19's p13a1).
 	if not _party.is_empty():
 		_vm.selected = clampi(_shop.buyer(), 0, _party.size() - 1)
+		_vm.list_lit = _vm.selected
 		_vm.selected_creature = -1
 	_message.text = ""
 	_vm.close_shop()
@@ -4290,7 +4298,12 @@ func _draw_screen() -> void:
 			_vm.place_blank = []
 	# A DAMAGE page keeps its leading blank row (the original's cursor starts the first hit a row down).
 	# The original printer's rows (START.EXE 0x77F8: PrintWrap; main chat 106, DOSBox: Rolf's and the clerk's texts).
-	var lines := PrintWrap.lines(body.strip_edges(not press24, true), 38)
+	# Chat 128 (DOSBox, 3:0's " DOES ANYONE WANT TO GAMBLE?"): a text's leading spaces print (the printer skips spaces
+	# only at a wrap, 0x77A4); only leading line breaks go. Ours had cut the spaces too (the question a column left).
+	var shown := body.strip_edges(false, true)
+	if not press24:
+		shown = shown.lstrip("\n")
+	var lines := PrintWrap.lines(shown, 38)
 	var white := -1
 	if not vertical.is_empty():
 		white = lines.size() + selected
@@ -4304,8 +4317,12 @@ func _draw_screen() -> void:
 	if note24 or _battle_begins:
 		menu = []
 	var lit := clampi(_vm.selected, 0, maxi(_party.size() - 1, 0))
-	if _vm.typing_wait and _vm.state == EclVM.State.WAIT and _vm.list_lit >= 0:
-		lit = clampi(_vm.list_lit, 0, maxi(_party.size() - 1, 0))      # chat 114: the list as last drawn
+	if _vm.list_lit >= 0 and ((_vm.typing_wait and _vm.state == EclVM.State.WAIT) or _vm.state == EclVM.State.MENU):
+		# Chat 114: the list as last drawn. Chat 128 (DOSBox, 3:0's tavern on a step whose MAD MAN check runs its
+		# LOAD_CHAR loop over the party, seed 11111122): at the script's own menus too (PRESS <RETURN>, IGNORE GRAB) the
+		# original keeps THRENDER GRONE lit while the script has PHINEAS picked (End there lights THRENDER GRONE: the
+		# pick wrapped round); ours lit PHINEAS.
+		lit = clampi(_vm.list_lit, 0, maxi(_party.size() - 1, 0))
 	if who_label != "":
 		lit = clampi(_list_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)

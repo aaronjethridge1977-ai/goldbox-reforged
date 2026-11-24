@@ -194,7 +194,7 @@ var _blank_name := -1
 ## Chat 114: the member lit in the party list as the original last drew it: the pick when the script started, or
 ## the one a LOAD_CHAR with 0x80 (a redraw) points at. A LOAD_CHAR without it moves the window, not the list's
 ## highlight (DOSBox: 3:0's farewell types with THRENDER GRONE lit while the script has SKULLCRUSHER picked).
-## main.gd lights it during a typing wait, the one time a script's mid-run pick shows.
+## main.gd lights it during a typing wait and at the script's menus (chat 128); WHO, Home / End and the screens set it.
 var list_lit := -1
 
 ## Minutes the script moved the clock on (CLOCK); the game runs spell effects down by them.
@@ -519,6 +519,7 @@ func choose(index: int) -> State:
 		return run()
 	if _menu_kind == "who":
 		selected = index
+		list_lit = index      # chat 128: WHO's list lit the pick
 		_menu_kind = ""
 		menu = []
 		state = State.RUNNING
