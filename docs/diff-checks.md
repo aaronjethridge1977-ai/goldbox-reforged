@@ -172,6 +172,39 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 128: a held arrow and a typed burst on the walking screen; the party list's light at a script's menus (main path)
+
+- **A held arrow (input, main path; to the Lead):** DOSBox (cycles 15000, the lab's reference), 3:0 from check 46's
+  start (`~/gbr/lab/data/c128/ohold.py <key> <hold> <secs>`: the key held through XTest, row 15 polled): Left held
+  turns at once, then after ~0.5 s (the repeat delay) about every 0.16 s, and once more after the release; Up held
+  steps about every 0.3 s. Game speed 0, 4 and 9 the same: the pace is the view's redraw before the get-key reads
+  again, and the get-key's drain (chat 127) merges the repeats typed meanwhile. The redraw's time depends on the view
+  (three-key bursts, `fastk.py`: a turn's window 0.12-0.19 s). Ours acted on every repeat (Xvfb 25 a second: Left held
+  1.3 s, 17 turns). **A typed burst** has the same cause: 14,7 W, Up, Left 0.09 s on, Right 0.18 s on: the original
+  13,7 N (Left and Right merged into Right), ours 13,7 W (`burst_t1.txt`). Option (A), the walking screen holding keys
+  for the redraw (0.16 s a turn, 0.3 s a step; key-by-key replays and the bot skip it), is on `wip/main-128-heldpace`
+  waiting for the Lead's answer (board, 08:09). No gate check can hold it: `--fast` shortens the hold, timed keys
+  aren't. The wilderness's held step is not measured (blocked terrain at check 127's start).
+- **RECORD MY GAME and repeats (tooling, fixed):** the recorder dropped key repeats, which the walking screen acts on,
+  so a held arrow replayed as one step; they are recorded since chat 128 (`"e": 1`) and `timed=` sends them as repeats
+  (a recorded held Left replayed with the same 17 turns).
+- **The party list's light at a script's menus (display, main path; fixed):** 3:0's tavern (10,8) at seed 11111122 (the
+  step's MAD MAN check, RANDOM 19 = 19, runs a LOAD_CHAR loop over the party, leaving PHINEAS picked): the original
+  keeps THRENDER GRONE lit at the text, its PRESS <RETURN> and IGNORE GRAB; End there lights THRENDER GRONE (the pick
+  wrapped: PHINEAS was picked), End again BAKSHI; WHO WILL GAMBLE? starts on PHINEAS. Ours lit PHINEAS at the menus
+  (chat 114's `list_lit` held only during a typing wait). Ours now: the same four screens and WHO on PHINEAS
+  (`~/gbr/lab/data/c128/tl_all.png`, `who1.png`). Game state was the same (the pick).
+- **A text's leading space (display, main path; fixed):** `" DOES ANYONE WANT TO GAMBLE?"` (3:0) prints from column 2 in
+  the original; ours cut leading spaces. Six PRINT_CLEAR texts start with one (the gamble question, five of SKULLCRUSHER's
+  lines at 4:2); some PRINTs start with spaces too (they print the same way after a cleared box).
+- **Checked, matching:** Enter typed during the step into the tavern answers the text's PRESS (the original and ours
+  go on to GAMBLE? YES NO); the save (SAVE WHICH GAME, a letter) is instant at the reference speed in both (no
+  "Please Wait"; a key 0.09 s later meets QUIT TO DOS). **Settled from the code:** the row-24 note 0x709:0xD68's eight
+  GAME.OVR callers are the code wheel (ours has none), the river, NOT HERE, MODIFY and the hall's four notes (all
+  checked by chats 125-127); GAME.OVR's direct KeyPressed callers are the title and credits waits (0xD4: a wait or a
+  key, the key kept), Magic On / Off, the rest's STOP RESTING? and the menu reader 0x2CC8C, whose timeout
+  (DS:0x6B2E-0x6B32) Pool never sets; the get-key's other callers are a digit entry (0x24F84) and load-error exits.
+
 ## Chat 127: the "full flush" drops nothing; a burst of keys read as the original's get-key reads it (main path)
 
 - **START.EXE 0x899:0x104 isn't a flush:** its first instruction after the frame (0x899:0x10A, `EB 12`) jumps to
