@@ -12,6 +12,11 @@ extends RefCounted
 const DOS_SCANS := {KEY_UP: 0x48, KEY_DOWN: 0x50, KEY_LEFT: 0x4B, KEY_RIGHT: 0x4D, KEY_HOME: 0x47, KEY_END: 0x4F,
 	KEY_PAGEUP: 0x49, KEY_PAGEDOWN: 0x51, KEY_INSERT: 0x52, KEY_DELETE: 0x53, KEY_F1: 0x3B, KEY_F2: 0x3C, KEY_F3: 0x3D,
 	KEY_F4: 0x3E, KEY_F5: 0x3F, KEY_F6: 0x40, KEY_F7: 0x41, KEY_F8: 0x42, KEY_F9: 0x43, KEY_F10: 0x44}
+## Alt and a letter: the BIOS sends 0 then the letter key's scan code (Alt-M is 0x32: a fight's poll, GAME.OVR 0xBB81).
+const ALT_SCANS := {KEY_Q: 0x10, KEY_W: 0x11, KEY_E: 0x12, KEY_R: 0x13, KEY_T: 0x14, KEY_Y: 0x15, KEY_U: 0x16,
+	KEY_I: 0x17, KEY_O: 0x18, KEY_P: 0x19, KEY_A: 0x1E, KEY_S: 0x1F, KEY_D: 0x20, KEY_F: 0x21, KEY_G: 0x22, KEY_H: 0x23,
+	KEY_J: 0x24, KEY_K: 0x25, KEY_L: 0x26, KEY_Z: 0x2C, KEY_X: 0x2D, KEY_C: 0x2E, KEY_V: 0x2F, KEY_B: 0x30, KEY_N: 0x31,
+	KEY_M: 0x32}
 
 var _first_ext := false
 var _last: InputEventKey = null
@@ -19,7 +24,7 @@ var _last: InputEventKey = null
 
 ## A key typed during the wait.
 func add(ev: InputEventKey) -> void:
-	var ext := DOS_SCANS.has(ev.keycode)
+	var ext := is_ext(ev)
 	if not ext and dos_char(ev) < 0:
 		return
 	if _last == null:
@@ -44,6 +49,30 @@ func take() -> InputEventKey:
 	return ev
 
 
+## The byte the get-key's drain keeps for the burst (-1: nothing waits): the last key's character, or its scan code
+## for an extended key (the first key's kind doesn't change it). The burst is emptied.
+func take_byte() -> int:
+	if _last == null:
+		return -1
+	var b := dos_byte(_last)
+	_last = null
+	return b
+
+
+## An extended key (0 then a scan code): the DOS_SCANS keys and Alt with a letter.
+static func is_ext(ev: InputEventKey) -> bool:
+	return DOS_SCANS.has(ev.keycode) or (ev.alt_pressed and ALT_SCANS.has(ev.keycode))
+
+
+## A key's last byte in the BIOS buffer: an extended key's scan code, else its character (-1: none).
+static func dos_byte(ev: InputEventKey) -> int:
+	if DOS_SCANS.has(ev.keycode):
+		return DOS_SCANS[ev.keycode]
+	if ev.alt_pressed and ALT_SCANS.has(ev.keycode):
+		return ALT_SCANS[ev.keycode]
+	return dos_char(ev)
+
+
 ## A plain key's DOS character (-1: a key that types nothing).
 static func dos_char(ev: InputEventKey) -> int:
 	match ev.keycode:
@@ -61,13 +90,13 @@ static func dos_char(ev: InputEventKey) -> int:
 
 
 static func burst(first_ext: bool, last: InputEventKey) -> InputEventKey:
-	var last_ext := DOS_SCANS.has(last.keycode)
+	var last_ext := is_ext(last)
 	if first_ext == last_ext:
 		return last
 	var e := InputEventKey.new()
 	e.pressed = true
 	if not first_ext:
-		var scan: int = DOS_SCANS[last.keycode]
+		var scan: int = dos_byte(last)
 		e.keycode = scan as Key      # the scan code as a character: Godot's keycode for an ASCII capital is its code
 		e.unicode = scan
 		return e

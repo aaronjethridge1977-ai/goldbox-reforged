@@ -499,7 +499,8 @@ func _build() -> void:
 		if then.is_valid():
 			then.call()
 		else:
-			_refresh())
+			_refresh()
+		_feed_typed.call_deferred())
 	add_child(_flash_timer)
 
 
@@ -934,6 +935,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	CharacterSheet.anti_magic = anti_magic
 	_combat.surprise_flags = _surprise
 	_combat.message.connect(_on_combat_message)
+	_combat.magic_note.connect(func(t: String) -> void: _say(t))
 	_messages.clear()
 	_panel_msgs.clear()
 	_pending_msgs.clear()
@@ -1250,6 +1252,7 @@ func _show_messages() -> void:
 			_skulls.clear()
 		_refresh()
 	_draining = false
+	_feed_typed.call_deferred()
 	_aim_rows_kept = false
 	_spell_hits.clear()
 	_skulls.clear()
@@ -1442,20 +1445,41 @@ func queue_keys(keys: Array) -> void:
 
 
 ## A player's menu takes the next typed key, then the one after while a player's menu still waits; a computer-run
-## turn stops it (its opening poll reads the next one: Combat.ai_act).
+## turn stops it (its opening poll reads the next one: Combat.ai_act). Then the keys typed during the fight while no
+## menu waited (Combat.typed), all as one: the get-key's burst (KeyBurst).
 func _feed_typed() -> void:
-	if _combat == null or _combat.key_queue.is_empty() or not visible or _result != 0 or _draining:
+	if _combat == null or not visible or _result != 0 or not _player_waits():
 		return
-	if _combat.active < 0 or _combatants[_combat.active].get("quick", false) or _announcing:
+	var ev: InputEventKey = null
+	if not _combat.key_queue.is_empty():
+		ev = _combat.key_queue.pop_front()
+	elif _combat.typed.has_key():
+		ev = _combat.typed.take()
+		if ev == null:
+			return       # an extended key's scan code no key has: read, nothing done
+	else:
 		return
-	var ev: InputEventKey = _combat.key_queue.pop_front()
 	_unhandled_input(ev)
 	_feed_typed.call_deferred()
+
+
+## A player's menu or question waits for a key (no computer-run turn, fight line or note running).
+func _player_waits() -> bool:
+	if _flash != "" or _draining or _announcing:
+		return false
+	if _asking_continue:
+		return true
+	return _combat.active >= 0 and not _combatants[_combat.active].get("quick", false)
 
 
 func _ai_step() -> void:
 	if _combat == null or not visible:
 		return
+	if _flash != "":
+		# A note the poll put up (MAGIC ON: 0xBA:0x1693's Delay) holds the turn (DOSBox, Combat Chat 59).
+		await _flash_timer.timeout
+		if _combat == null or not visible:
+			return
 	var actor: Dictionary = _combatants[_combat.active] if _combat.active >= 0 else {}
 	var before: Vector2i = actor.get("cell", Vector2i.ZERO)
 	var moves_before: int = actor.get("moves", 0)
@@ -2503,6 +2527,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	if _sheet != null and _sheet.visible:
 		return
+	if _combat != null and _result == 0 and event is InputEventKey and not _player_waits():
+		# No key is read while a computer-run turn, a fight line or a note runs (their waits are START.EXE
+		# 0x709:0xDBE's plain Delay): a key typed then waits in the BIOS buffer for the next read, a computer turn's
+		# poll (GAME.OVR 0xBB81: Combat.poll_keys) or a player's menu, which takes all those waiting as one (the
+		# get-key's drain, START.EXE 0x899:0x59) (Combat Chat 59; ours took Space and Alt-M at once and dropped the
+		# rest).
+		get_viewport().set_input_as_handled()
+		_combat.typed.add(event as InputEventKey)
+		return
 	if _flash != "":
 		# A key ends the message at once.
 		_flash_timer.stop()
@@ -2595,20 +2628,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_advance()
 		get_viewport().set_input_as_handled()
 		return
-	if _combat != null and _result == 0 and _combat.active >= 0 and _combatants[_combat.active].get("quick", false):
-		# The original reads keys while the computer runs a turn (GAME.OVR 0xBB80; lab):
-		# Alt-M switches magic on or off for the party's QUICK members, Space hands every
-		# QUICK party member back to the player (not the NPCs, who always fight on their own).
-		if key == KEY_M and (event as InputEventKey).alt_pressed:
-			get_viewport().set_input_as_handled()
-			toggle_magic()
-			return
-		if key == KEY_SPACE:
-			# Read at the next computer turn's opening, where the one whose turn it is goes back to the
-			# order pick and takes it by hand (Combat.hand_back; Combat Chat 52).
-			get_viewport().set_input_as_handled()
-			_combat.control_pending = true
-			return
 	if (_event_fight or _cmode == "move") and _result == 0 and _combat != null:
 		_fight_input(event, key)     # (a test fight's Esc leaves it, but not from inside MOVE)
 		return
