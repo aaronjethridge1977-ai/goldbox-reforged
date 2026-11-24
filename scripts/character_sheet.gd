@@ -70,7 +70,6 @@ const COIN_NAMES := ["COPPER", "SILVER", "ELECTRUM", "GOLD", "PLATINUM", "GEMS",
 const LEVEL_WORDS := ["1ST LEVEL", "2ND LEVEL", "3RD LEVEL", "4TH LEVEL", "5TH LEVEL",
 	"6TH LEVEL", "7TH LEVEL", "8TH LEVEL", "9TH LEVEL"]
 const MESSAGE_TIME := 0.7       # lab: a message stays about 0.7 s
-const SAID_TIME := 0.8          # lab: a scroll spell's result, once typed out
 const MAX_ITEMS := 16
 const ID_PRICE := 200           # lab: "FOR 200 GOLD PIECES I'LL IDENTIFY YOUR BANDED MAIL"
 
@@ -103,6 +102,7 @@ var _scroll_target: PartyMember = null
 var _said: Array = []          # the scroll spell's result lines still to show ([name, words])
 var _use_it: GameItem = null   # USE on a potion, wand or ring outside a fight: the item, while its lines and WHOM show
 var _use_id := 0               # and its spell
+var _said_on_items := false    # the result lines show under the item list (an item used with no CAST SPELL ON WHOM)
 var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 ## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
@@ -424,6 +424,19 @@ func _heading(m: PartyMember, what: String) -> void:
 	_t(m.name.length() + 4, 1, what, GameScreen.GREEN)
 
 
+## The item list cut at row 15 over a text box (rows 17-22): an item's USES AN ITEM and its result lines.
+func _draw_item_box(m: PartyMember) -> void:
+	_draw_items(m, false, 15)
+	for c in range(1, 39):
+		_scr.tile(c, 16, 22)
+	_scr.tile(0, 16, 20)
+	_scr.tile(39, 16, 20)
+	if not _said.is_empty():
+		_t(1, 18, _said[0][0], GameScreen.CYAN)
+		_t(1, 19, _said[0][1], GameScreen.GREEN)
+	_menu(_item_menu(), 0)
+
+
 func _draw_items(m: PartyMember, cursor_lit: bool, last_row := 99) -> void:
 	_frame(2)
 	_heading(m, "ITEMS")
@@ -659,22 +672,17 @@ func _refresh() -> void:
 		"scroll_whom", "use_whom":
 			_draw_whom("CAST SPELL ON WHOM", camp_look)
 		"item_uses":
-			_draw_items(m, false, 15)
-			for c in range(1, 39):
-				_scr.tile(c, 16, 22)
-			_scr.tile(0, 16, 20)
-			_scr.tile(39, 16, 20)
-			if not _said.is_empty():
-				_t(1, 18, _said[0][0], GameScreen.CYAN)
-				_t(1, 19, _said[0][1], GameScreen.GREEN)
+			_draw_item_box(m)
 			if _use_it != null:
 				_t(1, 22, item_label(_use_it).to_upper(), GameScreen.GREEN)
-			_menu(_item_menu(), 0)
 		"scroll_said":
-			_draw_whom("CAST SPELL ON WHOM", camp_look)     # the result is typed over WHOM's screen, the camp's picture kept
-			if not _said.is_empty():
-				_t(1, 18, _said[0][0], GameScreen.CYAN)
-				_t(1, 19, _said[0][1], GameScreen.GREEN)
+			if _said_on_items:
+				_draw_item_box(m)
+			else:
+				_draw_whom("CAST SPELL ON WHOM", camp_look)     # typed over WHOM's screen, the camp's picture kept
+				if not _said.is_empty():
+					_t(1, 18, _said[0][0], GameScreen.CYAN)
+					_t(1, 19, _said[0][1], GameScreen.GREEN)
 		"cast":
 			_draw_spells(m)
 			_t(0, 24, "CHOOSE SPELL:", MAGENTA)
@@ -887,8 +895,16 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	_held_key = null
 	_mode = "item_uses"
 	if _timer != null:
-		_timer.start(String(m.name + "USES AN ITEM").length() / 33.0 + maxf(CampScreen.speed * 0.225, 0.05))
+		_timer.start(_line_time(m.name, "USES AN ITEM"))
 	return "\u0001"
+
+
+## A typed line's time (START.EXE 0x7782 types game speed x 10 ms a character other than spaces) and the Delay after
+## it (0x709:0xDBE, game speed x 225 ms): at speed 0 none (Combat Chat 58, DOSBox: check 187's start at speed 0,
+## LIRA's potion of Disappearance: the item list again at once; at speed 4 each line about 1.2 s).
+static func _line_time(who: String, words: String) -> float:
+	var chars := EclVM.typed_chars(who) + EclVM.typed_chars(words)
+	return maxf(CampScreen.speed * (0.010 * chars + 0.225), 0.05)
 
 
 ## The Delay after USES AN ITEM is over: CAST SPELL ON WHOM for a one-member spell, else the spell at once.
@@ -903,9 +919,12 @@ func _after_uses() -> void:
 	_use_on(_who())
 
 
-## The used item's spell on `target`; its result lines as a scroll's (held for their time, keys kept).
+## The used item's spell on `target`; its result lines as a scroll's (held for their time, keys kept). With no
+## CAST SPELL ON WHOM they show under the item list (DOSBox, check 187's start at speed 4: LIRA USES AN ITEM, then
+## ARN / IS INVISIBLE, BRAM / IS INVISIBLE... on rows 18-19 under LIRA'S ITEMS).
 func _use_on(target: PartyMember) -> void:
 	var m := _who()
+	_said_on_items = _mode == "item_uses"
 	var lines := SpellCaster.cast_outside(spells, m, _use_id, _people, target, _rng, true)
 	if not lines.is_empty() and lines[0].ends_with(" USES AN ITEM"):
 		lines.remove_at(0)
@@ -957,7 +976,7 @@ func _draw_scroll(m: PartyMember) -> void:
 
 
 ## The scroll's chosen spell on `target` (lab: no CASTS line; "<NAME>" cyan on row 18,
-## the result green on row 19, typed out, held about 0.8 s; then the item list. Restoration
+## the result green on row 19, typed out, held for a Delay (_line_time); then the item list. Restoration
 ## on someone not drained says nothing.) The spell leaves the scroll.
 func _cast_scroll(m: PartyMember, target: PartyMember) -> void:
 	var it := _scroll
@@ -975,6 +994,7 @@ func _cast_scroll(m: PartyMember, target: PartyMember) -> void:
 			lines.remove_at(0)      # "<NAME> USES AN ITEM": not shown for a scroll
 	_spend_scroll(m, it, _scroll_slot())
 	_scroll = null
+	_said_on_items = false
 	_show_said(lines)
 
 
@@ -1002,8 +1022,7 @@ func _show_said(lines: PackedStringArray) -> void:
 
 func _hold_said() -> void:
 	if _timer != null and not _said.is_empty():
-		var chars: int = String(_said[0][0]).length() + String(_said[0][1]).length()
-		_timer.start(SAID_TIME + chars / 33.0)
+		_timer.start(_line_time(_said[0][0], _said[0][1]))
 
 
 func _next_said() -> void:
