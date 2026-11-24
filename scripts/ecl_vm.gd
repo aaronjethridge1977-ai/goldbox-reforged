@@ -397,6 +397,26 @@ const BACKDROP_LINE := 0xC05F
 var backdrop_ground := 0x41
 var backdrop_line := 9
 var arrival_at := []
+## Chat 122: the highlight every horizontal menu shares (GAME.OVR's menu routine 0x2CC8C keeps it in DS:0x6B2B, one
+## byte for the whole session, not saved). 0-based here. A menu lights it, made 0 for good when past its last word
+## (0x2CCDE); a choice by letter leaves it on that word (0x2CF4B); ',' and '.' move it left and right, wrapping
+## (0x2CE93, 0x2CEB7); Enter, Space and Escape leave it. A list (0x2D669: the script's vertical menu, WHO, shops'
+## lists) makes it 0 as it opens (0x2D6B9); the YES / NO question 0x2D9A0 makes it 1 (NO). DOSBox: the walking
+## menu lights it (after VIEW's EXIT, ENCAMP; after SEARCH, SEARCH); Enter and Space there do nothing.
+static var menu_hl := 0
+
+
+## The lit word of a horizontal menu of `count` words (as 0x2CCDE: past the end it is the first word from now on).
+static func menu_lit(count: int) -> int:
+	if menu_hl >= count or menu_hl < 0:
+		menu_hl = 0
+	return menu_hl
+
+
+## ',' (step -1) and '.' (+1) on a horizontal menu of `count` words (0x2CE93 / 0x2CEB7): the next word, wrapping.
+static func menu_step(count: int, step: int) -> void:
+	if count > 0:
+		menu_hl = posmod(menu_lit(count) + step, count)
 var _arrival_loads := -1
 var redraw_pending := false   # a CALL 0x2C90 waits for its text to type: main keeps the old square till then
 var view_redrawn := false   # the script ran something that redraws the view (main's _stale_view; main chat 110)

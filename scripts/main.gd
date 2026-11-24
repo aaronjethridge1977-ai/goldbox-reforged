@@ -419,7 +419,7 @@ func _back_to_start() -> void:
 	SaveListScreen.quick_path = _save_path()     # the save/load list (Combat lane, QoL 5)
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 var _who_open := false   # a WHO menu's highlight has been put on the selected member
-var _menu_sel := 0   # the event menus' highlight, kept from one menu to the next
+var _list_sel := 0   # a vertical menu's or WHO's highlight (the horizontal menus' is EclVM.menu_hl, chat 122)
 
 
 ## A new game with the ready-made party: New Phlan at the start of the adventure.
@@ -1137,7 +1137,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _door_options != "":
 			var letter := OS.get_keycode_string(key).to_upper()
 			if letter.length() == 1:
+				if _door_options.contains(letter):
+					EclVM.menu_hl = _door_options.find(letter)    # chat 122: the shared highlight (0x2CF4B)
 				_door_choice(letter)
+			elif key in [KEY_COMMA, KEY_PERIOD]:
+				EclVM.menu_step(_door_options.length(), -1 if key == KEY_COMMA else 1)   # chat 122 (0x2CE93 / 0x2CEB7)
 			elif event.is_action("ui_accept") or key == KEY_SPACE:
 				# Chat 121 (DOSBox, 5:3's gate after FORCE THE GATE OPEN): Enter and Space leave the menu as EXIT
 				# (GAME.OVR 0x1758D acts only on B, P, K; the door's tries untouched); the arrows and End do nothing.
@@ -1165,17 +1169,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				# move the white member on the party list, Enter (or SELECT's S) takes them.
 				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
 				if key in [KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1, KEY_UP, KEY_DOWN]:
-					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1, KEY_DOWN] else -1), _vm.menu.size())
+					_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_KP_1, KEY_DOWN] else -1), _vm.menu.size())
 				elif event.is_action("ui_accept") or key == KEY_S:
-					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
+					choice = clampi(_list_sel, 0, _vm.menu.size() - 1)
 			elif _vm.menu_vertical:
 				# A vertical menu (lab, chat 13): Home and End move the highlight up and down,
 				# wrapping round; Enter takes it. Letters and the left/right arrows do nothing.
 				# Up/Down too (P33, Jeremy 2026-11-14: both pairs in every list).
 				if key in [KEY_HOME, KEY_END, KEY_UP, KEY_DOWN]:
-					_menu_sel = posmod(clampi(_menu_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_DOWN] else -1), _vm.menu.size())
+					_list_sel = posmod(clampi(_list_sel, 0, _vm.menu.size() - 1) + (1 if key in [KEY_END, KEY_DOWN] else -1), _vm.menu.size())
 				elif event.is_action("ui_accept"):
-					choice = clampi(_menu_sel, 0, _vm.menu.size() - 1)
+					choice = clampi(_list_sel, 0, _vm.menu.size() - 1)
+			elif key in [KEY_COMMA, KEY_PERIOD]:
+				# Chat 122 (GAME.OVR 0x2CE93 / 0x2CEB7): ',' and '.' move the highlight left and right, wrapping; with
+				# Enter taken only by a one-word menu (Q24) they change no choice.
+				EclVM.menu_step(_vm.menu.size(), -1 if key == KEY_COMMA else 1)
 			elif key >= KEY_A and key <= KEY_Z:
 				var letter := OS.get_keycode_string(key).to_upper()
 				var hits := []
@@ -1193,7 +1201,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				# Enter and the arrows do nothing.
 				choice = 0
 			if choice >= 0 and choice < _vm.menu.size():
-				_menu_sel = choice   # the original keeps the highlight where the last choice was
+				if _vm._menu_kind != "who" and not _vm.menu_vertical:
+					EclVM.menu_hl = choice   # chat 122: the shared highlight stays on the word taken (0x2CF4B)
 				# A script's horizontal menu (YES / NO) leaves the box as it is: the script's next ops
 				# decide (chat 51, DOSBox: NO at Kuto's Well, 8:29 0xAF71, then EXIT, keeps the question;
 				# the rowboat's NO clears it with its own PRINT_CLEAR " ", 7:26 0xAD47). Only the menu's
@@ -1212,6 +1221,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		# A key on the walking menu: the member selected now is the player's own (GAME.OVR 0x40E3 keeps it
 		# in 0x4436; a script's LOAD_CHAR is undone from it at EXIT or PROGRAM: ecl_vm.gd, Combat Chat 18).
 		_vm.walk_selected = _vm.selected
+		var walk_words := _walk_words()
+		if key in [KEY_COMMA, KEY_PERIOD] and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+			# Chat 122 (DOSBox, 5:3: ',' and '.' move the walking menu's lit word, wrapping; Enter and Space do nothing).
+			EclVM.menu_step(walk_words.size(), -1 if key == KEY_COMMA else 1)
+			get_viewport().set_input_as_handled()
+			_show()
+			return
+		if event is InputEventKey and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+			var w := walk_words.find(OS.get_keycode_string(key).to_upper().left(1)) if OS.get_keycode_string(key).length() == 1 else -1
+			if w >= 0:
+				EclVM.menu_hl = w      # chat 122: a word taken by its letter stays lit (0x2CF4B; DOSBox: after SEARCH, SEARCH)
 		if (key == KEY_HOME or key == KEY_END) and not _party.is_empty():
 			# Home/End move the selected character up and down the party (lab, chat 11).
 			_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) + (1 if key == KEY_END else -1), _party.size())
@@ -2788,7 +2808,8 @@ func _after_vm() -> void:
 				return   # drawn on row 24 by _show
 			if _vm.menu_vertical:
 				# The original clears the text area for a vertical menu and shows its question.
-				_menu_sel = 0
+				_list_sel = 0
+				EclVM.menu_hl = 0      # chat 122: a list opens with the shared highlight on its first word (0x2D6B9)
 				if _held_message != "":
 					_held_message = _vm.menu_question
 				else:
@@ -3983,6 +4004,11 @@ func _show() -> void:
 
 
 ## The adventure screen as the original shows it.
+## The walking menu's words' letters (chat 122: the wilderness's menu has no AREA).
+func _walk_words() -> Array:
+	return ["C", "V", "E", "S", "L"] if _vm.on_overland else ["A", "C", "V", "E", "S", "L"]
+
+
 func _draw_screen() -> void:
 	var body := _message.text
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
@@ -3999,7 +4025,8 @@ func _draw_screen() -> void:
 		# list, the text box empty (lab, chat 22: the inn's WHO WILL PAY?).
 		if not _who_open:
 			_who_open = true
-			_menu_sel = clampi(_vm.selected, 0, _vm.menu.size() - 1)
+			_list_sel = clampi(_vm.selected, 0, _vm.menu.size() - 1)
+			EclVM.menu_hl = 0      # chat 122: WHO is a list (0x2D669): the shared highlight on its first word
 		body = ""
 		menu = []
 		who_label = _vm.text.strip_edges()
@@ -4011,7 +4038,7 @@ func _draw_screen() -> void:
 		if cut >= 0:
 			body = body.substr(0, cut)
 		menu = _vm.menu.duplicate()
-		selected = clampi(_menu_sel, 0, menu.size() - 1)
+		selected = clampi(_list_sel, 0, menu.size() - 1) if _vm.menu_vertical else EclVM.menu_lit(menu.size())
 		if _vm.menu_vertical:
 			vertical = menu
 			menu = []
@@ -4027,6 +4054,7 @@ func _draw_screen() -> void:
 			_message.text = ""
 			_place_left = []     # chat 119: the whole screen is drawn again (DOSBox: LEAVE shows 26,27 E)
 		_menu_was_wild = wild_mode
+		selected = EclVM.menu_lit(_walk_words().size())   # chat 122: the shared highlight (DS:0x6B2B), not always AREA
 	var view := _view_img
 	if _area_view and not _vm.on_overland:
 		view = _area_picture()
@@ -4067,7 +4095,7 @@ func _draw_screen() -> void:
 	if _vm.typing_wait and _vm.state == EclVM.State.WAIT and _vm.list_lit >= 0:
 		lit = clampi(_vm.list_lit, 0, maxi(_party.size() - 1, 0))      # chat 114: the list as last drawn
 	if who_label != "":
-		lit = clampi(_menu_sel, 0, maxi(_party.size() - 1, 0))
+		lit = clampi(_list_sel, 0, maxi(_party.size() - 1, 0))
 	_screen.draw_walk(view, _party, lit, place, lines, menu, wild, _vm.on_overland, selected if not _busy and _door_options == "" else -1, white)
 	if _vm.white_from >= 0 and vertical.is_empty() and body == _message.text:
 		# Chat 114 (DOSBox, 8:13's rocks): DAMAGE's hit lines are white under the script's green text. Rows as the
@@ -4123,7 +4151,7 @@ func _draw_screen() -> void:
 		for c in _door_options:
 			door_words.append(words[c])
 		_screen.text(0, 24, "LOCKED.", 13)
-		_screen.menu_line(24, door_words, 8, 0)
+		_screen.menu_line(24, door_words, 8, EclVM.menu_lit(door_words.size()))   # chat 122: the shared highlight
 		_screen.update()
 
 
@@ -4250,7 +4278,10 @@ func dev_snapshot() -> Dictionary:
 func dev_choose(i: int) -> void:
 	if _vm.state != EclVM.State.MENU or i < 0 or i >= _vm.menu.size():
 		return
-	_menu_sel = i
+	if _vm._menu_kind == "who" or _vm.menu_vertical:
+		_list_sel = i
+	else:
+		EclVM.menu_hl = i
 	_message.text = ""
 	if dev_choice_hook.is_valid():
 		dev_choice_hook.call(i)
