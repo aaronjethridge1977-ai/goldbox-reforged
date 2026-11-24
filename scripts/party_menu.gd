@@ -263,15 +263,13 @@ func _say_24(text: String) -> void:
 	if _row24 == text:
 		_row24 = ""
 		_refresh()
-	if _typed_ahead != null:
-		var ev := _typed_ahead
-		_typed_ahead = null
-		if visible:
-			_unhandled_input(ev)
+	var ev := _typed_ahead.take()
+	if ev != null and visible:
+		_unhandled_input(ev)
 
 
 var _noting := false                      # a row-24 note's wait is running
-var _typed_ahead: InputEventKey = null    # the last key typed during it
+var _typed_ahead := KeyBurst.new()        # the keys typed during it (the get-key's burst rule: main chat 127)
 
 
 # --- Actions (the bot calls these too) ----------------------------------------------------
@@ -363,7 +361,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	get_viewport().set_input_as_handled()
 	if _noting:
-		_typed_ahead = event as InputEventKey
+		_typed_ahead.add(event as InputEventKey)
 		return
 	var key := (event as InputEventKey).keycode
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
