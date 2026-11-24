@@ -172,6 +172,62 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 123: typed answers, Escape, the menus' digits and Home / End; checks 468, 470-475 (main path, input and game state)
+
+- **The lab's Escape was never pressed (found, fixed in the lab):** `keys.py` looked keysyms up by the lowercased name,
+  and keysym names are case-sensitive: "Escape", "Delete", "Insert", "Prior", "Next", "F1"-"F4", "F9", "F10" sent
+  NoSymbol (keycode 204), not the key ("esc", "home", "end", "pgup" in its table were fine). Chats 121-122's "Escape does
+  nothing" at LOCKED. and the vertical menu, and their Delete / PgUp / PgDn / Insert / F-key sweep at the walking screen,
+  were no presses. Now the table, then the name as given, then lowercased; an unknown name prints a warning. Redone with
+  a real Escape below; the walking screen's Delete, PgUp, PgDn, Insert, F1-F4, F9, F10 and Escape do nothing (DOSBox,
+  check 457's start: confirmed). The Player's and Combat's labs carry the same keys.py (board, Findings).
+- **A typed number (found, fixed; main path, input and game state):** the original reads INPUT_NUMBER's answer as Turbo
+  Pascal's Val: leading spaces skipped, then + or -, then digits or $ and hex digits, nothing after (DOSBox, 2:20's PAY,
+  one answer per boot, `data/c123/numk.sh`): " 5", "+5", "05", "$A", "$10000" (65536, so 0), "-0" taken; "5 ", "-5",
+  "5-3", "1 2", " ", "=5", "5=" asked again. Ours stripped both ends (so "5 " was paid) and took no sign or $ (asked
+  again). `EclVM.val_number`. BackSpace edits as in ours.
+- **Spaces in a typed word (found, fixed; main path, game state):** INPUT_STRING keeps them: 7:23's password " NOKNOK" and
+  "NOKNOK " are wrong in the original (the monster, the party killed); ours stripped them and let the party through.
+  Lower case is taken as upper in both.
+- **Escape at a typed answer (found, fixed; main path, input):** it ends the answer as Enter does: "56" Esc paid 56, "1A"
+  Esc and Esc at an empty field asked again (2:20's PAY); "NOK" Esc asked DO YOU REALLY MEAN NOK? (7:23). Godot's
+  LineEdit only stopped editing on Escape: the keys after it were lost and the next Enter only took the field back.
+  **Check 468** (2:20 PAY: 5-3 asked again, then $14 and Escape pays 20: THEY PAW THROUGH YOUR COINS; fails before).
+- **The menus' digits (found, fixed; main path, input and game state):** GAME.OVR 0x2CC8C (0x2CF60-0x2CF8C) turns the
+  digits into the keypad's keys for callers that take extended keys (table DS:0x288C), as chat 122 found at the walking
+  screen. At a script's vertical menu (1:18's plaza) 1 lights the next line (End), 7 the one above (Home, wrapping);
+  2-6, 8, 9, 0 do nothing. Ours took a digit as the item's number (STRIDE / DISGUISE / SNEAK at once): not the original's
+  key (Q24). The lab's bots keep picking by number through `main._press` only. Checks 74, 95, 420, 421, 424 and 425
+  typed digits at 1:18's vertical menus: their keys now type End / Enter, as the original's (resealed; they match on the
+  old code too). **Check 472** (the plaza: 7, 1, 1, Enter: DISGUISE; fails before).
+- **Home / End at a script's horizontal menu (found, fixed; main path, input and game state):** the menu's caller 0x8B57
+  hands extended keys to the walking screen's handler (0x85:0x52), so Home / End (and 1 / 7) move the selected member
+  there, the menu staying up (DOSBox: 7:23's YES / NO, the party list redrawn; the arrows nothing). At 6:1's BUY PASS
+  after End twice, ROB 0 robs the third member; ours did nothing there and robbed the first. **Check 471.**
+- **WHO (found, fixed; main path, input and game state):** 1 / 7 move its member as End / Home; Space, ',' and '.' do
+  nothing (DOSBox, 1:18's CHALLENGE); ours took Space as SELECT. Escape leaves WHO up (the inn's lock-up, original bug
+  16). **Check 473** (3:0's inn, WHO WILL PAY?: 1 then Space then Enter: BAKSHI pays; fails before).
+- **Escape at a vertical menu and at LOCKED. (found, fixed; main path, input):** with a real Escape the plaza's menu takes
+  the lit line (End then Escape: DISGUISE, 0x4A35 = 1) and LOCKED. leaves as EXIT (5:3's gate); ours did nothing at
+  either. A script's horizontal menu still ignores it (7:23's YES / NO; 0x2CE6E sets no key). **Checks 474** (the plaza,
+  End, Escape) **and 475** (check 466 with Escape at LOCKED.); both fail before.
+- **The walking screen's digits: check 470** (5:3 from check 457's start: 8 4 8 6 8 2 8, 1 1 7; fails on the code
+  before chat 122's a069d04).
+- **Seen, matching:** SAVE WHICH GAME (camp): every key but a slot letter does nothing, Escape asks QUIT TO DOS (chat
+  88's, now with a real Escape); AREA's map stays up through steps and turns, 1 / 7 move the member, ',' '.' the lit
+  word, Space, Enter, Escape nothing (3:0); the creation menu (START.EXE, empty party): only letters; digits, Home / End,
+  arrows, ',', '.', Enter, Escape nothing (Space redraws the empty party's header away: display, not modelled).
+- **Found, not ours to fix (Combat, board):** the training hall's menu takes 1 / 7 as End / Home in the original (the
+  member moves; 2, 8 nothing); ours' party_menu.gd takes neither. After 1:18's tavern duel lost by BAKSHI (dying), the
+  original drops the plaza's disguise effect (1) from him, ours keeps it (`~/gbr/lab/data/c123/duel473`, its keys
+  `k473` before the inn: WHO with 1 and Space at the CHALLENGE; game state, an optional fight).
+- **Combat's shared highlight (seen; task 3):** after VIEW's EXIT ours lights ENCAMP as the original does (5:3, check
+  457's start); after camp's EXIT the original lights LOOK (EXIT is camp's 6th word), ours AREA (display; Combat's
+  camp_screen.gd, board).
+- **Found, display (main path; open):** ours' AREA map is a stand-in (grey lines on black, chat 11); the original draws
+  the 16 x 16 map as 8-pixel tiles in an 11 x 11 window round the party (dark grey floor, light grey walls with round
+  corners, the party as a white arrow): `~/gbr/lab/data/c123/area_cmp.png` (zoomed: `area_zoom.png`). Display only (Q35): doesn't reset the streak.
+
 ## Chat 122: the menus' shared highlight (main path, input and display)
 
 - **The walking menu's lit word (found, fixed; main path, display; chat 121's open item):** GAME.OVR's horizontal menu
