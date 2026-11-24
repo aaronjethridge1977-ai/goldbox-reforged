@@ -172,6 +172,32 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 126: keys typed during A BATTLE BEGINS..., a rest, the camp's CAST and the shop's ID (main path)
+
+- **A BATTLE BEGINS... doesn't flush the keys (found, fixed; input, main path, resets the streak; paced play only):**
+  after the DELAY and the text (0xE452) the fight's setup calls START.EXE 0x899:0x122 ("read a key if one is
+  waiting") after each of three steps (0xE4B2, 0xE4BB, 0xE4C4) and once per combatant placed (0xE1EC), all within the
+  text's first moment; the full flush is 0x899:0x104 (15 callers, none here). DOSBox at speed 4, check 84's goblins,
+  C then Q: Q 0.02 s into the text reached no menu; 0.07, 0.10, 0.12, 0.15 s in ran the fight on QUICK; four keys
+  typed during the DELAY all dropped. Ours (chat 125's `_battle_wait`) dropped every key through the text; now
+  main.gd keeps the last key typed after the text's first 0.05 s and hands it to the fight (windowed: Q 0.05 s in
+  dropped, 0.15 s in ran QUICK). No check (the checks run unpaced).
+- **A rest takes any key as STOP RESTING? (found; input, main path; Combat's file, request 04:32):** GAME.OVR 0x24B1D
+  tests KeyPressed after each 5-minute step and asks STOP RESTING? (magenta) with the shared Yes / No (0x2D9A0: only Y
+  or N answer). Check 84's start (tpseed 12345), REST 30 hours, the game state's +0x5A4 (the period) poked 0
+  (`data/c126/gspoke.py`): x typed: the question waits; y: stopped after 24 hours; n: rested to the end; Escape: the
+  question. Ours stops at once on Escape and ignores the rest. THE WHOLE PARTY IS HEALED waits game speed x 225 ms
+  (0x246D0) and by the code shows every 24 hours rested, healed or not (ours: no wait, only when someone healed).
+- **The camp's CAST note and the shop's ID reply hand the key on (found; input, main path; Combat's files, request
+  04:32):** check 173's CAST on ARN, E typed during ARN / IS PROTECTED: the spell list takes it (EXIT); check 152's
+  ID, E typed during the reply: the item menu takes it (back to VIEW). Ours dropped both.
+- **0x2A41B is HAS MEMORIZED / HAS SCRIBED** (chat 125 listed it as a camp spell's text; ours already waits it); 0x22BF2
+  is an item's "Item:" line (mostly fights; not checked).
+- **Seen, matching (windowed, keys at set times, against DOSBox at speed 4):** Up, Left, Up 0.15 s apart across 2:20's
+  gateway into 3:0 (1,4 E: the Left lost); E then R 0.1 s apart (the REST menu); LOOK then Up (13,9 W 21:08); AREA
+  then Up (the screen identical but ours' mini-map); SEARCH, Up, Up (12,9 W 21:17); E and R typed during 2:20's
+  arrival text (the walking menu, R does nothing).
+
 ## Chat 125: keys typed during a timed note or a rest's interruption (main path)
 
 - **The original's timed waits (the Lead's speed-0 sweep):** every game-speed wait is START.EXE 0x709:0xDBE (a plain
