@@ -30,7 +30,15 @@ NAMES = {"enter": "Return", "esc": "Escape", "up": "Up", "down": "Down", "left":
 
 
 def keycode(name):
-    return X.XKeysymToKeycode(d, X.XStringToKeysym(NAMES.get(name.lower(), name.lower()).encode()))
+    # Chat 123: keysym names are case-sensitive ("Escape", "Delete", "Prior", "F1"); the lowercased name gave
+    # NoSymbol for them and the key sent was none of them. The table first, then the name as given, then lowercased.
+    ks = X.XStringToKeysym(NAMES[name.lower()].encode()) if name.lower() in NAMES else 0
+    for n in (name, name.lower()):
+        if ks == 0:
+            ks = X.XStringToKeysym(n.encode())
+    if ks == 0:
+        sys.stderr.write("keys.py: no keysym %r\n" % name)
+    return X.XKeysymToKeycode(d, ks)
 
 
 def key(name, hold=0.08):

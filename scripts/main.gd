@@ -160,11 +160,13 @@ func _ready() -> void:
 	_typed.text_submitted.connect(_on_typed)
 	# The box itself sits under the game screen; what's typed is drawn on row 24 (P53).
 	_typed.text_changed.connect(func(_t: String) -> void: _show())
-	# Chat 123 (DOSBox, 2:20's PAY and 7:23's password): Escape does nothing at a typed answer; Godot's LineEdit stopped
-	# editing on it (the digits after it lost, the next Enter only took the field back).
+	# Chat 123 (DOSBox, 2:20's PAY): Escape ends a typed answer as Enter does ("56" Esc paid 56, "1A" Esc and Esc at an
+	# empty field asked again); Godot's LineEdit only stopped editing on it (the keys after it lost, the next Enter
+	# only took the field back).
 	_typed.gui_input.connect(func(ev: InputEvent) -> void:
-		if ev is InputEventKey and (ev as InputEventKey).keycode == KEY_ESCAPE:
-			_typed.accept_event())
+		if ev is InputEventKey and ev.is_pressed() and (ev as InputEventKey).keycode == KEY_ESCAPE:
+			_typed.accept_event()
+			_on_typed(_typed.text))
 	add_child(_typed)
 	_screen = GameScreen.new()
 	_screen.visible = false
