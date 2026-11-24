@@ -53,6 +53,7 @@ var _busy := false                  # a delay or walk is playing; input waits
 ## P90 (chat 105, DOSBox 2:20 5,9 at speed 9): a key typed while a script prints or waits on the walking screen
 ## isn't lost: the original acts on the last one once the script is done ("Y L" looks, "L Y" does nothing).
 var _type_ahead: InputEventKey = null
+var _type_ahead_ext := false        # the first key typed since the last hand-off was an extended one (chat 127)
 var _walk_path: Array[Vector2i] = []
 var _walk_final_dir := 0
 var _held_message := ""
@@ -1126,7 +1127,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 		if _busy:
 			if event is InputEventKey and not (event as InputEventKey).echo:
-				_type_ahead = event as InputEventKey
+				_type_ahead_add(event as InputEventKey)
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventKey and WALK_DIGITS.has(key) and _door_options == "" \
@@ -2813,6 +2814,63 @@ func _on_timer() -> void:
 	_type_ahead_go()
 
 
+## The DOS keyboard's extended keys (sent as 0 then this scan code) by ours' key.
+const DOS_SCANS := {KEY_UP: 0x48, KEY_DOWN: 0x50, KEY_LEFT: 0x4B, KEY_RIGHT: 0x4D, KEY_HOME: 0x47, KEY_END: 0x4F,
+	KEY_PAGEUP: 0x49, KEY_PAGEDOWN: 0x51, KEY_INSERT: 0x52, KEY_DELETE: 0x53, KEY_F1: 0x3B, KEY_F2: 0x3C, KEY_F3: 0x3D,
+	KEY_F4: 0x3E, KEY_F5: 0x3F, KEY_F6: 0x40, KEY_F7: 0x41, KEY_F8: 0x42, KEY_F9: 0x43, KEY_F10: 0x44}
+
+
+## A plain key's DOS character (-1: a key that types nothing, e.g. Shift).
+static func _dos_char(ev: InputEventKey) -> int:
+	match ev.keycode:
+		KEY_ENTER, KEY_KP_ENTER:
+			return 13
+		KEY_ESCAPE:
+			return 27
+		KEY_BACKSPACE:
+			return 8
+		KEY_TAB:
+			return 9
+	if ev.keycode >= KEY_KP_0 and ev.keycode <= KEY_KP_9:
+		return 48 + ev.keycode - KEY_KP_0
+	return ev.unicode if ev.unicode > 0 and ev.unicode < 127 else -1
+
+
+## A key typed while the walking screen is busy; the hand-off works out what the original's reader takes from them all.
+func _type_ahead_add(ev: InputEventKey) -> void:
+	var ext := DOS_SCANS.has(ev.keycode)
+	if not ext and _dos_char(ev) < 0:
+		return   # no key in the BIOS buffer (Shift, Ctrl, ...): the original never sees it
+	if _type_ahead == null:
+		_type_ahead_ext = ext
+	_type_ahead = ev
+
+
+## Chat 127 (START.EXE's get-key 0x899:0x59, DOSBox at speed 4, Rolf's approach): the original's reader takes one
+## character (ReadKey); if it isn't 0 it reads every key still waiting and keeps the last byte; if it is 0 (an extended
+## key) the caller reads again for the scan code, and that read keeps the last byte the same way. So a burst's FIRST
+## key decides plain or extended and its LAST byte the value: Down then Enter is an extended key with scan 0x0D
+## (nothing: PRESS not answered); Enter then Down is the character 0x50, 'P' (PRESS's letter: answered). One kind
+## throughout is simply the last key (chat 120's "E I": IGNORE CAVE). Null: an extended scan code no key has.
+func _dos_burst(first_ext: bool, last: InputEventKey) -> InputEventKey:
+	var last_ext := DOS_SCANS.has(last.keycode)
+	if first_ext == last_ext:
+		return last
+	var e := InputEventKey.new()
+	e.pressed = true
+	if not first_ext:
+		var scan: int = DOS_SCANS[last.keycode]
+		e.keycode = scan as Key   # the scan code as a character: Godot's keycode for an ASCII capital is its code
+		e.unicode = scan
+		return e
+	var c := _dos_char(last)
+	for k in DOS_SCANS:
+		if DOS_SCANS[k] == c:
+			e.keycode = k
+			return e
+	return null
+
+
 ## The key typed during the DELAY (P90): acted on once the script has ended on the walking screen, or by the menu
 ## or page the script stops at (chat 120, DOSBox: 6:25's dragon text, E typed while it types: ENTER CAVE IGNORE CAVE
 ## takes it, YOU ENTER THE CAVE.; "E I": IGNORE CAVE, the last key; 8:16's YOU SENSE AN ANTI-MAGIC SHELL ..., Enter
@@ -2820,8 +2878,10 @@ func _on_timer() -> void:
 func _type_ahead_go() -> void:
 	if _type_ahead == null or _busy:
 		return
-	var ev := _type_ahead
+	var ev := _dos_burst(_type_ahead_ext, _type_ahead)
 	_type_ahead = null
+	if ev == null:
+		return
 	if _mode == Mode.WALK and _vm.state == EclVM.State.INPUT and _typed.visible:
 		# Chat 124 (DOSBox, 3:0's tavern wager at speed 4, keys typed while HOW MANY PLATINUM PIECES ... types): the
 		# typed answer starts with the key: "1" shows 1 in the field, "12" only 2 (the last key), "1 Enter" and Escape
