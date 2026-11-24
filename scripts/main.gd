@@ -3352,7 +3352,15 @@ func _start_event_fight() -> void:
 	if CombatScreen.paced():
 		# Combat's: the original's fight setup prints "A battle begins..." on row 24 (light green)
 		# before the battlefield shows (GAME.OVR 0xE448; ~0.2 s in main's cold-open capture).
+		# Chat 125 (GAME.OVR 0xE435, DOSBox at speed 4, check 84's start: COMBAT at the goblins' menu): first a DELAY
+		# (game speed x 225 ms, 0x709:0xDBE: 0.83 s, row 24 blank), then the text; a key typed meanwhile reaches no
+		# menu (Q typed 0.5 s after COMBAT: the fight's first menu still waited). Ours showed the text at once and
+		# its first menu took a key typed 0.2 s on. Keys are dropped through both (_unhandled_input).
 		_battle_begins = true
+		_battle_wait = true
+		_show()
+		await get_tree().create_timer(maxf(CampScreen.speed * 0.225, 0.001)).timeout
+		_battle_wait = false
 		_show()
 		await get_tree().create_timer(0.2).timeout
 		_battle_begins = false
@@ -3376,6 +3384,7 @@ var _deferred_arrival := false   # 0x442F still set: the loaded block's arrival 
 var _deferred_prev_block := -1   # the block left (its menu mode is 0x49F9's at the arrival)
 var _deferred_then_arrive := false   # a LOOK's event is running: the arrival follows it
 var _battle_begins := false    # row 24 says A BATTLE BEGINS... for a moment before a fight (Combat)
+var _battle_wait := false      # ... after the DELAY before it (row 24 blank; chat 125)
 var _ending: EndingScreen
 
 
@@ -4228,7 +4237,7 @@ func _draw_screen() -> void:
 	_draw_runes(lines)
 	if who_label != "":
 		_screen.party_clickable(_party.size(), lit)   # Combat Chat 13, mouse step 2: a WHO list's lines (Up / Down)
-	if _battle_begins:   # over any row-24 note (Combat Chat 12: a load's GAME LOADED. hid it)
+	if _battle_begins and not _battle_wait:   # over any row-24 note (Combat Chat 12: a load's GAME LOADED. hid it)
 		_screen.text(0, 24, "A BATTLE BEGINS...", GameScreen.GREEN)   # GAME.OVR 0xE448 (Combat)
 		_screen.update()
 	elif note24:
