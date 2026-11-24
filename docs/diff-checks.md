@@ -172,6 +172,44 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 124: the AREA map as the original's, a key typed before a question; the second number input, the booth (main path)
+
+- **The old "Escape does nothing" claims (task: did the gate rely on a key never pressed?):** no. keys.py's table had
+  "esc" -> Escape from the start (b9683be), and every original-side run before chat 121 typed "esc" / "Esc" (the
+  table), never "Escape"; the lab's scripts and logs name "Escape", "Delete", "Insert", "Prior", "Next" or F1-F4 / F9
+  / F10 only in chats 121-123 (redone by chat 123). The checks' README claims (chats 88-97: Esc at DROP, TRADE, CAST,
+  USE IT?, STAY?, the shops, the temple, the hall) were real presses.
+- **A key typed while a question types (found, fixed; main path, input):** DOSBox, 3:0's tavern wager at speed 4
+  (`data/c124/gamta.sh`: keys 0.5 s after YOU HAVE 1 PP.'s Enter, while HOW MANY PLATINUM PIECES WILL YOU WAGER?
+  types): "1" is in the field when it opens, "12" leaves only 2 (the last key, as chat 104's walking-screen
+  type-ahead), "1 Enter" and Escape end an empty answer (asked again). Ours dropped the key at an INPUT (chat 120's
+  `_type_ahead_go` took it only at menus and pages). Now the key starts the field (Enter / Escape end it). Ours with
+  timed keys (`data/c124/ta1-3.txt`): 1 then Enter wagers 1 (RED), "12" wagers 2 (I CAN'T ACCEPT THAT WAGER.), "1
+  Enter" asks again: as the original. No check (a check's keys wait for the engine).
+- **The second INPUT_NUMBER (seen, matching):** 3:0's tavern, the spinning top (ECL3 block 0 0xA564, INPUT_NUMBER 4
+  [4A0D]; check 93's walk, I, YES, THRENDER GRONE with 1 PP): DOSBox (`data/c124/gamk.sh`) and ours (`gamo.sh`) alike
+  for "1", " 1", "+1", "$1", "1 " (asked again), "1" Escape, Escape (asked again), 1234567 (six kept: asked again),
+  2 and -0 (I CAN'T ACCEPT THAT WAGER.), 65537 (asked again), 65536 (0: can't accept). The only two INPUT_NUMBERs in
+  the game are this and 2:20's PAY.
+- **The booth's WHAT DO YOU SAY? (seen, matching):** 2:20's rope booth (INPUT_STRING 4 [9890], check 435's start):
+  "OHLO", "ohlo", "OHLO" Escape give the package (0x4A81 = 250); " OHLO", "OHLO ", "OH LO", "OHLOX", "OHL" Escape: I
+  CANNOT HELP YOU. Ours the same (DOSBox `boothk.sh`).
+- **LOAD WHICH GAME? and the hall's SAVE WHICH GAME (seen, matching):** START.EXE's prompt takes a slot letter and
+  Escape (CHOOSE A FUNCTION); Space, Enter, 1, 7, Home, End, the arrows, ',' and '.' do nothing (the screen unchanged
+  pixel for pixel). The hall's SAVE CURRENT GAME (3:11, check 103's start): the same keys, Escape back to CHOOSE A
+  FUNCTION (camp's asks QUIT TO DOS, chat 88). Ours' start_menu.gd and party_menu.gd take the same.
+- **The AREA map (found, fixed; main path, display):** GAME.OVR AREA (0x170B3) toggles DS:0x6AAC and redraws the view;
+  the view's draw (0x2EEF4) with it set calls 0x2E8F7: an 11 x 11 window of 8-pixel symbols at the view's corner,
+  the window's corner (x - 5, y - 5) kept within 0..5; each square symbol 0x104 + its walls (north 1, east 2, south
+  4, west 8; any wall nibble, doors included: 0x2ED72), then the party's square symbol 0x100 + facing / 2. Symbols
+  0x100-0x11E are symbol set 4, 8X8D1.DAX block 202 (loaded at 0xEA81; `data/c124/sym202.png`): a dark grey floor
+  with light grey edges, white arrows. Every square is drawn, seen or not. Ours drew grey lines on black (chat 11).
+  Now the original's: 2:20 14,5 S and 3:0 14,8 N, 15,9 E (an edge, the party in the window's last column) identical
+  to DOSBox pixel for pixel, the whole screen (`data/c124/area_o*.png` / `area_s*.png`).
+- **Open (display, main path, rare):** stepping into another area with AREA up (2:20 14,5 N, Up, into 3:0 14,8 N), the
+  original draws the new area's map but leaves the place line at the old square (14,5 N) until the next key; ours
+  shows 14,8 N (`data/c124/area_edge_cmp.png`).
+
 ## Chat 123: typed answers, Escape, the menus' digits and Home / End; checks 468, 470-475 (main path, input and game state)
 
 - **The lab's Escape was never pressed (found, fixed in the lab):** `keys.py` looked keysyms up by the lowercased name,
