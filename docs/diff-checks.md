@@ -196,6 +196,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   start (2:20, tpseed 20200001) at speed 4, REST 8 hours, R, F typed 0.45 s later (during the note, 0.25-0.94 s):
   the encounter's COMBAT WAIT FLEE PARLAY takes it, THE PARTY FLEES (14,6 W); ours drops it (the menu waits). The
   note lasts game speed x 225 ms in the original, 1.5 s in ours (text timing).
+- **A fight's start waits a DELAY before A BATTLE BEGINS... (found, fixed; input, main path, resets the streak):**
+  GAME.OVR 0xE435 waits game speed x 225 ms (row 24 blank) and then prints the text (0xE448). DOSBox at speed 4,
+  check 84's start, COMBAT at the goblins' menu: 0.83 s blank, the text 0.2 s, then MOVE VIEW AIM USE QUICK DONE; Q typed
+  0.5 s after COMBAT reached no menu (the fight's first menu still waited). Ours (windowed, paced) showed the text at
+  once and its first menu took a key from 0.2 s on: Q at 0.6 s ran the fight on QUICK. main.gd `_battle_wait`: the
+  DELAY first, keys dropped through both. Paced play only (the checks run unpaced): no check.
+- **Typed ahead, seen, matching:** 5:3's password: R typed while WHAT PASSWORD DO YOU GIVE? types, then HODIA, Enter:
+  through the gate in both (chat 124's fix covers INPUT_STRING); the inn's WHO WILL PAY? comes up at once after YES (no
+  text to type into); the altar's (check 25) DAMAGE page shows whole with PRESS ANY KEY (nothing timed). Walking: three
+  turns or steps typed 0.1 s apart all taken in both (3:0 from check 46's start, 6:25's band); four Ups 0.11 s apart:
+  the original takes 3 (a step there lasts about 0.35 s at speed 0 and 4 alike: the machine's draw, not a game-speed
+  wait; keys typed during one step: the last one taken, as ours' type-ahead), ours 4 at its 0.22 s step: not a rule
+  difference.
+- **Chat 124's open item (the place line after an area change with AREA up) was a jump save's artifact:** its Up was
+  the jump. A real crossing (check 462's start, 2:20 15,4 E, AREA, Up into 3:0 0,4): the whole screen identical, both
+  keeping 15,4 E on the place line (`data/c125/ae_cmp.png`). Closed.
 - **Seen, matching (Combat Chat 57's answers):** the hall's 1 1 7 1 lights RHIANNON in both; camp's EXIT, EXIT at
   check 457's start: the whole screen identical (LOOK lit).
 
@@ -255,7 +271,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **AREA in seven more areas (seen, matching after the fix):** jump saves (`data/c124/areas.sh`, `al1.txt`): 1:18, 4:2,
   8:29, 6:1 (4,0 N, the top edge), 4:10, 1:24, 4:21 identical to DOSBox, the whole screen; 5:4 and 7:23 (no square on
   the place line) give NOT HERE in both.
-- **Open (display, main path, rare):** stepping into another area with AREA up (2:20 14,5 N, Up, into 3:0 14,8 N), the
+- **Open (display, main path, rare; closed by chat 125: a jump save's artifact):** stepping into another area with AREA up (2:20 14,5 N, Up, into 3:0 14,8 N), the
   original draws the new area's map but leaves the place line at the old square (14,5 N) until the next key; ours
   shows 14,8 N (`data/c124/area_edge_cmp.png`).
 
