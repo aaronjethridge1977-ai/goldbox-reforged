@@ -423,3 +423,4 @@ pp.10, 25). *book*
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- (Curse) **The 10% experience bonus needs the prime requisite at 16 or more** (the Cluebook's 16+, not the Manual's 15+), single-class only, and **paladins and rangers get it too** (unlike Pool): cleric WIS, fighter STR, magic-user INT, thief DEX over 15; paladin STR and WIS both over 15; ranger STR, INT and WIS all over 15; the award + award / 10. *code*: Curse GAME.OVR 0x6094-0x61C3 (the record in memory: class +0x75; each ability is a byte pair, the second read: STR +0x11, INT +0x13, WIS +0x15, DEX +0x17), main chat 126 (answers Sources 1's request item (3)).
