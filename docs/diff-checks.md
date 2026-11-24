@@ -201,6 +201,12 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (the Adventurer's Journal's tale; `PRINT [6E7E]`, a byte variable, operand type 0x01); ours read type 0x01 as a string's
   address and printed no number. The game's other type-0x01 PRINT is 1:18's count before ... RUSH TO ATTACK. (`PRINT_CLEAR
   [6E79]`, the random encounters' COMBAT); every other PRINT of memory is 0x81 (a string) or 0x03 (the wager's PP).
+- **Keys typed with Ctrl or Alt (input, main path; fixed):** DOSBox, 2:20 / 3:0 from check 46's start, each from a fresh boot
+  (`data/c128/mod_all.png`): Alt+A and Ctrl+A do nothing on the walking screen, Shift+A is AREA; Ctrl or Alt with Up or Left
+  neither steps nor turns (DOS types Alt+letter as an extended key, Ctrl+letter as a control code, Ctrl / Alt arrows as
+  other extended codes). Ours took them as the plain keys (Alt+A and Ctrl+A opened AREA). Now ignored on the walking screen
+  and its script menus (F-keys and Escape aside; Ctrl+M as Enter at a menu not modelled). Ours windowed: Alt+A then A,
+  Ctrl+A then A leave AREA open (`n2mod_all.png`).
 - **Checked, matching:** Enter typed during the step into the tavern answers the text's PRESS (the original and ours
   go on to GAMBLE? YES NO); the save (SAVE WHICH GAME, a letter) is instant at the reference speed in both (no
   "Please Wait"; a key 0.09 s later meets QUIT TO DOS). **Settled from the code:** the row-24 note 0x709:0xD68's eight

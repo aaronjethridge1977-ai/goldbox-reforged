@@ -1126,6 +1126,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mode = ((_mode + 1) % 3) as Mode
 	elif _mode == Mode.WALK:
 		var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
+		if event is InputEventKey and ((event as InputEventKey).ctrl_pressed or (event as InputEventKey).alt_pressed) \
+				and not (key >= KEY_F1 and key <= KEY_F12) and key != KEY_ESCAPE:
+			# Chat 128 (DOSBox, 2:20 from check 46's start): Alt+A and Ctrl+A do nothing on the walking screen (DOS
+			# types Alt+letter as an extended key with the letter's scan code and Ctrl+letter as a control code, none
+			# of them a walking word); Shift+A is AREA as A is. Ours took Alt+A and Ctrl+A as A. The arrows and digits
+			# with Ctrl or Alt are other extended codes too. Not modelled: Ctrl+M (0x0D) as Enter at a script's menu.
+			get_viewport().set_input_as_handled()
+			return
 		if _busy:
 			if event is InputEventKey and not (event as InputEventKey).echo:
 				_type_ahead_add(event as InputEventKey)
