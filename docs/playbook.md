@@ -653,6 +653,7 @@ round is a minute; "a level" is the caster's level)
 Answering LEAVE puts some fights off to be taken later at a higher level. *seen* (Players 15, 23) Skip fights not
 worth the time: (Pool) at Podol Plaza (1:18) DISGUISE, not STRIDE BOLDLY: its orc bands are 15 rounds for about 180
 experience each. *Jeremy* (2026-11-22 18:14, after trying it)
+- A healing potion held for a hit-point mark (drink at 20 HP or less) never fires against a breath that takes a member from full to 0 in one blow: drink before the breath fight or not at all. *seen* (Gold Box Player 48, p48t3/p48t5: ARN, BRAM, CEDRIC fell to Tyranthraxus with their potions unspent)
 
 ## 5. In a fight
 
@@ -790,6 +791,7 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
   kobolds at 6) (corrected 2026-11-22: the book's "movement at least the fastest enemy's")
 - If the whole party flees, every unconscious or dead member is lost for good. Never flee and leave bodies: bandage the
   dying, or reload. *book* (Manual)
+- Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).
 
 ## 6. After a fight
 
@@ -1034,5 +1036,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- A healing potion held for a hit-point mark (drink at 20 HP or less) never fires against a breath that takes a member from full to 0 in one blow: drink before the breath fight or not at all. *seen* (Gold Box Player 48, p48t3/p48t5: ARN, BRAM, CEDRIC fell to Tyranthraxus with their potions unspent)
-- Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).

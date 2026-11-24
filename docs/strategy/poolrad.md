@@ -94,6 +94,7 @@ CEDRIC cleric, ELWEN C/F/MU, LIRA F/MU, DORN F/T)
     mummies; the tower door (15,6): LEAVE (section 3).
 14. **Stojanow Gate:** buy the merchant's wagon by day (section 3).
 15. **Valjevo Castle:** section 3 and section 4's rules.
+- Level drainers load only in 2:15 (Mendor's Library: the spectre, MON2 17), 4:2 (the Textile House: wights) and 4:10 (the graveyard: wights, a wraith, spectres, vampires): every fixed and table LOAD_MON in ECL1-8 read, and MON3CHA (all of ECL3's monsters, Kovel Mansion 3:14's included) has no drainer at all; so the route table's row 14 (`library2` -> `kovel`, "spectre on the way out") and the trips table's row 9 drain happened leaving the library (2:15), not in Kovel: Restoration can go once 4:10 is cleared. *code* (Chat 113, data/c109/dis + MON1-8CHA, for the Lead's 05:04 note)
 
 ## 3. Hard fights
 
@@ -322,6 +323,9 @@ files); results *seen* unless marked.
   rounds: on 3,8 S slot 1 stands 27,12, 2 26,12, 3 28,12, 4 25,12, 5 26,11, 6 25,11, 7 27,11, with him at 27,13. His
   first breath never caught slots 4-5 and seldom 3 in 60 seeds, but slot 2 in 55% and slot 6 in 37%: casters 3rd-5th,
   the sturdiest fighter 2nd. *code* + *seen* (main chat 104, ours over 60 seeds; the formation seen in DOSBox)
+- The finale's 12 guards fall to rules alone, no chat orders: Hold Person on the guards touching a member, clouds on the guards touching ours (no overlap), every blow on a held or clouded guard beside the striker: 5 of 5 won, none dead (seeds 47010001-05). With the casters kept off Tyranthraxus the game was 2 of 5, two losses at his 15 and 10 HP. *seen* (Gold Box Player 48, p48t1-t5; stuck-fights.md section 5)
+- Tyranthraxus (AC -4, alone after the CONTINUE rounds): the casters with fighter levels strike him too, not only the fighters: with ELWEN and LIRA walking in from his first round the game went 4 of 5 against 2 of 5 with them standing back; LIRA (F6) hit in four of five tries (14-22 HP, one killing blow), ELWEN (F5) never in five swings. *seen* (Player 49, stuck-fights.md section 5, "Q34's finishing blows"; Jeremy's Q34 2026-11-23 07:33)
+- No camp lies between the finale's guards and Tyranthraxus (guards, treasure, the vote, his COMBAT), so the one party order sets both fights' start: a breath spread that puts DORN, CEDRIC and LIRA in the front row lost the guards 3 of 5 (main's spread, the game 0 of 5 against 4 of 5); keep the fighters in slots 1-3 *seen* (Player 50, 5:7, seeds 47010001-05)
 
 **Cadorna's Textile House (4:2)**
 - **Grishnak's temple (3,11):** Grishnak (a caster: Curse, Hold Person, Silence 15', Cause Disease, Bestow Curse and
@@ -587,6 +591,8 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
   parley Nice with the caged lizard men (SAVIOR, the friend word for the Lizard Man Keep). *book*
 - New Phlan's city watch (12 7th-level clerics...) and City Hall's guards fight only a party that attacks the town:
   never attack it. *code* (the gear map's data)
+- A member who falls in a fight earns nothing from it, even if bandaged and cured back to hit points before it ends (and isn't counted in the split, so the others' shares grow); one unconscious with hit points from before the fight gets nothing either; curing a fallen member mid-fight saves the member, not the share (*code*: GAME.OVR 0x58D3 pays by record +0x10D; Player 51's p45i5, LIRA in the finale's guards fight, Combat Chat 53).
+- Stirges (7:26's bands and others): a stirge that hits latches on and drinks 1d4 at the start of each of its turns instead of attacking (its turn ends there); the member it hangs on gets no movement in any round that starts with it attached, so kill the latched ones first; once one has drunk about 12 it lets go and is forced to flee every turn after (a free blow as it leaves). *code* *seen* (GAME.OVR 0x103CB, 0x100AD; DOSBox, the Player's 7:26 13,22 band; Combat Chat 54)
 
 ## 5. The magic-gear map
 
@@ -738,9 +744,3 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- Level drainers load only in 2:15 (Mendor's Library: the spectre, MON2 17), 4:2 (the Textile House: wights) and 4:10 (the graveyard: wights, a wraith, spectres, vampires): every fixed and table LOAD_MON in ECL1-8 read, and MON3CHA (all of ECL3's monsters, Kovel Mansion 3:14's included) has no drainer at all; so the route table's row 14 (`library2` -> `kovel`, "spectre on the way out") and the trips table's row 9 drain happened leaving the library (2:15), not in Kovel: Restoration can go once 4:10 is cleared. *code* (Chat 113, data/c109/dis + MON1-8CHA, for the Lead's 05:04 note)
-- The finale's 12 guards fall to rules alone, no chat orders: Hold Person on the guards touching a member, clouds on the guards touching ours (no overlap), every blow on a held or clouded guard beside the striker: 5 of 5 won, none dead (seeds 47010001-05). With the casters kept off Tyranthraxus the game was 2 of 5, two losses at his 15 and 10 HP. *seen* (Gold Box Player 48, p48t1-t5; stuck-fights.md section 5)
-- Tyranthraxus (AC -4, alone after the CONTINUE rounds): the casters with fighter levels strike him too, not only the fighters: with ELWEN and LIRA walking in from his first round the game went 4 of 5 against 2 of 5 with them standing back; LIRA (F6) hit in four of five tries (14-22 HP, one killing blow), ELWEN (F5) never in five swings. *seen* (Player 49, stuck-fights.md section 5, "Q34's finishing blows"; Jeremy's Q34 2026-11-23 07:33)
-- No camp lies between the finale's guards and Tyranthraxus (guards, treasure, the vote, his COMBAT), so the one party order sets both fights' start: a breath spread that puts DORN, CEDRIC and LIRA in the front row lost the guards 3 of 5 (main's spread, the game 0 of 5 against 4 of 5); keep the fighters in slots 1-3 *seen* (Player 50, 5:7, seeds 47010001-05)
-- A member who falls in a fight earns nothing from it, even if bandaged and cured back to hit points before it ends (and isn't counted in the split, so the others' shares grow); one unconscious with hit points from before the fight gets nothing either; curing a fallen member mid-fight saves the member, not the share (*code*: GAME.OVR 0x58D3 pays by record +0x10D; Player 51's p45i5, LIRA in the finale's guards fight, Combat Chat 53).
-- Stirges (7:26's bands and others): a stirge that hits latches on and drinks 1d4 at the start of each of its turns instead of attacking (its turn ends there); the member it hangs on gets no movement in any round that starts with it attached, so kill the latched ones first; once one has drunk about 12 it lets go and is forced to flee every turn after (a free blow as it leaves). *code* *seen* (GAME.OVR 0x103CB, 0x100AD; DOSBox, the Player's 7:26 13,22 band; Combat Chat 54)

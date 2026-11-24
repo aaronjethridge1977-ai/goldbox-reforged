@@ -137,7 +137,9 @@ walk the ledger line by line and isn't checked again at the door, where things g
    foe beside him) become the general rules; then `OP_PLAN5` is retired and the rules alone are measured against the
    chat on the same saves and seeds.
 4. **Tyranthraxus' first breath** (2 of 5 tries lost before a menu of ours): **spread the party in the CONTINUE
-   BATTLE rounds** before he comes; tried in ours first (main, step 3), then in the original. **Casters never strike
-   him** (ELWEN died both times she was ordered to).
+   BATTLE rounds** before he comes; tried in ours first (main, step 3), then in the original. **Superseded
+   2026-11-23:** the CONTINUE rounds' places don't carry (his fight forms from the party order), and main's breath
+   order lost the guards' fight in the original (Player 50: game 0 of 5): keep Player 49's order (Jeremy, Q36). "Casters
+   never strike him" is a guideline: ELWEN and LIRA strike him (Jeremy, Q34; Player 49: game 4 of 5).
 5. **The throne room's escort: closed** (won from 6,3 without it).
 6. **The measure adds:** deaths in wins, minutes of the Player chat per try, consumables left unspent.
