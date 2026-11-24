@@ -172,6 +172,43 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 122: the menus' shared highlight (main path, input and display)
+
+- **The walking menu's lit word (found, fixed; main path, display; chat 121's open item):** GAME.OVR's horizontal menu
+  routine 0x2CC8C (stub 0x3C5:0x2A, 29 callers in GAME.OVR, one in START.EXE) keeps its highlight in one byte, DS:0x6B2B,
+  for the whole session (not saved). At a menu's start a highlight past the last word becomes 1 for good (0x2CCDE); a
+  word taken by its letter leaves the highlight on it (0x2CF4B); Enter, Space and Escape leave it. The list routine
+  0x2D669 (the script's vertical menu 0x8C5B, WHO, shops' lists) sets it to 1 as it opens (0x2D6B9); the YES / NO
+  question 0x2D9A0 sets 2. START.EXE never writes it. DOSBox (5:3, check 457's start): S lights SEARCH, ',' ENCAMP, '.'
+  x3 AREA; after the LOCKED. menu's ',' and E, ENCAMP. Ours (`EclVM.menu_hl`, `menu_lit`, `menu_step`): the walking menu,
+  a script's horizontal menu and the LOCKED. menu share it; row 24 pixel for pixel in all seven screens. A script's
+  menu past its last word now starts from the first (ours lit the last); lists keep their own highlight and put the
+  shared one on the first word. **Needs Combat:** VIEW's, camp's, a fight's, the shops' and the treasure's menus
+  (their screens) to read and set `EclVM.menu_hl` (after VIEW's EXIT the walking menu lights ENCAMP; ours now VIEW).
+- **',' and '.' (found, fixed; main path, input):** 0x2CC8C moves its highlight left with ',' and right with '.',
+  wrapping (0x2CE93, 0x2CEB7), at every menu using it; ours took neither key anywhere. At the walking menu, the scripts'
+  menus (Enter only for one word, Q24) and LOCKED. (Enter = EXIT) they change only what is lit; Combat's menus that
+  take Enter on the lit word would change the choice (Combat's check).
+- **A DAMAGE that kills the whole party (found, fixed; main path area 7:23, input and display):** GAME.OVR 0x371B
+  checks every member after the hits; with nobody standing (0x3761-0x37DF) it clears the screen to one frame, prints
+  THE ENTIRE PARTY IS KILLED! at its top left (green), waits 3 s, then PRESS <ENTER>/<RETURN> TO CONTINUE waits for a
+  key, and the game quits to DOS. The boxes that filled before wait as usual (PRESS ANY KEY TO CONTINUE); the last one
+  is drawn but not waited on. DOSBox, 7:23's wrong password at 1,1 (DAMAGE 224, 1d1+200 on all six): five DIES lines and
+  PRESS ANY KEY, then the kill screen. Ours went straight to THE PARTY HAS FALLEN (two keys fewer); now both screens
+  pixel for pixel, then ours' fallen-party screen (ours doesn't quit). The 3 s before the prompt are not modelled
+  (text timing, open).
+- **A DAMAGE that prints nothing (found, fixed; 7:23, display):** the lizard men's barrels at 5,4 (two DAMAGE 128: one
+  random member, a save): the second picks DARKSTAR, who saves (d20 = 20); the original's page shows the first one's
+  THRENDER GRONE DIES. still white, ours drew it green. Now `EclVM._damage_left` keeps the white rows. The barrels and
+  the fight's set-up: all 881 draws as the original's (trace). **For Combat (display):** the fight's view is one row
+  higher in ours (the wall above clipped) and the dead THRENDER GRONE's body isn't drawn at his place (27,13).
+- **The fountain's explosion (seen, matching; 7:23 2,1):** DESTROY THE EQUIPMENT four times (tpseed 11111111): the
+  whines, then THERE IS AN ENORMOUS EXPLOSION!, the facing written W, 3d10 on all: the same texts and deaths.
+- **Seen, matching:** the script's vertical menu (5:3's gate) puts the shared highlight on its first word as it opens
+  (DOSBox: 4 before, 1 at the menu) and takes no ',' '.' or Escape. Enter and Space at the walking menu do nothing; Escape at LOCKED. and at a script's horizontal
+  menu (2:20's kobolds, COMBAT WAIT FLEE PARLAY) does nothing, nor Enter and Space there; AREA's map stays up through a
+  step and into the next script menu (1:18, ours the same).
+
 ## Chat 121: the 3D view's far row, its edge wrap and backdrop codes; the arrival's place line; CALL 0x2C90's time and sky; the LOCKED. menu; check 466 (main path, display and input)
 
 - **The far row's fillers (found, fixed; main path, display):** GAME.OVR 0x2EF7D draws the far row from the centre
