@@ -197,7 +197,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Ctrl+V add nothing; past the field's length (6 here) nothing. "K1" is asked again (Val). Ours' LineEdit moved its
   caret on the arrows and Home, deleted on Delete, selected, pasted and undid. Now `main.gd _input_char` decides every
   key (the type-ahead's first key too). Check 486: the wager typed 1, Left, Enter (1K: asked again), 2, Home, Ctrl+H,
-  Enter: 2 wagered (GREEN, 4 PP); the code before wagered 1 (3 PP). Not measured: Alt with an arrow or F-key.
+  Enter: 2 wagered (GREEN, 4 PP); the code before wagered 1 (3 PP). A Left typed while the question types starts the
+  answer with K in both (chat 124's type-ahead). Not measured: Alt with an arrow or F-key.
 - **Checked, matching:** an extended key at a script's menu types no letter (check 93's IGNORE GRAB: Home ('G') and
   PgUp ('I') do nothing in both); 5:7's PRESS BUTTON OR RETURN TO CONTINUE (a one-word MENU_HORIZONTAL): B, Space, Down,
   Tab nothing, P goes on (both); the party's DAMAGE page's PRESS ANY KEY: Down goes on, Shift, Ctrl, Alt alone nothing
