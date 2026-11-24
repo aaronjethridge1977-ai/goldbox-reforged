@@ -1369,7 +1369,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				# (GAME.OVR 0x170B3: "Not Here", colour 14); chat 61, DOSBox with 0x49FB = 1. Chat 124: START.EXE
 				# 0x709:0xD68 clears row 24, prints it, waits a script DELAY (game speed x 225 ms, 0x709:0xDBE) and
 				# clears it again (DOSBox, 5:4 at speed 4: yellow, gone within 0.9 s); ours showed it white for 1.5 s.
-				_note_24("NOT HERE", GameScreen.YELLOW, TEXT_SPEED * 225)
+				_note_24_wait("NOT HERE")
 			else:
 				_area_view = not _area_view
 		elif key == KEY_E:
@@ -1700,6 +1700,25 @@ func _note_24(text: String, colour: int = GameScreen.WHITE, ms: int = 1500) -> v
 	if Time.get_ticks_msec() >= _row24_until and _row24_note == text:
 		_row24_note = ""
 		_show()
+
+
+## START.EXE 0x709:0xD68's note: row 24 cleared, the text in yellow, a script DELAY (game speed x 225 ms, 0x709:0xDBE,
+## a plain wait), row 24 cleared; `then` runs after it. The game reads no keys meanwhile: chat 125 (DOSBox, check 33's
+## start at speed 4, 18,20 E: Right into the river, then Left and Up typed during the note) took only the last key
+## (18,19 N; Left Left: one step); in plain walking the same three keys all step. Ours walked on during the note
+## (17,19 N). Keys typed during it are now type-ahead (`_busy`: the last one is taken after).
+func _note_24_wait(text: String, then: Callable = Callable()) -> void:
+	var ms := TEXT_SPEED * 225
+	_busy = true
+	_note_24(text, GameScreen.YELLOW, ms)
+	await get_tree().create_timer(ms / 1000.0).timeout
+	if _row24_note == text:
+		_row24_note = ""
+	_busy = false
+	if then.is_valid():
+		then.call()
+	_show()
+	_type_ahead_go()
 
 
 ## Lab aid: the first item in the game's treasure and monster lists whose full name starts
@@ -2493,12 +2512,9 @@ func _overland_step(direction: int) -> void:
 	# routine then runs ECL entry [0x49E5] whether it moved or not (0x4228), as in a 3D area.
 	if OverlandMap.water(v) or (OverlandMap.river(v) and _vm.read_byte(0x4AA2) == 0):
 		if not OverlandMap.water(v):
-			_note_24("THE RIVER'S STENCH DRIVES YOU BACK.", GameScreen.YELLOW, TEXT_SPEED * 225)
-		if _vm.ecl != null:
-			_vm.clear_output()
-			_vm.walk_menu_next = true
-			_vm.start(1)
-			_after_vm()
+			_note_24_wait("THE RIVER'S STENCH DRIVES YOU BACK.", _event_after_river)
+		else:
+			_event_after_river()
 		return
 	_vm.write_byte(EclVM.OVERLAND_X, x)
 	_vm.write_byte(EclVM.OVERLAND_Y, y)
@@ -2511,6 +2527,16 @@ func _overland_step(direction: int) -> void:
 		_vm.clear_output()
 		# Chat 119 (DOSBox, check 127's start, a step onto Phlan's east edge: YOU ARE ON THE EASTERN EDGE OF THE CITY. ...
 		# types over CAST VIEW ENCAMP SEARCH LOOK, then NORTH SOUTH BOAT LEAVE): the walking menu stays on row 24.
+		_vm.walk_menu_next = true
+		_vm.start(1)
+		_after_vm()
+
+
+## A refused band step runs the square's event (chat 54), after the river's note when there is one (GAME.OVR 0x16FEE
+## prints it before the step routine's ECL call at 0x4228).
+func _event_after_river() -> void:
+	if _vm.ecl != null:
+		_vm.clear_output()
 		_vm.walk_menu_next = true
 		_vm.start(1)
 		_after_vm()
