@@ -205,7 +205,7 @@ func _refresh() -> void:
 			match _mode:
 				"menu":
 					if _row24 != "":
-						_scr.text(0, 24, _row24, GameScreen.WHITE)
+						_scr.text(0, 24, _row24, GameScreen.YELLOW)
 					else:
 						_scr.text(0, 24, "CHOOSE A FUNCTION", MAGENTA)
 				"confirm_drop":
@@ -249,11 +249,13 @@ func _open_save_list() -> void:
 	_save_list.open("save", game_path)
 
 
-## P57: why training refused, on row 24 for a moment (as the camp's refusals), then the menu.
+## The hall's refusals (TRAIN's four, MODIFY's): START.EXE 0x709:0xD68 clears row 24, prints the text in yellow (GAME.OVR
+## passes 14), waits a script DELAY (game speed x 225 ms, 0x709:0xDBE) and clears row 24; then CHOOSE A FUNCTION
+## (main chat 124, DOSBox at 3:11 at speed 4: TRAINING COSTS 1000 GP. 0.2-0.9 s; at speed 0 it lasts no time).
 func _say_24(text: String) -> void:
 	_row24 = text
 	_refresh()
-	await get_tree().create_timer(1.5 * CampScreen.delay_scale()).timeout
+	await get_tree().create_timer(CampScreen.speed * 0.225).timeout
 	if _row24 == text:
 		_row24 = ""
 		_refresh()
@@ -300,8 +302,8 @@ func _train() -> void:
 		return
 	var plan := m.training_plan(tables, hall_mask)
 	if plan.has("error"):
-		_note.text = plan.error       # the original says nothing; ours shows it (P57)
-		_say_24(plan.error)
+		_note.text = plan.error
+		_say_24(plan.error)           # GAME.OVR 0x1C359-0x1C67F
 		return
 	_plan.assign(plan.classes)
 	_note.text = ""
@@ -478,8 +480,12 @@ func _function(item: String) -> void:
 				_mode = "confirm_drop"
 				_refresh()
 		"MODIFY CHARACTER":
-			if _who() != null and game_path != "" and _who().experience == 0:
-				_modify()
+			if _who() != null and game_path != "":
+				if _who().experience > 0:
+					# GAME.OVR 0x1BA25: experience (record +0xAC) above 0: "<name> can't be modified." as a row-24 note.
+					_say_24("%s CAN'T BE MODIFIED." % _who().name)
+				else:
+					_modify()
 		"TRAIN CHARACTER":
 			_train()
 		"VIEW CHARACTER":
