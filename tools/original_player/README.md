@@ -1329,6 +1329,28 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 56 (2026-11-24): the 4:2 ghoul fixture for Combat (P115)
+
+**Where 4:2's ghouls come from** (ECL 4_2, lab `data/c109/dis/4_2.txt`): a step onto a plain square (event 0) draws
+1 in 30 (0x9A08; 1 in 5 when [6DCA] is 1); then RANDOM 10 + [4AE4] picks the band (0x9A85): over 17 hobgoblins, 13-17
+the skeletal force, **8-12 "SOME GHOULS DECIDE TO ADD YOU TO THEIR MENU." (0x9B91): 1 wight (20) + 5 ghouls (72), COMBAT
+at once** (no COMBAT WAIT FLEE menu), 4-7 scorpions, 0-3 frogs. An interrupted rest draws the same table (0x9A2A).
+These are Jeremy's "1 wight, 5 ghoul" fights (P114).
+
+**The fixture:** `p56/ghoul42.plan` from `p2start/p41b3_s41back` (3:0 4,12, the inn; the Plan 2 chain's level-6 party,
+all full) by grish.plan's way into 4:2, then pacing 9,5 <-> 9,8 with a checkpoint before every step (each save faces its
+step), `tactics on`. Run p56a1 (seed 56020001): scorpions at 9,6, then the ghouls on the 42nd paced step. The save
+**`.lab/player/saves/p56a1/g042`** (also `p2start/p56a1_g042`, slot H's files): **4:2 9,6 facing N, seed aeba0d61**;
+one step N (`up`) onto 9,5 gives the text, seed c58ffa7f, and the fight: **WIGHT 23 HP at 27,12; GHOULS 10 HP each at
+26,12, 28,12, 26,11, 25,11, 27,11**; the party at ARN 27,13, BRAM 28,13, CEDRIC 26,13, ELWEN 28,14, LIRA 29,14, DORN
+27,14 (the band starts in contact with the front row and closes at once); ELWEN's menu first (round 1, seed 59d003d8).
+Party at the save: ARN F6 57/65, BRAM F6 53/60, CEDRIC C6 42/42, ELWEN C5/F5/MU4 41/41, LIRA F5/MU5 43/43, DORN F5/T6
+43/46; **ELWEN memorized: 2 STINKING CLOUD** (3 Bless, 3 Sleep, 5 Hold Person, 1 Prayer), LIRA 2 STINKING CLOUD (2
+Sleep, Read Magic), CEDRIC 2 Bless, 4 Hold Person, 3 Prayer, 1 more. Checked: `p56/ghoulv.plan` (p56v1) from that save
+and seed: the same seed after the step, the same six figures on the same squares. In p56a1 and p56v1 our tactics TURNed
+in round 1 (ELWEN, then CEDRIC): four destroyed or gone, two ghouls turned and fled; Combat casts by hand instead.
+Memorized spell ids read from the save (0x17..0x2B): 1 Bless, 21 Sleep, 23 Hold Person, 34 Stinking Cloud, 42 Prayer.
+
 ## Player 55 (2026-11-23/24): the full recheck, 70 of 70 on f12ed9f (28 of 70 again on 30db957, all identical); baseline.txt to 70
 
 **All 70 replayed** on origin/main **f12ed9f** (2026-11-23 21:42; the day's text timing, type-ahead, experience share
