@@ -200,6 +200,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   LOOKed: the clock). With the key still held when the wait ends, both games went on alike (ours' next repeat), so only a
   release inside the wait shows it. Not changed: the repeats typed during A BATTLE BEGINS... (main.gd `_battle_keep`, not
   measured).
+- **Combat's request (keys typed during computer turns), check 489: built, not installed.** A --fast check can't hold a key inside a monster's line (~33 ms), so `~/gbr/lab/data/c130/dc_paced.sh` (dc_new.sh with --anim for a check folder holding `paced`) runs it paced: check 84's goblins at speed 4, RHIANNON DONE GUARD, DARKSTAR DONE QUIT, timed THRENDER D G and D 2.7 s after the G (the goblin's second line; windows: the original +2.31-3.16 s, ours +1.97-3.08 s), PHINEAS QUIT, Alt-Q. Ours matches turn by turn to Alt-Q, then the dice part (RHIANNON's guard blow: the original misses, ours hits for 3): a draw-count difference in that round, to Combat (board). The control can't be keyed under --fast (a D typed for PHINEAS lands in the goblin's turn, the poll drains it).
 
 ## Chat 129: the held arrow landed; Ctrl+M; a typed answer's keys (main path); the wilderness's held step
 
