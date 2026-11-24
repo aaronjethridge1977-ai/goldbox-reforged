@@ -1,4 +1,4 @@
-# recordings identical at 2026-11-21T07:02:20-05:00 (match.py baseline)
+# recordings identical at 2026-11-24T03:32:37-05:00 (Player 55: written from match.py score's 70 of 70 on f12ed9f, 2026-11-24 03:29)
 p13a1
 p13b6
 p35i2
@@ -18,6 +18,7 @@ p16c3
 p16d1
 p16e2
 p17a2
+p17a6
 p17a7
 p18a1
 p18a3
@@ -67,3 +68,4 @@ p27d3
 p28a2
 p28i3
 p29a2
+p45i5

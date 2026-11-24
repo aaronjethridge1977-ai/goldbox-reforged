@@ -1329,6 +1329,24 @@ each change (a 40 or 80 fall marked as the breath).
 
 Lab: `p50/` (measure.txt, breath.py, rules48.plan with the spread); runs p50t1-t5.
 
+## Player 55 (2026-11-23/24): the full recheck, 70 of 70 on f12ed9f; baseline.txt to 70
+
+**All 70 replayed** on origin/main **f12ed9f** (2026-11-23 21:42; the day's text timing, type-ahead, experience share
+and attacker's facing in), `match.py run -j 2`, 21:43-03:29 (beside main's and Combat's diffcheck runs): **70 of 70
+identical** (0 game, 0 replay tool, 0 known shortcut). Lab: `p55/match_all.out`, `p55/score_f12ed9f.md`, the kept
+outputs `p55/match_f12ed9f_outputs/`.
+**match/baseline.txt** (the release gate's list, `tools/build/match_gate.sh`) rewritten to the 70 (was 68 from
+2026-11-21: p17a6 and p45i5 added). Written from the f12ed9f score, not by `match.py baseline`: that reads ours' logs
+from LAB/logs, which the second run below was already rewriting.
+**Keys the recordings give at a fight's YES / NO question** (Combat Chat 56's 5cbfda2: only Y and N): always a letter
+(y, n, and stray c / d / p / f the original ignored), never Enter or Esc; segment.py adds no Enter of its own.
+**The lab's keys.py** (main chat 123: X keysym names are case-sensitive, so a name missing from the table was sent
+lowercased and gave no key): the 70 recordings' keys to the original are all in the table (pgdn 21 times, pgup once,
+no esc, F-key, Delete or Insert), so the original got every key; none needs a look.
+**Second run on 30db957** (main and Combat landed many input changes after f12ed9f: the fight's Y / N, the shared
+menu highlight, digits and Home / End at menus, Space at a one-word menu, keys during row 24's notes), all 70 from a
+detached checkout `p55/wt` so this worktree's pushes can't change files under it: see below.
+
 ## Player 54 (2026-11-23): the ghoul fixture for Combat (P115)
 
 **Combat's ghoul checkpoint** (the Lead's item, Jeremy's cloud-on-ghouls report P115): p32a4's band at 4:10 8,8 is
