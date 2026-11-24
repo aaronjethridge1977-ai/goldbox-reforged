@@ -175,10 +175,24 @@ func _ready() -> void:
 	# Chat 123 (DOSBox, 2:20's PAY): Escape ends a typed answer as Enter does ("56" Esc paid 56, "1A" Esc and Esc at an
 	# empty field asked again); Godot's LineEdit only stopped editing on it (the keys after it lost, the next Enter
 	# only took the field back).
+	# Chat 129 (DOSBox, the same wager): the field takes only what the original's reader does (_input_char); the
+	# LineEdit's own editing keys (the caret, Delete, select all, paste, undo) never reach it.
 	_typed.gui_input.connect(func(ev: InputEvent) -> void:
-		if ev is InputEventKey and ev.is_pressed() and (ev as InputEventKey).keycode == KEY_ESCAPE:
-			_typed.accept_event()
-			_on_typed(_typed.text))
+		if not ev is InputEventKey:
+			return
+		_typed.accept_event()
+		if not ev.is_pressed():
+			return
+		var c := _input_char(ev as InputEventKey)
+		if c == INPUT_END:
+			_on_typed(_typed.text)
+		elif c == INPUT_BACK:
+			_typed.text = _typed.text.left(-1)
+			_show()
+		elif c >= 32 and (_typed.max_length <= 0 or _typed.text.length() < _typed.max_length):
+			_typed.text += String.chr(c)
+			_show()
+		_typed.caret_column = _typed.text.length())
 	add_child(_typed)
 	_screen = GameScreen.new()
 	_screen.visible = false
@@ -2882,6 +2896,48 @@ static func _dos_char(ev: InputEventKey) -> int:
 	return ev.unicode if ev.unicode > 0 and ev.unicode < 127 else -1
 
 
+const INPUT_END := -2    # _input_char: ends the typed answer
+const INPUT_BACK := -3   # _input_char: takes back the last character
+## Alt+letter and Alt+digit: the DOS keyboard's scan codes (sent as 0, then the scan code).
+const ALT_SCANS := {KEY_Q: 0x10, KEY_W: 0x11, KEY_E: 0x12, KEY_R: 0x13, KEY_T: 0x14, KEY_Y: 0x15, KEY_U: 0x16,
+	KEY_I: 0x17, KEY_O: 0x18, KEY_P: 0x19, KEY_A: 0x1E, KEY_S: 0x1F, KEY_D: 0x20, KEY_F: 0x21, KEY_G: 0x22,
+	KEY_H: 0x23, KEY_J: 0x24, KEY_K: 0x25, KEY_L: 0x26, KEY_Z: 0x2C, KEY_X: 0x2D, KEY_C: 0x2E, KEY_V: 0x2F,
+	KEY_B: 0x30, KEY_N: 0x31, KEY_M: 0x32, KEY_1: 0x78, KEY_2: 0x79, KEY_3: 0x7A, KEY_4: 0x7B, KEY_5: 0x7C,
+	KEY_6: 0x7D, KEY_7: 0x7E}
+
+
+## Chat 129 (DOSBox, 3:0's tavern wager, HOW MANY PLATINUM PIECES WILL YOU WAGER?, at speed 4): what a key does in a
+## script's typed answer. The original's reader takes the extended keys' second byte, the scan code, as a character:
+## Left types K, Right M, Up H, Down P, Home G, End O, PgUp I, PgDn Q, Insert R, Delete S, F1 ';', F10 D; Alt+B '0',
+## Alt+N '1', Alt+1 'X' (shown in capitals), Alt+A (0x1E) nothing. Enter, Escape, Ctrl+M and Ctrl+[ end the answer;
+## Backspace and Ctrl+H take back a character; Tab, Ctrl+A, Ctrl+V and other control codes type nothing. Typing past
+## the field's length does nothing. Ours' LineEdit moved its caret on the arrows, pasted, selected and undid.
+## Returns the character, INPUT_END, INPUT_BACK, or -1 (nothing).
+static func _input_char(ev: InputEventKey) -> int:
+	var k := ev.keycode
+	if ev.alt_pressed and not ev.ctrl_pressed:
+		if DOS_SCANS.has(k):
+			return -1   # Alt+arrow / Alt+F-key: other scan codes (not measured)
+		var s: int = ALT_SCANS.get(k, -1)
+		return s if s >= 32 else -1
+	if ev.ctrl_pressed:
+		match k:
+			KEY_M, KEY_BRACKETLEFT:
+				return INPUT_END
+			KEY_H:
+				return INPUT_BACK
+		return -1
+	if DOS_SCANS.has(k):
+		return DOS_SCANS[k]
+	match _dos_char(ev):
+		13, 27:
+			return INPUT_END
+		8:
+			return INPUT_BACK
+	var c := _dos_char(ev)
+	return c if c >= 32 and c < 127 else -1
+
+
 ## Chat 128: the view's redraw after a walking-screen turn or step (see _redraw_until).
 func _redrawing() -> bool:
 	return Time.get_ticks_msec() < _redraw_until
@@ -2950,10 +3006,11 @@ func _type_ahead_go() -> void:
 		# Chat 124 (DOSBox, 3:0's tavern wager at speed 4, keys typed while HOW MANY PLATINUM PIECES ... types): the
 		# typed answer starts with the key: "1" shows 1 in the field, "12" only 2 (the last key), "1 Enter" and Escape
 		# end the empty answer (asked again). Ours dropped it.
-		if ev.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE]:
+		var c := _input_char(ev)   # chat 129: an extended key types its scan code here too
+		if c == INPUT_END:
 			_on_typed(_typed.text)
-		elif ev.unicode >= 32 and ev.unicode < 127:
-			_typed.text = String.chr(ev.unicode)
+		elif c >= 32:
+			_typed.text = String.chr(c)
 			_typed.caret_column = _typed.text.length()
 			_show()
 		return
