@@ -196,6 +196,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   the code before (0,15 N) and with the break. Combat's type-ahead keeps (the hall's notes, the rest, the CAST note,
   the ID reply) should read a burst the same way.
 - **Seen, matching:** Rolf's approach (game start), Enter typed during it: the first PRESS answered at once (both).
+- **Combat Chat 57's fixes of main chats 125-126's requests, checked (windowed, keys at set times, against chats
+  125-126's DOSBox results):** the hall's End End during TRAINING COSTS 1000 GP. (RHIANNON), F during RUDELY
+  INTERRUPTED! (fled to 14,6 W), E during the camp's CAST note (the MAGIC menu), E during the shop's ID reply (VIEW):
+  all match. **Checks 480** (check 173's start at speed 4, SELECT then E: the spell list's EXIT, then E, E, Right:
+  13,9 E) and **481** (check 152's start at speed 4, Y then E: back to VIEW, then E, E, Right: 13,8 E): MATCH x3, the
+  break DIFFERS, both fail on 195f136 (before the fix: ours never left camp / the shop). A check for RUDELY
+  INTERRUPTED (R, F 250 ms apart) matched on the code before the fix too (under `--fast` the F reaches the menu
+  either way), so it isn't in the gate (`~/gbr/checks/data/482` holds only its unused `timed.txt`).
+- **STOP RESTING? (display, Combat's file):** ours draws it over the rest menu's words with no YES NO; the original
+  clears row 24 (STOP RESTING? YES NO). **The rest's pace (text timing):** at speed 4 the original rests 24 hours
+  before the question (x typed 0.3 s after REST: 00:06:00 of 30 hours left), ours 6 (01:00:00 left). The hours
+  carry into days at 24 in both (24 increments show 01:00:00).
+- **A fight's first menu takes keys one at a time (found; input, main path, resets; Combat's files):** check 84's
+  goblins, COMBAT, keys 1.2 s on (late in A BATTLE BEGINS...): q QUICK; d DONE's menu; q d QUICK (d gone); Down q and
+  q Down both QUICK. A computer-run turn's start reads and drops a key (GAME.OVR 0xBB81, the Magic On / Off reader).
+  Ours' `_battle_key` (chat 126) hands on only the last key: q Down and q d differ. To Combat (request 06:27).
 
 ## Chat 126: keys typed during A BATTLE BEGINS..., a rest, the camp's CAST and the shop's ID (main path)
 
