@@ -1994,8 +1994,10 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> 
 
 
 ## The hot letter or Enter on the lit item ("" for neither).
-## A YES / NO question's key (0x2D9A0 through the menu 0x2CC8C): 1 YES, 0 NO, -1 none. Y and N take their word,
-## Enter the lit one; ',' and '.' move the highlight. The word taken stays lit for the next menu (0x2CF4B).
+## A YES / NO question's key (0x2D9A0 through the menu 0x2CC8C): 1 YES, 0 NO, -1 none. Only Y and N answer: the
+## question asks again until the menu returns one of them (the set at 0x2D980), so Enter (0x2CC8C returns 0x0D) and
+## Esc do nothing (DOSBox, Combat Chat 56: ATTACK ALLY: YES NO stayed up through Enter and Esc). ',' and '.' move
+## the highlight. The word taken stays lit for the next menu (0x2CF4B).
 func _yes_no(event: InputEvent, key: Key) -> int:
 	if key == KEY_COMMA or key == KEY_PERIOD:
 		EclVM.menu_step(2, -1 if key == KEY_COMMA else 1)
@@ -2008,8 +2010,6 @@ func _yes_no(event: InputEvent, key: Key) -> int:
 	if key == KEY_N:
 		_pick = 1
 		return 0
-	if event is InputEventKey and (key == KEY_ENTER or key == KEY_KP_ENTER):
-		return 1 if _lit(["YES", "NO"]) == 0 else 0
 	return -1
 
 
@@ -2545,7 +2545,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _asking_abort:
 		get_viewport().set_input_as_handled()
 		var yn := _yes_no(event, key)
-		if yn == 0 or event.is_action("ui_cancel"):
+		if yn == 0:     # Esc asks again (0x27F10 -> 0x2D9A0: Y or N only)
 			_asking_abort = false
 			_refresh()
 		elif yn == 1:
@@ -2559,7 +2559,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _asking_continue:
 		var yn := _yes_no(event, key)
 		if yn >= 0:
-			_asking_continue = false   # Enter takes the lit word (NO unless ',' '.' moved it)
+			_asking_continue = false   # Y or N only (0x2D9A0)
 			_combat.continue_battle(yn == 1)
 			_advance()
 		get_viewport().set_input_as_handled()
