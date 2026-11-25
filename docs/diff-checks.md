@@ -188,7 +188,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   7:17 fights after the checkpoint `p20a3_s11c` (26885 draws; 42 figures each), p23b1's three 8:13/8:27 fights
   (`p23a3_s17door`; 25823 draws; 24, 36 and 38 figures), p13b6's first six fights (`c34d_shopped13`; 26072 draws; the
   sixth, 2:20, 38 figures). **Every draw identical and every figure's cells agree.** Not re-run: the other 8:27 horde
-  recordings (p22c2-p23a3, the same encounter as check 100's and p23b1's).
+  recordings (p22c2-p22c8, p35i6, p23a3: the same encounter as check 100's, p23b1's and p23a2's; p23a2's from
+  `p22c8_kobold_caves`, 11758 draws, 36 figures, also agrees).
 - **Limits of these starts:** checks 100-530's start is check 100's played save (on QUICK); the Player's saves are
   played saves from the original (p2start), loaded as they were saved, keys and seeds as each recording logged them
   (the camp's save keys left out where a recording began by saving); the second fight of each run is reached by
@@ -200,8 +201,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   with two figures; `data/c138/splitfight.py` cuts a run's n-th fight out of both traces, carrying each slot's last
   cell across the cut.
 - **The throne room after Combat Chat 62's 317c996 (the last-step reset):** chat 137's three waves (`o528t.sh`'s trace
-  against ours with `k528w.txt`): still identical to 27018 of 48430, then the wave-2 WILD BOAR's turn (with Combat).
-  The end-state check waits for that fix.
+  against ours with `k528w.txt`): still identical to 27018 of 48430, then the wave-2 WILD BOAR's turn. **After
+  125631e (a fall spends the figure's turn) on 85498f9: all 48430 draws identical**; wave 1's 57 figures agree; wave 2
+  (65 figures) agrees once ours' log is numbered as the original's: DORN, DYING at the wave's start and set aside, is
+  the original's figure 5 and ours' log leaves him out of the cell list and numbers the figures after him one lower
+  (ours' "who acts next" draws do include him: a recorder difference, not play); figure 64 isn't in the trace
+  (`TPOS=64` logs 0-63: the throne room's wave 2 needs 72).
+- **The throne room's end state: still no seed (to Combat: a new difference).** Ours' seed search (`th1seed.sh`; wave 2
+  can stall 80+ rounds on a KOBOLD LEADER fleeing in panic, past the lab's `fightend` limit, so each wave gets six)
+  found 3960000a, where ours' party wins all three waves. The original from the same keys (`o531t.sh`): destroyed in
+  wave 3 (as with 39600001 and 39600005). **The draws part at 15134 of 43912, in wave 1 (game state, main path):** a
+  KOBOLD LEADER (ours' figure 54, the original's 55; a bow, 2 attacks, 15 movement left) steps from 21,11 to 22,12,
+  next to PRINCESS FATIMA, picks from the five in bow range (OVR:0b95d d5 = 4), then changes to its melee weapon; ours
+  ends its turn there (combat.gd: "Someone is next to it: it changes weapons, and that is its turn"), the original
+  picks again from the one figure in reach (OVR:0b95d d1) and swings (OVR:2bbbf d20). DOSBox HOLD at 15134
+  (`data/c138/t532h_orig.txt`); traces `t532_orig.txt`, `t532_ours.txt`; ours' keys `k532_ours.txt`.
 - **A ghoul's paralysis outlasts the fight (check 531; game state, main path; matched; installed):** Player 56's
   ghoul save (`p2start/p56a1_g042`, 4:2 9,6 N; a party not on QUICK in its save; slot G by `data/c50/slot.py`),
   tpseed aeba0d61, Up (SOME GHOULS DECIDE TO ADD YOU TO THEIR MENU.: the encounter is a random one, so the seed at the
