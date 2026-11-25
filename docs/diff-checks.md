@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528)
+## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528); TAKE and SHARE at the load (529, 530); the throne room's wave 2 (to Combat)
 
 - **A computer-run member's walk after a kill with attacks to spare (game state, main path; to Combat, fix ready):**
   chat 136's "figure 1's recorded path differs in five cells" in check 527's throne room (all 16281 draws identical).
@@ -191,6 +191,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   `SEED2=`). Ours' seed search (`data/c137/fxseeds.sh`, `fxq.py`: a quick save's effects) found effects left at the end
   on most seeds; on 52600019 the original's end save has CEDRIC BLESS 1 minute and PRAYER (49) 3, ELWEN BLESS 5,
   LIRA 1, DORN 5, as ours. statediff compares them with minutes (a break with DORN at 4 DIFFERS).
+- **Coins with everyone at the load (checks 529, 530; game state, main path; matched):** check 100's start with each
+  member's platinum raised to the load and +0x102 written to match (`atload.py`; poked: platinum and +0x102; LIRA and
+  DIRTEN over the load with +0x102 0, as the bot checkpoint has them), MAGIC off, 8:27's band kobolds (tpseed
+  31310016; `data/c137/o529.sh` stops at the treasure). 529: TAKE, MONEY, the pile's 304 copper, ARN asks 304:
+  nothing taken (the cached load at the ceiling: GAME.OVR 0x2570F, ours since chat 26). 530: SHARE. Both end saves
+  MATCH.
+- **The throne room's wave 2 (game state, main path; to Combat):** the same start and seeds, all three waves traced
+  (`o528t.sh`, 48430 draws, `TPOS=64`): identical to 27018 (wave 1 and 10,000 draws into wave 2), then a different
+  WILD BOAR takes round 3's turn (ours boar 7, 5 of 18 HP; the original boar 12, ours' 10). HOLDs at 26946 and 27016
+  (`o528h.sh`, `HOLD=`): every living figure's initiative left (fight record +0x108 byte 3) agrees with ours' but that
+  boar's: 0 in the original by 26946 (and its byte +1 is 0, every other figure's 1), 5 in ours. Not the last-step fix
+  (the patched build parts at the same draw), not DORN's place (a DYING member is a figure in the original, figure 6
+  on 27,14 off the grid; ours' aside numbering gives the same rolls; moving the aside rolls to the end parts at 17484).
+  The original also keeps the actor's initiative until its turn ends (ours zeroes it at the pick: the same choice).
 - **Not measured:** the throne room's end state as a check: from Player 39's door save with tpseed 39600001 the party
   wins waves 1 and 2 (618 and 319 experience; the ballistae between them) and is destroyed in wave 3: no end save.
 
