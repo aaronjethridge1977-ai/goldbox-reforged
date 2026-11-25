@@ -205,6 +205,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   swallowed (DOSBox: the first E of four at 3 s; ours ignores keys in its casting mode). **After DISPLAY** MAGIC's
   menu lights CAST in both (and Enter does nothing there: chat 89's rule).
 
+- **A dead elf's racial effect (found; game state, new area; not fixed):** check 498's camp with ELWEN (elf) poked dead
+  of poison (status 6, 0x37 added to her .SPC): load, ENCAMP, SAVE: the original's .SPC holds only 0x37 (124 gone);
+  after CEDRIC's SLOW POISON she stands at 1 HP with 22/300/255 and 15/10 as ours, still without 124. Ours keeps 124
+  (its loader re-adds racial effects). Lab check `chk520` (start `s520b`) differs only there. The camp Slow Poison's
+  elf d100 (Combat 61) wasn't settled: `trace.py` recorded no draws this session.
+- **Installed in chat 134:** 510, 512, 513, 516-519; 497, 499, 504 (chat 133's, after Combat 61's c42852a). Gate 508.
+
 ## Chat 133: level drain and training while drained (checks 492, 493); a two-day rest interrupted on day 2 (494); treasure over the load (495); a slowed poison running out (496); Slow Poison's power (498, a fix); CAST SPELL ON WHOM after MAGIC's menu (497, to Combat)
 
 - **UNCONSCIOUS and DYING survive the heals until the next fight (WITHDRAWN in chat 134: poked starts with record
