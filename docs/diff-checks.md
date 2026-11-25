@@ -172,6 +172,36 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 132: the party destroyed in a fight; a rest interrupted while memorizing (check 491); 489 and 490 paced in the gate
+
+- **The party destroyed in a fight (found, fixed; display, main path: every wipe; doesn't reset the streak):** DOSBox,
+  check 84's goblins with every member's HP poked to 1 (`~/gbr/lab/data/c132/wipe.sh`: `recpoke.py <name> 11B 1`, then
+  DONE QUIT at each menu; the last screens in `wipe.log`, frames `wf_*.png`): the last fight line (YOUR TEAMMATE IS
+  DYING, ~0.75 s) goes straight to GAME.OVR 0x6B37's screen: one frame, THE END! (white, row 1, column 15), THE
+  MONSTERS REJOICE FOR THE PARTY / HAS BEEN DESTROYED (light green, 0x709:0x768's box 2,5-37,22) and PRESS ANY KEY
+  TO CONTINUE (magenta, row 24); its key quits to DOS. Ours showed THE PARTY HAS FALLEN. PRESS A KEY.: now the same
+  screen pixel for pixel (`wipe1.png` against ours' `screen=`), its key back to ours' start menu. After THE ENTIRE
+  PARTY IS KILLED! (a DAMAGE, chat 122) ours now goes straight to the start menu (the original quits there too).
+  **For Combat (display, main path):** the fight's own end on a loss waits for a key on THE PARTY HAS FALLEN. (row
+  24); the original shows nothing there and opens THE END at once.
+- **A rest interrupted while a spell waits to be memorized (check 491; game state, main path; matched, no fix):**
+  check 84's start (tpseed 20200001, speed 4): ENCAMP, MAGIC, BROTHER SEAN (End x3) MEMORIZEs RESIST COLD (his free
+  slot), REST offers 4:15, the goblins interrupt at 12:56, FLEE (14,6 W). The original drops the pending spell: CAN
+  MEMORIZE 1 again, REST offers 00:00:00 (the same after a won fight instead of FLEE); ours too. Three runs MATCH;
+  the break (0x11B) DIFFERS; RESIST COLD written back as pending (0x2B = 0x88) DIFFERS (statediff reads the 0x80
+  entries).
+- **The fight's order after a menu QUICK (seen, the same as Combat Chat 60's fix 320f3d3):** traced in check 491's
+  first version (the goblins fought, Alt-Q read at RHIANNON's first menu at 1.08 s, `kbuf.py`): the original draws a
+  second pass of twelve "who acts next" d100s (782-793) before her QUICK turn; ours (before Combat's fix) acted at
+  once. Plain check 84 with the same keys does the same; check 84 itself sets QUICK before the first menu.
+- **Checks 489 and 490 in the gate (paced):** diffcheck.sh runs a check folder holding `paced` with `--anim` (line
+  49), seal.sh lists `paced`; 489 and 490 MATCH 3 of 3 on 65077e2 (~100 s for the pair alone); the code before
+  Combat's fix DIFFERS (Combat Chat 60's runs).
+- **A flee after kills (from the code, no fix):** GAME.OVR 0x5A47's award (0x557E, 0x58D3 at 0x5B82) runs only when
+  a member ends the fight okay (status 0) or animated (1) (0x84DA); a party that fled has none, so nobody gets
+  experience, kills or not, as ours (`_after_fight([], ...)`). The number THE PARTY HAS FLED.'s page shows after
+  kills is not measured.
+
 ## Chat 131: a held key through A BATTLE BEGINS...; an area change, a picture, held Enter and a held arrow into a text (main path)
 
 - **The tool: the BIOS keyboard buffer watched** (`~/gbr/lab/data/c131/kbuf.py <secs> <key>@<t>[:<hold>]...`): DOSBox's
