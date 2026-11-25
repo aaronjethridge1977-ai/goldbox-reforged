@@ -185,6 +185,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Fixed in item_powers.gd (the same rule as ecl_vm.gd's `_hurt`); both MATCH. In a fight ours' ready path calls the
   same code but not the fight's going-down (combat.gd's `_hurt`: bleeding, GOES DOWN lines): to Combat (new area).
   Lab `~/gbr/lab/data/c136/chk523`, `chk524`, originals `o523`, `o524`, keys `k523.txt`.
+- **522 installed** (the temple's RAISE DEAD sets +0x10D 1, chat 135's check): Combat Chat 62 landed the edit (b7b1f20); 522 MATCHes on b4fe699.
 - **A camp PRAYER, then a wilderness fight (check 525; game state, main path; matched):** check 100's start (8:27's
   band, a real checkpoint; CEDRIC holds two PRAYERs), ENCAMP, CEDRIC, MAGIC, CAST, End x4 (PRAYER: no dice drawn in
   camp), EXIT x3, then check 100's step and kobold fight on QUICK: the end save MATCHes, and cmpfight3 shows all 7979
