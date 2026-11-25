@@ -174,6 +174,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 133: level drain and training while drained (checks 492, 493); a two-day rest interrupted on day 2 (494); treasure over the load (495); a slowed poison running out (496); Slow Poison's power (498, a fix); CAST SPELL ON WHOM after MAGIC's menu (497, to Combat)
 
+- **UNCONSCIOUS and DYING survive the heals until the next fight (found; game state, main path; to the Lead: match
+  the original?):** DOSBox, check 133's party in 8:27's camp, DORN poked UNCONSCIOUS (4, 0 HP) and LIRA DYING (5, 3 HP),
+  REST a day (tpseed 11111111): DORN 1 HP and LIRA 4 HP, both statuses unchanged (VIEW: STATUS UNCONSCIOUS); the day's
+  heal (GAME.OVR 0x2463D) calls START.EXE 0xB0:0x89 per member and leaves the status alone. CEDRIC's CURE LIGHT
+  WOUNDS on DORN: 7 HP, still UNCONSCIOUS. Check 100's kobolds with DORN UNCONSCIOUS at 10 HP: the original's fight
+  takes him (he ends OKAY with his 36: the fight's end pass, GAME.OVR 0x5C08, makes UNCONSCIOUS with HP above 0 OKAY before the award), ours' doesn't (no share; the fight parts too). Ours stands a member
+  up at the first HP (camp_screen.gd `_heal_day`, spell_caster.gd `_heal`). Lab checks `chk506` (the rest, DYING kept:
+  fails on main), `chk508` (the fight: fails on main), `o507`. Not changed until the Lead decides (board, 00:33).
 - **Slow Poison's effect has power 255 (found, fixed; game state, main path):** DOSBox, check 133's start (8:27) with
   DORN dead of poison (status 6, 0x37 in his .SPC): CEDRIC (cleric 5) casts SLOW POISON on him in camp: DORN GETS
   BACK UP at 1 HP, effects 22/300/255 and 15/10/255 (GAME.OVR 0x288CA pushes 0xFF as the power); ours wrote 22/300/5
@@ -195,6 +203,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   VIEW's menu and ITEMS again (`t2.png`, `t4.png`); after EXIT to the camp menu and VIEW again, ARN (`t5.png`). Three
   trades (the javelins and the bow to BRAM with the light kept, the scroll after the camp menu: End to BRAM) MATCH 3
   of 3; ours keeping BRAM after the camp, or dropping it at VIEW's menu, would give the scroll or the bow elsewhere.
+- **CURE LIGHT WOUNDS on a member dead of poison (check 505; game state, main path; matched):** the same camp:
+  CEDRIC's CURE on DORN (status 6, HP 0): no message, the spell spent, DORN still dead at 0. Three runs MATCH; the
+  spell put back in the end save DIFFERS.
 - **MEMORIZE's list light (check 503; input, main path; matched):** DOSBox, the same camp: CEDRIC casts CURE LIGHT
   WOUNDS on himself (a 1st-level slot free), EXIT, MEMORIZE: the list opens with the page's last row lit (FIND TRAPS,
   2nd level: MEMORIZE does nothing, CAN MEMORIZE 1 0 0), Home, MEMORIZE: RESIST COLD pending (136); E at MEMORIZE
@@ -230,6 +241,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   BAKSHI IS RESTORED: magic-user 3 -> 4, HP 26 -> 28 (max 30, rolled 30: 0x75 / 0x74 = 2 back), 0x74 and 0x75 0,
   experience 10001, the slots recounted; the scroll used up. Three runs MATCH (with `levels`); a magic-user slot
   changed in the end save DIFFERS.
+- **A level-1 member drained is DEAD FOREVER with HP 0 (found; game state, main path; Combat's level_drain.gd,
+  request with a ready edit):** check 504: 493's start with RHIANNON, DARKSTAR and PHINEAS made level 1 (recounted),
+  tpseed 11111111: the wight drains BAKSHI, RHIANNON (IS DEAD FOREVER), THRENDER GRONE; won. The original's end:
+  RHIANNON status 8, max HP 0, HP 0 (the branch at GAME.OVR 0x10F1C calls 0x1ECB3, then writes 0x32 = 0); ours HP
+  13. `~/gbr/lab/data/c133/combat_edit.diff` adds `m.hp = 0`; with it 504 MATCHes 3 of 3 (and 493).
 - **Training while drained (check 492; game state, main path; matched, no fix):** check 214's start (3:11) with
   THRENDER GRONE drained twice from 4 (0x73 = 4, 0x74 = 2, 0x75 = 7): TRAIN to 3: 0x75 7 -> 4, 0x74 1 (GAME.OVR
   0x1C89C: 0x75 less 0x75 / 0x74 per class trained), HP from the d10 only, 0x73 kept at 4. Three runs MATCH; 0x75 = 5
