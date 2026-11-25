@@ -172,6 +172,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 136: a wrong-alignment sword readied past the HP (523, 524)
+
+- **The aligned sword's damage past the HP (checks 523, 524; game state, main path: the knight's tomb's Long Sword +2,
+  4:10, lawful good only, 15 damage; found and fixed):** readying an aligned sword (item byte 62 0x84) that doesn't
+  answer to the bearer (GAME.OVR 0x11D00: byte 61's low nibble against record +0xA0) clears its readied byte and
+  deals byte 61's high nibble through the general damage call (0x11D66 -> 0xB0:0x7F = GAME.OVR 0x2C22E, magic,
+  DS:0x6819 8), so START.EXE 0xBA:0x2228's rule decides: 523, check 179's start with ITEM4 block 29 item 6 given to
+  ELWEN (neutral good, 9 HP; `data/c136/give.py`, an appended record as mksave.py's `item<n>=`): ENCAMP, ELWEN,
+  VIEW, ITEMS, READY (the mace off), End x3, READY (the sword): **DYING**, 0 HP, +0x10D 0, the sword not readied;
+  524, the same at 4 HP: **DEAD**. Ours lowered HP to 0 and set UNCONSCIOUS, +0x10D kept 1 (both DIFFER on main).
+  Fixed in item_powers.gd (the same rule as ecl_vm.gd's `_hurt`); both MATCH. In a fight ours' ready path calls the
+  same code but not the fight's going-down (combat.gd's `_hurt`: bleeding, GOES DOWN lines): to Combat (new area).
+  Lab `~/gbr/lab/data/c136/chk523`, `chk524`, originals `o523`, `o524`, keys `k523.txt`.
+
 ## Chat 135: the camp Slow Poison's half-elf d100 (521); record +0x10D outside fights (statediff compares it; 522, a temple RAISE DEAD from a fight-dead start)
 
 - **The camp SLOW POISON's d100 (check 521; game state, main path; matched, Combat 61's line confirmed):** chat 134's

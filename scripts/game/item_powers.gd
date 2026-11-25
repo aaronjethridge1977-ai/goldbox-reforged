@@ -73,10 +73,21 @@ static func changed(m: PartyMember, it: GameItem, readying: bool) -> PackedStrin
 			if readying and not aligned(m, it):
 				it.readied = false
 				var dmg: int = it.raw[61] >> 4
-				m.hp = maxi(m.hp - dmg, 0)
 				out.append(SpecialAffects.damage_words(m.name, dmg, SpecialAffects.MAGIC))
-				if m.hp == 0 and m.status == PartyMember.STATUS_OKAY:
+				# The damage goes through the general damage call (0x11D66 -> 0xB0:0x7F -> START.EXE 0xBA:0x2228):
+				# short of the HP the excess decides (more than 9 dead, else dying), an ANIMATED member at 0 dies,
+				# and one left in any status but OKAY or ANIMATED gets record +0x10D 0 (main chat 136, checks
+				# 523, 524: ELWEN at 9 HP DYING, at 4 HP DEAD in the original's camp; ours had UNCONSCIOUS).
+				var past := dmg - m.hp if dmg > m.hp else 0
+				m.hp = maxi(m.hp - dmg, 0)
+				if past > 9 or (m.hp == 0 and m.status == PartyMember.STATUS_ANIMATED):
+					m.status = PartyMember.STATUS_DEAD
+				elif past > 0:
+					m.status = PartyMember.STATUS_DYING
+				elif m.hp == 0:
 					m.status = PartyMember.STATUS_UNCONSCIOUS
+				if m.status not in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED] and m.raw.size() > 0x10D:
+					m.raw[0x10D] = 0
 		HAMMER:
 			if not readying:
 				for a in m.affects.duplicate():

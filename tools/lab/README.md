@@ -71,6 +71,13 @@ reasons, each event's start save and result). `mksave.py ... item<n>=<DAX>:<bloc
 Never save over the shipped saves (J is every `mksave.py` save's base; chat 20 restored it from the game folder):
 the checks save to F.
 
+**Poked starts (the Lead, 2026-11-25; chats 133-134's false finds):** a lab start says which bytes it pokes
+and which it leaves as play makes them. Before trusting a finding from a lab start, compare its records with a
+played original save (a check's original end, a Player save) for every byte the finding relies on (status,
++0x10D, the .SPC effects, levels, cached THAC0 and AC); a byte play never leaves that way is a false start, not
+a difference. Known: a downed status (4, 5, 6) has +0x10D 0; a .SPC poke appends and keeps the racial effects;
+poked levels need `lvl.gd`'s recount.
+
 **Full screen (P25, chat 22):** a run embedded in the Godot editor's Game tab can't change its window mode, so
 Alt+Enter / F11 only flip the setting there; test full screen in a floating window ("Embed Game on Next Play" off) or an
 export.
