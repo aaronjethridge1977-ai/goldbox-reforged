@@ -2797,14 +2797,14 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		return
 	# The original's reference card keys work at the combat menu too (lab, Combat Chat 1, the
 	# kobold net trap; GAME.OVR 0x9CAE for Alt-M): Alt-M switches MAGIC ON / OFF, Alt-Q puts the
-	# whole party on QUICK (this member's turn runs at once), Space takes every party member off
+	# whole party on QUICK and gives the turn back to the order (_alt_quick), Space takes every party member off
 	# QUICK (nothing to see at the menu; the turn goes on). Space used to end the turn here.
 	if _cmode == "menu" and event is InputEventKey and (event as InputEventKey).alt_pressed:
 		if key == KEY_M:
 			toggle_magic()
 			return
 		if key == KEY_Q:
-			quick_all()
+			_alt_quick()
 			return
 	if _cmode == "menu" and key == KEY_SPACE:
 		for c in _combatants:
@@ -2913,6 +2913,24 @@ func quick_all() -> void:
 			Combat.set_record_quick(c.who, true)
 	if _combat.active >= 0 and not was_quick and _ai_timer.is_stopped():
 		_ai_timer.start(0.2)
+
+
+## Alt-Q at a member's menu (GAME.OVR 0x9D34): its combat record's +0x108 byte 3 (initiative) = 20, every party member
+## on QUICK (0xAA32 each), the 200 ms Delay (0xA40:0x29C), and the menu is left with no turn end (0xBA:0x2637 not
+## called): the order is drawn again (every figure's d100, 0x9938) and picks the member first (initiative 20), whose
+## turn then runs on QUICK. Ours ran the turn at once, a d100 per figure short (Combat Chat 60, main chat 130's
+## check 489: DOSBox at check 84's goblins, Alt-Q at BROTHER SEAN's menu: draws 868-879 the order, 880 his pattern d8).
+func _alt_quick() -> void:
+	var i: int = _combat.active
+	for c in _combatants:
+		if c.team == 0:
+			c.quick = true
+			Combat.set_record_quick(c.who, true)
+	_combat.keep_turn(i)
+	_refresh()     # a member on QUICK: no menu on row 24
+	await get_tree().create_timer(0.2).timeout
+	if _combat != null and _combat.active == i and _result == 0:
+		_advance()
 
 
 ## DONE's MAGIC item (SETTINGS: MAGIC ON DONE): its text shows the setting, the original's Alt-M.

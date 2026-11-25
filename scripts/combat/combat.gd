@@ -541,6 +541,16 @@ func delay() -> bool:
 var asked_round := -1
 
 
+## A turn left with no turn end and its initiative set to 20 (GAME.OVR 0x9D40, Alt-Q at the menu): the order's next
+## draw picks it again first.
+func keep_turn(i: int) -> void:
+	if i < 0:
+		return
+	combatants[i].init = 20
+	if not order.has(i):
+		order.append(i)
+
+
 func enemies_all_running() -> bool:
 	var any := false
 	for c in combatants:
