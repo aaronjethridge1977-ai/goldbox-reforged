@@ -172,7 +172,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat)
+
+- **A member killed by a two-level drain's first level stays DEAD (status 6), not DEAD FOREVER (found; game state,
+  main path; Combat's level_drain.gd; lab check 536, not in the gate until the edit lands):** 534's fight with tpseed
+  41000005: ARN (fighter 6) takes three two-level drains; the third's first level takes him to fighter 1 at 0 HP ("IS
+  KILLED", status 6), its second finds the highest level under 2: "IS DEAD FOREVER" through the kill routine
+  (GAME.OVR 0x10F15 -> 0xECB3), which shows its words and then **leaves a member already dead, stoned or gone (status
+  6, 7, 8) as he is** (0xECE5-0xECF6); the fighter level is zeroed, 0x73 0, 0x74 6, 0x75 65, max HP 0 as in ours. The
+  original's end save: ARN status 6; ours 8, the only difference (all 1143 draws identical, all figures' cells agree).
+  The edit (`~/gbr/lab/data/c139/level_drain_536.diff`: set GONE only when the status isn't 6, 7 or 8): 536 MATCHES
+  3 of 3, 492/493/504/512/534/535 still match, and the full gate on it 522 of 523 (532, the flaky key order below,
+  since fixed). Check 504's level-1 member drained while standing (status 8) is unchanged.
+- **Gate keys made timing-proof (the Lead's 18:28 note: 532 failed once under load):** ours' `magic` key lands a
+  variable number of turns into a fight whose party is on QUICK (in 532 it missed LIRA's turn: her six spell tries,
+  0xB1CD, gone at draw 827). 526, 528 and 532 now use Combat's `magicat=<draw>` (MAGIC ON at the first computer turn
+  from that draw: 0 for 532, whose original's Alt-M lands before the first QUICK turn; 3662 and 3641 for 526 and 528,
+  whose originals read it after the first caster's turn: `magicat=0` DIFFERS there). Checks README, chat 139.
 
 - **A member DYING when a won fight ends (check 535, a `levels` check; game state, main path; matched; installed):**
   534's fight with tpseed 41000015 (ours' scratch build printed each member's status as the fight ended: LIRA 5,
