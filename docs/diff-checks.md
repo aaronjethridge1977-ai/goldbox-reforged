@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 138: every main-path fight with more than 32 figures traced with all figures (no difference); the throne room after Combat's last-step fix
+
+- **Why:** trace.py logged figures 0-31 only until chat 137 (`TPOS`), and the Player's lab copy still does; chat 137's
+  BRAM showed that a path can differ with every draw identical. A scratch build of ours printing each step of a figure
+  numbered 32 or higher (lab `data/c138/scan32.sh` over all 518 gate checks) found such steps in checks 100, 118, 299,
+  307, 525, 526, 528, 529, 530 (two fights: 8:27's kobold horde from tpseed 31310016 and 3:0's tavern brawl); the
+  Stage 1 match's own replays (`logs/<run>.segment_*.txt`) have them in 15 recordings: 1:18's goblins (p18a5), 2:20
+  (p13b6), 4:21's courtyard (p36m3, 56 figures), the nomads' area 7:17 (p20a3), 8:27's kobold hordes (p22c2-p23b1).
+- **All traced in DOSBox with `TPOS=64` (72 for the brawl), from played saves, each against ours (game state, main
+  path; no difference):** check 100's horde (7979 draws), 526 (10514, MAGIC ON), 528 (9207), 525 (7979, after the camp
+  PRAYER): 34 figures each; the brawl, check 118 (6402 draws, 37 figures); from the Player's saves with the recordings'
+  keys and seeds (every fight's seed checked against the recording's): p18a5's two goblin fights (`p18a4_s9c`; 11636
+  draws; 34 and 38 figures), p36m3's courtyard (`p15h6_s6t`; 32083 draws over two fights; 56 figures), p20a3's two
+  7:17 fights after the checkpoint `p20a3_s11c` (26885 draws; 42 figures each), p23b1's three 8:13/8:27 fights
+  (`p23a3_s17door`; 25823 draws; 24, 36 and 38 figures), p13b6's first six fights (`c34d_shopped13`; 26072 draws; the
+  sixth, 2:20, 38 figures). **Every draw identical and every figure's cells agree.** Not re-run: the other 8:27 horde
+  recordings (p22c2-p23a3, the same encounter as check 100's and p23b1's).
+- **Limits of these starts:** checks 100-530's start is check 100's played save (on QUICK); the Player's saves are
+  played saves from the original (p2start), loaded as they were saved, keys and seeds as each recording logged them
+  (the camp's save keys left out where a recording began by saving); the second fight of each run is reached by
+  playing the first. No bytes poked.
+- **The recorder:** the original writes a tried step's cell and takes it back within one draw (a runner put back on its
+  square for the free attacks, then moved; a step tried and refused: the brawl's fleeing CORPORALs); and a figure placed
+  on the cell its slot held at the end of the fight before logs no change. The lab's `cmpdraws.py` now drops such
+  loops within a draw (BRAM's chat 137 difference still shows; the fixed build still agrees) and splits a POS line
+  with two figures; `data/c138/splitfight.py` cuts a run's n-th fight out of both traces, carrying each slot's last
+  cell across the cut.
+- **The throne room after Combat Chat 62's 317c996 (the last-step reset):** chat 137's three waves (`o528t.sh`'s trace
+  against ours with `k528w.txt`): still identical to 27018 of 48430, then the wave-2 WILD BOAR's turn (with Combat).
+  The end-state check waits for that fix.
+- **match_gate.sh on 13d46ee** (after 317c996, which moves paths after a kill with attacks to spare): see the board.
+
 ## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528); TAKE and SHARE at the load (529, 530); the throne room's wave 2 (to Combat)
 
 - **A computer-run member's walk after a kill with attacks to spare (game state, main path; to Combat, fix ready):**
