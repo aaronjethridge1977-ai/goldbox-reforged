@@ -172,6 +172,22 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 139: Mendor's Library's basilisk stones a member (532)
+
+- **The basilisk's gaze (check 532; game state, main path; matched; installed):** Player 17's checkpoint
+  `p17a7/s8pre1` (2:15 8,11 W; the Stage 1 match's library run) walked in DOSBox to 5,5 N with the recording's keys
+  (its 8,9 door was locked in the replay: bashed) and saved: the start. The party is on QUICK in the save. tpseed
+  11111111, Up (THESE ARE THE LIBRARY STACKS...), Enter (A DULL BROWN REPTILIAN...), COMBAT, Alt-M at once; the fight
+  runs itself (about 8 s): the basilisk dies, its gaze has stoned DORN: **status 7, HP 0, +0x10D 0** in both end
+  saves, BRAM 28 of 34; CONTINUE NO, Enter, the pile's EXIT, N (leave the treasure), save. All 1104 draws identical
+  (`TPOS=64` trace, lab `data/c139/tlib1_*.txt`); three runs MATCH. The stoning effect handler (GAME.OVR 0x10908, one of
+  chat 135's "Not measured" callers of the kill routine) is now measured once, in a fight. The Stage 1 match's own
+  basilisk (seed e239d23e) stoned no one.
+- **Keys (lab, not the game):** ours' `magic` token must come right after COMBAT (`C,magic,quickall`): after
+  `quickall` it took effect four turns late here (BRAM, ARN, LIRA and CEDRIC acted with MAGIC off; LIRA's spell tries,
+  0xB1CD x6, missing in ours: draws parted at 827). In the original Alt-M lands before the first QUICK turn. Checks 526
+  and 528 use `quickall,magic` and match (no caster acted first there).
+
 ## Chat 138: every main-path fight with more than 32 figures traced with all figures (no difference); a ghoul's paralysis outlasts the fight (531); the throne room after Combat's last-step fix
 
 - **Why:** trace.py logged figures 0-31 only until chat 137 (`TPOS`), and the Player's lab copy still does; chat 137's
