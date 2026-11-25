@@ -1312,7 +1312,7 @@ func _cast(target: PartyMember) -> void:
 			await get_tree().create_timer(1.0 * (TEXT_SPEED + 1) / 5.0).timeout     # P104: speed 4's pace
 			if not visible or _mode != "casting":
 				return
-	_back_to_list()
+	await _back_to_list()
 	_hand_on()
 
 
@@ -1330,10 +1330,25 @@ func _hand_on() -> void:
 func _back_to_list() -> void:
 	_lines = []
 	if _caster.ready_spells().is_empty():
+		# The CAST loop (GAME.OVR 0x17CF7) builds the list again after every cast or LOSE IT?; with nothing left it
+		# says "<NAME>" / "HAS NO SPELLS MEMORIZED" over the screen as it stands, row 24 kept, then the MAGIC menu or
+		# the walking screen (Combat Chat 62, DOSBox: BAKSHI's last spell READ MAGIC on the list page, CURE LIGHT WOUNDS
+		# under CAST SPELL ON WHOM, MAGIC MISSILE's LOSE IT? YES; the adventure menu's CAST the same). Ours went
+		# straight on.
+		_none_left = true
+		_say_name(_caster.name, "HAS NO SPELLS MEMORIZED")
+		_refresh()
+		await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
+		_none_left = false
+		if not visible:
+			return
+		_lines = []
+		_plain_rope = false
 		if _walk:
 			_close_walk()
 		else:
 			_magic_menu()
+		_hand_on()
 	else:
 		# The list is built again: the first page, its last spell lit (Combat Chat 18, DOSBox: after a cure
 		# cast from the second row, after Bless, after LOSE IT? NO; ours kept the light where it was).
@@ -1343,6 +1358,7 @@ func _back_to_list() -> void:
 		_refresh()
 
 
+var _none_left := false   # HAS NO SPELLS MEMORIZED after the last spell: keys wait (as during a spell's text)
 var _row24 := ""     # a refusal shown on row 24 for a moment, in place of the menu
 
 
@@ -1453,7 +1469,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not (event as InputEventKey).echo:
 			_interrupt_keys.add(event as InputEventKey)
 		return
-	if _mode in ["shown", "casting"]:
+	if _mode in ["shown", "casting"] or _none_left:
 		# A spell's text waits with no key read (GAME.OVR 0x2A41B: game speed x 225 ms): a key typed meanwhile stays
 		# buffered and the spell list after it takes the last one (main chat 126, DOSBox: check 173's start, CAST on
 		# ARN, E typed during ARN / IS PROTECTED: the list took EXIT; ours dropped it).

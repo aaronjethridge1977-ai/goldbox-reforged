@@ -318,6 +318,8 @@ static func _handcast(main: Node, arg: String) -> void:
 	var deeper := a.size() > 7 and a[7] == "1"
 	# Combat Chat 58 (combat58/handg.py, P115): :<name> ninth, NEXT until a figure whose name begins so is lit, then TARGET.
 	var aim_name := a[8] if a.size() > 8 else ""
+	# Combat Chat 62 (combat62/handuse.py's CASTFIRST): :1 tenth, CAST (while casts < <casts>) before USE.
+	var cast_first := a.size() > 9 and a[9] == "1"
 	var uses := 0
 	var downs := 0
 	var casts := 0
@@ -406,7 +408,13 @@ static func _handcast(main: Node, arg: String) -> void:
 				aim_n += 1
 		elif st.begins_with("menu:"):
 			seen = true
-			if "USE" in st.split(":")[1].split(",") and not quick and uses < uses_max:     # handuse.py: USE first
+			if cast_first and "CAST" in st.split(":")[1].split(",") and not quick and casts < casts_max:
+				k = "c"
+				why = "CAST (first)"
+				picks = 0
+				aim_n = 0
+				casts += 1
+			elif "USE" in st.split(":")[1].split(",") and not quick and uses < uses_max:     # handuse.py: USE first
 				k = "u"
 				why = "USE"
 				downs = 0

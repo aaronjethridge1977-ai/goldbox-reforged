@@ -115,6 +115,10 @@ run orig_A_c61_hand_cscroll 0 env HANDX=0:99:0:1:2 OURS_SEED=1 ./combat34/handre
 # sp_kob (BAKSHI, a half-elf, Slow Poison memorized, a poison effect 0x37 added to his SPC): CAST on himself (TARGET at once),
 # then QUICK: the half-elf's d100 as the effect goes on (0x11A3F), power 255; two original runs identical (c61sp2, sp3), 27623.
 run orig_A_c61_hand_slowp 0 env HANDX=0:1:0:0:0 OURS_SEED=1 ./combat34/handreg.sh sp_kob 33333333 up up 0 1
+# Combat Chat 62: rm_kob (BAKSHI, READ MAGIC alone in memory, an unread Magic User Scroll): CAST is offered (any memory slot),
+# CAST on the page: CAMP ONLY SPELL (0x14C67), the spell kept, the turn not spent; QUICK. Two original runs identical
+# (c62rq, rq2; the second step sent after the trace starts), 21407 draws.
+run orig_A_c62_hand_rmfight 0 env HANDX=0:1:0:0:0:0::1 OURS_SEED=1 ./combat34/handreg.sh rm_kob 33333333 up up 1 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
