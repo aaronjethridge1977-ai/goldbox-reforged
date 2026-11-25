@@ -2902,11 +2902,21 @@ func ai_act() -> bool:
 					ns += " %s@%s" % [combatants[j].who.name, combatants[j].cell]
 				print("   @%d hit list%s" % [TpDice.calls, ns])
 			if shooting and not m.weapon_ranged_melee and enemy_adjacent(active):
-				# Someone is next to it: it changes weapons, and that is its turn.
+				# Someone is next to it: it changes weapons (GAME.OVR 0xB9B8 -> 0xBF8A) and the action stops "not done"
+				# with its attacks and movement kept ([bp-2] = 1), so the turn loop (0xAD72) finds a target (0x68:0x89,
+				# kept while it stands) and runs the action again (0xADA6): the powers, the last step and failed steps
+				# cleared, and with the melee weapon a pick from those in reach and the blow (main chat 138, DOSBox: the
+				# throne room, seed 3960000a, draws 15134-15136: a KOBOLD LEADER with a bow stepped next to PRINCESS
+				# FATIMA, picked from five in bow range, changed weapons, picked from the one in reach and struck; ours
+				# ended its turn there, as since Combat Chat 4).
 				choose_weapon(active)
-				c.moves = 0
-				c.attacks = 0
-				return false
+				c.powers_done = false
+				c.last_step = 8
+				c.fails = 0
+				if not _enemy_of(c, c.get("target", -1)) and not find_target(active, true):
+					guard(active)
+					return false
+				continue
 		if OS.has_environment("APDBG"):
 			print("   @%d strike %s t %d attacks %d moves %d" % [TpDice.calls, c.who.name, t, c.attacks, c.moves])
 		if c.attacks <= 0:
