@@ -1139,7 +1139,11 @@ func _quick_load_needs_reset() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _battle_begins:
-		if _battle_keep and event is InputEventKey and event.is_pressed() and not (event as InputEventKey).echo:
+		# Chat 131 (DOSBox at speed 4, check 84's goblins, the BIOS buffer watched): a held key's repeats count as
+		# keys here too: the setup's reads (START.EXE 0x899:0x122 -> 0x89E9: read a key, then empty the buffer
+		# keeping the last) clear what came before, and repeats typed after the last one reach the first menu
+		# (Q held from 0.45 s after COMBAT: its repeats at 0.99 and 1.03 s made RHIANNON QUICK). Ours dropped them.
+		if _battle_keep and event is InputEventKey and event.is_pressed():
 			_battle_keys.append(event as InputEventKey)   # they reach the fight in order (chat 126; Combat Chat 58)
 		return
 	if _game_path == "" or not event.is_pressed() or _shop.visible or _sheet.visible or _combat.visible \
