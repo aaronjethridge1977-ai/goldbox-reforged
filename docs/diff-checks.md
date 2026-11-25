@@ -172,7 +172,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534)
+
+- **The spectres' drain (check 534, a `levels` check; game state, main path; matched; installed):** 4:10 9,1's two
+  spectres from Player 37's `p37g1_s37g10` (10,1 N; the Stage 1 match's graveyard run), tpseed 41000001, Left, Up, the
+  party on QUICK: ours' scan over 24 seeds (a scratch build printing each drain) chose the one where the party wins and
+  two members are drained but live. One touch drains ARN and one BRAM **two levels each** (fighter 6 -> 4, record
+  +0x74 2), HP 36 each, in both end saves; all 1449 draws identical and all 8 figures' cells agree. Three runs MATCH;
+  a copy draining one level a touch DIFFERS (levels, +0x74). Checks 493 and 512 cover the wight's one-level drain.
 
 - **The throne room's end state (check 533; game state, main path; matched; installed):** chat 138's open item. Ours'
   `th1seed.sh` over 44 seeds (39600010-1b, 39600020-3f; check 527's start, LIRA's camp HASTE, the three waves on
