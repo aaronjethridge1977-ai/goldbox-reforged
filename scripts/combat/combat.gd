@@ -2624,7 +2624,6 @@ func ai_act() -> bool:
 		return false
 	if c.get("ai", false):
 		# The turn loop's poll (0xAD6C) and the step's (0xB409): each further step or blow reads the keys waiting.
-		c.opened = false
 		poll_keys()
 		if control_pending:
 			control_pending = false
@@ -2732,11 +2731,6 @@ func ai_act() -> bool:
 			# box up, then the first step (DOSBox tu_spec5, Combat Chat 49's frames): the step comes at
 			# the next call, after the screen's message pause. No dice move.
 			return true
-		# The first step or blow comes at the next call, after the turn loop's poll (GAME.OVR 0xAD6C) and the
-		# step's (0xB409, after it prints MOVE/ATTACK): a Space typed while the panel is up, before the first blow,
-		# hands a QUICK member back with nothing done (DOSBox, Combat Chats 59-60). No dice move between.
-		c.opened = true
-		return true
 	if c.get("fleeing", false):
 		var fr := _flee_step(active)
 		if fr == "moved" or fr == "retry":

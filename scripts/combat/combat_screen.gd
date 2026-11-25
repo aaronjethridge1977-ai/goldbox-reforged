@@ -96,11 +96,6 @@ var _messages := PackedStringArray()
 ## runs and the lab's replays are unchanged.
 const MESSAGE_GAP := 0.2
 const TURN_START := 0.05
-## A computer-run turn's first step or blow after its opening (the turn loop's and the step's polls come between:
-## Combat.ai_act; GAME.OVR 0xAD6C, 0xB409). DOSBox (Combat Chat 60, the kobolds at check 84's start, speed 4): Q at
-## PHINEAS's menu, then Space 0.10 or 0.15 s later: his menu again, nothing done; 0.20 s later: his blow (its ATTACKS
-## line 0.55 s after the Q), then the next member's menu. Ours' last poll before the first blow: TURN_START + FIRST_STEP.
-const FIRST_STEP := 0.12
 var _panel_msgs := PackedStringArray()      # paced: the messages now on the right
 var _pending_msgs := PackedStringArray()    # paced: still to be shown
 var _pending_subj: Array[int] = []           # each one's Combat.fx_subject when it was said
@@ -1503,8 +1498,7 @@ func _ai_step() -> void:
 		for k in range(maxi(0, _messages.size() - (_message_count - shown_before)), _messages.size()):
 			if String(_messages[k]).contains(" ATTACKS "):
 				blow = true
-		var waiting: bool = actor.get("guarding", false) or (more and (actor.get("fleeing", false) or
-				actor.get("opened", false)))
+		var waiting: bool = actor.get("guarding", false) or (more and actor.get("fleeing", false))
 		if actor.cell != before or blow or not waiting:
 			_box_off = true
 		if actor.cell != before:
@@ -1525,10 +1519,7 @@ func _ai_step() -> void:
 		await messages_shown
 		if _combat == null or not visible:
 			return
-	if more and not actor.is_empty() and actor.get("opened", false):
-		# The turn's opening done; its first step or blow (with the step's poll) FIRST_STEP later.
-		_ai_timer.start(FIRST_STEP)
-	elif more:
+	if more:
 		_ai_timer.start(0.15 if paced() else 0.3)
 	else:
 		# The next figure's panel follows the last line's clearing at once (~0.03 s, a frame).
@@ -2903,7 +2894,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 		"QUICK":
 			_combatants[_combat.active].quick = true
 			Combat.set_record_quick(_combatants[_combat.active].who, true)   # kept for the next fight (0xAA38)
-			_ai_timer.start(TURN_START)     # its opening, then FIRST_STEP to the first step or blow (Combat Chat 60)
+			_ai_timer.start(0.2)
 		"DONE":
 			_cmode = "done"
 			_refresh()
@@ -2921,7 +2912,7 @@ func quick_all() -> void:
 			c.quick = true
 			Combat.set_record_quick(c.who, true)
 	if _combat.active >= 0 and not was_quick and _ai_timer.is_stopped():
-		_ai_timer.start(TURN_START)
+		_ai_timer.start(0.2)
 
 
 ## DONE's MAGIC item (SETTINGS: MAGIC ON DONE): its text shows the setting, the original's Alt-M.
