@@ -750,3 +750,5 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+
+- **A camp HASTE at the throne room's door (8:13) carries into the fight:** LIRA's HASTE (magic-user 5: the first five in party order, 8 minutes, each AGES a year) cast in camp at the door, then Right, Up, Enter: the kobold king's fight on QUICK ran 16281 draws instead of 31163 from the same seed. Cast it at the door, after the last rest. *seen* (main chat 136, DOSBox, Player 39's p39a1_s39door, tpseed 39600001; ours identical draw by draw)

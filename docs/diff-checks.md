@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 136: a wrong-alignment sword readied past the HP (523, 524), a camp PRAYER through a wilderness fight (525), QUICK with MAGIC ON (526, to Combat)
+## Chat 136: a wrong-alignment sword readied past the HP (523, 524), a camp PRAYER through a wilderness fight (525), QUICK with MAGIC ON (526, to Combat), a camp HASTE through the throne room (527)
 
 - **The aligned sword's damage past the HP (checks 523, 524; game state, main path: the knight's tomb's Long Sword +2,
   4:10, lawful good only, 15 damage; found and fixed):** readying an aligned sword (item byte 62 0x84) that doesn't
@@ -197,6 +197,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   `data/c136/o526.sh` (the same for an end save). Draws identical to 6362 of 10514; then, after CEDRIC's three spell
   picks find nothing, the original draws a blow's target pick (OVR:160db d22) and walks him west; ours draws none and
   walks him north into a kobold's swing. Board: main (chat 136) → combat. `chk526` DIFFERS on main (HP, spells spent).
+  Check 68's fight (5:6) with MAGIC ON: all 966 draws identical, every position agrees.
+- **A camp HASTE, then the throne room (check 527; game state, main path; matched):** Player 39's door save
+  (`p2start/p39a1_s39door`, slot G by `data/c50/slot.py`; 8:13 4,4 W): ENCAMP, LIRA, MAGIC, CAST, CAST (the list's
+  light starts on HASTE there: the menus' shared highlight comes with the save), tpseed 39600001: the original draws
+  two d100s (GAME.OVR 0x11A4D, ELWEN the half-elf's; 0x115FB) and puts effect 39 for 8 minutes on the first five,
+  each AGES; ours the same (it needs ~30 waits after the cast: eleven lines at speed 4's pace). Then the fight (the
+  seed set again to 39600001, Right, Up, Enter, QUICK: chat 97's throne room): **all 16281 draws identical** (31163
+  without the HASTE), the party's end HP and status the same in both; figure 1's recorded path differs in five
+  cells mid-fight (and the original's trace holds no monster positions there): the recorder, as far as the draws
+  and the end show. Lab `data/c136/cf528_orig.txt`.
 
 ## Chat 135: the camp Slow Poison's half-elf d100 (521); record +0x10D outside fights (statediff compares it; 522, a temple RAISE DEAD from a fight-dead start)
 
