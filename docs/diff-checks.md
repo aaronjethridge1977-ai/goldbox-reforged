@@ -172,6 +172,28 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528)
+
+- **A computer-run member's walk after a kill with attacks to spare (game state, main path; to Combat, fix ready):**
+  chat 136's "figure 1's recorded path differs in five cells" in check 527's throne room (all 16281 draws identical).
+  main's trace.py logged figures 0-31 only (`NPOS`); the throne room has 57 (`TPOS=64` now logs them all). With all
+  57 logged, BRAM (hasted) is the only figure whose cells differ: he kills the KOBOLD LEADER from 15,6 and walks on
+  towards a second one, the original 16,7 16,6 17,7 16,6 (re-pick) 17,7, ours 16,7 17,7 18,8 17,7 16,6; he ends the
+  fight on 29,12 in the original, 29,10 in ours. The turn loop (GAME.OVR 0xAD72) calls the action 0xB6FC again after
+  such a kill, and 0xB6FC starts by clearing the last step (DS:0x443C = 8) and the failed steps (0x443D = 0); ours
+  clears them once a turn, so BRAM's first step (SE) reversed his last (NW), counted as a fail and changed his pattern
+  3 -> 4. With the reset (4 lines in combat.gd, `data/c137/c137_laststep.diff`): every draw and all 57 figures'
+  cells agree; DIFFCHECKS 514/514 with it. Board: main (chat 137) → combat.
+- **QUICK with MAGIC ON (check 526) MATCHes** after Combat Chat 62's d9f0d7d (the aim drops the caster's target):
+  installed.
+- **A fight's BLESS and PRAYER outlast it (check 528; game state, main path; matched):** 526's fight with its own seed
+  (tpseed 31310016 for the encounter, 52600019 set at the encounter menu, then COMBAT and Alt-M; `data/c137/o528b.sh`,
+  `SEED2=`). Ours' seed search (`data/c137/fxseeds.sh`, `fxq.py`: a quick save's effects) found effects left at the end
+  on most seeds; on 52600019 the original's end save has CEDRIC BLESS 1 minute and PRAYER (49) 3, ELWEN BLESS 5,
+  LIRA 1, DORN 5, as ours. statediff compares them with minutes (a break with DORN at 4 DIFFERS).
+- **Not measured:** the throne room's end state as a check: from Player 39's door save with tpseed 39600001 the party
+  wins waves 1 and 2 (618 and 319 experience; the ballistae between them) and is destroyed in wave 3: no end save.
+
 ## Chat 136: a wrong-alignment sword readied past the HP (523, 524), a camp PRAYER through a wilderness fight (525), QUICK with MAGIC ON (526, to Combat), a camp HASTE through the throne room (527)
 
 - **The aligned sword's damage past the HP (checks 523, 524; game state, main path: the knight's tomb's Long Sword +2,
