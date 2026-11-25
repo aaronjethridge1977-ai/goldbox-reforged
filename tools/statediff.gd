@@ -22,6 +22,7 @@ const NAMES := {0x49C3: "wilderness x", 0x49C4: "wilderness y", 0x49C5: "clock m
 ## Chat 82: compare the records' cached THAC0 and AC too (+0x110, +0x111): only checks that ask (diffcheck.sh passes
 ## --cache for a check folder holding a `cache` file); the cache follows the original's refreshes only in part.
 var compare_cache := false
+var compare_levels := false     # chat 133: --levels (a check folder holding a `levels` file)
 
 
 func _init() -> void:
@@ -35,6 +36,8 @@ func _init() -> void:
 			orig_path = arg.trim_prefix("--orig=")
 		elif arg == "--cache":
 			compare_cache = true
+		elif arg == "--levels":
+			compare_levels = true
 		elif arg.begins_with("--ignore="):
 			for a in arg.trim_prefix("--ignore=").split(","):
 				ignore[a.hex_to_int()] = true
@@ -161,7 +164,17 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 			["icon leg colours", 0xC3, 1], ["icon hair colours", 0xC4, 1], ["icon shield colours", 0xC5, 1],
 			["icon weapon colours", 0xC6, 1],
 			# Chat 102 (checks 367-372, NPC_ADD): ADD_NPC's control byte (128 + morale / 2) and side.
-			["control", 0x84, 1], ["side", 0x10E, 1]]
+			["control", 0x84, 1], ["side", 0x10E, 1],
+			# Chat 133 (check 493, a wight's level drain): what a drain and the level recount write.
+			["highest level", 0x73, 1], ["levels drained", 0x74, 1], ["HP drained", 0x75, 1],
+			["rolled HP", 0xB1, 1]]
+	# Chat 133: what the level recount writes (GAME.OVR 0x2AA87), for a check with a `levels` file. Not for
+	# every check: the original recounts as a character joins the party (0x1F55A), so a lab start with levels
+	# poked by hand reads recounted there and as poked in ours (42 checks); a real record is already counted.
+	if compare_levels:
+		fields.append_array([["base THAC0", 0x2D, 1],
+			["cleric slots 1", 0xB2, 1], ["cleric slots 2", 0xB3, 1], ["cleric slots 3", 0xB4, 1],
+			["magic-user slots 1", 0xB5, 1], ["magic-user slots 2", 0xB6, 1], ["magic-user slots 3", 0xB7, 1]])
 	if compare_cache:     # chat 82: the record's cached THAC0 and AC (a check with a `cache` file; TRAIN leaves them stale)
 		fields.append_array([["cached THAC0", 0x110, 1], ["cached AC", 0x111, 1]])
 	for i in 7:
