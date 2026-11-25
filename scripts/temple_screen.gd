@@ -341,6 +341,8 @@ func _pay() -> void:
 			if m.status == PartyMember.STATUS_DEAD:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
+				if m.raw.size() > 0x10D:
+					m.raw[0x10D] = 1     # GAME.OVR 0x4B70 (main chat 135, DOSBox: RHIANNON dead with +0x10D 0 raised: 1)
 				for b in m.affects.duplicate():
 					if int(b.effect) in [0x20, SpellCaster.POISONED]:
 						m.affects.erase(b)
@@ -349,6 +351,8 @@ func _pay() -> void:
 			if m.status == SpecialAffects.STONED:
 				m.status = PartyMember.STATUS_OKAY
 				m.hp = 1
+				if m.raw.size() > 0x10D:
+					m.raw[0x10D] = 1     # GAME.OVR 0x4F18 (main chat 135: as RAISE DEAD's 0x4B70)
 		"CURE BLINDNESS":
 			# GAME.OVR 0x482C: the first effect 0x21 goes (0x2AF10).
 			for b in m.affects:
