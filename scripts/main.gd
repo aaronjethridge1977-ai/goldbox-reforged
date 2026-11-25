@@ -432,14 +432,33 @@ var _starting_party := false
 var _lost := false     # the party has fallen: a key goes back to the start menu
 
 
-## The whole party is down: the adventure ends here; any key goes back to the start menu
-## (load a game or continue from the quick save). (The original's own screen for this is
-## still to be compared in the lab.)
+## The whole party is down in a fight: the original's end screen (GAME.OVR 0x6B37-0x6BAA; chat 132, DOSBox, check
+## 84's goblins with every member at 1 HP, DONE QUIT each turn): one frame round the screen, THE END! (white, centred
+## on row 1), THE MONSTERS REJOICE FOR THE PARTY / HAS BEEN DESTROYED (light green, box 2,5-37,22, wrapped) and
+## PRESS ANY KEY TO CONTINUE (magenta) on row 24. The original then quits to DOS; ours' key goes back to the start
+## menu (load a game or continue from the quick save). Ours showed its own THE PARTY HAS FALLEN. PRESS A KEY.
 func _party_lost() -> void:
 	_lost = true
 	_vm.state = EclVM.State.DONE
-	_message.text = "THE PARTY HAS FALLEN.\n\nPRESS A KEY."
+	_message.text = ""
 	_show()
+
+
+func _draw_rejoice() -> void:
+	_screen.clear()
+	for c in 40:
+		_screen.tile(c, 0, 22)
+		_screen.tile(c, 23, 22)
+	for r in range(1, 23):
+		_screen.tile(0, r, 21)
+		_screen.tile(39, r, 21)
+	for p in [Vector2i(0, 0), Vector2i(39, 0), Vector2i(0, 23), Vector2i(39, 23)]:
+		_screen.tile(p.x, p.y, 20)
+	_screen.text(15, 1, "THE END!", GameScreen.WHITE)
+	_screen.text(2, 5, "THE MONSTERS REJOICE FOR THE PARTY", GameScreen.GREEN)
+	_screen.text(2, 6, "HAS BEEN DESTROYED", GameScreen.GREEN)
+	_screen.text(0, 24, "PRESS ANY KEY TO CONTINUE", 13)
+	_screen.update()
 
 
 func _back_to_start() -> void:
@@ -3292,8 +3311,9 @@ func _run_program() -> void:
 			_vm.close_program()
 			_make_camp()
 		3:
+			# After THE ENTIRE PARTY IS KILLED!'s key the original quits to DOS (chat 122): ours goes to the start menu.
 			_vm.close_program()
-			_party_lost()
+			_back_to_start()
 		8:
 			# Tyranthraxus is beaten: the closing pictures and words, then the script goes on.
 			if _ending == null:
@@ -4379,6 +4399,9 @@ func _draw_killed() -> void:
 func _draw_screen() -> void:
 	if _vm.killed_page and _vm.state == EclVM.State.MENU:
 		_draw_killed()
+		return
+	if _lost:
+		_draw_rejoice()
 		return
 	var body := _message.text
 	var menu: Array = ["AREA", "CAST", "VIEW", "ENCAMP", "SEARCH", "LOOK"]
