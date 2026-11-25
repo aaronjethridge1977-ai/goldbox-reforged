@@ -473,6 +473,7 @@ func _pick_next() -> int:
 		return -1
 	combatants[chosen]["init_was"] = best_init
 	combatants[chosen]["init"] = 0
+	combatants[chosen].erase("fell")
 	return chosen
 
 
@@ -2668,6 +2669,8 @@ func ai_act() -> bool:
 	if active < 0:
 		return false
 	var c: Dictionary = combatants[active]
+	if c.get("fell", false) and not c.down:
+		return false        # fell in its own turn and stood up again (a wild boar fighting on): the turn is over
 	if c.down:
 		if not c.get("ai", false) and c.get("quick", false):
 			# Down at its own menu (ready_downed) and put on QUICK: the computer turn's opening still draws the pattern
@@ -3129,6 +3132,14 @@ func _went_down(j: int) -> void:
 			if tm.morale == 0xB3:
 				SpellCaster.set_control(tm, 0)
 	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
+	# A fall spends the figure's turn: its initiative (fight record +0x108 byte 3 = 0) and what is left of its moves
+	# and blows, so a wild boar that fights on (below) gets nothing back this round (main chat 137's throne room,
+	# DOSBox: wave 2's revived boar at 5 of 18 HP had initiative 0 at draw 26946, ours 5 and the round's turn; wave
+	# 3's running boar dropped by ELWEN's free blow at 40086 and revived (40088) ended its turn, ours ran on).
+	t.init = 0
+	t.moves = 0
+	t.attacks = 0
+	t.fell = true       # its turn, if running, ends here (ai_act); cleared when the order next picks it
 	t.regen_in = 0      # 0x3B
 	t.dies_in = 0       # 0x5F
 	if tm.has_affect(0x63) and tm.status in [PartyMember.STATUS_DYING, PartyMember.STATUS_UNCONSCIOUS]:
