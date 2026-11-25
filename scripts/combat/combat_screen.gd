@@ -489,6 +489,9 @@ func _build() -> void:
 	_sheet.closed.connect(_after_sheet)
 	_sheet.spell_chosen.connect(_on_spell_chosen)
 	_sheet.item_used.connect(_on_item_used)
+	_sheet.member_hurt.connect(func(past: int) -> void:
+		if _combat != null and _combat.active >= 0:
+			_combat.ready_downed(_combat.active, past))
 	add_child(_sheet)
 	_flash_timer = Timer.new()
 	_flash_timer.one_shot = true
