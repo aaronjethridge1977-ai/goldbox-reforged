@@ -52,6 +52,8 @@ signal closed
 ## In a fight: CAST chose a spell, or USE chose an item that casts one.
 signal spell_chosen(id: int)
 signal item_used(item: GameItem)
+## A READY in a fight whose item hurt the member down (an aligned sword of another alignment): `past` = the HP short.
+signal member_hurt(past: int)
 
 ## Set once by the game: the item types (slots, hands, classes) and spell table.
 static var types: ItemTypes
@@ -850,7 +852,12 @@ func _ready_item(m: PartyMember, it: GameItem) -> String:
 	if no != "":
 		return no
 	it.readied = true
-	return " / ".join(ItemPowers.changed(m, it, true))
+	var hp0 := m.hp
+	var st0 := m.status
+	var said := " / ".join(ItemPowers.changed(m, it, true))
+	if in_combat and st0 == PartyMember.STATUS_OKAY and m.status != PartyMember.STATUS_OKAY:
+		member_hurt.emit(maxi((it.raw[61] >> 4) - hp0, 0))
+	return said
 
 
 func _is_scroll(it: GameItem) -> bool:

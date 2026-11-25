@@ -123,6 +123,10 @@ run orig_A_c62_hand_rmfight 0 env HANDX=0:1:0:0:0:0::1 OURS_SEED=1 ./combat34/ha
 # scroll at his first turn does nothing (still unread: the item list back), EXIT, QUICK. Two original runs identical (c62ru,
 # ru2; USEEXIT=1), 21407 draws. Ours' camp keys wait out the cast's lines (P104's pace).
 run orig_A_c62_hand_rmuse 0 env HANDX=0:99:0:1:2:0::0:1 OURS_SEED=1 ./combat34/handreg.sh rm_kob 33333333 "E,wait,M,wait,End,wait,C,wait,C,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,E,wait,E,wait,up" up 1 1
+# sw_kob (BAKSHI at 10 HP, the knight's tomb's Long Sword +2 for alignment 0 unreadied; main chat 136's request): USE, End x2,
+# READY: TAKES 15 POINTS OF DAMAGE FROM MAGIC (5 HP then: DEAD), the list, EXIT, his menu without MOVE, QUICK: the pattern's
+# d8 and d4 and the fight is lost. Two original runs identical (c62sw3, sw4), 2131 draws.
+run orig_A_c62_hand_swready 0 env HANDX=0:99:0:1:2:0::0:1:r OURS_SEED=1 ./combat34/handreg.sh sw_kob 33333333 up up 1 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
