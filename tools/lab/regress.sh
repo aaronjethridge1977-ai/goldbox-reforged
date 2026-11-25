@@ -100,6 +100,9 @@ run orig_A_c36_hand_lb1 0 env OURS_SEED=1 ./combat34/handreg.sh lb_kob1 33333333
 run orig_A_c36_hand_lb2 0 env GBR_PLAYOUT=1 OURS_SEED=1 ./combat34/handreg.sh lb_kob1 44444444 up up 3 1
 run orig_A_c38_hand_disp 0 env HANDX=0:2:1 OURS_SEED=1 ./combat34/handreg.sh disp_kob 33333333 up up 0 1
 run orig_A_c39_hand_jav 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.sh jav_kob 33333333 up up 1 1
+# Combat Chat 60 (the spell matrix: wands): wand_kob (BAKSHI magic-user 1, 4:10's Wand of Lightning Bolt readied), two USEs by
+# hand (End x2, U, NEXT, TARGET), then QUICK; two original runs identical (tmp/c33_c38w2, c33_c60w3), 6936 draws.
+run orig_A_c60_hand_wand 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.sh wand_kob 33333333 up up 1 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
@@ -153,6 +156,20 @@ run orig_A_c46_uc4f 0 env ORIG=skip GBR_PLAYOUT=1 HANDX=0:5:1 ./combat42/mx.sh u
 # Combat Chat 46: a Potion of Speed (fixture spd_kob: combat38/mkitem.py lb_kob1 spd_kob tmp/rp_fb/game/CHRDATF3.ITM Potion 61=80
 # 60=1, readied): BAKSHI drinks it (USE, End x2, U): the 5d4 once, the half-elf's d100, the mark at once. 15195 draws, two runs.
 run orig_A_c46_mx_spd2 0 env ORIG=skip GBR_PLAYOUT=1 OURS_SEED=1 HANDX=0:99:0:1:2 ./combat42/mx.sh spd_kob 33333333 mx_spd2 up up 0 1
+# Combat Chat 57: the touch spells (Cause Light Wounds 4, Shocking Grasp 20): the d8 before the touch roll, the touch
+# with the script's fight modifier (the kobolds' cave: the party -2). Second original runs agree (tmp/c57/q*kb_orig.txt).
+run orig_A_c57_mx_q4k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q4k 11111111 mx_q4k up up 1 1
+run orig_A_c57_mx_q20k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q20k 11111111 mx_q20k up up 1 1
+run orig_A_c58_mx_q30k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q30k 11111111 mx_q30k up up 0 1
+run orig_A_c58_mx_g42b 0 env ORIG=skip GBR_PLAYOUT=1 HANDX=::::::GHOUL FX_IGNORE=28 FX_END_LOOSE=1 ./combat42/mx.sh g42b aeba0d61 mx_g42b "" up,enter 1 1
+run orig_A_c58_mx_q9k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q9k 11111111 mx_q9k up up 1 1
+run orig_A_c58_mx_q2k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q2k 11111111 mx_q2k up up 1 1
+run orig_A_c58_mx_q33k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q33k 11111111 mx_q33k up up 1 1
+run orig_A_c58_mx_q12k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q12k 11111111 mx_q12k up up 0 1
+run orig_A_c58_mx_q19k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q19k 11111111 mx_q19k up up 1 1
+run orig_A_c58_mx_q45k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q45k 11111111 mx_q45k up up 1 1
+run orig_A_c58_mx_q54k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q54k 11111111 mx_q54k up up 0 1
+run orig_A_c58_mx_q28k 0 env ORIG=skip GBR_PLAYOUT=1 ./combat42/mx.sh q28k 11111111 mx_q28k up up 1 1
 # Combat Chat 51: 2:20's trolls with the QUICK party (k220): a guard felling the one stepping up keeps its move and attacks
 # (troll 10, draw 2636), and troll 8's rise held by BRAM on its second cell; THRENDER steps onto a slain kobold (disp_kob).
 run orig_A_c51_k220 0 ./combat51/regline.sh k220 33333333 "" "up,enter,fightend,n,wait,wait,wait,wait,wait,wait,tplog"
