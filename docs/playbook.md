@@ -1040,3 +1040,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- Read Magic, Friends, Find Traps, Knock, Strength and Cure Disease are camp-only: chosen in a fight they say CAMP ONLY SPELL and nothing happens (the turn is kept). Cast Read Magic in camp and USE the unread scroll there: its effect lasts a minute, so it is gone by the time a fight a step away reaches the caster's turn. *seen* (Combat Chat 62, DOSBox rm_kob)
