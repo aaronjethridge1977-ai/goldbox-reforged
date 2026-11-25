@@ -1714,8 +1714,10 @@ func _bottom_menu() -> Array:
 		items.append("USE")
 	# CAST: not once the figure has been wounded this round (GAME.OVR 0x9F46, record byte 1).
 	# Nor inside the anti-magic shell (0x9F59).
+	# Any memory slot holding a spell counts (0x9F18-0x9F44: bytes 0x17-0x2A above 0, a camp-only spell or one still
+	# being memorized too; Combat Chat 62, DOSBox: BAKSHI with READ MAGIC alone offered CAST; ours left it out).
 	if _combat.magic != null and not c.get("no_spells", false) and not _combat.anti_magic and \
-			not _combat.magic.castable(_combat.active).is_empty():
+			who.memorized.any(func(s: int) -> bool: return s > 0):
 		items.append("CAST")
 	# TURN: a cleric level (record +0x96) and no turn yet this fight (GAME.OVR 0x9F89: combat byte +0x11, set by
 	# the turn 0x139A5, the block zeroed at each fight's setup 0xD909). Undead in sight or not (Player 32, p32a1:
@@ -2109,6 +2111,10 @@ func _start_use() -> void:
 func _start_cast() -> void:
 	if _combat.magic == null:
 		return
+	if _combatants[_combat.active].who.ready_spells().is_empty():
+		# Only spells still being memorized: the list (0x239D6 mode 0) has nothing and returns at once, no page (0x14C56).
+		_refresh()
+		return
 	_sheet.open_combat(_party_view(), _active_index(), "cast", 0)
 
 
@@ -2131,6 +2137,12 @@ func _after_sheet() -> void:
 
 func _on_spell_chosen(id: int) -> void:
 	if _combat == null or _combat.magic == null:
+		return
+	if _combat.magic.table.when(id) == SpellTable.WHEN_CAMP:
+		# GAME.OVR 0x14C67: a spell whose table byte +0xB is 0 (Friends, Read Magic, Find Traps, Knock, Strength, Cure
+		# Disease): "Camp Only Spell" through the row-24 note 0xBA:0x1693, the spell kept, back to the member's menu
+		# with the turn not spent (Combat Chat 62, DOSBox: BAKSHI's READ MAGIC, 21407 draws the same after).
+		_say("CAMP ONLY SPELL")
 		return
 	if not _combat.magic.castable(_combat.active).has(id):
 		_say("CAN'T CAST THAT NOW")

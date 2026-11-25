@@ -656,10 +656,18 @@ func _refresh() -> void:
 			if _message == "":
 				_menu(_item_menu(), 0)
 		"confirm", "id_reply":
-			_draw_items(m, false)
-			var q := PrintWrap.lines(_question, 38)   # the original's printer (main chat 106); lab: "...IDENTIFY" (33) then "YOUR BANDED MAIL"
-			for i in q.size():
-				_t(1, 21 + i, q[i], GameScreen.YELLOW)
+			if _mode == "confirm" and _pending == "use" and _scroll != null:
+				# A combat-only spell chosen on a scroll's page outside a fight: the page stays, its spell unlit, and
+				# "THAT ITEM" / "IS A COMBAT-ONLY ITEM..." green on rows 19-20 (Combat Chat 62, DOSBox: BAKSHI under Read
+				# Magic, MAGIC MISSILE's page; ours drew the item list and one yellow line at row 21).
+				_draw_scroll(m, false)
+				_t(1, 19, "THAT ITEM", GameScreen.GREEN)
+				_t(1, 20, "IS A COMBAT-ONLY ITEM...", GameScreen.GREEN)
+			else:
+				_draw_items(m, false)
+				var q := PrintWrap.lines(_question, 38)   # the original's printer (main chat 106); lab: "...IDENTIFY" (33) then "YOUR BANDED MAIL"
+				for i in q.size():
+					_t(1, 21 + i, q[i], GameScreen.YELLOW)
 			var prompt := {"drop": "DROP IT?", "sell": "IS IT A DEAL?", "id": "IS IT A DEAL?", "use": "USE IT?"}.get(_pending, "?") as String
 			if _message == "":
 				_t(0, 24, prompt, MAGENTA)
@@ -957,7 +965,7 @@ func _scroll_slot() -> int:
 	return 60
 
 
-func _draw_scroll(m: PartyMember) -> void:
+func _draw_scroll(m: PartyMember, lit := true) -> void:
 	_frame(2)
 	_heading(m, "SPELLS ON SCROLL")
 	var ids := _scroll_ids()
@@ -969,9 +977,11 @@ func _draw_scroll(m: PartyMember) -> void:
 			_t(1, row, LEVEL_WORDS[clampi(lv - 1, 0, LEVEL_WORDS.size() - 1)], MAGENTA)
 			row += 1
 			last = lv
-		_t(3, row, spells.name_of(ids[i]).to_upper(), GameScreen.WHITE if i == _scroll_cursor else GameScreen.GREEN)
+		_t(3, row, spells.name_of(ids[i]).to_upper(), GameScreen.WHITE if lit and i == _scroll_cursor else GameScreen.GREEN)
 		_scr.list_line(row, i)
 		row += 1
+	if not lit:
+		return
 	_scr.list_chosen(_scroll_cursor, KEY_HOME, KEY_END)
 	_t(0, 24, "CHOOSE SPELL:", MAGENTA)
 	_menu(["CAST", "EXIT"], 14)
@@ -1517,6 +1527,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					_say(_use_item(m, it, true))
 				_mode = "items"
 			elif choice == "NO" or cancel:
+				if _pending == "use":
+					_scroll = null
 				_mode = "items"
 			_after_change()
 		"coin":
