@@ -976,7 +976,13 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 					continue
 				if t.hp <= 0:
 					t.hp = 1
-				SpellCaster.add_affect(t, SpellCaster.SLOWED_POISON, id, table.duration_for(id, lvl), lvl)
+				# Power 0xFF, not the level (GAME.OVR 0x288CA, the same handler as outside fights; DOSBox, Combat Chat 61,
+				# sp_kob: BAKSHI's Slow Poison on himself in a fight: 16:60/255; main chat 133's request).
+				# The effect goes on through the add-effect routine (0x278DB -> 0x2C540), so the target's category 9
+				# runs: an elf's or half-elf's d100 (0x115ED, 0x11A3F; DOSBox, sp_kob: BAKSHI's d100 at draw 2046,
+				# before the order's), magic resistance clearing the effect.
+				if not resists(t, -1):
+					SpellCaster.add_affect(t, SpellCaster.SLOWED_POISON, id, table.duration_for(id, lvl), 0xFF)
 				c.message.emit("%s IS AFFECTED" % t.name)
 				if t.status != PartyMember.STATUS_OKAY:
 					if e.down:

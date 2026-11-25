@@ -106,6 +106,15 @@ run orig_A_c60_hand_wand 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.s
 # Combat Chat 60 (scrolls): scrr_kob (BAKSHI magic-user 1, a read Magic User Scroll of Magic Missile readied: byte 53 = 0),
 # USE, End x2, U, the scroll's page CAST, NEXT, TARGET, then QUICK; two original runs identical (c60r2, c60r3), 16582 draws.
 run orig_A_c60_hand_scroll 0 env HANDX=0:99:0:1:2 OURS_SEED=1 ./combat34/handreg.sh scrr_kob 33333333 up up 1 1
+# Combat Chat 61 (scrolls): scr3f_kob (a read Magic User Scroll of STINKING CLOUD, MAGIC MISSILE, SLEEP, first in BAKSHI's
+# items): USE, U, the page lights the last (SLEEP), CAST, NEXT, TARGET; two original runs identical (c61s3f, s3f2), 12799 draws.
+run orig_A_c61_hand_scroll3 0 env HANDX=0:99:0:1:0 OURS_SEED=1 ./combat34/handreg.sh scr3f_kob 33333333 up up 1 1
+# cscr_kob (an unread Clerical Scroll of HOLD PERSON, CURE LIGHT WOUNDS; BAKSHI has a cleric level: read at the USE, 0x27466),
+# End x2, U, CURE LIGHT WOUNDS lit, CAST, NEXT, TARGET; two original runs identical (c61cs, cs2), 16284 draws.
+run orig_A_c61_hand_cscroll 0 env HANDX=0:99:0:1:2 OURS_SEED=1 ./combat34/handreg.sh cscr_kob 33333333 up up 1 1
+# sp_kob (BAKSHI, a half-elf, Slow Poison memorized, a poison effect 0x37 added to his SPC): CAST on himself (TARGET at once),
+# then QUICK: the half-elf's d100 as the effect goes on (0x11A3F), power 255; two original runs identical (c61sp2, sp3), 27623.
+run orig_A_c61_hand_slowp 0 env HANDX=0:1:0:0:0 OURS_SEED=1 ./combat34/handreg.sh sp_kob 33333333 up up 0 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
