@@ -112,6 +112,7 @@ static func drain(m: PartyMember, levels: int, t: ClassTables, spells: SpellTabl
 		if m.raw[HIGHEST] < 2:
 			m.status = STATUS_GONE
 			out.append("%s IS DEAD FOREVER" % m.name)
+			m.hp = 0     # main chat 133 (DOSBox, check 504: RHIANNON, fighter/thief 1/1, drained: HP 0, not 13)
 			m.hp_max = 0
 			m.raw[0x32] = 0
 			var p := _drain_pick(m, t)

@@ -215,6 +215,7 @@ func open_cast(party: Array[PartyMember], sel: int, walk_menu: Array) -> void:
 	_sel = clampi(sel, 0, maxi(party.size() - 1, 0))
 	_walk = true
 	_walk_menu = walk_menu
+	_last_target = null     # main chat 133 (DOSBox, check 499): the adventure menu's CAST lights the caster again
 	_starting = false
 	_plain_rope = false
 	_lines = []
@@ -760,6 +761,10 @@ func _open_save_list() -> void:
 
 
 func _magic_menu() -> void:
+	# The MAGIC menu forgets the last target (main chat 133, DOSBox, check 497: CEDRIC's SLOW POISON on DORN, EXIT
+	# from the list, CAST CURE LIGHT WOUNDS: CAST SPELL ON WHOM lights CEDRIC again; cast straight from the list it
+	# lights DORN, chat 83's case).
+	_last_target = null
 	_to_menu("magic", MAGIC_MENU)
 
 
