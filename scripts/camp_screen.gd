@@ -1062,6 +1062,8 @@ func _heal_day() -> void:
 				and m.hp < m.hp_max and not SpecialAffects.diseased(m):
 			m.hp += 1
 			m.status = PartyMember.STATUS_OKAY
+			if m.raw.size() > 0x10D:
+				m.raw[0x10D] = 1     # (main chat 134, DOSBox: DIRTEN rested a day: OKAY, +0x10D set)
 	# GAME.OVR 0x2463D: the line is printed (0x24699) before the any-healed test (0x246BD, which only redraws the
 	# party list), so it shows every 24 hours rested (main chat 126, by the code), and waits (0x246D0).
 	_say("THE WHOLE PARTY IS HEALED")

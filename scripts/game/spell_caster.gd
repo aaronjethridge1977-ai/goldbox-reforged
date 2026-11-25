@@ -604,4 +604,6 @@ static func _heal(m: PartyMember, amount: int) -> bool:
 	m.hp = mini(m.hp + amount, m.hp_max)
 	if m.hp > 0:
 		m.status = PartyMember.STATUS_OKAY
+		if m.raw.size() > 0x10D:
+			m.raw[0x10D] = 1     # back in the fight's list (main chat 134, DOSBox: DIRTEN cured: OKAY, +0x10D 1)
 	return true
