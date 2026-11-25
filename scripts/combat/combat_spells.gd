@@ -1470,6 +1470,11 @@ func _ai_plan(i: int, id: int, aiming: bool = false) -> Dictionary:
 	# The list is the blow's: range and a clear line between the figures' cells (Combat Chat 31, Player 20's
 	# p20a3 draw 1434: LIRA's Sleep, the original's d3; a gnoll at range 7 seen from LIRA's cell to one of its
 	# cells but not to its anchor, which `why_not`, the player's aim at a square, looks at).
+	# Each aim calls 0x15FDF with its flag 1 (0x1470A), which drops the caster's target before the pick (0x16007 ->
+	# 0x16046): with nobody in range the caster is left with none, and its next turn picks a new one (main chat
+	# 136's check 526, DOSBox held at draws 5177-5179: CEDRIC's begun HOLD PERSON going off with no kobold in reach
+	# cleared his target; at his next turn the original drew a pick at 0x160DB, ours walked to the old target).
+	me.target = -1
 	var reach := spell_range(i, id)
 	var near: Array[int] = []
 	for j in c.combatants.size():
