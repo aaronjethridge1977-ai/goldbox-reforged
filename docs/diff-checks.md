@@ -172,6 +172,40 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 131: a held key through A BATTLE BEGINS...; an area change, a picture, held Enter and a held arrow into a text (main path)
+
+- **The tool: the BIOS keyboard buffer watched** (`~/gbr/lab/data/c131/kbuf.py <secs> <key>@<t>[:<hold>]...`): DOSBox's
+  0040:001A / 001C read from its memory every ~0.5 ms, each key put in or taken printed with its time. DOSBox-staging
+  makes its own typematic: the first repeat ~0.5 s after the press, then ~30 a second (Xvfb's own autorepeat, 660 ms /
+  40 ms, doesn't reach it); ours gets the host's (on :98, Xvfb's).
+- **A held key's repeats during A BATTLE BEGINS... (found, fixed; input, main path, resets the streak; paced play
+  only):** check 84's goblins at speed 4, C then Q held. The setup's reads (START.EXE 0x899:0x122 -> 0x89E9: read a key,
+  then read every key still waiting, keeping the last) clear the buffer at ~0.97 s after C (the text shows at ~0.88 s);
+  keys typed after that wait for the fight's first read (~1.06 s). Q held from 0.45 s for 0.58 s: its repeats at 0.99
+  and 1.03 s made RHIANNON QUICK (DARKSTAR's menu next); Q held from 0.15 s and let go at ~0.98 s: everything
+  cleared, her menu waits. Ours dropped repeats in `_battle_keep` (her menu waited); now kept like any key (timed:
+  C, Q at 453 ms, repeats at 994 and 1027 ms: QUICK, as the same keys as presses did before). Held through the fight's
+  opening (let go at ~1.14 s and ~1.44 s), both games matched before and after (the later repeats reach the menus).
+- **A computer turn's poll drains the pre-fight keys (found; input, main path; Combat's file, request 19:46):** Q held
+  from 0.40 s for 0.65 s: three keys waited at the first read (`out -3`): RHIANNON QUICK, DARKSTAR's menu waits (her
+  turn's opening poll took the other two at once). Ours' `Combat.poll_keys` takes `key_queue` one a poll: with three
+  keys DARKSTAR goes QUICK too.
+- **Check 490 (built, not installed; `~/gbr/lab/data/c131/chk490`, paced):** the two-repeat case, then Alt-Q at
+  DARKSTAR's menu: the fight parts on the dice after RHIANNON's menu QUICK (the original: DARKSTAR misses, the goblin
+  misses BAKSHI, THRENDER hits for 3; ours: DARKSTAR's third dart hits for 3, THRENDER misses, the goblin hits BAKSHI),
+  as 489 does after its menus; check 84 (all QUICK before the first menu) matches. To Combat with 489.
+- **Checked, matching:** keys typed during an area change (check 33's walk, 6:25 -> 7:26 at 15,11: the change calls
+  the full flush, GAME.OVR 0x31B52, before any key typed after the step: a Right 0.04-0.5 s after the crossing step
+  stays in the buffer and steps on, 17,11 E, in both); a key typed during the nomad camp's picture and text (L at 0.1,
+  1.0 and 2.0 s after the step: LEAVE in both; the picture's flush, 0x2E552, comes before them); Enter held at 3:0's
+  tavern page (the page goes, DOES ANYONE WANT TO GAMBLE? YES NO stays: Enter does nothing at a horizontal menu, in
+  both); Y then Enter held 2.5 s (16 Enters piled up through the rules text, read as one: WHO WILL GAMBLE? waits, in
+  both); Y then Enter held 7.6 s (a repeat selects THRENDER GRONE, the rest go before the wager's answer: the field
+  empty, in both); Up held 1.5 s into the tavern (one step, the text, 15 Ups piled up and drained by the PRESS page;
+  Enter then gives the question, in both). The first key after a LOAD (the deferred arrival) calls three 8x8D loads,
+  each with the full flush (0x32364): not measured further (ours clears its type-ahead at a load).
+- Not measured: Alt + keypad digits in a typed answer; a held key through a text square with no PRESS page in a city.
+
 ## Chat 130: the keypad; Shift / Ctrl / Alt with the F-keys and grey keys in a typed answer; a held key through a script's wait (main path)
 
 - **The keypad (checked, matching):** DOSBox at 3:0's wager (`~/gbr/lab/data/c130/wprobe2.sh`), Num Lock off: keypad 4,
