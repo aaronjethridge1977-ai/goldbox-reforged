@@ -133,7 +133,8 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 				return out
 			if t.hp <= 0:
 				t.hp = 1
-			add_affect(t, SLOWED_POISON, id, table.duration_for(id, lvl), lvl)
+			# The effect's power is 0xFF, not the level (GAME.OVR 0x288CA; main chat 133, DOSBox, check 497: 22/280/255).
+			add_affect(t, SLOWED_POISON, id, table.duration_for(id, lvl), 0xFF)
 			out.append("%s IS AFFECTED" % t.name)
 			if t.status != PartyMember.STATUS_OKAY:
 				t.status = PartyMember.STATUS_OKAY
