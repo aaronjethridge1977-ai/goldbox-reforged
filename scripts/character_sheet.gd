@@ -1410,9 +1410,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _is_scroll(it) and not scroll_read(m, it):
 					pass         # an unread scroll lists nothing: the item list stays (scroll_read)
 				elif _is_scroll(it) and item_spell(m, it) > 0 and it.raw.size() >= GameItem.SIZE:
-					# Lab (Combat Chat 5, the Slums' orcs): the scroll's page as in camp, then AIM.
+					# Lab (Combat Chat 5, the Slums' orcs): the scroll's page as in camp, then AIM. The last spell lit,
+					# wherever the scroll stands in the item list (GAME.OVR 0x22AC4 starts the list at -1 in camp and
+					# fight; DOSBox, Combat Chat 61: a read scroll of STINKING CLOUD, MAGIC MISSILE, SLEEP first in
+					# BAKSHI's items: SLEEP lit; ours lit the item list's line, STINKING CLOUD).
 					_scroll = it
-					_scroll_cursor = clampi(_cursor, 0, maxi(_scroll_ids().size() - 1, 0))
+					_scroll_cursor = maxi(_scroll_ids().size() - 1, 0)
 					_mode = "scroll"
 					_pick = 0
 				elif item_spell(m, it) > 0:
