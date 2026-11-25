@@ -369,6 +369,8 @@ static func _handcast(main: Node, arg: String) -> void:
 			k = "y"
 			why = "abort spell"
 		elif st == "choose":
+			if sheet._mode == "scroll":     # Combat Chat 61: the scroll page's list and its lit spell, for the lab's shots
+				print("HAND SCROLL %s lit %d" % [str(sheet._scroll_ids()), sheet._scroll_cursor])
 			k = "c"
 			why = "cast the lit spell"
 			aim_n = 0
