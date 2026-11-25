@@ -118,6 +118,8 @@ static func dos_char(ev: InputEventKey) -> int:
 			return 8
 		KEY_TAB:
 			return 9
+		KEY_SPACE:
+			return 32     # (the lab's timed= Space carries no unicode)
 	if ev.keycode >= KEY_KP_0 and ev.keycode <= KEY_KP_9:
 		return 48 + ev.keycode - KEY_KP_0
 	return ev.unicode if ev.unicode > 0 and ev.unicode < 127 else -1
