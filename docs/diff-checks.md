@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 136: a wrong-alignment sword readied past the HP (523, 524)
+## Chat 136: a wrong-alignment sword readied past the HP (523, 524), a camp PRAYER through a wilderness fight (525), QUICK with MAGIC ON (526, to Combat)
 
 - **The aligned sword's damage past the HP (checks 523, 524; game state, main path: the knight's tomb's Long Sword +2,
   4:10, lawful good only, 15 damage; found and fixed):** readying an aligned sword (item byte 62 0x84) that doesn't
@@ -185,6 +185,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   Fixed in item_powers.gd (the same rule as ecl_vm.gd's `_hurt`); both MATCH. In a fight ours' ready path calls the
   same code but not the fight's going-down (combat.gd's `_hurt`: bleeding, GOES DOWN lines): to Combat (new area).
   Lab `~/gbr/lab/data/c136/chk523`, `chk524`, originals `o523`, `o524`, keys `k523.txt`.
+- **A camp PRAYER, then a wilderness fight (check 525; game state, main path; matched):** check 100's start (8:27's
+  band, a real checkpoint; CEDRIC holds two PRAYERs), ENCAMP, CEDRIC, MAGIC, CAST, End x4 (PRAYER: no dice drawn in
+  camp), EXIT x3, then check 100's step and kobold fight on QUICK: the end save MATCHes, and cmpfight3 shows all 7979
+  of the original's draws identical (the same count as check 100 without the PRAYER: a band step's time likely ends
+  it before the fight). In ours the keys after the CAST need waits (keys during the cast's lines are swallowed, as
+  chat 134 saw). Check 998 (check 100's keys against 525's end) differs only in CEDRIC's spent PRAYER.
+- **QUICK with MAGIC ON: a member who weighs his spells and casts none (check 526; game state, main path; to Combat):**
+  check 100's fight with Alt-M at COMBAT. The save's party is already on QUICK, so presser.py never sees QUICK and
+  never sends Alt-M: `~/gbr/lab/cmpfight3m.sh` (cmpfight3 with `ALTM=1`: COMBAT, then Alt-M 0.3 s later) and
+  `data/c136/o526.sh` (the same for an end save). Draws identical to 6362 of 10514; then, after CEDRIC's three spell
+  picks find nothing, the original draws a blow's target pick (OVR:160db d22) and walks him west; ours draws none and
+  walks him north into a kobold's swing. Board: main (chat 136) → combat. `chk526` DIFFERS on main (HP, spells spent).
 
 ## Chat 135: the camp Slow Poison's half-elf d100 (521); record +0x10D outside fights (statediff compares it; 522, a temple RAISE DEAD from a fight-dead start)
 
