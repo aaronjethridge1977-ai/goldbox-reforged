@@ -320,6 +320,8 @@ static func _handcast(main: Node, arg: String) -> void:
 	var aim_name := a[8] if a.size() > 8 else ""
 	# Combat Chat 62 (combat62/handuse.py's CASTFIRST): :1 tenth, CAST (while casts < <casts>) before USE.
 	var cast_first := a.size() > 9 and a[9] == "1"
+	# :1 eleventh (handuse.py's USEEXIT): the item list back after the USEs are spent: EXIT it, then QUICK.
+	var use_exit := a.size() > 10 and a[10] == "1"
 	var uses := 0
 	var downs := 0
 	var casts := 0
@@ -378,7 +380,10 @@ static func _handcast(main: Node, arg: String) -> void:
 			aim_n = 0
 			picks = 0
 		elif st == "use":
-			if downs < use_down:
+			if use_exit and uses >= uses_max:
+				k = "e"
+				why = "exit the list (uses spent)"
+			elif downs < use_down:
 				k = "End"
 				why = "item list down"
 				downs += 1
