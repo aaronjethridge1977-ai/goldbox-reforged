@@ -225,7 +225,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   draws identical and all 12 figures' cells agree. Break: tpseed 00000001 (11 differences). **Lab pitfall:** N on
   ours' walking screen is a lab key in debug builds (the clock to 08:00 / 20:00), so a check's keys must not send N
   where the original asks nothing (the first version of 531's keys did: "ours 20:00").
-- **match_gate.sh on 13d46ee** (after 317c996, which moves paths after a kill with attacks to spare): see the board.
+- **match_gate.sh on 85498f9** (after Combat Chat 62's 317c996, d9f0d7d and 125631e, which move fights on the recordings' paths; for 0.1.8): **70 of 70 identical** (`data/c138/mg2.log`).
 
 ## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528); TAKE and SHARE at the load (529, 530); the throne room's wave 2 (to Combat)
 
