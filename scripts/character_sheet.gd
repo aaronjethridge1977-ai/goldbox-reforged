@@ -52,8 +52,9 @@ signal closed
 ## In a fight: CAST chose a spell, or USE chose an item that casts one.
 signal spell_chosen(id: int)
 signal item_used(item: GameItem)
-## A READY in a fight whose item hurt the member down (an aligned sword of another alignment): `past` = the HP short.
-signal member_hurt(past: int)
+## A READY in a fight whose item hurt the member (an aligned sword of another alignment): its damage line, and when it
+## put the member down `past` = the HP short (else -1). The fight shows the line, then gives the list back (resume).
+signal member_hurt(words: String, past: int)
 
 ## Set once by the game: the item types (slots, hands, classes) and spell table.
 static var types: ItemTypes
@@ -793,6 +794,20 @@ static func recache_name(it: GameItem) -> void:
 		it.raw[1 + i] = bytes[i] if i < bytes.size() else 0
 
 
+## The fight hands the list back after a READY's damage (member_hurt): keys typed meanwhile wait for it (KeyBurst).
+func hold_key(ev: InputEventKey) -> void:
+	_held_key.add(ev)
+
+
+func resume() -> void:
+	visible = true
+	_after_change()
+	if _held_key.has_key():
+		var ev := _held_key.take()
+		if ev != null:
+			_unhandled_input(ev)
+
+
 func _say(text: String) -> void:
 	_note = text
 	_message = text.left(40)
@@ -854,10 +869,16 @@ func _ready_item(m: PartyMember, it: GameItem) -> String:
 	it.readied = true
 	var hp0 := m.hp
 	var st0 := m.status
-	var said := " / ".join(ItemPowers.changed(m, it, true))
-	if in_combat and st0 == PartyMember.STATUS_OKAY and m.status != PartyMember.STATUS_OKAY:
-		member_hurt.emit(maxi((it.raw[61] >> 4) - hp0, 0))
-	return said
+	var lines := ItemPowers.changed(m, it, true)
+	if in_combat and not lines.is_empty() and ItemPowers.power(it) == ItemPowers.ALIGNED:
+		# In a fight the damage goes through the damage routine on the fight's screen (GAME.OVR 0x11D45: 0xBA:0x2B88
+		# draws the field, then 0xB0:0x7F's line, burst and fall words), and the item list comes back after it
+		# (DOSBox, Combat Chat 63, sw_kob at speed 6: BAKSHI / TAKES 15 POINTS / OF DAMAGE FROM / MAGIC, the burst,
+		# BAKSHI / IS KILLED with the skull, then BAKSHI'S ITEMS; ours said it on the sheet's line).
+		var downed := st0 == PartyMember.STATUS_OKAY and m.status != PartyMember.STATUS_OKAY
+		member_hurt.emit(lines[0], maxi((it.raw[61] >> 4) - hp0, 0) if downed else -1)
+		return ""
+	return " / ".join(lines)
 
 
 func _is_scroll(it: GameItem) -> bool:

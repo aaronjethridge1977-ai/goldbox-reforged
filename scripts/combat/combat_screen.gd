@@ -489,9 +489,7 @@ func _build() -> void:
 	_sheet.closed.connect(_after_sheet)
 	_sheet.spell_chosen.connect(_on_spell_chosen)
 	_sheet.item_used.connect(_on_item_used)
-	_sheet.member_hurt.connect(func(past: int) -> void:
-		if _combat != null and _combat.active >= 0:
-			_combat.ready_downed(_combat.active, past))
+	_sheet.member_hurt.connect(_on_ready_hurt)
 	add_child(_sheet)
 	_flash_timer = Timer.new()
 	_flash_timer.one_shot = true
@@ -543,6 +541,8 @@ static func _message_pieces(msg: String) -> String:
 	var m := re.search(msg)
 	if m != null:
 		msg += "\n" + ("POINT OF DAMAGE" if m.get_string(1) == "1" else "POINTS OF DAMAGE")
+	if msg.contains(", AND IS DYING"):
+		return msg      # the damage routine's (Combat._routine_fall): "GOES DOWN, AND" / "IS DYING" by the wrap
 	return msg.replace(" AND IS DYING", "\nAND IS DYING")
 
 
@@ -572,7 +572,7 @@ func _draw_original(field: Image) -> void:
 	f.convert(Image.FORMAT_RGBA8)
 	g.img.blit_rect(f, Rect2i(0, 0, mini(f.get_width(), 168), mini(f.get_height(), 168)), Vector2i(8, 8))
 	g.click_zone(Rect2i(8, 8, VIEW_CELLS * CELL, VIEW_CELLS * CELL), _field_click)
-	if not _combatants.is_empty():
+	if not _combatants.is_empty() and not _bare:
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
 		g.text(23, 1, m.name.left(16), GameScreen.CYAN if e.team == 0 else GameScreen.YELLOW)
@@ -616,13 +616,18 @@ func _draw_original(field: Image) -> void:
 		shown = Array(_panel_msgs)
 	elif not _messages.is_empty() and not String(_messages[-1]).begins_with("ROUND "):
 		shown = [_messages[-1]]
+	var prev := ""
 	for m_text in shown:
 		var rest := _message_pieces(String(m_text).to_upper())
 		# A fall under a blow's lines: a blank line before it and the falling figure's name in
-		# light red (main's cold-open capture of the original: "ORC" red over "GOES DOWN").
+		# light red (main's cold-open capture of the original: "ORC" red over "GOES DOWN"). The damage
+		# routine's fall goes on the row under its damage line (GAME.OVR 0x2C4E0: DS:0x5E25 + 1; DOSBox,
+		# Combat Chat 63's sw_kob: BAKSHI red on row 14 under MAGIC).
 		var falls := not lines.is_empty() and _falls_line(rest)
-		if falls:
+		var red := falls
+		if falls and not (prev.contains(" TAKES ") and prev.contains(" OF DAMAGE")):
 			lines.append(["", GameScreen.GREEN])
+		prev = rest
 		while rest != "":
 			var hit := ""
 			var at := rest.length()
@@ -638,13 +643,16 @@ func _draw_original(field: Image) -> void:
 							lines.append([w, GameScreen.GREEN])
 			if hit == "":
 				break
-			lines.append([hit.left(16), GameScreen.RED if falls and at == 0 and lines[-1][0] == "" else names[hit]])
+			lines.append([hit.left(16), GameScreen.RED if red and at == 0 else names[hit]])
+			red = false
 			rest = rest.substr(at + hit.length()).strip_edges()
 	if _casting != "choose":
 		for i in mini(lines.size(), 12):
 			g.text(23, 10 + i, lines[i][0], lines[i][1])
 	# Bottom lines.
-	if _aim_rows_kept and _row24_msg == "":
+	if _bare:
+		g.forget_menu(24)      # a READY's damage on the fight's screen: nothing on row 24 (DOSBox, Combat Chat 63)
+	elif _aim_rows_kept and _row24_msg == "":
 		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
 		if _kept_prompt != "":
 			g.text(0, 24, _kept_prompt, MAGENTA)
@@ -2160,6 +2168,43 @@ func _on_item_used(it: GameItem) -> void:
 		_begin_spell(id, it)
 
 
+## A READY in a fight that hurt the member (CharacterSheet.member_hurt; an aligned sword of another alignment): the
+## original leaves the item list for the fight's screen (GAME.OVR 0x11D45 -> 0xBA:0x2B88: the field around the member,
+## no box, the panel's top and row 24 empty), shows the damage routine's line with its burst (START.EXE 0x2B8B, the
+## explosion, sprites 10/138) and, when the member went down, its fall words with the skull, then the item list again
+## (DOSBox, Combat Chat 63: sw_kob at speed 6, tmp/c63/gsw_514-531; BAKSHI / TAKES 15 POINTS / OF DAMAGE FROM / MAGIC,
+## the burst, BAKSHI / IS KILLED, BAKSHI'S ITEMS). Ours said the line on the sheet's row.
+var _bare := false
+
+
+func _on_ready_hurt(words: String, past: int) -> void:
+	if _combat == null or _combat.active < 0:
+		return
+	var j: int = _combat.active
+	_sheet.visible = false
+	_bare = true
+	_hit_pic = [10, 138]
+	_bolt_on = false
+	if not _spell_hits.has(j):
+		_spell_hits.append(j)
+	var was := _combat.fx_subject
+	_combat.fx_subject = j
+	_combat.message.emit(words)
+	_combat.fx_subject = was
+	if past >= 0:
+		var up_before := _standing()
+		_combat.ready_downed(j, past)
+		_note_falls(up_before)
+	_refresh()
+	while _draining and is_inside_tree():
+		await get_tree().process_frame
+	_spell_hits.erase(j)
+	_bare = false
+	_panel_msgs.clear()
+	_refresh()
+	_sheet.resume()
+
+
 var _spell_resolving := false        # aiming a begun spell at the turn it goes off (P80)
 
 
@@ -2472,7 +2517,7 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)) and not _panel_kept:
+		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)) and not _panel_kept and not _bare:
 			_bevel(img, at)
 		if i == _posed:
 			icon = _attack_icon(e)
@@ -2548,6 +2593,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	if _sheet != null and _sheet.visible:
+		return
+	if _bare:
+		# A READY's damage on the fight's screen: no key is read; one typed waits for the item list (the get-key's drain).
+		get_viewport().set_input_as_handled()
+		if event is InputEventKey and not (event as InputEventKey).echo:
+			_sheet.hold_key(event as InputEventKey)
 		return
 	if _combat != null and _result == 0 and event is InputEventKey and not _player_waits():
 		# No key is read while a computer-run turn, a fight line or a note runs (their waits are START.EXE
