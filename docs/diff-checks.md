@@ -172,7 +172,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535)
+
+- **A member DYING when a won fight ends (check 535, a `levels` check; game state, main path; matched; installed):**
+  534's fight with tpseed 41000015 (ours' scratch build printed each member's status as the fight ended: LIRA 5,
+  DYING, 0 HP): the party wins (ELWEN at 1 HP; LIRA and ELWEN drained several times) and the end-of-fight pass leaves
+  LIRA UNCONSCIOUS (status 4, 0 HP) in both end saves, from a played save (chat 61's check 69 measured it from a lab
+  start). All 2459 draws identical, all 8 figures' cells agree. Three runs MATCH; a copy with both of ours' passes off
+  (combat.gd `finish` and main.gd's fight end each turn DYING to UNCONSCIOUS) DIFFERS (LIRA status 5); with only
+  combat.gd's off it still matches (main.gd's pass covers it).
 
 - **The spectres' drain (check 534, a `levels` check; game state, main path; matched; installed):** 4:10 9,1's two
   spectres from Player 37's `p37g1_s37g10` (10,1 N; the Stage 1 match's graveyard run), tpseed 41000001, Left, Up, the
