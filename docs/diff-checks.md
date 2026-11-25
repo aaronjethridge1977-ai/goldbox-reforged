@@ -201,6 +201,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   a member ends the fight okay (status 0) or animated (1) (0x84DA); a party that fled has none, so nobody gets
   experience, kills or not, as ours (`_after_fight([], ...)`). The number THE PARTY HAS FLED.'s page shows after
   kills is not measured.
+- **The rest's daily heal (from the code, no fix):** the original counts rested 5-minute steps in DS:0x6DD8 (GAME.OVR
+  0x24643: 288 steps, then THE WHOLE PARTY IS HEALED and the count back to 0) and clears it when a camp opens
+  (0x196B3, the camp's entry), as ours' `_rest_steps`: a rest broken off and taken up in a new camp starts the day
+  again in both.
+- **Checked, matching (input, main path):** keys after a LOAD's first key (s46sp4, 3:0 14,5 S: Up, then Left at 0.1,
+  0.5, 0.6, 0.75 and 0.9 s: the arrival's three 8x8D loads, each with the full flush, come ~0.6 s in, yet every Left
+  was read at once and acted, 14,8 W, in both; Left alone: 14,5 E); Up held 2 s into the Slums from check 84's start
+  (the repeats fill the BIOS buffer to 15, the rest lost, while the entry text types and waits; at 5.09 s all 15 are
+  read as one key: one step to 3,5 S, the fortune teller, in both); V then I 0.15 s later at check 84's start (no
+  flush: ITEMS, as ours).
+- Not measured (low value): Alt + keypad digits in a typed answer.
 
 ## Chat 131: a held key through A BATTLE BEGINS...; an area change, a picture, held Enter and a held arrow into a text (main path)
 
