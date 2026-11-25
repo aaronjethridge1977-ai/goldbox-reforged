@@ -2909,6 +2909,10 @@ func ai_act() -> bool:
 		# 2468ace1 draw 907).
 		c.moves = moves_left
 		c.powers_done = false
+		# The turn loop calls the action (0xB6FC) again, and the action starts by clearing the last step
+		# (DS:0x443C = 8) and the failed steps (0x443D = 0) (main chat 137: the throne room, BRAM hasted).
+		c.last_step = 8
+		c.fails = 0
 		return true
 	return false
 
