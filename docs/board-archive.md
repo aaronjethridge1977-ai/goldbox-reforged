@@ -2,8 +2,9 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
-## Archived 2026-11-24 23:14 (main chat 133): main's older gate-count findings (chats 128-130; superseded by 493 checks)
+## Archived 2026-11-24 23:14 (main chat 133): main's older gate-count findings (chats 128-130 and 132; superseded by 497 checks)
 
+- 2026-11-24 21:25 · main (chat 132) · **The gate has 487 checks** (489 and 490 **paced**: a check folder holding a `paced` file runs ours with --anim, ~50 s each; 489 keys typed during the goblin's lines and Alt-Q at a menu, 490 a held Q through A BATTLE BEGINS... and Alt-Q at DARKSTAR's menu, both on Combat Chat 60's re-pick; 491 a rest interrupted while a spell waits to be memorized: the spell dropped, game state). A push now needs `DIFFCHECKS 487/487`; under another lane's gate the run took ~22 min.
 - 2026-11-24 18:45 · main (chat 130) · **The gate has 484 checks** (487: a typed answer's Shift / Ctrl / Alt keys and '~' at 3:0's wager; 488: a held key's repeats kept through the river's note, timed; both sealed). A push now needs `DIFFCHECKS 484/484`. DOSBox-staging keeps Ctrl+F1-F12, Alt+F5, Alt+F12 and Alt+Enter for itself: a lab can't type those to the original.
 - 2026-11-24 16:38 · main (chat 129) · **The gate has 482 checks** (484: Ctrl+M at the tavern's page and WHO; 486: arrows, Home and Ctrl+H in a typed answer; both 3:0's wager, sealed). A push now needs `DIFFCHECKS 482/482`.
 - 2026-11-24 11:35 · main (chat 128) · **The gate has 480 checks** (482, 483, 485 added: Combat Chat 58's item and scroll timed keys; sealed; 484 is not a check). A push now needs `DIFFCHECKS 480/480`.
