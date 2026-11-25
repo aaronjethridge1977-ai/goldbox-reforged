@@ -482,6 +482,7 @@ func _pick_next() -> int:
 ## the fight only), no square and are never picked as targets (Player 1's segment check, 1:18's tavern duel:
 ## seven d100s, two d6s, the target picks d1; Player 15's p15f6: DORN at 0 HP, 17 d6s and 18 d100s).
 var aside: Array = []
+var aside_members: Array = []     # their records (the end pass, finish)
 
 
 ## Who rolls the d100 above, in the original's figure order: the party in party order (the members
@@ -1205,6 +1206,23 @@ func finish() -> void:
 		elif c.team == 0 and not got_away and not m.is_monster and m.status == PartyMember.STATUS_UNCONSCIOUS and m.hp > 0:
 			m.status = PartyMember.STATUS_OKAY
 		c.bleeding = 0
+	# The pass runs over the whole party list (0x5D96), so the members set aside at the start too (Combat Chat 61: an
+	# UNCONSCIOUS member with HP, kept so through rests and cures, wakes OKAY at the next fight's end).
+	for m in aside_members:
+		if m.status == PartyMember.STATUS_DYING:
+			m.status = PartyMember.STATUS_UNCONSCIOUS
+		elif not got_away and m.status == PartyMember.STATUS_UNCONSCIOUS and m.hp > 0:
+			m.status = PartyMember.STATUS_OKAY
+	# Record +0x10D, "in the fight": cleared when a member falls or runs (START.EXE 0xBA:0x2E81), set again by the pass
+	# above for the ones it stands up and by 0x5D59 for every member OKAY or animated; the next fight rolls initiative
+	# only for the figures with it set (0x1287F), and the hired NPC's SELL needs it (CharacterSheet).
+	var members: Array = aside_members.duplicate()
+	for c in combatants:
+		if c.team == 0 and c.who is PartyMember and not c.who.is_monster:
+			members.append(c.who)
+	for m in members:
+		if m.raw.size() > 0x10D:
+			m.raw[0x10D] = 1 if m.status in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED] else 0
 
 
 # --- Actions ----------------------------------------------------------------------------
