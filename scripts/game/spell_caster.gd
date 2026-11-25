@@ -134,7 +134,10 @@ static func cast_outside(table: SpellTable, caster: PartyMember, id: int, party:
 			if t.hp <= 0:
 				t.hp = 1
 			# The effect's power is 0xFF, not the level (GAME.OVR 0x288CA; main chat 133, DOSBox, check 497: 22/280/255).
-			add_affect(t, SLOWED_POISON, id, table.duration_for(id, lvl), 0xFF)
+			# Through the add-effect routine (0x278DB -> 0x2C540): an elf's or half-elf's d100 as it goes on (Combat
+			# Chat 61, DOSBox in a fight, the same handler: BAKSHI, a half-elf, drew one; a small change in main's file).
+			if not SpecialAffects.blocks(t, SLOWED_POISON, func(): return _roll(rng, 1, 100), table.level(id)):
+				add_affect(t, SLOWED_POISON, id, table.duration_for(id, lvl), 0xFF)
 			out.append("%s IS AFFECTED" % t.name)
 			if t.status != PartyMember.STATUS_OKAY:
 				t.status = PartyMember.STATUS_OKAY
