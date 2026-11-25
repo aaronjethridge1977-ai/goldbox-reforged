@@ -867,7 +867,11 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	var everyone: Array[PartyMember] = _party.duplicate()
 	var standing: Array[PartyMember] = []
 	for m in _party:
-		if m.can_fight():
+		# An UNCONSCIOUS member with HP whose record still has +0x10D ("in the fight") set fights: the round's setup
+		# rolls initiative for every figure with it (GAME.OVR 0x1287F), whatever the status (Combat Chat 61, DOSBox:
+		# main chat 133's check 508, DORN poked UNCONSCIOUS at 10 HP: his d6 at 0x1289F, then 7979 draws the same as
+		# ours with him in; one who fell has it cleared, Combat.finish).
+		if m.can_fight() or (m.status == PartyMember.STATUS_UNCONSCIOUS and m.hp > 0 and m.raw.size() > 0x10D and m.raw[0x10D] != 0):
 			standing.append(m)
 	_party = standing
 	# Clutter on the floor (Battlefield.scatter), rolled as the original does: after the
@@ -912,6 +916,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 				fights = true
 		if not fights:
 			_combat.aside.append([k, m.name])
+			_combat.aside_members.append(m)
 	duel_party = []
 	_combat.quick_bandages = Combat.quick_bandages_on() and DisplayServer.get_name() != "headless" and not TpDice.on
 	_combat.smart_quick = SmartQuick.on() and DisplayServer.get_name() != "headless" and not TpDice.on
