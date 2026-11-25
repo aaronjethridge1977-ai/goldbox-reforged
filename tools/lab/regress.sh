@@ -119,6 +119,10 @@ run orig_A_c61_hand_slowp 0 env HANDX=0:1:0:0:0 OURS_SEED=1 ./combat34/handreg.s
 # CAST on the page: CAMP ONLY SPELL (0x14C67), the spell kept, the turn not spent; QUICK. Two original runs identical
 # (c62rq, rq2; the second step sent after the trace starts), 21407 draws.
 run orig_A_c62_hand_rmfight 0 env HANDX=0:1:0:0:0:0::1 OURS_SEED=1 ./combat34/handreg.sh rm_kob 33333333 up up 1 1
+# rm_kob: READ MAGIC cast in camp (BAKSHI IS AFFECTED, effect 0x10 for 1 minute), out, one step, the fight: USE on the unread
+# scroll at his first turn does nothing (still unread: the item list back), EXIT, QUICK. Two original runs identical (c62ru,
+# ru2; USEEXIT=1), 21407 draws. Ours' camp keys wait out the cast's lines (P104's pace).
+run orig_A_c62_hand_rmuse 0 env HANDX=0:99:0:1:2:0::0:1 OURS_SEED=1 ./combat34/handreg.sh rm_kob 33333333 "E,wait,M,wait,End,wait,C,wait,C,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,wait,E,wait,E,wait,up" up 1 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
