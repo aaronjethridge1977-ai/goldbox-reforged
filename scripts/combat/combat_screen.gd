@@ -673,7 +673,7 @@ func _draw_original(field: Image) -> void:
 		g.menu_line(24, ["YES", "NO"], 16, _lit(["YES", "NO"]))
 	elif _combat != null and _result != 0 and not _drain_notes.is_empty():
 		g.text(0, 24, String(_drain_notes[0]), GameScreen.YELLOW)     # QoL DRAIN REMINDER
-	elif _combat != null and _result != 0 and not (paced() and _event_fight and _result == 1):
+	elif _combat != null and _result != 0 and not (paced() and _event_fight and _result in [1, 2]):
 		g.text(0, 24, ["", "THE PARTY WINS.", "THE PARTY HAS FALLEN.", "THE PARTY HAS FLED."][_result], GameScreen.WHITE)
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
 		# A spell's aim shows the spell on row 23, an attack's the range (lab, Combat Chat 4:
@@ -1344,15 +1344,17 @@ static func drain_notes(drained: Dictionary, result: int) -> Array:
 	return out
 
 
-## What follows THE PARTY WINS / HAS FLED (after any drain notes): an event fight won goes straight
-## on to the results; the rest wait for Esc or Enter.
+## What follows THE PARTY WINS / HAS FALLEN / HAS FLED (after any drain notes): an event fight won or lost goes
+## straight on (the results, or main's THE END!); the rest wait for Esc or Enter.
 func _after_result() -> void:
-	if _event_fight and _result == 1:
+	if _event_fight and _result in [1, 2]:
 		# Straight on to the results (the original's "Continue Battle?" is skipped). Paced,
 		# as the original: no line on row 24, the results ~0.1 s after the last line or the
-		# NO (Combat Chat 12, main's cold-open capture).
+		# NO (Combat Chat 12, main's cold-open capture). A fight lost the same way: the last line, then main's THE END!
+		# (main chat 132, DOSBox at check 84's goblins with every member at 1 HP: no key, nothing on row 24; ours showed
+		# THE PARTY HAS FALLEN. and waited for a key).
 		await get_tree().create_timer(0.1 if paced() else 1.0).timeout
-		if visible and _event_fight and _result == 1:
+		if visible and _event_fight and _result in [1, 2]:
 			_leave()
 
 
