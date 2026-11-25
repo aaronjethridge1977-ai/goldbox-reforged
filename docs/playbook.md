@@ -1038,3 +1038,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- A magic-user scroll found or bought unread can't be USEd (in a fight or in camp: USE does nothing, no message) until it has been read: cast READ MAGIC first (its effect lets the next USE read it); a cleric uses a cleric scroll unread. Ready the scroll before the fight, and read it in camp. *code* + *seen* (GAME.OVR 0x27466; DOSBox, Combat Chat 60, the spell matrix's scroll fixture).

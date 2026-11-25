@@ -103,6 +103,9 @@ run orig_A_c39_hand_jav 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.sh
 # Combat Chat 60 (the spell matrix: wands): wand_kob (BAKSHI magic-user 1, 4:10's Wand of Lightning Bolt readied), two USEs by
 # hand (End x2, U, NEXT, TARGET), then QUICK; two original runs identical (tmp/c33_c38w2, c33_c60w3), 6936 draws.
 run orig_A_c60_hand_wand 0 env HANDX=0:99:0:2:2 OURS_SEED=1 ./combat34/handreg.sh wand_kob 33333333 up up 1 1
+# Combat Chat 60 (scrolls): scrr_kob (BAKSHI magic-user 1, a read Magic User Scroll of Magic Missile readied: byte 53 = 0),
+# USE, End x2, U, the scroll's page CAST, NEXT, TARGET, then QUICK; two original runs identical (c60r2, c60r3), 16582 draws.
+run orig_A_c60_hand_scroll 0 env HANDX=0:99:0:1:2 OURS_SEED=1 ./combat34/handreg.sh scrr_kob 33333333 up up 1 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
