@@ -2612,12 +2612,18 @@ static var party_judge: Callable
 ## key waiting and keeps the last byte (START.EXE 0x899:0x59; an extended key's 0 is followed by a second read), then
 ## acts on that byte alone: 0x32 (Alt-M, or 2) switches MAGIC (DS:0x6E30) with its note; 0x20 (Space, or Alt-D) takes
 ## every party member off QUICK (hand_back, read here as control_pending); 0x2D (Alt-X, or -) only with the debug
-## parameter (0x1638E); anything else is gone. The keys typed before the fight's first menu (key_queue) go one a poll.
+## parameter (0x1638E); anything else is gone. The keys typed before the fight's first menu (key_queue) are drained with
+## the rest (main chat 131, DOSBox at check 84's goblins with the BIOS buffer watched: three Q repeats waiting, RHIANNON
+## QUICK at her menu, the poll at her turn's opening took the other two and DARKSTAR's menu waited; ours took one a poll
+## and the third made DARKSTAR QUICK).
 func poll_keys() -> void:
 	var b := -1
-	if not key_queue.is_empty():
-		b = KeyBurst.dos_byte(key_queue.pop_front())
-	elif typed.has_key():
+	for ev in key_queue:
+		var q := KeyBurst.dos_byte(ev)
+		if q >= 0:
+			b = q
+	key_queue.clear()
+	if typed.has_key():
 		b = typed.take_byte()
 	if b == 0x32:
 		magic_on = not magic_on
