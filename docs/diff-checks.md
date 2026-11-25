@@ -190,10 +190,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   **Outside camp the same:** the adventure menu's CAST (SLOW POISON on DORN, HOLD PERSON's LOSE IT? NO, EXIT to the
   walk, CAST, CURE LIGHT WOUNDS): CEDRIC lit (`w2.png`); ours DORN (BRAM cured). The edit's second line is
   `open_cast()`'s; **check 499** (the walk's casts, then ENCAMP: DORN 4 in the original, 1 in ours) MATCHes with it.
+- **TRADE WITH WHOM?'s light (check 501; input, main path; matched):** DOSBox, 8:27's camp (check 133's start):
+  ARN's VIEW ITEMS TRADE lights ARN; End, SELECT (BRAM); a second TRADE in ITEMS lights BRAM, and so after EXIT to
+  VIEW's menu and ITEMS again (`t2.png`, `t4.png`); after EXIT to the camp menu and VIEW again, ARN (`t5.png`). Three
+  trades (the javelins and the bow to BRAM with the light kept, the scroll after the camp menu: End to BRAM) MATCH 3
+  of 3; ours keeping BRAM after the camp, or dropping it at VIEW's menu, would give the scroll or the bow elsewhere.
+- **MEMORIZE's list light (check 503; input, main path; matched):** DOSBox, the same camp: CEDRIC casts CURE LIGHT
+  WOUNDS on himself (a 1st-level slot free), EXIT, MEMORIZE: the list opens with the page's last row lit (FIND TRAPS,
+  2nd level: MEMORIZE does nothing, CAN MEMORIZE 1 0 0), Home, MEMORIZE: RESIST COLD pending (136); E at MEMORIZE
+  THESE SPELLS? does nothing, YES. Three runs MATCH; BLESS pending in the end save DIFFERS (`m1.png`).
 - **A slowed poison running out (check 496; game state, main path; matched):** the same start: SLOW POISON, CURE
   LIGHT WOUNDS (DORN 1 -> 4), REST 6 hours: the 10-minute ticks take DORN to 1 (never below), at 5 hours (cleric 5)
   he DIES FROM POISON: 0 HP, status dead, 0x37 kept, 0x16 and 0x0F gone; 18:50. Three runs MATCH. (Walking with
   LOOKs in 3:0 met an encounter within the hour in each of six seeds: the camp's rest was the way to the end.)
+- **Dying of a slowed poison while walking (check 502; game state, main path; matched):** the same start, from the
+  adventure menu (no camp): CEDRIC's SLOW POISON on DORN, CURE LIGHT WOUNDS straight from the list (DORN lit in both:
+  1 -> 4), EXIT, one step north on the band (12 hours): DORN dead at 00:50. Three runs MATCH; DORN alive at 1 HP in
+  the end save DIFFERS.
 - **Treasure the member can't carry (check 495; game state, main path; matched):** check 442's start (2:20's
   treasure room) with THRENDER GRONE at his load ceiling (STR 17: 500 + 1500 = 2000; gold 1498 and the cached load
   word 0x102 = 2000): SHARE, TAKE, TAKE x3 on the 20 arrows: refused, no message, nothing moves; EXIT, THERE IS STILL
@@ -210,6 +223,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   pick), 0x74 = 1, 0x75 = 2, maximum and current HP cut, experience 8037; won in round 6. Three runs MATCH (THAC0 and
   spell slots compared too); BAKSHI's 0x75 made 3 in the end save DIFFERS. At level 1 every member drained IS DEAD
   FOREVER in both (seen in ours; the original wasn't run to the wipe).
+- **A Restoration scroll on the drained member (check 500; game state, main path; matched):** 493's own end (the
+  original's save, slot F renamed G, its party's stems patched) with a Clerical Scroll of Restoration (a real record
+  from Combat's lab, `game33/CHRDATA3.ITM` item 5, links zeroed, unreadied) given to BROTHER SEAN: ENCAMP, VIEW,
+  ITEMS, READY off the mace and the shield, READY the scroll, USE, CAST (RESTORATION), Home x2 (BAKSHI), SELECT:
+  BAKSHI IS RESTORED: magic-user 3 -> 4, HP 26 -> 28 (max 30, rolled 30: 0x75 / 0x74 = 2 back), 0x74 and 0x75 0,
+  experience 10001, the slots recounted; the scroll used up. Three runs MATCH (with `levels`); a magic-user slot
+  changed in the end save DIFFERS.
 - **Training while drained (check 492; game state, main path; matched, no fix):** check 214's start (3:11) with
   THRENDER GRONE drained twice from 4 (0x73 = 4, 0x74 = 2, 0x75 = 7): TRAIN to 3: 0x75 7 -> 4, 0x74 1 (GAME.OVR
   0x1C89C: 0x75 less 0x75 / 0x74 per class trained), HP from the d10 only, 0x73 kept at 4. Three runs MATCH; 0x75 = 5
