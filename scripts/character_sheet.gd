@@ -857,6 +857,8 @@ func _use_item(m: PartyMember, it: GameItem, wasted: bool) -> String:
 	if _is_scroll(it):
 		if m.class_level(0) == 0 and m.class_level(1) == 0:
 			return "OOPS!"
+		if not scroll_read(m, it):
+			return ""
 		if not wasted and spells != null and it.raw.size() >= GameItem.SIZE:
 			# Lab (Combat Chat 5, camp, Restoration and Cure Light Wounds scrolls): the
 			# scroll's own page, "<NAME>'S SPELLS ON SCROLL", the last one lit (main chat 86,
@@ -1050,6 +1052,21 @@ static func _spend_scroll(m: PartyMember, it: GameItem, slot: int) -> void:
 
 ## The spell a readied item casts when used (a scroll: its first spell; a wand, potion or
 ## other charged item: record byte 61), 0 if none. Scrolls need a caster.
+## A scroll's USE lists its spells only once it has been read (GAME.OVR 0x22AC4 -> 0x239D6 mode 2 -> 0x27466): an unread
+## scroll (byte 53, its hidden flag, not 0) is read there if the user is under Read Magic (0xBA:0x2199, effect 0x10), or
+## has cleric levels (+0x96) and the scroll is a cleric's (its type's slot 12); still unread, it lists nothing and the
+## USE does nothing, the item list kept (DOSBox, Combat Chat 60: BAKSHI, magic-user 1, a copied unread Magic User Scroll
+## of Magic Missile readied, U at the fight's item list: nothing; ours opened the scroll's page and cast).
+static func scroll_read(m: PartyMember, it: GameItem) -> bool:
+	if it.raw.size() < GameItem.SIZE or it.raw[53] == 0:
+		return true
+	var rm: int = spells.effect(PartyMember.READ_MAGIC) if spells != null else 0
+	if (rm > 0 and m.has_affect(rm)) or (m.class_level(0) > 0 and types != null and types.slot(it.type) == 12):
+		it.raw[53] = 0       # (only the flag: 0x27466 writes nothing else)
+		return true
+	return false
+
+
 static func item_spell(m: PartyMember, it: GameItem) -> int:
 	if types == null:
 		return 0
@@ -1390,6 +1407,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif choice == "USE" and in_combat:
 				if not it.readied:
 					_say("MUST BE READIED")
+				elif _is_scroll(it) and not scroll_read(m, it):
+					pass         # an unread scroll lists nothing: the item list stays (scroll_read)
 				elif _is_scroll(it) and item_spell(m, it) > 0 and it.raw.size() >= GameItem.SIZE:
 					# Lab (Combat Chat 5, the Slums' orcs): the scroll's page as in camp, then AIM.
 					_scroll = it

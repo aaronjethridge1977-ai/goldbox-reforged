@@ -344,8 +344,8 @@ static func _handcast(main: Node, arg: String) -> void:
 			st = "continue"
 		elif cs._asking_abort:
 			st = "abort"
-		elif sheet != null and sheet.visible and sheet._mode == "cast":
-			st = "choose"
+		elif sheet != null and sheet.visible and sheet._mode in ["cast", "scroll"]:
+			st = "choose"      # (Combat Chat 60: a scroll's page, CHOOSE SPELL: CAST EXIT, as handuse.py's)
 		elif sheet != null and sheet.visible and sheet._mode == "items":
 			st = "use"
 		elif cs._flash != "" or cs._row24_msg != "":
