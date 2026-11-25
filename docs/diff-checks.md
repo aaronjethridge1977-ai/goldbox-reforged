@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 134: the UNCONSCIOUS rule at the temple and in camp casts (509, 511, to Combat), a member with 16 items (510), a second level drain (512)
+## Chat 134: the UNCONSCIOUS rule at the temple, in camp casts and in the next fight (509, 511, 514, 515, to Combat), a member with 16 items (510), a second level drain (512), a camp Bless through a fight (513)
 
 - **The temple's cure leaves an UNCONSCIOUS member UNCONSCIOUS (found; game state, main path; to Combat with chat 133's
   rule, the Lead's 02:26 "faithful"):** DOSBox, check 113's start (3:0's temple) with BROTHER SEAN poked UNCONSCIOUS
@@ -181,6 +181,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   0 -> 3 HP, status 4). One ready edit `~/gbr/lab/data/c134/unc_edit.diff` (temple_screen.gd `_heal`, camp_screen.gd
   `_heal_day`, spell_caster.gd `_heal`, party_member.gd `can_fight` taking UNCONSCIOUS with HP > 0): 506, 508, 509, 511
   MATCH 3 of 3 and the gate's 498 MATCH; main installs the four once Combat lands it.
+- **DYING keeps through the temple's cure and fights with HP (found; game state, main path; to Combat with the
+  rule):** check 514: 113's start with THRENDER GRONE DYING (5) at 0 HP: POOL, HEAL, CURE SERIOUS WOUNDS: 11 HP (his
+  maximum), status still 5 (ours 0). Check 515: chat 133's 508 start (check 100's kobolds, tpseed 31310016) with DORN
+  DYING at 10 HP: he fights and takes the 36 share (ours kept him out: the fight parts, ARN 27 / 33), HP 10 after,
+  status 4 (the end pass makes DYING UNCONSCIOUS, once). In the edit: `can_fight` takes OKAY, UNCONSCIOUS and DYING with
+  HP > 0; main.gd's fight-end stand-up only for a duel's bystanders (Combat's finish() already made the fighters'
+  pass; a second pass stood DORN up). Not measured: whether such a member acts, and whether he bleeds (ours' `_bleed`
+  goes by status).
 - **TAKE by a member holding 16 items (check 510; game state, main path; matched):** check 442's start (2:20's treasure
   room) with THRENDER GRONE given 14 unreadied darts (PHINEAS's record, count 1; 0xC7 = 16, load 716): SHARE, TAKE,
   TAKE: OVERLOADED on row 24 for a moment, nothing moves (x3); EXIT, GO BACK? YES, End (BAKSHI), TAKE x3: both items
@@ -189,6 +197,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   from 493's original end (already drained once: magic-user 3, 0x74 1, 0x75 2, HP 26), tpseed 11111111, the same
   route and fight: the wight drains him again: fighter 4 -> 3, 0x74 2, 0x75 4, HP 22 of 26. Three runs MATCH; 0x75 3
   in the end save DIFFERS.
+
+- **A camp BLESS through a fight (check 513; game state, main path; matched):** check 493's start (which holds a
+  2-minute Bless 1/2/1 on all six), BROTHER SEAN given BLESS for a CURE LIGHT WOUNDS, the route to 10,5 W, ENCAMP,
+  BLESS (1/6/4 on all six, as ours), the step to 9,5: the wight, QUICK: the rounds run it out on everyone. Three of
+  four original runs; one, run under heavy CPU load with a key pressed during the cast's lines, kept SEAN's and
+  DARKSTAR's Bless at 6 (not reproduced with the same keys; GAME.OVR 0x23DCC's clock skips a member whose flag
+  byte DS:0x471D+i is clear while DS:0x49F3 = 2, set again only by a pass with time left or REST, 0x24AB1). The
+  odd run's save (`o513`) as the end save DIFFERS.
+- **Key during a cast's lines:** in both games the keys pressed while BLESS's "<NAME> IS BLESSED" lines show are
+  swallowed (DOSBox: the first E of four at 3 s; ours ignores keys in its casting mode). **After DISPLAY** MAGIC's
+  menu lights CAST in both (and Enter does nothing there: chat 89's rule).
 
 ## Chat 133: level drain and training while drained (checks 492, 493); a two-day rest interrupted on day 2 (494); treasure over the load (495); a slowed poison running out (496); Slow Poison's power (498, a fix); CAST SPELL ON WHOM after MAGIC's menu (497, to Combat)
 
