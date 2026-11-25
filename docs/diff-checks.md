@@ -172,7 +172,20 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533)
+
+- **The throne room's end state (check 533; game state, main path; matched; installed):** chat 138's open item. Ours'
+  `th1seed.sh` over 44 seeds (39600010-1b, 39600020-3f; check 527's start, LIRA's camp HASTE, the three waves on
+  QUICK): 5 parties came through all three waves. The original on two of them: **39600016 crashed the original** in
+  wave 2 (Runtime error 204 at 00B0:0136 on the DOS screen, after some 35,700 initiative draws of a stalled round
+  loop: original-bugs.md #23; Player 44 met the same crash in wave 2 on 2026-11-22); **39600026: the party lives**
+  (ARN 13, BRAM 1, CEDRIC 0 unconscious, ELWEN 15, LIRA 10, DORN 0 unconscious, PRINCESS FATIMA 11), ours' the
+  same. All 37509 draws of the three waves identical (`TPOS=72`, one draw lost in the original's trace); wave 3's
+  cell lists are offset by two in ours' log (CEDRIC and DORN set aside: the recorder difference chat 138 noted), the
+  paths compared by eye agree. Keys: check 527's camp, tpseed 39600026, Right, Up, Enter, each wave `quickall` and six
+  `fightend`s, CONTINUE NO, the pile's Enter, EXIT, N; the third pile EXITed (YES NO: N) and F2. Three runs MATCH
+  (~35 s). Run on bf2ca38 (before Combat's KOBOLD LEADER fix: the leader's weapon change doesn't come up at this
+  seed; the check holds the end state when that fix lands).
 
 - **The basilisk's gaze (check 532; game state, main path; matched; installed):** Player 17's checkpoint
   `p17a7/s8pre1` (2:15 8,11 W; the Stage 1 match's library run) walked in DOSBox to 5,5 N with the recording's keys
