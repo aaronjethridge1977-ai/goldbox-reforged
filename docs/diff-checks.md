@@ -196,6 +196,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   fight leaves the dead; 111 and 160 poked it at 1): RAISE DEAD: OKAY, 1 HP, CON 13, +0x10D 1, as from 111's start.
   Ours leaves 0: 522 DIFFERS on main (`in the fight (+0x10D): original 1, ours 0`), MATCHes with the two-line edit
   (`~/gbr/lab/data/c135/raise10d.diff`, temple_screen.gd: Combat's file). Not installed until the edit lands.
+- **Not measured (leads, new area):** the other callers of the kill routine 0xECB3 are effect handlers (GAME.OVR 0xF776,
+  0xFFF4, 0x101A0, 0x10908 stoning, 0x10D7D the drain, 0x1126B), mostly in fights, where ours' fight end writes +0x10D.
+  A wrong-alignment sword readied (0x11D00) deals its damage through the general damage call (0x11D66 -> 0xB0:0x7F):
+  past the HP the original likely leaves the member DYING or DEAD (0xBA:0x2228's rule) with +0x10D 0; ours'
+  item_powers.gd only lowers HP to 0 and sets UNCONSCIOUS. Measure before changing.
 
 ## Chat 134: a member downed in play healed (516-519; chat 133's UNCONSCIOUS rule withdrawn), a member with 16 items (510), a second level drain (512), a camp Bless through a fight (513)
 
