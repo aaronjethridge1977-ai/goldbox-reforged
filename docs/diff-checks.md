@@ -172,23 +172,19 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 134: the UNCONSCIOUS rule at the temple, in camp casts and in the next fight (509, 511, 514, 515, to Combat), a member with 16 items (510), a second level drain (512), a camp Bless through a fight (513)
+## Chat 134: a member downed in play healed (516-519; chat 133's UNCONSCIOUS rule withdrawn), a member with 16 items (510), a second level drain (512), a camp Bless through a fight (513)
 
-- **The temple's cure leaves an UNCONSCIOUS member UNCONSCIOUS (found; game state, main path; to Combat with chat 133's
-  rule, the Lead's 02:26 "faithful"):** DOSBox, check 113's start (3:0's temple) with BROTHER SEAN poked UNCONSCIOUS
-  (0x10C = 4) at 0 HP: POOL, End x3, HEAL, CURE SERIOUS WOUNDS, YES: 10 HP, status still 4 (ours 0). Check 511
-  (`~/gbr/lab/data/c134/chk511`); 509 the same for the camp's CURE LIGHT WOUNDS (chat 133's s507, k505's keys: DORN
-  0 -> 3 HP, status 4). One ready edit `~/gbr/lab/data/c134/unc_edit.diff` (temple_screen.gd `_heal`, camp_screen.gd
-  `_heal_day`, spell_caster.gd `_heal`, party_member.gd `can_fight` taking UNCONSCIOUS with HP > 0): 506, 508, 509, 511
-  MATCH 3 of 3 and the gate's 498 MATCH; main installs the four once Combat lands it.
-- **DYING keeps through the temple's cure and fights with HP (found; game state, main path; to Combat with the
-  rule):** check 514: 113's start with THRENDER GRONE DYING (5) at 0 HP: POOL, HEAL, CURE SERIOUS WOUNDS: 11 HP (his
-  maximum), status still 5 (ours 0). Check 515: chat 133's 508 start (check 100's kobolds, tpseed 31310016) with DORN
-  DYING at 10 HP: he fights and takes the 36 share (ours kept him out: the fight parts, ARN 27 / 33), HP 10 after,
-  status 4 (the end pass makes DYING UNCONSCIOUS, once). In the edit: `can_fight` takes OKAY, UNCONSCIOUS and DYING with
-  HP > 0; main.gd's fight-end stand-up only for a duel's bystanders (Combat's finish() already made the fighters'
-  pass; a second pass stood DORN up). Not measured: whether such a member acts, and whether he bleeds (ours' `_bleed`
-  goes by status).
+- **A member downed in play is stood up by any heal (checks 516-519; game state, main path; matched; chat 133's
+  rule withdrawn):** the original's heals test record +0x10D (in the fight), not the status: a member downed in play
+  always has 0x10D = 0 (every downed member in the gate's original saves: 22 from fights, the rocks' DYING PHINEAS),
+  and a heal then sets status 0 and 0x10D 1, as ours' stand-up at the first HP. 516: check 508's original end as the
+  start (8:27, DIRTEN downed by the kobolds: status 4, 0x10D 0, 0 HP): CEDRIC's CURE LIGHT WOUNDS: DIRTEN 3 HP, OKAY,
+  and his CAST list opens; 517: the same start (DORN set OKAY), a day's REST: DIRTEN 1 HP, OKAY; 518 / 519: check
+  113's temple with BROTHER SEAN UNCONSCIOUS / THRENDER GRONE DYING at 0 HP and 0x10D 0: CURE SERIOUS WOUNDS: OKAY.
+  Three runs each MATCH; `~/gbr/lab/data/c134/src_heal` (the withdrawn edit: no stand-up) DIFFERS on each. Chat 133's
+  starts and my first ones (lab checks 506, 508, 509, 511, 514, 515) poked the status and left 0x10D at 1, a state
+  play doesn't make: there the original leaves the status (and a DYING one with HP fights and ends UNCONSCIOUS), the
+  measures stand, but they aren't the game. Dropped, with `unc_edit.diff`.
 - **TAKE by a member holding 16 items (check 510; game state, main path; matched):** check 442's start (2:20's treasure
   room) with THRENDER GRONE given 14 unreadied darts (PHINEAS's record, count 1; 0xC7 = 16, load 716): SHARE, TAKE,
   TAKE: OVERLOADED on row 24 for a moment, nothing moves (x3); EXIT, GO BACK? YES, End (BAKSHI), TAKE x3: both items
@@ -211,8 +207,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 133: level drain and training while drained (checks 492, 493); a two-day rest interrupted on day 2 (494); treasure over the load (495); a slowed poison running out (496); Slow Poison's power (498, a fix); CAST SPELL ON WHOM after MAGIC's menu (497, to Combat)
 
-- **UNCONSCIOUS and DYING survive the heals until the next fight (found; game state, main path; to the Lead: match
-  the original?):** DOSBox, check 133's party in 8:27's camp, DORN poked UNCONSCIOUS (4, 0 HP) and LIRA DYING (5, 3 HP),
+- **UNCONSCIOUS and DYING survive the heals until the next fight (WITHDRAWN in chat 134: poked starts with record
+  +0x10D left at 1; a member downed in play is stood up, checks 516-519):** DOSBox, check 133's party in 8:27's camp, DORN poked UNCONSCIOUS (4, 0 HP) and LIRA DYING (5, 3 HP),
   REST a day (tpseed 11111111): DORN 1 HP and LIRA 4 HP, both statuses unchanged (VIEW: STATUS UNCONSCIOUS); the day's
   heal (GAME.OVR 0x2463D) calls START.EXE 0xB0:0x89 per member and leaves the status alone. CEDRIC's CURE LIGHT
   WOUNDS on DORN: 7 HP, still UNCONSCIOUS. Check 100's kobolds with DORN UNCONSCIOUS at 10 HP: the original's fight
