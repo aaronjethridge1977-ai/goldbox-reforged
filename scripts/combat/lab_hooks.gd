@@ -322,6 +322,8 @@ static func _handcast(main: Node, arg: String) -> void:
 	var cast_first := a.size() > 9 and a[9] == "1"
 	# :1 eleventh (handuse.py's USEEXIT): the item list back after the USEs are spent: EXIT it, then QUICK.
 	var use_exit := a.size() > 10 and a[10] == "1"
+	# :r twelfth (handuse.py's READYKEY=r): on the item list READY the lit item instead of USE (once), then as :useexit.
+	var ready_key := a[11] if a.size() > 11 else ""
 	var uses := 0
 	var downs := 0
 	var casts := 0
@@ -387,6 +389,11 @@ static func _handcast(main: Node, arg: String) -> void:
 				k = "End"
 				why = "item list down"
 				downs += 1
+			elif ready_key != "":
+				k = ready_key
+				why = "ready the lit item"
+				uses += 1
+				downs = 0
 			else:
 				k = "u"
 				why = "use the lit item"

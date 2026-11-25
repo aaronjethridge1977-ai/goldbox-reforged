@@ -1114,6 +1114,20 @@ func _toggle_ready(i: int, it: GameItem, hands: int) -> void:
 		message.emit(line)
 
 
+## A member hurt down by readying an item in a fight (an aligned sword of another alignment, ItemPowers: DYING or DEAD
+## past the HP): the figure is down for the fight, its movement gone, the bleeding counted from the HP short, with no
+## line but the damage's (DOSBox, Combat Chat 62, sw_kob: BAKSHI at 5 HP readied the knight's tomb's Long Sword +2: TAKES
+## 15 POINTS OF DAMAGE FROM MAGIC in the panel, DEAD, his menu back without MOVE; on QUICK his turn drew only the pattern
+## d8 and d4 and the fight was lost. Ours left him standing: he fought on).
+func ready_downed(j: int, past: int) -> void:
+	var t: Dictionary = combatants[j]
+	t.down = true
+	t.moves = 0
+	if (t.who as PartyMember).status == PartyMember.STATUS_DYING:
+		t.bleeding = past
+	_went_down(j)
+
+
 ## Puts a readied item away through the ready routine (0x2250A): its power's unready runs (ItemPowers.changed:
 ## a lent effect's record goes; Combat Chat 40).
 func _put_away(i: int, it: GameItem) -> void:
@@ -2655,6 +2669,10 @@ func ai_act() -> bool:
 		return false
 	var c: Dictionary = combatants[active]
 	if c.down:
+		if not c.get("ai", false) and c.get("quick", false):
+			# Down at its own menu (ready_downed) and put on QUICK: the computer turn's opening still draws the pattern
+			# (0xABF0) before it stops (DOSBox, Combat Chat 62, sw_kob: the dead BAKSHI's d8 and d4, draws 2046-2047).
+			_ai_begin(active)
 		return false
 	if c.get("ai", false):
 		# The turn loop's poll (0xAD6C) and the step's (0xB409): each further step or blow reads the keys waiting.
