@@ -169,6 +169,13 @@ static func delay_scale() -> float:
 const TEXT_SPEED := 4
 
 
+## P104 (Lead, 2026-11-24, after Q39: one rule everywhere, a line meant to be read is held at speed 4's pace): the
+## rest's notes, the camp's refusals and HAS NO SPELLS MEMORIZED, the hall's and the shop's notes too. delay_scale's
+## factor at TEXT_SPEED.
+static func text_scale() -> float:
+	return (TEXT_SPEED + 1) / 5.0
+
+
 func _init() -> void:
 	_note.visible = false
 	add_child(_note)
@@ -891,7 +898,7 @@ func _notes_then(healed: bool, hit: bool) -> void:
 	_timer.stop()
 	if healed and _resting and visible:
 		_refresh()
-		await get_tree().create_timer(speed * 0.225 + 0.001).timeout
+		await get_tree().create_timer(TEXT_SPEED * 0.225 + 0.001).timeout     # P104: speed 4's pace
 		_lines = []
 		_refresh()
 	if not _held.is_empty():
@@ -944,7 +951,7 @@ func _interrupt() -> void:
 	typed_ahead = null
 	_interrupt_keys.clear()
 	_interrupting = true
-	await get_tree().create_timer(speed * 0.225).timeout
+	await get_tree().create_timer(TEXT_SPEED * 0.225).timeout     # P104: speed 4's pace
 	_interrupting = false
 	typed_ahead = _interrupt_keys.take()
 	_resting = false
@@ -967,7 +974,7 @@ var _held: Array = []   # P35: this step's HAS MEMORIZED / HAS SCRIBED messages,
 ## screen staying, waits the game speed x 225 ms (START.EXE 0x709:0xDBE, no key) and clears
 ## the box (0x17E3); then the rest goes on (lab, New Phlan, save F: BROTHER SEAN HAS MEMORIZED /
 ## RESIST COLD, then DARKSTAR HAS MEMORIZED / SLEEP, each for a moment, then the camp menu).
-## Ours pauses the rest's clock for each one the same way (ALTER's SPEED 0: no wait).
+## Ours pauses the rest's clock for each one the same way, at speed 4's pace whatever SETTINGS says (P104).
 func _show_held() -> void:
 	_timer.stop()
 	while not _held.is_empty() and _resting and visible:
@@ -976,7 +983,7 @@ func _show_held() -> void:
 		_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], [line, GameScreen.GREEN, String(h[0]).length()],
 			[String(h[2]).to_upper(), GameScreen.GREEN]])
 		_refresh()
-		await get_tree().create_timer(speed * 0.225 + 0.001).timeout
+		await get_tree().create_timer(TEXT_SPEED * 0.225 + 0.001).timeout     # P104: speed 4's pace
 		_lines = []
 		_refresh()
 	_held.clear()
@@ -1335,7 +1342,7 @@ var _row24 := ""     # a refusal shown on row 24 for a moment, in place of the m
 func _note_24(text: String) -> void:
 	_row24 = text
 	_refresh()
-	await get_tree().create_timer(1.0 * delay_scale()).timeout
+	await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
 	if _row24 == text:
 		_row24 = ""
 		_refresh()
@@ -1351,7 +1358,7 @@ func _marked(k: int) -> bool:
 func _note_name(name: String, message: String) -> void:
 	_say_name(name, message)
 	_refresh()
-	await get_tree().create_timer(1.0 * delay_scale()).timeout
+	await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
 	if not visible or _lines.size() < 3 or _lines[2][0] != message:
 		return
 	_lines = []

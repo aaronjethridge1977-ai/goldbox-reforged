@@ -336,7 +336,7 @@ func _do_train() -> void:
 			return
 	_mode = "congrats"
 	_refresh()
-	await get_tree().create_timer(0.6 * CampScreen.delay_scale()).timeout
+	await get_tree().create_timer(0.6 * CampScreen.text_scale())     # P104.timeout
 	if _mode == "congrats":
 		_show_menu()
 

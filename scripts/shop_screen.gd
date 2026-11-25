@@ -324,7 +324,7 @@ func _show_flash(text: String, refusal: bool = false) -> void:
 	if not is_inside_tree():
 		return
 	var t := CharacterSheet.MESSAGE_TIME if refusal else 1.2
-	await get_tree().create_timer(t * CampScreen.delay_scale()).timeout
+	await get_tree().create_timer(t * CampScreen.text_scale())     # P104: speed 4's pace.timeout
 	if id == _flash_id and _flash != "":
 		_flash = ""
 		_refresh()
