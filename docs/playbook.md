@@ -250,6 +250,8 @@ Clerics have no missile weapon in Pool; from Curse on, clerics use staff slings 
   spectres, draws 744-749; main chats 79-80, checks 179-187; START.EXE 0xBA:0x26C2) (Combat Chat 35's "at the reader's
   own level" was wrong.) **A wand's spell goes off at level 6 too:** a 1st-level magic-user's Wand of Lightning Bolt
   does 6d6 a bolt. *seen* (Combat Chat 38, the spell lab's wand_kob in DOSBox, three bolts)
+- (Pool) A magic-user scroll found or bought unread can't be USEd (in a fight or in camp: USE does nothing, no message) until it has been read: cast READ MAGIC first (its effect lets the next USE read it); a cleric uses a cleric scroll unread. Ready the scroll before the fight, and read it in camp. *code* + *seen* (GAME.OVR 0x27466; DOSBox, Combat Chat 60, the spell matrix's scroll fixture).
+- (Pool) A scroll with several spells opens on its **last** spell (the list in the scroll's slot order, under level headings): press the key for the one you want before CAST, or Enter casts the last; a cleric (or cleric multi-class) reads an unread clerical scroll at the USE itself, no Read Magic needed. *seen* (Combat Chat 61, DOSBox: scr3f_kob, cscr_kob)
 - (Pool) **SCRIBE** (copying a magic-user scroll into the book):
   - copies only a spell of a level the magic-user already has slots for ("YOU CAN NOT SCRIBE THAT SPELL": a level-1
     magic-user can't copy Stinking Cloud). *code* (GAME.OVR 0x1838D; Combat Chat 35)
@@ -1038,5 +1040,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- A magic-user scroll found or bought unread can't be USEd (in a fight or in camp: USE does nothing, no message) until it has been read: cast READ MAGIC first (its effect lets the next USE read it); a cleric uses a cleric scroll unread. Ready the scroll before the fight, and read it in camp. *code* + *seen* (GAME.OVR 0x27466; DOSBox, Combat Chat 60, the spell matrix's scroll fixture).
-- A scroll with several spells opens on its **last** spell (the list in the scroll's slot order, under level headings): press the key for the one you want before CAST, or Enter casts the last; a cleric (or cleric multi-class) reads an unread clerical scroll at the USE itself, no Read Magic needed. *seen* (Combat Chat 61, DOSBox: scr3f_kob, cscr_kob)
