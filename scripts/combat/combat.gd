@@ -1116,16 +1116,18 @@ func _toggle_ready(i: int, it: GameItem, hands: int) -> void:
 
 
 ## A member hurt down by readying an item in a fight (an aligned sword of another alignment, ItemPowers: DYING or DEAD
-## past the HP): the figure is down for the fight, its movement gone, the bleeding counted from the HP short, with no
-## line but the damage's (DOSBox, Combat Chat 62, sw_kob: BAKSHI at 5 HP readied the knight's tomb's Long Sword +2: TAKES
-## 15 POINTS OF DAMAGE FROM MAGIC in the panel, DEAD, his menu back without MOVE; on QUICK his turn drew only the pattern
-## d8 and d4 and the fight was lost. Ours left him standing: he fought on).
+## past the HP): the figure is down for the fight, its movement gone, the bleeding counted from the HP short, and the
+## damage routine's fall words (DOSBox, Combat Chat 62, sw_kob: BAKSHI at 5 HP readied the knight's tomb's Long Sword
+## +2: TAKES 15 POINTS OF DAMAGE FROM MAGIC in the panel, DEAD, his menu back without MOVE; on QUICK his turn drew only
+## the pattern d8 and d4 and the fight was lost; ours left him standing. Combat Chat 63 at speed 6: BAKSHI / IS KILLED
+## under the damage line, flashed at speed 0).
 func ready_downed(j: int, past: int) -> void:
 	var t: Dictionary = combatants[j]
 	t.down = true
 	t.moves = 0
 	if (t.who as PartyMember).status == PartyMember.STATUS_DYING:
 		t.bleeding = past
+	_routine_fall(j)
 	_went_down(j)
 
 
@@ -1139,11 +1141,14 @@ func _put_away(i: int, it: GameItem) -> void:
 
 
 ## Applies damage the way the original does (see "Going down" above).
+## Its callers are the damage routine's (GAME.OVR 0x2C22E: a spell's, a breath's, a drink's), which words a fall its own
+## way (_routine_fall).
 func hurt(j: int, dmg: int, kind: int = 0) -> void:
-	_hurt(j, dmg, kind)
+	_hurt(j, dmg, kind, true)
 
 
-func _hurt(j: int, dmg: int, kind: int = 0) -> void:
+## `routine`: the damage came through the damage routine (0x2C22E), not a blow: its fall words (_routine_fall).
+func _hurt(j: int, dmg: int, kind: int = 0, routine := false) -> void:
 	var t: Dictionary = combatants[j]
 	var tm: PartyMember = t.who
 	t.last_kind = kind
@@ -1178,13 +1183,32 @@ func _hurt(j: int, dmg: int, kind: int = 0) -> void:
 	t.down = true
 	if past > 9:
 		tm.status = PartyMember.STATUS_DEAD
-		message.emit("%s GOES DOWN" % tm.name)
-		message.emit("%s IS KILLED" % tm.name)
 	else:
 		tm.status = PartyMember.STATUS_DYING
 		t.bleeding = past
+	if routine:
+		_routine_fall(j)
+	elif past > 9:
+		message.emit("%s GOES DOWN" % tm.name)
+		message.emit("%s IS KILLED" % tm.name)
+	else:
 		message.emit("%s GOES DOWN AND IS DYING" % tm.name)
 	_went_down(j)
+
+
+## The damage routine's fall words (GAME.OVR 0x2C44A, once the figure is out of the fight): "Goes Down", with
+## ", and is Dying" for DYING, or "is killed" alone for DEAD, STONED or GONE (the set at 0x2C204), on the row under
+## the damage line (DOSBox: Combat Chat 39's c39j3, KOBOLD / IS KILLED under a bolt's ELECTRICITY; fbk2b, KOBOLD /
+## GOES DOWN, AND / IS DYING under FIRE; Combat Chat 63's sw_kob, a READY's BAKSHI / IS KILLED). A blow's are its own
+## (0x12AB3: "goes down", "and is Dying", then "is killed").
+func _routine_fall(j: int) -> void:
+	var tm: PartyMember = combatants[j].who
+	if tm.status >= PartyMember.STATUS_DEAD:
+		message.emit("%s IS KILLED" % tm.name)
+	elif tm.status == PartyMember.STATUS_DYING:
+		message.emit("%s GOES DOWN, AND IS DYING" % tm.name)
+	else:
+		message.emit("%s GOES DOWN" % tm.name)
 
 
 ## After the fight, as the original does: the dying stop bleeding (UNCONSCIOUS, 0 HP).
@@ -1854,12 +1878,12 @@ func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 		var burn := SpecialAffects.element_damage(tm, SpecialAffects.FIRE, roll(2, 10, "fire"))
 		if burn > 0:
 			message.emit(SpecialAffects.damage_words(tm.name, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC))
-			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC)
+			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC, true)
 	if _hit_has(am, allowed, 0x50) and not t.down:
 		# An ankheg's acid (0x106A7): 1d4 more.
 		var acid := roll(1, 4, "acid")
 		message.emit(SpecialAffects.damage_words(tm.name, acid, SpecialAffects.ACID))
-		_hurt(j, acid, SpecialAffects.ACID)
+		_hurt(j, acid, SpecialAffects.ACID, true)
 
 
 ## Has `m` effect `type` among the ones this hit's category runs (`_on_hit_specials`)?
