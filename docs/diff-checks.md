@@ -172,6 +172,31 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 135: the camp Slow Poison's half-elf d100 (521); record +0x10D outside fights (statediff compares it; 522, a temple RAISE DEAD from a fight-dead start)
+
+- **The camp SLOW POISON's d100 (check 521; game state, main path; matched, Combat 61's line confirmed):** chat 134's
+  start (`s520b`) had ELWEN's .SPC replaced by `37` (her racial `7c` gone), a state play never makes: the original
+  then drew nothing (seed unchanged; the tracer was fine). From check 498's camp with ELWEN dead of poison as play
+  leaves her (`7c` kept, `37` appended, record +0x10D 0): CEDRIC's SLOW POISON draws one d100 at GAME.OVR 0x11A4D
+  (the half-elf's handler) as the effect goes on; she stands at 1 HP, OKAY, +0x10D 1, 124 kept (the same with +0x10D
+  1). 521 adds CURE LIGHT WOUNDS on her after it (tpseed 22222222: the d8 after the d100: 1 -> 7). MATCH; a copy
+  without the d100 DIFFERS (6).
+- **A dead elf's racial effect (chat 134's finding withdrawn):** every original save in the gate keeps a dead
+  member's racial effects (LIRA, ELWEN, BAKSHI, RHIANNON, DORN, PHINEAS dead; RHIANNON raised in 111 and 160 and slowed
+  in 155 still holds 0x6B). Chat 134's "dropped" 124 was its start's poke.
+- **Record +0x10D outside fights (found and fixed; game state, main path):** statediff now compares +0x10D ("in the
+  fight": the next fight rolls initiative only for members with it, GAME.OVR 0x1287F; a hired NPC with it has no
+  TRADE or SELL). The full gate with it showed six checks where ours kept 1: the original's damage routine
+  (START.EXE 0xBA:0x2228) writes +0x10D 0 and HP 0 whenever a hit leaves the member in any status but OKAY or
+  ANIMATED (the set at 0xBA:0x2208), in or out of a fight (87, 88: PHINEAS dying from 8:13's rocks and 3:14's
+  slings; 121: ARN killed by 5:5's hedge; 456: THRENDER GRONE in 4:2), and the kill routine a slowed poison's end
+  calls (GAME.OVR 0xECB3 -> 0xED06) does the same (496, 502: DORN). Fixed in ecl_vm.gd's `_hurt` and spell_caster.gd.
+- **The temple's RAISE DEAD and STONE TO FLESH set +0x10D (check 522; game state, main path; ready edit to Combat):**
+  GAME.OVR 0x4B70 / 0x4F18 write +0x10D 1 with status 0 and HP 1. Check 111's start with RHIANNON's +0x10D 0 (as a
+  fight leaves the dead; 111 and 160 poked it at 1): RAISE DEAD: OKAY, 1 HP, CON 13, +0x10D 1, as from 111's start.
+  Ours leaves 0: 522 DIFFERS on main (`in the fight (+0x10D): original 1, ours 0`), MATCHes with the two-line edit
+  (`~/gbr/lab/data/c135/raise10d.diff`, temple_screen.gd: Combat's file). Not installed until the edit lands.
+
 ## Chat 134: a member downed in play healed (516-519; chat 133's UNCONSCIOUS rule withdrawn), a member with 16 items (510), a second level drain (512), a camp Bless through a fight (513)
 
 - **A member downed in play is stood up by any heal (checks 516-519; game state, main path; matched; chat 133's

@@ -167,7 +167,10 @@ func _member(name: String, t: Dictionary, u: Dictionary) -> int:
 			["control", 0x84, 1], ["side", 0x10E, 1],
 			# Chat 133 (check 493, a wight's level drain): what a drain and the level recount write.
 			["highest level", 0x73, 1], ["levels drained", 0x74, 1], ["HP drained", 0x75, 1],
-			["rolled HP", 0xB1, 1]]
+			["rolled HP", 0xB1, 1],
+			# Chat 135 (check 522, the temple's RAISE DEAD): record +0x10D, "in the fight": the next fight rolls initiative only
+			# for members with it (GAME.OVR 0x1287F), and a hired NPC with it has no TRADE or SELL.
+			["in the fight (+0x10D)", 0x10D, 1]]
 	# Chat 133: what the level recount writes (GAME.OVR 0x2AA87), for a check with a `levels` file. Not for
 	# every check: the original recounts as a character joins the party (0x1F55A), so a lab start with levels
 	# poked by hand reads recounted there and as poked in ours (42 checks); a real record is already counted.

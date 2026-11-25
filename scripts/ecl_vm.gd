@@ -1046,6 +1046,11 @@ func _hurt(m: PartyMember, damage: int) -> void:
 		m.status = PartyMember.STATUS_DYING
 	elif m.hp == 0:
 		m.status = PartyMember.STATUS_UNCONSCIOUS
+	# ... and one left in any status but OKAY or ANIMATED (the set at 0xBA:0x2208) is out of the fight: record +0x10D 0
+	# (0xBA:0x22E1; main chat 135, checks 87, 88, 121, 456: PHINEAS dying from the rocks and the slings, ARN killed by
+	# the hedge, THRENDER GRONE in 4:2; ours kept 1).
+	if m.status not in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED] and m.raw.size() > 0x10D:
+		m.raw[0x10D] = 0
 	_box_hits += 1
 
 

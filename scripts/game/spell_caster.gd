@@ -453,6 +453,8 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 			if m.has_affect(POISONED):
 				m.hp = 0
 				m.status = PartyMember.STATUS_DEAD
+				if m.raw.size() > 0x10D:
+					m.raw[0x10D] = 0     # the kill (0xECB3 -> 0xED06; main chat 135, checks 496, 502: DORN's 0x10D 0)
 				out.append("%s DIES FROM POISON" % m.name)
 			for b in m.affects.duplicate():
 				if int(b.effect) == POISON_TICK:
