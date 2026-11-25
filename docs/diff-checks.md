@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 138: every main-path fight with more than 32 figures traced with all figures (no difference); the throne room after Combat's last-step fix
+## Chat 138: every main-path fight with more than 32 figures traced with all figures (no difference); a ghoul's paralysis outlasts the fight (531); the throne room after Combat's last-step fix
 
 - **Why:** trace.py logged figures 0-31 only until chat 137 (`TPOS`), and the Player's lab copy still does; chat 137's
   BRAM showed that a path can differ with every draw identical. A scratch build of ours printing each step of a figure
@@ -202,6 +202,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **The throne room after Combat Chat 62's 317c996 (the last-step reset):** chat 137's three waves (`o528t.sh`'s trace
   against ours with `k528w.txt`): still identical to 27018 of 48430, then the wave-2 WILD BOAR's turn (with Combat).
   The end-state check waits for that fix.
+- **A ghoul's paralysis outlasts the fight (check 531; game state, main path; matched; installed):** Player 56's
+  ghoul save (`p2start/p56a1_g042`, 4:2 9,6 N; a party not on QUICK in its save; slot G by `data/c50/slot.py`),
+  tpseed aeba0d61, Up (SOME GHOULS DECIDE TO ADD YOU TO THEIR MENU.: the encounter is a random one, so the seed at the
+  load matters), tpseed 00000002 at that text (an ours seed search, `data/c138/fxg.sh`, over the end saves' effects),
+  Enter, everyone QUICK, CONTINUE BATTLE NO, the pile (VIEW POOL EXIT: nothing to take; EXIT goes straight to the
+  walking screen in both), save. BRAM leaves the fight paralysed, effect 52 with 60 minutes, in both end saves; 1387
+  draws identical and all 12 figures' cells agree. Break: tpseed 00000001 (11 differences). **Lab pitfall:** N on
+  ours' walking screen is a lab key in debug builds (the clock to 08:00 / 20:00), so a check's keys must not send N
+  where the original asks nothing (the first version of 531's keys did: "ours 20:00").
 - **match_gate.sh on 13d46ee** (after 317c996, which moves paths after a kill with attacks to spare): see the board.
 
 ## Chat 137: a computer-run member's walk after a kill (to Combat, fix ready); QUICK with MAGIC ON (526) in the gate; BLESS and PRAYER cast in a fight outlast it (528); TAKE and SHARE at the load (529, 530); the throne room's wave 2 (to Combat)
