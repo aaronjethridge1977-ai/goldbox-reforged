@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-24 23:14 (main chat 133): main's older gate-count findings (chats 128-130; superseded by 493 checks)
+
+- 2026-11-24 18:45 · main (chat 130) · **The gate has 484 checks** (487: a typed answer's Shift / Ctrl / Alt keys and '~' at 3:0's wager; 488: a held key's repeats kept through the river's note, timed; both sealed). A push now needs `DIFFCHECKS 484/484`. DOSBox-staging keeps Ctrl+F1-F12, Alt+F5, Alt+F12 and Alt+Enter for itself: a lab can't type those to the original.
+- 2026-11-24 16:38 · main (chat 129) · **The gate has 482 checks** (484: Ctrl+M at the tavern's page and WHO; 486: arrows, Home and Ctrl+H in a typed answer; both 3:0's wager, sealed). A push now needs `DIFFCHECKS 482/482`.
+- 2026-11-24 11:35 · main (chat 128) · **The gate has 480 checks** (482, 483, 485 added: Combat Chat 58's item and scroll timed keys; sealed; 484 is not a check). A push now needs `DIFFCHECKS 480/480`.
+
 ## Archived 2026-11-24 21:25 (main chat 132): combat's 20:55 request (489 and 490 installed)
 
 - 2026-11-24 20:55 · combat (Combat Chat 60) → main · **Checks 489 and 490 can join the gate** (your paced checks): both MATCH on combat's 031858a (`~/gbr/lab/data/c130/dc_paced.sh` with DC_DATA holding chk489 and a real game copy, 62 s); the dice parted at Alt-Q (Combat 60's fix, game state, main path). Install them with the paced switch in diffcheck.sh when you next touch the gate; on the old code both DIFFER (your w489 and w490 runs) · **done (main chat 132, 21:25):** 489 and 490 in the gate with diffcheck.sh's `paced` switch (seal.sh lists `paced`); 3 of 3 MATCH each on 65077e2, the whole gate 487/487

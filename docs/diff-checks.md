@@ -172,6 +172,61 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 133: level drain and training while drained (checks 492, 493); a two-day rest interrupted on day 2 (494); treasure over the load (495); a slowed poison running out (496); Slow Poison's power (498, a fix); CAST SPELL ON WHOM after MAGIC's menu (497, to Combat)
+
+- **Slow Poison's effect has power 255 (found, fixed; game state, main path):** DOSBox, check 133's start (8:27) with
+  DORN dead of poison (status 6, 0x37 in his .SPC): CEDRIC (cleric 5) casts SLOW POISON on him in camp: DORN GETS
+  BACK UP at 1 HP, effects 22/300/255 and 15/10/255 (GAME.OVR 0x288CA pushes 0xFF as the power); ours wrote 22/300/5
+  (the level). Only Dispel Magic reads the power (check 202's rule). Fixed in spell_caster.gd; **check 498** (the cast,
+  then the save) fails on the code before. Combat's in-fight cast (combat_spells.gd, Slow Poison) writes the level too:
+  request to Combat.
+- **CAST SPELL ON WHOM after MAGIC's menu lights the caster again (found; input, main path: camp healing; Combat's
+  file, request with a ready edit):** DOSBox, the same start: SLOW POISON on DORN, then CAST straight from the list:
+  the light starts on DORN (chat 83's case, as ours); but EXIT from the list to MAGIC's menu (CAST MEMORIZE SCRIBE
+  DISPLAY REST EXIT), CAST, CURE LIGHT WOUNDS: the light starts on CEDRIC, the caster (`~/gbr/lab/data/c133/v2.png`,
+  `v3.png`). Ours kept DORN lit until MAGIC's own EXIT, so End x3 cured BRAM, not DORN. Ready edit
+  `~/gbr/lab/data/c133/light_edit.diff` (`_magic_menu()` forgets the last target); **check 497** (the Cure, then a
+  20-minute REST: DORN 4 -> 2 in the original, 1 in ours) MATCHes with it, 3 of 3; not installed until it lands.
+  **Outside camp the same:** the adventure menu's CAST (SLOW POISON on DORN, HOLD PERSON's LOSE IT? NO, EXIT to the
+  walk, CAST, CURE LIGHT WOUNDS): CEDRIC lit (`w2.png`); ours DORN (BRAM cured). The edit's second line is
+  `open_cast()`'s; **check 499** (the walk's casts, then ENCAMP: DORN 4 in the original, 1 in ours) MATCHes with it.
+- **A slowed poison running out (check 496; game state, main path; matched):** the same start: SLOW POISON, CURE
+  LIGHT WOUNDS (DORN 1 -> 4), REST 6 hours: the 10-minute ticks take DORN to 1 (never below), at 5 hours (cleric 5)
+  he DIES FROM POISON: 0 HP, status dead, 0x37 kept, 0x16 and 0x0F gone; 18:50. Three runs MATCH. (Walking with
+  LOOKs in 3:0 met an encounter within the hour in each of six seeds: the camp's rest was the way to the end.)
+- **Treasure the member can't carry (check 495; game state, main path; matched):** check 442's start (2:20's
+  treasure room) with THRENDER GRONE at his load ceiling (STR 17: 500 + 1500 = 2000; gold 1498 and the cached load
+  word 0x102 = 2000): SHARE, TAKE, TAKE x3 on the 20 arrows: refused, no message, nothing moves; EXIT, THERE IS STILL
+  TREASURE LEFT ... GO BACK? YES, End (BAKSHI), TAKE, TAKE, TAKE: the arrows and the short bow (both +1) go to him and
+  the menu loses TAKE; EXIT, the walk on. Three runs MATCH; a copy of ours whose `can_take_item` always says yes
+  DIFFERS (THRENDER GRONE gets both).
+
+- **A wight's level drain in a fight (check 493; game state, main path: 4:10, 4:2 and 2:15's drainers; matched, no
+  fix):** check 64's start (4:10) with 0x4A07 = 1 (one wight behind the tower), every member's class levels poked to 4
+  and recounted with ours' tables (`~/gbr/lab/data/c133/p493.py`, `lvl.gd`: the original recounts a character as it
+  joins the party, GAME.OVR 0x1F55A, so a poke without the recount gives the two games different THAC0s and the fights
+  part), THRENDER GRONE's weapon +2 (the others +0: the wight needs magic); the route to 9,5 W: WIGHTS APPEAR FROM
+  BEHIND THE TOWER, QUICK: the wight hits BAKSHI (cleric/fighter/magic-user 4/4/4): magic-user 4 -> 3 (0x10C5D's
+  pick), 0x74 = 1, 0x75 = 2, maximum and current HP cut, experience 8037; won in round 6. Three runs MATCH (THAC0 and
+  spell slots compared too); BAKSHI's 0x75 made 3 in the end save DIFFERS. At level 1 every member drained IS DEAD
+  FOREVER in both (seen in ours; the original wasn't run to the wipe).
+- **Training while drained (check 492; game state, main path; matched, no fix):** check 214's start (3:11) with
+  THRENDER GRONE drained twice from 4 (0x73 = 4, 0x74 = 2, 0x75 = 7): TRAIN to 3: 0x75 7 -> 4, 0x74 1 (GAME.OVR
+  0x1C89C: 0x75 less 0x75 / 0x74 per class trained), HP from the d10 only, 0x73 kept at 4. Three runs MATCH; 0x75 = 5
+  in the end save DIFFERS.
+- **A two-day rest interrupted on day 2 with hurt members (check 494; game state, main path; matched, no fix):**
+  check 133's start (8:27) with ARN 10, LIRA 5, DORN 2 HP, tpseed 22222222 (found in ours: 11111111, 44444444 and
+  55555555 rest both days; 33333333 and 35353535 are interrupted on day 1): ENCAMP, REST, DAYS, INC x2, REST: THE
+  WHOLE PARTY IS HEALED (each hurt member + 1), then on day 2 YOU SPOT A GROUP OF KOBOLDS, FLEE (fails: the fight),
+  QUICK, CONTINUE BATTLE NO, 32 XP each, DIRTEN at 0, the treasure left; 12:54. Three runs MATCH; LIRA + 1 HP DIFFERS.
+  (The original's end save holds the game speed the lab poked, 0x49FC = 4: put back to the start's 0 by hand.)
+- **statediff (tools/statediff.gd) compares more of the record:** the highest level (0x73), levels and HP drained
+  (0x74, 0x75) and the rolled HP (0xB1) in every check (all 487 matched there); base THAC0 (0x2D) and the spell slots
+  (0xB2-0xB7) only with `--levels` (a check folder holding a `levels` file; diffcheck.sh and seal.sh pass and seal it):
+  42 checks with levels poked by hand (the spell checks 180-213, the halls 135 and 140) read recounted in the original
+  and as poked in ours. Not a difference in play (a real record is already counted); a lab start with poked levels
+  should be recounted (`lvl.gd`) before its original is run.
+
 ## Chat 132: the party destroyed in a fight; a rest interrupted while memorizing (check 491); 489 and 490 paced in the gate
 
 - **The party destroyed in a fight (found, fixed; display, main path: every wipe; doesn't reset the streak):** DOSBox,
