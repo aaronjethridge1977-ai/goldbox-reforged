@@ -411,6 +411,8 @@ func _heal(m: PartyMember, amount: int) -> void:
 		m.hp = mini(m.hp + amount, m.hp_max)
 		if m.hp > 0:
 			m.status = PartyMember.STATUS_OKAY
+			if m.raw.size() > 0x10D:
+				m.raw[0x10D] = 1     # as the camp's cure (main chat 134)
 
 
 func _pool() -> void:
