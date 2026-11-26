@@ -531,7 +531,12 @@ func radius(id: int) -> int:
 	return area_code(id) & 7
 
 
+## How many aims a "pick" spell takes (GAME.OVR 0x148BE): (code & 3) + 1 for codes 1-7 (0x14AD1); code 15 (Silence,
+## 15' Radius's 0x1F) aims once, its target the aimed figure alone (0x14920-0x14972; main chat 139's check 541:
+## GRISHNAK's SILENCE drew one target pick in the original, four in ours).
 func max_picks(id: int) -> int:
+	if area_code(id) == 15:
+		return 1
 	return (area_code(id) & 3) + 1
 
 
@@ -1083,9 +1088,12 @@ func _effects(i: int, id: int, targets: Array, dur: int, lvl: int, saved: Dictio
 	var effect := table.effect(id)
 	for j in targets:
 		var t: PartyMember = c.combatants[j].who
-		var no_save := table.field(id, 8) == 0
+		# The effect routine (GAME.OVR 0x278DB) rolls the save for any save kind but 0 (0x2797F); the add (0x2C540) lets
+		# it stop the effect only for kind 1: kind 3 (Silence, 15' Radius) rolls it and goes on (main chat 139's check
+		# 541: the original's d20 at OVR:2BC5D after GRISHNAK's pick, DORN silenced; ours rolled none).
+		var save_kind := table.field(id, 8)
 		var was_saved: bool = saved.get(j, false) if saved.has(j) else \
-				(not no_save and table.field(id, 8) == 1 and save(t, table.field(id, 9), 0, m))
+				(save_kind != 0 and save(t, table.field(id, 9), 0, m) and save_kind == 1)
 		# A touch spell (range 255: Cause Blindness, Cause Disease, Bestow Curse here) then rolls the
 		# caster's to-hit against the target's AC, saved or not (GAME.OVR 0x279AD: the save first, then
 		# 0x2BBA1); a miss and it does nothing (Combat Chat 8: LIRA's ring of Cause Blindness at 5:4's
