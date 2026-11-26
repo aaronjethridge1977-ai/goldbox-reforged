@@ -106,6 +106,7 @@ var _row24_msg := ""
 var _announcing := false
 var _announced := false
 var _aim_rows_kept := false
+var _aim_end := false              # the cast's end frame: row 23 cleared, the AIM row kept (Combat Chat 67)
 var _kept_prompt := ""
 var _kept_items := []
 var _kept_lit := 0
@@ -663,7 +664,8 @@ func _draw_original(field: Image) -> void:
 	if _bare:
 		g.forget_menu(24)      # a READY's damage on the fight's screen: nothing on row 24 (DOSBox, Combat Chat 63)
 	elif _aim_rows_kept and _row24_msg == "":
-		g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+		if not _aim_end:
+			g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
 		if _kept_prompt != "":
 			g.text(0, 24, _kept_prompt, MAGENTA)
 			g.menu_line(24, _kept_items, _kept_prompt.length() + (0 if _kept_prompt == "AIM:" else 1), _kept_lit)
@@ -1367,6 +1369,14 @@ func _show_messages() -> void:
 			_panel_msgs.clear()
 			_skulls.clear()
 		_refresh()
+	if _aim_rows_kept and paced() and is_inside_tree():
+		# The cast's end: the lines and row 23 (SPELL:) cleared, the AIM row kept, ~70 ms before the next figure's
+		# panel (DOSBox at speed 6, Combat Chat 67: c67ha f400, c67sl f433, c67dm f343 and f523, c66hp f464; ours went
+		# straight on).
+		_aim_end = true
+		_refresh()
+		await get_tree().create_timer(0.07).timeout
+		_aim_end = false
 	_draining = false
 	_feed_typed.call_deferred()
 	_aim_rows_kept = false
