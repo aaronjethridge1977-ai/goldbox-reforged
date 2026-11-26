@@ -172,6 +172,41 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 148: the pile's order with a TREASURE list (577, matched); a training member's fall in a fight (578, lab: a ready edit to Combat)
+
+- **577 (game state, main path; matched; installed): the treasure pile with all three parts.** The robed orc at 1:18
+  14,8 (entry 6; [4A35] 255: every answer fights, 0xB181: the ORC LEADER, MON1CHA 5 with four items, and TREASURE list
+  22). Start `sorcG`: Player 1a's played `entry` (1:18 8,4 W) by slot.py, THRENDER GRONE given a HAND AXE (give.py,
+  ITEM1 53:55) and readied in the original's camp (the FLAIL off), saved F, slot.py F -> G. Keys: route.py's walk
+  (8,4 -> 14,8; a second Up after the shrine's text at 13,8, the first is taken by the text in both games), ATTACK;
+  PHINEAS, RHIANNON, DARKSTAR DONE DELAY; THRENDER AIM NEXT x12 (the ORC LEADER at range 2) TARGET; the rest QUICK.
+  The original's LOOT: LONG BOW, CHAIN MAIL, BATTLE AXE (the orc's, last to first), HAND AXE (thrown), 6 LEATHER HOLY
+  SYMBOLS (the TREASURE's); THRENDER TAKEs four, the fifth refused (his load). Confirms chat 147's
+  thrown-before-TREASURE order from the code: 577 DIFFERS on e0bc105's parent (the axe after the symbols, not taken),
+  MATCHES on main.
+- **578 (game state; the Manual of Bodily Health's training and a fall in a fight; lab check until Combat lands the
+  edit): the fall runs the training's end.** A figure going down in a fight runs 0x12DE7 -> 0x2BEF4, the same strip as
+  the kill outside a fight (0xECB3, chat 142's 554): the first record of each of DS:0xC14's 16 types removed through
+  0x2AF10 with its end handler (record byte +4 set). For 0x07 (the training, 43200 minutes after the reading's day)
+  that end is CON + 1. Ours' `_went_down` (combat.gd, Combat's) ran only the charm's end. Start `strn` (poked:
+  Player 56's `sg042`, CEDRIC's CHRDATG3.SPC a fresh training record 07 c0 a8 ff 01, as the reading's end writes it
+  (c142 `oman2`), and his HP 1); seed aeba0d61, Up, Enter; each turn AIM NEXT to CEDRIC: at range 1 TARGET, ATTACK ALLY
+  YES; else EXIT, QUICK (`otrn.sh` writes the keys `k578`): DORN and ARN knock CEDRIC down (HP 0), the party wins.
+  The original's save: CEDRIC CON 19 (was 18), no .SPC; ours: CON 18, the only difference. Ready edit
+  `~/gbr/lab/data/c148/train_fall.patch` (the 0x07 end through `SpellCaster.ended`; 578 MATCHES with it).
+- **Read, no change:** a member who falls in a won fight keeps his items: the fight's end walks every figure but
+  takes money and items only from side 1 (+0x10E = 1) not running (+0x10C 3) (0x55B3-0x579B), as ours'
+  `Spoils.gather(defeated)`; the 1d10 for an item with word +0x3A 0 and the 8 kept are ours' too. A wand's (any
+  charged item's) last charge: USE's spend (0x22C7E-0x22CBA) takes one from a stack (+0x39 > 1), else a charge
+  (+0x3C), and removes the item at 0 (0xBA:0x1509), as ours' `spend_use`.
+- **The effect handlers' table** (for the next reader): far pointers at DS:0x6828 + 4 x type, read live; stub
+  segment 0x1E4 is the image's 0x41 (0x20B -> 0x68), so `ovr.stub(seg - 0x1A3, off)` gives the file offset: 0x07
+  0xEE8E, 0x0B 0xF05B, 0x16 0xF3D0, 0x1E 0xF6C0, 0x1F / 0x33 / 0x34 / 0x35 0xFF9A (nothing), 0x20 0xF776, 0x36 0xFFB0
+  (nothing), 0x3A 0x100AD (fight record byte 6), 0x3B 0x100CD (adds 0x62), 0x4A 0x16281, 0x4B 0x103CA, 0x5F 0x1126B,
+  0x62 0x1135B (+3 HP to max), 0x89 0x11DD5 (with its flag: removes 0x17, the Spiritual Hammer, whose end takes the
+  hammer). Leads for Combat (code only): a cleric holding the hammer who falls loses it in the original; the troll's
+  fall: 0x3B's end adds a 0x62 and only the first 0x62 goes (ours filters every record of a type).
+
 ## Chat 147: thrown weapons on the treasure pile (576, fixed); 572, 573 and 576 installed (564)
 
 - **The pile after a fight: a thrown weapon's place (game state, main path; fixed in main.gd `_after_fight`; check
