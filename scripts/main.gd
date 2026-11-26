@@ -3703,6 +3703,19 @@ func _on_event_fight_finished(result: int) -> void:
 			if m != _duelist:
 				aside.append(m)
 		_show_time_news(SpellCaster.pass_time(aside, _combat.rounds()))
+	else:
+		# So do the members left out of the fight (down before it: not fielded): the round's clock (0xA093 ->
+		# 0x241A1) ages the whole party's effects (chat 149, DOSBox, check 581: Player 11's p11t1 ogres with
+		# CEDRIC dead from before: his effect 8 went 62680 -> 62674 over the 6 rounds; ours kept 62680).
+		var fielded := {}
+		for c in _combat._combatants:
+			fielded[c.who] = true
+		var out: Array = []
+		for m in _party:
+			if not fielded.has(m):
+				out.append(m)
+		if not out.is_empty():
+			_show_time_news(SpellCaster.pass_time(out, _combat.rounds()))
 	# The fight's end turns every dying member of the party unconscious, a member down before the fight
 	# too (the original's figure list holds the whole party; Combat's finish() covers the fighters).
 	# Chat 61: since a script's DAMAGE leaves a member dying, check 69's DIRTEN (the priest's fireball
