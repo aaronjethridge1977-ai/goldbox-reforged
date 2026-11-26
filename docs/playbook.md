@@ -568,6 +568,7 @@ Cloud (3), Ray of Enfeeblement (4), Haste (5), Slow (6).
 | 6 | as 5 / as 5 / Haste, Slow |
 
 Scrolls (Kovel, Bane's temple) add Hold Person, Haste, Slow and Fireball copies: adjust the books when they're found.
+- Read Magic, Friends, Find Traps, Knock, Strength and Cure Disease are camp-only: chosen in a fight they say CAMP ONLY SPELL and nothing happens (the turn is kept). Cast Read Magic in camp and USE the unread scroll there: its effect lasts a minute, so it is gone by the time a fight a step away reaches the caster's turn. *seen* (Combat Chat 62, DOSBox rm_kob)
 
 ## 4. Before a fight
 
@@ -796,6 +797,7 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
   dying, or reload. *book* (Manual)
 - Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).
 - A caster in a fight turns to face the spell's aim, and a spell with no aim (Bless, Mirror Image, Shield and the like) turns the caster to face north: a caster with foes to its south then has them at its back (struck from behind; and once it has had its turn and taken a blow, a foe leaving from behind it gets no free blow from it); cast self spells before the line closes, or with foes north of the caster. *code* + *seen* (Gold Box Combat Chat 55: GAME.OVR 0x27DCA; DOSBox mik1, BAKSHI's facing east to north at the Mirror Image draw).
+- Outdoors a spell aimed by MANUAL can't be put on a river or low-ground square (seen through but not walked): no TARGET there, so aim an area spell on a figure or on plain ground beside the group. *code* + *seen* (GAME.OVR 0x1585B; DOSBox, 8:27's band, LIRA's Sleep; Combat Chat 64)
 
 ## 6. After a fight
 
@@ -861,6 +863,7 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 - A member who refuses an item for weight refuses anything heavier: skip them for those. *seen* (Player 29, p28j1)
 - A fallen NPC is dropped after the fight and his items go into the treasure, where you can take them back. *seen*
   (Player 11)
+- A BLESS or PRAYER cast in a fight's last rounds stays on after it for its minutes left (the end save keeps them: BLESS up to 5, PRAYER 3), so a fight one or two steps later can start blessed; and a member at the load can TAKE no coins at all (the amount asked must fit under the ceiling: not even part of it), while SHARE puts the pile on whoever still has room. *seen* (DOSBox, 8:27's band kobolds, main chat 137, checks 528-530).
 
 ## 7. Resting and camping
 
@@ -1040,8 +1043,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-- Read Magic, Friends, Find Traps, Knock, Strength and Cure Disease are camp-only: chosen in a fight they say CAMP ONLY SPELL and nothing happens (the turn is kept). Cast Read Magic in camp and USE the unread scroll there: its effect lasts a minute, so it is gone by the time a fight a step away reaches the caster's turn. *seen* (Combat Chat 62, DOSBox rm_kob)
-- A BLESS or PRAYER cast in a fight's last rounds stays on after it for its minutes left (the end save keeps them: BLESS up to 5, PRAYER 3), so a fight one or two steps later can start blessed; and a member at the load can TAKE no coins at all (the amount asked must fit under the ceiling: not even part of it), while SHARE puts the pile on whoever still has room. *seen* (DOSBox, 8:27's band kobolds, main chat 137, checks 528-530).
-- (Pool) A monster archer (a kobold leader's bow) that walks up next to a member swaps to its melee weapon and still strikes that turn, picking among those beside it: standing next to archers doesn't buy a free round. *code* + *seen* (GAME.OVR 0xB9B8 -> the turn loop 0xAD72; main chat 138's DOSBox throne room, seed 3960000a, draws 15134-15136; Combat Chat 63).
-- (Pool) An enemy cleric's SILENCE, 15' RADIUS falls on one figure only, the one aimed at, and its saving throw doesn't stop it: spreading out doesn't help, the silenced caster just can't cast for the spell's minutes. *code* + *seen* (GAME.OVR 0x148BE, 0x2C540; main chat 139's check 541, Grishnak at 4:2; Combat Chat 64)
-- Outdoors a spell aimed by MANUAL can't be put on a river or low-ground square (seen through but not walked): no TARGET there, so aim an area spell on a figure or on plain ground beside the group. *code* + *seen* (GAME.OVR 0x1585B; DOSBox, 8:27's band, LIRA's Sleep; Combat Chat 64)
+
