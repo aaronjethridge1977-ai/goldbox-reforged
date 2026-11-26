@@ -183,20 +183,22 @@ func _refresh() -> void:
 			_scr.text(2 + who.length(), 1, "SPELLS TO CHOOSE FROM", GameScreen.GREEN)
 			for c in 40:
 				_scr.tile(c, 2, 22)
-			var row := 5
-			var last_level := 0
-			for i in _list.size():
-				var lv := spells.level(_list[i])
-				if lv != last_level:
-					last_level = lv
-					_scr.text(1, row, CharacterSheet.LEVEL_WORDS[clampi(lv - 1, 0, CharacterSheet.LEVEL_WORDS.size() - 1)], MAGENTA)
-					row += 1
-				_scr.text(3, row, spells.names[_list[i]].to_upper(), GameScreen.WHITE if i == _cursor else GameScreen.GREEN)
-				_scr.list_line(row, i)
-				row += 1
+			# P136 (Jeremy, 0.1.8: SHAZAM's 3rd-level list ran past the frame onto row 24): the original pages it as the
+			# camp's lists, 18 rows (5-22) headings included, LEARN NEXT / LEARN PREV (Player 41's p41t1, ELWEN at magic-user
+			# 5: rows 5-22 1ST LEVEL .. DISPEL MAGIC lit, NEXT, eight Homes to FIREBALL; p35e2 the same; no EXIT).
+			var rows := _learn_rows()
+			for r in range(_top, mini(_top + LEARN_PAGE, rows.size())):
+				var it: Array = rows[r]
+				var sr := 5 + r - _top
+				if it[1] < 0:
+					_scr.text(1, sr, it[0], MAGENTA)
+				else:
+					_scr.text(3, sr, it[0], GameScreen.WHITE if it[1] == _cursor else GameScreen.GREEN)
+					_scr.list_line(sr, it[1])
 			_scr.list_chosen(_cursor)
 			_scr.text(0, 24, "CHOOSE SPELL:", MAGENTA)
-			_scr.menu_line(24, ["LEARN"], 14, 0)
+			var words := _learn_menu()
+			_scr.menu_line(24, words, 14, EclVM.menu_lit(words.size()))
 		_:
 			_draw_party()
 			var items := _items()
@@ -330,7 +332,15 @@ func _do_train() -> void:
 	if learn and spells != null:
 		_list = m.learnable_spells(spells)
 		if not _list.is_empty():
-			_cursor = _list.size() - 1      # the original lights the last spell (Player 3)
+			# The original lights the first page's last spell (Player 3: the last of a short list; p41t1: DISPEL
+			# MAGIC, the last on page one of 27 rows), LEARN lit.
+			_top = 0
+			_pick = 0
+			var rows := _learn_rows()
+			_cursor = 0
+			for r in mini(LEARN_PAGE, rows.size()):
+				if rows[r][1] >= 0:
+					_cursor = rows[r][1]
 			_mode = "learn"
 			_refresh()
 			return
@@ -339,6 +349,64 @@ func _do_train() -> void:
 	await get_tree().create_timer(0.6 * CampScreen.text_scale())     # P104.timeout
 	if _mode == "congrats":
 		_show_menu()
+
+
+const LEARN_PAGE := 18                 # the learn page's rows, 5-22 (p41t1)
+var _top := 0                          # the learn page's first row on the screen
+
+
+## The learn page's rows: [text, -1] for a level's heading wherever the level changes, [name, index in _list].
+func _learn_rows() -> Array:
+	var out: Array = []
+	var last_level := 0
+	for i in _list.size():
+		var lv := spells.level(_list[i])
+		if lv != last_level:
+			last_level = lv
+			out.append([CharacterSheet.LEVEL_WORDS[clampi(lv - 1, 0, CharacterSheet.LEVEL_WORDS.size() - 1)], -1])
+		out.append([spells.names[_list[i]].to_upper(), i])
+	return out
+
+
+func _learn_row_of(i: int) -> int:
+	var rows := _learn_rows()
+	for r in rows.size():
+		if rows[r][1] == i:
+			return r
+	return 0
+
+
+## LEARN, NEXT while rows lie below the page, PREV while a spell lies above it (the camp's _list_menu).
+func _learn_menu() -> Array:
+	var rows := _learn_rows()
+	var words: Array = ["LEARN"]
+	if _top + LEARN_PAGE < rows.size():
+		words.append("NEXT")
+	for r in mini(_top, rows.size()):
+		if rows[r][1] >= 0:
+			words.append("PREV")
+			break
+	return words
+
+
+## NEXT / PREV as the camp's _turn_page: the last page shows the list's last rows, the light keeps its screen row,
+## and off a heading NEXT goes to the spell below, PREV to the one above.
+func _learn_page(step: int) -> void:
+	var rows := _learn_rows()
+	var sr := _learn_row_of(_cursor) - _top
+	if step > 0:
+		_top = mini(_top + LEARN_PAGE, maxi(rows.size() - LEARN_PAGE, 0))
+	else:
+		_top = maxi(_top - LEARN_PAGE, 0)
+	var r := clampi(_top + sr, 0, maxi(rows.size() - 1, 0))
+	while r >= 0 and r < rows.size() and rows[r][1] < 0:
+		r += 1 if step > 0 else -1
+	if r < 0 or r >= rows.size():
+		r = clampi(_top + sr, 0, rows.size() - 1)
+		while r < rows.size() - 1 and rows[r][1] < 0:
+			r += 1
+	_cursor = maxi(rows[r][1], 0)
+	_refresh()
 
 
 ## What the screen shows (for the lab's headless checks).
@@ -430,10 +498,30 @@ func _unhandled_input(event: InputEvent) -> void:
 					_note.text = "COULDN'T SAVE THE GAME." if save_failed else "GAME SAVED."
 					_show_menu()
 		"learn":
+			var words := _learn_menu()
+			var word := ""
+			if enter:
+				word = words[EclVM.menu_lit(words.size())]
+			elif key == KEY_PAGEDOWN or key == KEY_PAGEUP:
+				word = "NEXT" if key == KEY_PAGEDOWN else "PREV"     # as the camp's lists (main chat 92)
+			else:
+				for w in words:
+					if String(w).unicode_at(0) == key:
+						word = w
 			if up or down:
 				_cursor = (_cursor + (1 if down else -1) + _list.size()) % _list.size()
+				# The page follows the light (the camp's lists, Combat Chat 16).
+				var at := _learn_row_of(_cursor)
+				if at < _top or at >= _top + LEARN_PAGE:
+					_top = clampi(at, 0, maxi(_learn_rows().size() - LEARN_PAGE, 0))
 				_refresh()
-			elif enter or key == KEY_L:
+			elif key == KEY_COMMA or key == KEY_PERIOD:
+				EclVM.menu_step(words.size(), -1 if key == KEY_COMMA else 1)
+				_refresh()
+			elif word in ["NEXT", "PREV"] and word in words:
+				_pick = words.find(word)
+				_learn_page(1 if word == "NEXT" else -1)
+			elif word == "LEARN":
 				_who().spell_book[_list[_cursor] - 1] = 1
 				_note.text = "%s LEARNS %s." % [_who().name, spells.names[_list[_cursor]].to_upper()]
 				_show_menu()
