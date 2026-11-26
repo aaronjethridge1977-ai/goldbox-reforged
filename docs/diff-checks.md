@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 142: a kill outside a fight takes DS:0xC14's effects (554; fixed); the clock's member flag (552, 555; bug #24)
+## Chat 142: a kill outside a fight takes DS:0xC14's effects (554; fixed); the clock's member flag (552, 555; bug #24); the temple's RAISE DEAD and CURE CRITICAL WOUNDS on a played party (556, 557)
 
 - **The Lead's item, the 16 effects on a death outside a fight (main path: no difference, from the code).** A script's
   damage (traps, falls, the hedge, the slings: START.EXE 0xBA:0x2228, called from GAME.OVR 0x96BF, 0x12C7F, 0x2C3E5)
@@ -200,9 +200,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   at 43200 to the REST's end, **ELWEN CON 18** (ours 19; with one record, 553, the walk starts again from the head and
   counts the training). Ours: `_pass_time_original` keeps the flags (`rest_begins`, `pass_time(..., rest_step)`);
   camp_screen.gd's REST must mark its start and pass `true` (Combat's file: requested; `data/c142/camp_flag.patch`).
-  With the patch 552 and 555 MATCH (scratch tree `data/c142/wt`); on main 555 DIFFERS until it lands. **Main path?** A
+  With the patch 552 and 555 MATCH (a scratch worktree, since removed); on main 555 DIFFERS until it lands. **Main path?** A
   dwarf (or PHINEAS) reading the Manual of Bodily Health and RESTing: its training waits for the next REST or the
   walk; asked of the Lead.
+
+- **556 (game state, main path; matched; installed): RAISE DEAD on a member killed in play** (the reload rule's raise
+  after a won fight). Start `sraise`: check 546's temple start (3:0 Tempus) with check 550's original end party (BRAM
+  DEAD after 4:10's mummies; ARN, ELWEN, LIRA diseased). 546's keys with End x6 (RAISE DEAD), YES: BRAM OKAY, HP 1,
+  **CON 18 -> 17, max HP 60 -> 59** (the cut at CON 14 and over: a fighter's CON - 14 a level), in both. Three runs
+  MATCH; NO at PAY FOR CURE differs (lab break 996).
+- **557 (game state, main path; matched; installed): CURE CRITICAL WOUNDS on a diseased member** (`sraise`, End x4:
+  LIRA, HP 11 of 24, diseased by the mummies; End x4 the cure): 600 paid, no HP healed, in both. Three runs MATCH; NO
+  differs (lab break 997).
 
 ## Chat 141: 0.1.8's gate; a disease left to run its course (547, 548; fixed)
 
