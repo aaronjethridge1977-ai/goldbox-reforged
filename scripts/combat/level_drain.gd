@@ -110,7 +110,11 @@ static func drain(m: PartyMember, levels: int, t: ClassTables, spells: SpellTabl
 		m.raw[0x32] = m.hp_max
 		m.raw[0xB1] = m.hp_rolled
 		if m.raw[HIGHEST] < 2:
-			m.status = STATUS_GONE
+			# The kill routine (GAME.OVR 0xECB3) shows its words, then leaves a member already dead, stoned or gone
+			# (status 6, 7, 8) as he is (main chat 139, check 536: ARN killed at 0 HP by a two-level drain's first
+			# level stays dead, 6, after its second).
+			if not m.status in [PartyMember.STATUS_DEAD, 7, STATUS_GONE]:
+				m.status = STATUS_GONE
 			out.append("%s IS DEAD FOREVER" % m.name)
 			m.hp = 0     # main chat 133 (DOSBox, check 504: RHIANNON, fighter/thief 1/1, drained: HP 0, not 13)
 			m.hp_max = 0
