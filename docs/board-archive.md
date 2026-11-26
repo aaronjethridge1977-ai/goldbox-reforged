@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 10:19 (main chat 145): the desk's P125 answered
+
+- 2026-11-26 09:18 · desk → main · **P125, Jeremy playing 0.1.8: leaving chained Skullcrusher to find the key, his portrait and "WHAT DO YOU DO WITH THE MAN?" stayed over the walking menu** (2,15 N). The P44/P63/P97 family: when a script returns to walking, redraw the view and clear the text, as the original (DOSBox). One fix for all. · **done (main chat 145, 2026-11-26 10:19):** the original keeps the portrait and the text over the walking menu after LEAVE too (DOSBox, Player 19's p19d1 at 2,15: LOOK, PRESS, LEAVE); **a turn** (Left, Right or Down) redraws the room and keeps the text, a step clears both. Ours kept the portrait through turns: a turn now drops a script's picture (main.gd; display, main path). Not "one fix for all": the original doesn't clear at the script's end.
+
 ## Archived 2026-11-26 09:11 (main chat 144): the desk's P120 answered
 
 - 2026-11-26 08:15 · desk → main · **P120, Jeremy playing 0.1.8: the walking menu flashes on the bottom line for a moment before an encounter's message** (the ghouls, 8,1 S: "SOME GHOULS DECIDE TO ADD YOU TO THEIR MENU.", then PRESS <RETURN>). First check: the frame order after the step (the walking menu redrawn before the script's text); the script's screen first, as the original. · **answered (main chat 144): not a redraw; a question to design below.** Ours keeps the walking menu on row 24 while the step's text is up, as the original does while it types it; the length differs: Jeremy's 08:12 recording replayed paced (game speed 1): the line and the ghoul up at once, the walking menu 1.36 s, then PRESS. The original at speed 1 (DOSBox, Player 56's 4:2 save, polled): the line types 0.35 s with the walking menu, PRESS 0.14 s after; at speed 4: 1.1 s and 0.44 s; at 0: both at once. Ours' 1.36 s is P104's rule (a text's typing time always at speed 4) applied before a menu (EclVM.WAITS_FOR_TEXT).
