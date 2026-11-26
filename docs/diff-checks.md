@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 145: VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); the training hall at 999.5 gold (the original crashes)
+## Chat 145: P125 (a turn redraws the view over a script's picture); VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); the training hall at 999.5 gold (the original crashes)
 
 All three ready edits are Combat's files (character_sheet.gd, treasure_screen.gd): patches in `~/gbr/lab/data/c145/`,
 checks in the lab (`data/c145/chk569`-`chk571`): DIFFER on main, MATCH with the edits; the three together on a scratch
@@ -203,6 +203,12 @@ tree: DIFFCHECKS 555/555 (`dc_wt3.log`). Main installs 569-571 once they land.
   chest, End (BAKSHI): VIEW TAKE POOL SHARE DETECT EXIT; D: BAKSHI / IS AFFECTED on rows 18-19 for 0.67 s, then VIEW
   TAKE POOL SHARE EXIT; LOOT: * SHIELD, * MAGIC USER SCROLL WITH 1 SPELL; BAKSHI's Detect Magic gone, effect 5 for 10.
   Ours had no DETECT. `treasure_detect.patch` (SpellCaster.cast_outside, the line for 0.67 s, keys wait).
+- **P125 (Jeremy: the chained man's portrait and question stayed over the walking menu after LEAVE; found, display,
+  main path; fixed in main.gd):** 4:2's dark room (ECL4 block 2, 0xA1E8: LEAVE writes 255 to [6DE1] and EXITs).
+  DOSBox, Player 19's `p19d1/textile` (2,15 S; LOOK re-runs the room): after LEAVE the original keeps his portrait and
+  WHAT DO YOU DO WITH THE MAN? over the walking menu, as ours; a turn (Left, Right or Down) redraws the room and keeps
+  the text; a step clears both (as ours). Ours kept the portrait through turns (`_event_image`): a turn now drops it.
+  Not P125's "clear at the script's end": the original doesn't. Seen in ours windowed (`oursW.sh`, shots).
 - **The training hall at 999.5 to 999.99 gold (found; game state, main path, an edge; a question to the Lead):**
   0x1C369 tests the purse rounded to the nearest gold piece (0x238F8), so 999 gold and 10 silver (199900 copper) are
   offered training; ours refuses under 1000. The fee loop (0x1DC6C) then takes every coin, still owes up to 100
