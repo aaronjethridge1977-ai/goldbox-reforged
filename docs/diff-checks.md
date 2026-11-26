@@ -203,7 +203,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   again. (3) That append is 0xB0:0x52 = 0x2BD3C, a bare list insert: no add-effect handlers (no half-elf d100
   0x11A3F, which a spell's add does run). Ready edit `~/gbr/lab/data/c140/helpless_hit.diff` (combat.gd): seed
   43100004's 2155 draws and the rest fight's 5137 identical; 544 MATCHES 3 of 3, DIFFERS on main (137 differences:
-  DORN dead in ours, alive in the original). The rest's interruption roll and time already agreed (main as is).
+  DORN dead in ours, alive in the original); 545 the same with tpseed 43100016 (the original leaves DORN UNCONSCIOUS,
+  main 38 HP; 2061 draws identical with the edit; MATCHES 3 of 3, DIFFERS on main). The rest's interruption roll and
+  time already agreed (main as is).
 - **Not measured (leads):** the kill routine's caller 0xF776 is the handler printing "collapses" (string at file
   0xF76C; it writes +0x10E, +0x10F 1, +0x76 0, +0x6B from +0x98, +0x72 12): which effect owns it, and whether the
   main path reaches it, is still open; ours has no "collapses" text.
