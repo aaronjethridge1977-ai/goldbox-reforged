@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538); Grishnak's Hold Person and Curse outlast the fight (539, 540)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538); Grishnak's Hold Person and Curse outlast the fight (539, 540); his Silence's aim (541, to Combat)
 
 - **Members held at a won fight's end (check 539; game state, main path; matched; installed):** Grishnak's temple
   (4:2 3,11, Cadorna's Textile House): Player 41's checkpoint `p41b1/s41out` walked in DOSBox to 4,11 W with the
@@ -184,6 +184,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 - **Grishnak's CURSE outlasts the fight (check 540; game state, main path; matched; installed):** 539's start and keys
   with tpseed 4200001b: CEDRIC, ELWEN and DORN keep effect 2 with 1 minute left, LIRA dead, ARN at 0 HP, in both end
   saves; all 3804 fight draws identical. Three runs MATCH.
+- **Grishnak's SILENCE 15' RADIUS going off a turn after it was begun (found; game state, main path; to Combat; lab
+  check 541):** 539's start and keys with tpseed 42000045: draws identical to 2573 of 2850; at Grishnak's turn the
+  begun SILENCE goes off: the original draws one target pick (0x160DB, d2) and a saving throw (0x2BC5D, d20), ours
+  re-aims with four d2 (`resolve_pending` -> `_ai_plan`) and draws ELWEN's half-elf resistance d100, no save. End
+  saves: the original silences DORN only (effect 21, 9 minutes), ours ELWEN and DORN (7 each). DOSBox HOLD at 2573
+  (`data/c139/tgr45h_orig.txt`). Whether the Stage 1 match fought Grishnak himself is unconfirmed (its 4:2
+  recordings show no GRISHNAK); his room is on the textile house's commission.
 
 - **The throne room won with four of seven dead (check 538; game state, main path; matched; installed):** 533's keys
   with tpseed 3960002c (one of ours' five surviving seeds): BRAM, CEDRIC, LIRA and PRINCESS FATIMA dead, DORN
