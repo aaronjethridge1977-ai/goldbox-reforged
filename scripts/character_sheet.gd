@@ -578,9 +578,15 @@ func _menu(items: Array, col: int) -> void:
 
 
 func _view_menu() -> Array:
-	var items := ["ITEMS"]
+	# GAME.OVR 0x21B3C-0x21BF5 (main chat 145, DOSBox: Player 9's party from spois): ITEMS only for a member
+	# carrying an item (CEDRIC, his last item dropped: VIEW:SPELLS TRADE DROP EXIT); SPELLS for any spell byte,
+	# one still being memorized too (LIRA, her one spell cast and MEMORIZE picked: VIEW:ITEMS SPELLS TRADE DROP
+	# EXIT; S then shows nothing and the VIEW page stays).
+	var items := []
 	var m := _who()
-	if _has_spells(m):
+	if m != null and not m.items.is_empty():
+		items.append("ITEMS")
+	if m != null and not m.memorized.is_empty():
 		items.append("SPELLS")
 	# TRADE and DROP (money) only for a member carrying some, gems and jewelry included (main chat 86, check
 	# 256: DOSBox, camp VIEW: ARN with nothing VIEW:ITEMS EXIT, with one gem ITEMS TRADE DROP EXIT). In a
@@ -843,6 +849,10 @@ func _after_change(items_changed: bool = true) -> void:
 			_who().refresh_load_word()     # after an item action (GAME.OVR 0x224AF)
 	var m := _who()
 	_cursor = clampi(_cursor, 0, maxi(m.items.size() - 1, 0))
+	# The ITEMS page's loop runs while the member carries an item (GAME.OVR 0x21F89, record +0xC7): the last one
+	# dropped, traded or sold, the VIEW page is back (main chat 145, DOSBox: CEDRIC's seven items dropped).
+	if _mode == "items" and m.items.is_empty() and _editable():
+		_mode = "view"
 	_refresh()
 
 
@@ -1168,8 +1178,14 @@ func _can_take(p: PartyMember, it: GameItem) -> bool:
 
 
 ## What a shop pays for an item: half its price.
+## The shop's offer (GAME.OVR 0x22D41-0x22D8C): half the price; for a stack (count over 1) times the count over 20,
+## the product a 16-bit word (the arrows' and quarrels' own branch, type 0x49 and also 0x1C, is never taken). Main chat 145,
+## DOSBox (check 570, the arms shop): 10 QUARRELS (price 300) 75 GOLD PIECES, 15 ARROWS (price 100) 37; ours offered 150, 50.
 static func _sale_price(it: GameItem) -> int:
-	return it.price / 2
+	var half := it.price / 2
+	if it.count > 1:
+		return ((it.count * half) & 0xFFFF) / 20
+	return half
 
 
 ## The shop pays for a sold item (GAME.OVR 0x22E47-0x22EE6, after the item is gone and before the record is
@@ -1310,7 +1326,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					_mode = "items"
 					_cursor = 0
 				"SPELLS":
-					_mode = "spells"
+					if _has_spells(m):     # only spells being memorized: nothing (main chat 145, DOSBox)
+						_mode = "spells"
 				"TRADE":
 					_pending = "coin_trade"
 					_mode = "coin_whom"
