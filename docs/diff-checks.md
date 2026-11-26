@@ -182,6 +182,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   (Jeremy's party: SIR KILLEMGOOD's; byte 46 = 0x46): READY TRADE DROP HALVE JOIN EXIT, U does nothing, the Manual readied and unread, CON
   18 after 31 d 1 h; ours offered USE and read it: CON 19. DIFFERS on main; MATCH with `use_10d.patch`
   (character_sheet.gd `_item_menu()`: no USE when raw[0x10D] is 0). Requested of Combat (the sheet is its screen).
+- **No USE in the training hall's nor the treasure's VIEW (found; input, main path; Combat's edit):** the same
+  menu builder adds USE only with DS:0x49F3 2-5. DOSBox: check 96's start at 3:11's fighters' hall, YES, VIEW, ITEMS:
+  READY TRADE DROP HALVE JOIN EXIT (`hview.sh`, finished by hand); 2:15's basilisk won from `slibG` (seed 11111111),
+  the treasure's VIEW, ITEMS: READY TRADE DROP JOIN EXIT (`otreas.sh`). Ours offers USE in both (party_menu.gd,
+  treasure_screen.gd). No state check (no played member there with a readied usable item). The edit
+  (`use_menu.patch`: `CharacterSheet.no_use`, with 558's +0x10D test) is in the scratch tree's full gate.
+  **Code only (not measured):** in a fight USE also needs the figure record +0x108's byte 2, cleared for the round by a
+  cough (0xF6C0) or Silence (0xF36A); ours' sheet offers it.
 - **The Manual on a played dwarf (bug #24; the Lead's recheck of 555):** lab check 561: check 542's original end
   (DORN cured of the basilisk at the temple: OKAY, HP 1, his four racial records as play left them) at 3:0's inn, given
   the same Manual record, reads it (USE offered) and RESTs 31 d 1 h: the original's save holds the training record
