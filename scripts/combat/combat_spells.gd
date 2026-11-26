@@ -555,10 +555,15 @@ func level_of(m: PartyMember, id: int) -> int:
 	return m.caster_level(table, id)
 
 
-## Why combatant i can't aim spell `id` at `cell` ("" if it can).
+## Why combatant i can't aim spell `id` at `cell` ("" if it can): the MANUAL aim's square (GAME.OVR 0x155F5 with
+## the aim's flag 0: TARGET when the line walk 0x3DB:0x39 from the caster to the square is clear, half its length
+## within the spell's range, and the square's ground can be walked: DS:0x2744's cost not 0xFF, 0x1585B; outdoors
+## the river and the low ground are seen through but not walked, so no TARGET there; Combat Chat 64).
 func why_not(i: int, id: int, cell: Vector2i) -> String:
 	if not c.field.in_bounds(cell.x, cell.y):
 		return "OUT OF RANGE"
+	if not c.field.walkable(cell.x, cell.y):
+		return "CAN'T AIM THERE"
 	var me: Dictionary = c.combatants[i]
 	var best := 1 << 30
 	var clear := false
@@ -570,6 +575,22 @@ func why_not(i: int, id: int, cell: Vector2i) -> String:
 		return "OUT OF RANGE"
 	if not clear:
 		return "NO CLEAR SHOT"
+	return ""
+
+
+## Why combatant i can't aim spell `id` at figure j picked with NEXT / PREV ("" if it can). GAME.OVR 0x1529B with
+## the aim's flag 0 (a spell): the range is 0xBA:0x255B's, from the in-sight list 0x3045B builds from the caster
+## (the shortest clear line over every pair of the two figures' cells, halved), TARGET offered when it is within
+## the spell's range; no "Range = n" line and no test of its own for a clear shot (NEXT walks only figures in sight,
+## 0x15AE1). Ours took the line to the figure's top-left cell, which differs for a large figure (Combat Chat 64).
+func why_not_figure(i: int, id: int, j: int) -> String:
+	if j == i:
+		return ""
+	var line: Vector2i = c.clear_line(c.combatants[i], c.combatants[j])
+	if line.y != 1:
+		return "NO CLEAR SHOT"
+	if line.x / 2 > spell_range(i, id):
+		return "OUT OF RANGE"
 	return ""
 
 
