@@ -1203,7 +1203,20 @@ func _show_messages() -> void:
 			# 2026-11-23: a Stinking Cloud's sparkles on the wrong troll), by name only inside a spell's own lines
 			# (-2), never on a line outside a spell (a guard's, a turn's IS COUGHING; ours had paired those by name).
 			var cands: Array[int] = []
-			if subj >= 0:
+			if subj <= Combat.ROUTINE_SUBJECT:
+				# A damage line through the damage routine outside a spell (a stirge's drink, fiery blows, acid): the
+				# explosion on the figure hurt (START.EXE 0x2B8B, called from 0x2C3C7 with 0: picture set 0x17; DOSBox,
+				# Combat Chat 64: the stirge band at speed 6, BRAM / TAKES 1 POINT / OF DAMAGE FROM / MAGIC with the burst
+				# on BRAM, the stirge's panel kept).
+				var k: int = Combat.ROUTINE_SUBJECT - subj
+				cands = [k]
+				_hit_pic = [10, 138]
+				_bolt_on = false
+				if not _spell_hits.has(k):
+					_spell_hits.append(k)
+				if OS.has_environment("AIMDBG"):     # lab (Combat Chat 64)
+					print("ROUTINEBURST %s at %s: %s" % [(_combatants[k].who as PartyMember).name, _combatants[k].cell, msg])
+			elif subj >= 0:
 				cands = [subj]
 				if not _spell_hits.has(subj):
 					_hit_pic = [9, 137]      # a cloud's save in a later round: the sparkles
