@@ -172,6 +172,27 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 147: thrown weapons on the treasure pile (576, fixed); 572, 573 and 576 installed (564)
+
+- **The pile after a fight: a thrown weapon's place (game state, main path; fixed in main.gd `_after_fight`; check
+  576):** a thrown weapon whose stack runs out (its type flagged thrown and melee, 0x14: hand axe, spear, types 4, 7, 20;
+  not darts or javelins, 0x0A / 0x1A, which are lost in both games) is copied to the pile's head when thrown (GAME.OVR
+  0x14200-0x1425D, count byte +0x39 less the blows 0x6E2D, readied byte cleared, then removed from the thrower). The
+  TREASURE's items were put on the pile before the fight (0x27EF / 0x2A21, at the head each), and the fight's end puts
+  the defeated figures' items at the head (0x571E): the pile reads the figures' items, the thrown weapons last thrown
+  first, then the TREASURE's. Ours appended the thrown weapons last, in throw order. DOSBox, start `sthr2G` (Player 56's
+  `sg042` with LIRA given a SPEAR and DORN a HAND AXE (give.py: ITEM1 53:26, 53:55, appended, +0xC7 + 1), both readied in
+  camp in the original and saved there: no poked readied bytes): the ghouls, ELWEN QUICK, DORN AIM NEXT x7 (a GHOUL at
+  range 2) TARGET, LIRA AIM NEXT x4 TARGET, the rest QUICK; LOOT: SPEAR, HAND AXE; TAKE gives ARN the SPEAR (ours before:
+  the HAND AXE). 576 DIFFERS on e0bc105's parent, MATCHES with the fix. The thrown-before-TREASURE part is from the
+  code (no DOSBox fight with both yet).
+- **Read, no change:** the fight's USE of a potion does nothing in the original (USE opens the items page; U on an
+  unreadied POTION: nothing, as the post's rule); a charged item's last charge removes it (ours' `spend_use`). The
+  inn's payment is the script's own platinum test (3:0, ECL3 block 0 0xA1C1, check 382), not the rounded purse: the
+  rounded purse's only callers stay CURE, BUY and TRAIN. Lead 0x101A0 (the fight's poison): "IS POISONED", effect 0x37
+  with 0xFF, "KILLED", then 0xECB3; ours' fight fall (`_went_down`) strips the same 16 effects (Combat's; not chased).
+- **Installed:** 572, 573 (Combat Chat 66's b68a89f: HALVE's new half after the stack, the self-TRADE) and 576.
+
 ## Chat 146: the training hall at 999.5 gold built (B); JOIN's place and a readied stack joined (574, 575, matched); the fight's HALVE and DROP; 565, 569-571 installed (561)
 
 - **The training hall at 999.5 to 999.99 gold (the Lead, 11:22, B; game state, main path, an edge; fixed in
