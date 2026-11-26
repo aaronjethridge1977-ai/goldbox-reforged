@@ -172,7 +172,11 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538)
+
+- **The throne room won with four of seven dead (check 538; game state, main path; matched; installed):** 533's keys
+  with tpseed 3960002c (one of ours' five surviving seeds): BRAM, CEDRIC, LIRA and PRINCESS FATIMA dead, DORN
+  unconscious, ARN 6 and ELWEN 2 HP, in both end saves; all 48271 draws identical. Three runs MATCH.
 
 - **CURE LIGHT WOUNDS on a stoned member in camp (check 537; game state, main path; matched; installed):** 532's
   original end (DORN stoned by the basilisk) as the start: ENCAMP, CEDRIC's MAGIC, CAST, CURE LIGHT WOUNDS, DORN
