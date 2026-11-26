@@ -172,7 +172,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 149: SHARE with a fallen member (579, matched); a monster that got away keeps its loot (580, matched)
+## Chat 149: SHARE with a fallen member (579, matched); a monster that got away keeps its loot (580, matched); a member out of the fight ages his effects (581, fixed)
+
+- **581 (game state, main path; fixed in main.gd): a member left out of a fight (down before it) ages his effects by
+  the fight's rounds.** The original's round clock (0xA093 -> 0x241A1) ages the whole party's effects; ours' fight
+  ticked only its fielded figures (the duel's set-aside members were already aged, chat 66's check 95). Start
+  `sdead` (poked: 580's `sogre` with CEDRIC dead as a real death leaves him, from 579's save: SAV 0x10C 6, 0x10D 0,
+  0x10F 1, 0x11B 0; a first poke with 0x10C alone left 0x10D set and the original fielded him), 580's walk and
+  fight (CEDRIC not fielded), NO, Enter; ARN TAKEs the first item (a LONG BOW); End, End (in the original's
+  treasure list End steps the cursor; Down didn't: ours takes both, Jeremy's P33); dead CEDRIC TAKEs the next LONG
+  BOW (allowed in both games); EXIT, NO. On aa4d277 the one difference: CEDRIC's effect 8 62674 in the original,
+  62680 in ours (6 rounds). `_on_event_fight_finished` now runs `SpellCaster.pass_time` on every party member not
+  among the fight's figures, as for a duel: MATCH.
 
 - **579 (game state, main path; matched; installed): a dead member gets an even SHARE.** GAME.OVR 0x252C3 counts
   (0x25269) and pays every player character (+0x84 control 0 or 0xB3; an NPC, 0x80 and over, skipped) whatever his
