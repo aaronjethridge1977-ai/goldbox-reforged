@@ -1044,3 +1044,7 @@ Tool and method notes behind the guide's lines; players can skip this.
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
+- Hold Person and Sleep never on undead: Jeremy's Hold Person on a wight and two ghouls (4:2) was UNAFFECTED on all three, and that fight cost 116 HP with three down; the wight fights he won cleanly (2 HP each) were TURN first, wight and ghouls forced to flee. *Jeremy* (his play 2026-11-26)
+- (Pool, 4:2) The wight with 10 skeletons and 8 zombies: one TURN routs most skeletons and zombies, but the wight isn't turned and drains whoever it reaches: every blow on the wight after the TURN, or leave the band for later (Jeremy: three tries, no win, moved on). *Jeremy* (his play 2026-11-26)
+- (Pool) Scorpions: disable before contact. A large scorpion's 1-HP sting killed CHOP outright twice (IS POISONED, IS KILLED, from 45 HP); Jeremy's cheap wins were two Stinking Clouds (2 HP) or a Sleep (0 HP). *Jeremy* (his play 2026-11-26)
+- Heal between back-to-back fights where drainers roam: Jeremy's fighter went into a third wight fight at 9 HP. *Jeremy* (his play 2026-11-26)
