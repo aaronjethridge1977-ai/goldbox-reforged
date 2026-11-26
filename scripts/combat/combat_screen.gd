@@ -1235,6 +1235,11 @@ func _show_messages() -> void:
 						await _crackle_to(_combatants[k].cell)
 						_panel_msgs.append(msg)
 					break
+			if _sparkle >= 0 and not _on_screen(_combatants[_sparkle].cell):
+				# START.EXE 0x2B8B: a figure off the view first brings the view to it (0x3E0:0x4D, then 0x3E0:0x52 with
+				# margin 3, as a step's 0x12FFC with 2), and the view stays there (DOSBox, Combat Chat 65: sl_kob1's
+				# third sleeper at the field's right edge).
+				_ensure_view(_combatants[_sparkle].cell, 3)
 			if msg.contains("GOES DOWN") or msg.contains("IS KILLED") or msg.contains("FALLS DEAD"):
 				for k in _lingering:
 					if (_combatants[k].who as PartyMember).name.to_upper() == who:
@@ -1674,8 +1679,10 @@ func _show_aim() -> void:
 	_aim_cell = _combatants[_selected].cell
 	_spell_cell = _aim_cell
 	if OS.has_environment("AIMDBG"):     # lab: each aim step's figure, cell, range and TARGET (Combat Chat 64)
-		print("AIMSTEP %d %s %s range %d target %s" % [_aim_index, _combatants[_selected].who.name, _aim_cell,
-			_combat.range_of(_combatants[_combat.active], _combatants[_selected]), _can_target()])
+		print("AIMSTEP %d %s %s range %d target %s tl %d near %d" % [_aim_index, _combatants[_selected].who.name,
+			_aim_cell, _combat.range_of(_combatants[_combat.active], _combatants[_selected]), _can_target(),
+			_combat.line_steps(_combatants[_combat.active].cell, _aim_cell, false).x / 2,
+			_combat.clear_line(_combatants[_combat.active], _combatants[_selected]).x / 2])
 	if not _on_screen(_aim_cell):
 		_centre_on(_aim_cell)
 	_refresh()
@@ -2307,7 +2314,7 @@ func _spell_target() -> void:
 	# the six beside him, where ours picked a new target with d19).
 	_combatants[me].target = _combat.occupant(_aim_cell)
 	if _combat.magic.aim_kind(_spell_id) == "area":
-		_finish_cast()
+		_finish_cast(true)
 		return
 	var who := _combat.occupant(_aim_cell)
 	if who < 0:
@@ -2387,11 +2394,19 @@ func _finish_cast(by_target := false) -> void:
 		_kept_prompt = {"aim": "AIM:", "manual": "(USE CURSOR KEYS)"}.get(_cmode, "")
 		_kept_items = _bottom_menu() if _kept_prompt != "" else []
 		_kept_lit = _lit(_kept_items) if _kept_prompt != "" else 0
+	var aimed_at := _selected if _cmode == "aim" else -1
 	_casting = ""
 	_aiming = false
 	_cmode = "menu"
 	_selected = me
-	if by_target and paced() and not _spell_picks.is_empty():
+	if by_target and paced() and _spell_picks.is_empty() and aimed_at >= 0:
+		# A spell aimed with NEXT and TARGET keeps the aimed figure's panel, with no box, through its flight and lines
+		# (the original's aim loop returns without redrawing the panel; DOSBox, Combat Chat 65: sl_kob1 at speed 6,
+		# BAKSHI's Sleep on a kobold: KOBOLD HITPOINTS 3 from TARGET through the bolt and the four FALLS ASLEEP).
+		_selected = aimed_at
+		_kept_state = _panel_state(_combatants[_selected], false)
+		_panel_kept = true
+	elif by_target and paced() and not _spell_picks.is_empty():
 		# The aim ends on the last figure picked and the panel stays on it, with no box, through the spell's
 		# lines (P108's film, Combat Chat 50: DOSBox hpk15, Hold Person on three kobolds: KOBOLD HITPOINTS 3
 		# from the third TARGET to the last line; after EXIT the aim has gone back to the caster, hp_orc1).
