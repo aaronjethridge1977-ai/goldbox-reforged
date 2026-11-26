@@ -1042,15 +1042,18 @@ func pay_gold(gold: int) -> bool:
 	return true
 
 
-## A shop's purchase: all the coins together pay, and what is left comes back in platinum
-## and gold only, the part under a gold piece lost (lab, chat 10, New Phlan's arms shop:
-## 144 silver and 2 platinum paying 1 gold left 3 platinum and 1 gold; 3 platinum paying 1
-## gold left 2 platinum and 4 gold). Training gives silver change (pay_gold).
+## A shop's ID (GAME.OVR 0x2300B): all the coins together pay, and what is left comes back in platinum
+## and gold only (lab, chat 10, New Phlan's arms shop: 144 silver and 2 platinum paying 1 gold left
+## 3 platinum and 1 gold; 3 platinum paying 1 gold left 2 platinum and 4 gold). The purse is worth
+## its copper rounded to the nearest gold piece (0x238F8: (copper + 100) / 200, as CoinPile.gold_of;
+## main chat 144, DOSBox: ARN's 42 copper, 110 silver, 10 electrum, 19 gold, 401 platinum (2034.71
+## gold) paying Tempus' ID left 367 platinum; ours floored it to 366 platinum and 4 gold). Training
+## gives silver change (pay_training).
 func pay_gold_in_shop(gold: int) -> bool:
-	var left := wealth_copper() - gold * 200
-	if left < 0:
+	var purse := (wealth_copper() + 100) / COIN_VALUE[3]
+	if purse < gold:
 		return false
-	var whole := left / COIN_VALUE[3]
+	var whole := (purse - gold) & 0xFFFF     # 0x8F:0x52 takes a word
 	for i in 5:
 		money[i] = 0
 	money[4] = whole * COIN_VALUE[3] / COIN_VALUE[4]
