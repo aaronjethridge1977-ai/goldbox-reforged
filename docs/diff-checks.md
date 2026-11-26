@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 142: a kill outside a fight takes DS:0xC14's effects (554; fixed); the clock's member flag (552, 555; bug #24)
+
+- **The Lead's item, the 16 effects on a death outside a fight (main path: no difference, from the code).** A script's
+  damage (traps, falls, the hedge, the slings: START.EXE 0xBA:0x2228, called from GAME.OVR 0x96BF, 0x12C7F, 0x2C3E5)
+  sets the status and +0x10D and never runs the strip 0x2BEF4; a script's status writes (0x803F) neither. The strip
+  is reached only through the kill 0xECB3 (0xED1B: from 0xF406 the slowed poison's end, the rot's last month, 0xF7A4,
+  the fight-time callers 0x100A4-0x1129D) and a fight's fall (0x12DE7). Ours does the same for the main path: no
+  change there. 0x2BEF4 removes the first record of each of the 16 types through 0x2AF10, which runs the record's
+  end when its byte +4 is set (0x2AEEA, flag 1).
+- **554 (game state, new area; DIFFERED, fixed in spell_caster.gd `kill_strip`): the rot kills a member in training.**
+  Start `sdman`: `sinn2G` with DORN's 16th item record replaced by `smanG`'s Manual and his rot's power poked 0x2F ->
+  0x1F (its last month, 43195 minutes). The inn's camp, End x5 (DORN), VIEW, ITEMS, End x15, Home x13 (SHIELD), READY,
+  End x13, READY, USE, EXIT x2, REST 29 d 23 h 55 min. The original: DIES ROTS AWAY on the rest's last step with 1445
+  minutes of the training left; the training gone and its end run: **DORN CON 18 -> 19** (dead); ours kept the
+  training (CON 18). Second difference: his disease 0x32, after the training in the list, kept the step's 5 minutes
+  in the original (renewed in ours): the walk goes on from the record that followed the rot (read before the removal,
+  0x23FA6), the training, which the strip freed (bug #25). Fixed both (the walk part with ORIGINAL'S BUGS on). Three
+  runs MATCH. Not the main path (a member killed by the rot mid-training); the slowed poison's death strips the same.
+- **The clock's member flag (lead 1 of chat 141, explained; bug #24).** Each step's walk clears the member's flag
+  (0x23EA9); a record that loses a step sets it (0x23F8E), and so does a record with time from where the walk ended
+  on (0x2405A); members without it are passed over (0x23E98) until a call outside camp (0x23DD9) or a REST's start
+  (0x24AB1). DORN in 552 (rot and disease out in one step, the renewal past the walk's end) is one case; **a living
+  one, 555 (game state; lab):** `sman2` (`smanG` with ELWEN's .SPC holding two 0x7C records of 0 minutes; every dwarf
+  carries four 0-minute racial records, 0x1A 0x2F 0x5A 0x61, PHINEAS two), 553's keys: the reading runs out after a
+  day as the list's last record, its predecessor isn't the head, so the walk ends there: the appended training stays
+  at 43200 to the REST's end, **ELWEN CON 18** (ours 19; with one record, 553, the walk starts again from the head and
+  counts the training). Ours: `_pass_time_original` keeps the flags (`rest_begins`, `pass_time(..., rest_step)`);
+  camp_screen.gd's REST must mark its start and pass `true` (Combat's file: requested; `data/c142/camp_flag.patch`).
+  With the patch 552 and 555 MATCH (scratch tree `data/c142/wt`); on main 555 DIFFERS until it lands. **Main path?** A
+  dwarf (or PHINEAS) reading the Manual of Bodily Health and RESTing: its training waits for the next REST or the
+  walk; asked of the Lead.
+
 ## Chat 141: 0.1.8's gate; a disease left to run its course (547, 548; fixed)
 
 - **0.1.8's release gate on cc951cc:** DIFFCHECKS 534/534 (897 s); match_gate on cc951cc 70 of 70 identical (01:24-04:23); released 04:23 (v0.1.8, Windows and Linux); both builds' smoke tests and the two crash

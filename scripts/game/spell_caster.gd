@@ -456,6 +456,7 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 				if m.raw.size() > 0x10D:
 					m.raw[0x10D] = 0     # the kill (0xECB3 -> 0xED06; main chat 135, checks 496, 502: DORN's 0x10D 0)
 				out.append("%s DIES FROM POISON" % m.name)
+				kill_strip(m, out)   # 0xECB3 -> 0x2BEF4, as the rot's kill
 			for b in m.affects.duplicate():
 				if int(b.effect) == POISON_TICK:
 					m.affects.erase(b)
@@ -503,9 +504,9 @@ static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, va
 ## Lets `minutes` of game time pass for everyone's effects, in the original's steps of at most 10 minutes (0x240A4);
 ## those that run out end. A disease or its rot that runs out is renewed: the record ends and a new one goes on at
 ## the list's end with fresh time (_disease_runs_out). Returns the lines to show ("ROTS...").
-static func pass_time(party: Array, minutes: int) -> PackedStringArray:
+static func pass_time(party: Array, minutes: int, rest_step := false) -> PackedStringArray:
 	if OriginalBugs.on():
-		return _pass_time_original(party, minutes)
+		return _pass_time_original(party, minutes, rest_step)
 	var out := PackedStringArray()
 	var left := minutes
 	while left > 0:
@@ -551,11 +552,27 @@ static func _disease_runs_out(m: PartyMember, a: Dictionary, out: PackedStringAr
 	var was := m.status
 	if SpecialAffects.disease_expires(m, renewed, out):
 		m.affects.append(renewed)
-	elif m.status != was and m.raw.size() > 0x10D:
+	elif m.status != was:
 		# The rot's last month kills through 0xECB3 (status 8, "DIES ROTS AWAY"), which clears +0x10D as every kill
 		# (0xED06; main chat 135). DOSBox, a 59 d 23 h 55 min rest at 3:0's inn: DORN status 8, HP 0, +0x10D 0
 		# (check 551).
-		m.raw[0x10D] = 0
+		if m.raw.size() > 0x10D:
+			m.raw[0x10D] = 0
+		kill_strip(m, out)
+
+
+## The kill outside a fight (GAME.OVR 0xECB3, from the rot's last month and a slowed poison's end) runs 0x2BEF4:
+## for each of the 16 types of DS:0xC14 (Combat.DOWN_STRIPS, the table a fight's fall uses too) the member's first
+## record of the type is removed with its end (0x2AF10). Main chat 142, DOSBox at 3:0's inn (check 554): DORN, his rot
+## in its last month, reads the Manual of Bodily Health; the rot kills him with 1445 minutes of the training left:
+## the training is gone and its end ran (DIES ROTS AWAY, CON 18 -> 19); ours had kept the training.
+static func kill_strip(m: PartyMember, out: PackedStringArray) -> void:
+	for type in Combat.DOWN_STRIPS:
+		for a in m.affects:
+			if int(a.effect) == type:
+				m.affects.erase(a)
+				ended(m, a, out)
+				break
 
 
 ## The original's effect clock (GAME.OVR 0x23DCD, ORIGINAL'S BUGS on: bug #17): time passes in steps of at most
@@ -566,16 +583,20 @@ static func _disease_runs_out(m: PartyMember, a: Dictionary, out: PackedStringAr
 ## record that followed it: so when the second record runs out, the first loses a step more (Combat Chat 40, DOSBox,
 ## Player 37's p37i1: CEDRIC's Haste ahead of his Bless and Prayer, both out in one round, lost 2 minutes, the
 ## others' Haste 1, and ran out a minute before theirs).
-static func _pass_time_original(party: Array, minutes: int) -> PackedStringArray:
+static func _pass_time_original(party: Array, minutes: int, rest_step := false) -> PackedStringArray:
 	var out := PackedStringArray()
 	var left := minutes
+	if not rest_step:
+		rest_begins(party)
 	while left > 0:
 		var step := mini(left, 10)
 		left -= step
 		for p in party:
 			var m: PartyMember = p
-			if m.affects.is_empty():
+			var id := m.get_instance_id()
+			if m.affects.is_empty() or not _counted.get(id, true):
 				continue
+			_counted[id] = false
 			var tail: Dictionary = m.affects.back()
 			var i := 0
 			var done := false
@@ -588,15 +609,55 @@ static func _pass_time_original(party: Array, minutes: int) -> PackedStringArray
 					continue
 				if int(a.minutes) > step:
 					a.minutes = int(a.minutes) - step
+					_counted[id] = true
 					i += 1
 					continue
 				a.minutes = int(a.minutes) - step
 				var after_head := i == 1
+				var next: Variant = m.affects[i + 1] if i + 1 < m.affects.size() else null
 				m.affects.remove_at(i)
 				_run_out(m, a, out)
 				if after_head:
 					i = 0
+				elif next == null:
+					i = m.affects.size()
+				else:
+					# The walk goes on from the record that followed (read before the removal, 0x23FA6), wherever the
+					# end put it; one a kill's strip removed (kill_strip) is freed memory: the original follows it
+					# and steps nothing more of the member's list in that step (main chat 142, check 554: DORN's
+					# disease, after the training the rot's kill took, kept the 5 minutes of the death step; ours
+					# had renewed it).
+					i = -1
+					for k in m.affects.size():
+						if is_same(m.affects[k], next):
+							i = k
+							break
+					if i < 0:
+						done = true
+						i = m.affects.size()
+			for k in range(maxi(i, 0), m.affects.size()):
+				if int(m.affects[k].minutes) > 0:
+					_counted[id] = true
+					break
 	return out
+
+
+## The clock's flag per member (DS:0x471D+i; bug #24): set for everyone as a call begins outside camp (0x23DD9) and
+## as a REST begins (0x24AB1); in camp it carries from one step of the REST to the next (rest_step). A member without
+## it is passed over (0x23E98). Each walk clears it (0x23EA9); a record that loses a step sets it (0x23F8E), as does
+## one with time from where the walk ended on (0x2405A, records appended during the walk included). So a member whose
+## timed records all run out in one step, what they add lying past the walk's end, is not counted again until the
+## next REST. Main chat 142, DOSBox at 3:0's inn (lab check 555): ELWEN with two 0-minute records (a dwarf has four,
+## the racial ones) reads the Manual of Bodily Health and RESTs 31 d 1 h: the reading ends after a day, its training is
+## appended at 43200 minutes and stays there to the REST's end (CON 18; with one record, check 553, the walk starts
+## again from the head and counts it: CON 19); lab check 552, DORN killed by the rot with his disease renewed in the
+## same step: the 14400 minutes kept to the end of a 61-day REST.
+static var _counted := {}
+
+
+static func rest_begins(party: Array) -> void:
+	for p in party:
+		_counted[(p as Object).get_instance_id()] = true
 
 
 ## The cures of GAME.OVR 0x292A2 (Cure Disease's handler 0x29347, and Neutralize Poison's

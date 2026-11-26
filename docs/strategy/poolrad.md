@@ -760,3 +760,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
+- *code* (main chat 142, GAME.OVR 0x23DCD; DOSBox lab check 555): in the original a dwarf (four racial 0-minute effects) or PHINEAS who reads the Manual of Bodily Health gets his 30 days' training frozen for the rest of that REST: REST one day for the reading, end the REST, then REST 30 days (or walk); one killed mid-training by a slowed poison (0xF406 -> 0xECB3, the kill check 554 measured for the rot) gets the CON point at once, kept when he is raised.
