@@ -1493,12 +1493,6 @@ func step(dir: int) -> String:
 		c.moves = 0
 		c.attacks = 0
 		return "fell"
-	if CombatSpells.held(c.who):
-		# A mover a free attack made helpless (a ghoul's paralysis) has no movement left (GAME.OVR 0x13080-0x130A2:
-		# out of the fight or under 0xBA:0xB73's effects, +0x108's +6 = 0); a computer-run one's turn then ends
-		# with no blow and no guard (0xB3B2 -> 0xBB0F: 0xB73 -> 0xBA:0x2637) (Jeremy's P121: CHOP MCHACK on QUICK,
-		# paralysed by a ghoul's free attack as he stepped, then struck the ghoul in ours).
-		c.moves = 0
 	c.moves -= cost
 	c.cell = to
 	if TpDice.on:
@@ -2739,10 +2733,6 @@ func ai_act() -> bool:
 			control_pending = false
 			if hand_back():
 				return false
-		if CombatSpells.held(c.who):
-			c.moves = 0          # made helpless in its own turn (P121): the turn ends, no blow, no guard (0xBB0F)
-			c.attacks = 0
-			return false
 	if not c.get("ai", false):
 		var magic_was := magic_on
 		poll_keys()
