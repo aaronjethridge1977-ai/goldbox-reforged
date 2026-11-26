@@ -172,6 +172,31 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 150: a member down with HP left keeps 0 after any damage; members out of a fight age a minute a round (582, fixed)
+
+- **582 (game state, main path; fixed in party_member.gd, ecl_vm.gd, item_powers.gd, spell_caster.gd, main.gd).** Start
+  `sunc` (poked: 580's `sogre` with CEDRIC unconscious from before the fight: SAV 0x10C 4, 0x10D 0, HP 9; .SPC
+  POISONED 0x37 (0 min, byte 4 = 0), SLOWED_POISON 0x16 (60 min, byte 4 = 1), POISON_TICK 0x0F (2 min, byte 4 = 1),
+  then his own effect 8), 581's keys (the p11t1 ogre walk, fight, TAKEs). The original's end: CEDRIC status 4, HP 0,
+  +0x10D 0, tick 6, Slow Poison 14. Ours (dd4dbef's parent): HP 4, stood up OKAY, +0x10D 1, tick 10. Two causes:
+  (1) **START.EXE 0xBA:0x2228** (the damage routine outside blows: a script's DAMAGE, an item's, the tick through
+  0xB0:0x7F -> GAME.OVR 0x2C22E) sets the status from the damage, then any member not OKAY or ANIMATED (the set at
+  0xBA:0x2208) gets +0x10D 0 **and HP 0** (0x22EA), one already down with HP left too; ours subtracted. Now
+  `PartyMember.take_damage`, shared by the three callers. (2) The round clock ages the party **one minute a round**
+  (0xA093 pushes 1, 1 to 0x241A1); ours aged the members left out in one lump after the fight, so the tick renewed
+  mid-fight (0xF246 -> 0xEC7A, appended with 10) came out at 10, not 6. Now a minute per round, as the fighters'
+  `CombatSpells.tick`. MATCH.
+- **The .SPC record's byte 4 is the end-handler flag** (GAME.OVR 0x2AF70: the removal 0x2AF10, from the clock, the
+  cures and the kill's strip, calls the type's end handler only when it is not 0). Of the 38 adds through 0xB0:0x52
+  (= 0x2BD3C), 16 pass 1 (the spells' effects, Slow Poison's tick 0x28913, the Manual 0xEE13, the disease 0x11092, the
+  renewals 0xEC7A) and 22 pass 0 (permanent records: the racial ones 0x1A14D-0x1A288, monster and item powers,
+  POISONED 0x10210, 0x19 at 0xFFD4 / 0x103B0 for a minute). A poke with byte 4 = 0 ran no end at all (CEDRIC's tick
+  expired with no damage, no renewal: `uw10F` of the first poke). **Open (save export, new area):** ours' loader
+  drops byte 4 and OriginalSave writes 0, so a save made in ours and loaded in the original never ends a Slow Poison,
+  the Manual's reading or training, a disease's renewal. Ours' own play is unaffected (ours ignores the byte).
+- **Per-round handlers** (category 19) run only for the fight's figures; the clock 0x23DCC itself has no status test,
+  so a member left out ages his timers and their end handlers run, as checked here.
+
 ## Chat 149: SHARE with a fallen member (579, matched); a monster that got away keeps its loot (580, matched); a member out of the fight ages his effects (581, fixed)
 
 - **581 (game state, main path; fixed in main.gd): a member left out of a fight (down before it) ages his effects by
