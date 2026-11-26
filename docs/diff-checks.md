@@ -174,6 +174,8 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542) and CURE DISEASE on one diseased in play (546); 536 and 541 in the gate; a mummy's second touch (543, to Combat); a blow on a member held mid-attack, a held member's save (544, to Combat)
 
+- **match_gate on 9f5d86f** (Combat Chat 64's two fixes; for 0.1.8): **70 of 70 baseline recordings identical** (22:01-01:00).
+  The gate: **DIFFCHECKS 531/531** on fdda6cd (with Combat's later 3054e5d, a display change).
 - **536 and 541 in the gate** (Combat Chat 64's 2906ed3, the drain's kill leaving the dead as they are, and 96a56dd,
   Silence 15' Radius aimed once with its save): each MATCH 3 of 3 on 9f5d86f. **DIFFCHECKS 530/530** on 9f5d86f.
 - **STONE TO FLESH at the temple on a member really stoned (check 542; game state, main path; matched; installed):**
