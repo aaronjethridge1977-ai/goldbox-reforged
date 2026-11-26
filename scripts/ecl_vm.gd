@@ -146,6 +146,9 @@ var delay_chars := 0
 var typewriter := true
 var _title_keep = null           # the text a vertical menu's typing title stands over (null: no title wait)
 var typing_wait := false         # BOTH SIDES WAIT. is up; the menu comes back after one DELAY (P106)
+## P120 B (Jeremy, 2026-11-26 10:42): the typing wait before a menu, a question, an input or the walking menu (EXIT) runs
+## at the game speed, as the original's (the text stays up under the menu); main.gd _script_delay.
+var menu_wait := false
 var _parlay_values: Array = []
 var encounter_distance := 0      # squares between party and monsters, as the menu sees it
 var notes: Array[String] = []    # things the engine would do but can't yet
@@ -268,6 +271,7 @@ func copy_from(src: EclVM) -> void:
 	print_chars = src.print_chars
 	delay_chars = src.delay_chars
 	typing_wait = src.typing_wait
+	menu_wait = src.menu_wait
 	typewriter = src.typewriter
 	_title_keep = src._title_keep
 	_menu_dest = src._menu_dest.duplicate()
@@ -609,6 +613,7 @@ func resume() -> State:
 		_show_encounter_menu()
 		return state
 	typing_wait = false
+	menu_wait = false
 	state = State.RUNNING
 	return run()
 
@@ -874,9 +879,10 @@ static func typed_chars(s: String) -> int:
 ## for the text printed since the script last stopped (DOSBox: 1:18's tavern, YOU HAVE ENTERED A CROWDED TAVERN.
 ## types over the old view, then the drunk's picture, then the next text). True: wait that typing time, then the
 ## instruction runs again (print_chars is spent, so it runs on).
-func _wait_typing() -> bool:
+func _wait_typing(for_menu := false) -> bool:
 	if print_chars <= 0 or running_entry == 2 or text.strip_edges() == "":
 		return false
+	menu_wait = for_menu
 	pc = _at
 	delay_chars = print_chars
 	print_chars = 0
@@ -1289,7 +1295,7 @@ func _exec(ins: Dictionary) -> void:
 	# Chat 117 (DOSBox, 8:13's boulder: YES NO comes 3.3 s after A BOULDER BLOCKS OFF THE PASSAGE. starts, once it has
 	# typed, with row 24 as left meanwhile): the original types a PRINT before the next op runs, so a menu, a question
 	# or an input after a text waits that text's typing time; ours showed the menu with the text at once.
-	if op in WAITS_FOR_TEXT and _wait_typing():
+	if op in WAITS_FOR_TEXT and _wait_typing(true):
 		return
 	var prev_op := _prev_op
 	_prev_op = op
@@ -1303,8 +1309,9 @@ func _exec(ins: Dictionary) -> void:
 		"EXIT":
 			# Chat 117 (DOSBox, 8:13's boulder NO, 4:2's well): the text printed since the script last stopped types
 			# before the walking menu comes back; row 24 keeps what was left there meanwhile (blank after a menu's
-			# choice, DAMAGE's prompt, the walking menu after a step). Ours showed the walking menu at once.
-			if _wait_typing():
+			# choice, DAMAGE's prompt, the walking menu after a step). Ours showed the walking menu at once. The text stays up
+			# under the walking menu, so this wait is a menu's (P120 B: the game speed).
+			if _wait_typing(true):
 				return
 			_restore_pick()
 			state = State.DONE

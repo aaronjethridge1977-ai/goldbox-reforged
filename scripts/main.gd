@@ -3089,6 +3089,11 @@ func _script_delay() -> float:
 	# P104 (Jeremy, 2026-11-23 07:33, QoL): the game speed never shortens a text's pause; text stays readable.
 	# A pause that holds a text up (its typing time, a DELAY after it, BOTH SIDES WAIT.) runs at TEXT_SPEED,
 	# whatever SETTINGS says; a DELAY with no text before it (a figure walking up) keeps the game speed.
+	if _vm.typing_wait and _vm.menu_wait:
+		# P120 B (Jeremy, 2026-11-26 10:42): before a menu, a question, an input or the walking menu the text stays up under
+		# it, so its typing time follows the game speed, as the original's (main chat 144, DOSBox at the ghouls, 44
+		# characters: speed 1 0.49 s, speed 4 1.1 s, speed 0 at once; ours had held speed 4's 1.36 s at every speed).
+		return maxf(CampScreen.speed * chars * 0.010, 0.001)
 	if _vm.typing_wait:      # a PRINT_CLEAR over a text not yet seen: its typing time only (no DELAY)
 		return maxf(TEXT_SPEED * chars * 0.010, 0.001)
 	if _vm.state == EclVM.State.WAIT and _vm._enc_waited:
