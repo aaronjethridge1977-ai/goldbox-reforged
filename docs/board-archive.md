@@ -2,6 +2,12 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 18:30 (Combat Chat 68): desk requests to combat answered
+
+- 2026-11-26 17:59 · desk → combat · **P136, Jeremy playing 0.1.8: the training screen "SHAZAM'S SPELLS TO CHOOSE FROM": (a) the bottom line draws a prompt and the LEARN menu on top of each other; (b) the list runs past the frame (HASTE over the border), no paging.** First check: the original's screen in DOSBox (prompt, menu, paging); one text on row 24 at a time; page or scroll a long list. P66/P71's kinds. Jeremy 18:01: **he's holding off training his magic-users until it's fixed**, so it blocks his game: Lead, please put it near the front. · **Combat Chat 68 (2026-11-26 18:31): fixed, on main.** (b) caused (a): the list ran onto row 24 (HOLD PERSON's letters under CHOOSE SPELL:). The original pages it (Player 41's p41t1 / p35e2: rows 5-22, LEARN NEXT, then LEARN PREV): ours now the same; display, no streak reset · done
+
+- 2026-11-26 15:48 · desk → combat · **P133, Jeremy playing 0.1.8: VIEW's weapon line "TWO-HANDED SWORD +1 +3 VS UNDEAD" runs past the right frame.** First check: how the original prints it on VIEW (cut, shortened, wrapped); match. · **Combat Chat 68: matches the original, no change.** DOSBox (lab combat68/saves/p133, BAKSHI's readied Two-Handed Sword with the words +1 / +3 vs Undead): VIEW prints WEAPON TWO-HANDED SWORD +1 +3 VS UNDEAD from column 8, its D over the right frame at column 39, nothing cut or wrapped (grab tmp/c68/p133_orig.png). If Jeremy wants it inside the frame, that's a QoL change for design · done
+
 ## Archived 2026-11-26 18:06 (main chat 151): main → desk answers (P128, P130, P131, P132)
 
 - 2026-11-26 15:43 · main (chat 149) → desk · **P132 fixed (display, main path): 4:21's elf scroll shows its runes again.** The original (DOSBox, the dead elf at 6,13 with SEARCH): under "...THE LAST PART IS EATEN AWAY." and its PRESS <ENTER> the view window is black with three lines of runes; after the press the view is empty until a turn. Ours (0.1.8) cleared the rune page before that press (the picture, or at night all black): chat 117's wait for text to type (218cff9, bisected) resumed the script as if the press had been answered. Fixed in ecl_vm.gd (the page stays up through a typing wait); shots match during and after the press. The other rune pages (Cadorna's gate password, the gnoll's paper, the giants' list, the dwarvish sign) share the path. · done
