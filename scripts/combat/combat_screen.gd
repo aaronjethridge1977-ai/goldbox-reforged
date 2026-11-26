@@ -577,7 +577,10 @@ func _draw_original(field: Image) -> void:
 	if not _combatants.is_empty() and not _bare:
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
-		g.text(23, 1, m.name.left(16), GameScreen.CYAN if e.team == 0 else GameScreen.YELLOW)
+		# A kept panel keeps its name's colour too (DOSBox chk1 at speed 6, Combat Chat 66: the charmed KOBOLD's
+		# name yellow under IS CHARMED; ours turned it cyan with the side it changed to).
+		var team: int = _kept_team if _panel_kept else int(e.team)
+		g.text(23, 1, m.name.left(16), GameScreen.CYAN if team == 0 else GameScreen.YELLOW)
 		# A figure that surrenders (GAME.OVR 0xBE31: 0xB0:0x57 makes it UNCONSCIOUS with 0 HP, off the field) is not
 		# drawn again: its own turn's panel keeps the HP it began with and no status line under "SURRENDERS"
 		# (Jeremy's P105; DOSBox prayer_kob5, Combat Chat 48).
@@ -1265,6 +1268,10 @@ func _show_messages() -> void:
 						and not (subj == -2 and _falls_line(msg) and _last_hurt >= 0):
 					_spell_hits.erase(k)
 					_sparkle = k
+					if k == _posed:
+						# Sparkles on the caster draw him standing again (DOSBox prk1 at speed 6, Combat Chat 66:
+						# BAKSHI IS PRAYING, the sparkle over his standing icon; ours kept the cast pose).
+						_posed = -1
 					if _bolt_on:
 						# The walk reaches the square first, then its burst and line.
 						_panel_msgs.erase(msg)
@@ -2450,6 +2457,7 @@ func _abort_spell() -> void:
 
 ## The last pick's panel kept through the cast's lines (see _finish_cast), with no box drawn and its status line as
 ## it was at TARGET (the original doesn't redraw it: no "(HELPLESS)" under a kobold just held, hpk15).
+var _kept_team := 0     # the kept panel's side (its name's colour)
 var _panel_kept := false
 var _kept_state := ""
 var _kept_hp := 0
@@ -2488,6 +2496,7 @@ func _finish_cast(by_target := false) -> void:
 		_selected = aimed_at
 		_kept_state = _panel_state(_combatants[_selected], false)
 		_kept_hp = (_combatants[_selected].who as PartyMember).hp
+		_kept_team = int(_combatants[_selected].team)
 		_panel_kept = true
 	elif by_target and paced() and not _spell_picks.is_empty():
 		# The aim ends on the last figure picked and the panel stays on it, with no box, through the spell's
@@ -2496,13 +2505,17 @@ func _finish_cast(by_target := false) -> void:
 		_selected = int(_spell_picks[_spell_picks.size() - 1])
 		_kept_state = _panel_state(_combatants[_selected], false)
 		_kept_hp = (_combatants[_selected].who as PartyMember).hp
+		_kept_team = int(_combatants[_selected].team)
 		_panel_kept = true
-	elif paced() and not _spell_picks.is_empty():
+	elif paced() and (not _spell_picks.is_empty() or (_use_item == null and _combat.magic.aim_kind(_spell_id) == "self")):
+		# (A spell on the caster, no aim, the same: DOSBox prk1 at speed 6, Combat Chat 66: BAKSHI IS PRAYING with
+		# the sparkle on him and no box; ours boxed him.)
 		# Picks ended with EXIT: the aim has gone back to the caster, whose panel stays, with no box, through the
 		# spark and the lines (DOSBox hpk1 at speed 6, Combat Chat 66: c66hp f427-f465, BAKSHI's panel, no box,
 		# KOBOLD IS HELD; ours boxed him).
 		_kept_state = _panel_state(_combatants[me], false)
 		_kept_hp = (_combatants[me].who as PartyMember).hp
+		_kept_team = int(_combatants[me].team)
 		_panel_kept = true
 	if _spell_resolving:
 		_combatants[me].resolving = true
