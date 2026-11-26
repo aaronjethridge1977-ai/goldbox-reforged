@@ -52,6 +52,8 @@ var _won_text := ""
 var _hides := PackedStringArray()   # the hirelings' lines (main chat 104), a page before the results
 var _share_xp := 0
 var _note := Label.new() # the last thing that happened (the bot logs it)
+var _detect_line := ""   # DETECT's line while it shows (keys wait)
+var _rng := RandomNumberGenerator.new()
 var _flash := ""         # a refusal on row 24 for a moment (OVERLOADED)
 var _flash_id := 0
 const REFUSAL_TIME := 1.5   # P71: the least time a refusal (OVERLOADED) stays on row 24, at any SPEED
@@ -108,8 +110,34 @@ func _menu() -> Array:
 	items.append("POOL")
 	if _spoils == null or _spoils.has_money():
 		items.append("SHARE")
+	if _detect_id() > 0:
+		items.append("DETECT")
 	items.append("EXIT")
 	return items
+
+
+## DETECT (GAME.OVR 0x64A6-0x6519, 0x65F0; main chat 145, DOSBox: check 402's chest, BAKSHI lit: VIEW TAKE POOL SHARE
+## DETECT EXIT): offered while the pile holds items and the lit member has Detect Magic in memory (spell 5 or 11, the
+## record's bytes 0x17 up; one still being memorized doesn't count); D casts it (BAKSHI / IS AFFECTED for 0.67 s, then
+## the menu without DETECT, the LOOT list marked; check 571).
+func _detect_id() -> int:
+	if _spoils == null or _spoils.items.is_empty() or _who >= _party.size() or _party[_who] == null:
+		return 0
+	var mem := _party[_who].memorized
+	for k in range(mem.size() - 1, -1, -1):
+		if mem[k] == 5 or mem[k] == 11:
+			return mem[k]
+	return 0
+
+
+func _detect() -> void:
+	var m := _party[_who]
+	var lines := SpellCaster.cast_outside(CharacterSheet.spells, m, _detect_id(), _party, null, _rng)
+	_detect_line = lines[lines.size() - 1] if lines.size() > 1 else ""
+	_refresh()
+	await get_tree().create_timer(0.67).timeout
+	_detect_line = ""
+	_refresh()
 
 
 ## TAKE goes straight to the items (no MONEY ITEMS EXIT step) when the pile has items and no money.
@@ -167,7 +195,7 @@ func _draw_mode() -> void:
 			_scr.text(0, 24, "PRESS <ENTER>/<RETURN> TO CONTINUE", GameScreen.WHITE)
 			_scr.update()
 		"menu":
-			_walk(_menu(), PackedStringArray())
+			_walk(_menu(), PackedStringArray([_detect_line]) if _detect_line != "" else PackedStringArray())
 		"take":
 			_walk(TAKE_MENU, PackedStringArray(), "TAKE:")
 		"ask_exit":
@@ -411,6 +439,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		event = dk
 	var key := (event as InputEventKey).keycode
 	get_viewport().set_input_as_handled()
+	if _detect_line != "":
+		return     # DETECT's line: keys wait
 	if _flash != "":
 		_flash = ""            # a key takes a refusal away; the key then does what it does
 		_refresh()
@@ -520,6 +550,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					_refresh()
 				"POOL": _pool()
 				"SHARE": _share()
+				"DETECT": _detect()
 				"EXIT": _exit()
 		"take":
 			match choice:
