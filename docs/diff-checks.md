@@ -172,6 +172,21 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 146: the training hall at 999.5 gold built (B); JOIN's place and a readied stack joined (574, 575, matched)
+
+- **The training hall at 999.5 to 999.99 gold (the Lead, 11:22, B; game state, main path, an edge; fixed in
+  party_member.gd):** TRAIN tests the purse rounded to the nearest gold piece (GAME.OVR 0x1C369 -> 0x238F8), as the
+  shop's ID; ours refused under 1000. Now the offer is the original's; the fee takes all the coins, where the original's
+  fee loop (0x1DC6C) runs out and stops with "Runtime error 200" (original-bugs.md #26, not reproduced). No check:
+  the original's end is the DOS prompt (chat 145's `s999`, `o999.sh`). Ours tested headless: 10 silver and 999 gold
+  offered, all paid; 9 silver and 999 gold refused.
+- **JOIN keeps the lit stack in its place (matched; game state, main path; checks 574, 575 in the lab):** `sjoin` (chat
+  145's `squar` with LIRA's 10 QUARRELS record copied to her list's end: LONG SWORD, CHAIN MAIL, SHORT BOW, 10 ARROWS,
+  10 QUARRELS, 15 ARROWS, 10 QUARRELS), the arms shop, VIEW, ITEMS: JOIN on the first QUARRELS leaves 20 QUARRELS 5th;
+  on the last, 20 QUARRELS last (the first gone). `sjoinr` (her readied 10 ARROWS copied last, unreadied): JOIN on
+  the last: 20 ARROWS, NO, last; the readied stack is gone. Ours (`_join`) does both. 574/575 compare items as a
+  set, so the order itself is the DOSBox reading (`ojoin.sh`, `ojoin2.sh`).
+
 ## Chat 145: P125 (a turn redraws the view over a script's picture); P120 B; VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); HALVE's place and a trade to oneself (572, 573); the training hall at 999.5 gold (the original crashes)
 
 All three ready edits are Combat's files (character_sheet.gd, treasure_screen.gd): patches in `~/gbr/lab/data/c145/`,
