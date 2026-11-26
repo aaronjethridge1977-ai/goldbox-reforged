@@ -235,9 +235,10 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	var m := PartyMember.new()
 	m.raw = d
 	m._cache_from_record = true
-	if d[0x84] >= 128 and d[0xC0] == 0 and d[0x2E] >= 1 and d[0x2E] <= 7:
-		# An NPC joined in ours before Combat Chat 67 kept its monster record's icon bytes (P126); the
-		# original's ADD_NPC never leaves size 0 on a race 1-7 record: draw them now, as the join would have.
+	if d[0x84] >= 128 and d[0xC0] == 0 and d[0x2E] >= 1 and d[0x2E] <= 7 and d.slice(0xC1, 0xC7) == PackedByteArray([1, 2, 3, 4, 6, 7]):
+		# An NPC joined in ours before Combat Chat 67 kept its monster record's icon bytes (P126: size 0, colours
+		# 01 02 03 04 06 07); the original's ADD_NPC always draws them anew, so no record of the original's holds that
+		# (its shipped DIRTEN holds size 0 and colours 0, drawn so: the gate's checks): draw them now, as the join would.
 		m.raw[0xC0] = 1 if d[0x2E] in [1, 3, 5] else 2
 		for k in [0xC1, 0xC2, 0xC3, 0xC5, 0xC6]:
 			var r := _colour_rng.randi_range(1, 6)
