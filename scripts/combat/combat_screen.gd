@@ -579,7 +579,7 @@ func _draw_original(field: Image) -> void:
 	f.convert(Image.FORMAT_RGBA8)
 	g.img.blit_rect(f, Rect2i(0, 0, mini(f.get_width(), 168), mini(f.get_height(), 168)), Vector2i(8, 8))
 	g.click_zone(Rect2i(8, 8, VIEW_CELLS * CELL, VIEW_CELLS * CELL), _field_click)
-	if not _combatants.is_empty() and not _bare:
+	if not _combatants.is_empty() and not _bare and not _opening:
 		var e: Dictionary = _combatants[_selected]
 		var m: PartyMember = e.who
 		# A kept panel keeps its name's colour too (DOSBox chk1 at speed 6, Combat Chat 66: the charmed KOBOLD's
@@ -667,7 +667,7 @@ func _draw_original(field: Image) -> void:
 		for i in mini(lines.size(), 12):
 			g.text(23, 10 + i, lines[i][0], lines[i][1])
 	# Bottom lines.
-	if _bare:
+	if _bare or _opening:
 		g.forget_menu(24)      # a READY's damage on the fight's screen: nothing on row 24 (DOSBox, Combat Chat 63)
 	elif _aim_rows_kept and _row24_msg == "":
 		if not _aim_end:
@@ -1112,8 +1112,9 @@ func _sound_for(msg: String) -> void:
 ## monster powers' and turning's (0x10294 "is Paralyzed", 0x13AA1 "is turned") and a spell's
 ## line on a figure it reached (not "is unaffected", which the original prints plainly).
 func _effect_line(msg: String) -> bool:
-	if msg.ends_with(" IS PARALYZED") or msg.ends_with(" IS TURNED"):
-		return true
+	if msg.ends_with(" IS PARALYZED") or msg.ends_with(" IS TURNED") or msg.ends_with(" BY FEAR") \
+			or msg.ends_with(" WITH FEAR"):
+		return true     # the fight's start fear (0x10705 / 0x10803) through the add-effect routine too (Combat Chat 68)
 	if msg.ends_with(" IS UNAFFECTED") or msg.contains(" ATTACKS ") or msg.ends_with(" SAVES") \
 			or msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ") or _continues(msg):
 		return false
@@ -1507,11 +1508,18 @@ func _advance() -> void:
 			if c.team == 1:
 				c.down = true
 		_combat.decided = true
+	# P135 (Jeremy, 0.1.8: the mummies' fear lines over SIR KILLEMGOOD's panel): the lines of the fight's start (a mummy's
+	# or Tyranthraxus's fear, GAME.OVR 0x10705 / 0x10803, before round 1's first figure) go on an empty panel, no figure
+	# boxed, row 24 empty (DOSBox at speed 6, Combat Chat 68: check 543's mummies, c68fear f003-f048: BATTLE BEGINS...,
+	# then THRENDER GRONE / IS UNAFFECTED, BAKSHI / IS UNAFFECTED, RHIANNON / IS PARALYZED / WITH FEAR ... alone, then
+	# DARKSTAR's panel and menu). Ours drew the first member's panel and menu under them, its (HELPLESS) row overwritten.
+	_opening = _combat.round_no == 0
 	var i := _combat.next_turn()
 	if _draining:
 		await messages_shown
 		if _combat == null:
 			return
+	_opening = false
 	if i == Combat.ASK_CONTINUE:
 		_asking_continue = true
 		_pick = 1     # the YES / NO question 0x2D9A0 lights NO (0x2D9B9)
@@ -2356,6 +2364,7 @@ func _on_item_used(it: GameItem) -> void:
 ## (DOSBox, Combat Chat 63: sw_kob at speed 6, tmp/c63/gsw_514-531; BAKSHI / TAKES 15 POINTS / OF DAMAGE FROM / MAGIC,
 ## the burst, BAKSHI / IS KILLED, BAKSHI'S ITEMS). Ours said the line on the sheet's row.
 var _bare := false
+var _opening := false                # the fight's start lines (P135): no panel, no box, row 24 empty
 
 
 func _on_ready_hurt(words: String, past: int) -> void:
@@ -2747,7 +2756,7 @@ func _refresh() -> void:
 			continue
 		var icon: Image = e.icon
 		var at: Vector2i = (e.cell - _view) * CELL
-		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)) and not _panel_kept and not _bare:
+		if i == _selected and _cmode != "manual" and not (_box_off and e.get("quick", false)) and not _panel_kept and not _bare and not _opening:
 			_bevel(img, at)
 		if i == _posed:
 			icon = _attack_icon(e)

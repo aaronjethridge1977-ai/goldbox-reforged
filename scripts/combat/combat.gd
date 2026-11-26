@@ -3050,7 +3050,13 @@ func _afflict(j: int, effect: int, rounds: int, saved: bool, words: String) -> v
 		message.emit("%s IS UNAFFECTED" % tm.name)
 		return
 	SpellCaster.add_affect(tm, effect, 0, rounds, 12)
+	# The add-effect routine's line (0x2C617) shows the effect's sparkles on the figure while it is up; "is unaffected"
+	# is printed plainly (DOSBox at speed 6, Combat Chat 68: check 543's mummies, RHIANNON / IS PARALYZED / WITH FEAR
+	# with the sparkles on her 1.79 s, no hold after; the UNAFFECTED lines 1.18 s, nothing on the field).
+	var was := fx_subject
+	fx_subject = j
 	message.emit("%s %s" % [tm.name, words])
+	fx_subject = was
 
 
 func _battle_start_powers() -> void:
