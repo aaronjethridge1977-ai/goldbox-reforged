@@ -3087,6 +3087,12 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			# DONE after the step that left 1 of 3). Computer turns don't use this loop.
 			if _combatants[me].moves < 2:
 				_combatants[me].moves = 0
+			if what == "moved" and Combat.stopped(_combatants[me].who):
+				# The MOVE loop after a step and the cloud's save (GAME.OVR 0xA4F8-0xA50F): a member now paralysed,
+				# asleep or 0x33 (START.EXE 0xBA:0xB73) has his turn ended (0xBA:0x2637): no blow either (Combat Chat
+				# 67; a computer-run step only loses its movement, Combat.step).
+				_combatants[me].moves = 0
+				_combatants[me].attacks = 0
 			_after_player_action(what)
 			if _cmode == "move" and _combat.active == _selected and _combatants[_selected].moves <= 0:
 				_cmode = "menu"
