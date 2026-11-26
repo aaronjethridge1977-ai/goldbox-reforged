@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 146: the training hall at 999.5 gold built (B); JOIN's place and a readied stack joined (574, 575, matched)
+## Chat 146: the training hall at 999.5 gold built (B); JOIN's place and a readied stack joined (574, 575, matched); the fight's HALVE and DROP; 565, 569-571 installed (561)
 
 - **The training hall at 999.5 to 999.99 gold (the Lead, 11:22, B; game state, main path, an edge; fixed in
   party_member.gd):** TRAIN tests the purse rounded to the nearest gold piece (GAME.OVR 0x1C369 -> 0x238F8), as the
@@ -186,6 +186,17 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   on the last, 20 QUARRELS last (the first gone). `sjoinr` (her readied 10 ARROWS copied last, unreadied): JOIN on
   the last: 20 ARROWS, NO, last; the readied stack is gone. Ours (`_join`) does both. 574/575 compare items as a
   set, so the order itself is the DOSBox reading (`ojoin.sh`, `ojoin2.sh`).
+- **The fight's HALVE and DROP (matched with Combat's pending edit; game state, main path):** DOSBox, `sg042` (the
+  ghouls; ELWEN and DORN guard), LIRA's turn, VIEW (VIEW:ITEMS SPELLS DROP EXIT), ITEMS, End x11 (10 ARROWS, 12th of
+  14): HALVE gives 5 ARROWS, 5 ARROWS before the BRASS KEY, as the camp's (572): `halve_after.patch`'s shared `_halve`
+  covers fights. DROP: YOUR 10 ARROWS WILL BE GONE FOREVER, DROP IT? YES: gone, as ours (`ofhalve.sh`, `ofdrop.sh`).
+- **The rounded purse's callers (read; all three now as ours):** the far stub to 0x238F8 is called from 0x46E9 (the
+  temple's CURE: purse, else the pile, else "Not enough money."; temple_screen.gd `_pay`), 0x7096 (the shop's BUY:
+  purse, the overload test 0x6F0D, then the pile; shop_screen.gd), 0x1C369 (TRAIN, built this chat); no near callers.
+- **Lead closed (read): 0x1126B is the wild boar's FALLS DEAD** (effect 0x5F, special_affects.gd): it kills only a
+  figure with +0x10D set, which a downed figure doesn't have; ours' `dies_in` skips a downed figure. No change.
+- **Installed:** 565, 569, 570, 571 (Combat Chat 66's b942267, 5dc2477) and 574, 575: the gate **561/561** on
+  7e7b672 (`dc2.log`). 572, 573 wait for `halve_after.patch`.
 
 ## Chat 145: P125 (a turn redraws the view over a script's picture); P120 B; VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); HALVE's place and a trade to oneself (572, 573); the training hall at 999.5 gold (the original crashes)
 
