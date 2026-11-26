@@ -172,6 +172,49 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 145: VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); the training hall at 999.5 gold (the original crashes)
+
+All three ready edits are Combat's files (character_sheet.gd, treasure_screen.gd): patches in `~/gbr/lab/data/c145/`,
+checks in the lab (`data/c145/chk569`-`chk571`): DIFFER on main, MATCH with the edits; the three together on a scratch
+tree: DIFFCHECKS 555/555 (`dc_wt3.log`). Main installs 569-571 once they land.
+
+- **VIEW offers ITEMS only to a member carrying an item (found; input, main path: a fresh character carries nothing):**
+  the VIEW builder (GAME.OVR 0x21B94) adds ITEMS only when the record's item list (+0xC8) is set, and the ITEMS page's
+  loop (0x21F89) runs only while the count (+0xC7) is over 0. DOSBox, Player 9's party (`data/c143/spois`): CEDRIC's
+  seven items unreadied and dropped in camp: after the last DROP, YES the VIEW page is back at once, now VIEW:SPELLS
+  TRADE DROP EXIT; I does nothing. Ours stayed on an empty ITEMS page and kept ITEMS on VIEW. **569:** the drops, then
+  I, E, E, Left, E (the original: VIEW -> camp -> walking, a turn, camp), E, F2: main is one menu level behind (no
+  save); `view_items.patch` (the ITEMS word, the page back to VIEW after any change that empties the list).
+- **VIEW offers SPELLS for a spell still being memorized (found; display, main path):** the builder (0x21B4C-0x21B6B)
+  tests the record's 21 spell bytes for any non-zero, so a byte with 0x80 (picked in MEMORIZE, not yet rested) counts.
+  DOSBox: LIRA casts her one SLEEP (LOSE IT? YES), MEMORIZE picks SLEEP: VIEW:ITEMS SPELLS TRADE DROP EXIT; S shows
+  nothing (polled: no page; 0x239D6 lists only memorized spells). Ours dropped SPELLS (`_has_spells` skips learning
+  ids). With a memorized one too (CEDRIC: BLESS cast in camp, CAUSE LIGHT WOUNDS picked) both list the same three
+  (BLESS, CURE LIGHT WOUNDS x2). In `view_items.patch` (SPELLS on any spell byte; S opens the page only with a castable one).
+- **A stack's SELL price (found; game state, main path; checked 570):** the offer (0x22D41-0x22D8C) is half the price,
+  and for a count over 1 times the count over 20 (a 16-bit product; the type 0x49 test meant for arrows is followed by
+  a 0x1C test that can't hold, so every stack takes it). DOSBox, check 163's start with LIRA given p17a6's 10 QUARRELS
+  (price 300) and p17a7's 15 ARROWS (price 100; played records, unreadied; `data/c145/squar`): I'LL GIVE YOU 75 GOLD
+  PIECES, then 37 (LIRA 22 platinum, 2 gold); ours offered 150 and 50 (40 platinum). A full 20 ARROWS (100) pay 50 in
+  both. `sell_stack.patch` (`_sale_price`; the bot's sale estimate uses it too).
+- **The treasure's DETECT (found; input and game state, main path; checked 571):** the treasure menu (0x644B) adds
+  DETECT before EXIT while the pile holds items (0x8F:0x4D's second flag) and the lit member has spell 5 or 11 in
+  memory (record 0x17-0x2B; a 0x80 byte doesn't count); D (0x65F0) casts it through 0x96:0x39. DOSBox, check 402's
+  chest, End (BAKSHI): VIEW TAKE POOL SHARE DETECT EXIT; D: BAKSHI / IS AFFECTED on rows 18-19 for 0.67 s, then VIEW
+  TAKE POOL SHARE EXIT; LOOT: * SHIELD, * MAGIC USER SCROLL WITH 1 SPELL; BAKSHI's Detect Magic gone, effect 5 for 10.
+  Ours had no DETECT. `treasure_detect.patch` (SpellCaster.cast_outside, the line for 0.67 s, keys wait).
+- **The training hall at 999.5 to 999.99 gold (found; game state, main path, an edge; a question to the Lead):**
+  0x1C369 tests the purse rounded to the nearest gold piece (0x238F8), so 999 gold and 10 silver (199900 copper) are
+  offered training; ours refuses under 1000. The fee loop (0x1DC6C) then takes every coin, still owes up to 100
+  copper and walks past platinum: gems and jewellery (values read from the class-name text after DS:0xD24's table),
+  then a zero value: **DOSBox (check 332's start, RHIANNON's coins poked to 999 gold, 10 silver; `data/c145/s999`):
+  YES: Runtime error 200 at 0078:4347** (division by zero, back to DOS); with one gem (`s999g`): **Runtime error 200
+  at 0078:440C** (the change loop past copper). Ours never offers it. Board: to the Lead.
+- **Matched (no change):** the ITEMS menu builder (0x21FB4-0x2217A: READY, USE (+0x10D, no anti-magic, camp /
+  wilderness / walking, a fight with record +0x108's byte 2), TRADE (not a barred NPC, not a fight), DROP, HALVE (under
+  16 items), JOIN, SELL (not barred) and ID in a shop) and ours' `_item_menu`; the camp's MAGIC menu (a fixed string,
+  START.EXE DS:0xCD07); the temple's two menus (GAME.OVR 0x51B6, 0x51E8) and the shop's (0x7157, 0x7179).
+
 ## Chat 144: the ID's purse rounded (564, fixed) and paid from the pile (565, to Combat); the temple's ID (563); no USE for a coughing member in a fight (to Combat); no DROP on a penniless member's fight VIEW (to Combat); the thieves' well (566-568); P119 WALK PACE; P120 measured
 
 - **The ID pays from a purse rounded to the nearest gold piece (found; game state, main path; fixed, 8856a43):**
