@@ -127,6 +127,10 @@ run orig_A_c62_hand_rmuse 0 env HANDX=0:99:0:1:2:0::0:1 OURS_SEED=1 ./combat34/h
 # READY: TAKES 15 POINTS OF DAMAGE FROM MAGIC (5 HP then: DEAD), the list, EXIT, his menu without MOVE, QUICK: the pattern's
 # d8 and d4 and the fight is lost. Two original runs identical (c62sw3, sw4), 2131 draws.
 run orig_A_c62_hand_swready 0 env HANDX=0:99:0:1:2:0::0:1:r OURS_SEED=1 ./combat34/handreg.sh sw_kob 33333333 up up 1 1
+# Combat Chat 64: the spell aim at range (GAME.OVR 0x1529B): BAKSHI's Stinking Cloud (range 3) NEXT through the kobolds,
+# TARGET on the 13 at range 1-3, none on the six at 4-9; the cast aborted after 40 NEXTs, then QUICK (handuse.py AIMSKIP=99
+# CASTS=1 CASTFIRST=1 USES=0; 13273 draws, two original runs identical).
+run orig_A_c64_mx_q34k 0 env HANDX=0:1:0:0:0:0::1 OURS_SEED=1 ./combat34/handreg.sh q34k 11111111 up up 99 1
 # Combat Chat 41: MOVE off the field's edge (8:27's kobolds, ARN alone, fixture flee_k1): FLEE: YES, he gets away and the
 # round plays out (the kobolds' turns) before THE PARTY HAS FLED; the original's keys replayed (handflee=@).
 run orig_A_c41_flee 0 ./combat41/oursflee.sh flee_k1 31310016 - @/home/aaron/gbr/combat_lab/traces/orig_A_c41_flee_hand.txt
