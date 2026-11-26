@@ -1505,9 +1505,21 @@ func step(dir: int) -> String:
 		c.moves = 0
 		c.attacks = 0
 		return "fell"
+	if stopped(c.who):
+		# The step routine (GAME.OVR 0x12F0D) ends with 0x13091-0x130A2: a mover holding 0x33, 0x34 or 0x35 after the
+		# guards' blows (START.EXE 0xBA:0xB73) has no movement left; its blows stay (Combat Chat 67; check 544's
+		# QUICK CEDRIC, paralysed by a ghoul as he stepped, still struck).
+		c.moves = 0
 	if magic:
 		magic.cloud_save(active)     # a step into a Stinking Cloud (GAME.OVR 0xA4ED, 0xB6E2)
 	return "moved"
+
+
+## START.EXE 0xBA:0xB73: does the figure hold one of DS:0x286C-0x286E's effects (0x33, 0x34 paralysed, 0x35
+## asleep)? A Stinking Cloud's nausea (0x1F) is not among them: a member made sick by the cloud as he steps keeps
+## his movement (P129, Combat Chat 67).
+static func stopped(m: PartyMember) -> bool:
+	return m.has_affect(0x33) or m.has_affect(0x34) or m.has_affect(0x35)
 
 
 ## Enemies guarding next to combatant `i`'s new cell attack it (each once), in the order of the
