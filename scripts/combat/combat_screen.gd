@@ -140,6 +140,9 @@ var _hold_seq: Array = []    # Hold Person's targets as taken, last aimed first:
 var _hold_from := Vector2i.ZERO
 var _spell_hits: Array[int] = []   # figures the last spell reached, not yet shown
 var _sparkle := -1                 # the figure showing a spell's sparkles
+var _after_sparkles := false       # the last line shown had sparkles: the next follows with no gap (Combat Chat 67)
+var _spark_who := -1               # the figure the burst's frames were started on, and when (msec)
+var _spark_t0 := 0
 ## The picture shown on a figure the spell reaches (COMSPR block and its second frame): the sparkles (picture 0x12)
 ## for most spells; the burst (0x13: GAME.OVR 0x298D4 the bolt's hit on a square, 0x2A1C6) for Fireball, Lightning
 ## Bolt and the Javelin of Lightning (P86, seen in DOSBox, Combat Chat 42).
@@ -1048,10 +1051,11 @@ static func paced() -> bool:
 	return _paced == 1
 
 
-## How long a spell's effect shows on a figure it reaches (P85): START.EXE 0x2B8B's 4 frames, 70 ms each,
-## (game speed + 1) times.
+## How long a spell's effect shows on a figure it reaches (P85): START.EXE 0x2B8B's 4 frames (game speed + 1) times,
+## 70 ms each by the code, ~63 ms as they come out: DOSBox at speed 6 (Combat Chat 67), 28 frames in 1.76-1.77 s on
+## Haste's caster (c67ha f370-f399), each sleeper (c65sl f416-f447) and the held kobold (c66hp f433-f464); ours 1.96 s.
 static func sparkle_time() -> float:
-	return (CampScreen.speed + 1) * 4 * 0.07
+	return (CampScreen.speed + 1) * 4 * 0.063
 
 
 ## How long a combat message stays: game speed x 0.2 s, as the original.
@@ -1151,6 +1155,7 @@ func _skip_miss(msg: String, who: String) -> bool:
 func _show_messages() -> void:
 	_draining = true
 	_shown_by.clear()
+	_after_sparkles = false
 	while not _pending_msgs.is_empty() and is_inside_tree():
 		var msg := _pending_msgs[0]
 		_pending_msgs.remove_at(0)
@@ -1178,6 +1183,7 @@ func _show_messages() -> void:
 				await get_tree().process_frame
 			_row24_msg = "GUARDING" if msg.ends_with(" IS GUARDING") else msg
 			_move_label = ""
+			_after_sparkles = false
 			_refresh()
 			await get_tree().create_timer(message_hold()).timeout
 			_row24_msg = ""
@@ -1210,6 +1216,7 @@ func _show_messages() -> void:
 				Speaker.play(snd, true, 0.31)
 			continue
 		if msg.begins_with("SPELL: "):
+			_after_sparkles = false
 			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
 			_row24_msg = "SPELL:" + msg.substr(7)
 			_refresh()
@@ -1220,7 +1227,13 @@ func _show_messages() -> void:
 		if not _continues(msg) and not dying:
 			_panel_msgs.clear()
 			_refresh()
-			await get_tree().create_timer(MESSAGE_GAP).timeout
+			if _after_sparkles:
+				# A line straight after a spell's line with sparkles follows at once (the lines cleared for a tick):
+				# DOSBox at speed 6 (Combat Chat 67): c67ha's BAKSHI IS HASTED, then BAKSHI AGES as the sparkles end;
+				# c65sl's four FALLS ASLEEP 0.01 s apart (ours left the panel empty 0.2 s before each).
+				await get_tree().process_frame
+			else:
+				await get_tree().create_timer(MESSAGE_GAP).timeout
 			if _flying:
 				await flight_done
 				await get_tree().create_timer(0.13).timeout
@@ -1314,14 +1327,17 @@ func _show_messages() -> void:
 			# (GAME.OVR 0x2C617), and no hold after: 0.28 s at SPEED 0, 1.4 s at 4 (ours had at least 1.2 s).
 			var until := Time.get_ticks_msec() + int(sparkle_time() * 1000.0)
 			while Time.get_ticks_msec() < until and is_inside_tree():
-				await get_tree().create_timer(0.066).timeout
+				await get_tree().create_timer(0.03).timeout
 				_refresh()
 			_sparkle = -1
+			_spark_who = -1
+			_after_sparkles = true
 			if _bolt_on and _spell_hits.is_empty():
 				# The last figure hit: the walk goes on to its end (GAME.OVR 0x29B02's loop).
 				await _crackle_to(Vector2i(-1, -1))
 				_bolt_on = false
 		else:
+			_after_sparkles = false
 			await get_tree().create_timer(message_hold()).timeout
 		if not _spell_flight.is_empty() and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
 			var sf := _spell_flight
@@ -2708,7 +2724,18 @@ func _refresh() -> void:
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
 	if _sparkle >= 0 and _sparkle < _combatants.size():
-		var sp := _art.sprite(_hit_pic[0] if (Time.get_ticks_msec() / 133) % 2 == 0 else _hit_pic[1])
+		# START.EXE 0x2B8B's four frames from the burst's start, ~63 ms each: the picture, it mirrored, the second
+		# picture mirrored, the second (DOSBox at speed 6, Combat Chat 67: c67ha f370-f374, BAKSHI's Haste: the cycle
+		# X, mirror X, mirror Y, Y; ours alternated the two pictures unmirrored on the clock, 133 ms each).
+		var now := Time.get_ticks_msec()
+		if _spark_who != _sparkle:
+			_spark_who = _sparkle
+			_spark_t0 = now
+		var phase: int = ((now - _spark_t0) / 63) % 4
+		var sp := _art.sprite(_hit_pic[0] if phase < 2 else _hit_pic[1])
+		if sp != null and (phase == 1 or phase == 2):
+			sp = sp.duplicate() as Image
+			sp.flip_x()
 		if sp != null:
 			img.blend_rect(sp, Rect2i(Vector2i.ZERO, sp.get_size()), (_combatants[_sparkle].cell - _view) * CELL)
 	if not _flight.is_empty() and _flight.img != null:
