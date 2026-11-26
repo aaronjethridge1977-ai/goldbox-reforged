@@ -204,16 +204,16 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   the rot's record gone, the disease's renewed (14400). Ours left +0x10D 1. The edit (`_disease_runs_out`): a
   renewal that doesn't go on and changed the status clears +0x10D. The rest is **59 d 23 h 55 min** (DAYS 59, Right,
   HOURS 23, Right, MINS 11 x5), so the death is the rest's last step: see the next item for why.
-- **Found, not fixed (game state; a lead): the clock's per-member flag.** A 61-day rest (`oinn4`): after DORN's death
-  his renewed 0x32 stays at 14400 for the 289 steps left in the original; ours counts it down (12955). GAME.OVR
-  0x23DCD keeps a flag per member (DS:0x471D+i): cleared as the member's list is walked (0x23EA9), set again only by
-  a record that loses a step (0x23F8E, 0x24073); a call with DS:0x49F3 != 2 sets every flag first (0x23DD9), REST
-  sets them at its start (0x24AB1); adding an effect never sets one (no other writer). So with 0x49F3 = 2 a member
-  whose timed records all run out in one step stops being counted until the next REST, and a record put on him
-  meanwhile (a renewal, the Manual's training after its reading, a spell) waits. Ours has no flag and doesn't keep
-  0x49F3 (which values it takes in camp, the inn's rest, walking and fights is to measure first; check 513's odd run
-  is the same flag). Main path only where a member's last timed record runs out and a new one follows without a
-  REST: the Manual of Bodily Health's reading -> training is the case to measure next.
+- **Found, not fixed (game state, a lead; a member the rot killed): his clock stops.** A 61-day rest (`oinn4`, lab
+  check 552): after DORN's death his renewed 0x32 stays at 14400 for the 289 steps left in the original; ours counts
+  it down (12955). Not yet explained. GAME.OVR 0x23DCD keeps a flag per member (DS:0x471D+i): the walk clears it
+  (0x23EA9); a record that loses a step sets it (0x23F8E), and so does the record the walk ends on when it still has
+  time (0x2405A -> 0x24073); a call with DS:0x49F3 != 2 sets every flag first (0x23DD9), REST at its start (0x24AB1).
+  Measured: 0x49F3 = 4 walking in 3:0, 2 in camp (also after the inn's rest). By that reading DORN's renewal (the walk's
+  last record) sets his flag again, so the flag alone doesn't stop him; a scratch edit with the flag (no end-of-walk
+  set) froze BRAM after day 30 too (his rot and disease run out in one step), where the original goes on. Next: trace
+  the clock at DORN's death step (does the kill at status 8 take him out of the member list DS:0x5D96, or does
+  0xEC7A's append fail for him and the 14400 record come later?). Dead members only, so low priority.
 - **550 (game state, main path; matched; installed):** 4:10's mummies at tpseed 41100006 (ours' seed search
   `mumseed2.sh` over 41100002-25: members die on 14 of 24): BRAM DEAD, all 2440 draws and positions identical.
 - **0xF776** (chat 140's open "collapses"): the end handler that undoes Animate Dead's writes (+0x10E from the power's
