@@ -174,7 +174,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 141: 0.1.8's gate; a disease left to run its course (547, 548; fixed)
 
-- **0.1.8's release gate on cc951cc:** DIFFCHECKS 534/534 (897 s); match_gate on cc951cc (below); both builds' smoke tests and the two crash
+- **0.1.8's release gate on cc951cc:** DIFFCHECKS 534/534 (897 s); match_gate on cc951cc 70 of 70 identical (01:24-04:23); released 04:23 (v0.1.8, Windows and Linux); both builds' smoke tests and the two crash
   replays (`fireball_crash`, `holds_crash2`) on the Windows export, the Linux tarball's smoke. **Bug #23** (the
   throne room's wave-2 crash): ours at tpseed 39600016 (chat 139's th1seed keys, check 527's start), every one of
   the original's 41695 draws up to its crash identical, then wave 2 and wave 3 play on to their end (47390 draws, the
@@ -213,7 +213,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   last record) sets his flag again, so the flag alone doesn't stop him; a scratch edit with the flag (no end-of-walk
   set) froze BRAM after day 30 too (his rot and disease run out in one step), where the original goes on. Next: trace
   the clock at DORN's death step (does the kill at status 8 take him out of the member list DS:0x5D96, or does
-  0xEC7A's append fail for him and the 14400 record come later?). Dead members only, so low priority.
+  0xEC7A's append fail for him and the 14400 record come later?). **Measured (`oinn6a`, `oinn6b`):** after the death
+  step DORN's flag is 0 (`flags141.py`: 49F3 2, flags 00 01 01 00 01 00 00 01); a second REST of a day fills the flags
+  and his 0x32 counts again (14400 -> 12960). So the freeze lasts to the end of the REST he dies in; ELWEN's Manual
+  training, appended the same way by the reading's end (553), kept counting, so the kill in the step is what leaves
+  the flag clear. It touches only a member gone for good: low priority, no fix. Also read: the
+  kill 0xECB3 (status, +0x10D 0, HP 0) runs 0x2BEF4, which removes the 16 effects of DS:0xC14 (read live: 07 0B 1E 1F
+  20 33 34 35 36 3A 3B 5F 62 89 4A 4B; 0x32 isn't one) with their end handlers; ours does that for a figure going
+  down in a fight (combat.gd) but not for the kills outside one (the rot's last month, a slowed poison's end): a
+  member the rot kills while training (07) keeps the training in ours. New area; a ready fix once measured.
 - **553 (game state, main path; matched; installed): the Manual of Bodily Health through a rest.** Start `smanG`:
   `sinn2G` with ELWEN's 16th item record replaced by check 189's poked potion (byte 61 = 90, spell 67, the Manual's;
   every member carries 16 items, so it replaces a POTION). At the inn's camp: End x3 (ELWEN), VIEW, ITEMS, End x15,
