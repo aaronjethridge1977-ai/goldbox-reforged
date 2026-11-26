@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 141: 0.1.8's gate; a disease left to run its course (547, 548; fixed)
+
+- **0.1.8's release gate on cc951cc:** DIFFCHECKS 534/534 (897 s); match_gate on cc951cc (below); both builds' smoke tests and the two crash
+  replays (`fireball_crash`, `holds_crash2`) on the Windows export, the Linux tarball's smoke. **Bug #23** (the
+  throne room's wave-2 crash): ours at tpseed 39600016 (chat 139's th1seed keys, check 527's start), every one of
+  the original's 41695 draws up to its crash identical, then wave 2 and wave 3 play on to their end (47390 draws, the
+  party destroyed in wave 3, no crash).
+- **A disease left to run its course (game state, main path; fixed in main's spell_caster.gd):** the Lead's lead
+  (an inn rest of several days). Start `sinn2G`: check 391's inn save (3:0 6,12 W, the inn's door) with chat 140's
+  `sdis` party files as members 1-6 (BRAM, CEDRIC, LIRA, DORN diseased by 4:10's mummies in the original: 0x32 with
+  14389-14396 minutes, the rot 0x39 with 43189-43196; BRAM 31/60, CEDRIC 38/42, LIRA 21/24, DORN 30/39), the save's
+  SWORDSMAN kept as member 7 (10/18). Keys: Right, Up x3, Y, End x6 Enter (SWORDSMAN can't pay), Home x6 Enter, REST,
+  **Left Left (DAYS: the rest menu's arrows reach it; the letter D is DEC)**, INC x11 (547) or x31 (548), REST, then
+  EXIT, F2 (the original saved F from the camp menu). The original rests the whole time (THE WHOLE PARTY IS HEALED
+  shows once SWORDSMAN is full, with days still to run, and the rest goes on). The disease runs out at ~10 days and
+  is renewed, the rot at ~30 days (ROTS..., CHA -2, a month off its power) and is renewed; a diseased member gains
+  1 HP at each 10 days (BRAM 31 -> 32 in 11 days, 34 in 31), the rest heals no diseased member. **Ours' renewed clock
+  differed by 1-2 minutes** (BRAM 12948 for the original's 12950, DORN 12954 for 12955; 548 the rot too): the rest
+  steps 5 minutes; the original's end handlers 0xFF56 (0x32) and 0xFFF4 (0x39) append a new record through 0xEC7A
+  (-> 0xB0:0x52 = 0x2BD3C, no handlers) with fresh time (0x3840 = 14400, 0xA8C0 = 43200) at the list's end, so
+  the overshoot past the step it ran out in is lost; ours added the time to the old record in place, keeping the
+  overshoot and its place in the list. 0xEC7A appends nothing while DS:0x681F is set (the temple's and the camp's
+  cures set it around their removals: 0x48FD, 0x4B22, 0x4D45, 0x292AC...), so a cure never renews. **The edit**
+  (spell_caster.gd `_run_out`, `_disease_runs_out`): the record ends and SpecialAffects.disease_expires' renewal is
+  appended fresh; the fixes-on clock steps 10 minutes at most as the original's. 547, 548 MATCH 3 of 3 with it,
+  DIFFER on main before; lab 549 (sinn3G: BRAM +0x11B 50, CEDRIC 10, poked) MATCH too.
+
 ## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542) and CURE DISEASE on one diseased in play (546); 536 and 541 in the gate; a mummy's second touch (543, to Combat); a blow on a member held mid-attack, a held member's save (544, to Combat)
 
 - **543, 544, 545 installed** (Combat Chat 65's 70122c0 landed both edits): each MATCH 3 of 3; **DIFFCHECKS 534/534** on 79577f8.
