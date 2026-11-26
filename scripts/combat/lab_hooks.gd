@@ -3,7 +3,7 @@ class_name LabHooks
 ## Methods 2). Owned by the side lane; main.gd keeps one call into it. Lab only.
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "fightaim", "partyhp", "monsters", "outcome", "who", "temple",
-		"ending", "fxlog", "fxwatch"]
+		"ending", "fxlog", "fxwatch", "origaim"]
 const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee=", "controlat="]
 
 
@@ -21,7 +21,10 @@ static func handles(n: String) -> bool:
 ## (no wait for the game to settle, no state line), as main.gd's `continue` did.
 static func handle(main: Node, n: String) -> bool:
 	var combat = main._combat
-	if n == "smartquick":               # SETTINGS' smarter QUICK tactics in the open fight
+	if n == "origaim":                  # the original's AIM cycle whatever SETTINGS says (Combat Chat 64)
+		CombatScreen.lab_original_aim = true
+		return true
+	elif n == "smartquick":             # SETTINGS' smarter QUICK tactics in the open fight
 		if combat._combat != null:
 			combat._combat.smart_quick = true
 	elif n.begins_with("magicat="):     # magicat=<draw>: MAGIC ON at the first computer turn from that draw on (Combat Chat 25)
