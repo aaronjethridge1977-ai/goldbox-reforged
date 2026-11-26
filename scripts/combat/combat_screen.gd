@@ -106,6 +106,7 @@ var _row24_msg := ""
 var _announcing := false
 var _announced := false
 var _aim_rows_kept := false
+var _kept_row23 := ""             # row 23 as the aim left it (SPELL:<name> or ITEM:<name>), kept through the lines
 var _aim_end := false              # the cast's end frame: row 23 cleared, the AIM row kept (Combat Chat 67)
 var _kept_prompt := ""
 var _kept_items := []
@@ -648,7 +649,12 @@ func _draw_original(field: Image) -> void:
 					at = k
 					hit = n
 			if at > 0:
-				for piece in rest.substr(0, at).split("\n"):
+				var said := rest.substr(0, at)
+				if said.strip_edges().begins_with("TAKES ") and said.contains(" OF DAMAGE"):
+					# The damage routine's line keeps TAKES n POINT(S) on a row of its own (DOSBox at speed 6, Combat
+					# Chat 65's fireball: TAKES 1 POINT / OF DAMAGE FROM / FIRE; ours TAKES 1 POINT OF / DAMAGE FROM FIRE).
+					said = said.replace(" OF DAMAGE", "\nOF DAMAGE")
+				for piece in said.split("\n"):
 					for w in GameScreen.wrap(piece.strip_edges(), 16):
 						if w != "":
 							lines.append([w, GameScreen.GREEN])
@@ -665,12 +671,14 @@ func _draw_original(field: Image) -> void:
 		g.forget_menu(24)      # a READY's damage on the fight's screen: nothing on row 24 (DOSBox, Combat Chat 63)
 	elif _aim_rows_kept and _row24_msg == "":
 		if not _aim_end:
-			g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+			g.text(0, 23, _kept_row23, GameScreen.GREEN)
 		if _kept_prompt != "":
 			g.text(0, 24, _kept_prompt, MAGENTA)
 			g.menu_line(24, _kept_items, _kept_prompt.length() + (0 if _kept_prompt == "AIM:" else 1), _kept_lit)
 		g.forget_menu(24)
 	elif _announcing:
+		if _use_item != null:
+			g.text(0, 23, _row23_label(), GameScreen.GREEN)     # ITEM:WAND under USES AN ITEM (c67wd f456)
 		g.forget_menu(24)
 	elif _row24_msg != "":
 		g.text(0, 24, _row24_msg, GameScreen.GREEN)
@@ -678,9 +686,9 @@ func _draw_original(field: Image) -> void:
 		if _combat != null and (_cmode == "aim" or _cmode == "manual"):
 			# An aim's note (0xBA:0x1693) clears and writes row 24 only: row 23's SPELL or RANGE line stays (DOSBox
 			# hpk1 at speed 6: SPELL:HOLD PERSON over ALREADY BEEN TARGETED; Combat Chat 66).
-			if _aim_for == "spell" and _use_item == null:
-				g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
-			elif _aim_for != "spell":
+			if _aim_for == "spell":
+				g.text(0, 23, _row23_label(), GameScreen.GREEN)
+			else:
 				g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		g.text(0, 24, _flash, GameScreen.GREEN)
 	elif _asking_flee:
@@ -708,10 +716,8 @@ func _draw_original(field: Image) -> void:
 	elif _combat != null and (_cmode == "aim" or _cmode == "manual"):
 		# A spell's aim shows the spell on row 23, an attack's the range (lab, Combat Chat 4:
 		# "SPELL:SLOW POISON" over AIM: and over (USE CURSOR KEYS)).
-		if _aim_for == "spell" and _use_item != null:
-			pass
-		elif _aim_for == "spell":
-			g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+		if _aim_for == "spell":
+			g.text(0, 23, _row23_label(), GameScreen.GREEN)
 		else:
 			g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		var prompt := "AIM:" if _cmode == "aim" else "(USE CURSOR KEYS)"
@@ -1324,13 +1330,14 @@ func _show_messages() -> void:
 			var cs: Dictionary = _combat.cloud_shows.pop_front()
 			_ensure_view(cs.aim, -1)
 			_refresh()
-		var routine_burst := _sparkle >= 0 and subj <= Combat.ROUTINE_SUBJECT
+		var routine_burst := _sparkle >= 0 and (subj <= Combat.ROUTINE_SUBJECT or (msg.contains(" TAKES ") and msg.contains(" OF DAMAGE")))
 		if _sparkle >= 0:
 			# P85: START.EXE 0x2B8B shows the effect's 4 frames 70 ms apart (speed + 1) times with the message up
 			# (GAME.OVR 0x2C617), and no hold after: 0.28 s at SPEED 0, 1.4 s at 4 (ours had at least 1.2 s).
 			# The damage routine's burst (0x2C3C7) shows its 4 frames once, then the line holds a message's time
 			# (DOSBox at speed 6, Combat Chat 67: Cause Light Wounds c67cl f417-f422, the stirge's drink c64 stf
-			# f911-f916: 0.25 s of burst, 1.18 s more; ours had the sparkles' 1.76 s and no hold).
+			# f911-f916: 0.25 s of burst, 1.18 s more; every damage line so: the wand's bolt c67wd 1.43 s, Combat
+			# Chat 65's fireball c65fb 1.45 s; ours had the sparkles' 1.76 s and no hold).
 			var until := Time.get_ticks_msec() + (4 * 63 if routine_burst else int(sparkle_time() * 1000.0))
 			while Time.get_ticks_msec() < until and is_inside_tree():
 				await get_tree().create_timer(0.03).timeout
@@ -2401,16 +2408,18 @@ func _begin_spell(id: int, item: GameItem) -> void:
 		_spell_cell = _combatants[_combat.active].cell
 		_finish_cast()
 		return
-	if item == null:
+	if true:
 		# CASTS A SPELL before the aim (GAME.OVR 0x27D60 prints it, then 0x2A332 aims; DOSBox, Combat Chat 23:
-		# Bakshi's Sleep: the line with rows 23-24 empty for ~0.8 s, then SPELL:SLEEP and AIM:). An item's
-		# USES line is not checked: it stays after the aim.
+		# Bakshi's Sleep: the line with rows 23-24 empty for ~0.8 s, then SPELL:SLEEP and AIM:). An item's the same
+		# way: USES AN ITEM with ITEM:<name> on row 23, then the aim under ITEM:<name>, kept through the lines
+		# (DOSBox at speed 6, Combat Chat 67: wand_kob's Wand of Lightning Bolt, c67wd f456-f458, f478-f508; ours
+		# aimed with row 23 empty, then BAKSHI USES WAND and SPELL:LIGHTNING BOLT after TARGET).
 		var me: int = _combat.active
 		_announced = true
 		_announcing = true
 		_casting = "announce"
 		_cmode = "announce"
-		_combat.message.emit("%s CASTS A SPELL" % (_combatants[me].who as PartyMember).name)
+		_combat.message.emit(("%s USES AN ITEM" if item != null else "%s CASTS A SPELL") % (_combatants[me].who as PartyMember).name)
 		_refresh()
 		if paced():
 			await get_tree().process_frame
@@ -2498,6 +2507,13 @@ func _abort_spell() -> void:
 	_advance()
 
 
+## Row 23 under a spell's or an item's aim and lines: SPELL:<spell> or ITEM:<the item's name>.
+func _row23_label() -> String:
+	if _use_item != null:
+		return "ITEM:" + _use_item.name.to_upper()
+	return "SPELL:" + _combat.magic.table.name_of(_spell_id)
+
+
 ## The last pick's panel kept through the cast's lines (see _finish_cast), with no box drawn and its status line as
 ## it was at TARGET (the original doesn't redraw it: no "(HELPLESS)" under a kobold just held, hpk15).
 var _kept_team := 0     # the kept panel's side (its name's colour)
@@ -2523,6 +2539,7 @@ func _finish_cast(by_target := false) -> void:
 	var announced := _announced
 	_announced = false
 	_aim_rows_kept = announced and paced() and _cmode in ["aim", "manual", "announce"]
+	_kept_row23 = _row23_label()
 	if _aim_rows_kept:
 		_kept_prompt = {"aim": "AIM:", "manual": "(USE CURSOR KEYS)"}.get(_cmode, "")
 		_kept_items = _bottom_menu() if _kept_prompt != "" else []
