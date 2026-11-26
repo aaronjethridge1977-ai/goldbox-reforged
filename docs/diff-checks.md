@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 145: P125 (a turn redraws the view over a script's picture); VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); the training hall at 999.5 gold (the original crashes)
+## Chat 145: P125 (a turn redraws the view over a script's picture); P120 B; VIEW's ITEMS and SPELLS words, the ITEMS page closing on the last item (569); a stack's SELL price (570); the treasure's DETECT (571); HALVE's place and a trade to oneself (572, 573); the training hall at 999.5 gold (the original crashes)
 
 All three ready edits are Combat's files (character_sheet.gd, treasure_screen.gd): patches in `~/gbr/lab/data/c145/`,
 checks in the lab (`data/c145/chk569`-`chk571`): DIFFER on main, MATCH with the edits; the three together on a scratch
@@ -209,6 +209,19 @@ tree: DIFFCHECKS 555/555 (`dc_wt3.log`). Main installs 569-571 once they land.
   WHAT DO YOU DO WITH THE MAN? over the walking menu, as ours; a turn (Left, Right or Down) redraws the room and keeps
   the text; a step clears both (as ours). Ours kept the portrait through turns (`_event_image`): a turn now drops it.
   Not P125's "clear at the script's end": the original doesn't. Seen in ours windowed (`oursW.sh`, shots).
+- **HALVE puts the new half right after the halved stack (found; game state and input, main path; checked 572):**
+  DOSBox, `squar`, the arms shop: LIRA's 10 QUARRELS (5th of 6) halved: 5 QUARRELS, 5 QUARRELS, 15 ARROWS; End, DROP
+  drops the new 5 QUARRELS. Ours appended it last, so End lit the 15 ARROWS (statediff compares items as a set: check
+  156's two HALVEs and JOIN ended the same either way). Both halves keep the price (5 QUARRELS offered 37).
+- **A TRADE to the giver herself moves the item to the end of her list (found; game state, main path, an edge;
+  checked 573):** TRADE WITH WHOM starts lit on the giver (End: the next member); SELECT at once: the original takes the
+  item off and gives it back at the list's end (LIRA's 10 QUARRELS after the 15 ARROWS; DROP then on the same line
+  drops the ARROWS). Ours did nothing for a trade to oneself. Both in `halve_after.patch`; all of chat 145's edits in
+  `c145_all.patch` (569-573 MATCH on `wt5`).
+- **P120 B built (Jeremy, 10:42; text timing, main path):** the typing wait before a menu, a question, an input
+  (`EclVM.WAITS_FOR_TEXT`) or the walking menu (EXIT: the text stays up under it) runs at the game speed
+  (`EclVM.menu_wait`, `_script_delay`: speed x 10 ms a character, as START.EXE 0x7782); a DELAY's, a PRINT_CLEAR's and
+  BOTH SIDES WAIT's keep P104's speed 4. The gate's checks don't see it (--keys waits for idle).
 - **The training hall at 999.5 to 999.99 gold (found; game state, main path, an edge; a question to the Lead):**
   0x1C369 tests the purse rounded to the nearest gold piece (0x238F8), so 999 gold and 10 silver (199900 copper) are
   offered training; ours refuses under 1000. The fee loop (0x1DC6C) then takes every coin, still owes up to 100
