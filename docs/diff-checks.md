@@ -174,6 +174,9 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
 
 ## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538); Grishnak's Hold Person and Curse outlast the fight (539, 540); his Silence's aim (541, to Combat)
 
+- **match_gate on ff2e564** (current main after Combat Chat 63's KOBOLD LEADER fix, 80a71ec; the Lead's 18:28 note):
+  **70 of 70 baseline recordings still identical** (18:34-21:32, beside the gate runs). Seed 3960000a's throne room
+  (chat 138's parting at 15134): all 43912 draws identical on that fix.
 - **Members held at a won fight's end (check 539; game state, main path; matched; installed):** Grishnak's temple
   (4:2 3,11, Cadorna's Textile House): Player 41's checkpoint `p41b1/s41out` walked in DOSBox to 4,11 W with the
   recording's keys and seed (the seed at the door as recorded); ours' scan over 21 seeds (a scratch build printing
