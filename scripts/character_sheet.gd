@@ -110,6 +110,9 @@ var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 ## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
 var shop_pile_platinum := 0
+## The shop's (or the temple's) pile while its VIEW is open: an ID the buyer's purse can't pay comes from it (GAME.OVR
+## 0x23043); the shop takes it back when the sheet closes. Empty outside a shop.
+var shop_pile := PackedInt32Array()
 ## No USE in the item menu: the original adds USE only in camp, walking, the wilderness and a fight (DS:0x49F3 2-5;
 ## GAME.OVR 0x21FDE): the training hall's party menu (mode 0) leaves it out (main chat 143, DOSBox: check 96's
 ## start, 3:11's hall, VIEW, ITEMS: READY TRADE DROP HALVE JOIN EXIT). Set after open(); open() clears it.
@@ -159,6 +162,7 @@ func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool 
 	in_shop = shop
 	no_use = false
 	shop_pile_platinum = 0
+	shop_pile = PackedInt32Array()
 	portrait = with_portrait
 	camp_look = false
 	own_look = false
@@ -580,14 +584,15 @@ func _view_menu() -> Array:
 		items.append("SPELLS")
 	# TRADE and DROP (money) only for a member carrying some, gems and jewelry included (main chat 86, check
 	# 256: DOSBox, camp VIEW: ARN with nothing VIEW:ITEMS EXIT, with one gem ITEMS TRADE DROP EXIT). In a
-	# fight: not seen (DROP kept as it was).
+	# fight the same, TRADE never (GAME.OVR 0x21C1E-0x21C7C: DROP on the money alone; main chat 144, DOSBox, Player
+	# 56's 4:2 ghouls: DORN VIEW:ITEMS DROP EXIT, ELWEN with her coins poked to 0 VIEW:ITEMS SPELLS EXIT).
 	var money := false
 	if m != null:
 		for c in m.money:
 			money = money or c > 0
 	if money and not in_combat and not _npc_barred(m):
 		items.append("TRADE")
-	if money or in_combat:
+	if money:
 		items.append("DROP")
 	if _orders_on(m):
 		items.append("ORDER")
@@ -1546,7 +1551,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				elif _pending == "id" and it != null:
 					# Lab: paid from all the coins (1000 gold, 2 platinum, 144 silver -> 163
 					# platinum, 2 gold); with too little, NOT ENOUGH MONEY.
-					if not m.pay_gold_in_shop(ID_PRICE):
+					# GAME.OVR 0x2300B-0x23088: the purse pays if it is worth 200 gold (rounded, 0x238F8), else the
+					# shop's pile if it is, else NOT ENOUGH MONEY (main chat 144, DOSBox check 565: check 152's start,
+					# POOL, ARN's purse empty: the ID went through, the pile 200 gold less).
+					var paid := m.pay_gold_in_shop(ID_PRICE)
+					if not paid and in_shop and shop_pile.size() >= 5 and CoinPile.gold_of(shop_pile) >= ID_PRICE:
+						shop_pile = CoinPile.set_gold(shop_pile, CoinPile.gold_of(shop_pile) - ID_PRICE)
+						paid = true
+					if not paid:
 						_mode = "id_reply"
 						_say("NOT ENOUGH MONEY")
 						_after_change()

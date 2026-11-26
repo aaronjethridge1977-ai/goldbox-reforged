@@ -441,9 +441,13 @@ func _view() -> void:
 	if not sheet.closed.is_connected(_after_view):
 		sheet.closed.connect(_after_view)
 	sheet.open(_party, "SHOP", _buyer, true, 1, true)
+	sheet.shop_pile = pile     # an ID the purse can't pay comes from the pile (CharacterSheet.shop_pile)
 
 
 func _after_view() -> void:
+	if sheet != null and sheet.shop_pile.size() == pile.size():
+		pile = sheet.shop_pile     # an ID paid from the pile
+		sheet.shop_pile = PackedInt32Array()
 	# A SELL whose seller was overloaded left platinum on the pile (CharacterSheet._sell_pay).
 	if sheet != null and sheet.shop_pile_platinum > 0:
 		pile[4] += sheet.shop_pile_platinum
