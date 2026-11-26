@@ -819,7 +819,9 @@ func _resolve_spell(i: int, id: int, targets: Array[int]) -> void:
 				# original's d8 at OVR:2bd30 before the d20 at 2bbbf; ours rolled the touch first).
 				var dmg := c.roll(1, 8, "spell damage") + (lvl if id == 20 else 0)
 				if not _touch_roll(i, j):
-					c.message.emit("%s MISSES" % m.name)
+					# A miss zeroes the damage and the damage routine prints nothing for 0 (0x2C26A): no line (DOSBox at
+					# speed 6, Combat Chat 67, q20k's first grasp: the aim, then the cast's end frame; ours printed
+					# BAKSHI MISSES).
 					continue
 				_damage(i, id, j, dmg)
 		9:          # Burning Hands: the caster's level in damage
@@ -1158,8 +1160,14 @@ func _damage(i: int, id: int, j: int, dmg: int, dice: int = 1) -> void:
 	if dmg <= 0:
 		c.message.emit("%s IS UNAFFECTED" % t.name)
 		return
-	var words := kind if kind != SpecialAffects.MAGIC or id == 15 or id == 65 else 0
-	c.message.emit(SpecialAffects.damage_words(t.name, dmg, words))
+	if id == 4 or id == 20:
+		# A touch spell's damage is the damage routine's line, its words and its burst (START.EXE 0x2B8B from 0x2C3C7):
+		# DOSBox at speed 6, Combat Chat 67, q4k: KOBOLD TAKES 5 POINTS OF DAMAGE FROM MAGIC with the explosion (ours
+		# had no FROM MAGIC and the spell's sparkles).
+		c._routine_line(j, SpecialAffects.damage_words(t.name, dmg, kind))
+	else:
+		var words := kind if kind != SpecialAffects.MAGIC or id == 15 or id == 65 else 0
+		c.message.emit(SpecialAffects.damage_words(t.name, dmg, words))
 	c.hurt(j, dmg, kind)
 
 

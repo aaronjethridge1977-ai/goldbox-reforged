@@ -1324,16 +1324,23 @@ func _show_messages() -> void:
 			var cs: Dictionary = _combat.cloud_shows.pop_front()
 			_ensure_view(cs.aim, -1)
 			_refresh()
+		var routine_burst := _sparkle >= 0 and subj <= Combat.ROUTINE_SUBJECT
 		if _sparkle >= 0:
 			# P85: START.EXE 0x2B8B shows the effect's 4 frames 70 ms apart (speed + 1) times with the message up
 			# (GAME.OVR 0x2C617), and no hold after: 0.28 s at SPEED 0, 1.4 s at 4 (ours had at least 1.2 s).
-			var until := Time.get_ticks_msec() + int(sparkle_time() * 1000.0)
+			# The damage routine's burst (0x2C3C7) shows its 4 frames once, then the line holds a message's time
+			# (DOSBox at speed 6, Combat Chat 67: Cause Light Wounds c67cl f417-f422, the stirge's drink c64 stf
+			# f911-f916: 0.25 s of burst, 1.18 s more; ours had the sparkles' 1.76 s and no hold).
+			var until := Time.get_ticks_msec() + (4 * 63 if routine_burst else int(sparkle_time() * 1000.0))
 			while Time.get_ticks_msec() < until and is_inside_tree():
 				await get_tree().create_timer(0.03).timeout
 				_refresh()
 			_sparkle = -1
 			_spark_who = -1
-			_after_sparkles = true
+			_after_sparkles = not routine_burst
+			if routine_burst:
+				_refresh()
+				await get_tree().create_timer(message_hold()).timeout
 			if _bolt_on and _spell_hits.is_empty():
 				# The last figure hit: the walk goes on to its end (GAME.OVR 0x29B02's loop).
 				await _crackle_to(Vector2i(-1, -1))

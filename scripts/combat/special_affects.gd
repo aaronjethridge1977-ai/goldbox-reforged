@@ -304,18 +304,24 @@ static func weapon_damage(attacker: PartyMember, target: PartyMember, weapon: Ga
 
 
 ## "<NAME> TAKES n POINTS OF DAMAGE FROM FIRE" as the original words it.
+## The words after the name are cut at 40 characters, as the original's line holds them (DOSBox at speed 6, Combat
+## Chat 67: q20k's KOBOLD TAKES 9 POINTS OF DAMAGE FROM ELECTRICIT, and Combat Chat 65's lightning bolt film c65lb's
+## TAKES 3 POINTS ... ELECTRICIT; ours printed the whole word).
 static func damage_words(name: String, dmg: int, kind: int) -> String:
-	var t := "%s TAKES 1 POINT OF DAMAGE" % name if dmg == 1 else "%s TAKES %d POINTS OF DAMAGE" % [name, dmg]
+	var t := "TAKES 1 POINT OF DAMAGE" if dmg == 1 else "TAKES %d POINTS OF DAMAGE" % dmg
 	match kind & ~MAGIC:
 		FIRE:
-			return t + " FROM FIRE"
+			t += " FROM FIRE"
 		COLD:
-			return t + " FROM COLD"
+			t += " FROM COLD"
 		ELECTRIC:
-			return t + " FROM ELECTRICITY"
+			t += " FROM ELECTRICITY"
 		ACID:
-			return t + " FROM ACID"
-	return t + " FROM MAGIC" if kind == MAGIC else t
+			t += " FROM ACID"
+		_:
+			if kind == MAGIC:
+				t += " FROM MAGIC"
+	return "%s %s" % [name, t.left(40)]
 
 
 ## Does this item's name use word `word` (record bytes 47..49)?
