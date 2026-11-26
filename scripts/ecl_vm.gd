@@ -1050,19 +1050,10 @@ func _hurt(m: PartyMember, damage: int) -> void:
 	# more than 9 dead, else dying; an ANIMATED member brought to 0 dies; down, dying and dead keep 0 HP.
 	# Chat 61, check 87 (8:13's rocks: PHINEAS, 4 HP, hit for 5: dying in the original's save; ours had
 	# him unconscious, and a member killed outright kept a negative HP).
-	var past := damage - m.hp if damage > m.hp else 0
-	m.hp = maxi(m.hp - damage, 0)
-	if past > 9 or (m.hp == 0 and m.status == PartyMember.STATUS_ANIMATED):
-		m.status = PartyMember.STATUS_DEAD
-	elif past > 0:
-		m.status = PartyMember.STATUS_DYING
-	elif m.hp == 0:
-		m.status = PartyMember.STATUS_UNCONSCIOUS
 	# ... and one left in any status but OKAY or ANIMATED (the set at 0xBA:0x2208) is out of the fight: record +0x10D 0
 	# (0xBA:0x22E1; main chat 135, checks 87, 88, 121, 456: PHINEAS dying from the rocks and the slings, ARN killed by
-	# the hedge, THRENDER GRONE in 4:2; ours kept 1).
-	if m.status not in [PartyMember.STATUS_OKAY, PartyMember.STATUS_ANIMATED] and m.raw.size() > 0x10D:
-		m.raw[0x10D] = 0
+	# the hedge, THRENDER GRONE in 4:2; ours kept 1), with 0 HP (0x22EA; chat 150: a member down with HP left too).
+	m.take_damage(damage)
 	_box_hits += 1
 
 

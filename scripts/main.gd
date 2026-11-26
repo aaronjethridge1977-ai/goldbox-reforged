@@ -3714,8 +3714,14 @@ func _on_event_fight_finished(result: int) -> void:
 		for m in _party:
 			if not fielded.has(m):
 				out.append(m)
+		# A minute a round (0xA093 pushes 1 minute, as the fighters' tick): an effect that ends and renews inside the
+		# fight (a slowed poison's 10-minute tick) renews from the round it ended in (chat 150, DOSBox, check 582:
+		# CEDRIC unconscious from before the ogres, his tick due in 2 minutes; the one lump of rounds renewed it late).
 		if not out.is_empty():
-			_show_time_news(SpellCaster.pass_time(out, _combat.rounds()))
+			var news := PackedStringArray()
+			for r in _combat.rounds():
+				news.append_array(SpellCaster.pass_time(out, 1))
+			_show_time_news(news)
 	# The fight's end turns every dying member of the party unconscious, a member down before the fight
 	# too (the original's figure list holds the whole party; Combat's finish() covers the fighters).
 	# Chat 61: since a script's DAMAGE leaves a member dying, check 69's DIRTEN (the priest's fireball
