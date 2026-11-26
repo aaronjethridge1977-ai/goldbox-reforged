@@ -3190,6 +3190,11 @@ func _went_down(j: int) -> void:
 			t.team = (int(a.value) >> 6) & 1
 			if tm.morale == 0xB3:
 				SpellCaster.set_control(tm, 0)
+		elif int(a.effect) == SpellCaster.MANUAL_TRAINING:
+			# The fall's strip runs each removed record's end (0x12DE7 -> 0x2BEF4 -> 0x2AF10), as the kill outside a
+			# fight: the Manual's training ends with CON + 1 (main chat 148, DOSBox: check 578, Player 56's ghouls
+			# with CEDRIC training and knocked down by DORN and ARN: CON 18 -> 19, the training gone).
+			SpellCaster.ended(tm, a, PackedStringArray())
 	tm.affects = tm.affects.filter(func(a): return not DOWN_STRIPS.has(int(a.effect)))
 	# A fall spends the figure's turn: its initiative (fight record +0x108 byte 3 = 0) and what is left of its moves
 	# and blows, so a wild boar that fights on (below) gets nothing back this round (main chat 137's throne room,
