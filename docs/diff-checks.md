@@ -214,6 +214,14 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   set) froze BRAM after day 30 too (his rot and disease run out in one step), where the original goes on. Next: trace
   the clock at DORN's death step (does the kill at status 8 take him out of the member list DS:0x5D96, or does
   0xEC7A's append fail for him and the 14400 record come later?). Dead members only, so low priority.
+- **553 (game state, main path; matched; installed): the Manual of Bodily Health through a rest.** Start `smanG`:
+  `sinn2G` with ELWEN's 16th item record replaced by check 189's poked potion (byte 61 = 90, spell 67, the Manual's;
+  every member carries 16 items, so it replaces a POTION). At the inn's camp: End x3 (ELWEN), VIEW, ITEMS, End x15,
+  Home x13 (SHIELD), READY (off: her hands were full and USE did nothing), End x13, READY, USE (effect 4 for 1440
+  minutes, the item gone), EXIT x2, REST 31 d 1 h: STARTS TO TRAIN after the day, the training (effect 7, 43200
+  minutes) runs out in the same rest, IS HARDIER: ELWEN CON 18 -> 19, no effects left, in both (the walk's last record
+  is the appended training, so the clock's flag stays set: the dead DORN's case above is not this). Three runs
+  MATCH; without the USE DIFFERS (CON).
 - **550 (game state, main path; matched; installed):** 4:10's mummies at tpseed 41100006 (ours' seed search
   `mumseed2.sh` over 41100002-25: members die on 14 of 24): BRAM DEAD, all 2440 draws and positions identical.
 - **0xF776** (chat 140's open "collapses"): the end handler that undoes Animate Dead's writes (+0x10E from the power's
