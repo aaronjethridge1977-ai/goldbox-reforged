@@ -102,6 +102,8 @@ signal magic_note(text: String)
 ## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
 ## pairs by name there), -1 outside a spell (no sparkles).
 var fx_subject := -1
+## fx_subject for a damage-routine line outside a spell: ROUTINE_SUBJECT - <figure> (the screen's burst on it).
+const ROUTINE_SUBJECT := -10
 var handed_back := -1      # a member whose computer turn Space ended: next_turn gives it back for the menu
 var paid: Array = []       # the party members a won fight's experience goes to (finish(): still in the fight)
 ## The anti-magic shell (ECL 0x49E5 above 0, the ruined castle's): in a fight the original hides CAST on the menu
@@ -1147,6 +1149,15 @@ func hurt(j: int, dmg: int, kind: int = 0) -> void:
 	_hurt(j, dmg, kind, true)
 
 
+## A damage line the damage routine prints outside a spell (a stirge's drink, fiery blows, an ankheg's acid, the acid
+## spit): the figure's own line, the screen putting the explosion on it (START.EXE 0x2B8B; Combat Chat 64).
+func _routine_line(j: int, words: String) -> void:
+	var was := fx_subject
+	fx_subject = ROUTINE_SUBJECT - j
+	message.emit(words)
+	fx_subject = was
+
+
 ## `routine`: the damage came through the damage routine (0x2C22E), not a blow: its fall words (_routine_fall).
 func _hurt(j: int, dmg: int, kind: int = 0, routine := false) -> void:
 	var t: Dictionary = combatants[j]
@@ -1877,12 +1888,12 @@ func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
 		var burn := SpecialAffects.element_damage(tm, SpecialAffects.FIRE, roll(2, 10, "fire"))
 		if burn > 0:
-			message.emit(SpecialAffects.damage_words(tm.name, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC))
+			_routine_line(j, SpecialAffects.damage_words(tm.name, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC))
 			_hurt(j, burn, SpecialAffects.FIRE | SpecialAffects.MAGIC, true)
 	if _hit_has(am, allowed, 0x50) and not t.down:
 		# An ankheg's acid (0x106A7): 1d4 more.
 		var acid := roll(1, 4, "acid")
-		message.emit(SpecialAffects.damage_words(tm.name, acid, SpecialAffects.ACID))
+		_routine_line(j, SpecialAffects.damage_words(tm.name, acid, SpecialAffects.ACID))
 		_hurt(j, acid, SpecialAffects.ACID, true)
 
 
@@ -3257,7 +3268,7 @@ func _stirge_drink(i: int) -> bool:
 	var d := roll(1, 4, "blood")
 	# The damage routine (0xB0:0x7F, with DS:0x6819 cleared at 0x10498) words it "FROM MAGIC" (0x2C392: the type
 	# byte & 8 == itself, so 0 too): DOSBox, "BRAM TAKES 1 POINT OF DAMAGE FROM MAGIC" after the drink.
-	message.emit(SpecialAffects.damage_words(combatants[latched].who.name, d, SpecialAffects.MAGIC))
+	_routine_line(latched, SpecialAffects.damage_words(combatants[latched].who.name, d, SpecialAffects.MAGIC))
 	hurt(latched, d)
 	if not combatants[latched].down and int(c.drink) > d:
 		c.drink = int(c.drink) - d
@@ -3322,7 +3333,7 @@ func _act_powers(i: int) -> void:
 			dmg /= 2
 		m.affects = m.affects.filter(func(a): return not int(a.effect) in [0x79, 0x50])
 		if dmg > 0:
-			message.emit(SpecialAffects.damage_words(t.who.name, dmg, SpecialAffects.ACID))
+			_routine_line(j, SpecialAffects.damage_words(t.who.name, dmg, SpecialAffects.ACID))
 			hurt(j, dmg, SpecialAffects.ACID)
 	# Tyranthraxus's breath (GAME.OVR 0x2A0F1): the 50% d100 (it breathes on 51-100) only once the round counter
 	# DS:0x6DE3 is past 0 (it counts at each round's end, so not before or in round 1: ours'
