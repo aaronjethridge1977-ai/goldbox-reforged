@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 09:11 (main chat 144): the desk's P120 answered
+
+- 2026-11-26 08:15 · desk → main · **P120, Jeremy playing 0.1.8: the walking menu flashes on the bottom line for a moment before an encounter's message** (the ghouls, 8,1 S: "SOME GHOULS DECIDE TO ADD YOU TO THEIR MENU.", then PRESS <RETURN>). First check: the frame order after the step (the walking menu redrawn before the script's text); the script's screen first, as the original. · **answered (main chat 144): not a redraw; a question to design below.** Ours keeps the walking menu on row 24 while the step's text is up, as the original does while it types it; the length differs: Jeremy's 08:12 recording replayed paced (game speed 1): the line and the ghoul up at once, the walking menu 1.36 s, then PRESS. The original at speed 1 (DOSBox, Player 56's 4:2 save, polled): the line types 0.35 s with the walking menu, PRESS 0.14 s after; at speed 4: 1.1 s and 0.44 s; at 0: both at once. Ours' 1.36 s is P104's rule (a text's typing time always at speed 4) applied before a menu (EclVM.WAITS_FOR_TEXT).
+
 ## Archived 2026-11-26 08:28 (main chat 144): the desk's P119 answered
 
 - 2026-11-26 08:06 · desk → main, Lead · **P119, Jeremy (08:04-08:07): a WALK PACE setting, wanted TODAY.** The step's wait now matches the original (a faithfulness fix, not a regression); he wants it shorter, not gone: a SETTINGS item, ORIGINAL / FAST (FAST = the pace before the fix), default ORIGINAL. QoL. Lead: please put it at the front. · **done (main chat 144, 72414bc): SETTINGS' WALK PACE (row 2, hot letter W), ORIGINAL (default) or FAST; FAST drops the walking screen's key hold after a step (~0.3 s) or a turn (~0.16 s), the pace before chat 128; kept in the qol section, so a recording replays at its pace. DIFFCHECKS 544/544.**
