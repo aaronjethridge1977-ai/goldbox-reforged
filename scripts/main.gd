@@ -4371,7 +4371,9 @@ func _show() -> void:
 		_view_img = DungeonView.to_image(view)
 		_picture.texture = ImageTexture.create_from_image(_view_img)
 	_map_view.set_marker(_pos, _facing)
-	_automap.place(e.map, "%s:%d" % [e.file, e.id], _pos, int(_facing), area.to_upper())
+	# P118 (Combat Chat 67): the view's pictures when it was drawn from here, for the automap's door marks.
+	var drawn_walls: WallSet = _walls if _event_image == null and not _vm.view_blank and _stale_view.is_empty() else null
+	_automap.place(e.map, "%s:%d" % [e.file, e.id], _pos, int(_facing), area.to_upper(), drawn_walls)
 	var facing_name: String = ["North", "East", "South", "West"][_facing]
 	var map: GeoMap = e.map
 	var night := GameClock.hour(_vm) >= 14

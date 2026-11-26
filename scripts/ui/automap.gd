@@ -11,6 +11,14 @@ extends Control
 ## P100 (Jeremy's Q37 B1, 2026-11-24): a door mark only on a side the party has stepped through; every other
 ## door-bit side draws as the wall the 3D view shows (the map's door bits can't tell a secret door: Kuto's Well's
 ## 5,8 N showed a door the party couldn't use; the original's AREA draws no door marks at all).
+## P118 (Jeremy, 2026-11-26 08:04-08:38; Combat Chat 67): a door mark once the side has appeared as a door in the
+## 3D view, an opening mark once it has appeared as an archway or opening; area exits as doors once seen or used.
+## What a picture shows is content (content/poolrad/wall_marks.json: D door, A opening, W wall, by WALLDEF block):
+## neither the door bits (secret doors: a wall picture with door bits) nor passability (graves, trees and grass are
+## passable; many door and arch pictures on the city's edges are not) can tell it. Each side the view draws is
+## recorded as it is drawn (seen_kinds: 2 bits a side, 1 door, 2 opening; saved beside the visited squares under
+## "<map key>#s"); a side stepped through with door bits (P100's) and a map edge the party left the area by
+## (an exit used) draw as doors too. Secret doors, a wall picture in the view, stay walls until stepped through.
 ##
 ## The look (Jeremy, 2026-11-16 20:55, from Combat Chat 15's mockups M2 and F1, the original's own AREA view
 ## as the model): drawn on the game's 320 x 200 grid with the game's own rope, gold blocks and font. The
@@ -37,6 +45,7 @@ var mini_open := true
 var party_rows := 6          # members in the party list (main sets it): the mini-map stays below them
 var full_open := false
 var visited := {}               # map key -> PackedByteArray(256)
+var seen_kinds := {}            # map key -> PackedByteArray(256): per square, 2 bits a side (1 door, 2 opening) seen in the view
 var map: GeoMap
 var map_key := ""
 var pos := Vector2i.ZERO
@@ -91,10 +100,16 @@ func _process(_delta: float) -> void:
 		mini_shown = false
 
 
-## Where the party is now; marks the square visited.
-func place(m: GeoMap, key: String, at: Vector2i, dir: int, name: String) -> void:
+## Where the party is now; marks the square visited. `walls`: the 3D view's pictures when the view has just been
+## drawn from here (its door and opening sides are recorded as seen), else null.
+func place(m: GeoMap, key: String, at: Vector2i, dir: int, name: String, walls: WallSet = null) -> void:
 	var from := pos
 	var same := map_key == key
+	if not same and map != null and visited.has(map_key) and _inside(from):
+		# Leaving an area: a step off the map's edge is an exit used (a door mark on that side).
+		var out: Vector2i = from + STEPS[facing]
+		if not _inside(out) and map.wall(from.x, from.y, facing) == 0:
+			_mark_seen(map_key, from, facing, KIND_DOOR)
 	map = m
 	map_key = key
 	pos = at
@@ -110,7 +125,72 @@ func place(m: GeoMap, key: String, at: Vector2i, dir: int, name: String) -> void
 		if same and side >= 0 and from.x >= 0 and from.x < 16 and from.y >= 0 and from.y < 16:
 			visited[key][from.y * 16 + from.x] |= 2 << side
 			visited[key][at.y * 16 + at.x] |= 2 << ((side + 2) % 4)
+	if walls != null:
+		_record_view(m, key, at, dir, walls)
 	queue_redraw()
+
+
+const KIND_DOOR := 1
+const KIND_OPENING := 2
+const MARKS_PATH := "res://content/poolrad/wall_marks.json"
+static var _marks := {}            # "file:block" -> "AWAWD..."
+static var _marks_loaded := false
+
+
+## What wall picture `w` (a WallSet entry) shows: KIND_DOOR, KIND_OPENING or 0 (a wall).
+static func picture_kind(w: Dictionary) -> int:
+	if not _marks_loaded:
+		_marks_loaded = true
+		var f := FileAccess.open(MARKS_PATH, FileAccess.READ)
+		if f != null:
+			var d = JSON.parse_string(f.get_as_text())
+			if d is Dictionary and d.get("walls") is Dictionary:
+				_marks = d["walls"]
+	if not w.has("src"):
+		return 0
+	var src: Vector3i = w["src"]
+	var row := String(_marks.get("%d:%d" % [src.x, src.y], ""))
+	if src.z >= row.length():
+		return 0
+	return {"D": KIND_DOOR, "A": KIND_OPENING}.get(row[src.z], 0)
+
+
+static func _inside(p: Vector2i) -> bool:
+	return p.x >= 0 and p.y >= 0 and p.x < 16 and p.y < 16
+
+
+func _mark_seen(key: String, sq: Vector2i, side: int, kind: int) -> void:
+	if not seen_kinds.has(key):
+		var b := PackedByteArray()
+		b.resize(256)
+		seen_kinds[key] = b
+	var i := sq.y * 16 + sq.x
+	seen_kinds[key][i] = (seen_kinds[key][i] & ~(3 << (side * 2))) | (kind << (side * 2))
+
+
+## The sides the 3D view drew from `at` facing `dir` (DungeonView's slots; off the map the view reads nothing
+## the automap draws): each door or opening picture is recorded; a side now drawn as a wall clears its mark
+## (a script changed it).
+func _record_view(m: GeoMap, key: String, at: Vector2i, dir: int, walls: WallSet) -> void:
+	var right := (dir + 1) % 4
+	for cells in DungeonView.SLOT_CELLS:
+		for c in cells:
+			var sq: Vector2i = at + STEPS[dir] * int(c[0]) + STEPS[right] * int(c[1])
+			if not _inside(sq):
+				continue
+			var side: int = [dir, (dir + 3) % 4, right][int(c[2])]
+			var w := m.wall(sq.x, sq.y, side)
+			var kind := 0
+			if w > 0 and w <= walls.walls.size():
+				kind = picture_kind(walls.walls[w - 1])
+			if kind != 0 or (seen_kinds.has(key) and seen_kind_at(key, sq, side) != 0):
+				_mark_seen(key, sq, side, kind)
+
+
+func seen_kind_at(key: String, sq: Vector2i, side: int) -> int:
+	if not seen_kinds.has(key) or not _inside(sq):
+		return 0
+	return (seen_kinds[key][sq.y * 16 + sq.x] >> (side * 2)) & 3
 
 
 const STEPS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]   # a step across side 0-3
@@ -134,13 +214,22 @@ func to_save() -> Dictionary:
 	var out := {}
 	for k in visited:
 		out[k] = (visited[k] as PackedByteArray).hex_encode()
+	for k in seen_kinds:
+		out[k + SEEN_SUFFIX] = (seen_kinds[k] as PackedByteArray).hex_encode()
 	return out
+
+
+const SEEN_SUFFIX := "#s"
 
 
 func from_save(d: Dictionary) -> void:
 	visited.clear()
+	seen_kinds.clear()
 	for k in d:
-		visited[k] = String(d[k]).hex_decode()
+		if String(k).ends_with(SEEN_SUFFIX):
+			seen_kinds[String(k).trim_suffix(SEEN_SUFFIX)] = String(d[k]).hex_decode()
+		else:
+			visited[k] = String(d[k]).hex_decode()
 
 
 var _shown := ""                   # what the overlay shows now: it is repainted only when this changes
@@ -151,7 +240,8 @@ func _draw() -> void:
 	if _g == null:
 		return
 	var what := "%s|%s|%s|%s|%d|%s|%d|%s|%s|%d" % [enabled and map != null and visible, full_open, mini_open,
-		map_key, party_rows, pos, facing, title, visited.get(map_key, PackedByteArray()).hex_encode(), map.get_instance_id() if map != null else 0]
+		map_key, party_rows, pos, facing, title, visited.get(map_key, PackedByteArray()).hex_encode() + seen_kinds.get(map_key, PackedByteArray()).hex_encode(),
+		map.get_instance_id() if map != null else 0]
 	if what == _shown:
 		return
 	_shown = what
@@ -226,11 +316,24 @@ func _paint(origin: Vector2i, cell: int, first: Vector2i, n: Vector2i, clip: Rec
 				var r: Rect2i = [Rect2i(p.x - 1, p.y - 1, cell + 2, 2), Rect2i(p.x + cell - 1, p.y - 1, 2, cell + 2),
 					Rect2i(p.x - 1, p.y + cell - 1, cell + 2, 2), Rect2i(p.x - 1, p.y - 1, 2, cell + 2)][side]
 				img.fill_rect(r.intersection(clip), WALL)
-				if map.door(sq.x, sq.y, side) != 0 and crossed(sq.x, sq.y, side):
-					var m := cell / 4
-					var d: Rect2i = [Rect2i(p.x + m, p.y - 1, cell - 2 * m, 2), Rect2i(p.x + cell - 1, p.y + m, 2, cell - 2 * m),
-						Rect2i(p.x + m, p.y + cell - 1, cell - 2 * m, 2), Rect2i(p.x - 1, p.y + m, 2, cell - 2 * m)][side]
-					img.fill_rect(d.intersection(clip), DOOR)
+	# The marks after every wall, so a neighbour's wall on the same edge doesn't cover them.
+	for cy in n.y:
+		for cx in n.x:
+			var sq := first + Vector2i(cx, cy)
+			if not seen(sq.x, sq.y):
+				continue
+			var p := origin + Vector2i(cx, cy) * cell
+			for side in 4:
+				var kind := seen_kind_at(map_key, sq, side)
+				if kind == 0 and map.wall(sq.x, sq.y, side) != 0 and map.door(sq.x, sq.y, side) != 0 and crossed(sq.x, sq.y, side):
+					kind = KIND_DOOR
+				if kind == 0:
+					continue
+				var m := cell / 4
+				var d: Rect2i = [Rect2i(p.x + m, p.y - 1, cell - 2 * m, 2), Rect2i(p.x + cell - 1, p.y + m, 2, cell - 2 * m),
+					Rect2i(p.x + m, p.y + cell - 1, cell - 2 * m, 2), Rect2i(p.x - 1, p.y + m, 2, cell - 2 * m)][side]
+				# A door: a brown stretch in the wall; an opening: the wall broken there (the floor's grey).
+				img.fill_rect(d.intersection(clip), DOOR if kind == KIND_DOOR else FLOOR)
 	var rel := pos - first
 	if rel.x < 0 or rel.y < 0 or rel.x >= n.x or rel.y >= n.y:
 		return
