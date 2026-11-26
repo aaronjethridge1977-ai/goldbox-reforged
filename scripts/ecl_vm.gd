@@ -386,6 +386,7 @@ const RUNE_BASE := 0xE000
 var rune_lines: Array[String] = []
 var runes_shown := false
 var runes_closing := false
+var _keep_runes := false     # resume() from a typing wait: run() leaves the rune page up
 ## The place line CALL 0x2C90 drew: {"hide": 0x49FB then, "at": [x, y, facing]} (main's _place_line keeps it until the
 ## party is elsewhere); {} for the live cell.
 var place_drawn := {}
@@ -612,6 +613,10 @@ func resume() -> State:
 		_enc_waited = false
 		_show_encounter_menu()
 		return state
+	# A wait for the text to type (chat 117) isn't a stop the player answers: the rune page stays up through it
+	# (P132, main chat 149, DOSBox: 4:21's elf scroll keeps its runes under "...THE LAST PART IS EATEN AWAY." and its
+	# PRESS <ENTER>; since chat 117 the typing wait before that press cleared them, the view black or the picture).
+	_keep_runes = typing_wait
 	typing_wait = false
 	menu_wait = false
 	state = State.RUNNING
@@ -622,11 +627,12 @@ func run(max_steps: int = 20000) -> State:
 	var steps := 0
 	print_chars = 0
 	redraw_pending = false
-	if runes_closing:
+	if runes_closing and not _keep_runes:
 		runes_closing = false
 		runes_shown = false
 		rune_lines = []
 		view_blank = true
+	_keep_runes = false
 	while state == State.RUNNING:
 		steps += 1
 		if steps > max_steps:
