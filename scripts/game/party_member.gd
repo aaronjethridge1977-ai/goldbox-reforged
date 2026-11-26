@@ -1186,7 +1186,8 @@ func money_text() -> String:
 # The original's rules (Pool of Radiance's own texts and tables; the rule order as Pilgrim's
 # reconstruction of the engine documents it):
 # - Only conscious characters train ("WE ONLY TRAIN CONSCIOUS PEOPLE"), and training costs
-#   1000 gold pieces' worth of the trainee's own money ("TRAINING COSTS 1000 GP.").
+#   1000 gold pieces' worth of the trainee's own money ("TRAINING COSTS 1000 GP."), the purse
+#   rounded to the nearest gold piece (GAME.OVR 0x1C369 -> 0x238F8, as the shop's ID).
 # - A class can advance when the character's experience reaches the next level's total
 #   and the class isn't at its cap. If several classes can, the original trains only the
 #   one whose next level costs the most experience.
@@ -1265,7 +1266,7 @@ func class_indices() -> Array[int]:
 func training_plan(t: ClassTables, hall_mask: int) -> Dictionary:
 	if status != STATUS_OKAY:
 		return {"error": "WE ONLY TRAIN CONSCIOUS PEOPLE"}
-	if wealth_copper() < 1000 * 200:
+	if (wealth_copper() + 100) / COIN_VALUE[3] < 1000:     # 0x238F8: rounded (main chat 146)
 		return {"error": "TRAINING COSTS 1000 GP."}
 	var have_mask := 0
 	var exp_mask := 0
@@ -1340,9 +1341,13 @@ func train(t: ClassTables, table: SpellTable, classes: Array[int], rng: RandomNu
 ## each kind giving what it has up to one coin past the rest of the fee; what was paid over
 ## comes back as change from platinum down (1500 gold pays 1001 and gets 1 back: 500 left;
 ## 144 silver and 500 platinum: 144 silver and 199 platinum, change 2 gold 4 silver).
+## A purse worth 999.5 to 999.99 gold passes the hall's rounded test (training_plan); the
+## original's loop then runs out of coins and stops with "Runtime error 200" (original-bugs.md
+## #26; main chat 145, DOSBox from 10 silver and 999 gold): ours takes all the coins instead
+## (the Lead, 2026-11-26 11:22, B).
 func pay_training(gold: int) -> bool:
 	var left := gold * 200
-	if wealth_copper() < left:
+	if (wealth_copper() + 100) / COIN_VALUE[3] < gold:
 		return false
 	for i in 5:
 		if left <= 0:
