@@ -110,6 +110,10 @@ var _rng := RandomNumberGenerator.new()
 var in_shop := false     # opened from a shop's VIEW: the item menu offers SELL
 ## Platinum a SELL put on the shop's pile (the seller overloaded); the shop takes it when the sheet closes.
 var shop_pile_platinum := 0
+## No USE in the item menu: the original adds USE only in camp, walking, the wilderness and a fight (DS:0x49F3 2-5;
+## GAME.OVR 0x21FDE): the training hall's party menu (mode 0) leaves it out (main chat 143, DOSBox: check 96's
+## start, 3:11's hall, VIEW, ITEMS: READY TRADE DROP HALVE JOIN EXIT). Set after open(); open() clears it.
+var no_use := false
 var camp_look := false   # opened from the camp: CAST SPELL ON WHOM and TRADE TO? show the camp's picture
 ## Opened from a screen with its own picture (the treasure): the party picks (TRADE TO?, TRADE WITH
 ## WHOM?) show it with this place line (main chat 106, P97: DOSBox, the treasure's VIEW, TRADE: the
@@ -153,6 +157,7 @@ func _init() -> void:
 func open(people: Array[PartyMember], title: String, start: int = 0, shop: bool = false,
 		pick: int = 0, with_portrait: bool = false) -> void:
 	in_shop = shop
+	no_use = false
 	shop_pile_platinum = 0
 	portrait = with_portrait
 	camp_look = false
@@ -605,7 +610,10 @@ func _orders_on(m: PartyMember) -> bool:
 func _item_menu() -> Array:
 	var m := _who()
 	var room := m != null and m.items.size() < MAX_ITEMS
-	var use: Array = [] if anti_magic else ["USE"]
+	# GAME.OVR 0x21FCA: USE only for a member with record +0x10D set (main chat 143, DOSBox check 558: DORN, stoned by
+	# the basilisk, his Manual readied: READY TRADE DROP HALVE JOIN EXIT; ours used it, CON 18 -> 19).
+	var out_of_it := m != null and not m.is_monster and m.raw.size() > 0x10D and m.raw[0x10D] == 0
+	var use: Array = [] if anti_magic or out_of_it or no_use else ["USE"]
 	if in_combat:
 		return ["READY"] + use + ["DROP"] + (["HALVE"] if room else []) + ["JOIN", "EXIT"]
 	var trade: Array = [] if _npc_barred(m) else ["TRADE"]

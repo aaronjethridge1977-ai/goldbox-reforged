@@ -378,6 +378,7 @@ func _view() -> void:
 	if _party.is_empty():
 		return
 	_sheet.open(_party, "PARTY", _who)
+	_sheet.no_use = true     # no USE at the treasure (main chat 143, DOSBox: 2:15's basilisk won, VIEW, ITEMS: READY TRADE DROP JOIN EXIT)
 	# P97 (main chat 106, DOSBox): TRADE TO? from here keeps the treasure's picture, no place line.
 	_sheet.own_look = true
 	_sheet.own_view = picture

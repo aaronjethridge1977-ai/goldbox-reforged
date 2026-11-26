@@ -508,6 +508,7 @@ func _function(item: String) -> void:
 		"VIEW CHARACTER":
 			if _who() != null:
 				_sheet.open(party, "PARTY", _sel, false, 0, true)
+				_sheet.no_use = true     # the hall's VIEW: no USE (CharacterSheet.no_use)
 		"ADD CHARACTER TO PARTY":
 			if not roster.is_empty():
 				_cursor = 0

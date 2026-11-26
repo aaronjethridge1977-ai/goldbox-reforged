@@ -435,6 +435,15 @@ func _close() -> void:
 	closed.emit()
 
 
+## A SELL whose seller was overloaded left platinum on the pile (CharacterSheet._sell_pay), as the shop's.
+func _after_view() -> void:
+	if _sheet != null and _sheet.shop_pile_platinum > 0:
+		pile[4] += _sheet.shop_pile_platinum
+		_sheet.shop_pile_platinum = 0
+	if visible:
+		_refresh()
+
+
 ## E from the menu: with money on the pile a priest asks first (GAME.OVR 0x53A3).
 func _leave() -> void:
 	if CoinPile.has_money(pile):
@@ -566,7 +575,13 @@ func _unhandled_input(event: InputEvent) -> void:
 					_cure = 0
 					_lines = []
 					_refresh()
-				"VIEW": _sheet.open(_party, "PARTY", _who)
+				"VIEW":
+					# The temple runs as a shop (DS:0x49F3 = 1): VIEW's item menu is the shop's, READY TRADE DROP
+					# HALVE JOIN SELL ID EXIT, no USE (GAME.OVR 0x21FDE, 0x22125, 0x22154; main chat 143, DOSBox
+					# check 562: ARN sells a long bow for 30 gold at Tempus' temple; ours had no SELL).
+					if not _sheet.closed.is_connected(_after_view):
+						_sheet.closed.connect(_after_view)
+					_sheet.open(_party, "PARTY", _who, true)
 				"TAKE":
 					_mode = "coins"
 					_coin = 0
