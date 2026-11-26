@@ -159,6 +159,8 @@ static func load_files(sav_path: String, itm_path: String) -> PartyMember:
 ## record (GAME.OVR 0x1EF8B under the LOAD_MON handler, before a TREASURE's random items and
 ## the fight), by monster id, oldest first; load_monster takes them instead of drawing.
 static var colours_drawn := {}
+## Play's icon-colour d6s (load_monster): their own generator, apart from the game's dice.
+static var _colour_rng := RandomNumberGenerator.new()
 
 
 ## LOAD_MON's draws: five d6 for the record's colours (lab dice only, as load_monster's).
@@ -185,20 +187,30 @@ static func load_monster(game_path: String, file_no: int, id: int) -> PartyMembe
 		if itm and itm.blocks.has(id):
 			item_data = itm.blocks[id]
 	var m := from_bytes(cha.blocks[id], item_data)
-	if m and TpDice.on:
+	if m:
 		# As GAME.OVR loads a monster record (0x1EF8B, side chat 2): 0xC0 from the race (1,
 		# 3, 5: 1; 2, 4, 6, 7: 2), then five icon colours, each (d6 + 8) * 16 + the same d6,
-		# in 0xC1-0xC3 and 0xC5-0xC6, 0xC4 = 0xC4. Lab dice only for now: whether 0xC0 changes
-		# which icon some monsters show is not yet checked.
+		# in 0xC1-0xC3 and 0xC5-0xC6, 0xC4 = 0xC4. ADD_NPC loads its record so (0x1F248 ->
+		# 0x1EEAA), so a joined NPC's combat figure is CHEAD/CBODY at that size in those colours
+		# (Combat Chat 67, P126: SKULLCRUSHER, MON4CHA 27, holds size 0 and colours 1-7 with no
+		# bright twins: ours drew him small and dark; the original's saves c114 sSk and c102 o369
+		# hold 2 and D5 91 91 C4 C4 D5). In play the d6s come from their own generator, so the
+		# game's dice stream is unchanged; lab dice take the traced ones.
 		var race: int = m.raw[0x2E]
 		if race in [1, 3, 5]:
 			m.raw[0xC0] = 1
 		elif race in [2, 4, 6, 7]:
 			m.raw[0xC0] = 2
-		var drawn: Array = colours_drawn[id].pop_front() if not colours_drawn.get(id, []).is_empty() else []
+		var drawn: Array = colours_drawn[id].pop_front() if TpDice.on and not colours_drawn.get(id, []).is_empty() else []
 		var j := 0
 		for k in [0xC1, 0xC2, 0xC3, 0xC5, 0xC6]:
-			var r: int = drawn[j] if j < drawn.size() else TpDice.random(6, "monster colour") + 1
+			var r: int
+			if j < drawn.size():
+				r = drawn[j]
+			elif TpDice.on:
+				r = TpDice.random(6, "monster colour") + 1
+			else:
+				r = _colour_rng.randi_range(1, 6)
 			j += 1
 			m.raw[k] = ((r + 8) * 16 + r) & 0xFF
 			if k == 0xC3:
@@ -223,6 +235,14 @@ static func from_bytes(d: PackedByteArray, item_data: PackedByteArray) -> PartyM
 	var m := PartyMember.new()
 	m.raw = d
 	m._cache_from_record = true
+	if d[0x84] >= 128 and d[0xC0] == 0 and d[0x2E] >= 1 and d[0x2E] <= 7:
+		# An NPC joined in ours before Combat Chat 67 kept its monster record's icon bytes (P126); the
+		# original's ADD_NPC never leaves size 0 on a race 1-7 record: draw them now, as the join would have.
+		m.raw[0xC0] = 1 if d[0x2E] in [1, 3, 5] else 2
+		for k in [0xC1, 0xC2, 0xC3, 0xC5, 0xC6]:
+			var r := _colour_rng.randi_range(1, 6)
+			m.raw[k] = ((r + 8) * 16 + r) & 0xFF
+		m.raw[0xC4] = 0xC4
 	m.name = d.slice(1, 1 + mini(d[0], 15)).get_string_from_ascii().strip_edges()
 	m.race_id = d[0x2E]
 	m.race = RACES[d[0x2E]] if d[0x2E] < RACES.size() else "?"
