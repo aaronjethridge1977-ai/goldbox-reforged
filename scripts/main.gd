@@ -1552,14 +1552,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			_facing = ((_facing + 2) % 4) as DungeonView.Dir
 			_write_wall_ahead()
 			_vm.sprite_id = -1
+			_event_image = null     # P125: a turn redraws the 3D view (below)
 			_redraw_hold(REDRAW_TURN_MS)
 		elif event.is_action("ui_left") or event.is_action("ui_right"):
 			# A turn redraws the view from the map, as a step does: a figure an encounter left
 			# standing (THE MONSTERS FLEE, a parley's end) is gone (P38; the original draws a
-			# figure only on the script's SPRITE commands).
+			# figure only on the script's SPRITE commands). A script's picture goes too, its last text stays (P125, main
+			# chat 145, DOSBox: 4:2 2,15, the chained man's LEAVE: his portrait and WHAT DO YOU DO WITH THE MAN? stay over
+			# the walking menu, as ours; a turn shows the room, the text still there; a step clears both). Ours kept the
+			# portrait through turns.
 			_facing = ((_facing + (3 if event.is_action("ui_left") else 1)) % 4) as DungeonView.Dir
 			_write_wall_ahead()   # GAME.OVR 0x171AE / 0x171F5 (chat 61)
 			_vm.sprite_id = -1
+			_event_image = null
 			Speaker.play(Speaker.STEP)    # GAME.OVR 0x171DF / 0x17224 (Combat's sound)
 			_redraw_hold(REDRAW_TURN_MS)
 		else:
