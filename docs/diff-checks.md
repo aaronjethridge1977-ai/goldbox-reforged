@@ -198,7 +198,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   variable number of turns into a fight whose party is on QUICK (in 532 it missed LIRA's turn: her six spell tries,
   0xB1CD, gone at draw 827). 526, 528 and 532 now use Combat's `magicat=<draw>` (MAGIC ON at the first computer turn
   from that draw: 0 for 532, whose original's Alt-M lands before the first QUICK turn; 3662 and 3641 for 526 and 528,
-  whose originals read it after the first caster's turn: `magicat=0` DIFFERS there). Checks README, chat 139.
+  whose originals read it after the first caster's turn: `magicat=0` DIFFERS there); 3, 5 and 10 `magicat=0` after each fight's tpseed (MATCH as before). No gate check uses the `magic` key now. Checks README, chat 139.
 
 - **A member DYING when a won fight ends (check 535, a `levels` check; game state, main path; matched; installed):**
   534's fight with tpseed 41000015 (ours' scratch build printed each member's status as the fight ended: LIRA 5,
