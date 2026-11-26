@@ -2993,7 +2993,7 @@ func _redrawing() -> bool:
 
 
 func _redraw_hold(ms: int) -> void:
-	if _keys_replay:
+	if _keys_replay or WalkPace.fast():     # P119: SETTINGS' WALK PACE FAST, no hold (the pace before chat 128)
 		return
 	var real := int(ms / Engine.time_scale)
 	_redraw_until = Time.get_ticks_msec() + real
