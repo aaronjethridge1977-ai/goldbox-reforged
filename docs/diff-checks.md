@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542); 536 and 541 in the gate; a mummy's second touch (543, to Combat)
+## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542); 536 and 541 in the gate; a mummy's second touch (543, to Combat); a blow on a member held mid-attack, a held member's save (544, to Combat)
 
 - **536 and 541 in the gate** (Combat Chat 64's 2906ed3, the drain's kill leaving the dead as they are, and 96a56dd,
   Silence 15' Radius aimed once with its save): each MATCH 3 of 3 on 9f5d86f. **DIFFCHECKS 530/530** on 9f5d86f.
@@ -192,6 +192,18 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   first: draws part at 1080 (BRAM, diseased at 1062, touched again at 1078). The original ends with BRAM, CEDRIC,
   LIRA and DORN diseased, ours with BRAM and LIRA. Ready edit `~/gbr/lab/data/c140/mummy_rot_543.diff` (combat.gd):
   all 2421 draws identical, HP and minutes as the original's; 543 MATCHES 3 of 3 with it, DIFFERS on main.
+- **Ghouls on a member their claw paralysed (found; game state, main path; to Combat; lab check 544):** first seen
+  after the mummies (543's original end save, camp REST 30 hours at tpseed 11111111: the rest is broken at 07:26 in
+  both by A PACK OF HUNGRY GHOULS, 28 of them; both parties wiped, so no save to compare), then measured from check
+  531's start (Player 56's 4:2 ghoul save) with tpseed 43100004. (1) GAME.OVR 0x13ECE: when the to-hit roll
+  (0x2BBA1) misses, 0xBA:0xB73 tests the target for effects 51, 52, 53, 31 (DS:0x286C; ours' `CombatSpells.HELD`) and
+  the blow **hits anyway**: a ghoul's bite after the claw that paralysed hits (ours missed: 1127 / 1185). The slay-
+  helpless blow stays at the attack's start. (2) The paralysis helper 0x10246 (0x102F4, 0x10316 the ghoul, 0x10341
+  the drider) saves with no test for a target already held, and on a failure prints IS PARALYZED and appends 0x34
+  again. (3) That append is 0xB0:0x52 = 0x2BD3C, a bare list insert: no add-effect handlers (no half-elf d100
+  0x11A3F, which a spell's add does run). Ready edit `~/gbr/lab/data/c140/helpless_hit.diff` (combat.gd): seed
+  43100004's 2155 draws and the rest fight's 5137 identical; 544 MATCHES 3 of 3, DIFFERS on main (137 differences:
+  DORN dead in ours, alive in the original). The rest's interruption roll and time already agreed (main as is).
 - **Not measured (leads):** the kill routine's caller 0xF776 is the handler printing "collapses" (string at file
   0xF76C; it writes +0x10E, +0x10F 1, +0x76 0, +0x6B from +0x98, +0x72 12): which effect owns it, and whether the
   main path reaches it, is still open; ours has no "collapses" text.
