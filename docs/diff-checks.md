@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542); 536 and 541 in the gate
+## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542); 536 and 541 in the gate; a mummy's second touch (543, to Combat)
 
 - **536 and 541 in the gate** (Combat Chat 64's 2906ed3, the drain's kill leaving the dead as they are, and 96a56dd,
   Silence 15' Radius aimed once with its save): each MATCH 3 of 3 on 9f5d86f. **DIFFCHECKS 530/530** on 9f5d86f.
@@ -183,6 +183,15 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   HP 1, +0x10D 1, the pool's 2000 gp paid; EXIT, SHARE, EXIT (no money left: no question). Both games the same; three
   runs MATCH, NO at PAY FOR CURE differs (18). Chat 135's RAISE DEAD +0x10D check (522) covered the other half of
   0x4B70 / 0x4F18.
+- **A mummy's touch on a member already diseased (found; game state, main path; to Combat; lab check 543):** 4:10
+  Valhingen graveyard's three mummies (9,11 W) from Player 54's p54a1 walk (`p2start/p25l2_s26g5`, 144 recorded keys
+  and seed 32010004 replayed in DOSBox to 10,11 W, the recording's seed there, saved: `data/c140/smumG`); tpseed
+  41100001, everyone QUICK. The touch's handler (GAME.OVR 0x11047) tests effect 0x32 first (0xBA:0x2199) and returns
+  without a draw; only a new infection draws the d6 for the rot's months (0x110AC -> 0xB0:0x48 = 0x2BCCD, the dice;
+  the rot's power is months x 16 + 15) and adds 0x32 (14400 minutes, 0xFF) and 0x39 (43200 minutes). Ours drew the d6
+  first: draws part at 1080 (BRAM, diseased at 1062, touched again at 1078). The original ends with BRAM, CEDRIC,
+  LIRA and DORN diseased, ours with BRAM and LIRA. Ready edit `~/gbr/lab/data/c140/mummy_rot_543.diff` (combat.gd):
+  all 2421 draws identical, HP and minutes as the original's; 543 MATCHES 3 of 3 with it, DIFFERS on main.
 - **Not measured (leads):** the kill routine's caller 0xF776 is the handler printing "collapses" (string at file
   0xF76C; it writes +0x10E, +0x10F 1, +0x76 0, +0x6B from +0x98, +0x72 12): which effect owns it, and whether the
   main path reaches it, is still open; ours has no "collapses" text.
