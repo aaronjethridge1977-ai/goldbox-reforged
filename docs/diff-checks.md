@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538); Grishnak's Hold Person outlasts the fight (539)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537); the throne room won with four dead (538); Grishnak's Hold Person and Curse outlast the fight (539, 540)
 
 - **Members held at a won fight's end (check 539; game state, main path; matched; installed):** Grishnak's temple
   (4:2 3,11, Cadorna's Textile House): Player 41's checkpoint `p41b1/s41out` walked in DOSBox to 4,11 W with the
@@ -180,7 +180,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   each member's effects as the fight ends) chose tpseed 42000008: the party wins with ARN, CEDRIC and LIRA held by
   Grishnak's HOLD PERSON, **effect 52 with 7, 8 and 8 minutes left in both end saves** (the original's .SPC files
   read), BRAM at 0 HP. All 3055 fight draws identical, all 22 figures' cells agree. Three runs MATCH. (Grishnak also
-  knows Cause Disease, the kill routine's disease caller 0xFFF4: not seen cast in these 21 seeds.)
+  knows Cause Disease, the kill routine's disease caller 0xFFF4: not seen cast in 45 seeds.)
+- **Grishnak's CURSE outlasts the fight (check 540; game state, main path; matched; installed):** 539's start and keys
+  with tpseed 4200001b: CEDRIC, ELWEN and DORN keep effect 2 with 1 minute left, LIRA dead, ARN at 0 HP, in both end
+  saves; all 3804 fight draws identical. Three runs MATCH.
 
 - **The throne room won with four of seven dead (check 538; game state, main path; matched; installed):** 533's keys
   with tpseed 3960002c (one of ours' five surviving seeds): BRAM, CEDRIC, LIRA and PRINCESS FATIMA dead, DORN
