@@ -4,7 +4,7 @@ class_name LabHooks
 
 const KEYS := ["smartquick", "smartmonsters", "fightend", "fightmenu", "fightaim", "partyhp", "monsters", "outcome", "who", "temple",
 		"ending", "fxlog", "fxwatch", "origaim"]
-const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee=", "controlat="]
+const PREFIXES := ["magicat=", "order=", "memorize=", "stage=", "hp=", "foehp=", "poison=", "handcast=", "handflee=", "controlat=", "grabs=", "speed="]
 
 
 ## Whether `n` is one of these keys.
@@ -166,6 +166,12 @@ static func handle(main: Node, n: String) -> bool:
 					str(c.down), str(c.get("fled", false))])
 		else:
 			print("   OUTCOME none (result %d)" % combat._result)
+		return true
+	elif n.begins_with("speed="):       # speed=<0-9>: the game speed now (after load=; as the lab's pokeds.py 49e2) (Combat Chat 65)
+		CampScreen.speed = clampi(int(n.trim_prefix("speed=")), 0, 9)
+		return true
+	elif n.begins_with("grabs="):       # grabs=<secs>:<ms>:<prefix>: the fight's screen filmed (Combat Chat 65)
+		_grabs(main, n.trim_prefix("grabs="))     # not awaited: the replay goes on while it films
 		return true
 	elif n.begins_with("handcast="):    # handcast=<aimskip>:<picks>: the lab's handcast.py in ours (Combat Chat 34)
 		await _handcast(main, n.trim_prefix("handcast="))
@@ -463,3 +469,25 @@ static func _handcast(main: Node, arg: String) -> void:
 		steady = 0
 		if st == "continue":
 			break
+
+
+## grabs=<secs>:<ms>:<prefix>: the open fight's screen saved every <ms> ms for <secs> s, each frame that differs from
+## the last as <prefix><n>_<centiseconds>.png, as the lab's grabloop.py films DOSBox (Combat Chat 65: the spell
+## matrix's pictures in a paced fight, EXTRA=--anim).
+static func _grabs(main: Node, arg: String) -> void:
+	var a := arg.split(":")
+	var secs := float(a[0])
+	var ms := int(a[1]) if a.size() > 1 else 40
+	var prefix := a[2] if a.size() > 2 else "/tmp/grab_"
+	var t0 := Time.get_ticks_msec()
+	var last := PackedByteArray()
+	var n := 0
+	while Time.get_ticks_msec() - t0 < secs * 1000.0 and n < 3000:
+		var cs = main._combat
+		if cs != null and cs.visible and cs.get("_scr") != null and cs._scr.img != null:
+			var b: PackedByteArray = cs._scr.img.get_data()
+			if b != last:
+				cs._scr.img.save_png("%s%03d_%05d.png" % [prefix, n, (Time.get_ticks_msec() - t0) / 10])
+				n += 1
+				last = b
+		await main.get_tree().create_timer(ms / 1000.0).timeout
