@@ -1222,7 +1222,9 @@ func _halve(m: PartyMember, it: GameItem) -> String:
 	copy.count = half
 	copy.readied = false
 	it.count -= half
-	m.items.append(copy)
+	# The new half goes right after the halved stack (main chat 145, DOSBox, check 572: 10 QUARRELS halved among six items:
+	# 5 QUARRELS, 5 QUARRELS, 15 ARROWS; ours put it last).
+	m.items.insert(m.items.find(it) + 1, copy)
 	return ""
 
 
@@ -1544,6 +1546,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					var it := _item()
 					if to == null and it != null:
 						m.items.erase(it)      # bug 19: given past the party's end, gone
+					elif to == m and it != null:
+						# To the giver herself (the light starts on her): the item goes to her list's end (main chat 145,
+						# DOSBox, check 573: LIRA's 10 QUARRELS, TRADE, SELECT; ours kept it in place).
+						m.items.erase(it)
+						m.items.append(it)
 					elif to != m and it != null:
 						if not _can_take(to, it):
 							_say("OVERLOADED")
