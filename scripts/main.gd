@@ -3805,7 +3805,15 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 	for it in found:
 		if it.name == "":
 			it.name = ItemNames.shared(_game_path).name_of(it)
-	found.append_array(field_items)
+	# A thrown weapon that lands (the stack's last, its type flagged thrown and melee) goes to the pile's head when it
+	# is thrown (GAME.OVR 0x14200-0x1425D), after the TREASURE's items were put there and before the fight's end puts
+	# the defeated figures' items at the head (0x571E): so the field's items come between the two, the last thrown
+	# first (DOSBox, chat 147: DORN's HAND AXE, then LIRA's SPEAR at the 4:2 ghouls: LOOT lists SPEAR, HAND AXE).
+	var pile: Array[GameItem] = []
+	for it in field_items:
+		pile.push_front(it)
+	pile.append_array(found)
+	found = pile
 	var spoils := Spoils.gather(defeated, coins, found, _vm.read_byte(0x6DE3) != 1)
 	var hidden := _hirelings_take_shares(spoils)
 	var standing: Array = []
