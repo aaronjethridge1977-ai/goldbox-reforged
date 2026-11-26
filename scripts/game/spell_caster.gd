@@ -500,36 +500,56 @@ static func add_affect(m: PartyMember, effect: int, spell: int, minutes: int, va
 	m.affects.append({"effect": effect, "spell": spell, "minutes": minutes, "value": value})
 
 
-## Lets `minutes` of game time pass for everyone's effects; those that run out end, except
-## diseases, which run their course (SpecialAffects.disease_expires). Returns the lines
-## to show ("ROTS...").
+## Lets `minutes` of game time pass for everyone's effects, in the original's steps of at most 10 minutes (0x240A4);
+## those that run out end. A disease or its rot that runs out is renewed: the record ends and a new one goes on at
+## the list's end with fresh time (_disease_runs_out). Returns the lines to show ("ROTS...").
 static func pass_time(party: Array, minutes: int) -> PackedStringArray:
 	if OriginalBugs.on():
 		return _pass_time_original(party, minutes)
 	var out := PackedStringArray()
-	for p in party:
-		var m: PartyMember = p
-		var keep: Array = []
-		var ending: Array = []
-		for a in m.affects:
-			if int(a.minutes) == 0:
-				keep.append(a)          # 0 = until removed
-				continue
-			a.minutes = int(a.minutes) - minutes
-			var lasts := true
-			while lasts and int(a.minutes) <= 0:
-				if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT]:
-					lasts = SpecialAffects.disease_expires(m, a, out)
+	var left := minutes
+	while left > 0:
+		var step := mini(left, 10)
+		left -= step
+		for p in party:
+			var m: PartyMember = p
+			var keep: Array = []
+			var ending: Array = []
+			for a in m.affects:
+				if int(a.minutes) == 0:
+					keep.append(a)          # 0 = until removed
+					continue
+				a.minutes = int(a.minutes) - step
+				if int(a.minutes) > 0:
+					keep.append(a)
 				else:
-					lasts = false
-			if lasts:
-				keep.append(a)
-			else:
-				ending.append(a)
-		m.affects = keep
-		for a in ending:
-			ended(m, a, out)
+					ending.append(a)
+			m.affects = keep
+			for a in ending:
+				_run_out(m, a, out)
 	return out
+
+
+## An effect whose time ran out: its end (ended), or for a disease or its rot the end handler's renewal
+## (_disease_runs_out).
+static func _run_out(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void:
+	if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT]:
+		_disease_runs_out(m, a, out)
+	else:
+		ended(m, a, out)
+
+
+## A disease (0x32) or its rot (0x39) that ran out (GAME.OVR 0xFF56 / 0xFFF4, the end handlers the clock's removal
+## runs): through 0xEC7A each appends a new record of its type with fresh time (0x32: 14400 minutes, the old power;
+## 0x39: 43200, a month less in the power's high nibble) by 0xB0:0x52, at the list's end; the cures set DS:0x681F
+## and get no new record (the cures don't come here). The old record's overshoot is not carried (main chat 141,
+## DOSBox at 3:0's inn: an 11-day REST with four members diseased, the renewed 0x32 at 14400 less the steps after
+## the one it ran out in; check 547).
+static func _disease_runs_out(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void:
+	var renewed: Dictionary = a.duplicate()
+	renewed.minutes = 0
+	if SpecialAffects.disease_expires(m, renewed, out):
+		m.affects.append(renewed)
 
 
 ## The original's effect clock (GAME.OVR 0x23DCD, ORIGINAL'S BUGS on: bug #17): time passes in steps of at most
@@ -565,18 +585,9 @@ static func _pass_time_original(party: Array, minutes: int) -> PackedStringArray
 					i += 1
 					continue
 				a.minutes = int(a.minutes) - step
-				var lasts := true
-				while lasts and int(a.minutes) <= 0:
-					if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT]:
-						lasts = SpecialAffects.disease_expires(m, a, out)
-					else:
-						lasts = false
-				if lasts:
-					i += 1
-					continue
 				var after_head := i == 1
 				m.affects.remove_at(i)
-				ended(m, a, out)
+				_run_out(m, a, out)
 				if after_head:
 					i = 0
 	return out
