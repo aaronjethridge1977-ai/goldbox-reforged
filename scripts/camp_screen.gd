@@ -818,6 +818,7 @@ func _start_rest() -> void:
 			# The study hours; each spell's 15 minutes a level follow (_learn_step).
 			m.learn_hours = m.learn_study_hours(spells)
 	_lines = []
+	SpellCaster.rest_begins(_party)    # the clock's member flags, set as a REST begins (GAME.OVR 0x24AB1)
 	_rest_go()
 	_refresh()
 
@@ -875,7 +876,7 @@ func _tick() -> void:
 		_to_rest -= 1
 		_rest_steps += 1
 		minutes_passed += 5
-		var news := SpellCaster.pass_time(_party, 5)
+		var news := SpellCaster.pass_time(_party, 5, true)
 		if not news.is_empty():
 			_say(news[news.size() - 1])
 		if _rest_steps % STEPS_PER_HEAL == 0:
