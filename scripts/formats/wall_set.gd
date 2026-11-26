@@ -91,7 +91,8 @@ static func build(game_path: String, file_no: int, segments: Array) -> WallSet:
 				var n := shape.x * shape.y
 				parts.append({"size": shape, "cells": data.slice(o, o + n)})
 				o += n
-			ws.walls.append({"tiles": tile_cache[id], "parts": parts})
+			# "src": which picture this is (WALLDEF file, block, wall in the block): the automap's door marks.
+			ws.walls.append({"tiles": tile_cache[id], "parts": parts, "src": Vector3i(file_no, id, w)})
 	return ws
 
 
