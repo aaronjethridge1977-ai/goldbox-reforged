@@ -548,8 +548,14 @@ static func _run_out(m: PartyMember, a: Dictionary, out: PackedStringArray) -> v
 static func _disease_runs_out(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void:
 	var renewed: Dictionary = a.duplicate()
 	renewed.minutes = 0
+	var was := m.status
 	if SpecialAffects.disease_expires(m, renewed, out):
 		m.affects.append(renewed)
+	elif m.status != was and m.raw.size() > 0x10D:
+		# The rot's last month kills through 0xECB3 (status 8, "DIES ROTS AWAY"), which clears +0x10D as every kill
+		# (0xED06; main chat 135). DOSBox, a 59 d 23 h 55 min rest at 3:0's inn: DORN status 8, HP 0, +0x10D 0
+		# (check 551).
+		m.raw[0x10D] = 0
 
 
 ## The original's effect clock (GAME.OVR 0x23DCD, ORIGINAL'S BUGS on: bug #17): time passes in steps of at most
