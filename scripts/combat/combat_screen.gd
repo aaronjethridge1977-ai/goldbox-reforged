@@ -2247,6 +2247,16 @@ var _use_items: Array[GameItem] = []    # kept for the developer layout (empty)
 ## (potion, wand, scroll...) aims it as CAST does, spending the item's charge.
 func _start_use() -> void:
 	_sheet.open_combat(_party_view(), _active_index(), "use", 0)
+	_sheet.no_use = _no_items_now()
+
+
+## No USE in the fight's item list for a figure that may use no item this round (GAME.OVR 0x21FDE: record +0x108's
+## byte 2, set each round 0x127FB, cleared by the cough 0xF6C0 and Silence 0xF36A). Main chat 144, DOSBox (Player
+## 56's 4:2 ghouls, ELWEN's Stinking Cloud on ARN and CEDRIC): coughing ARN's and CEDRIC's USE lists READY DROP
+## HALVE JOIN EXIT, BRAM's (outside the cloud) READY USE DROP HALVE JOIN EXIT.
+func _no_items_now() -> bool:
+	var c: Dictionary = _combatants[_combat.active]
+	return c.get("no_items", false) or (c.who as PartyMember).has_affect(CombatSpells.EFFECT_SILENCED)
 
 
 ## CAST: the spells page on grey, "CHOOSE SPELL:" CAST EXIT.
@@ -3124,6 +3134,7 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 			_refresh()
 		"VIEW":
 			_sheet.open_combat(_party_view(), 0, "view", _pick)
+			_sheet.no_use = _no_items_now()
 		"AIM":
 			_start_aim()
 		"USE":
