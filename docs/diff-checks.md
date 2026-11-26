@@ -172,6 +172,51 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 144: the ID's purse rounded (564, fixed) and paid from the pile (565, to Combat); the temple's ID (563); no USE for a coughing member in a fight (to Combat); no DROP on a penniless member's fight VIEW (to Combat); the thieves' well (566-568); P119 WALK PACE; P120 measured
+
+- **The ID pays from a purse rounded to the nearest gold piece (found; game state, main path; fixed, 8856a43):**
+  GAME.OVR 0x2300B calls 0x238F8, which sums the member's five coins in copper (DS:0xD24's values) and returns
+  (copper + 100) / 200; the rest goes back through 0x8F:0x52 (platinum and gold). The shop's BUY (0x7096), the temple's
+  cures (0x46E9) and the training hall's 1000-gold test (0x1C369) call the same routine (the stub 0x85:0x57; ours'
+  CoinPile.gold_of already rounded for BUY and the cures). Ours' `PartyMember.pay_gold_in_shop` floored. Lab check 564
+  (check 152's start with ARN's silver poked to 10 at CHRDATG1.SAV 0x8A: 500 gold and half a gold piece), 152's keys
+  (two IDs): the original 20 platinum and 1 gold, ours 20 platinum; MATCH after the fix. In the gate.
+- **The temple's ID (Chat 143's lead; matched with Combat's 004e6d5 and the fix):** lab check 563 (Player 9's party,
+  `data/c143/spois`, Tempus' temple: VIEW, ITEMS, End, ID): FOR 200 GOLD PIECES I'LL IDENTIFY YOUR BRACERS, YES:
+  BRACERS AC 6; ARN's 42 copper, 110 silver, 10 electrum, 19 gold, 401 platinum leave 367 platinum (floored: 366 and
+  4 gold). In the gate.
+- **An ID the purse can't pay comes from the shop's pile (found; game state, main path; Combat's files, ready edit
+  `~/gbr/lab/data/c144/id_pile.patch`):** 0x23043: the purse if it is worth 200, else the pile (0x67F4) if it is, else
+  "Not Enough Money". Lab check 565 (check 152's start: POOL, VIEW, ITEMS, End x3, ID on the Broad Sword, YES: BROAD
+  SWORD -2 CURSED, the pile 200 less; then SHARE, EXIT, NO to GO BACK): DIFFERS on main (ours refused the ID and shared
+  more), MATCH with the edit. Main installs 565 once it lands. The desk's earlier answer on Miss Poof's ID (only her
+  own coins) is corrected on the board.
+- **No USE in the fight's item list for a coughing member (found; input, main path; Combat's file, ready edit
+  `use_fight.patch`):** 0x21FDE: in a fight USE also needs record +0x108's byte 2 (set each round 0x127FB, cleared by
+  the cough 0xF6C0 and Silence 0xF36A). DOSBox: Player 56's 4:2 ghouls (`data/c144/sg042`, seed aeba0d61), ELWEN's
+  second Stinking Cloud by MANUAL two up two left (26,12: ARN and CEDRIC in it, both cough): ARN's and CEDRIC's USE
+  lists READY DROP HALVE JOIN EXIT; BRAM's, outside, READY USE DROP HALVE JOIN EXIT. Ours offered USE to all. No state
+  check: potions and scrolls can't be readied and USE on an unreadied item does nothing in both games, and the party
+  has no readied usable item. Silence: code only.
+- **No DROP on a fight VIEW for a member without money (found; input, main path; Combat's file, ready edit
+  `view_drop.patch`):** the VIEW page's builder (0x21C1E-0x21C7C) adds TRADE for money outside a fight (not a hired
+  NPC) and DROP for money in every mode. DOSBox, the same fight: DORN VIEW:ITEMS DROP EXIT; ELWEN with her seven coin
+  counts poked to 0 (`sg042p`) VIEW:ITEMS SPELLS EXIT. Ours kept DROP in a fight whatever the purse.
+- **Matched (no change):** the wilderness's item menu (DS:0x49F3 3; `data/c119/sOV`, LEAVE at the east edge: BRAM
+  READY USE TRADE DROP HALVE JOIN EXIT; ARN, dead, no USE); the inn's camp is DS:0x49F3 2 (USE as camp); HALVE needs
+  fewer than 16 items in every mode (0x220AC). **P122, the thieves' well** (4:2 1,3): 566 (check 456's start: PHINEAS,
+  a thief, climbs; Restal; no mission ([4A97] 0): the ring lifts the party out), 567 (Player 19's `p19a10_s10b` walked
+  from 2,8: DORN climbs; the mission open ([4A97] 255, [4AC8] 0): YES, the blindfold, YES: 6,11 N), 568 (`p19b2_s10c`,
+  after the Textile House ([4AC8] 1): the seal for half the treasure, YES: 1200 experience each, SHARE, out). In the gate.
+- **P120 (Jeremy: the walking menu before the ghouls' PRESS):** not a redraw. The original keeps the walking menu on
+  row 24 while a step's text types (speed 1: 0.35 s, PRESS 0.14 s after; speed 4: 1.1 s and 0.44 s; speed 0: at once;
+  `rowpoll.py`); ours' text is up at once and the menu waits P104's speed-4 typing time (1.36 s for this line), seen
+  in Jeremy's 08:12 recording replayed paced (`treplay_x.sh` with a scratch film token). A design question (board).
+- **Lead (code only, edge):** the training hall's test is the rounded purse (0x1C369: 999.5 gold passes; ours refuses
+  under 1000), and its fee loop (0x1DC6C) has no bound on the coin index: an underpaying purse walks on past
+  platinum into gems, jewellery and the record beyond with values read past DS:0xD24's table. Not measured.
+- Gate: 549, 552, 555, 558, 561, 562 (Combat's edits), 563, 564 joined: 552/552 on 626568a; 566-568 joined after.
+
 ## Chat 143: USE only for a member in it (558, to Combat); the Manual on a played dwarf (561, bug #24); the temple's REMOVE CURSE and NEUTRALIZE POISON on played parties (559, 560); the temple's VIEW is a shop's (562, to Combat)
 
 - **USE only for a member with record +0x10D set (found; input and game state, main path; Combat's edit):** the
