@@ -172,7 +172,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542); 536 and 541 in the gate; a mummy's second touch (543, to Combat); a blow on a member held mid-attack, a held member's save (544, to Combat)
+## Chat 140: the temple's STONE TO FLESH on a member stoned in play (542) and CURE DISEASE on one diseased in play (546); 536 and 541 in the gate; a mummy's second touch (543, to Combat); a blow on a member held mid-attack, a held member's save (544, to Combat)
 
 - **536 and 541 in the gate** (Combat Chat 64's 2906ed3, the drain's kill leaving the dead as they are, and 96a56dd,
   Silence 15' Radius aimed once with its save): each MATCH 3 of 3 on 9f5d86f. **DIFFCHECKS 530/530** on 9f5d86f.
@@ -183,6 +183,10 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   HP 1, +0x10D 1, the pool's 2000 gp paid; EXIT, SHARE, EXIT (no money left: no question). Both games the same; three
   runs MATCH, NO at PAY FOR CURE differs (18). Chat 135's RAISE DEAD +0x10D check (522) covered the other half of
   0x4B70 / 0x4F18.
+- **CURE DISEASE at the temple on a member diseased in play (check 546; game state, main path; matched; installed):**
+  check 126's start with the party of the original's end of 4:10's mummies (543's `omum1`): BRAM's mummy disease
+  0x32 and rot 0x39 (months 3) go for 1000 gp ("CURE DISEASE WILL ONLY COST 1000 GOLD PIECES."), his 0x37 stays, in
+  both. Three runs MATCH; NO differs (11). (Checks 144-150 used .SPC records written by hand.)
 - **A mummy's touch on a member already diseased (found; game state, main path; to Combat; lab check 543):** 4:10
   Valhingen graveyard's three mummies (9,11 W) from Player 54's p54a1 walk (`p2start/p25l2_s26g5`, 144 recorded keys
   and seed 32010004 replayed in DOSBox to 10,11 W, the recording's seed there, saved: `data/c140/smumG`); tpseed
