@@ -158,7 +158,7 @@ var _last_hurt := -1     # the figure whose effect line was shown last (its fall
 var _skulls: Array[int] = []    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
 var _move_label := ""
-var _moves_after_step := 0    # the walker's moves (half-moves) after its last step, for the label before GUARDING
+var _moves_after_step := 0    # the figure's moves (half-moves) at its turn's start or after its last step: the label before GUARDING
 var _turn_weapon_of := -1   # paced: the figure whose turn began, and its weapon line then
 var _turn_weapon := ""
 var _shown_by := {}      # paced: attackers whose blows were shown in this run of messages
@@ -667,6 +667,13 @@ func _draw_original(field: Image) -> void:
 	elif _row24_msg != "":
 		g.text(0, 24, _row24_msg, GameScreen.GREEN)
 	elif _flash != "":
+		if _combat != null and (_cmode == "aim" or _cmode == "manual"):
+			# An aim's note (0xBA:0x1693) clears and writes row 24 only: row 23's SPELL or RANGE line stays (DOSBox
+			# hpk1 at speed 6: SPELL:HOLD PERSON over ALREADY BEEN TARGETED; Combat Chat 66).
+			if _aim_for == "spell" and _use_item == null:
+				g.text(0, 23, "SPELL:" + _combat.magic.table.name_of(_spell_id), GameScreen.GREEN)
+			elif _aim_for != "spell":
+				g.text(0, 23, "RANGE = %d" % _aim_range(), GameScreen.GREEN)
 		g.text(0, 24, _flash, GameScreen.GREEN)
 	elif _asking_flee:
 		# GAME.OVR 0xA41E: "Flee:" through the question 0x2D9A0 with colour 0xD, YES straight after the colon
@@ -1156,13 +1163,15 @@ func _show_messages() -> void:
 			# A runner's "Escape is blocked" likewise: the getaway (0x68:0x39, called by the player's flee at
 			# 0xA440 and by the computer's run at 0xB52D) prints it through the row-24 routine 0xBA:0x1693 (the
 			# player's seen in DOSBox, Combat Chat 47's flee_k6).
-			if _move_label != "" and _moves_after_step >= 2 and paced():
-				# A walk that ends in a guard with a move left counts MOVE LEFT down once more, to what its last
-				# step left, a frame before GUARDING (GAME.OVR 0xB3B3 prints the label at each pass's top; DOSBox
-				# fb_kob1 at speed 6, c65fb f066-f086: ... 2, the step, 1, GUARDING; with under a move left (f054-
-				# f062: ... 1, the step, GUARDING) none).
+			if msg.ends_with(" IS GUARDING") and _moves_after_step >= 2 and paced():
+				# A computer-run guard shows MOVE LEFT first, a frame before GUARDING: GAME.OVR 0xB3B2, each pass of the
+				# figure's action, prints the label with the movement left at its top, the guarding pass too (DOSBox at
+				# speed 6: hpk1, a kobold with no step: 6, GUARDING; fb_kob1, c65fb f076-f086: 6 4 3 2, 1, GUARDING); with
+				# under a move left none (hpk1 c66hp f025-f037: 6 5 4 3 1, the last step, GUARDING; fb f054-f062).
 				_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (_moves_after_step / 2)
 				_refresh()
+				if OS.has_environment("AIMDBG"):     # lab (Combat Chat 66)
+					print("GUARDLABEL ", _move_label)
 				await get_tree().process_frame
 			_row24_msg = "GUARDING" if msg.ends_with(" IS GUARDING") else msg
 			_move_label = ""
@@ -1485,6 +1494,7 @@ func _advance() -> void:
 		_ensure_view(_combatants[i].cell, 2)
 		_box_off = false
 		_move_label = ""
+		_moves_after_step = int(_combatants[i].get("moves", 0))
 	else:
 		_centre_on_selected()
 	_refresh()
@@ -1856,10 +1866,10 @@ func _bevel(img: Image, at: Vector2i) -> void:
 		img.set_pixelv(at + Vector2i(0, CELL - 1), Color8(255, 255, 255))
 
 
-func _say(text: String, then: Callable = Callable()) -> void:
+func _say(text: String, then: Callable = Callable(), hold := -1.0) -> void:
 	_flash = text
 	_after_flash = then
-	_flash_timer.start(CharacterSheet.MESSAGE_TIME)
+	_flash_timer.start(hold if hold > 0.0 else CharacterSheet.MESSAGE_TIME)
 	print(text)
 	_refresh()
 
@@ -2392,8 +2402,10 @@ func _spell_target() -> void:
 		_say("NO TARGET THERE")
 	elif who in _spell_picks:
 		# A figure picked again costs no pick (GAME.OVR 0x14B79, "Already been targeted"); the aim starts over.
-		_say("ALREADY BEEN TARGETED")
-		_restart_pick_aim()
+		# The note first, over the picked figure's panel and box, then the aim again (0x14B8E's row-24 note and its
+		# Delay, the game speed's (1.2 s at 6), come before the next pass of the pick loop; DOSBox hpk1 at speed 6,
+		# c66hp f410-f413).
+		_say("ALREADY BEEN TARGETED", _restart_pick_aim, message_hold() if paced() else -1.0)
 	else:
 		_spell_picks.append(who)
 		_picks_left -= 1
@@ -2484,6 +2496,13 @@ func _finish_cast(by_target := false) -> void:
 		_selected = int(_spell_picks[_spell_picks.size() - 1])
 		_kept_state = _panel_state(_combatants[_selected], false)
 		_kept_hp = (_combatants[_selected].who as PartyMember).hp
+		_panel_kept = true
+	elif paced() and not _spell_picks.is_empty():
+		# Picks ended with EXIT: the aim has gone back to the caster, whose panel stays, with no box, through the
+		# spark and the lines (DOSBox hpk1 at speed 6, Combat Chat 66: c66hp f427-f465, BAKSHI's panel, no box,
+		# KOBOLD IS HELD; ours boxed him).
+		_kept_state = _panel_state(_combatants[me], false)
+		_kept_hp = (_combatants[me].who as PartyMember).hp
 		_panel_kept = true
 	if _spell_resolving:
 		_combatants[me].resolving = true
