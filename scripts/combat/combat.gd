@@ -66,6 +66,9 @@ var morale_base := 99        # the encounter's morale (0x6DC6)
 # caves' traps write +2 / -2 / -4 (8:13: "A NET ENTANGLES YOU"), the lizard men's swamp -4.
 # GAME.OVR: the to-hit roll 0x2BBF2 (d20 + 0x6E71 for a party figure, 0x6E70 for a monster,
 # a natural 20 always hits), each round's movement 0x1291E.
+## A Stinking Cloud just laid, not yet shown (CombatSpells._lay_cloud): {aim, cells, under}; the paced screen draws the
+## old ground there until the caster's CREATES A NOXIOUS CLOUD line is up (Combat Chat 65, GAME.OVR 0x28EDC).
+var cloud_shows: Array = []
 var monster_hit_mod := 0
 var party_hit_mod := 0
 var party_move_mod := 0

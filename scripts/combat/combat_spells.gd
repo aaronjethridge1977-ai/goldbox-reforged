@@ -318,6 +318,15 @@ func _lay_cloud(i: int, cell: Vector2i, lvl: int) -> void:
 		c.field.cells[p.y * Battlefield.WIDTH + p.x] = CLOUD_GROUND
 	if not (cl.cells as Array).is_empty():
 		clouds.append(cl)
+	# GAME.OVR 0x28ECF-0x28F09: with the four cells laid, "<caster> Creates a noxious cloud" on row 10 (0xBA:0x16EC;
+	# the string at 0x28B11), the view centred on the aim (0x3E0:0x52 with margin 0xFF) and drawn again, the cloud now
+	# in it, and the Delay; then the saves (DOSBox, Combat Chat 65: sc_orc1 at speed 6, BAKSHI / CREATES A / NOXIOUS
+	# CLOUD on the field as it was, then the cloud with the view on the aimed orc; ours drew it before the flight).
+	c.cloud_shows.append({"aim": cell, "cells": cl.cells.duplicate(), "under": cl.under.duplicate()})
+	var was := c.fx_subject
+	c.fx_subject = -1
+	c.message.emit("%s CREATES A NOXIOUS CLOUD" % c.combatants[i].who.name)
+	c.fx_subject = was
 	for j in who:
 		cloud_save(j, c.combatants[i].who)
 
