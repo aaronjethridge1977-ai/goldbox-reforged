@@ -172,7 +172,13 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
-## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat)
+## Chat 139: Mendor's Library's basilisk stones a member (532); the throne room's end state, three waves won (533); the spectres' two-level drain (534); a member DYING at a won fight's end (535); a drain past level 2 after a kill (536, to Combat); a heal on a stoned member (537)
+
+- **CURE LIGHT WOUNDS on a stoned member in camp (check 537; game state, main path; matched; installed):** 532's
+  original end (DORN stoned by the basilisk) as the start: ENCAMP, CEDRIC's MAGIC, CAST, CURE LIGHT WOUNDS, DORN
+  (CAST SPELL ON WHOM lights the caster first: End x3), SELECT: the spell is spent and a d8 drawn (the seed moves),
+  DORN stays stoned at 0 HP, in both end saves. Three runs MATCH. (Ours' F2 doesn't save from the camp menu: the
+  check leaves camp first, as the others do.)
 
 - **A member killed by a two-level drain's first level stays DEAD (status 6), not DEAD FOREVER (found; game state,
   main path; Combat's level_drain.gd; lab check 536, not in the gate until the edit lands):** 534's fight with tpseed
