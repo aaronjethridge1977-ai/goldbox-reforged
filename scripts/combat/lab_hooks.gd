@@ -123,7 +123,7 @@ static func handle(main: Node, n: String) -> bool:
 		print("   ACTIVE %s" % (combat._combatants[act].who.name if act >= 0 else "-"))
 		for c in combat._combatants:
 			if not c.down:
-				print("   %s %s %d,%d" % ["P" if c.team == 0 else "M", c.who.name, c.cell.x, c.cell.y])
+				print("   %s %s %d,%d dir %d" % ["P" if c.team == 0 else "M", c.who.name, c.cell.x, c.cell.y, int(c.get("dir", -1))])
 	elif n == "ending":                 # ending: the closing scene (PROGRAM 8) over the walking screen (Combat Chat 4)
 		if main._ending == null:
 			main._ending = EndingScreen.new()
