@@ -184,6 +184,27 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   BOW (allowed in both games); EXIT, NO. On aa4d277 the one difference: CEDRIC's effect 8 62674 in the original,
   62680 in ours (6 rounds). `_on_event_fight_finished` now runs `SpellCaster.pass_time` on every party member not
   among the fight's figures, as for a duel: MATCH.
+- **P132 (display, main path; fixed in ecl_vm.gd): 4:21's elf scroll lost its runes again.** The original (DOSBox,
+  a jump save to 4:21, 6,14 N, SEARCH, Up, Enter, Enter): under "...THE LAST PART IS EATEN AWAY." and its PRESS
+  <ENTER> the view window is black with the three rune lines (chat 109's page); after the press the view is empty
+  (its inner frame) until a turn. Ours showed the picture (the skeleton) or, as Jeremy saw at night, an all-black
+  view, no runes. Bisected (`runetest.sh`, chat 109's 98606c9 good): chat 117's 218cff9 (a menu waits for the text
+  before it to type) stops the script before the press, and `run()` cleared the rune page on that resume as if the
+  press had been answered. `resume()` from a typing wait now keeps the page (`_keep_runes`): MATCH in shots (during
+  the press and after it). The other rune pages (5:3, 5:4, 7:23) go through the same path. Shots
+  `~/gbr/lab/data/c149/p132_*.png`.
+- **P131 (game state, new area; matched, no change): the diary page (Journal Entry 11) in the textile house.** 4:2
+  event 23 (0xAB65: 7 squares, 3,3 3,6 7,6 10,6 1,8 15,8 0,13) gives it once while the cell 0x4A0F is not 1, then
+  sets it; 0x4A0F is a cell other areas reuse (3:0 0xAE73, 3:11 0xA0A7 write 0; 4:21, 6:28, 1:24, 8:29 ... too), so
+  after New Phlan (or a reload from before the find) the page comes back at the first of the 7 squares walked on.
+  DOSBox and ours from a jump save (4:2 4,3 W): Up gives the page at 3,3; off and back on 3,3, nothing, in both.
+- **P130 (display, main path; matched, no change): the textile house's map.** The original's AREA map and ours at
+  4:2 2,2, 13,2, 2,13 and 13,13 (the four 11 x 11 windows cover all 16 x 16): pixel-identical (`areas149.sh`); ours'
+  maps read the same GEO data, so the Cluebook's drawing (p. 15) is what differs from the game. (At 13,13 ours'
+  place line put the time on row 14: the mini-map's QoL layout, chat 118, applied though AREA hides the mini-map.)
+- **P128's second door (Jeremy 14:52, near 7,4 facing N):** every door-bit side is passable in the original's move
+  routine, whatever its picture; 4:2 has 45 door-bit sides drawn with a wall-like picture (11,14 E and 15,3 E with
+  picture 4, the rest picture 11). 7,4 itself has no door bits (its north side is open).
 
 - **579 (game state, main path; matched; installed): a dead member gets an even SHARE.** GAME.OVR 0x252C3 counts
   (0x25269) and pays every player character (+0x84 control 0 or 0xB3; an NPC, 0x80 and over, skipped) whatever his
