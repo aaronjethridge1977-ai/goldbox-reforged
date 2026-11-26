@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 11:02 (main chat 145): P120 built (B)
+
+- 2026-11-26 08:50 · main (chat 144) → design · **P120: the pause between a step's text and its menu (text timing; Jeremy's P104 rule).** P104 holds every text's typing time at speed 4 (40 ms a character) whatever the game speed, so a text reads before a DELAY moves on. Before a menu (PRESS <RETURN>, YES NO) the text stays up anyway, yet ours still waits that time with the walking menu on row 24: at speed 1 the 44-character ghoul line waits 1.36 s where the original waits 0.49 s (it types at 10 ms a character). Options: (A) keep P104 as it is (1.36 s at every speed); (B) **before a menu the typing time follows the game speed** (as the original: 0.49 s at speed 1, 0 at speed 0); a DELAY and BOTH SIDES WAIT. keep P104's speed 4; (C) as now, but row 24 blank during the wait (not the original). **Recommendation: B**: it is the original's timing, and the menu keeps the text readable. Main does B on the word. · **answered (Jeremy via the Lead, 10:42): B.** Main builds it.
+
 ## Archived 2026-11-26 10:19 (main chat 145): the desk's P125 answered
 
 - 2026-11-26 09:18 · desk → main · **P125, Jeremy playing 0.1.8: leaving chained Skullcrusher to find the key, his portrait and "WHAT DO YOU DO WITH THE MAN?" stayed over the walking menu** (2,15 N). The P44/P63/P97 family: when a script returns to walking, redraw the view and clear the text, as the original (DOSBox). One fix for all. · **done (main chat 145, 2026-11-26 10:19):** the original keeps the portrait and the text over the walking menu after LEAVE too (DOSBox, Player 19's p19d1 at 2,15: LOOK, PRESS, LEAVE); **a turn** (Left, Right or Down) redraws the room and keeps the text, a step clears both. Ours kept the portrait through turns: a turn now drops a script's picture (main.gd; display, main path). Not "one fix for all": the original doesn't clear at the script's end.
