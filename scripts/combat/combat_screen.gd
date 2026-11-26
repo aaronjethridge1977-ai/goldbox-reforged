@@ -154,6 +154,7 @@ var _crackle_at := Vector2i.ZERO
 ## skull (block 11) on its square while "GOES DOWN ..." is up, then the square is empty (lab:
 ## Bakshi and the orcs at speed 4, 0.8 s).
 var _lingering: Array[int] = []
+var _last_hurt := -1     # the figure whose effect line was shown last (its fall, if any, comes next)
 var _skulls: Array[int] = []    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
 var _move_label := ""
@@ -581,6 +582,8 @@ func _draw_original(field: Image) -> void:
 		# (Jeremy's P105; DOSBox prayer_kob5, Combat Chat 48).
 		var gave_up: bool = e.get("surrendered", false) and _turn_weapon_of == _selected
 		var hp_shown: int = int(e.get("surrender_hp", m.hp)) if gave_up else m.hp
+		if _panel_kept:
+			hp_shown = _kept_hp      # the panel isn't drawn again (DOSBox fb_kob1: HITPOINTS 3 under its fall)
 		g.text(23, 3, "HITPOINTS", GameScreen.GREEN)
 		g.text(33, 3, str(hp_shown), GameScreen.YELLOW if hp_shown < m.hp_max else GameScreen.GREEN)
 		g.text(23, 5, "AC %d" % m.ac, GameScreen.GREEN)
@@ -952,6 +955,14 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	_combat.surprise_flags = _surprise
 	_combat.message.connect(_on_combat_message)
 	_combat.magic_note.connect(func(t: String) -> void: _say(t))
+	# A computer-run figure with no weapon readied at its turn's start that readies one: the panel drawn again with it
+	# (DOSBox, Combat Chat 65: fb_kob1 at speed 6, each kobold's first turn: KOBOLD HITPOINTS 3 AC 7, then SHORT SWORD
+	# with its first step; ours kept the panel of the turn's start, no weapon).
+	_combat.weapon_readied.connect(func(i: int) -> void:
+		if i == _turn_weapon_of and _turn_weapon == "":
+			_turn_weapon = _weapon_text(_combatants[i].who)
+			if paced():
+				_refresh())
 	_messages.clear()
 	_panel_msgs.clear()
 	_pending_msgs.clear()
@@ -1165,9 +1176,13 @@ func _show_messages() -> void:
 					Speaker.play(snd, true)
 				var sf := _spell_flight
 				_spell_flight = {}
-				_fly(sf.from, sf.to, [5, 133], 240.0)
-				await flight_done
+				if sf.has("from"):
+					_fly(sf.from, sf.to, [5, 133], 240.0)
+					await flight_done
 				Speaker.play(0xFF)
+				if sf.has("centre"):
+					_ensure_view(sf.centre, 0)     # Fireball (0x29746)
+					_refresh()
 			elif snd > 0:
 				# Nothing flies: the spell's first line follows at once (DOSBox: Sleep's ~0.2 s after TARGET,
 				# Mirror Image's 0.06 s after its SPELL line), the sound cut on its own.
@@ -1225,7 +1240,11 @@ func _show_messages() -> void:
 			elif subj == -2:
 				cands = _bolt_order(_spell_hits, who)
 			for k in cands:
-				if (_combatants[k].who as PartyMember).name.to_upper() == who and not msg.contains(" ATTACKS "):
+				# A fall line (GOES DOWN...) is the damage routine's words under the figure's own line, with no picture
+				# of its own (DOSBox, Combat Chat 65: fb_kob1, the skull on the burnt kobold and no burst; ours gave
+				# the fall line the next KOBOLD's burst, and the skull went to that one).
+				if (_combatants[k].who as PartyMember).name.to_upper() == who and not msg.contains(" ATTACKS ") \
+						and not (subj == -2 and _falls_line(msg) and _last_hurt >= 0):
 					_spell_hits.erase(k)
 					_sparkle = k
 					if _bolt_on:
@@ -1240,11 +1259,24 @@ func _show_messages() -> void:
 				# margin 3, as a step's 0x12FFC with 2), and the view stays there (DOSBox, Combat Chat 65: sl_kob1's
 				# third sleeper at the field's right edge).
 				_ensure_view(_combatants[_sparkle].cell, 3)
+			if _sparkle >= 0:
+				_last_hurt = _sparkle
+				if OS.has_environment("AIMDBG"):     # lab (Combat Chat 65)
+					print("BURST %d at %s subj %d: %s" % [_sparkle, _combatants[_sparkle].cell, subj, msg])
 			if msg.contains("GOES DOWN") or msg.contains("IS KILLED") or msg.contains("FALLS DEAD"):
-				for k in _lingering:
+				# The fall is the figure whose line came last (a fireball's GOES DOWN under its own burst; DOSBox,
+				# Combat Chat 65: fb_kob1's skull on the kobold just burnt, ours took the first KOBOLD lingering).
+				var order: Array[int] = []
+				for k in [subj, _last_hurt]:
+					if k >= 0 and _lingering.has(k):
+						order.append(k)
+				order.append_array(_lingering)
+				for k in order:
 					if (_combatants[k].who as PartyMember).name.to_upper() == who:
 						_lingering.erase(k)
 						_skulls.append(k)
+						if OS.has_environment("AIMDBG"):     # lab (Combat Chat 65)
+							print("SKULL %d at %s subj %d last %d" % [k, _combatants[k].cell, subj, _last_hurt])
 						break
 		_refresh()
 		if msg.ends_with(" CREATES A NOXIOUS CLOUD") and not _combat.cloud_shows.is_empty():
@@ -1278,8 +1310,12 @@ func _show_messages() -> void:
 				if not _pending_subj.is_empty():
 					_pending_subj.pop_front()
 			_refresh()
-			_fly(sf.from, sf.to, [5, 133], 240.0)
-			await flight_done
+			if sf.has("from"):
+				_fly(sf.from, sf.to, [5, 133], 240.0)
+				await flight_done
+			if sf.has("centre"):
+				_ensure_view(sf.centre, 0)
+				_refresh()
 		if _cast_sound == 0 and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
 			# The cast's sound plays while its line is drawn; then the wrapper's wait is set
 			# again (0x27E56), which takes the driver off the timer: the sound stops there (in
@@ -1296,6 +1332,7 @@ func _show_messages() -> void:
 	_spell_hits.clear()
 	_skulls.clear()
 	_lingering.clear()
+	_last_hurt = -1
 	if _posed >= 0:
 		_posed = -1
 		_refresh()
@@ -2004,10 +2041,14 @@ func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	_bolt_on = id in [CombatSpells.LIGHTNING, 60]
 	_bolt_started = false
 	_bolt_walk = []
-	# Fireball: no spark flies to the aim; the bursts follow TARGET at once (P86, DOSBox, Combat Chat 42: two hand
-	# casts filmed; Lightning Bolt's spark does fly).
-	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell and id != CombatSpells.FIREBALL:
+	# Fireball's spark flies to the aim too, and then its handler (GAME.OVR 0x29683) centres the view on the aim
+	# (0x29746: 0x3E0:0x52 with margin 0) before the bursts (DOSBox, Combat Chat 65: fb_kob1 at speed 6, the spark
+	# from BAKSHI to the aimed kobold in 0.3 s, then the view moved one column and two rows; P86's "no spark",
+	# Combat Chat 42, was filmed at speed 0).
+	if _combat.magic.aim_kind(id) != "self" and to != _combatants[i].cell:
 		_spell_flight = {"from": _combatants[i].cell, "to": to}
+	if id == CombatSpells.FIREBALL:
+		_spell_flight["centre"] = cell
 	if _cast_announced and not _muted:
 		# No line after the aim: the cast's sound and its flight go first, before the spell's lines.
 		_pending_msgs.append(CAST_MARK)
@@ -2381,6 +2422,7 @@ func _abort_spell() -> void:
 ## it was at TARGET (the original doesn't redraw it: no "(HELPLESS)" under a kobold just held, hpk15).
 var _panel_kept := false
 var _kept_state := ""
+var _kept_hp := 0
 
 
 ## The panel's status line for combatant `e` (START.EXE 0x16A0, see _draw_original).
@@ -2415,6 +2457,7 @@ func _finish_cast(by_target := false) -> void:
 		# BAKSHI's Sleep on a kobold: KOBOLD HITPOINTS 3 from TARGET through the bolt and the four FALLS ASLEEP).
 		_selected = aimed_at
 		_kept_state = _panel_state(_combatants[_selected], false)
+		_kept_hp = (_combatants[_selected].who as PartyMember).hp
 		_panel_kept = true
 	elif by_target and paced() and not _spell_picks.is_empty():
 		# The aim ends on the last figure picked and the panel stays on it, with no box, through the spell's
@@ -2422,11 +2465,16 @@ func _finish_cast(by_target := false) -> void:
 		# from the third TARGET to the last line; after EXIT the aim has gone back to the caster, hp_orc1).
 		_selected = int(_spell_picks[_spell_picks.size() - 1])
 		_kept_state = _panel_state(_combatants[_selected], false)
+		_kept_hp = (_combatants[_selected].who as PartyMember).hp
 		_panel_kept = true
 	if _spell_resolving:
 		_combatants[me].resolving = true
 	_cast_announced = announced
+	# The figures the spell puts down stay drawn until their own line (DOSBox, Combat Chat 65: fb_kob1, every kobold
+	# standing through the spark and each one's burst until its GOES DOWN; ours dropped them all at TARGET).
+	var up_before := _standing()
 	_combat.magic.cast(me, _spell_id, _spell_cell, _spell_picks, _use_item, announced)
+	_note_falls(up_before)
 	_cast_announced = false
 	_combatants[me].resolving = false
 	_spell_resolving = false

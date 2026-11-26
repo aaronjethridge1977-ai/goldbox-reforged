@@ -100,6 +100,8 @@ var key_queue: Array = []
 var typed := KeyBurst.new()
 ## The poll's Alt-M (or 2) line: "MAGIC ON" / "MAGIC OFF" (the original's 0xBA:0x1693 note, from 0xBBD7 / 0xBBED).
 signal magic_note(text: String)
+## The computer's choice readied an item on figure i (the screen draws the turn's panel again; Combat Chat 65).
+signal weapon_readied(i: int)
 ## Whose line a message is, for the screen's sparkles (Combat Chat 52, Jeremy's troll and cloud): the figure an effect
 ## is being added to (>= 0; the original shows the sparkles from its add-effect routine, START.EXE 0x2B8B from GAME.OVR
 ## 0x2C617, on that figure while its line is up), -2 inside a spell's resolution with the figure not known (the screen
@@ -1070,6 +1072,8 @@ func choose_weapon(i: int) -> void:
 			_toggle_ready(i, best_shield, hands_used(m))
 	if m.items.map(func(it): return it.readied) != readied_before:
 		m.recalculate(types)       # (only on a change: ours' recalculate would rebuild a monster's AC)
+		if m.weapon != weapon_before:
+			weapon_readied.emit(i)
 		if m.weapon != weapon_before and c.attacks > 0:
 			c.attacks = attacks_for(m)
 			c.second = second_for(m)
