@@ -1247,6 +1247,11 @@ func _show_messages() -> void:
 						_skulls.append(k)
 						break
 		_refresh()
+		if msg.ends_with(" CREATES A NOXIOUS CLOUD") and not _combat.cloud_shows.is_empty():
+			# GAME.OVR 0x28EEC-0x28F04: the line up, then the view centred on the aim and drawn with the cloud.
+			var cs: Dictionary = _combat.cloud_shows.pop_front()
+			_ensure_view(cs.aim, -1)
+			_refresh()
 		if _sparkle >= 0:
 			# P85: START.EXE 0x2B8B shows the effect's 4 frames 70 ms apart (speed + 1) times with the message up
 			# (GAME.OVR 0x2C617), and no hold after: 0.28 s at SPEED 0, 1.4 s at 4 (ours had at least 1.2 s).
@@ -2101,6 +2106,11 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> 
 		var at := p0.lerp(p1, gone / length if length > 0 else 1.0)
 		var img: Image = _arrow(a, b) if frames[0] is String else _art.sprite(frames[int(t * 15.0) % frames.size()])
 		_flight = {"img": img, "at": Vector2i(int(at.x) / 8 * 8, int(at.y) / 8 * 8)}
+		if frames == [5, 133] and _posed >= 0 and _combatants[_posed].cell == a and gone >= CELL:
+			# A spell's spark that has left the caster's square: the field drawn under it again shows the caster
+			# standing (DOSBox, Combat Chat 65: sc_orc1 and sl_kob1 at speed 6, BAKSHI's cast pose for the
+			# spark's first ~0.12 s only; ours kept it to the end of the spell's lines).
+			_posed = -1
 		_refresh()
 		if gone >= length:
 			break
@@ -2489,9 +2499,18 @@ func _refresh() -> void:
 	var size := VIEW_CELLS * CELL
 	var img := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
 	img.fill(Color8(85, 85, 85))
+	var unseen := {}     # a cloud laid but not yet shown (Combat.cloud_shows): its old ground
+	if _combat != null and not _combat.cloud_shows.is_empty():
+		if paced():
+			for cs in _combat.cloud_shows:
+				for k in (cs.cells as Array).size():
+					unseen[cs.cells[k]] = int(cs.under[k])
+		else:
+			_combat.cloud_shows.clear()
 	for r in VIEW_CELLS:
 		for c in VIEW_CELLS:
 			var t := _field.tile(_view.x + c, _view.y + r)
+			t = unseen.get(Vector2i(_view.x + c, _view.y + r), t)
 			var ti := _art.tile(t)
 			if ti:
 				img.blit_rect(ti, Rect2i(0, 0, CELL, CELL), Vector2i(c * CELL, r * CELL))
