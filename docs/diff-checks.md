@@ -172,6 +172,24 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 149: SHARE with a fallen member (579, matched); a monster that got away keeps its loot (580, matched)
+
+- **579 (game state, main path; matched; installed): a dead member gets an even SHARE.** GAME.OVR 0x252C3 counts
+  (0x25269) and pays every player character (+0x84 control 0 or 0xB3; an NPC, 0x80 and over, skipped) whatever his
+  health; ours' `CoinPile.share` the same. Start `sfall` (poked: Player 56's `sg042`, CEDRIC's HP 1 at
+  CHRDATG3.SAV 0x11B, no training record), chat 148's 578 keys (seed aeba0d61; AIM NEXT to CEDRIC, ATTACK ALLY YES at
+  range 1, else QUICK): DORN and ARN knock CEDRIC dead (status 6); the ghouls carry no money (VIEW POOL EXIT), so POOL,
+  then SHARE: CEDRIC takes his part as the rest (copper 62, gold 1416 ...), in both games. Break 9579 (no SHARE)
+  DIFFERS. The hirelings' cut (0x6866) skips one with +0x10C not 0 and counts him as one share, as ours'
+  `_hirelings_take_shares` (status 0).
+- **580 (game state, main path; matched; installed): a monster that got away stays off the pile.** The fight's end walk
+  (0x557E, experience and money: 0x55ED side 1, 0x55FB +0x10C 3 skipped) as ours' `defeated()` (down, not fled; a
+  panicked monster killed later is looted in both; CONTINUE BATTLE NO marks the standing ones fled). Start `sogre`:
+  Player 11's played `p11t1/entry` (1:18 1,15 S; slot.py H -> G), seed 12345678 at the load, the segment's 61
+  walking keys: the ogres' random encounter at 7,9 E in both games; COMBAT, QUICK all; an OGRE GOT AWAY; CONTINUE
+  BATTLE NO, 322 experience each, SHARE, EXIT, NO. A scratch tree counting the fled ogre DIFFERS (experience + 37,
+  one gold and one jewellery more each): the escaped ogre carried money.
+
 ## Chat 148: the pile's order with a TREASURE list (577, matched); a training member's fall in a fight (578, lab: a ready edit to Combat)
 
 - **577 (game state, main path; matched; installed): the treasure pile with all three parts.** The robed orc at 1:18
