@@ -693,6 +693,30 @@ const STATUS_NAMES := ["OKAY", "ANIMATED", "TEMP GONE", "RUNNING", "UNCONSCIOUS"
 	"DEAD", "STONED", "GONE"]
 
 
+## The original's damage routine outside a fight's blows (START.EXE 0xBA:0x2228; a script's DAMAGE, an item's, a
+## slowed poison's tick): short of the HP the excess decides (more than 9 dead, else dying), an ANIMATED member brought
+## to 0 dies, one brought to 0 goes unconscious; then a member in any status but OKAY or ANIMATED (the set at
+## 0xBA:0x2208) is out of the fight (record +0x10D 0, 0x22E1) **and keeps 0 HP** (0x22EA), even one already down with
+## HP left: only an OKAY or ANIMATED member keeps HP less the damage. Chat 150, DOSBox: CEDRIC unconscious at 9 HP
+## with a slowed poison, its first tick (1 point) left him at 0 (ours had 8). Main chats 61, 135, 136 (checks 87, 88,
+## 121, 456, 523, 524) for the falls.
+func take_damage(dmg: int) -> void:
+	var past := dmg - hp if dmg > hp else 0
+	var left := hp - dmg if dmg <= hp else 0
+	if past > 9 or (left == 0 and status == STATUS_ANIMATED):
+		status = STATUS_DEAD
+	elif past > 0:
+		status = STATUS_DYING
+	elif left == 0:
+		status = STATUS_UNCONSCIOUS
+	if status not in [STATUS_OKAY, STATUS_ANIMATED]:
+		if raw.size() > 0x10D:
+			raw[0x10D] = 0
+		hp = 0
+	else:
+		hp = left
+
+
 func can_fight() -> bool:
 	return status == STATUS_OKAY and hp > 0
 

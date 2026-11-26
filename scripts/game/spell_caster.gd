@@ -465,7 +465,9 @@ static func ended(m: PartyMember, a: Dictionary, out: PackedStringArray) -> void
 			if m.has_affect(SLOWED_POISON):
 				m.affects.append({"effect": POISON_TICK, "spell": int(a.get("spell", 0)), "minutes": 10, "value": 0xFF})
 				if m.hp > 1:
-					m.hp -= 1
+					# Through the damage routine (0xB0:0x7F -> START.EXE 0xBA:0x2228): a member down with HP left
+					# keeps 0 (chat 150, DOSBox: CEDRIC unconscious at 9 HP, 0 after the tick).
+					m.take_damage(1)
 					out.append("%s TAKES 1 POINT OF DAMAGE" % m.name)
 		MANUAL_TRAINING:
 			out.append("%s IS HARDIER" % m.name)
