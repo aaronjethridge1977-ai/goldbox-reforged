@@ -889,7 +889,9 @@ func shoot(i: int, j: int) -> void:
 		need -= script_hit_mod(am)
 		var d20 := roll(1, 20, "%s shoots %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var free_miss := _free_miss(t, d20)     # to-hit category 16, on every roll above 1
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
+		# A roll that misses a helpless target (the effects 0xBA:0xB73 tests, DS:0x286C: 51, 52, 53, 31) hits anyway
+		# (GAME.OVR 0x13ED3), so one made helpless by an earlier blow of the same attack is struck (a ghoul's bite).
+		var hit := (d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss) or CombatSpells.held(tm)
 		if not hit:
 			message.emit("%s ATTACKS %s%s AND MISSES" % [am.name, tm.name, how])
 		else:
@@ -1683,7 +1685,9 @@ func attack(i: int, j: int, free: bool = false) -> void:
 		var need: int = am.thac0 - ac - bonus - SpecialAffects.hit_bonus(am, tm) - script_hit_mod(am)
 		var d20 := roll(1, 20, "%s to hit %s%s (needs %d)" % [am.name, tm.name, how.to_lower(), need])
 		var free_miss := _free_miss(t, d20)     # to-hit category 16, on every roll above 1
-		var hit := d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss
+		# A roll that misses a helpless target (the effects 0xBA:0xB73 tests, DS:0x286C: 51, 52, 53, 31) hits anyway
+		# (GAME.OVR 0x13ED3), so one made helpless by an earlier blow of the same attack is struck (a ghoul's bite).
+		var hit := (d20 != 1 and (d20 == 20 or d20 >= need) and not free_miss) or CombatSpells.held(tm)
 		if not hit:
 			message.emit("%s %s %s%s AND MISSES" % [am.name, verb, tm.name, how])
 			continue
@@ -1872,9 +1876,11 @@ func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 		paralysis = 63
 	if _hit_has(am, allowed, 0x45):
 		paralysis = roll(1, 9, "paralysis rounds") + 10     # drider (GAME.OVR 0x10341)
-	if paralysis > 0 and not t.down and not CombatSpells.held(tm) \
-			and not SpecialAffects.blocks(tm, SpecialAffects.PARALYZED, func(): return roll(1, 100, "resists")) \
-			and not _save(tm, 0, 0):
+	# The handlers (GAME.OVR 0x102F4, 0x10316, 0x10341) call 0x10246: the save (0xB0:0x43), with no test for a target
+	# already held (a ghoul's bite on a member its claw paralysed is saved against), and on a failure "IS PARALYZED"
+	# and the effect appended (0xB0:0x52 = 0x2BD3C runs no add-effect handlers: no racial d100, as a half-elf's
+	# 0x11A3F at a spell's add, and no resistance pass).
+	if paralysis > 0 and not t.down and not _save(tm, 0, 0):
 		message.emit("%s IS PARALYZED" % tm.name)
 		SpellCaster.add_affect(tm, SpecialAffects.PARALYZED, 0, paralysis, 12)
 	for type in [0x55, 0x56]:
@@ -1882,7 +1888,8 @@ func _on_hit_specials(i: int, j: int, slot2: bool = false) -> void:
 			drain(j, 1 if type == 0x55 else 2)
 	if _hit_has(am, allowed, 0x57) and not t.down:
 		# A mummy's touch (GAME.OVR 0x11047): disease, no save.
-		if SpecialAffects.infect(tm, roll(1, 6, "months of rot")):
+		# The months are drawn only for a member not yet diseased (0x11074: effect 0x32 tested first).
+		if not tm.has_affect(SpecialAffects.DISEASE) and SpecialAffects.infect(tm, roll(1, 6, "months of rot")):
 			message.emit("%s IS DISEASED" % tm.name)
 	if _hit_has(am, allowed, 0x4F) and not t.down:
 		# Tyranthraxus's fiery blows (handler at GAME.OVR 0x10674): 2d10 more, as fire.
