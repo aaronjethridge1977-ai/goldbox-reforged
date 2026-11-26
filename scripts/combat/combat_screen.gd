@@ -1599,6 +1599,17 @@ func _start_aim(purpose: String = "attack") -> void:
 	others.assign(others.filter(func(j): return _combat.clear_line(_combatants[me], _combatants[j]).y == 1))
 	_combat._by_distance(_combatants[me], others)
 	_aim_list.append_array(others)
+	if OS.has_environment("AIMDBG") and purpose == "spell":
+		# lab (Combat Chat 64): squares in range with a clear line whose ground is seen through but not walked
+		var f: Battlefield = _combat.field
+		for y in Battlefield.HEIGHT:
+			for x in Battlefield.WIDTH:
+				if f.see_through(x, y) and not f.walkable(x, y) and _combat.range_between(_combatants[me].cell,
+						Vector2i(x, y)) <= _combat.magic.spell_range(me, _spell_id) and _combat.line_steps(
+						_combatants[me].cell, Vector2i(x, y)).y == 1:
+					print("AIMLOW %s at %s ground pic %d" % [_combatants[me].who.name, Vector2i(x, y), f.tile(x, y)])
+		print("AIMFROM %s %s range %d" % [_combatants[me].who.name, _combatants[me].cell,
+			_combat.magic.spell_range(me, _spell_id)])
 	_aiming = true
 	_cmode = "aim"
 	# Every aim starts on the first of the list, the caster or attacker himself (GAME.OVR 0x15D53: 0x15B84 takes
@@ -1649,6 +1660,9 @@ func _show_aim() -> void:
 	_selected = _aim_list[_aim_index]
 	_aim_cell = _combatants[_selected].cell
 	_spell_cell = _aim_cell
+	if OS.has_environment("AIMDBG"):     # lab: each aim step's figure, cell, range and TARGET (Combat Chat 64)
+		print("AIMSTEP %d %s %s range %d target %s" % [_aim_index, _combatants[_selected].who.name, _aim_cell,
+			_combat.range_of(_combatants[_combat.active], _combatants[_selected]), _can_target()])
 	if not _on_screen(_aim_cell):
 		_centre_on(_aim_cell)
 	_refresh()
@@ -1684,10 +1698,18 @@ func _aim_why(j: int) -> String:
 	return "" if _combatants[me].attacks > 0 else "NO ATTACKS LEFT"
 
 
+## Why a spell's aim can't TARGET where it is ("" if it can): a figure walked to with NEXT / PREV by the in-sight
+## list's range (CombatSpells.why_not_figure), a MANUAL square by the line to it and its ground (why_not).
+func _spell_why() -> String:
+	if _cmode == "aim" and _aiming and not _aim_list.is_empty():
+		return _combat.magic.why_not_figure(_combat.active, _spell_id, _aim_list[_aim_index])
+	return _combat.magic.why_not(_combat.active, _spell_id, _aim_cell)
+
+
 ## Whether TARGET is offered at the aim.
 func _can_target() -> bool:
 	if _aim_for == "spell":
-		return _combat.magic.why_not(_combat.active, _spell_id, _aim_cell) == ""
+		return _spell_why() == ""
 	var who := _combat.occupant(_aim_cell)
 	return who >= 0 and _aim_why(who) == ""
 
@@ -1781,13 +1803,16 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 			KEY_KP_2: Vector2i(0, 1), KEY_KP_4: Vector2i(-1, 0), KEY_KP_6: Vector2i(1, 0),
 			KEY_KP_7: Vector2i(-1, -1), KEY_KP_9: Vector2i(1, -1), KEY_KP_1: Vector2i(-1, 1), KEY_KP_3: Vector2i(1, 1)}
 		if moves.has(key):
-			_aim_cell += moves[key]
+			# The cursor stays on the field (GAME.OVR 0x1568D: x clamped to 0-49, y to 0-24; Combat Chat 64).
+			_aim_cell = (_aim_cell + moves[key]).clamp(Vector2i.ZERO, Vector2i(Battlefield.WIDTH - 1, Battlefield.HEIGHT - 1))
 			_spell_cell = _aim_cell
 			var who := _combat.occupant(_aim_cell)
 			if who < 0 and _aim_for == "spell":
 				who = _combat.body_at(_aim_cell)    # a fallen member's body (0x157B9)
 			if who >= 0:
 				_selected = who
+			if OS.has_environment("AIMDBG"):     # lab (Combat Chat 64)
+				print("AIMMANUAL %s target %s" % [_aim_cell, _can_target()])
 			if not _on_screen(_aim_cell):
 				_centre_on(_aim_cell)
 			_refresh()
@@ -2259,7 +2284,7 @@ func _begin_spell(id: int, item: GameItem) -> void:
 ## (as many as the spell takes) and go off when the last is picked.
 func _spell_target() -> void:
 	var me: int = _combat.active
-	var why := _combat.magic.why_not(me, _spell_id, _aim_cell)
+	var why := _spell_why()
 	if why != "":
 		_say(why)
 		return
