@@ -158,6 +158,7 @@ var _last_hurt := -1     # the figure whose effect line was shown last (its fall
 var _skulls: Array[int] = []    # a spell's missile, flown after its "CASTS A SPELL" (P16)
 var _box_off := false
 var _move_label := ""
+var _moves_after_step := 0    # the walker's moves (half-moves) after its last step, for the label before GUARDING
 var _turn_weapon_of := -1   # paced: the figure whose turn began, and its weapon line then
 var _turn_weapon := ""
 var _shown_by := {}      # paced: attackers whose blows were shown in this run of messages
@@ -290,7 +291,7 @@ func run_check(game_path: String, map: GeoMap, px: int, py: int, facing: int,
 			var icon: Image = e.icon
 			if icon:
 				var src := icon
-				if Placement.DX[e.dir] < 0:
+				if _mirrored(e.dir):
 					src = icon.duplicate() as Image
 					src.flip_x()
 				full.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), e.cell * CELL)
@@ -1155,6 +1156,14 @@ func _show_messages() -> void:
 			# A runner's "Escape is blocked" likewise: the getaway (0x68:0x39, called by the player's flee at
 			# 0xA440 and by the computer's run at 0xB52D) prints it through the row-24 routine 0xBA:0x1693 (the
 			# player's seen in DOSBox, Combat Chat 47's flee_k6).
+			if _move_label != "" and _moves_after_step >= 2 and paced():
+				# A walk that ends in a guard with a move left counts MOVE LEFT down once more, to what its last
+				# step left, a frame before GUARDING (GAME.OVR 0xB3B3 prints the label at each pass's top; DOSBox
+				# fb_kob1 at speed 6, c65fb f066-f086: ... 2, the step, 1, GUARDING; with under a move left (f054-
+				# f062: ... 1, the step, GUARDING) none).
+				_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (_moves_after_step / 2)
+				_refresh()
+				await get_tree().process_frame
 			_row24_msg = "GUARDING" if msg.ends_with(" IS GUARDING") else msg
 			_move_label = ""
 			_refresh()
@@ -1582,6 +1591,8 @@ func _ai_step() -> void:
 		if actor.cell != before:
 			Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)
 			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
+			var stepped: Vector2i = actor.cell - before
+			_moves_after_step = maxi(0, moves_before - (3 if stepped.x != 0 and stepped.y != 0 else 2))
 			# GAME.OVR 0x12F0D: a computer-run step whose square is off the view first brings
 			# the walker's own square within 2, then keeps the new one in view.
 			if not _on_screen(actor.cell):
@@ -2111,6 +2122,13 @@ func _crackle_to(to: Vector2i) -> void:
 		_crackle_at = p
 	_sparkle = hit
 	_refresh()
+
+
+## A figure's icon is drawn mirrored when it faces S, SW, W or NW (dir 4-7): GAME.OVR 0x31F68
+## mirrors the picture for any dir above 3 (DOSBox fb_kob1: the kobolds facing S drawn as the ones
+## facing W) (was: only the dirs with a step west).
+static func _mirrored(dir: int) -> bool:
+	return dir > 3
 
 
 ## The arrow sprite for a flight from a to b, mirrored for the left diagonals (lab: Darkstar's
@@ -2643,7 +2661,7 @@ func _refresh() -> void:
 			icon = _attack_icon(e)
 		if icon:
 			var src := icon
-			if Placement.DX[e.dir] < 0:
+			if _mirrored(e.dir):
 				src = icon.duplicate() as Image
 				src.flip_x()
 			img.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), at)
