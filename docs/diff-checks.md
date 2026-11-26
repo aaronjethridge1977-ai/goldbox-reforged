@@ -172,6 +172,38 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 143: USE only for a member in it (558, to Combat); the Manual on a played dwarf (561, bug #24); the temple's REMOVE CURSE and NEUTRALIZE POISON on played parties (559, 560); the temple's VIEW is a shop's (562, to Combat)
+
+- **USE only for a member with record +0x10D set (found; input and game state, main path; Combat's edit):** the
+  original's item menu (GAME.OVR 0x21FCA) adds USE only when the member's +0x10D is set (0 for one stoned, dead, dying,
+  or unconscious after a fight or a script's damage) and DS:0x49F3 is 2-5 (camp 2, walking 4, the fight 5 with a second
+  test). DOSBox lab check 558: check 532's original end party (DORN stoned by 2:15's basilisk: status 7, +0x10D 0) at
+  3:0's inn (`sinn2G`'s SAVGAMG.DAT), DORN given the Manual of Bodily Health record from slot E of chat 108's `wp110/game`
+  (Jeremy's party: SIR KILLEMGOOD's; byte 46 = 0x46): READY TRADE DROP HALVE JOIN EXIT, U does nothing, the Manual readied and unread, CON
+  18 after 31 d 1 h; ours offered USE and read it: CON 19. DIFFERS on main; MATCH with `use_10d.patch`
+  (character_sheet.gd `_item_menu()`: no USE when raw[0x10D] is 0). Requested of Combat (the sheet is its screen).
+- **The Manual on a played dwarf (bug #24; the Lead's recheck of 555):** lab check 561: check 542's original end
+  (DORN cured of the basilisk at the temple: OKAY, HP 1, his four racial records as play left them) at 3:0's inn, given
+  the same Manual record, reads it (USE offered) and RESTs 31 d 1 h: the original's save holds the training record
+  `07 c0a8 ff 01` (43200 minutes: frozen to the REST's end), CON 18; ours 19. DIFFERS on main; MATCH with Combat's two
+  camp lines (chat 142's `camp_flag.patch`). Installs with 552 and 555.
+- **559, the temple's REMOVE CURSE on a cursed item a player readied (no change needed; main path):** check 546's
+  start (its party list made seven: DIRTEN's entry from the save) with Player 8's checkpoint `p8_v31T/entry`: LIRA's
+  readied Necklace (byte 54 = 1); End x4 (LIRA), HEAL, End x7 (REMOVE CURSE), 3500 gold, YES: byte 54 cleared, the
+  Necklace still readied; SHARE leaves money (the party's load): GO BACK AND RETRIEVE YOUR MONEY? NO. MATCH; NO at the
+  price (lab 995) DIFFERS.
+- **560, the temple's NEUTRALIZE POISON on a member killed by poison in a fight (no change needed; main path):**
+  check 546's start with Player 9's `p9_sk4T/after` (ELWEN and DORN dead, 0x37 appended in play); End x5 (DORN), HEAL,
+  End x5 (NEUTRALIZE POISON), 1000 gold, YES: the 0x37 record gone, DORN still DEAD at 0 HP, +0x10D 0. MATCH; NO at
+  the price (lab 996) DIFFERS.
+- **The temple's VIEW is a shop's (found; input and game state, main path; Combat's edit):** the temple runs with
+  DS:0x49F3 = 1, so VIEW's item menu is READY TRADE DROP HALVE JOIN SELL ID EXIT (no USE; the menu builder's
+  0x22125 and 0x22154 add SELL and ID in mode 1). Lab check 562 (560's start): VIEW, ITEMS, End x2, SELL: I'LL GIVE
+  YOU 30 GOLD PIECES FOR YOUR LONG BOW, YES: ARN's platinum 401 -> 407. Ours had no SELL there (USE instead): DIFFERS on
+  main; MATCH with `temple_sell.patch` (temple_screen.gd opens the sheet as a shop's; an overloaded seller's platinum
+  goes on the temple's pile, as the shop's `_after_view`). The temple's ID not measured.
+- **Not found in play:** a blind member (effect 0x21) in any played save (CURE BLINDNESS stays on check 123's start).
+
 ## Chat 142: a kill outside a fight takes DS:0xC14's effects (554; fixed); the clock's member flag (552, 555; bug #24); the temple's RAISE DEAD and CURE CRITICAL WOUNDS on a played party (556, 557)
 
 - **The Lead's item, the 16 effects on a death outside a fight (main path: no difference, from the code).** A script's
