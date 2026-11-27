@@ -172,6 +172,23 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 153: P137 matches (one spectre); keys typed during the closing pictures wait for the PRESS BUTTON menu (fixed; input, main path)
+
+- **P137 ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT.", no wight on the field): matches the original by the code.**
+  4:10 event 24 (ECL4 block 10, 0xAA74): ENCOUNTER_MENU 0xAA97, then CLEAR_MON and `LOAD_MON 17, 1, 17` (0xAAF7): one
+  monster, MON4CHA record 17, SPECTRE; its .SPC records (0x6D, 0x75, 0x6F, 0x6C, 0x6E, 0x56, 0x77) hold no summoning.
+  The wight is the text's only. Ours runs the same script (LOAD_MON loads the count it is given).
+- **The closing pictures read no key (found, fixed; input, main path, resets the streak):** PROGRAM 8 (GAME.OVR
+  0x20948) and its animation (0x206A3) call only the text, picture, clock and Delay routines (0xAF8, 0x3D0, 0x464,
+  0x709:0xC3F / 0xDBE / 0xDD3 / 0x626, 0xBA:0x27D9's redraw), no key read (START.EXE 0x899); a key typed then stays in
+  the BIOS buffer through KNOWING THAT TYRANTHRAXUS...'s typing (chats 116, 120) and the PRESS BUTTON OR RETURN TO
+  CONTINUE menu (5:7 0x993D) takes it. Ours (chat 24's hall door save, `data/c153/end.sh`, both fights won with
+  `foehp=1`): **V during the pictures opened VIEW over them**, Enter was dropped (the menu waited). Now main.gd
+  `_unhandled_input` keeps keys typed during them as type-ahead (as a DELAY's): Enter answers the menu once the text
+  has typed (on to New Phlan), V waits. By the code and ours' runs; no DOSBox film (the original's finale needs both
+  fights played, chat 24's `orig_end.sh`); no check (the checks' keys wait for the engine). No match recording
+  reaches the finale.
+
 ## Chat 152: P134, P140, P141 match; P139 (Pool): one load per coin; the .SPC byte 4 kept and written (save export, fixed); a hand-moved member paralysed mid-step (Combat Chat 67's ask, matched)
 
 - **P134 (Jeremy: DO YOU LEAVE? over the walking menu, no YES/NO, 15,6 E at the iron gate): matches the original.**

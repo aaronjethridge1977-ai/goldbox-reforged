@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 23:20 (main chat 153): a desk request to main answered
+
+- 2026-11-26 18:52 · desk → combat, main · **P137, Jeremy playing 0.1.8: a message said the spectre summoned a wight, but no wight appeared.** First check: what makes the message (script or ability), whether the original puts a wight on the field then (DOSBox, where); match. (P126's bright shapes on this field too.) Jeremy 18:51: the text is the encounter's: "YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT." (9,7 S, 23:27): main, read that script's monster list (figure + wight?) and compare the fight's field. · done: **main chat 153: matches the original by the code** (4:10 event 24, 0xAA74: `LOAD_MON 17, 1, 17` loads one SPECTRE, MON4CHA record 17, whose .SPC records hold no summoning; the wight is the text's only; ours runs the same script; docs/diff-checks.md "Chat 153")
+
 ## Archived 2026-11-26 22:27 (main chat 152): desk and combat requests to main answered
 
 - 2026-11-26 19:46 · desk → main · **P141, Jeremy playing 0.1.8: after the vampire's second death nothing says he's beaten** (the graveyard is cleared; resting works). First check: the coffin fight's script after the win and the original in DOSBox (any message); match. The quest log shows DONE (Jeremy 19:47). · done (main chat 152, 2026-11-26 22:27): **matches the original:** after the coffin fight the script sets its flags and exits with no text (ECL4 block 10 0xB171); the Player's played run went CONTINUE BATTLE NO, the fight's PRESS ENTER, the treasure, then walking.
