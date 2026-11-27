@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-27 12:52 (main chat 158): main chat 146's and 147's findings (in docs/diff-checks.md)
+- 2026-11-26 · main (chat 147) · **The treasure pile after a fight: thrown weapons' place** (GAME.OVR 0x14200-0x1425D): a thrown weapon that lands (hand axe, spear: types flagged 0x14) goes on the pile when thrown, at its head, so the pile reads the defeated figures' items, then the thrown weapons with the last thrown first, then the TREASURE's items (was: the thrown weapons last, in throw order). DOSBox matched (check 576). · which item TAKE lights first after a fight where a hand axe or spear was thrown; bot and Player recordings that TAKE after such a fight
+- 2026-11-26 · main (chat 146) · **The training hall tests the purse rounded to the nearest gold piece** (GAME.OVR 0x1C369 -> 0x238F8, as the shop's ID; the Lead's B, 11:22): 999.5 to 999.99 gold is offered training and the fee takes all the coins (the original crashes there: original-bugs #26, not reproduced) · a trainee with just under 1000 gold
+
 ## Archived 2026-11-27 08:36 (main chat 157): P138, answered
 
 - 2026-11-26 18:59 · desk → combat · **P138, Jeremy playing 0.1.8: DROP coins: the coins and MOVEMENT update at once, ENCUMBRANCE stays old (4205) until back on VIEW (3330).** Redraw it with the coins, as the original. · **Answered by main (chat 157), fixed the original's way, not as asked:** the original keeps ENCUMBRANCE *and* MOVEMENT as they were after a coin DROP (DOSBox from `sdrop` with ARN's platinum poked to 4000: 4000 dropped, ENCUMBRANCE 7116 and MOVEMENT 3 stayed, on the coin menu and back on VIEW's menu; the coin rows close up at once); ours redrew MOVEMENT, so ours now keeps it too (character_sheet.gd, 2026-11-27 08:36; display, main path; no streak reset). Both numbers are new on the next VIEW, as in the original.
