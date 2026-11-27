@@ -4156,6 +4156,15 @@ func _event_picture(head: int, id: int) -> Image:
 # An event's PIC block with several frames animates in the view as in the original: the first
 # frame, then each later one laid over it by XOR (EgaPicture.xor_frames; lab, chat 10: the
 # camp's fire), each shown for its delay (units of about 0.11 s, as the camp fire measured).
+# Main chat 158: the original turns the frames only inside its menu routine, for the menus whose caller asks
+# (GAME.OVR 0x2CD72; a script's MENU_HORIZONTAL 0x1F78 and ENCOUNTER_MENU 0x2F20 do while a PIC picture is up,
+# DS:0x84E0 / 0x84E1), counting each frame's delay from the menu's start (0x2CD01); while a text types, at
+# MENU_VERTICAL, PARLAY, WHO, a DAMAGE's PRESS or the walking menu the frame stands. DOSBox, 1:18's auction
+# (PICTURE 16, six frames; DS:0x6ABF watched): frame 1 through the typing, turning at PRESS <ENTER>, still at
+# DO YOU WISH TO:. Ours turned them all the time.
+const ANIM_POLL := 0.02
+const BIOS_TICK := 0.0549
+var _anim_elapsed := 0.0
 
 var _anim_frames: Array[Image] = []
 var _anim_delays: Array[int] = []
@@ -4192,21 +4201,38 @@ func _start_picture_animation(id: int) -> void:
 		_anim_timer.one_shot = true
 		_anim_timer.timeout.connect(_next_picture_frame)
 		add_child(_anim_timer)
-	_anim_timer.start(_frame_seconds(0))
+	_anim_elapsed = 0.0
+	_anim_timer.start(ANIM_POLL)
 
 
+## A frame's time: its delay in tenths of a second (the menu waits until delay x 10 hundredths have passed, 0x2CDB3),
+## read off the 18.2 Hz BIOS clock, so rounded up to its ticks: delays 2, 4, 6 stood 0.22, 0.45, 0.6 s in DOSBox.
 func _frame_seconds(i: int) -> float:
-	return maxf(_anim_delays[i] if i < _anim_delays.size() else 2, 1) * CampScreen.ANIM_UNIT
+	var d: int = maxi(_anim_delays[i] if i < _anim_delays.size() else 2, 1)
+	return ceilf(d * 0.1 / BIOS_TICK - 0.001) * BIOS_TICK
 
 
 func _next_picture_frame() -> void:
 	if _anim_frames.size() < 2 or not _event_image in _anim_frames:
 		_anim_frames = []
 		return
+	_anim_timer.start(ANIM_POLL)
+	if not _picture_menu_animates():
+		_anim_elapsed = 0.0
+		return
+	_anim_elapsed += ANIM_POLL
+	if _anim_elapsed + 0.001 < _frame_seconds(_anim_i):
+		return
+	_anim_elapsed = 0.0
 	_anim_i = (_anim_i + 1) % _anim_frames.size()
 	_event_image = _anim_frames[_anim_i]
-	_anim_timer.start(_frame_seconds(_anim_i))
 	_show()
+
+
+## The script waits at a menu that turns a picture's frames: MENU_HORIZONTAL (PRESS <RETURN> too) or ENCOUNTER_MENU.
+func _picture_menu_animates() -> bool:
+	return _vm != null and _vm.state == EclVM.State.MENU and not _vm.menu_vertical and _vm._menu_kind in ["", "encounter"] \
+			and not _vm.menu.is_empty()
 
 
 ## First frame of picture block `id` from PREFIX<n>.DAX, preferring the current script's file.
