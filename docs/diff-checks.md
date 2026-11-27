@@ -172,6 +172,52 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 159: P142 and P145 (match); Enter at REST's menu and at ORDER (checks 598, 599); the menu calls' Enter and Space swept; AIM's cursor Space, MODIFY's Enter filmed
+
+- **P142 (matches):** 3:14's thieves (ECL3 block 14, 0xAC4C): NO goes to 0xB343 (SPRITE_OFF, PICTURE 255, EXIT). DOSBox
+  from check 89's start (7,5 W, one step west): the picture goes, the view is redrawn and WILL YOU CHASE THEM? stays over
+  the walking menu, through a turn too (P125 / P134's rule); ours the same (windowed, same start and keys).
+- **P145 (filmed, matches):** the original walked from the Player's played save p21a3 `bane` (1:24 map 31, 15,4 W; no
+  jump) along row 4 and column 4 to 0,11, west off the edge into GEO1 block 24 (map 31's on-move table 0x99A8: west ->
+  map 24 at 14,11), then to 15,15 (two orc patrols and an ogre band on QUICK). From 15,15 facing west: no wall, Up walks
+  to 14,15 (06:39 -> 06:40); from 14,15 facing east: the wall, Up blocked. Ours from the original's saves at both squares
+  (`data/c159/o145F`, `o145W`): the same 3D frame and the same steps. A one-way wall in the data, both games.
+- **The 35 menu calls' Enter and Space (GAME.OVR, stub 0x3C5:0x2A):** only four callers test 0x0D after the call
+  (the script's menus 0x8BB9, AIM's cursor 0x1596E, MODIFY 0x1BAE8, REST 0x24535) and one exit set holds it (ORDER,
+  0x1905A: Enter, P, S); none tests 0x20 (Space acts only through the fight's main menu's set, known). MODIFY's test is
+  dead (only extended keys reach it): DOSBox, check 365's keys with Enter for Down: Enter did nothing, as ours. The
+  list routine (0x2D8AC) returns the lit line on any key the menu routine passes back but G O I Q (extended), P, N, E,
+  Esc: Space takes the line, as ours' vertical menu.
+- **Found, fixed (game state and input, main path; resets the streak by Q35): Enter at REST's menu.** REST's loop
+  (0x244FB-0x2461C) turns Enter into R whatever word is lit (0x2458C) and starts INC / DEC on the minutes at every REST
+  (0x244F7). DOSBox at 3:0's camp (check 391's start): R lights MINS (the camp word's place), Enter goes back to the
+  camp menu with REST lit (REST TIME 0); MAGIC's REST lights INC, Enter rests (Up then Enter: 5 minutes, the watch
+  rousts the party at 11:03); Esc goes back with the light kept. Ours took Enter as the lit word: MINS (nothing), or
+  INC from MAGIC (5 minutes more, no rest). `camp_screen.gd` (Combat's). **Check 598** (391's start: ENCAMP MAGIC REST
+  Up Enter, GO at the watch); DIFFERS on 0b503b8 (no end), MATCHES on 5d7a3ca.
+- **Found, fixed (input, main path; resets the streak by Q35): Enter at ALTER's ORDER.** ORDER's loop takes Enter as
+  SELECT / PLACE whatever is lit, the light kept (DOSBox: ALTER ORDER '.' (EXIT lit) Enter: BROTHER SEAN HAS BEEN
+  SELECTED, PLACE EXIT with EXIT lit); ours took EXIT. **Check 599** (391's start: ALTER ORDER '.' Enter End End Enter,
+  THRENDER third); DIFFERS on 0b503b8, MATCHES on dfdcea5.
+- **Found, fixed (display, main path; no reset):** REST's Up / Down change the time and leave the light where it is
+  (DOSBox: MINS stayed lit; REST's loop maps the scan codes to I / D itself, 0x24546); ours lit INC / DEC (0ba43e0).
+- **The event picture after LOOK (the post's (c), by the code):** a menu animates a picture only while DS:0x84E0
+  (PICTURE, 0x15F8; also 0x7B09) and 0x84E1 are both set; 0x84E1 is set by a step's arrival (0x4223) and a 3D redraw
+  (0x1684) and cleared only on one branch of the picture loader 0x7A21 (stub 0x2B:0x48: its call of 0x79E4, 0x79E7,
+  and 0x7B77; the loader is called by PICTURE at 0x158C, ENCOUNTER_MENU at 0x2D88 and five more handlers, 0x1188,
+  0x3033-0x32A8). LOOK touches neither flag, so an event's picture shown by LOOK animates at its menu as after a step,
+  as ours. Left open: which pictures take the clearing branch (those then hold their frame at the menu until a step;
+  ours turns them), display only.
+- **Matched (filmed):** Space at AIM's cursor with TARGET offered (check 84's goblins, RHIANNON's hand turn, `oaim.sh`:
+  the screen unchanged in both; 4537c87's by-the-code rule for the fight's cursor). The temple's CAST CURE ANYWAY (NO
+  lit) and PAY FOR CURE (YES lit), row 24 pixel for pixel. Ours' AIM opens on the nearest enemy with TARGETING SKIPS
+  THE PARTY on (QoL C11-3); the original on the aimer (RANGE = 0).
+- **Filmed, matches: Space at the camp's CAST SPELL ON WHOM** (Player 37's played save `p37a1_s37inn`, 3:0's inn:
+  ENCAMP, CEDRIC's MAGIC CAST, CURE LIGHT WOUNDS: the screen unchanged in both, SELECT lit in both). It is START.EXE's
+  member pick, the one a scroll's and an item's ON WHOM use (4537c87); a scroll's own ON WHOM not reached: CEDRIC's
+  CLERICAL SCROLL WITH 1 SPELL does nothing on USE in camp in both games (and the item list moves on Home / End
+  only: Up / Down do nothing there in the original, ours' QoL P33).
+
 ## Chat 158: the menu routine's timed key (dead), its animation loop (the camp's fire, event pictures), Space at TRADE TO? / TRADE WITH WHOM? and TRADE TO?'s light (checks 595-596), Enter and Space at the fight's menus (597); the hall's limits in Silver Blades and Pools
 
 - **The timed key (0x2CDFF) is dead in Pool:** DS:0x6B2E / 0x6B30 / 0x6B32 are only read (0x2CE01-0x2CE29); no code
