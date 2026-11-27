@@ -89,6 +89,14 @@ const REST_MENU := [["REST", 0, 0], ["DAYS", 7, 2], ["HOURS", 12, 0], ["MINS", 1
 const YES_NO := ["YES", "NO"]
 const LEVEL_WORDS := ["1ST LEVEL", "2ND LEVEL", "3RD LEVEL", "4TH LEVEL", "5TH LEVEL"]
 const LIST_TOP := 5
+const DISPLAY_PAGE := 17              # DISPLAY's rows 5-21
+## The effects DISPLAY names by their spell (GAME.OVR 0x1888D-0x188E6) and the ones it names itself (0x18979-0x18ACB).
+const DISPLAY_SPELL_FX := [1, 2, 5, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 22, 23, 24, 25, 28, 29, 32, 33, 34,
+	36, 37, 38, 39, 41, 42, 45, 46, 49, 51, 52, 53]
+const DISPLAY_NAMES := {0x04: "STUDYING MANUAL OF BODILY HEALTH", 0x07: "TRAINING WITH MANUAL OF BODILY HEALTH",
+	0x1B: "FEATHER FALL", 0x1F: "HELPLESS", 0x23: "PRAYER", 0x2C: "CAUSE DISEASE", 0x32: "DREADED MUMMY DISEASE",
+	0x36: "REPULSED", 0x37: "POISONED", 0x3B: "REGENERATING", 0x3D: "FIRE RESISTANCE", 0x47: "INVISIBLE",
+	0x48: "CAMOUFLAGED", 0x59: "DISPLACED"}
 
 var _party: Array[PartyMember] = []
 var _period := 0
@@ -128,6 +136,7 @@ var _list_kind := ""               # memorize, cast, scribe
 var _list: Array = []              # rows: [text, spell id or 0 for a heading]
 var _cursor := 0
 var _top := 0                      # the list's first row on the screen (a page, or the last page's overlap)
+var _display_top := 0              # DISPLAY's first row on the screen
 var _cast_id := 0
 var _caster: PartyMember = null    # while choosing whom a spell is cast on
 ## CAST SPELL ON WHOM starts on the last target picked since MAGIC was opened (chat 83, DOSBox: LIRA's ENLARGE on
@@ -706,26 +715,53 @@ func _draw_display() -> void:
 	_plain_rope = false
 	_page_frame([0, 23])
 	_scr.text(16, 1, "DISPLAY", GameScreen.WHITE)
-	var r := LIST_TOP
+	# One list for the party, paged as the camp's lists: rows 5-21, NEXT / PREV, the last page showing the list's last
+	# rows (main chat 156, DOSBox: p2c's seven members, NEXT shows BRAM to DIRTEN).
+	var rows := _display_rows()
+	_display_top = clampi(_display_top, 0, maxi(rows.size() - DISPLAY_PAGE, 0))
+	for i in range(_display_top, mini(_display_top + DISPLAY_PAGE, rows.size())):
+		var row: Array = rows[i]
+		_scr.text(row[1], LIST_TOP + i - _display_top, row[0], row[2])
+	_scr.menu_line(24, _display_menu(), 1, 0)
+
+
+## DISPLAY's rows: each member's name, the effects the original names, or " <NO SPELL EFFECTS>"; a blank row between
+## members ([text, column, colour]).
+func _display_rows() -> Array:
+	var rows: Array = []
 	for m in _party:
-		if r > 21:
-			break
-		_scr.text(1, r, m.name, GameScreen.CYAN)
+		if not rows.is_empty():
+			rows.append(["", 1, GameScreen.GREEN])
+		rows.append([m.name, 1, GameScreen.CYAN])
 		var any := false
 		for a in m.affects:
-			# Only spell effects are listed (lab: a fighter's other effects, racial ones and
-			# the like, aren't shown; he shows BLESS alone).
-			var n := spells.effect_name(int(a.effect))
-			if n.begins_with("EFFECT ") or r + 1 > 22:
-				continue
-			r += 1
-			_scr.text(2, r, n, GameScreen.GREEN)
-			any = true
+			var n := display_effect_name(int(a.effect))
+			if n != "":
+				rows.append([n, 2, GameScreen.GREEN])
+				any = true
 		if not any:
-			r += 1
-			_scr.text(1, r, " <NO SPELL EFFECTS>", GameScreen.GREEN)
-		r += 2
-	_scr.menu_line(24, ["EXIT"], 1, 0)
+			rows.append([" <NO SPELL EFFECTS>", 1, GameScreen.GREEN])
+	return rows
+
+
+func _display_menu() -> Array:
+	var words: Array = []
+	var n := _display_rows().size()
+	if _display_top + DISPLAY_PAGE < n:
+		words.append("NEXT")
+	if _display_top > 0:
+		words.append("PREV")
+	words.append("EXIT")
+	return words
+
+
+## DISPLAY's name for an effect (GAME.OVR 0x1887D-0x18AE0): a spell's effect by the spell's name ("FUNKY--" when no
+## spell has it), fourteen others by their own words, any other effect not listed (""; a fighter's racial records).
+func display_effect_name(effect: int) -> String:
+	if effect in DISPLAY_SPELL_FX:
+		var n := spells.effect_name(effect)
+		return "FUNKY--" if n.begins_with("EFFECT ") else n
+	return DISPLAY_NAMES.get(effect, "")
 
 
 # --- Menus ----------------------------------------------------------------------------------
@@ -1439,7 +1475,8 @@ func _items() -> Array:
 		"rest": return REST_MENU.map(func(it): return it[0])
 		"magic": return MAGIC_MENU
 		"list": return _list_menu()
-		"pending", "display": return ["EXIT"]
+		"pending": return ["EXIT"]
+		"display": return _display_menu()
 		"confirm", "drop", "ask", "quit": return YES_NO
 		"whom": return ["SELECT", "EXIT"]
 		"alter": return ALTER_MENU
@@ -1555,7 +1592,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# camp: ELWEN's MEMORIZE, Enter after the pages memorized the lit spell; LIRA's SCRIBE; check 311).
 	if _mode == "list" and key in [KEY_LEFT, KEY_RIGHT]:
 		return
-	if _mode == "list" and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
+	if _mode in ["list", "display"] and key in [KEY_PAGEDOWN, KEY_PAGEUP]:
 		var word := "NEXT" if key == KEY_PAGEDOWN else "PREV"
 		if word in items:
 			_act(word)
@@ -1662,6 +1699,7 @@ func _act(choice: String) -> void:
 				"SCRIBE": _open_list("scribe")
 				"DISPLAY":
 					_mode = "display"
+					_display_top = 0
 					_refresh()
 				"REST":
 					Rememorize.refill(_party, spells)
@@ -1698,8 +1736,15 @@ func _act(choice: String) -> void:
 					_who().cancel_learning()
 			_magic_menu()
 		"display":
-			_pick = 0
-			_magic_menu()
+			if choice == "NEXT":
+				_display_top += DISPLAY_PAGE
+				_refresh()
+			elif choice == "PREV":
+				_display_top = maxi(_display_top - DISPLAY_PAGE, 0)
+				_refresh()
+			else:
+				_pick = 0
+				_magic_menu()
 		"whom":
 			if choice == "SELECT" and _whom_off == -2:
 				# Bug 19: cast on no one past the party's end: the spell is used up, nobody healed (DOSBox).
