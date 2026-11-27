@@ -1285,6 +1285,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_message = ""
 		if _timer != null:
 			_timer.stop()
+	# The lists' digits as the keypad's keys (the list routine's menu, 0x2D8A0; KeyBurst.ext_digit; main chat 157).
+	if event is InputEventKey and _mode in ["items", "coin", "cast", "whom", "coin_whom", "scroll_whom", "use_whom"]:
+		event = KeyBurst.ext_digit(event as InputEventKey)
 	var key := (event as InputEventKey).keycode if event is InputEventKey else KEY_NONE
 	# P33/P45 (an exception, Jeremy 2026-11-14): Up/Down move through every list here as
 	# Home/End do (the item list, combat's CAST list, TRADE's and the coins' picks).

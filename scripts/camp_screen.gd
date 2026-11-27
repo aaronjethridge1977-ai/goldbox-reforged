@@ -1536,8 +1536,20 @@ func _unhandled_input(event: InputEvent) -> void:
 	var items := _items()
 	if items.is_empty():
 		return
+	# Digits as the keypad's keys at REST, the spell lists, WHOM and ORDER (KeyBurst.ext_digit; main chat 157).
+	if _mode in ["rest", "list", "pending", "whom", "order", "display"]:
+		event = KeyBurst.ext_digit(event as InputEventKey)
+		key = (event as InputEventKey).keycode
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
+	if _mode == "rest":
+		# REST's menu: Up / Down (8 / 2) are INC / DEC; Home, End (7 / 1), PgUp and PgDn change nothing (main chat 157,
+		# DOSBox at 3:0's inn from check 391's start: Up, Up, Home, 4, 8, 6, End rested 1:10; ours took Home as INC
+		# and End as DEC). Left / Right (4 / 6) pick the field, below.
+		up = key in [KEY_UP, KEY_KP_8]
+		down = key in [KEY_DOWN, KEY_KP_2]
+		if key in [KEY_HOME, KEY_END, KEY_PAGEUP, KEY_PAGEDOWN]:
+			return
 	if _mode in ["camp", "magic", "alter"]:
 		# Combat Chat 57 (DOSBox at 3:11's camp, check 103's start; main chat 123's request): these menus move the lit
 		# member on Home / End and on 7 / 1 (GAME.OVR 0x2CF60 makes the digits the keypad's keys); every other

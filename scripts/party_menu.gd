@@ -437,6 +437,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _noting:
 		_typed_ahead.add(event as InputEventKey)
 		return
+	if _mode in ["learn", "add"]:
+		event = KeyBurst.ext_digit(event as InputEventKey)     # the lists' digits as the keypad's keys (main chat 157)
 	var key := (event as InputEventKey).keycode
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
