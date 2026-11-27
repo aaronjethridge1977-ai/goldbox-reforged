@@ -73,6 +73,29 @@ static func dos_byte(ev: InputEventKey) -> int:
 	return dos_char(ev)
 
 
+## A digit at a menu that takes extended keys (GAME.OVR's menu routine 0x2CC8C with its extended flag set, and every
+## list through 0x2D8A0): 0x2CF60 turns 1-4 and 6-9 into the keypad's scan codes (DS:0x288C: End, Down, PgDn, Left,
+## Right, Home, Up, PgUp), as a DOS keypad with Num Lock types them, top row and keypad alike (main chat 157, DOSBox at
+## 3:0's arms and armour shop: 1 moves the buyer down as End, 7 at APPRAISE appraises a gem as Home; 2 does nothing
+## there). 8 and 2 come back as the keypad's Up / Down, not the arrows ours' lists also take as Home / End (P33/P45).
+## Returns `ev` itself for any other key.
+const EXT_DIGITS := {KEY_1: KEY_END, KEY_2: KEY_KP_2, KEY_3: KEY_PAGEDOWN, KEY_4: KEY_LEFT, KEY_6: KEY_RIGHT,
+		KEY_7: KEY_HOME, KEY_8: KEY_KP_8, KEY_9: KEY_PAGEUP, KEY_KP_1: KEY_END, KEY_KP_3: KEY_PAGEDOWN,
+		KEY_KP_4: KEY_LEFT, KEY_KP_6: KEY_RIGHT, KEY_KP_7: KEY_HOME, KEY_KP_9: KEY_PAGEUP}
+
+
+static func ext_digit(ev: InputEventKey) -> InputEventKey:
+	if ev.ctrl_pressed or ev.alt_pressed or not EXT_DIGITS.has(ev.keycode):
+		return ev
+	var e := InputEventKey.new()
+	e.pressed = true
+	e.echo = ev.echo
+	e.keycode = EXT_DIGITS[ev.keycode]
+	e.physical_keycode = e.keycode
+	e.key_label = e.keycode
+	return e
+
+
 ## What a screen's menu reads for a key typed with Ctrl or Alt (main chat 129's request, DOSBox at 3:0's camp: Ctrl+V
 ## and Alt+V do nothing; main.gd's walking screen and _input_char the same): Ctrl and a letter types a control code
 ## (1-26: no menu letter), except Ctrl+M (0x0D, Enter's), Ctrl+H (Backspace's) and Ctrl+[ (Escape's); Alt and a letter

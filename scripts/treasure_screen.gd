@@ -504,6 +504,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_mode = "coins"
 		_refresh()
 		return
+	# Digits as the keypad's keys at the menus and lists that take extended keys (KeyBurst.ext_digit; main chat 157)
+	if _mode in ["menu", "take", "items", "coins"]:
+		event = KeyBurst.ext_digit(event as InputEventKey)
+		key = (event as InputEventKey).keycode
 	var items: Array = _menu()
 	match _mode:
 		"take": items = TAKE_MENU

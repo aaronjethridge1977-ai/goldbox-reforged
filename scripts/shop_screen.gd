@@ -641,9 +641,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		_refresh()
 		return
+	# Digits as the keypad's keys at the menus and lists that take extended keys (KeyBurst.ext_digit; main chat 157)
+	if _mode in ["menu", "appraise", "value", "list", "coins"]:
+		event = KeyBurst.ext_digit(event as InputEventKey)
+		key = (event as InputEventKey).keycode
 	if _mode == "appraise":
 		# APPRAISE's menu (GEMS JEWELRY EXIT) reads keys as the original's own loop (main chat 90, DOSBox at 3:0's
-		# shop and temple, checks 297, 298): Home (keypad 7: scan code 0x47, the letter G) appraises a gem; Enter,
+		# shop and temple, checks 297, 298): Home (keypad 7 or 7: scan code 0x47, the letter G) appraises a gem; Enter,
 		# Space, the digits, the arrows and End choose nothing but work the cached load out again (the word KEEP's
 		# offer reads with ORIGINAL'S BUGS on); other letters and Backspace do nothing.
 		if key in [KEY_HOME, KEY_KP_7]:
