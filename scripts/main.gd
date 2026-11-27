@@ -1198,7 +1198,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			# with Ctrl or Alt are other extended codes too.
 			get_viewport().set_input_as_handled()
 			return
-		if _busy:
+		if _busy or (_ending != null and _ending.visible):
+			# Chat 153: the closing pictures (PROGRAM 8, GAME.OVR 0x20948 and its animation 0x206A3) read no key either;
+			# what is typed waits for the PRESS BUTTON OR RETURN menu after KNOWING THAT TYRANTHRAXUS... (ours opened
+			# VIEW over the pictures on V and dropped Enter).
 			# Chat 130 (DOSBox, 7:26's river at speed 4, Right held 0.6 s into THE RIVER'S STENCH DRIVES YOU BACK. and
 			# let go during it): the BIOS keeps a held key's repeats through a script's wait like any key, and the read
 			# after it takes them: a second note, then the keys typed during that one (Up then Left: only Left). Ours
