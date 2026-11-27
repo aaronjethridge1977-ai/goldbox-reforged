@@ -172,6 +172,33 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 154: HOW MUCH's digit entry (GAME.OVR 0x24F1D): a number over the coins is read as the coins; only Enter ends it (found; ready edit to Combat)
+
+- **Every key read in the original is now mapped from the code.** START.EXE 0x899: 0x0 is Ctrl-C's quit (not a
+  read; 14 GAME.OVR callers, after load errors and the title), 0x59 the get-key, 0x104 the dead flush (chat 127),
+  0x122 the fight setup's read-and-drop (chat 126). The get-key's callers: GAME.OVR 0xBB97 / 0xBBA5 (a fight's Magic
+  On / Off), 0x24F84 (the digit entry, below), 0x2CE41 / 0x2CE4F (the menu reader, chat 122), 0x2F7A6, 0x2FA45,
+  0x32352, 0x32416 (wall set, geo, 8x8 and symbol load errors); START.EXE 0x7ABB (a typed answer, chat 127), 0x709:0xBF5
+  (a row-24 note then any key: 12 GAME.OVR callers: DAMAGE's and the hit lines' PRESS <ENTER> (chat 43), the wipe's
+  "Press any key to continue" (0x6BAA), the rest load errors and the memory warnings), 0x43B6, 0x802:0x193 (disk and
+  file errors). The CRT KeyPressed's GAME.OVR callers are chat 127's five (title, credits, Magic, STOP RESTING?, the
+  menu reader). Only the digit entry hadn't been checked.
+- **The digit entry (GAME.OVR 0x24F1D; TAKE's 0x25B97 with the pile's coins as its most, TRADE's 0x2342F and DROP's
+  0x2372D with the member's):** a digit goes on the end (six characters at most); **a number above the most is replaced
+  by the most, on the screen too** (0x24FE4-0x2501B: Str(most)); Backspace takes one off; **only Enter (the number) and
+  Esc (0) end it**; every other key, Space too, is ignored. DOSBox (`data/c154/otake.sh`, Player 11's played
+  `sogre`, the ogres at seed 12345678, the pile SILVER 494 ELECTRUM 2 GOLD 35): TAKE, MONEY, ELECTRUM, 99999 reads 2
+  and ARN takes the two. **Ours showed 99999, tested it against the load: OVERLOADED, nothing taken** (game state, main
+  path: the treasure after a fight). Camp VIEW, DROP, PLATINUM: 1 then Space: the original still asks (1); **ours ended
+  the entry on Space and dropped the 1** (input, main path); 1 Space 2 Enter: the original reads 12, shows 6 (ARN's
+  platinum) and drops all six. Esc goes back to SELECT TYPE OF COIN in both.
+- **Ready edit to Combat** (the four screens are Combat's): `~/gbr/lab/data/c154/amount_clamp.patch`
+  (`TreasureScreen.amount_digit`, used by the treasure's, the shop's, the temple's and the sheet's HOW MUCH; the sheet's
+  ends on Enter only). Lab checks (installed once it lands): **583** (TAKE 99999 ELECTRUM, `sogre`, source 580's keys;
+  the original's end `otakeF`) and **584** (DROP PLATINUM 1 Space 2 Enter from `sdrop` = `otakeF` as slot G; end
+  `odropF`): both DIFFER on main (583: ARN's electrum 4 against 6; 584: ours never reaches the save) and MATCH with
+  the edit; the full gate on the edited tree 570/570 (`dc_wt1.log`, `dc_wt2.log`).
+
 ## Chat 153: P137 matches (one spectre); keys typed during the closing pictures wait for the PRESS BUTTON menu (fixed; input, main path)
 
 - **P137 ("YOU SURPRISE A FIGURE AS IT SUMMONS A WIGHT.", no wight on the field): matches the original by the code.**
