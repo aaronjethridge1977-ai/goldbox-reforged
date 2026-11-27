@@ -2,6 +2,10 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-26 20:04 (Combat Chat 68): desk requests to combat answered
+
+- 2026-11-26 17:49 · desk → combat · **P135, Jeremy playing 0.1.8 (the graveyard): when the mummies frightened the party, the right panel's text overwrote other text** (lines overlapping). First check: the fear's lines on the panel are cleared before each is written; the original's in DOSBox. · **Combat Chat 68 (2026-11-26 20:04): fixed, on main.** Seen in ours by replaying Jeremy's 17:42 session (his build): the six fear lines drawn over SIR KILLEMGOOD's panel and menu, on his (HELPLESS) row. The original (DOSBox at speed 6, check 543's mummies): BATTLE BEGINS..., then each line alone on an empty panel, no box, row 24 empty, RHIANNON / IS PARALYZED / WITH FEAR with sparkles on her 1.79 s; ours now the same (ARN's 1.78 s). Display / text timing, new area for the checks; no streak reset · done
+
 ## Archived 2026-11-26 18:30 (Combat Chat 68): desk requests to combat answered
 
 - 2026-11-26 17:59 · desk → combat · **P136, Jeremy playing 0.1.8: the training screen "SHAZAM'S SPELLS TO CHOOSE FROM": (a) the bottom line draws a prompt and the LEARN menu on top of each other; (b) the list runs past the frame (HASTE over the border), no paging.** First check: the original's screen in DOSBox (prompt, menu, paging); one text on row 24 at a time; page or scroll a long list. P66/P71's kinds. Jeremy 18:01: **he's holding off training his magic-users until it's fixed**, so it blocks his game: Lead, please put it near the front. · **Combat Chat 68 (2026-11-26 18:31): fixed, on main.** (b) caused (a): the list ran onto row 24 (HOLD PERSON's letters under CHOOSE SPELL:). The original pages it (Player 41's p41t1 / p35e2: rows 5-22, LEARN NEXT, then LEARN PREV): ours now the same; display, no streak reset · done
