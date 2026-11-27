@@ -172,6 +172,29 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 155: HOW MUCH landed (583, 584 in the gate); the coin page's light after a TAKE and Home / End wrapping on the coin page and LOOT (found; ready edit)
+
+- **HOW MUCH landed** (e349417, main chat 154's `amount_clamp.patch` on the Lead's yes; Combat's four screens): the gate on
+  the edited tree 572/572 (`~/gbr/lab/data/c155/gate1.log`), 583 and 584 installed (the gate is 572), match_gate 2 of 2
+  (p13a1, p17a6: the baseline recordings whose logs type an amount, at the shop).
+- **The treasure's coin page (GAME.OVR 0x25974, TAKE's MONEY; xref: also called from 0x534D, by the temple's loop 0x5280, and
+  0x7319, in the shop's loop (0x7035-0x7357, shop_screen.gd); shop and temple not run in DOSBox):** the list index ([bp-0x14], passed to the list routine 0x3C5:0x34) is cleared once before the loop
+  (0x259A2); each pass after a TAKE rebuilds the list but keeps the index, so **the light keeps its row** (on the last row
+  when the list got shorter). DOSBox (`data/c155/ocoin.sh`, `ocoin2.sh`, Player 11's ogres from `sogre`, the pile SILVER
+  494 ELECTRUM 2 GOLD 35; `rowlit.py` reads which row is white): ELECTRUM's 2 taken lights GOLD; GOLD's 35 taken (the last
+  row) lights ELECTRUM. **Ours went back to the first row** (game state, main path: the next Enter picks another coin).
+  **Home on the first row lights the last, End on the last the first**; ours stopped at the ends (input, main path).
+  Matched: Esc from HOW MUCH keeps the light; re-entering MONEY starts on the first row.
+- **LOOT (0x615F, the same list routine):** Home on the first of 14 items lit the 14th, End there the first (`oloot.sh`);
+  ours stopped at the ends (input, main path). The edit wraps it on the page as the shop's BUY list (0x2D594, check 379).
+- **The sheet's DROP and TRADE coin lists** clear their index inside the loop (0x2365B, 0x2335A): the first row after each,
+  as ours. Its Home / End already wrapped.
+- **Ready edit** `~/gbr/lab/data/c155/coin_wrap.patch` (treasure_screen.gd, shop_screen.gd, temple_screen.gd; Combat's
+  screens; question to the Lead on the board). Lab check **585** (`data/c155/chk585`, source 583: TAKE, MONEY, End, Enter,
+  Esc, End, End (wraps to SILVER), 1; End, 2 (ELECTRUM emptied), Enter (GOLD lit), 5; EXIT, ITEMS, Home, TAKE (the last
+  item); original's end `o585F` by `oc585.sh`): DIFFERS on e349417 (ARN 505 silver, 6 gold, the first item; the original
+  501, 10, the WOODEN HOLY SYMBOL) and MATCHES with the edit.
+
 ## Chat 154: HOW MUCH's digit entry (GAME.OVR 0x24F1D): a number over the coins is read as the coins; only Enter ends it (found; ready edit to Combat)
 
 - **Every key read in the original is now mapped from the code.** START.EXE 0x899: 0x0 is Ctrl-C's quit (not a
