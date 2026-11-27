@@ -333,6 +333,26 @@ func _page_frame() -> void:
 		_scr.tile(p.x, p.y, 20)
 
 
+## LOOT's Home / End wrap on the page shown, as the shop's BUY list (ShopScreen._move, GAME.OVR 0x2D594): End past
+## the page's last line or the pile's last item lights the page's first line, Home above it the page's last line (or
+## the pile's last item); only NEXT / PREV move the page (main chat 155, DOSBox after Player 11's ogres, 14 items:
+## Home on the first lit the last, End there the first; ours had stopped at the ends).
+func _step_loot(step: int) -> void:
+	var n := _spoils.items.size()
+	if n == 0:
+		return
+	var c := _cursor + step
+	if step > 0:
+		if c > _top + PAGE - 1 or c > n - 1:
+			c = _top
+	else:
+		if c < _top:
+			c = _top + PAGE - 1
+		if c > n - 1:
+			c = n - 1
+	_cursor = c
+
+
 func _coin_kinds() -> Array:
 	var out := []
 	for c in 7:
@@ -474,7 +494,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key in [KEY_ENTER, KEY_KP_ENTER]:
 			_take_money(_amount_coin, _typed.to_int())
 			_mode = "coins"
-			_cursor = 0
+			# The light keeps its row (GAME.OVR 0x25974 clears the list's index once, before its loop: main chat 155,
+			# DOSBox after Player 11's ogres: ELECTRUM's 2 taken from SILVER ELECTRUM GOLD lights GOLD), on the last
+			# row when the list got shorter.
+			_cursor = mini(_cursor, maxi(_coin_kinds().size() - 1, 0))
 			if _coin_kinds().is_empty():
 				_mode = "take"
 		elif key == KEY_ESCAPE:
@@ -521,11 +544,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _mode in ["menu", "take"]:
 			_who = (_who + step + _party.size()) % maxi(_party.size(), 1)
 		elif _mode == "coins":
-			_cursor = clampi(_cursor + step, 0, maxi(_coin_kinds().size() - 1, 0))
+			# Home on the first coin lights the last, End on the last the first (main chat 155, DOSBox: the list
+			# routine 0x3C5:0x34 wraps; ours had stopped at the ends)
+			var nk := _coin_kinds().size()
+			if nk > 0:
+				_cursor = posmod(_cursor + step, nk)
 		elif _mode == "items":
-			_cursor = clampi(_cursor + step, 0, maxi(_spoils.items.size() - 1, 0))
-			if _cursor < _top or _cursor >= _top + PAGE:
-				_top = clampi(_cursor, 0, maxi(_spoils.items.size() - PAGE, 0))
+			_step_loot(step)
 		_refresh()
 		return
 	elif key == KEY_ESCAPE:
