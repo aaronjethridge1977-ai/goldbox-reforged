@@ -2285,7 +2285,13 @@ func _menu_choice(event: InputEvent, key: Key, items: Array) -> String:
 		_refresh()
 		return ""
 	if event.is_action("ui_accept") and not items.is_empty():
-		return items[_lit(items)]
+		# The fight's menus (MOVE VIEW AIM ..., DONE's, SPEED's, AIM's) take neither Enter nor Space: the menu routine
+		# returns 0x0D / 0x20 and their callers (GAME.OVR 0xA772, 0xAA0E, 0x15427 ...) test only letters. AIM's cursor
+		# (MANUAL, 0x1596E) takes Enter as TARGET (0x15979), Space not (main chat 158, DOSBox at check 84's goblins,
+		# RHIANNON's hand turn: Enter and Space at each menu left the screen unchanged; ours took the lit word).
+		if _cmode == "manual" and key != KEY_SPACE and "TARGET" in items:
+			return "TARGET"
+		return ""
 	for it in items:
 		if key == OS.find_keycode_from_string(String(it).substr(0, 1)):
 			return it
