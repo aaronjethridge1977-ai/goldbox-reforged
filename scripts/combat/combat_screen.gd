@@ -1947,7 +1947,10 @@ func _aim_input(event: InputEvent, key: Key) -> void:
 			KEY_RIGHT: Vector2i(1, 0), KEY_HOME: Vector2i(-1, -1), KEY_PAGEUP: Vector2i(1, -1),
 			KEY_END: Vector2i(-1, 1), KEY_PAGEDOWN: Vector2i(1, 1), KEY_KP_8: Vector2i(0, -1),
 			KEY_KP_2: Vector2i(0, 1), KEY_KP_4: Vector2i(-1, 0), KEY_KP_6: Vector2i(1, 0),
-			KEY_KP_7: Vector2i(-1, -1), KEY_KP_9: Vector2i(1, -1), KEY_KP_1: Vector2i(-1, 1), KEY_KP_3: Vector2i(1, 1)}
+			KEY_KP_7: Vector2i(-1, -1), KEY_KP_9: Vector2i(1, -1), KEY_KP_1: Vector2i(-1, 1), KEY_KP_3: Vector2i(1, 1),
+			# the top row's digits as the keypad's (the cursor's menu 0x1596E has the extended flag: main chat 157)
+			KEY_8: Vector2i(0, -1), KEY_2: Vector2i(0, 1), KEY_4: Vector2i(-1, 0), KEY_6: Vector2i(1, 0),
+			KEY_7: Vector2i(-1, -1), KEY_9: Vector2i(1, -1), KEY_1: Vector2i(-1, 1), KEY_3: Vector2i(1, 1)}
 		if moves.has(key):
 			# The cursor stays on the field (GAME.OVR 0x1568D: x clamped to 0-49, y to 0-24; Combat Chat 64).
 			_aim_cell = (_aim_cell + moves[key]).clamp(Vector2i.ZERO, Vector2i(Battlefield.WIDTH - 1, Battlefield.HEIGHT - 1))
@@ -3076,9 +3079,12 @@ func _field_click(p: Vector2i, _double: bool) -> void:
 				Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1)].find(step)])
 
 
-const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_RIGHT: 2, KEY_KP_6: 2,
-	KEY_PAGEDOWN: 3, KEY_KP_3: 3, KEY_DOWN: 4, KEY_KP_2: 4, KEY_END: 5, KEY_KP_1: 5,
-	KEY_LEFT: 6, KEY_KP_4: 6, KEY_HOME: 7, KEY_KP_7: 7}
+## The top row's digits step as the keypad's: GAME.OVR's MOVE loop (0xA236) reads its keys through the menu routine
+## 0x2CC8C with the extended flag (0xA2CA), whose 0x2CF60 turns the digit's ASCII, the same from either row, into the
+## keypad's key (main chat 157).
+const _STEP_KEYS := {KEY_UP: 0, KEY_KP_8: 0, KEY_8: 0, KEY_PAGEUP: 1, KEY_KP_9: 1, KEY_9: 1, KEY_RIGHT: 2, KEY_KP_6: 2,
+	KEY_6: 2, KEY_PAGEDOWN: 3, KEY_KP_3: 3, KEY_3: 3, KEY_DOWN: 4, KEY_KP_2: 4, KEY_2: 4, KEY_END: 5, KEY_KP_1: 5,
+	KEY_1: 5, KEY_LEFT: 6, KEY_KP_4: 6, KEY_4: 6, KEY_HOME: 7, KEY_KP_7: 7, KEY_7: 7}
 
 
 func _fight_input(event: InputEvent, key: Key) -> void:
