@@ -172,6 +172,68 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 157: P138 (MOVEMENT after a coin DROP); the menu routine 0x2CC8C's 35 calls: the digits as the keypad's keys, REST's Home / End, GAME SPEED (checks 589-594); Silver Blades' FIX
+
+- **P138 (found, fixed; display, main path):** after a coin DROP from camp VIEW the original leaves both ENCUMBRANCE and
+  MOVEMENT as they were, on the coin menu and back on VIEW's menu (DOSBox, `data/c157/odrop157.sh` from `sdropP`:
+  chat 154's `sdrop` with ARN's platinum poked to 4000, CHRDATG1.SAV 0x90: 4000 dropped, ENCUMBRANCE 7116 and MOVEMENT 3
+  stayed; the coin rows close up at once, GOLD on row 7). Ours kept ENCUMBRANCE (chat 90's rule) but redrew MOVEMENT
+  (9). `character_sheet.gd` keeps MOVEMENT with ENCUMBRANCE now (`_move`, worked out with `_measure`). Jeremy's report
+  had it the other way round (the original redrawing ENCUMBRANCE): it doesn't.
+- **The menu routine 0x2CC8C (stub 0x3C5:0x2A): its keys** (0x2CE41-0x2CF9E): an extended key returns its scan code
+  only with the caller's flag (+0x0C) set, otherwise it is dropped; Escape returns 0; Enter returns 0x0D only when the
+  menu has light colours (+0x0E or +0x10; the hall's "Choose a function" has none); ',' and '.' move the light; Space
+  returns 0x20; a letter or digit that starts a word takes it; with the flag set, the digits 1-9 (the ASCII, the same
+  from the top row and from a keypad with Num Lock on) become the keypad's scan codes through DS:0x288C (1 End, 2 Down,
+  3 PgDn, 4 Left, 5 0x20, 6 Right, 7 Home, 8 Up, 9 PgUp) and a backslash 0x37. **Callers with the flag:** the temple's
+  (0x531C), the treasure's TAKE and its menu (0x630A, 0x659D), the shop's (0x72EE), the script's menus (0x8BB9), the
+  fight's QUICK DONE (0xA01B) and MOVE loop (0xA2CA), AIM's cursor (0x1596E), the walking screen (0x1709B, 0x1730B), the
+  camp's (0x18C73, 0x19006 ORDER, 0x193BD speed, 0x194D0 ALTER, 0x19750), the hall's (0x19C77, 0x1BAE8), REST
+  (0x24535), APPRAISE and SELL KEEP (0x268CB, 0x26A45, 0x26D98), and every list (the list routine's own call,
+  0x2D8AC). **Without:** 0xA772 and 0xAA0E (the fight's), AIM's menu (0x15427), LOCKED. (0x17585, 0x176C4), 0x1960B,
+  the icon editor (0x1CDC3), 0x1D378, LOAD / SAVE WHICH GAME (0x1F6C3, 0x1FD82), 0x20350, VIEW's (0x21CD1) and the YES /
+  NO question (0x2D9EA).
+- **Found, fixed (input and game state, main path): the top row's digits.** Ours took the keypad's 7 / 1 (Godot's
+  KEY_KP_7) at the shops, the temple, the treasure, the camp's lists, REST, the training hall's lists and the sheet's
+  lists, but not the top row's, which the original can't tell apart. DOSBox (`data/c157/oap.sh`, check 298's start at
+  3:0's arms and armour shop): 1 lit BRAM, then CEDRIC (End); 7 at APPRAISE appraised a gem (YOU CAN : SELL KEEP); 2, 8,
+  3, 9 at the shop's menu did nothing (2 is not POOL); after check 100's kobolds 1 at TAKE gave the taker's place to BRAM
+  and 6 was MONEY. `KeyBurst.ext_digit` (scripts/ui/key_burst.gd) turns 1, 3, 4, 6, 7, 9 into End, PgDn, Left, Right,
+  Home, PgUp, and 8 / 2 into the keypad's Up / Down (not the arrows ours' lists take as Home / End, Jeremy's P33/P45);
+  the shop, temple, treasure, camp, training hall and sheet call it outside typed amounts and YES / NO. **Checks:**
+  589 (check 298 with 7 4 7 6 for Home Left Home Right: ours never reached the save before), 590 (check 299 with T 1
+  Enter 4 6 ... I 6 Enter: BRAM takes the short sword), 592 (check 587 with the MEMORIZE list's End / Home as 1 / 7:
+  CEDRIC's spells 150 150 150 167 before), 593 (`sdrop`, camp VIEW ITEMS 1 1 DROP YES: the javelin dropped; nothing
+  before).
+- **Found, fixed (input and game state, main path): REST's Home and End.** The original's REST menu takes Up / Down (8 /
+  2) as INC / DEC; Home, End, 7, 1, the keypad's Home / End, PgUp and PgDn change nothing (`orest.sh`; `o591.sh` at 3:0's
+  inn from check 391's start: Up Up Home 4 8 6 End rested 1:10, 10:59 -> 12:09). Ours took Home as INC and End as DEC
+  (camp_screen.gd since its first version) and rested 0:10. **Check 591.**
+- **The fight's MOVE and AIM's cursor (by the code, fixed; input, main path):** both read through 0x2CC8C with the flag
+  (0xA2CA inside the MOVE loop 0xA236; 0x1596E), so a top-row digit steps as the keypad's; ours' `_STEP_KEYS` and the
+  cursor's table had only the keypad's. Not filmed: from check 100's and 543's starts the party fights on its own in
+  both games (no hand turn without a timed Space); ours with `controlat=0` from 543's start: 8 steps LIRA north, 7 is
+  BLOCKED, as the keypad's.
+- **Found, fixed (input and game state, main path): GAME SPEED's Up and Down.** The camp's ALTER SPEED (0x193BD, with
+  the flag) takes Up / 8 as SLOWER and Down / 2 as FASTER where offered; Home, End, 7, 1, 4, 6 do nothing (DOSBox at 3:0's
+  camp from 0: Up 1, Down 0, 8 1, 2 0). Ours took neither. **Check 594** (ENCAMP, ALTER, SPEED, Up Up 8 Down: speed 2
+  at 0x49FC; ours 0 before).
+- **The hall's MODIFY (by the code, fixed; input, new area):** its menu (0x1BAE8, "Modify character: Keep Exit") takes
+  extended keys; with the flag the caller reads Down (0x50) as the next row, Up (0x48) the one before (7 rows, wrapping),
+  Left (0x4B) / Right (0x4D) lower / raise; E and Esc leave (0x1C1CD). So 8 / 2 / 4 / 6 work as those; ours took the
+  arrows only (ui/character_modify.gd now through `KeyBurst.ext_digit`). Ours' + / - / = are left as they were (not
+  the original's keys: no word and no extended code).
+- **Silver Blades' FIX (the Sources' question (2), by the code):** the camp menu (DS:0x3D7, "Save View Magic Rest Alter
+  Fix Exit") is in its GAME.OVR (0x1D1FA; not START.EXE), F calls 0x1CFEB. Its tally 0x1C1C1 reads every member's
+  memorized spells: Cure Light Wounds (3 and 0x62) 1d8, Cure Serious Wounds (0x3A) 2d8+1, Cure Critical Wounds (0x47)
+  3d8+3, Heal (0x24) 4d8+5, and counts Neutralize Poison (0x43), Raise Dead (0x4B), Remove Curse (0x2B, 0x59), Stone to
+  Flesh (0x71), Cure Blindness (0x25), Cure Disease (0x27); the unit's own lines (0x1C8FA-0x1C963: "... back to flesh",
+  "is detoxified", "has been raised from the dead", "is relieved of a curse", "is cured of disease", "regains sight").
+  So FIX uses every cure, not Cure Light Wounds alone (Manual p.8). Spell names from START.EXE's table (35-byte rows
+  from Bless, image 0x112CE; the unpacked image `~/gbr/lab/data/c157/sb_start.img`).
+- **Matched (seen):** the original's REST: Up INC, Down DEC, 8 / 2 the same, 4 / 6 move the field; the camp's member
+  menus' digits (Combat Chat 57); the fight's menus without the flag take no arrows or digits in ours either.
+
 ## Chat 156: the coin page's edit landed (585); the list routine's callers: the temple's HEAL list, the camp's and LEARN's lists over two pages, DISPLAY (checks 586-588)
 
 - **The coin page's edit landed** (40b41f8, main chat 155's `coin_wrap.patch` on the Lead's yes; Combat's treasure, shop and
