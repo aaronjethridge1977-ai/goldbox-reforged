@@ -1252,6 +1252,12 @@ func _show_messages() -> void:
 				_fly(_hold_from, hs[1], [5, 133], 240.0, Speaker.SPELL)
 				await flight_done
 		_sound_for(msg)
+		var pic_before: Array = _hit_pic
+		if msg.contains(" TAKES ") and msg.contains(" OF DAMAGE"):
+			# A damage line is the damage routine's (0x2C3C7 -> START.EXE 0x2B8B, picture set 0x17): the explosion, whatever
+			# the spell (DOSBox at speed 6, Combat Chat 68: scrr_kob c68scr2 f475-f477, Magic Missile's KOBOLD / TAKES 12
+			# POINTS with the burst on it; ours drew the spell's sparkles).
+			_hit_pic = [10, 138]
 		if dying:
 			_panel_msgs.clear()
 			_row24_msg = msg
@@ -1380,6 +1386,8 @@ func _show_messages() -> void:
 			# DOSBox a cast's 1.0 s sound lasted 0.31 s).
 			Speaker.play(0xFF)
 		_row24_msg = ""
+		if _hit_pic != pic_before and not (subj <= Combat.ROUTINE_SUBJECT):
+			_hit_pic = pic_before     # the spell's own picture again for its later lines
 		if _pending_msgs.is_empty() or not _continues(_pending_msgs[0]):
 			_panel_msgs.clear()
 			_skulls.clear()
@@ -2417,6 +2425,16 @@ func _begin_spell(id: int, item: GameItem) -> void:
 		_spell_cell = _combatants[_combat.active].cell
 		_finish_cast()
 		return
+	if item != null and PartyMember.is_scroll(item):
+		# A scroll's spell is cast from its page (GAME.OVR 0x22AC4 -> 0x239D6 "Spells on Scroll" -> 0x275B4), not used as
+		# an item: no USES AN ITEM, nothing on row 23, CAST goes straight to the aim, and the lines come under the AIM row
+		# as a spell's (DOSBox at speed 6, Combat Chat 68: scrr_kob c68scr2, BAKSHI's Magic Missile: AIM:, TARGET, the
+		# spark, KOBOLD / TAKES 12 POINTS / OF DAMAGE FROM / MAGIC; ours gave it the wand's USES AN ITEM and
+		# ITEM:MAGIC USER SCROLL).
+		_announced = true
+		_casting = "aim"
+		_start_aim("spell")
+		return
 	if true:
 		# CASTS A SPELL before the aim (GAME.OVR 0x27D60 prints it, then 0x2A332 aims; DOSBox, Combat Chat 23:
 		# Bakshi's Sleep: the line with rows 23-24 empty for ~0.8 s, then SPELL:SLEEP and AIM:). An item's the same
@@ -2518,6 +2536,8 @@ func _abort_spell() -> void:
 
 ## Row 23 under a spell's or an item's aim and lines: SPELL:<spell> or ITEM:<the item's name>.
 func _row23_label() -> String:
+	if _use_item != null and PartyMember.is_scroll(_use_item):
+		return ""     # a scroll's spell (c68scr2: row 23 empty through the aim and the lines)
 	if _use_item != null:
 		return "ITEM:" + _use_item.name.to_upper()
 	return "SPELL:" + _combat.magic.table.name_of(_spell_id)
