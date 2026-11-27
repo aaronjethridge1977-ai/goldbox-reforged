@@ -658,6 +658,7 @@ Answering LEAVE puts some fights off to be taken later at a higher level. *seen*
 worth the time: (Pool) at Podol Plaza (1:18) DISGUISE, not STRIDE BOLDLY: its orc bands are 15 rounds for about 180
 experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 - A healing potion held for a hit-point mark (drink at 20 HP or less) never fires against a breath that takes a member from full to 0 in one blow: drink before the breath fight or not at all. *seen* (Gold Box Player 48, p48t3/p48t5: ARN, BRAM, CEDRIC fell to Tyranthraxus with their potions unspent)
+- **Reload is a tactic, not a failure** (*Jeremy*, 2026-11-26 19:48: "Loading the game is a real part of the strategy because it saves a lot of time"): quick-save at the door; reload at once when the round's order is wrong, the key opening fails (a TURN, a disabler, the first area spell), or anything lasting happens (a drain, disease, a charm, a death). In Valhingen Graveyard about half his ~50 reloads came before any member acted; the three mummies took 23 tries in about ten minutes and were then won with 0 HP lost. *Jeremy* (his play 2026-11-26)
 
 ## 5. In a fight
 
@@ -798,6 +799,10 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 - Don't step away from a figure that ended its turn without striking (it GUARDed, cast, or walked and didn't reach) while it still has blows: as you leave it strikes with every blow it has left that round, not just one; a 3/2 fighter on GUARD beside a fleeing monster gets both blows (*code*, seen: GAME.OVR 0x13372 and START.EXE 0xBA:0x2637; DOSBox k220z seed 10203040, Combat Chat 52).
 - A caster in a fight turns to face the spell's aim, and a spell with no aim (Bless, Mirror Image, Shield and the like) turns the caster to face north: a caster with foes to its south then has them at its back (struck from behind; and once it has had its turn and taken a blow, a foe leaving from behind it gets no free blow from it); cast self spells before the line closes, or with foes north of the caster. *code* + *seen* (Gold Box Combat Chat 55: GAME.OVR 0x27DCA; DOSBox mik1, BAKSHI's facing east to north at the Mirror Image draw).
 - Outdoors a spell aimed by MANUAL can't be put on a river or low-ground square (seen through but not walked): no TARGET there, so aim an area spell on a figure or on plain ground beside the group. *code* + *seen* (GAME.OVR 0x1585B; DOSBox, 8:27's band, LIRA's Sleep; Combat Chat 64)
+- Hold Person and Sleep never on undead: Jeremy's Hold Person on a wight and two ghouls (4:2) was UNAFFECTED on all three, and that fight cost 116 HP with three down; the wight fights he won cleanly (2 HP each) were TURN first, wight and ghouls forced to flee. *Jeremy* (his play 2026-11-26)
+- Walking past a ghoul draws its free attack, which can paralyse the walker: in the original he still strikes once that turn (DOSBox, lab check 544: CEDRIC paralysed as he stepped, then ATTACKS GHOUL), but from his next turn on he is helpless and any hit slays him; walk around paralysers or kill them first. *seen* (lab check 544; Combat Chat 66, P121)
+- TURN only when the undead are dangerous (drainers, paralysers: wights, ghouls); against weak ones (skeletons, zombies) fight them: turned undead run, and running them down costs more time than killing them (Jeremy won Sokal Keep's five skeleton-and-zombie fights by melee, 5-24 HP each). *Jeremy* (2026-11-26 15:53)
+- Undead and Fireball: TURN first, then Fireball the turned ones while they flee (Jeremy's mummies: TURN, two Fireballs, 0 HP). *Jeremy* (his play 2026-11-26)
 
 ## 6. After a fight
 
@@ -864,6 +869,7 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
 - A fallen NPC is dropped after the fight and his items go into the treasure, where you can take them back. *seen*
   (Player 11)
 - A BLESS or PRAYER cast in a fight's last rounds stays on after it for its minutes left (the end save keeps them: BLESS up to 5, PRAYER 3), so a fight one or two steps later can start blessed; and a member at the load can TAKE no coins at all (the amount asked must fit under the ceiling: not even part of it), while SHARE puts the pile on whoever still has room. *seen* (DOSBox, 8:27's band kobolds, main chat 137, checks 528-530).
+- Heal between back-to-back fights where drainers roam: Jeremy's fighter went into a third wight fight at 9 HP. *Jeremy* (his play 2026-11-26)
 
 ## 7. Resting and camping
 
@@ -1044,11 +1050,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
-- Hold Person and Sleep never on undead: Jeremy's Hold Person on a wight and two ghouls (4:2) was UNAFFECTED on all three, and that fight cost 116 HP with three down; the wight fights he won cleanly (2 HP each) were TURN first, wight and ghouls forced to flee. *Jeremy* (his play 2026-11-26)
-- (Pool, 4:2) The wight with 10 skeletons and 8 zombies: an easy win but slow; one TURN routs most skeletons and zombies and the rest is a mop-up once the wight is down (every blow on it after the TURN). Jeremy skipped it as not worth the time on a run to the end. *Jeremy* (2026-11-26 10:13)
-- (Pool) Scorpions: disable before contact with Stinking Cloud. A large scorpion's 1-HP sting killed CHOP outright twice (IS POISONED, IS KILLED, from 45 HP); two Stinking Clouds won it for 2 HP. A Sleep also put one down in ours; whether Sleep works on scorpions in the original is being checked (Jeremy 2026-11-26 13:57): until then, don't count on it. *Jeremy* (his play 2026-11-26)
-- Heal between back-to-back fights where drainers roam: Jeremy's fighter went into a third wight fight at 9 HP. *Jeremy* (his play 2026-11-26)
-- Walking past a ghoul draws its free attack, which can paralyse the walker: in the original he still strikes once that turn (DOSBox, lab check 544: CEDRIC paralysed as he stepped, then ATTACKS GHOUL), but from his next turn on he is helpless and any hit slays him; walk around paralysers or kill them first. *seen* (lab check 544; Combat Chat 66, P121)
-- TURN only when the undead are dangerous (drainers, paralysers: wights, ghouls); against weak ones (skeletons, zombies) fight them: turned undead run, and running them down costs more time than killing them (Jeremy won Sokal Keep's five skeleton-and-zombie fights by melee, 5-24 HP each). *Jeremy* (2026-11-26 15:53)
-- **Reload is a tactic, not a failure** (*Jeremy*, 2026-11-26 19:48: "Loading the game is a real part of the strategy because it saves a lot of time"): quick-save at the door; reload at once when the round's order is wrong, the key opening fails (a TURN, a disabler, the first area spell), or anything lasting happens (a drain, disease, a charm, a death). In Valhingen Graveyard about half his ~50 reloads came before any member acted; the three mummies took 23 tries in about ten minutes and were then won with 0 HP lost. *Jeremy* (his play 2026-11-26)
-- Undead and Fireball: TURN first, then Fireball the turned ones while they flee (Jeremy's mummies: TURN, two Fireballs, 0 HP). *Jeremy* (his play 2026-11-26)
