@@ -202,7 +202,7 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   in the shared highlight (VIEW's 2nd word) and lit EXIT, so Enter went back to the view page. Space at TRADE TO? and
   TRADE WITH WHOM? does nothing in the original (the menu routine returns 0x20, 0x2CEF7; START.EXE's member pick
   ignores it); ours took it as Enter (Godot's ui_accept); a scroll's and an item's CAST SPELL ON WHOM? are the same
-  pick (START.EXE 0xBA:0x2C48), fixed with them by the code (bf1be8f). Matched: Space on the coin page asks HOW MUCH.
+  pick (START.EXE 0xBA:0x2C48), fixed with them by the code (4537c87). Matched: Space on the coin page asks HOW MUCH.
   `character_sheet.gd` (Combat's). **Check 595** (ENCAMP VIEW TRADE End Space Enter Enter 1 Enter: one platinum to
   BAKSHI; ours traded none) and **596** (VIEW ITEMS R TRADE End Space Home Enter: the flail to THRENDER's own list
   end; ours gave it to BAKSHI on Space); both DIFFER on 734e7b8, MATCH after.
