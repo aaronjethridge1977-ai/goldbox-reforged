@@ -330,12 +330,31 @@ func _fire_delay(i: int) -> float:
 	return maxf(d, 1) * ANIM_UNIT
 
 
+## The original turns the fire's frames only inside its menu routine (GAME.OVR 0x2CD72-0x2CDFC), and only for a
+## menu whose caller asks for it (argument +0x0A: the camp's, MAGIC's, ALTER's and its ORDER, SPEED and PICS,
+## SAVE WHICH GAME in camp, START.EXE's member picks in camp; not REST's 0x24535, the YES / NO questions' 0x2D9EA
+## or the lists' 0x2D8AC) or while script cell 0x4AFF is not 0; then a frame per pass, its delay not waited. A SAVE
+## writes slot 3's number, 0xFFFF, there (0x1FEC2) and the menu's return clears it (0x2CFAD): after a save QUIT TO
+## DOS flickers the fire, after Esc at SAVE WHICH GAME it stands. Main chat 158, DOSBox at 3:0's camp (DS:0x6ABF
+## watched): REST's menu, DROP FROM PARTY? and QUIT TO DOS stood; after a save 0.12 s a frame; elsewhere 0.22 s.
+const FIRE_STILL := ["rest", "quit", "drop", "ask", "shown", "stop_ask"]
+const FIRE_FAST := 0.12     # a pass of the menu loop (DOSBox) when 0x4AFF is set
+var _fire_fast := false
+
+
 func _next_fire() -> void:
 	if not visible or _fire.is_empty():
 		return
-	_fire_frame = (_fire_frame + 1) % _fire.size()
-	_anim.start(_fire_delay(_fire_frame))
-	if _mode in ["camp", "save", "quit", "rest", "magic", "whom", "shown", "alter", "order", "drop", "speed", "pics", "ask"]:
+	if _mode == "quit" and _fire_fast:
+		_fire_frame = (_fire_frame + 1) % _fire.size()
+		_anim.start(FIRE_FAST)
+	elif _mode in FIRE_STILL:
+		_anim.start(_fire_delay(_fire_frame))
+		return
+	else:
+		_fire_frame = (_fire_frame + 1) % _fire.size()
+		_anim.start(_fire_delay(_fire_frame))
+	if _mode in ["camp", "save", "quit", "magic", "whom", "alter", "order", "speed", "pics"]:
 		_refresh()
 
 
@@ -1687,8 +1706,10 @@ func _act(choice: String) -> void:
 			save_requested.emit(choice)
 			_mode = "quit"
 			_pick = 1
+			_fire_fast = true
 			_refresh()
 		"quit":
+			_fire_fast = false
 			if choice == "YES":
 				get_tree().quit()
 				return
