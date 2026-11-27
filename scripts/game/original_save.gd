@@ -105,9 +105,25 @@ static func _write_character(stem: String, m: PartyMember) -> bool:
 		r[0] = int(a.effect) & 255
 		r.encode_u16(1, clampi(int(a.get("minutes", 0)), 0, 65535))
 		r[3] = int(a.get("value", 0)) & 255
+		r[4] = end_flag(a)
 		spc.append_array(r)
 	d[0xC7] = mini(itm.size() / GameItem.SIZE, 255)
 	return _put(stem + ".SAV", d) and _put_or_remove(stem + ".ITM", itm) and _put_or_remove(stem + ".SPC", spc)
+
+
+## A .SPC record's byte 4, the end-handler flag (GAME.OVR 0x2AF70: the removal 0x2AF10 runs the type's end handler
+## only when it is not 0; main chat 150). A record loaded from a .SPC keeps its own byte; one ours added gets the
+## original's: 1 for the spells' effects (ours carries the spell), the Manual, Slow Poison's tick and a disease or
+## its rot with their renewals; 0 for the permanent ones (racial, monster and item powers, POISONED 0x37: spell 0).
+## Without it a save made in ours never ends a Slow Poison, the Manual or a disease in the original (main chat 152).
+static func end_flag(a: Dictionary) -> int:
+	# The types the original always adds with 1 (a save from ours before chat 152 wrote 0 for every record: repaired).
+	if int(a.effect) in [SpecialAffects.DISEASE, SpecialAffects.ROT, SpellCaster.SLOWED_POISON, SpellCaster.POISON_TICK,
+			SpellCaster.MANUAL_READING, SpellCaster.MANUAL_TRAINING]:
+		return 1
+	if a.has("end"):
+		return int(a.end) & 255
+	return 1 if int(a.get("spell", 0)) != 0 else 0
 
 
 ## Chat 41 (Player 12's request; DOSBox): the original writes no .ITM for a member with no items and no

@@ -150,7 +150,9 @@ static func add_records(m: PartyMember, data: PackedByteArray) -> void:
 		if int(held.get(type, 0)) > 0:
 			held[type] = int(held[type]) - 1
 			continue
-		m.affects.append({"effect": type, "spell": 0, "minutes": data.decode_u16(o + 1), "value": data[o + 3]})
+		# Byte 4, the end-handler flag (GAME.OVR 0x2AF70), is kept for the save written back (main chat 152).
+		m.affects.append({"effect": type, "spell": 0, "minutes": data.decode_u16(o + 1), "value": data[o + 3],
+				"end": data[o + 4]})
 
 
 static func _raw(m: PartyMember, off: int) -> int:
