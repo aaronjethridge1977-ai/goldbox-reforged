@@ -518,7 +518,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _mode == "menu":
 			_who = (_who + step + _party.size()) % _party.size()
 		elif _mode == "list":
-			_cure = clampi(_cure + step, 0, CURES.size())
+			# Home / End wrap (the list routine 0x3C5:0x34, GAME.OVR 0x50E7: EXIT is the list's last line; main chat
+			# 156, DOSBox at 3:0's temple: eight Homes from CURE BLINDNESS light CURE LIGHT WOUNDS; check 586).
+			_cure = posmod(_cure + step, CURES.size() + 1)
 		elif _mode == "coins":
 			var nk := ShopScreen.coin_kinds_of(pile).size()     # Home / End wrap (the list routine 0x3C5:0x34: main chat 155)
 			if nk > 0:
