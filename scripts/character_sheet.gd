@@ -143,6 +143,9 @@ var _rows: Array = []    # the screen as text (for the lab and the bot)
 ## The encumbrance shown: worked out when the sheet opens and after item changes, not
 ## after money changes (lab: trading 10 silver left ENCUMBRANCE 388 on the page).
 var _enc := {}
+## MOVEMENT the same (P138, main chat 157, DOSBox: ARN's 4000 platinum dropped from camp VIEW left
+## ENCUMBRANCE 7116 and MOVEMENT 3 on the page, back on VIEW's menu too; the coin rows close up at once).
+var _move := {}
 ## Kept for the lab's sheet= key and the bot: the screen as text, and the bottom line.
 var _body := Label.new()
 var _foot := Label.new()
@@ -411,7 +414,7 @@ func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
 	_t(8, 18, "DAMAGE", W)
 	_t(15, 18, PartyMember.dice_text(m.damage).to_upper(), G)
 	_t(25, 18, "MOVEMENT", W)
-	_t(34, 18, str(m.movement), G)
+	_t(34, 18, str(_move.get(m, m.movement)), G)
 	# The two lines come from the item-line routine too (GAME.OVR 0x21489, 0x214E3: START.EXE 0xBA:0x442 at
 	# column 8), which puts "* " before a magic item's name while any member has Detect Magic.
 	var detect := PartyMember.party_detects_magic(_people)
@@ -836,8 +839,10 @@ func _say(text: String) -> void:
 
 func _measure() -> void:
 	_enc.clear()
+	_move.clear()
 	for p in _people:
 		_enc[p] = p.encumbrance()
+		_move[p] = p.movement
 
 
 func _after_change(items_changed: bool = true) -> void:
