@@ -1312,8 +1312,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	# Space at TRADE TO? and TRADE WITH WHOM? does nothing: the menu routine returns 0x20 (GAME.OVR 0x2CEF7) and the
 	# caller takes no word for it; Enter is SELECT (main chat 158, DOSBox at 3:0's camp; check 595). Ours took Space as
-	# Enter (Godot's ui_accept).
-	if _mode in ["whom", "coin_whom"] and key == KEY_SPACE:
+	# Enter (Godot's ui_accept). A scroll's and an item's CAST SPELL ON WHOM? are the same member pick (START.EXE
+	# 0xBA:0x2C48), so the same by the code.
+	if _mode in ["whom", "coin_whom", "scroll_whom", "use_whom"] and key == KEY_SPACE:
 		return
 	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty() and _mode != "amount":
 		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
