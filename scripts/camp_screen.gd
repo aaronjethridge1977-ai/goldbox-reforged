@@ -842,10 +842,18 @@ func _rest_menu(from: String = "camp") -> void:
 			need = maxi(need, m.learn_minutes(spells))
 		_to_rest = (need + 4) / 5
 	_pick = clampi(_pick, 0, REST_MENU.size() - 1)
-	if _pick in [1, 2, 3]:
-		_field = _pick - 1
+	# INC and DEC start on the minutes at every REST, whatever word is lit (GAME.OVR 0x244F7; main chat 159).
+	_field = 2
 	_lines = []
 	_refresh()
+
+
+## Back from REST's menu to the camp's or MAGIC's, the shared light where it is.
+func _rest_leave() -> void:
+	if _rest_back == "magic":
+		_magic_menu()
+	else:
+		_show_menu()
 
 
 func _change(sign: int) -> void:
@@ -1647,6 +1655,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pick = (_pick + d + items.size()) % items.size()
 		_refresh()
 		return
+	if _mode == "rest" and key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE]:
+		# REST's loop (GAME.OVR 0x244FB-0x2461C) turns Enter into R whatever word is lit (0x2458C), and Escape (0)
+		# ends it; neither moves the shared light (0x2CC8C), so the camp's or MAGIC's menu lights the word in the
+		# same place (main chat 159, DOSBox at 3:0's camp from check 391's start: R lights MINS, Enter goes back to the
+		# camp menu with REST lit; MAGIC's REST lights INC, Enter rests and MAGIC lights REST; Esc keeps REST lit).
+		# Ours took Enter as the lit word: MINS, or INC from MAGIC (5 minutes more, no rest).
+		if key == KEY_ESCAPE:
+			_rest_leave()
+		else:
+			_act("REST")
+		return
 	var choice := ""
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[EclVM.menu_lit(items.size())]
@@ -1719,7 +1738,8 @@ func _act(choice: String) -> void:
 			match choice:
 				# REST TIME 00:00:00: straight back, as EXIT (main chat 93, DOSBox: the camp menu with SAVE lit, or
 				# MAGIC's menu with CAST lit); ours stayed in the REST menu. Check 313.
-				"REST": _act("EXIT") if _to_rest <= 0 else _start_rest()
+				# R keeps the light on REST (SAVE or CAST lit after), Enter where it was (main chat 159).
+				"REST": _rest_leave() if _to_rest <= 0 else _start_rest()
 				"DAYS": _field = 0
 				"HOURS": _field = 1
 				"MINS": _field = 2
@@ -1727,10 +1747,7 @@ func _act(choice: String) -> void:
 				"DEC": _change(-1)
 				"EXIT":
 					_pick = REST_MENU.size() - 1    # past the camp's and MAGIC's menus: SAVE or CAST lit
-					if _rest_back == "magic":
-						_magic_menu()
-					else:
-						_show_menu()
+					_rest_leave()
 			_refresh()
 		"magic":
 			match choice:
