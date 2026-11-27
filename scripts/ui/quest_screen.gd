@@ -15,6 +15,9 @@ extends Control
 ## step not yet done isn't shown, Jeremy's spoiler rule), then the offer, or the clerk's words
 ## once reported. P116 (Jeremy, 2026-11-22 23:05): SETTINGS SHOW ALL QUEST STEPS (default OFF)
 ## lists every step instead, the done ones marked "*", the rest plain.
+## P144 (Jeremy, 2026-11-27 11:22: the box cut "Cleanse the temple of Bane" at "...REPORT TO HIM AT TYR'S"): a box
+## longer than its six rows offers MORE, which shows its next six (and from the top again after the last); a page
+## longer than rows 2-22 offers NEXT / PREV.
 
 signal closed
 
@@ -24,6 +27,8 @@ const PER_PAGE := 12
 const STATE_WORD := {"open": "OPEN", "done": "DONE", "failed": "FAILED", "reported": "REPORTED"}
 const MENU_LIST := ["VIEW", "EXIT"]
 const MENU_PAGE := ["EXIT"]
+const BOX_ROWS := 6           # rows 17-22
+const PAGE_ROWS := 21         # VIEW's page: rows 2-22
 
 var _screen: GameScreen
 var _quests: Array = []      # QuestLog.evaluate()'s entries, hidden ones left out
@@ -31,6 +36,8 @@ var _rows: Array = []        # the list's lines: an index into _quests, or -1 fo
 var _sel := 0
 var _unfolded := false
 var _page_view := false
+var _box_top := 0            # P144: the box's first line shown (MORE)
+var _page_top := 0           # P144: VIEW's page's first line shown (NEXT / PREV)
 
 
 static func on() -> bool:
@@ -75,6 +82,7 @@ func open(view: Array) -> void:
 		add_child(_screen)
 	_quests = view.filter(func(q): return String(q.get("state", "hidden")) != "hidden")
 	_page_view = false
+	_box_top = 0
 	_build_rows()
 	_sel = clampi(_sel, 0, maxi(_rows.size() - 1, 0))
 	visible = true
@@ -103,13 +111,20 @@ func _count(state: String) -> int:
 
 func _menu() -> Array:
 	if _page_view:
-		return MENU_PAGE
+		var words: Array = []
+		if _page_top + PAGE_ROWS < _page_lines().size():
+			words.append("NEXT")
+		if _page_top > 0:
+			words.append("PREV")
+		return words + MENU_PAGE
 	var items: Array = MENU_LIST.duplicate()
 	var page := _sel / PER_PAGE
 	if page > 0:
 		items.insert(1, "PREV")
 	if (page + 1) * PER_PAGE < _rows.size():
 		items.insert(1, "NEXT")
+	if not _rows.is_empty() and _box_lines().size() > BOX_ROWS:
+		items.insert(items.size() - 1, "MORE")
 	return items
 
 
@@ -190,8 +205,10 @@ func _draw() -> void:
 		g.list_line(row, k)
 	g.list_chosen(_sel)
 	var lines := _box_lines()
-	for n in mini(lines.size(), 6):
-		g.text(1, 17 + n, lines[n][0], lines[n][1])
+	if _box_top >= lines.size():
+		_box_top = 0
+	for n in range(_box_top, mini(lines.size(), _box_top + BOX_ROWS)):
+		g.text(1, 17 + n - _box_top, lines[n][0], lines[n][1])
 	g.menu_line(24, _menu())
 	g.update()
 
@@ -216,14 +233,13 @@ func _box_lines() -> Array:
 	return out
 
 
-func _draw_page(g: GameScreen) -> void:
-	_frame(g, false)
+## VIEW's page as lines: [column, text, colour], "" a blank row.
+func _page_lines() -> Array:
+	var out: Array = []
 	var q: Dictionary = _quests[_rows[_sel]]
-	var row := 2
 	for l in GameScreen.wrap(title_of(q), 36):
-		g.text((40 - l.length()) / 2, row, l, GameScreen.YELLOW)
-		row += 1
-	row += 1
+		out.append([(40 - l.length()) / 2, l, GameScreen.YELLOW])
+	out.append([0, "", GameScreen.GREEN])
 	var info: Array = []
 	if String(q.get("giver", "")) != "":
 		info.append("FROM: " + String(q.giver).to_upper())
@@ -234,28 +250,37 @@ func _draw_page(g: GameScreen) -> void:
 		"reported": "REPORTED AND PAID"}.get(st, st.to_upper()))
 	for t in info:
 		for l in GameScreen.wrap(t, 36):
-			if row <= 22:
-				g.text(2, row, l, GameScreen.GREEN)
-			row += 1
+			out.append([2, l, GameScreen.GREEN])
 	var all_steps := all_steps_on()
 	var shown: Array = q.get("steps", []).filter(func(s): return all_steps or bool(s.get("done", false)))
 	if not shown.is_empty():
-		row += 1
+		out.append([0, "", GameScreen.GREEN])
 		for s in shown:
-			if bool(s.get("done", false)) and row <= 22:
-				g.text(2, row, "*", GameScreen.WHITE)
+			var first := true
 			for l in GameScreen.wrap(String(s.text).to_upper(), 34):
-				if row <= 22:
-					g.text(4, row, l, GameScreen.WHITE)
-				row += 1
+				# a done step's "*" in column 2 of its first row
+				out.append([4, l, GameScreen.WHITE, first and bool(s.get("done", false))])
+				first = false
 	var words := String(q.get("report", "")) if st == "reported" else String(q.get("offer", ""))
 	if words != "":
-		row += 1
+		out.append([0, "", GameScreen.GREEN])
 		for l in GameScreen.wrap(words.to_upper(), 36):
-			if row <= 22:
-				g.text(2, row, l, GameScreen.CYAN)
-			row += 1
-	g.menu_line(24, MENU_PAGE)
+			out.append([2, l, GameScreen.CYAN])
+	return out
+
+
+func _draw_page(g: GameScreen) -> void:
+	_frame(g, false)
+	var lines := _page_lines()
+	_page_top = clampi(_page_top, 0, maxi(lines.size() - PAGE_ROWS, 0))
+	for n in range(_page_top, mini(lines.size(), _page_top + PAGE_ROWS)):
+		var e: Array = lines[n]
+		var row := 2 + n - _page_top
+		if e.size() > 3 and e[3]:
+			g.text(2, row, "*", GameScreen.WHITE)
+		if e[1] != "":
+			g.text(e[0], row, e[1], e[2])
+	g.menu_line(24, _menu())
 	g.update()
 
 
@@ -275,11 +300,22 @@ func _input(event: InputEvent) -> void:
 		if key in [KEY_ESCAPE, KEY_E, KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
 			_page_view = false
 			_draw()
+		elif key in [KEY_N, KEY_PAGEDOWN] and "NEXT" in _menu():
+			_page_top += PAGE_ROWS
+			_draw()
+		elif key in [KEY_P, KEY_PAGEUP] and "PREV" in _menu():
+			_page_top = maxi(_page_top - PAGE_ROWS, 0)
+			_draw()
 		return
 	if key in [KEY_ESCAPE, KEY_E, KEY_Q]:
 		_close()
 		return
 	if _rows.is_empty():
+		return
+	var was := _sel
+	if key == KEY_M and "MORE" in _menu():
+		_box_top += BOX_ROWS       # past the last line _draw starts the box again from the top
+		_draw()
 		return
 	if event.is_action("ui_up"):
 		_sel = (_sel + _rows.size() - 1) % _rows.size()
@@ -299,4 +335,7 @@ func _input(event: InputEvent) -> void:
 			_build_rows()
 		else:
 			_page_view = true
+			_page_top = 0
+	if _sel != was:
+		_box_top = 0
 	_draw()
