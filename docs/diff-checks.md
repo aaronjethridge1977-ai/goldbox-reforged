@@ -172,6 +172,40 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 152: P134, P140, P141 match; P139 (Pool): one load per coin; the .SPC byte 4 kept and written (save export, fixed); a hand-moved member paralysed mid-step (Combat Chat 67's ask, matched)
+
+- **P134 (Jeremy: DO YOU LEAVE? over the walking menu, no YES/NO, 15,6 E at the iron gate): matches the original.**
+  4:10's tower (event 10, ECL4 block 10 0xA148): the warning, DO YOU LEAVE? YES (0xB6B7) writes 14,6 W (0xA20D) and
+  EXITs with no redraw; the original keeps the tower door, the old place line and the question over the walking menu
+  until a turn or a step (DOSBox, chats 110 and 111; gate check 443). Ours from Player 37's `s37chest` poked to 14,6 E
+  (`data/c152/s134`): the same (YES -> 14,6 W, DO YOU LEAVE? kept). Not a difference. (A save after the vampire,
+  0x4A41 >= 254, runs none of the area's square events: Player 42's `s42coffin` shows nothing at the tower.)
+- **P140 (the mystic joins as "LEVEL 6 MU"): matches the original.** 4:10 event 26 (0xAD33), NPC_ADD 24: the
+  original's own save names him LEVEL 6 MU (gate check 367's original end, CHRDATF7.SAV).
+- **P141 (nothing says the vampire is beaten after the coffin fight): matches the original.** 4:10 event 25: after the
+  COMBAT (0xB161) the script writes 0x4A41 = 255, 0x4AB1 = 254 and EXITs with no text (0xB171); the Player's played
+  run (`player_lab/logs/p42v37.log` keys 60-63) went CONTINUE BATTLE NO, the fight's PRESS ENTER, the treasure, then
+  walking with no text.
+- **P139 (coin encumbrance), Pool's half: one load per coin, as ours.** DOSBox, Player 56's `sg042` (ARN 2300
+  platinum): VIEW ENCUMBRANCE 3431; the same with ARN's platinum poked to 300 (`data/c152/senc`, SAV 0x90): 1431.
+  Curse's rule: not measured (no Curse lab).
+- **The .SPC byte 4 (save export, new area; fixed in special_affects.gd `add_records`, original_save.gd `end_flag`).**
+  A record loaded from a .SPC keeps its byte 4; OriginalSave writes it back; ours' own adds get the original's: 1 for
+  Slow Poison 0x16, its tick 0x0F, the Manual 4 / 7, disease 0x32 and rot 0x39 (always, which also repairs saves ours
+  wrote before with 0) and any spell's effect (ours carries the spell), 0 for spell-0 records (racial, monster and item
+  powers, POISONED 0x37). DOSBox: ours loaded `sunc` and saved it from camp (slot F, `data/c152/w134`; CEDRIC's .SPC
+  37 [0], 16 [1], 0F [1], 08 [08: his own, kept]); that save in the original (`vload.sh`, three steps, camp save
+  `v5F`): the tick ran its end at 05:53: renewed at 10, CEDRIC 9 HP -> 0 (unconscious), Slow Poison 58, as chat 150's
+  original-poked start. Ours' own play is unchanged (ours ignores the byte); DIFFCHECKS 570/570 on be56614.
+- **A member moved by hand, paralysed by a ghoul as he steps (Combat Chat 67's ask): matches.** Start `data/c152/sgh`
+  (poked: `sg042` with ARN, BRAM, CEDRIC at 250 HP, SAV 0x11B), tpseed aeba0d61, Up, tpseed 43100005, Enter; LIRA,
+  ELWEN, DORN GUARD; ARN: MOVE, Down (ATTACK ALLY: NO), then End, PgUp, End, PgUp, End (`para.sh`, `plog.sh`, frames
+  `h*_*.png`). The original: the first step away 250 -> 238 (the wight's drain and blows), the second nothing, the
+  third ARN IS PARALYZED, then the next ghoul's blow slays the held ARN (status 5, HP 0) on the square he was leaving,
+  and within 0.9 s LIRA's turn (round 2). Ours with the same keys (12 waits after each turn so the monsters' turns run
+  first): the same three steps (drained, three misses, IS PARALYZED, GHOUL SLAYS HELPLESS ARN), ARN on 27,13, ROUND 2.
+  Not seen: a paralysis with no ghoul left to strike (every try in contact with two or more ghouls ended in the slay).
+
 ## Chat 150: a member down with HP left keeps 0 after any damage; members out of a fight age a minute a round (582, fixed)
 
 - **582 (game state, main path; fixed in party_member.gd, ecl_vm.gd, item_powers.gd, spell_caster.gd, main.gd).** Start
