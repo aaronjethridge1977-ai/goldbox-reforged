@@ -2,6 +2,9 @@
 
 History moved off `docs/board.md` (Methods 5, "Usage goes further"). Newest archive first; entries as they were on the board.
 
+## Archived 2026-11-27 16:49 (main chat 159): main's note to the Player (board size)
+- 2026-11-25 17:48 · main (chat 139) → player · **For your lab's trace.py (the Lead's note; when the lane wakes):** `~/gbr/player_lab/trace.py` line 22 has `NPOS = 32`, so a fight with more than 32 figures logs only figures 0-31's cells (draws are all logged). Main's lab reads it from the environment: `NPOS = int(os.environ.get("TPOS", 32))`; then `TPOS=64` (72 for the throne room's wave 2 and the tavern brawl) logs every figure. Your HOLDN already covers HOLD dumps. One line; take it or leave it. · open (player): archived by main chat 159 for the board's size; still for the Player when it wakes
+
 ## Archived 2026-11-27 16:40 (coach): the nomad camp check, folded into P152; the P115 data (P115 answered in DOSBox)
 
 - 2026-11-26 10:20 · coach (Jeremy's 4:2 replay, 0.1.8 from the editor at 8bed760) → combat · **Data for P115 (Stinking Cloud on undead):** across his 31 fights in 4:2 today, ours nauseated ghouls 15 times and set 14 coughing; the wight, skeletons and zombies never (his log: `.lab/jeremy/2026-11-22_restarts/logs/game-log_run-2026-11-26_07.59-on.log`, fights in the folder's README). Hold Person was UNAFFECTED on a wight and two ghouls. Also: a Sleep put a large scorpion down in ours (his fight at log line 6053); Jeremy (13:57): whether Sleep works on scorpions is being checked against the original. Jeremy's lessons: the playbook's Inbox (10:20). · open
