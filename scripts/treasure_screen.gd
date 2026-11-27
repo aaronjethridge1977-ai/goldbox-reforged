@@ -290,6 +290,17 @@ func _ask_text() -> void:
 	draw_ask(_scr, "THERE IS STILL TREASURE LEFT.", "DO YOU WANT TO GO BACK AND CLAIM YOUR TREASURE?")
 
 
+## HOW MUCH's digit entry (GAME.OVR 0x24F1D, for TAKE, TRADE and DROP): a digit goes on the end (six at most);
+## a number above `most` (the pile's or the member's coins of that kind) is replaced by `most` itself, on the
+## screen too, so the amount asked is never more than there is (main chat 154, DOSBox: 99999 typed for a pile
+## of 2 electrum reads 2 and takes them; ours had tested 99999 against the load and refused).
+static func amount_digit(typed: String, digit: String, most: int) -> String:
+	var t := (typed + digit).left(6)
+	if t.to_int() > most:
+		t = str(maxi(most, 0)).left(5)
+	return t
+
+
 ## A question under the view, as the original prints it from row 17 (GAME.OVR 0x73A4, 0x709:0x768
 ## with 1, 17, 38, 22): `green` in light green, then `white` after two spaces, word-wrapped together.
 static func draw_ask(scr: GameScreen, green: String, white: String) -> void:
@@ -456,8 +467,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_show_treasure()
 		return
 	if _mode == "amount":
-		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
-			_typed += char(key)
+		if key >= KEY_0 and key <= KEY_9:
+			_typed = amount_digit(_typed, char(key), _spoils.money[_amount_coin])
 		elif key == KEY_BACKSPACE:
 			_typed = _typed.left(-1)
 		elif key in [KEY_ENTER, KEY_KP_ENTER]:

@@ -1622,11 +1622,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		"amount":
 			if cancel:
 				_mode = "coin"
-			elif key >= KEY_0 and key <= KEY_9 and _amount.length() < 5:
-				_amount += str(key - KEY_0)
+			elif key >= KEY_0 and key <= KEY_9:
+				_amount = TreasureScreen.amount_digit(_amount, str(key - KEY_0), m.money[_coin])
 			elif key == KEY_BACKSPACE:
 				_amount = _amount.left(-1)
-			elif event.is_action("ui_accept"):
+			elif key in [KEY_ENTER, KEY_KP_ENTER]:
+				# only Enter ends HOW MUCH (GAME.OVR 0x2507C: Enter or Esc; Space is ignored: main chat 154,
+				# DOSBox, camp VIEW DROP PLATINUM, 1 then Space: still asking; ours had dropped the 1)
 				var n := mini(int(_amount) if _amount != "" else 0, m.money[_coin])
 				if _pending == "coin_trade" and _target == -2:
 					m.money[_coin] -= n     # bug 19: given past the party's end, gone

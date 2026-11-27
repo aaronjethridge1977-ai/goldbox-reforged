@@ -475,8 +475,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key := (event as InputEventKey).keycode
 	if _mode == "amount":
-		if key >= KEY_0 and key <= KEY_9 and _typed.length() < 6:
-			_typed += char(key)
+		if key >= KEY_0 and key <= KEY_9:
+			_typed = TreasureScreen.amount_digit(_typed, char(key), pile[_amount_coin])
 		elif key == KEY_BACKSPACE:
 			_typed = _typed.left(-1)
 		elif key in [KEY_ENTER, KEY_KP_ENTER]:
