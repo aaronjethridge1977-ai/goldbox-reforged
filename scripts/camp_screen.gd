@@ -1666,6 +1666,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_act("REST")
 		return
+	if _mode == "order" and key in [KEY_ENTER, KEY_KP_ENTER]:
+		# ORDER's loop (GAME.OVR 0x19056) takes Enter as S / P whatever word is lit: SELECT or PLACE, the light kept
+		# (main chat 159, DOSBox at 3:0's camp: ALTER ORDER '.' (EXIT lit) Enter: BROTHER SEAN HAS BEEN SELECTED, PLACE
+		# EXIT with EXIT lit). Ours took EXIT.
+		var keep := _pick
+		_act(items[0])
+		_pick = keep
+		_refresh()
+		return
 	var choice := ""
 	if key in [KEY_ENTER, KEY_KP_ENTER]:
 		choice = items[EclVM.menu_lit(items.size())]
