@@ -1537,7 +1537,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if items.is_empty():
 		return
 	# Digits as the keypad's keys at REST, the spell lists, WHOM and ORDER (KeyBurst.ext_digit; main chat 157).
-	if _mode in ["rest", "list", "pending", "whom", "order", "display"]:
+	if _mode in ["rest", "list", "pending", "whom", "order", "display", "speed"]:
 		event = KeyBurst.ext_digit(event as InputEventKey)
 		key = (event as InputEventKey).keycode
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
@@ -1550,6 +1550,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		down = key in [KEY_DOWN, KEY_KP_2]
 		if key in [KEY_HOME, KEY_END, KEY_PAGEUP, KEY_PAGEDOWN]:
 			return
+	if _mode == "speed" and key in [KEY_UP, KEY_KP_8, KEY_DOWN, KEY_KP_2]:
+		# GAME SPEED: Up (8) is SLOWER and Down (2) FASTER where the menu offers them (main chat 157, DOSBox at 3:0's
+		# camp, ALTER SPEED from 0: Up 1, Down 0, 8 1, 2 0; Home, End, 7, 1, 4, 6 nothing). Ours took neither.
+		var w := "SLOWER" if key in [KEY_UP, KEY_KP_8] else "FASTER"
+		if w in items:
+			_act(w)
+		return
 	if _mode in ["camp", "magic", "alter"]:
 		# Combat Chat 57 (DOSBox at 3:11's camp, check 103's start; main chat 123's request): these menus move the lit
 		# member on Home / End and on 7 / 1 (GAME.OVR 0x2CF60 makes the digits the keypad's keys); every other
