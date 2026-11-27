@@ -1218,14 +1218,17 @@ func _turn_page(step: int) -> void:
 func _move_cursor(d: int) -> void:
 	if _list.is_empty():
 		return
-	var i := _cursor
-	for k in _list.size():
-		i = (i + d + _list.size()) % _list.size()
+	# Home / End move the light on the page and wrap on it, never scrolling (the list routine 0x2D594; main chat 156,
+	# DOSBox: CEDRIC's MEMORIZE, End on FIND TRAPS, the page's last line, lights BLESS, its first; Home there FIND
+	# TRAPS again; the headings are skipped). Check 587.
+	var lo := clampi(_top, 0, _list.size() - 1)
+	var n := mini(_top + _page_rows(), _list.size()) - lo
+	var i := clampi(_cursor, lo, lo + n - 1)
+	for k in n:
+		i = lo + posmod(i - lo + d, n)
 		if _list[i][1] != 0:
 			_cursor = i
 			break
-	if _cursor < _top or _cursor >= _top + _page_rows():
-		_top = clampi(_cursor, 0, maxi(_list.size() - _page_rows(), 0))
 	_refresh()
 
 
