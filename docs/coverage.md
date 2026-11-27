@@ -9,7 +9,7 @@ Owner: the side lane (from 2026-11-14, Methods 3). Refresh it after a feature la
 
 Main-path entries below that are partial or missing (the engine-feature sections, then the spells and items the party or the monsters use most).
 
-- **Training halls and the party menu: A magic-user's new spell after training** (partial): built; the original's spell-learning page never seen
+- **Training halls and the party menu: A magic-user's new spell after training** (partial): built; the original's page seen (Player 3's one page, Player 41's p41t1 two: LEARN NEXT / PREV, Combat Chat 68), checks 329, 330 on one page; a two-page check not made
 - **Camp: Heal and memorized messages while resting** (partial): drawn as the rest; not seen in the original
 - **Conditions and effects: Fled (RUNNING) and left behind** (partial): the party keeps members left down after a flee; what the original does with them not checked
 - **Conditions and effects: Poison** (built): a failed save in a fight leaves the member dead with effect 0x37; Slow Poison and Neutralize Poison outside fights (main, chat 23) and the temple's NEUTRALIZE POISON (Combat Chat 3) built; Slow Poison cast in a fight built (Combat Chat 4: aimed at the body, GAME.OVR 0x157B9)
@@ -295,7 +295,7 @@ PROGRAM 0: the halls in New Phlan and the start of the game.
 | feature | status | main path | notes |
 |---|---|---|---|
 | TRAIN: level, hit points, THAC0, cost | checked | yes | screens, level and THAC0 matched (chat 10); 1000 gold a level |
-| A magic-user's new spell after training | partial | yes | built; the original's spell-learning page never seen |
+| A magic-user's new spell after training | partial | yes | built; the original's page seen (Player 3's one page, Player 41's p41t1 two: LEARN NEXT / PREV, Combat Chat 68), checks 329, 330 on one page; a two-page check not made |
 | Racial level limits | partial |  | open since chat 13: not checked against the original |
 | CREATE, MODIFY, DROP, ADD, REMOVE, VIEW, SAVE, BEGIN, EXIT | checked | yes | screens matched (chat 10-11); creation from START.EXE / GAME.OVR's rules (chat 4) |
 | ALTER ICON and PICS (icon editor, portraits) | checked |  | chat 4-5 |
