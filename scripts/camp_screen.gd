@@ -1600,7 +1600,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if up or down:
 		var step := 1 if down else -1
 		if _mode == "rest":
-			_pick = 4 if up else 5
+			# The light stays where it is: Up / Down come back from the menu routine as scan codes and REST's loop
+			# maps them to I / D itself (GAME.OVR 0x24546; main chat 159, DOSBox: MINS stayed lit; ours lit INC / DEC).
 			_change(1 if up else -1)
 		elif _mode in ["list", "pending"]:
 			_move_cursor(step)
