@@ -79,10 +79,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event is InputEventKey or not event.is_pressed():
 		return
 	get_viewport().set_input_as_handled()
+	# MODIFY's menu takes extended keys (GAME.OVR 0x1BAE8; 0x1BB01-0x1BEE8: Down next, Up the one before, Left / Right
+	# lower / raise), so the digits 2, 8, 4, 6 are those keys too (KeyBurst.ext_digit; main chat 157, by the code).
+	event = KeyBurst.ext_digit(event as InputEventKey)
 	match (event as InputEventKey).keycode:
-		KEY_UP:
+		KEY_UP, KEY_KP_8:
 			_sel = (_sel + 6) % 7
-		KEY_DOWN:
+		KEY_DOWN, KEY_KP_2:
 			_sel = (_sel + 1) % 7
 		KEY_RIGHT, KEY_KP_ADD, KEY_EQUAL:
 			_change(1)
