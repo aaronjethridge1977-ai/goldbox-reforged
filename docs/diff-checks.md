@@ -172,6 +172,48 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 156: the coin page's edit landed (585); the list routine's callers: the temple's HEAL list, the camp's and LEARN's lists over two pages, DISPLAY (checks 586-588)
+
+- **The coin page's edit landed** (40b41f8, main chat 155's `coin_wrap.patch` on the Lead's yes; Combat's treasure, shop and
+  temple screens): DIFFCHECKS 572/572, match_gate 2 of 2 (p13a1, p17a6); **585 in the gate (573)**.
+- **The list routine 0x3C5:0x34's 15 callers in GAME.OVR, each against ours:** 0x50E7 the temple's HEAL list (below);
+  0x615F LOOT, 0x233B0 / 0x236AF the sheet's TRADE / DROP coins, 0x25B14 the coin page (chat 155); 0x6E98 the shop's BUY
+  (check 379); 0x8CD9 inside 0x8C5B, the script's vertical menu (wraps, chat 123); 0x18BE7 the camp's DISPLAY (below);
+  0x1A0F4 / 0x1A38A / 0x1A4DF / 0x1A821 the creation's race, gender, class and alignment lists (one page each; ours wraps:
+  match); 0x1CA7A the hall's ADD list (21 rows; ours wraps and keeps the light after an ADD: match); 0x222C9 the sheet's
+  ITEMS (18 rows, at most 16 items: ours wraps; match); 0x271EF the spell lists, CAST / MEMORIZE / SCRIBE / LEARN (below).
+- **The temple's HEAL list (found, fixed; input and game state, main path):** ten lines, EXIT the tenth (index 9, 0x5169),
+  all on one page (rows 4-15); the routine wraps Home / End, and the loop (0x503A) keeps the index after a heal. DOSBox
+  (`data/c156/o586.sh`, check 291's start at 3:0): eight Homes from CURE BLINDNESS lit CURE LIGHT WOUNDS (100 gp paid);
+  ten Ends from there went round to it again. Ours clamped at CURE BLINDNESS and EXIT. **Check 586** (lab): DIFFERS on main
+  (THRENDER GRONE's coins 3201, original 3361), MATCHES with the edit (temple_screen.gd).
+- **The camp's MEMORIZE, CAST and SCRIBE lists and the training's LEARN over two pages (found, fixed; input and game
+  state, main path: a cleric from level 5 has two MEMORIZE pages):** Home / End wrap on the page and never scroll (0x2D594).
+  DOSBox (`omem.sh`, `o587.sh`; the Player's p2c entry, 6:1, CEDRIC cleric 6; `rowlit.py` with `R0=5 R1=16`): MEMORIZE opens
+  with FIND TRAPS lit (the page's last line, row 15); End lights BLESS (row 6, the heading skipped), Home there FIND TRAPS;
+  twenty Ends cycle rows 6-15 on page 1. Ours went on to page 2's first spell and scrolled. **Check 587** (lab; start
+  `smemP`: p2c with CEDRIC's spells in memory poked empty, CHRDATG3.SAV 0x17-0x2B = 0, as play leaves them after casting
+  all): End, MEMORIZE; End, MEMORIZE; Home, Home, MEMORIZE; End, Home, NEXT, End, MEMORIZE; EXIT, EXIT, YES, EXIT. The
+  original records BLESS, CURSE, FIND TRAPS and page 2's first spell (bytes 81 82 96 97); ours 150 151 152 164 on main;
+  MATCHES with the edit (camp_screen.gd `_move_cursor`). **LEARN the same** (party_menu.gd; the same list function 0x271EF):
+  DOSBox (`o588.sh`; poked start `smuL`: check 330's start with DARKSTAR at magic-user 2, CHRDATG5.SAV 0x9B = 2, 5001
+  experience at 0xAC, 0xB5 = 2, his book 0x33-0x6A emptied, so TRAIN's list is 21 rows on two pages): the list opens on
+  KNOCK (page 1's last, row 22); End lights BURNING HANDS (row 6); Home, Home INVISIBILITY (row 21); NEXT keeps row 21
+  (STINKING CLOUD); End STRENGTH; LEARN learns it (35). **Check 588** (lab; keys as 330's to TRAIN, YES, then End, Home,
+  Home, NEXT, End, LEARN, B, SEARCH, ENCAMP): DIFFERS on main (ours learned 31), MATCHES with the edit.
+- **The camp's DISPLAY (found, fixed; display, main path):** the original names effects itself (0x1887D-0x18AE0): the
+  spells' effects (1, 2, 5, 8-14, 16, 17, 19-25, 28, 29, 32-34, 36-39, 41, 42, 45, 46, 49, 51-53) by their spell's name
+  ("Funky--" if none), fourteen by their own words (0x04 STUDYING MANUAL OF BODILY HEALTH, 0x07 TRAINING WITH MANUAL OF
+  BODILY HEALTH, 0x1B FEATHER FALL, 0x1F HELPLESS, 0x23 PRAYER, 0x2C CAUSE DISEASE, 0x32 DREADED MUMMY DISEASE, 0x36
+  REPULSED, 0x37 POISONED, 0x3B REGENERATING, 0x3D FIRE RESISTANCE, 0x47 INVISIBLE, 0x48 CAMOUFLAGED, 0x59 DISPLACED), the
+  rest not listed; and it pages the party's rows (rows 5-21, NEXT / PREV, the last page the list's last 17 rows). DOSBox
+  (`odisp.sh`, p2c's seven members, three poisoned): ARN / POISONED ... DORN on page 1 with NEXT EXIT, BRAM ... DIRTEN /
+  POISONED after NEXT with PREV EXIT. Ours showed POISONED as `<NO SPELL EFFECTS>` and cut DIRTEN off. Ours' page now
+  matches the original's shot. Not matched: the original's End lit row 6 there and Home nothing (the routine's light on a
+  list with no light colour; display only, left).
+- **Lab hazard:** a lab `dck/diffcheck.sh` run while the full gate ran gave check 587 another check's party (ours loaded a
+  2:20 save); alone it matched. Run lab checks between gate runs.
+
 ## Chat 155: HOW MUCH landed (583, 584 in the gate); the coin page's light after a TAKE and Home / End wrapping on the coin page and LOOT (found; ready edit)
 
 - **HOW MUCH landed** (e349417, main chat 154's `amount_clamp.patch` on the Lead's yes; Combat's four screens): the gate on
