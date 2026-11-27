@@ -172,6 +172,57 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 158: the menu routine's timed key (dead), its animation loop (the camp's fire, event pictures), Space at TRADE TO? / TRADE WITH WHOM? and TRADE TO?'s light (checks 595-596), Enter and Space at the fight's menus (597); the hall's limits in Silver Blades and Pools
+
+- **The timed key (0x2CDFF) is dead in Pool:** DS:0x6B2E / 0x6B30 / 0x6B32 are only read (0x2CE01-0x2CE29); no code
+  in GAME.OVR or START.EXE writes them by address or through a base near them (0x6B01 / 0x6B06 / 0x6B0A blocks end
+  before them). Watched in DOSBox's memory every 20 ms (`data/c158/watch6b.py`) through the title and code wheel (Pool
+  has no demo: the credits go to the wheel), a load, 3:0's shop, the camp (SAVE, REST, ALTER, MAGIC, VIEW, TRADE),
+  check 100's kobold fight and its treasure, REST at the inn and 1:18's auction: always 0.
+- **The animation loop (0x2CD5D-0x2CDFC):** with a frame current (DS:0x6ABF > 0, the picture loader 0x3D0:0x2A fills
+  DS:0x6ABE: frame count, current frame, then per frame a delay dword and a far pointer from 0x6AC0), the menu draws the
+  current frame each pass and turns to the next when delay x 10 hundredths have passed since the menu began (0x2CD01)
+  or since the last turn, read off the BIOS clock (delays 2, 4, 6 stood 0.22, 0.45, 0.6 s). Only when the caller's
+  argument +0x0A is set: the camp's menus (0x18C73 MAGIC, 0x19006 ORDER, 0x193BD SPEED, 0x194D0 ALTER, 0x1960B,
+  0x19750 the camp), the treasure's TAKE (0x630A, 0x659D), SAVE WHICH GAME in camp (0x1FD82), START.EXE's member picks
+  in camp (0x37E8: CAST SPELL ON WHOM, TRADE TO?, TRADE WITH WHOM?), and a script's MENU_HORIZONTAL (0x1F78) and
+  ENCOUNTER_MENU (0x2F20) while a picture is up (DS:0x84E0 and 0x84E1: PICTURE n sets the first, a step's arrival 0x4223
+  and PICTURE 255 the second). Not REST (0x24535), the lists (0x2D8AC), the YES / NO questions (0x2D9EA), PARLAY,
+  MENU_VERTICAL, the walking menu. **Or while script cell 0x4AFF is not 0**, then a frame every pass, delays not
+  waited: a SAVE writes slot 3's wall-set number there (0xFFFF; 0x1FEC2) and every menu's return clears it (0x2CFAD).
+- **Found, fixed (display, main path; no reset):** (1) the camp's fire stood still in the original in REST's menu,
+  DROP FROM PARTY? and QUIT TO DOS (DOSBox, 0x6ABF watched), and flickered 0.12 s a frame at QUIT TO DOS after a save;
+  ours turned it everywhere at 0.22 s (camp_screen.gd `FIRE_STILL`, `_fire_fast`; YES / NO's "ask" and a spell's
+  result "shown" by the code). (2) An event's animated picture: at 1:18's auction (check 425's start, PICTURE 16, six
+  frames, delays 6 2 4 2 4 6) the original held frame 1 while the text typed, turned the frames from PRESS <ENTER> on,
+  held them at DO YOU WISH TO: (MENU_VERTICAL); ours turned them from the picture on, always (main.gd
+  `_picture_menu_animates`, `_frame_seconds` on the BIOS clock; seen in ours windowed, `data/c158/win.sh`).
+- **Found, fixed (input and game state, main path; resets the streak by Q35): TRADE TO?'s light and Space.** At 3:0's
+  camp (check 391's start) VIEW, T: TRADE TO? lights SELECT and Enter takes it (the coin page); ours kept TRADE's place
+  in the shared highlight (VIEW's 2nd word) and lit EXIT, so Enter went back to the view page. Space at TRADE TO? and
+  TRADE WITH WHOM? does nothing in the original (the menu routine returns 0x20, 0x2CEF7; START.EXE's member pick
+  ignores it); ours took it as Enter (Godot's ui_accept); a scroll's and an item's CAST SPELL ON WHOM? are the same
+  pick (START.EXE 0xBA:0x2C48), fixed with them by the code (bf1be8f). Matched: Space on the coin page asks HOW MUCH.
+  `character_sheet.gd` (Combat's). **Check 595** (ENCAMP VIEW TRADE End Space Enter Enter 1 Enter: one platinum to
+  BAKSHI; ours traded none) and **596** (VIEW ITEMS R TRADE End Space Home Enter: the flail to THRENDER's own list
+  end; ours gave it to BAKSHI on Space); both DIFFER on 734e7b8, MATCH after.
+- **Found, fixed (input, main path; resets the streak by Q35): Enter and Space at the fight's menus.** DOSBox at check
+  84's goblins (REST 8 hours, COMBAT: RHIANNON's hand turn): Enter and Space at MOVE VIEW AIM USE QUICK DONE, at DONE's
+  GUARD DELAY QUIT SPEED EXIT, at SPEED's and at AIM's menu changed nothing (screens compared pixel for pixel); the
+  menu routine returns 0x0D / 0x20 and the callers (0xA772 DONE, 0xAA0E, 0x15427 AIM ...) test only letters; AIM's
+  cursor (0x1596E) takes Enter and T as TARGET (0x15979), Space not. The MOVE loop (0xA2CA) ends on any key but the
+  directions and Esc, Enter and Space too (as ours). Ours took Enter and Space as the lit word everywhere but the
+  main menu's Space (combat_screen.gd `_menu_choice`; Combat's). **Check 597** (check 84's start: Enter, 8 at
+  RHIANNON's menu, then Alt-Q; ours before took Enter as MOVE and stepped north, no end). Combat's regress not run.
+- **Matched (filmed now): the fight's MOVE with the top row's digits** (chat 157's by-the-code fix): DOSBox at the
+  same hand turn, MOVE then 8: RHIANNON stepped north (the goblin guard's blow from behind), then 6 east, MOVE LEFT 9
+  -> 7 (`data/c158/omv158.sh`, shots /tmp/m1-m3.png not kept).
+- **Silver Blades' hall (the Sources' (1), by the code):** GAME.OVR 0x220E1-0x2228F caps demi-humans as Curse does
+  (0x24DDE) plus dwarf clerics at 8 and elf and gnome clerics at 7; humans and thieves have no race test, their caps
+  are the experience table's end (DS:0x5064 in START.EXE's data, 0x222ED: 15 for every class, 18 for thieves). **Pools'
+  hall:** 0x187A0-0x18930, Curse's demi-human caps and the gnome cleric's 7, then level 40 (0x28) for everyone.
+  Lines in silver-blades.md's and pools-of-darkness.md's Inboxes.
+
 ## Chat 157: P138 (MOVEMENT after a coin DROP); the menu routine 0x2CC8C's 35 calls: the digits as the keypad's keys, REST's Home / End, GAME SPEED (checks 589-594); Silver Blades' FIX
 
 - **P138 (found, fixed; display, main path):** after a coin DROP from camp VIEW the original leaves both ENCUMBRANCE and
