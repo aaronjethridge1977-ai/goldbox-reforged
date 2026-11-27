@@ -486,7 +486,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				pile = left
 			_mode = "coins"
-			_coin = 0
+			_coin = mini(_coin, maxi(ShopScreen.coin_kinds_of(pile).size() - 1, 0))     # the light keeps its row (GAME.OVR 0x25974: main chat 155)
 			if ShopScreen.coin_kinds_of(pile).is_empty():
 				_mode = "menu"
 				_pick = 0
@@ -520,7 +520,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _mode == "list":
 			_cure = clampi(_cure + step, 0, CURES.size())
 		elif _mode == "coins":
-			_coin = clampi(_coin + step, 0, maxi(ShopScreen.coin_kinds_of(pile).size() - 1, 0))
+			var nk := ShopScreen.coin_kinds_of(pile).size()     # Home / End wrap (the list routine 0x3C5:0x34: main chat 155)
+			if nk > 0:
+				_coin = posmod(_coin + step, nk)
 		_refresh()
 		return
 	var choice := ""

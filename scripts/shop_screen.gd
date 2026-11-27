@@ -632,7 +632,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif key in [KEY_ENTER, KEY_KP_ENTER]:
 			take_coins(_amount_coin, _typed.to_int())
 			_mode = "coins"
-			_coin = 0
+			_coin = mini(_coin, maxi(_coin_kinds().size() - 1, 0))     # the light keeps its row (GAME.OVR 0x25974: main chat 155)
 			if _coin_kinds().is_empty():
 				_mode = "menu"
 				_pick = 0
@@ -687,7 +687,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _mode == "menu":
 			_change_buyer(step)
 		elif _mode == "coins":
-			_coin = clampi(_coin + step, 0, maxi(_coin_kinds().size() - 1, 0))
+			var nk := _coin_kinds().size()     # Home / End wrap (the list routine 0x3C5:0x34: main chat 155)
+			if nk > 0:
+				_coin = posmod(_coin + step, nk)
 			_refresh()
 	elif key == KEY_ESCAPE and _mode == "value":
 		# The original sells on Esc too: original's bug 18 (on under ORIGINAL'S BUGS; off, Esc keeps).
