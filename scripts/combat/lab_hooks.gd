@@ -47,7 +47,7 @@ static func handle(main: Node, n: String) -> bool:
 		while combat.visible and not combat._asking_continue and combat._result != 2 and waited < 2400:
 			if combat._combat != null:
 				foes = combat._combat.combatants.filter(func(c): return c.team == 1).map(func(c): return c.who)
-			await main.get_tree().create_timer(0.5).timeout
+			await SafeWait.secs(main, 0.5)
 			waited += 1
 		if combat._asking_continue:
 			print("   ASKED CONTINUE BATTLE")
@@ -65,7 +65,7 @@ static func handle(main: Node, n: String) -> bool:
 			steady = steady + 1 if up else 0
 			if steady >= 3:
 				break
-			await main.get_tree().process_frame
+			await SafeWait.frame(main)
 		return true
 	elif n == "fightaim":               # waits (up to 60 s) for a member's AIM (a begun spell going off), steady 3 frames
 		# Combat Chat 52, Player 48's p45i5: ELWEN's MANUAL key for her begun Hold Person reached ours while a guard's
@@ -79,7 +79,7 @@ static func handle(main: Node, n: String) -> bool:
 			steady = steady + 1 if up else 0
 			if steady >= 3:
 				break
-			await main.get_tree().process_frame
+			await SafeWait.frame(main)
 		return true
 	elif n == "partyhp":                # each member's HP and status byte (record 0x11B, 0x10C)
 		for k in main._party.size():
@@ -211,7 +211,7 @@ static func _handflee(main: Node, arg: String) -> void:
 	var steady := 0
 	var t_end := Time.get_ticks_msec() + 1800000
 	while Time.get_ticks_msec() < t_end:
-		await main.get_tree().process_frame
+		await SafeWait.frame(main)
 		if not cs.visible or cs._combat == null:
 			if seen:
 				break
@@ -346,7 +346,7 @@ static func _handcast(main: Node, arg: String) -> void:
 	var steady := 0
 	var t_end := Time.get_ticks_msec() + 1800000
 	while Time.get_ticks_msec() < t_end:
-		await main.get_tree().process_frame
+		await SafeWait.frame(main)
 		if not cs.visible or cs._combat == null:
 			if seen:
 				break
@@ -490,4 +490,4 @@ static func _grabs(main: Node, arg: String) -> void:
 				cs._scr.img.save_png("%s%03d_%05d.png" % [prefix, n, (Time.get_ticks_msec() - t0) / 10])
 				n += 1
 				last = b
-		await main.get_tree().create_timer(ms / 1000.0).timeout
+		await SafeWait.secs(main, ms / 1000.0)

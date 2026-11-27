@@ -1189,12 +1189,12 @@ func _show_messages() -> void:
 				_refresh()
 				if OS.has_environment("AIMDBG"):     # lab (Combat Chat 66)
 					print("GUARDLABEL ", _move_label)
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			_row24_msg = "GUARDING" if msg.ends_with(" IS GUARDING") else msg
 			_move_label = ""
 			_after_sparkles = false
 			_refresh()
-			await get_tree().create_timer(message_hold()).timeout
+			await SafeWait.secs(self, message_hold())
 			_row24_msg = ""
 			_refresh()
 			continue
@@ -1229,7 +1229,7 @@ func _show_messages() -> void:
 			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
 			_row24_msg = "SPELL:" + msg.substr(7)
 			_refresh()
-			await get_tree().create_timer(message_hold()).timeout
+			await SafeWait.secs(self, message_hold())
 			_row24_msg = ""
 			_refresh()
 			continue
@@ -1240,12 +1240,12 @@ func _show_messages() -> void:
 				# A line straight after a spell's line with sparkles follows at once (the lines cleared for a tick):
 				# DOSBox at speed 6 (Combat Chat 67): c67ha's BAKSHI IS HASTED, then BAKSHI AGES as the sparkles end;
 				# c65sl's four FALLS ASLEEP 0.01 s apart (ours left the panel empty 0.2 s before each).
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			else:
-				await get_tree().create_timer(MESSAGE_GAP).timeout
+				await SafeWait.secs(self, MESSAGE_GAP)
 			if _flying:
 				await flight_done
-				await get_tree().create_timer(0.13).timeout
+				await SafeWait.secs(self, 0.13)
 		if who != "" and not _hold_seq.is_empty() and _hold_seq[0][0] == who:
 			var hs: Array = _hold_seq.pop_front()
 			if hs[2]:
@@ -1347,21 +1347,21 @@ func _show_messages() -> void:
 			# Chat 65's fireball c65fb 1.45 s; ours had the sparkles' 1.76 s and no hold).
 			var until := Time.get_ticks_msec() + (4 * 63 if routine_burst else int(sparkle_time() * 1000.0))
 			while Time.get_ticks_msec() < until and is_inside_tree():
-				await get_tree().create_timer(0.03).timeout
+				await SafeWait.secs(self, 0.03)
 				_refresh()
 			_sparkle = -1
 			_spark_who = -1
 			_after_sparkles = not routine_burst
 			if routine_burst:
 				_refresh()
-				await get_tree().create_timer(message_hold()).timeout
+				await SafeWait.secs(self, message_hold())
 			if _bolt_on and _spell_hits.is_empty():
 				# The last figure hit: the walk goes on to its end (GAME.OVR 0x29B02's loop).
 				await _crackle_to(Vector2i(-1, -1))
 				_bolt_on = false
 		else:
 			_after_sparkles = false
-			await get_tree().create_timer(message_hold()).timeout
+			await SafeWait.secs(self, message_hold())
 		if not _spell_flight.is_empty() and (msg.ends_with(" CASTS A SPELL") or msg.contains(" USES ")):
 			var sf := _spell_flight
 			_spell_flight = {}
@@ -1398,7 +1398,7 @@ func _show_messages() -> void:
 		# straight on).
 		_aim_end = true
 		_refresh()
-		await get_tree().create_timer(0.07).timeout
+		await SafeWait.secs(self, 0.07)
 		_aim_end = false
 	_draining = false
 	_feed_typed.call_deferred()
@@ -1411,6 +1411,8 @@ func _show_messages() -> void:
 		_posed = -1
 		_refresh()
 	_panel_kept = false
+	if not is_inside_tree():
+		return   # P153: off the tree (F3's restart) nothing waiting on the lines goes on
 	messages_shown.emit()
 
 
@@ -1503,13 +1505,15 @@ func _after_result() -> void:
 		# NO (Combat Chat 12, main's cold-open capture). A fight lost the same way: the last line, then main's THE END!
 		# (main chat 132, DOSBox at check 84's goblins with every member at 1 HP: no key, nothing on row 24; ours showed
 		# THE PARTY HAS FALLEN. and waited for a key).
-		await get_tree().create_timer(0.1 if paced() else 1.0).timeout
+		await SafeWait.secs(self, 0.1 if paced() else 1.0)
 		if visible and _event_fight and _result in [1, 2]:
 			_leave()
 
 
 ## Moves on to whoever acts next; computer-controlled turns play out on a timer.
 func _advance() -> void:
+	if not is_inside_tree():
+		return   # P153: F3's scene restart took the screen away mid-fight (SafeWait)
 	if _dev_win_now:
 		_dev_win_now = false
 		for c in _combat.combatants:
@@ -1572,7 +1576,7 @@ func _advance() -> void:
 	if not _combatants[i].get("quick", false) and _combat.magic and _combat.magic.resolve_pending(i):
 		# A player's spell begun last turn goes off at this turn, which it uses up.
 		_refresh()
-		await get_tree().create_timer(0.5 * CampScreen.delay_scale()).timeout
+		await SafeWait.secs(self, 0.5 * CampScreen.delay_scale())
 		if _draining:
 			await messages_shown
 		if _combat != null and _combat.active == i:
@@ -1679,13 +1683,13 @@ func _ai_step() -> void:
 	_refresh()
 	if _draining:
 		await messages_shown
-		if _combat == null or not visible:
+		if _combat == null or not visible or not is_inside_tree():
 			return
 	if more:
 		_ai_timer.start(0.15 if paced() else 0.3)
 	else:
 		# The next figure's panel follows the last line's clearing at once (~0.03 s, a frame).
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 		if _combat != null:
 			_advance()
 
@@ -2249,12 +2253,14 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> 
 		_refresh()
 		if gone >= length:
 			break
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 	_flight = {}
 	_flying = false
 	if sound > 0:
 		Speaker.play(0xFF)
 	_refresh()
+	if not is_inside_tree():
+		return   # P153
 	flight_done.emit()
 
 
@@ -2404,7 +2410,7 @@ func _on_ready_hurt(words: String, past: int) -> void:
 		_note_falls(up_before)
 	_refresh()
 	while _draining and is_inside_tree():
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 	_spell_hits.erase(j)
 	_bare = false
 	_panel_msgs.clear()
@@ -2458,7 +2464,7 @@ func _begin_spell(id: int, item: GameItem) -> void:
 		_combat.message.emit(("%s USES AN ITEM" if item != null else "%s CASTS A SPELL") % (_combatants[me].who as PartyMember).name)
 		_refresh()
 		if paced():
-			await get_tree().process_frame
+			await SafeWait.frame(self)
 			if _draining:
 				await messages_shown
 		_announcing = false
@@ -3290,7 +3296,7 @@ func _alt_quick() -> void:
 			Combat.set_record_quick(c.who, true)
 	_combat.keep_turn(i)
 	_refresh()     # a member on QUICK: no menu on row 24
-	await get_tree().create_timer(0.2).timeout
+	await SafeWait.secs(self, 0.2)
 	if _combat != null and _combat.active == i and _result == 0:
 		_advance()
 

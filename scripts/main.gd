@@ -552,7 +552,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 		var n := names[ki]
 		_replay_left = names.slice(ki + 1)   # lab: what's left if F3 restarts the scene (P56)
 		if n == "wait":
-			await get_tree().create_timer(0.5).timeout
+			await SafeWait.secs(self, 0.5)
 		elif n.begins_with("program="):     # program=0:120 runs PROGRAM 0 with hall mask 120
 			var a := n.trim_prefix("program=").split(":")
 			_vm.write_byte(EclVM.TRAINING_MASK, int(a[1]) if a.size() > 1 else 0)
@@ -611,7 +611,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 					continue
 				var due := t0 + int(d["t"])
 				while Time.get_ticks_msec() < due:
-					await get_tree().process_frame
+					await SafeWait.frame(self)
 				var tev := InputEventKey.new()
 				var kn := String(d["k"])
 				tev.keycode = OS.find_keycode_from_string(kn)
@@ -626,7 +626,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 				print("   at ", _state_line())   # where the key finds the game (chat 109: where a replay parts)
 				print("timed %d %s" % [int(d["t"]), kn])
 				Input.parse_input_event(tev)
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 				var tup := tev.duplicate()
 				tup.pressed = false
 				Input.parse_input_event(tup)
@@ -640,20 +640,20 @@ func _replay_keys(names: PackedStringArray) -> void:
 			TpDice.start(n.trim_prefix("tpseed=").hex_to_int())
 		elif n == "quickall":               # quickall: the whole party on QUICK in the open fight (lab)
 			while _battle_begins:           # chat 39: the fight opens after A BATTLE BEGINS... (--anim)
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			_combat.quick_all()
 		elif n.begins_with("planprep="):    # planprep=<plan file>: each member's QUICK flag as the plan's round 1 wants (lab, chat 96)
 			PlanFight.prepare(self, n.trim_prefix("planprep="))
 		elif n.begins_with("planfight="):   # planfight=<plan file>: the open fight played by a plan (lab, chat 96; scripts/dev/plan_fight.gd)
 			while _battle_begins:
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			await PlanFight.run(self, n.trim_prefix("planfight="))
 		elif LabHooks.handles(n):          # the side lane's lab keys (scripts/combat/lab_hooks.gd)
 			if await LabHooks.handle(self, n):
 				continue
 		elif n == "magic":                  # magic: Alt-M in the open fight (the party's QUICK members cast)
 			while _battle_begins:
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			_combat.toggle_magic()
 		elif n == "tplog":                  # tplog prints the dice drawn since tpseed= (and clears)
 			for l in TpDice.log:
@@ -670,7 +670,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 			# every monster HP 0 (+0x11B), status dead (+0x10C), out of the fight (+0x10D 0: ours' `down`),
 			# no blows or spells left; the fight then goes on by its own rules (no `decided`).
 			while _battle_begins:
-				await get_tree().process_frame
+				await SafeWait.frame(self)
 			if _combat._combat != null:
 				for c in _combat._combat.combatants:
 					if c.team == 1:
@@ -803,7 +803,7 @@ func _replay_keys(names: PackedStringArray) -> void:
 		var t_end := Time.get_ticks_msec() + 5000
 		var i := 0
 		while i < 300 or Time.get_ticks_msec() < t_end:
-			await get_tree().process_frame
+			await SafeWait.frame(self)
 			if i > 3 and not _busy:
 				break
 			i += 1
@@ -829,7 +829,7 @@ func _press(n: String) -> void:
 	up.pressed = false
 	Input.parse_input_event(up)
 	for i in 4:
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 	_lab_digit = false
 
 
@@ -841,7 +841,7 @@ var _lab_digit := false
 func _step_wait() -> void:
 	var quiet := 0
 	for i in 60:
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 		quiet = quiet + 1 if not _busy and _timer.is_stopped() and not _redrawing() else 0
 		if quiet >= 8:
 			return
@@ -857,7 +857,7 @@ func _tour(goal: Vector2i) -> void:
 	_said = ""
 	_door_tries.clear()     # a few tries at each locked door per walk
 	while Time.get_ticks_msec() < deadline:
-		await get_tree().process_frame
+		await SafeWait.frame(self)
 		if _lost:
 			print("   the party has fallen")
 			return
@@ -907,7 +907,7 @@ func _tour(goal: Vector2i) -> void:
 			print("   blocked at %s" % _pos)
 			return
 		while await _auto_handle():
-			await get_tree().process_frame
+			await SafeWait.frame(self)
 		if _pos == before and _door_retry:
 			# A locked door that didn't open this time: try it again (the tries are counted).
 			_door_retry = false
@@ -943,7 +943,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		await _press("up")
 		await _step_wait()
 		while await _auto_handle():
-			await get_tree().process_frame
+			await SafeWait.frame(self)
 		if _pos != next:
 			continue
 		var back := (k + 2) % 4
@@ -952,7 +952,7 @@ func _search_again(at: Vector2i, blocked: int) -> bool:
 		await _press("up")
 		await _step_wait()
 		while await _auto_handle():
-			await get_tree().process_frame
+			await SafeWait.frame(self)
 		ok = _pos == at
 		break
 	_searching = was
@@ -1794,7 +1794,7 @@ func _note_24(text: String, colour: int = GameScreen.WHITE, ms: int = 1500) -> v
 	_row24_colour = colour
 	_row24_until = Time.get_ticks_msec() + ms
 	_show()
-	await get_tree().create_timer(ms / 1000.0 + 0.1).timeout
+	await SafeWait.secs(self, ms / 1000.0 + 0.1)
 	if Time.get_ticks_msec() >= _row24_until and _row24_note == text:
 		_row24_note = ""
 		_show()
@@ -1809,7 +1809,7 @@ func _note_24_wait(text: String, then: Callable = Callable()) -> void:
 	var ms := TEXT_SPEED * 225
 	_busy = true
 	_note_24(text, GameScreen.YELLOW, ms)
-	await get_tree().create_timer(ms / 1000.0).timeout
+	await SafeWait.secs(self, ms / 1000.0)
 	if _row24_note == text:
 		_row24_note = ""
 	_busy = false
@@ -3621,12 +3621,12 @@ func _start_event_fight() -> void:
 		_battle_wait = true
 		_battle_keys.clear()
 		_show()
-		await get_tree().create_timer(maxf(CampScreen.speed * 0.225, 0.001)).timeout
+		await SafeWait.secs(self, maxf(CampScreen.speed * 0.225, 0.001))
 		_battle_wait = false
 		_show()
-		await get_tree().create_timer(0.05).timeout
+		await SafeWait.secs(self, 0.05)
 		_battle_keep = true
-		await get_tree().create_timer(0.15).timeout
+		await SafeWait.secs(self, 0.15)
 		_battle_keep = false
 		_battle_begins = false
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),

@@ -135,7 +135,7 @@ func _detect() -> void:
 	var lines := SpellCaster.cast_outside(CharacterSheet.spells, m, _detect_id(), _party, null, _rng)
 	_detect_line = lines[lines.size() - 1] if lines.size() > 1 else ""
 	_refresh()
-	await get_tree().create_timer(0.67).timeout
+	await SafeWait.secs(self, 0.67)
 	_detect_line = ""
 	_refresh()
 
@@ -414,7 +414,7 @@ func _refuse(text: String) -> void:
 		return
 	# P71 again (Jeremy, SPEED 0): the message time scaled by the speed (0.14 s at SPEED 0) was too short to
 	# read; a refusal now stays at least REFUSAL_TIME, and a key takes it away sooner (_unhandled_input).
-	await get_tree().create_timer(maxf(CharacterSheet.MESSAGE_TIME * CampScreen.delay_scale(), REFUSAL_TIME)).timeout
+	await SafeWait.secs(self, maxf(CharacterSheet.MESSAGE_TIME * CampScreen.delay_scale(), REFUSAL_TIME))
 	if id == _flash_id and _flash != "":
 		_flash = ""
 		_refresh()

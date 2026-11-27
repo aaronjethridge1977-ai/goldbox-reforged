@@ -967,7 +967,7 @@ func _notes_then(healed: bool, hit: bool) -> void:
 	_timer.stop()
 	if healed and _resting and visible:
 		_refresh()
-		await get_tree().create_timer(TEXT_SPEED * 0.225 + 0.001).timeout     # P104: speed 4's pace
+		await SafeWait.secs(self, TEXT_SPEED * 0.225 + 0.001)     # P104: speed 4's pace
 		_lines = []
 		_refresh()
 	if not _held.is_empty():
@@ -1020,7 +1020,7 @@ func _interrupt() -> void:
 	typed_ahead = null
 	_interrupt_keys.clear()
 	_interrupting = true
-	await get_tree().create_timer(TEXT_SPEED * 0.225).timeout     # P104: speed 4's pace
+	await SafeWait.secs(self, TEXT_SPEED * 0.225)     # P104: speed 4's pace
 	_interrupting = false
 	typed_ahead = _interrupt_keys.take()
 	_resting = false
@@ -1052,7 +1052,7 @@ func _show_held() -> void:
 		_say_lines([["", GameScreen.GREEN], ["", GameScreen.GREEN], [line, GameScreen.GREEN, String(h[0]).length()],
 			[String(h[2]).to_upper(), GameScreen.GREEN]])
 		_refresh()
-		await get_tree().create_timer(TEXT_SPEED * 0.225 + 0.001).timeout     # P104: speed 4's pace
+		await SafeWait.secs(self, TEXT_SPEED * 0.225 + 0.001)     # P104: speed 4's pace
 		_lines = []
 		_refresh()
 	_held.clear()
@@ -1363,7 +1363,7 @@ func _cast(target: PartyMember) -> void:
 			_say(lines[lines.size() - 1])
 		_mode = "shown"
 		_refresh()
-		await get_tree().create_timer(1.0 * (TEXT_SPEED + 1) / 5.0).timeout     # P104: speed 4's pace
+		await SafeWait.secs(self, 1.0 * (TEXT_SPEED + 1) / 5.0)     # P104: speed 4's pace
 		if not visible or _mode != "shown":
 			return
 	else:
@@ -1376,7 +1376,7 @@ func _cast(target: PartyMember) -> void:
 			else:
 				_say(lines[k])
 			_refresh()
-			await get_tree().create_timer(1.0 * (TEXT_SPEED + 1) / 5.0).timeout     # P104: speed 4's pace
+			await SafeWait.secs(self, 1.0 * (TEXT_SPEED + 1) / 5.0)     # P104: speed 4's pace
 			if not visible or _mode != "casting":
 				return
 	await _back_to_list()
@@ -1405,7 +1405,7 @@ func _back_to_list() -> void:
 		_none_left = true
 		_say_name(_caster.name, "HAS NO SPELLS MEMORIZED")
 		_refresh()
-		await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
+		await SafeWait.secs(self, 1.0 * text_scale())     # P104
 		_none_left = false
 		if not visible:
 			return
@@ -1432,7 +1432,7 @@ var _row24 := ""     # a refusal shown on row 24 for a moment, in place of the m
 func _note_24(text: String) -> void:
 	_row24 = text
 	_refresh()
-	await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
+	await SafeWait.secs(self, 1.0 * text_scale())     # P104
 	if _row24 == text:
 		_row24 = ""
 		_refresh()
@@ -1448,7 +1448,7 @@ func _marked(k: int) -> bool:
 func _note_name(name: String, message: String) -> void:
 	_say_name(name, message)
 	_refresh()
-	await get_tree().create_timer(1.0 * text_scale()).timeout     # P104
+	await SafeWait.secs(self, 1.0 * text_scale())     # P104
 	if not visible or _lines.size() < 3 or _lines[2][0] != message:
 		return
 	_lines = []
