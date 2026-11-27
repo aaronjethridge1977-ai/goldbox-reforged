@@ -771,3 +771,4 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
+- *Jeremy* (his play 2026-11-27, 0.1.8; `.lab/jeremy/2026-11-22_restarts/`): **The Temple of Bane's Mace with 5 orc leaders and 42-50 orcs:** with Mace left free he cast Hold Person every turn and four members were held and slain helpless (194 HP lost, reloaded); with **Hold Person on Mace in round 1** (and two leaders), two Fireballs on the orcs and Stinking Cloud in round 2: **won in 3 rounds, 3 HP lost**. Kovel Mansion's thief bands: Hold Person or one Fireball in round 1, 0-10 HP.

@@ -1050,3 +1050,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
 
+- An enemy caster with Hold Person (or any disabler) is the first target, before any crowd: Jeremy's fight with Bane's Mace cost 194 HP and four members held and slain with Mace free, 3 HP with Mace held in round 1. *Jeremy* (his play 2026-11-27)
