@@ -1310,6 +1310,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	# TRADE WITH WHOM? SELECT EXIT keeps its light on Left / Right (Enter is SELECT; main chat 90, check 302).
 	if _mode in ["whom", "coin_whom"] and (event.is_action("ui_left") or event.is_action("ui_right")):
 		return
+	# Space at TRADE TO? and TRADE WITH WHOM? does nothing: the menu routine returns 0x20 (GAME.OVR 0x2CEF7) and the
+	# caller takes no word for it; Enter is SELECT (main chat 158, DOSBox at 3:0's camp; check 595). Ours took Space as
+	# Enter (Godot's ui_accept).
+	if _mode in ["whom", "coin_whom"] and key == KEY_SPACE:
+		return
 	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty() and _mode != "amount":
 		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
 		_refresh()
@@ -1341,6 +1346,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				"TRADE":
 					_pending = "coin_trade"
 					_mode = "coin_whom"
+					# TRADE TO? lights SELECT (main chat 158, DOSBox at 3:0's camp: T, then Enter took SELECT; ours kept
+					# TRADE's place, the 2nd word, and lit EXIT: Enter went back to the view page; check 595).
+					_pick = 0
 					if _target < 0:
 						_target = _target_kept
 				"DROP":
