@@ -509,11 +509,19 @@ func _unhandled_input(event: InputEvent) -> void:
 					if String(w).unicode_at(0) == key:
 						word = w
 			if up or down:
-				_cursor = (_cursor + (1 if down else -1) + _list.size()) % _list.size()
-				# The page follows the light (the camp's lists, Combat Chat 16).
-				var at := _learn_row_of(_cursor)
-				if at < _top or at >= _top + LEARN_PAGE:
-					_top = clampi(at, 0, maxi(_learn_rows().size() - LEARN_PAGE, 0))
+				# Home / End move the light on the page and wrap on it, never scrolling (the list routine 0x2D594,
+				# called from 0x271EF for LEARN as for the camp's lists; main chat 156, DOSBox: the camp's MEMORIZE).
+				var vis: Array = []
+				var rows := _learn_rows()
+				for r in range(_top, mini(_top + LEARN_PAGE, rows.size())):
+					if rows[r][1] >= 0:
+						vis.append(rows[r][1])
+				if not vis.is_empty():
+					var k := vis.find(_cursor)
+					if k < 0:
+						_cursor = vis[0] if down else vis[vis.size() - 1]
+					else:
+						_cursor = vis[posmod(k + (1 if down else -1), vis.size())]
 				_refresh()
 			elif key == KEY_COMMA or key == KEY_PERIOD:
 				EclVM.menu_step(words.size(), -1 if key == KEY_COMMA else 1)
