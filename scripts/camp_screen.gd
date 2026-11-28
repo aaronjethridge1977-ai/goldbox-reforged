@@ -1486,8 +1486,9 @@ func _pick_member(d: int) -> void:
 	if _party.is_empty():
 		return
 	if _mode == "order" and _ordering >= 0:
-		# The selected member moves with the cursor.
-		var to := clampi(_sel + d, 0, _party.size() - 1)
+		# The selected member moves with the cursor; Home on the first puts him last and End on the last first (GAME.OVR's
+		# ORDER moves wrap: main chat 161, DOSBox at 6:1's camp, check 609; Talonius' Pool v1.3, camp.pas, led there).
+		var to := posmod(_sel + d, _party.size())
 		if to != _sel:
 			var m: PartyMember = _party[_sel]
 			_party.remove_at(_sel)
@@ -1547,7 +1548,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or not event is InputEventKey or _sheet.visible \
 			or (_icon_editor != null and _icon_editor.visible):
 		return
-	if event is InputEventKey and _mode in ["camp", "magic", "alter"] and not _interrupting and not _resting \
+	if event is InputEventKey and (_mode in ["camp", "magic", "alter"] or (_mode == "order" and _ordering < 0)) \
+			and not _interrupting and not _resting \
 			and _ext_first_member_key(event as InputEventKey):
 		# Main chat 161 (DOSBox at 6:1's camp, End End then the key): Ins, Del, F1-F10 (with or without Shift, Ctrl or
 		# Alt), Alt with a letter or digit and Ctrl with Left, Right, Home, End, PgUp or PgDn light the first member, as
@@ -1626,6 +1628,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_PAGEUP, KEY_PAGEDOWN, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6,
 				KEY_8, KEY_9, KEY_KP_2, KEY_KP_3, KEY_KP_4, KEY_KP_5, KEY_KP_6, KEY_KP_8, KEY_KP_9]:
 			if not _party.is_empty() and _sel != 0:
+				_sel = 0
+				_refresh()
+			return
+	if _mode == "order":
+		# ORDER as the camp's menus (main chat 161, DOSBox at 6:1's camp: End End then Down, Up, Left, Right, Del or F1
+		# at SELECT EXIT lit the first member; at PLACE EXIT Up, Down and Left did nothing and moved no light): Home / End
+		# (7 / 1) move the member or the selection; every other extended key lights the first member before SELECT and
+		# does nothing at PLACE. Ours moved on Up / Down and moved the menu's light on Left / Right.
+		up = key in [KEY_HOME, KEY_KP_7, KEY_7]
+		down = key in [KEY_END, KEY_KP_1, KEY_1]
+		if key in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_PAGEUP, KEY_PAGEDOWN, KEY_5, KEY_KP_2, KEY_KP_3, KEY_KP_4,
+				KEY_KP_5, KEY_KP_6, KEY_KP_8, KEY_KP_9]:
+			if _ordering < 0 and not _party.is_empty() and _sel != 0:
 				_sel = 0
 				_refresh()
 			return
