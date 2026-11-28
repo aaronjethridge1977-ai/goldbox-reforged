@@ -695,6 +695,7 @@ func _people_in(cells: Array[Vector2i]) -> Array[int]:
 ## Combatant i casts `id` at `cell` (area spells) or at the figures in `picked`.
 ## A spell going off (P16: the combat screen draws it): caster, spell id, aim cell, targets.
 signal spell_cast(i: int, id: int, cell: Vector2i, targets: Array)
+signal spell_dropped(i: int, id: int)     # a begun spell that finds nothing to aim at (resolve_pending)
 
 
 ## `announced`: the caster's "CASTS A SPELL" already shown before the aim (a player's aimed spell, CombatScreen:
@@ -1272,8 +1273,14 @@ func resolve_pending(i: int) -> bool:
 	if (me.get("quick", false) or me.team == 1) and not smart_kept:
 		var plan := _ai_plan(i, id, true)
 		if plan.is_empty():
-			# Nothing to aim it at any more: the spell is spent (assumed: no message).
+			# Nothing to aim it at any more: the spell is spent (assumed). The cast is still announced, as any computer
+			# cast's (CASTS A SPELL and SPELL:<name>, the screen showing only SPELL:<name> on row 23), then nothing: DOSBox,
+			# Combat Chat 71, check 526's fight (o70a f472-f473): CEDRIC's begun HOLD PERSON with every kobold held or
+			# down: his box, SPELL:HOLD PERSON on row 23 for ~0.46 s, no pose, no spark, no line.
 			(me.who as PartyMember).forget(id)
+			c.message.emit("%s CASTS A SPELL" % (me.who as PartyMember).name)
+			c.message.emit("SPELL: %s" % table.name_of(id))
+			spell_dropped.emit(i, id)
 			return true
 		cell = plan.cell
 		picked = plan.picked
