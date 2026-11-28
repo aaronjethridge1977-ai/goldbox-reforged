@@ -1,0 +1,59 @@
+# Player 57, stretch 2c (after p57e2, p57e3 lost event 9 at level 1): the hired SWORDSMAN (3:11 7,1: DO YOU DUEL NO,
+# PARTNER FOR YOUR ADVENTURING YES; the cluebook suggests hiring an NPC for Sokal's army; guide section 1: an NPC is a
+# bonus), then events 9 and 14 as 2b. From 2b's `pre9` (2:20 0,0 W).
+# Player 57, stretch 2b: the Slums' set fights left at level 1, for the levels Sokal Keep needs (p57d3, p57d4: its
+# gate patrols of 7-12 undead destroyed the level-1 party, 33 HP): event 12 (0,0), event 9 (3,3: 4 orc leaders and 20
+# orcs; two fresh Sleeps, section 3), event 14 (behind the locked door at 0,7: 30 orcs, 2 leaders). From `slums`
+# (2:20 14,10 E). The general rules (`tactics on`), `prepare` (memorize, heal) and a checkpoint at each door.
+area 2:20
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|YES
+answer JOIN YOU FOR|YES
+answer CONSIDER SOMEONE ELSE|NO
+tactics on
+advance VOSS,GRUM,MAREN,OSRIC,SYLVAR
+inntrip
+walk 15,4 avoid 9,12,14,16,19
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+inntrip end
+walk 15,4 avoid 9,12,14,16,19
+step E
+area 3:0
+alias 3:11
+walk 7,1 through 10,11,12,13,14,15,16,17,18
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,25
+innheal
+checkpoint hired
+walk 0,4 through 25
+step W
+area 2:20
+prepare
+checkpoint pre9b
+walk 3,3 avoid 12,14,16,19
+heal
+prepare
+checkpoint pre14
+walk 1,5 avoid 9,12,16,19
+heal
+checkpoint slums2b
