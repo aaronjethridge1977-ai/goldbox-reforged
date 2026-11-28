@@ -1527,9 +1527,35 @@ func _hot(item: String) -> int:
 	return item.unicode_at(0)
 
 
+## The extended keys (other than the arrows, PgUp / PgDn and the keypad's digits, taken below) the camp's menus hand to
+## the member step, which lights the first member (main chat 161; main.gd's _ext_first_member_key, the walking screen's).
+static func _ext_first_member_key(ev: InputEventKey) -> bool:
+	var k := ev.keycode
+	var plain := not (ev.shift_pressed or ev.ctrl_pressed or ev.alt_pressed)
+	if k >= KEY_F1 and k <= KEY_F10:
+		return not (plain and k in [KEY_F2, KEY_F3])
+	if plain:
+		return k in [KEY_INSERT, KEY_DELETE]
+	if ev.alt_pressed and not ev.ctrl_pressed:
+		return KeyBurst.ALT_SCANS.has(k) or (k >= KEY_0 and k <= KEY_9)
+	if ev.ctrl_pressed and not ev.alt_pressed:
+		return k in [KEY_LEFT, KEY_RIGHT, KEY_HOME, KEY_END, KEY_PAGEUP, KEY_PAGEDOWN]
+	return false
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not event.is_pressed() or not event is InputEventKey or _sheet.visible \
 			or (_icon_editor != null and _icon_editor.visible):
+		return
+	if event is InputEventKey and _mode in ["camp", "magic", "alter"] and not _interrupting and not _resting \
+			and _ext_first_member_key(event as InputEventKey):
+		# Main chat 161 (DOSBox at 6:1's camp, End End then the key): Ins, Del, F1-F10 (with or without Shift, Ctrl or
+		# Alt), Alt with a letter or digit and Ctrl with Left, Right, Home, End, PgUp or PgDn light the first member, as
+		# the arrows do (below); Ctrl+A does nothing. Ours' F2 / F3 (QUICK SAVE / LOAD) kept. Check 608.
+		get_viewport().set_input_as_handled()
+		if not _party.is_empty() and _sel != 0:
+			_sel = 0
+			_refresh()
 		return
 	if event is InputEventKey:
 		var dk := KeyBurst.menu_key(event as InputEventKey)
