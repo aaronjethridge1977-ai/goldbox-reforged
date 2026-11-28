@@ -4,6 +4,7 @@
 - Engine: **Godot 4.7, GDScript**, Compatibility renderer; desktop builds (Windows first, then Mac and Linux); no web build in Stage 1 (2026-11-15).
 - Target: **DOS Pool of Radiance**. Reproduce the original faithfully; additions are QoL only (automap, quest tracker, quick save, mouse) unless Jeremy says otherwise.
 - Reference projects (ssi-engine, Curse of the Azure Bonds port) are GPL: use them as format documentation only, don't copy code.
+- **Talonius' source reconstructions** (github.com/talonius, released 2026-11-08; Jeremy approved 2026-11-27 21:51, Gold Box Methods 9): byte-for-byte Turbo Pascal rebuilds of Pool (`bc-pool-of-radiance`), Curse, Silver Blades and Pools of Darkness, cloned in `~/gbr/refs/talonius/` (outside this repo: never a submodule, never copied in). **No licence and derived from SSI's code:** read them to learn rules and formats only, write our own code, **copy nothing** (no code, no tables pasted, no identifiers carried over), as with Simeon Pilgrim's Curse. For Pool, optional: where a lane reads GAME.OVR for a rule, `bc-pool-of-radiance`'s v1.3 tag (before its expansions) may answer faster; check every answer in DOSBox as usual. See ai-business-ideas `research/gold-box-prior-art.md`, "Source reconstructions".
 - The roadmap and decisions live in the `ai-business-ideas` repo: `plans/game-modernizer-roadmap.md` and `ideas/game-modernizer.md`.
 - Jeremy works one step at a time: finish a step, show the result, then move on.
 - Use tabs for GDScript indentation; keep files LF.
