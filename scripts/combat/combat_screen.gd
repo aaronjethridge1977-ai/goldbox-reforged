@@ -1221,6 +1221,9 @@ func _show_messages() -> void:
 				if sf.has("from"):
 					_fly(sf.from, sf.to, [5, 133], 240.0)
 					await flight_done
+					# The spell's first line follows the spark at once (DOSBox at speed 6, Combat Chat 71: o70a f165-f166
+					# and o71sl f242-f243, ~0.02 s; ours left the panel empty MESSAGE_GAP, 0.2 s). Not Fireball's (its burst).
+					_after_sparkles = not sf.has("centre")
 				Speaker.play(0xFF)
 				if sf.has("centre"):
 					_ensure_view(sf.centre, 0)     # Fireball (0x29746)
@@ -1259,6 +1262,9 @@ func _show_messages() -> void:
 				if sf.has("from"):
 					_fly(sf.from, sf.to, [5, 133], 240.0)
 					await flight_done
+					# The spell's first line follows the spark at once (DOSBox at speed 6, Combat Chat 71: o70a f165-f166
+					# and o71sl f242-f243, ~0.02 s; ours left the panel empty MESSAGE_GAP, 0.2 s). Not Fireball's (its burst).
+					_after_sparkles = not sf.has("centre")
 				if snd > 0:
 					Speaker.play(0xFF)
 				if sf.has("centre"):
@@ -2283,17 +2289,51 @@ func _fly(a: Vector2i, b: Vector2i, frames: Array, speed: float, sound := 0) -> 
 	_flying = true
 	if sound > 0:
 		Speaker.play(sound, true)
-	if not _on_screen(b):
-		_ensure_view(Vector2i((a.x + b.x + 1) / 2, (a.y + b.y + 1) / 2), 0)
-	var p0 := Vector2((a - _view) * CELL)
-	var p1 := Vector2((b - _view) * CELL)
-	var length := maxf(absf(p1.x - p0.x), absf(p1.y - p0.y))
+	# The view during a flight (DOSBox, Combat Chat 71: check 526's fight, ELWEN's SLEEP on kobolds far off; the
+	# original's flight routine, read in Talonius' Pool v1.3): with the start or the end off the view, a flight that
+	# fits in a view (7 cells or less each way) is drawn with the view centred on its middle (the start plus half the
+	# distance, rounded toward the start); a longer one starts in the view as it is, and each time the icon leaves the
+	# view, the view moves on with it: the icon's cell put at the view's edge it came in by (3 cells past the centre)
+	# on the axes it moved along, the centre carried along with it on the others; at the end, an end still off the
+	# view is brought in (margin 3). Was: the view centred on the middle at once, and a far flight left the view.
+	var d := b - a
+	var stepping := false
+	if not _on_screen(a) or not _on_screen(b):
+		if absi(d.x) <= 6 and absi(d.y) <= 6:
+			_ensure_view(Vector2i(a.x + d.x / 2, a.y + d.y / 2), 0)
+		else:
+			stepping = true
+	var cam := _view + Vector2i(3, 3)
+	var leg_from := a
+	var w0 := Vector2(a * CELL)
+	var w1 := Vector2(b * CELL)
+	var length := maxf(absf(w1.x - w0.x), absf(w1.y - w0.y))
 	var t := 0.0
 	var started := Time.get_ticks_msec()
 	while is_inside_tree():
 		t = (Time.get_ticks_msec() - started) / 1000.0
 		var gone := minf(t * speed, length)
-		var at := p0.lerp(p1, gone / length if length > 0 else 1.0)
+		var w := w0.lerp(w1, gone / length if length > 0 else 1.0)
+		var at := w - Vector2(_view * CELL)
+		if stepping and gone < length and (at.x < 0 or at.y < 0 or at.x > 6 * CELL or at.y > 6 * CELL):
+			var s := a + Vector2i(int((w.x - w0.x) / CELL), int((w.y - w0.y) / CELL))
+			cam += s - leg_from
+			if s.x != leg_from.x:   # the axes moved along since the last move of the view
+				if s.x >= _view.x + 6:
+					cam.x = s.x + 3
+				elif s.x <= _view.x:
+					cam.x = s.x - 3
+			if s.y != leg_from.y:
+				if s.y >= _view.y + 6:
+					cam.y = s.y + 3
+				elif s.y <= _view.y:
+					cam.y = s.y - 3
+			_ensure_view(cam, 0)
+			leg_from = s
+			at = w - Vector2(_view * CELL)
+		elif stepping and gone >= length and not _on_screen(b):
+			_ensure_view(b, 3)
+			at = w - Vector2(_view * CELL)
 		var img: Image = _arrow(a, b) if frames[0] is String else _art.sprite(frames[int(t * 15.0) % frames.size()])
 		_flight = {"img": img, "at": Vector2i(int(at.x) / 8 * 8, int(at.y) / 8 * 8)}
 		if frames == [5, 133] and _posed >= 0 and _combatants[_posed].cell == a and gone >= CELL:
