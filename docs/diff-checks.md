@@ -172,6 +172,54 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 162: the fight's menus' extended keys, Space in MOVE, Enter at the aim cursor, SPEED at its ends (checks 613-615) and the treasure's F10 (check 617), Combat's files: ready edits; City Hall's Bivant and Zhentil rewards (check 616); the LOOT page's names; bug 27, MEMORIZE after a drain (check 618)
+
+Talonius' Pool v1.3 (read only) gave each rule; each was filmed in DOSBox at check 84's goblins (RHIANNON's hand turn,
+`data/c162/o61x.sh <out> <keys...>`, as check 597's start) before a line changed.
+
+- **Alt-M and Alt-Q only at the fight's main menu (input / game state, main path; resets the streak).** combat.pas
+  CombatMenu keeps Alt-Q / R / X / M among extended keys; DONE's, SPEED's and AIM's menus (MenuHorizontal without its
+  reinterpret flag) drop every extended key. Filmed: DONE, Alt-Q kept GUARD DELAY QUIT SPEED EXIT; AIM, Alt-M kept AIM:.
+  Ours took QUIT and MANUAL (KeyBurst.menu_key kept M / Q for every fight menu). **Check 613.**
+- **Space does nothing in MOVE (input, main path; resets).** MoveMenu's loop ends on Esc and Enter only; Space comes back
+  as ' ' and its case's else (CENTER). Filmed: MOVE, Space, Up stepped her (MOVE LEFT 9, then 7 after a second Up: the
+  first step's redraw lags 1.5 s under load). Ours' ui_accept took Space and left MOVE. **Check 614.**
+- **The aim cursor's Enter and Shift+F1 (input, main path; resets).** ManualAimCursor loops until Esc, Enter, E or T and
+  tests scan codes as letters: Enter or Shift+F1 (0x54, 'T') ends it whether TARGET is offered or not, and with no target
+  there the AIM: menu comes back, as EXIT; F9 (0x43, 'C') is CENTER (filmed: the view moved, identical to C's). Ours'
+  Enter did nothing without TARGET, Shift+F1 and F9 nothing. **Check 615** (A, M, Shift+F1, E, A, M, Enter, E).
+- **SPEED offers SLOWER only below 9 and FASTER only above 0 (display, main path; no reset):** filmed GAMESPEED (0) :
+  SLOWER EXIT; ours always showed both (the camp's had it since chat 91).
+- The edit is in Combat's combat_screen.gd (main's standing permission ended 04:00): the ready patch
+  `~/gbr/lab/data/c162/fightkeys.patch` (applies to 3f5552f; checks 613-615 MATCH with it, DIFFER without: lab
+  `data/c162/chk613`-`chk615`, sealed by Combat with the patch). Combat 71 had taken 610-612 for Up / Down at the
+  treasure, shop and temple menus.
+- **The treasure's F10 is DETECT (input / game state, main path; resets).** postcbt.pas LootMenu switches on the scan
+  code's letter: F10 (0x44, 'D') casts the lit member's Detect Magic where DETECT is offered (with none memorized the
+  original casts an unset spell number: ours does nothing). Filmed at check 571's chest (BAKSHI lit): F10, then VIEW TAKE
+  POOL SHARE EXIT, the spell spent. Ours did nothing. **Check 617** (check 571's keys with F10 for D): DIFFERS on main,
+  MATCHES with `~/gbr/lab/data/c162/f10.patch` (treasure_screen.gd, Combat's: one entry in the menu's key map).
+- **P158, City Hall's rewards (matches; check 616).** 3:8's clerk (0x9D1A) sets [6E7F] to 255 before each report, then
+  each report's handler sets its own coins and item list (tables at 0xB5ED / 0xB604 / 0xB61B / 0xB632 by the report's
+  number) and TREASURE pays them: Bivant's boy (number 3) item list 51 (ITEM3 block 51: TWO-HANDED SWORD +1 +3 VS UNDEAD,
+  four CLERICAL SCROLL WITH 2 SPELLS), Zhentil's mission (14) coins and gems only. Filmed both in one visit (mksave J I
+  3 8 4 5 E 4AA9=254 4AB4=254; 3,208 then 2,125 experience each); ours the same (check 616 MATCH before the change).
+- **The LOOT page's names (display, main path; no reset).** The original names a TREASURE list's items from their name
+  words (LOOT: TWO-HANDED SWORD +1 +3 VS UNDEAD); ours took the record's cached name ("vs. Undead"). Other records differ
+  more (ITEM4 block 30's "Clerical Scroll of Restoring Level(s)" is a CLERICAL SCROLL WITH 2 SPELLS by its words;
+  "Flask OF Oil Flask(s)", "Sheet(s) OF Gold": lab `data/c162/p158/names.gd` lists them). main.gd `_after_fight` now
+  names every TREASURE item as the shop does.
+- **The original's bug 27: a level-drained caster memorizes past his slots (game state with ORIGINAL'S BUGS on, main
+  path after a drain; resets).** camp.pas SpellSlotsRemaining returns a byte: slots less the spells held at that level.
+  A drain lowers the slots and keeps the spells, so the count wraps. Filmed (`data/c162/mem1/om.sh`): check 84's start
+  with BROTHER SEAN's 1st-level cleric slots poked 3 -> 1 (two Cure Light Wounds held): CAN MEMORIZE CLERIC SPELLS: 25
+  (DisplaySpellSlots' String[2] of 255), MEMORIZE took two Resist Cold, saved pending (136, 136). Ours refused (a
+  negative count). party_member.gd `slots_left` now wraps with the switch on, capped at the record's 21 spells (the
+  original writes past its array); fixed by default (docs/original-bugs.md #27). **Check 618.** Not changed (Combat's
+  camp_screen.gd): the count shows "255" where the original shows its first two characters, "25" (display, to Combat).
+- **P58's Esc:** the original's Esc on the walking screen (2:20, check 84's start) left the screen unchanged, so ours'
+  Esc opens the message log too (H as well; never in a lab run or a replay).
+
 ## Chat 161: the menus' extended keys as letters (Del SHARE, F7 APPRAISE, F8 BUY, Shift+F1 TAKE, Shift+F3 VIEW); APPRAISE's EXIT and the load; F-keys, Alt and Ctrl keys light the first member; ORDER's wrap (checks 602-609)
 
 Talonius' Pool v1.3 (read only) gave each rule; every one was filmed in DOSBox before a line changed. The menu routine
