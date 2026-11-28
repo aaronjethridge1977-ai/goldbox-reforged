@@ -521,6 +521,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	# The original moves through lists and the party with Home and End (keypad 7 and 1).
 	var up := key in [KEY_HOME, KEY_KP_7, KEY_UP]
 	var down := key in [KEY_END, KEY_KP_1, KEY_DOWN]
+	if _mode == "menu" and key in [KEY_UP, KEY_DOWN]:
+		# Up and Down do nothing at this horizontal menu: only Home / End (keypad 7 / 1) step the member (their scan codes,
+		# 0x48 / 0x50, are H / P, and the letters test the extended flag; main chat 161, DOSBox after check 100's kobolds:
+		# End, Down, Down kept BRAM lit; the Lead, 2026-11-28, match the original). Lists keep P33's Up / Down.
+		return
 	if up or down:
 		var step := 1 if down else -1
 		if _mode == "menu":

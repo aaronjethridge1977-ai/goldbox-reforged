@@ -691,6 +691,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif key == KEY_LEFT or key == KEY_RIGHT:
 		_pick = (_pick + (1 if key == KEY_RIGHT else -1) + items.size()) % items.size()
 		_refresh()
+	elif _mode == "menu" and key in [KEY_UP, KEY_DOWN]:
+		# Up and Down do nothing at this horizontal menu: only Home / End (keypad 7 / 1) step the member (their scan codes,
+		# 0x48 / 0x50, are H / P, and the letters test the extended flag; main chat 161, DOSBox after check 100's kobolds:
+		# End, Down, Down kept BRAM lit; the Lead, 2026-11-28, match the original). Lists keep P33's Up / Down.
+		pass
 	elif key in [KEY_UP, KEY_DOWN, KEY_HOME, KEY_END, KEY_KP_7, KEY_KP_1]:
 		# The original moves through lists and the party with Home and End (keypad 7 and 1).
 		var step := 1 if key in [KEY_DOWN, KEY_END, KEY_KP_1] else -1
