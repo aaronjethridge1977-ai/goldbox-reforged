@@ -3941,9 +3941,11 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 		list_id = int(_fight_treasure[7])
 	var found: Array[GameItem] = _fight_made.duplicate() if list_id >= 128 else _item_list(list_id)
 	_fight_made = []
+	# The LOOT page names each item from its name words, as the shop and VIEW do (P158, main chat 162, DOSBox at 3:8's
+	# Bivant reward: TWO-HANDED SWORD +1 +3 VS UNDEAD; the record's own cached name says "vs. Undead", and others differ
+	# more: ITEM4 block 30's "Clerical Scroll of Restoring Level(s)" is a CLERICAL SCROLL WITH 2 SPELLS by its words).
 	for it in found:
-		if it.name == "":
-			it.name = ItemNames.shared(_game_path).name_of(it)
+		it.name = ItemNames.shared(_game_path).name_of(it)
 	# A thrown weapon that lands (the stack's last, its type flagged thrown and melee) goes to the pile's head when it
 	# is thrown (GAME.OVR 0x14200-0x1425D), after the TREASURE's items were put there and before the fight's end puts
 	# the defeated figures' items at the head (0x571E): so the field's items come between the two, the last thrown
