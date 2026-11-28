@@ -47,7 +47,8 @@ const LIST_MENU := ["HEAL", "EXIT"]
 const YES_NO := ["YES", "NO"]
 ## Extended keys the temple's menu reads as their scan code's letter (main chat 161): Del SHARE, F7 APPRAISE (Up's
 ## 0x48 and Down's 0x50, H and P, are kept from HEAL and POOL).
-const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A}
+## Shift+F1 (0x54) is TAKE and Shift+F3 (0x56) VIEW, as the shop's.
+const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A, KEY_MASK_SHIFT | KEY_F1: KEY_T, KEY_MASK_SHIFT | KEY_F3: KEY_V}
 const BLIND := 0x21     # Cause Blindness's effect (GAME.OVR 0x47D9 tests it, 0x4834 removes it)
 
 var _party: Array[PartyMember] = []
@@ -537,8 +538,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	var choice := ""
 	# Del is SHARE and F7 APPRAISE at the temple's menu (main chat 161, DOSBox at 3:0's temple of Tyr, check 604;
 	# Talonius' Pool v1.3 led there).
-	if _mode == "menu" and key in SCAN_LETTERS:
-		key = SCAN_LETTERS[key]
+	if _mode == "menu" and (event as InputEventKey).get_keycode_with_modifiers() in SCAN_LETTERS:
+		key = SCAN_LETTERS[(event as InputEventKey).get_keycode_with_modifiers()]
 	# The temple's menu (HEAL VIEW ... EXIT), CAST CURE ANYWAY, PAY FOR CURE and GO BACK AND RETRIEVE YOUR
 	# MONEY? take only their letters, Esc
 	# and the party keys: Enter and Left / Right do nothing there; the HEAL list keeps Enter for its lit word

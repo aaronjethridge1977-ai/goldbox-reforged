@@ -1141,8 +1141,10 @@ func _input(event: InputEvent) -> void:
 	# camp, shops, sheets and events included. Off the plain walking screen the whole game
 	# scene is started afresh and loads the quick save as it starts (every screen's timers and
 	# waits go with it); on the walking screen the usual path below does it.
+	# Plain F3 only (main chat 161): with Shift, Ctrl or Alt it is the original's own key (Shift+F3 is VIEW at a shop).
 	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F3 \
-			and _game_path != "" and not (_start_menu != null and is_instance_valid(_start_menu) and _start_menu.visible) \
+			and not ((event as InputEventKey).shift_pressed or (event as InputEventKey).ctrl_pressed \
+			or (event as InputEventKey).alt_pressed) and _game_path != "" and not (_start_menu != null and is_instance_valid(_start_menu) and _start_menu.visible) \
 			and FileAccess.file_exists(_save_path()) and _quick_load_needs_reset():
 		get_viewport().set_input_as_handled()
 		_reload_quick = true
@@ -1179,7 +1181,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		_back_to_start()
 		return
-	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3:
+	if _mode != Mode.WALK and event is InputEventKey and (event as InputEventKey).keycode == KEY_F3 \
+			and not ((event as InputEventKey).shift_pressed or (event as InputEventKey).ctrl_pressed \
+			or (event as InputEventKey).alt_pressed):
 		_quick_load()
 	elif lab_keys and event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
 		_mode = ((_mode + 1) % 3) as Mode

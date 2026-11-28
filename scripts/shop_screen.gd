@@ -43,8 +43,10 @@ const PAGE := 19
 const MENU := ["BUY", "VIEW", "POOL", "APPRAISE", "EXIT"]
 const POOL_MENU := ["BUY", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
 const ASK_MENU := ["YES", "NO"]
-## Extended keys the shop's menu reads as their scan code's letter (main chat 161): Del SHARE, F7 APPRAISE, F8 BUY.
-const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A, KEY_F8: KEY_B}
+## Extended keys the shop's menu reads as their scan code's letter (main chat 161, by key and Shift): Del (0x53) SHARE,
+## F7 (0x41) APPRAISE, F8 (0x42) BUY, Shift+F1 (0x54) TAKE, Shift+F3 (0x56) VIEW.
+const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A, KEY_F8: KEY_B, KEY_MASK_SHIFT | KEY_F1: KEY_T,
+	KEY_MASK_SHIFT | KEY_F3: KEY_V}
 const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]   # every item; row 24 shows _list_menu()
 
 var _items: Array[GameItem] = []
@@ -659,10 +661,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_party[_buyer].refresh_load_word()
 			get_viewport().set_input_as_handled()
 			return
-	# The shop's menu reads an extended key's scan code as a letter: Del (0x53) is SHARE, F7 (0x41) APPRAISE, F8 (0x42)
-	# BUY (main chat 161, DOSBox at 3:0's arms and armour shop, check 603; Talonius' Pool v1.3 led there).
-	if _mode == "menu" and key in SCAN_LETTERS:
-		key = SCAN_LETTERS[key]
+	# The shop's menu reads an extended key's scan code as a letter (SCAN_LETTERS; main chat 161, DOSBox at 3:0's arms
+	# and armour shop, check 603; Talonius' Pool v1.3 led there).
+	if _mode == "menu" and (event as InputEventKey).get_keycode_with_modifiers() in SCAN_LETTERS:
+		key = SCAN_LETTERS[(event as InputEventKey).get_keycode_with_modifiers()]
 	var items: Array = _list_menu() if _mode == "list" else _menu_items()
 	var choice := ""
 	_pick = EclVM.menu_lit(items.size())
