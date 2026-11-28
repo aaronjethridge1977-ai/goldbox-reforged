@@ -570,7 +570,15 @@ func slots_left(table: SpellTable, spell_class: int, level: int) -> int:
 		var id := s % LEARNING
 		if table.spell_class(id) == spell_class and table.level(id) == level:
 			used += 1
-	return spell_slots[spell_class][level - 1] - used
+	var left: int = spell_slots[spell_class][level - 1] - used
+	if left < 0 and OriginalBugs.on():
+		# The original's bug 27 (main chat 162, DOSBox; Talonius' Pool v1.3 camp.pas SpellSlotsRemaining): the count is a
+		# byte, so a caster holding more spells at a level than his slots there (a level drain lowers the slots and
+		# keeps the spells) has 256 less that many left and MEMORIZE takes more (BROTHER SEAN, slots poked 3 -> 1 with
+		# two Cure Light Wounds held: CAN MEMORIZE 25, i.e. "255" in two characters; two Resist Cold taken). The
+		# record holds 21 spells; past them the original writes beyond its array: ours stops there.
+		return mini(left & 0xFF, maxi(21 - memorized.size(), 0))
+	return left
 
 
 func has_slots() -> bool:
