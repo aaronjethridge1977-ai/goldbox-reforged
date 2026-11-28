@@ -414,7 +414,14 @@ func _draw_page(m: PartyMember, coin_lit: int = -1) -> void:
 	_t(8, 18, "DAMAGE", W)
 	_t(15, 18, PartyMember.dice_text(m.damage).to_upper(), G)
 	_t(25, 18, "MOVEMENT", W)
-	_t(34, 18, str(_move.get(m, m.movement)), G)
+	# The page doubles the movement while Slowed and halves it while Hasted (GAME.OVR's sheet, a byte: main chat 161,
+	# DOSBox at 3:0's camp, LIRA's Potion of Speed: MOVEMENT 9, then 4; Talonius' Pool v1.3, viewchar.pas, led there).
+	var mv: int = _move.get(m, m.movement)
+	if m.has_affect(CombatSpells.EFFECT_SLOW):
+		mv = (mv * 2) & 0xFF
+	if m.has_affect(CombatSpells.EFFECT_HASTE):
+		mv /= 2
+	_t(34, 18, str(mv), G)
 	# The two lines come from the item-line routine too (GAME.OVR 0x21489, 0x214E3: START.EXE 0xBA:0x442 at
 	# column 8), which puts "* " before a magic item's name while any member has Detect Magic.
 	var detect := PartyMember.party_detects_magic(_people)
