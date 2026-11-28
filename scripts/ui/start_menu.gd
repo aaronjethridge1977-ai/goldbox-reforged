@@ -474,6 +474,7 @@ static func setting_value(id: String) -> int:
 	match id:
 		"automap": return int(Automap.load_enabled())
 		"walkpace": return int(WalkPace.fast())      # P119 (main chat 144)
+		"textskip": return int(TextSkip.setting())    # P156 (main chat 160)
 		"portraits": return int(CharacterCreator.matched_portraits())
 		"memorized": return int(CampScreen.start_memorized_on())
 		"bandages": return int(Combat.quick_bandages_on())
@@ -502,6 +503,7 @@ static func change_setting(id: String) -> void:
 	match id:
 		"automap": Automap.save_enabled(not Automap.load_enabled())
 		"walkpace": WalkPace.save_fast(not WalkPace.fast())      # P119 (main chat 144)
+		"textskip": TextSkip.save_on(not TextSkip.setting())      # P156 (main chat 160)
 		"portraits": CharacterCreator.save_matched_portraits(not CharacterCreator.matched_portraits())
 		"memorized": CampScreen.save_start_memorized(not CampScreen.start_memorized_on())
 		"bandages": Combat.save_quick_bandages(not Combat.quick_bandages_on())
