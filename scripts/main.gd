@@ -50,6 +50,7 @@ var _dax_cache := {}
 const WALK_STEP_SECONDS := 0.22
 var _timer: Timer
 var _busy := false                  # a delay or walk is playing; input waits
+var _hold_started := 0               # P156: Time.get_ticks_msec() when a script text's timed hold began
 ## P90 (chat 105, DOSBox 2:20 5,9 at speed 9): a key typed while a script prints or waits on the walking screen
 ## isn't lost: the original acts on the last one once the script is done ("Y L" looks, "L Y" does nothing).
 var _type_ahead: InputEventKey = null
@@ -1196,6 +1197,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			# types Alt+letter as an extended key with the letter's scan code and Ctrl+letter as a control code, none
 			# of them a walking word); Shift+A is AREA as A is. Ours took Alt+A and Ctrl+A as A. The arrows and digits
 			# with Ctrl or Alt are other extended codes too.
+			get_viewport().set_input_as_handled()
+			return
+		if _busy and _text_skip(event):
 			get_viewport().set_input_as_handled()
 			return
 		if _busy or (_ending != null and _ending.visible):
@@ -2892,6 +2896,7 @@ func _on_timer() -> void:
 				_held_message = ""
 			if _vm.state == EclVM.State.WAIT:
 				_busy = true
+				_hold_started = Time.get_ticks_msec()
 				_timer.start(_script_delay())
 		else:
 			_timer.start(WALK_STEP_SECONDS)
@@ -3011,6 +3016,28 @@ func _redraw_hold(ms: int) -> void:
 		if gen == _redraw_gen:
 			_redraw_until = 0
 			_type_ahead_go())
+
+
+## P156 (Jeremy, 2026-11-27 20:04, QoL; SETTINGS' TEXT SKIP, off in every lab run): a key or click during a script
+## text's timed hold (its typing time and DELAY: the WAIT state, no scripted walk) ends the hold at once, the key used up;
+## not in the hold's first TextSkip.SKIP_FLOOR_MS, nor a held key's repeat (those wait as the original's keys do).
+func _text_skip(event: InputEvent) -> bool:
+	if not _walk_path.is_empty() or _vm.state != EclVM.State.WAIT or _timer.is_stopped() \
+			or (_ending != null and _ending.visible) or not TextSkip.on():
+		return false
+	if event is InputEventKey:
+		var k := event as InputEventKey
+		if k.echo or k.keycode in [KEY_SHIFT, KEY_CTRL, KEY_ALT, KEY_META, KEY_CAPSLOCK, KEY_NUMLOCK]:
+			return false
+	elif not (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT):
+		return false
+	if Time.get_ticks_msec() - _hold_started < TextSkip.SKIP_FLOOR_MS:
+		return false
+	if lab_keys:
+		print("   text skip after %d ms" % (Time.get_ticks_msec() - _hold_started))
+	_timer.stop()
+	_on_timer()
+	return true
 
 
 ## A key typed while the walking screen is busy; the hand-off works out what the original's reader takes from them all.
@@ -3145,6 +3172,7 @@ func _after_vm() -> void:
 		EclVM.State.WAIT:
 			if not _busy:
 				_busy = true
+				_hold_started = Time.get_ticks_msec()
 				_timer.start(_script_delay())
 			return
 		EclVM.State.MENU:
