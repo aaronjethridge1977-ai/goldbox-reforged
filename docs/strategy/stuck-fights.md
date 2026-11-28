@@ -110,6 +110,25 @@ Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\`.
       (the same fight was 5 of 5 lost by Player 34 at movement 3 with ELWEN and LIRA at 9 HP). **Sokal's army: done
       without a shortcut.** Saves `p2start/` of p35k5's `s9t`, `s9door`, and `p35k5/s9won`.
 
+### Party A (Player 57, 2026-11-28): 8 of 8 lost at levels 1-3
+
+Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\sokal9\p57\` (README.txt).
+
+- **Party** (Jeremy's Q42 run: party A, created in the original, every score but the prime need as rolled): VOSS F2
+  14 HP AC 0 (Broad Sword +1), GRUM F1/T1 6 HP AC 4, MAREN C2 8 HP AC 3 (Flail +1), OSRIC C3 22 HP AC 0 (Mace +2),
+  SYLVAR F1/MU1 6 HP AC 5, TAVIN MU2 8 HP AC 6 (Bracers AC 6), and the hired CURATE C4 26 HP AC 3: **90 HP** against
+  the army's 50 figures and 277 HP (Player 35's winning party had 142 HP and the rug's armour). Memorized: three Sleeps
+  (TAVIN 2, SYLVAR 1), OSRIC's Hold Person, cures and Bless.
+- **From the north door** (`p57i6_pre9`, 7,2 -> 7,4; the general rules, `advance none`): p57i6-i10 **5 of 5 lost**, the
+  party destroyed each time with 36-42 of the 50 standing (196-228 HP left). Both Sleeps and Hold Person cast every try;
+  in p57i8 both magic-users slept the same figure's clump.
+- **From the south door** (`p57j1_door9`, the guide's door: Bless in camp at 9,5, step W into 8,5, `advance none`):
+  p57j1-j3 **3 of 3 lost**, 33-39 standing (183-211 HP).
+- **Read:** not close in any try (the party falls with three quarters of the army up), so not a matter of one key turn:
+  the party's HP and AC are the gap (four members at 6-8 HP). The guide's levels for this fight (stretch table: 3) and
+  the rug's armour (Kuto's Well, stretch 4) came before Player 35's win. Asked the Lead (board): go on to Kuto's Well
+  and back, or keep trying here.
+
 ## 2. Stojanow Gate (2:9): the wall fight (7,6) and the towers
 
 Files: `D:\ai_projects\goldbox-reforged\.lab\stuck\stojanow\`.

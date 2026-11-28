@@ -1,0 +1,85 @@
+# Player 57, stretch 3e (3d with the army entered by the south door):
+# 3d: from 3c's `s5b` (4:21 6,13 W): the boat back, the training at once (OSRIC C3: Hold Person,
+# Slow Poison), the inn (memorize for the army: every magic-user slot Sleep, OSRIC Hold Person), back by
+# boat; then event 9, the army (7,4: 31 orcs, 4 leaders, 15 hobgoblins; section 3 and Jeremy's win in the Inbox: the
+# line holds still (`advance none`) while Sleeps go deep into the crowd), then Ferran Martinez (7,6 and 7,10: PARLAY,
+# LUX, TELL). Events 5 and 8 (the huge scorpions) stay for later.
+area 4:21
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer A PALE FORM RISES|PARLAY
+answer LEAVE SEARCH ATTACK TALK|TALK
+answer WHAT DO YOU SAY|type:LUX
+answer HAS THE CITY BEEN FREED|TELL
+answer DO YOU TAKE IT|YES
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|NO
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainC:@OSRIC,t,y,b
+answer DO YOU WANT TO TRAIN|YES
+picks TAVIN SLEEP, SLEEP
+picks SYLVAR SLEEP
+tactics on
+advance VOSS,GRUM,MAREN,OSRIC,SYLVAR,CURATE
+inntrip
+walk 7,15 avoid 5,8,9,11,12
+step S
+area 3:0
+walk 4,12 through 1,2,3,4,5,6,9,19,20,21,22,23,24,25
+innheal
+walk 11,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+walk 14,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+step E
+area 4:21
+inntrip end
+walk 7,15 avoid 5,8,9,11,12
+step S
+area 3:0
+coins VOSS PLATINUM 200|OSRIC
+walk 4,12 through 1,2,3,4,5,6,9,19,20,21,22,23,24,25
+innwait
+alias 3:11
+walk 6,0 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+step W
+# (GRUM's thief 2 left: the walk to the thieves' hall (10,0) met another hall at 9,0, p57i3)
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint town4
+walk 11,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+walk 14,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+step E
+area 4:21
+walk 7,2 avoid 5,8,9,11,12
+heal
+checkpoint pre9
+# (p57i6-i10 walked in from the north, 7,2 -> 7,4: 5 of 5 lost.) The guide's door (section 3: a southern door, a short
+# straight line with secure flanks; stuck-fights.md section 1, p35k5's win: Bless in camp at 9,5, step W into 8,5,
+# the fighters holding the doorway with `advance none`)
+walk 9,5 avoid 5,8,9,11,12
+checkpoint door9
+campcast MAREN BLESS
+advance none
+step W
+advance VOSS,GRUM,MAREN,OSRIC,SYLVAR,CURATE
+heal
+checkpoint army
+walk 7,6 avoid 5,8
+heal
+checkpoint ferran1
+walk 7,10 avoid 5,8
+heal
+checkpoint sokal

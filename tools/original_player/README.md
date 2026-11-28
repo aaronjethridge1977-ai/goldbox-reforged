@@ -1346,6 +1346,23 @@ Then BEGIN ADVENTURING, Rolf's tour (Enter through its texts) to 3:0 0,4 W 00:00
 **`p2start/p57_party_a`** (no items yet). Both magic-users know Sleep (book 11 18 19 21), one level-1 spell each; the
 clerics three level-1 spells each.
 
+**The run (from `p2start/p57_party_a`; the reload rule `OP_RELOAD=1`, `OP_FIGHTDEATH=1`, `OP_MANUAL=1`,
+`OP_STUCK_KEYS=1500`; the general rules, `tactics on`; lab `p57/reload.txt` lists every try):**
+
+| stretch | plan | runs | result |
+|---|---|---|---|
+| 1 New Phlan | `p57_01_newphlan.plan` | p57a1 | `shopped`, 1 try: the line in banded/chain/scale and shields, two short bows, darts; the clerk; the inn |
+| 2a the Slums at level 1 | `p57_02_slums.plan` | p57b1-b10 | `slums` (every event but 9, 12, 14, 16, 19): 4 losses (a wipe at 8,2 on a camp's interruptions; event 14's 32 orcs twice; the southern streets at 6,11 on the way to 19) |
+| 3a Sokal Keep at level 1 | `p57_03_sokal.plan` | p57d1-d4 | 2 losses at the keep's gate patrols (6 skeletons + 6 zombies, 90 HP against the party's 33): levels first |
+| 2b-2c the Slums' set fights | `p57_02b/02c_slums.plan` | p57e1-e3, p57f1-f6 | event 12 won; event 9 lost twice, then won at once with the hired CURATE (3:11 7,1: DO YOU DUEL NO, PARTNER YES, "A FINE WARRIOR WHO WILL JOIN YOU FOR 1 SHARE" YES, CONSIDER SOMEONE ELSE NO: a cleric 4, 26 HP; the cluebook's hired NPC); event 14 lost once, won (`slums2b`) |
+| 3b-3c town, training, Sokal | `p57_03b/03c_sokal.plan` | p57g1-g2, p57h1-h17 | the gems sold for 6987 gp: VOSS F2, MAREN C2, OSRIC C2, TAVIN MU2; Sokal's events but 5, 8 (the huge scorpions: VOSS stung dead twice), 9, 11, 12 (`s5b`); 1 wipe |
+| 3d-3e the army | `p57_03d_army.plan`, `p57_03e_army_south.plan` | p57i1-i10, p57j1- | OSRIC C3 (Hold Person); **the army (event 9) 5 of 5 lost from the north door (7,2 -> 7,4), then lost from the south door (9,5, Bless, step W into 8,5)**: stuck by the rule (stuck-fights.md section 1, "Party A") |
+
+Tool fixes on the way (all general): `--after` re-applies the plan's setting lines before the checkpoint (p57b2 had
+fought on QUICK); an inn trip per area (`inntrip` blocks keyed by their `area`); the hall's member list read to row 11
+(an NPC in slot 7); no MOVE step off the field (the original asks FLEE); **TURN only on dangerous undead** (the board's
+standing rule: p57i5's TURN sent Sokal's skeletons and zombies running for 30 rounds).
+
 ## Player 50 (2026-11-23): Guide 13's (4), main's breath spread in the original: worse (the guards 2 of 5, the game 0 of 5)
 
 **Main chat 104's spread** (DORN, ARN, CEDRIC, LIRA, ELWEN, BRAM, GENHEERIS; ALTER ORDER `keys order
