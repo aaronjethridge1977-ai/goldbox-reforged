@@ -571,14 +571,17 @@ class Heal:
                     return False, "e", "campday: ENCAMP"
                 p.note("heal", "rest interrupted by fight %d (main's bot would walk to the inn; the Player camps"
                                " again)" % p.fights)
-                if p.plan.inntrip and not getattr(p, "on_trip", False) and not self.inn:
+                # Player 57: a plan may hold one trip per area (the Slums' and Sokal Keep's): the one for this area,
+                # else the plan's last (as before)
+                trip = p.plan.inntrips.get(tuple(p.area()), p.plan.inntrip)
+                if trip and not getattr(p, "on_trip", False) and not self.inn:
                     # Player 14: bot.gd _heal: "an interrupted rest: a player gives up camping among the monsters
                     # and walks to the inn" (_rest_at_inn: travel to town, the inn, travel back). The plan's
                     # `inntrip` block is that trip for this area; the bot's tour back to the square is left out
                     # (the plan's next walk routes from where the trip comes back in).
                     p.heal, p.on_trip = None, True
                     p.note("heal", "rest interrupted by fight %d: the inn trip (bot.gd _rest_at_inn)" % p.fights)
-                    p.plan.goals[p.goal + 1:p.goal + 1] = copy.deepcopy(p.plan.inntrip)
+                    p.plan.goals[p.goal + 1:p.goal + 1] = copy.deepcopy(trip)
                     p.goal_key = p.g.nkeys
                     return True, None, ""
                 # Player 19: OP_REST_INTERRUPTS (default 5) interruptions before the stop (4:2 after event 2: every
@@ -1457,6 +1460,7 @@ class Plan:
         self.memos = []          # Player 12: one list of (member, [spell names]) per camp (the inn's) visit
         self.temple_cures = []   # Player 25: `templecure <service>` (bot.gd _temple_cures)
         self.inntrip = []        # Player 14: the `inntrip` block's goals (an interrupted rest's trip to the inn)
+        self.inntrips = {}       # Player 57: each block by the area it starts from (the plan's `area` before it)
         self.mem = None          # Player 14: the game's memory, for `@platinum` answers
         self.defaults = {"enter": "enter", "combat": "q", "encounter": "c", "continue": "n",
                          "treasure": "e"}
@@ -2751,6 +2755,8 @@ def load(path):
             # Player 14: `inntrip` ... `inntrip end`: goals kept aside for an interrupted rest (bot.gd _rest_at_inn)
             if rest.strip() == "end":
                 pl.goals, pl.inntrip = trip_outer, pl.goals + [TripEnd()]
+                if trip_area is not None:
+                    pl.inntrips[tuple(trip_area)] = pl.inntrip
                 pl.area = trip_area
             else:
                 trip_outer, trip_area, pl.goals = pl.goals, pl.area, []
