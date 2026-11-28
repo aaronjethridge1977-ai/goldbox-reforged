@@ -172,6 +172,54 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 161: the menus' extended keys as letters (Del SHARE, F7 APPRAISE, F8 BUY, Shift+F1 TAKE, Shift+F3 VIEW); APPRAISE's EXIT and the load; F-keys, Alt and Ctrl keys light the first member; ORDER's wrap (checks 602-609)
+
+Talonius' Pool v1.3 (read only) gave each rule; every one was filmed in DOSBox before a line changed. The menu routine
+(MenuHorizontal with its reinterpret flag) ends on any extended key and hands back the scan code as a character, so a
+caller's letter case takes some extended keys as letters, and the member step (SelectPrevNextChar) takes the first
+member for any code but Home (0x47) / End (0x4F).
+
+- **Del is SHARE, F7 APPRAISE, F8 BUY, Shift+F1 TAKE, Shift+F3 VIEW (input / game state, main path; resets the
+  streak).** The treasure's VIEW TAKE POOL SHARE EXIT (postcbt.pas), the shop's (shop.pas) and the temple's
+  (temple.pas) menus switch on the letter without testing the extended flag except for P (POOL, Down's 0x50) and the
+  temple's H (HEAL, Up's 0x48). Filmed: the treasure after check 100's kobolds (End, Del: VIEW TAKE POOL EXIT, the coins
+  shared), 3:0's arms and armour shop (Shift+F3 opened VIEW, F8 the BUY list, Shift+F1 after POOL the coin page, Del
+  shared: the party at its load, the rest pooled) and 3:0's temple of Tyr (F7 APPRAISE : GEMS EXIT, Del shared).
+  Ours did nothing on any of them. Checks **602** (the treasure: End, Del, T, Enter: BRAM takes the sword),
+  **603** (the shop: Shift+F3, E, F8, E, P, Shift+F1, E, Del, E, N), **604** (the temple: F7, E, P, Del, E).
+  Not filmed: the treasure's F10 (0x44, D: DETECT; with no Detect Magic memorized the original casts an unset spell
+  number) and Shift+F1 / Shift+F3 there (the same code as the shop's). Ours' F3 quick load (P56) now takes plain F3
+  only: Shift+F3 had restarted the scene.
+- **APPRAISE's EXIT works the load out again (game state, main path; resets).** AppraiseMenu (money.pas) runs
+  RecalcStats on the member after every key that ends its menu, EXIT and Esc too. Check 318's start has a stale cached
+  load (THRENDER's 721 under his 5,146 coins); after POOL his cached load wraps and SHARE gives him a wrapped count:
+  the pile keeps JEWELRY 55513 (filmed, **check 605**, matching ours already). After APPRAISE, EXIT the original's
+  SHARE empties the pile (check 604); ours' EXIT kept the stale load (shop_screen.gd, temple_screen.gd).
+- **The other extended keys light the first member (input, main path; resets).** Chat 160's rule held for every
+  extended code the original's BIOS types: on 6:1's walking screen, at BUY PASS and at the camp, End End then F1, F5-F8,
+  F10, Shift+F1, Alt+F1, Alt+X, Alt+V, Alt+1, Ctrl+Left, Ctrl+Home, Ctrl+End, Ctrl+PgDn, and at the camp Ins and Del,
+  lit the first member; Ctrl+Up, Alt+Up and Ctrl+A did nothing (no code in that BIOS, or a control code). Ctrl+F1
+  opens DOSBox's own keymapper: never send it. Ours did nothing on them (chat 128's "Alt+A does nothing" saw only
+  that AREA didn't open). main.gd `_ext_first_member_key` (ours' F2 / F3 and the lab's F4 / F9 kept), camp_screen.gd
+  the same for CAMP, MAGIC, ALTER and ORDER's SELECT. Checks **606** (F7 on the walking screen), **607** (Alt+X at
+  BUY PASS), **608** (the camp: End End, Del, EXIT; BUY PASS robs the first member).
+- **ALTER's ORDER (game state, main path; resets).** OrderMoveUp / OrderMoveDown wrap: at PLACE, Home on the first
+  member moves him to the end, End on the last to the front (filmed). At PLACE EXIT Up, Down and Left do nothing and
+  move no light; at SELECT EXIT every extended key but Home / End lights the first member. Ours stopped at the ends,
+  moved the member on Up / Down and the menu's light on Left / Right. **Check 609** (SELECT, Home, Down, PLACE).
+- **Not changed, to the Lead (Requests):** Up / Down at the treasure's, the shop's and the temple's menus step the
+  member in ours since 2026-11-12; in the original they do nothing (filmed at the treasure: End, Down, Down kept BRAM;
+  the shop and temple by the code; TAKE's MONEY ITEMS EXIT the same). Main path, game state through the next choice
+  (BUY, TAKE): whether P33 (Up / Down in lists) covers it.
+- **VIEW's MOVEMENT while Hasted or Slowed (display, main path; no reset).** The page shows the member's movement times 2
+  with Slow's effect (42), div 2 with Haste's (39), a byte (viewchar.pas): filmed from check 186's start (LIRA drinks the
+  Potion of Speed in 3:0's camp: MOVEMENT 9, then 4). Ours kept 9 (character_sheet.gd). No check (display).
+- **Matched by the code, not changed:** ROB's items (the chance lowered by heavy items for the rest of the member's
+  list), BASH's table (Strength 19+ never opens a plain door), a barred door's KNOCK (offered with a magic-user, cast only
+  with Knock memorized), the training hall's menu (only Home / End among the extended keys:
+  chargen.pas, Combat Chat 57's rule); the item lists (MenuVertical: Home, End, PgUp, PgDn only); SAVE / LOAD WHICH GAME
+  (no extended keys); GAME SPEED.
+
 ## Chat 160: P156's TEXT SKIP; P157, P151 fixed; P147, P154 match; the camp loops' extended keys (the knot at SPEED); the extended keys at script menus and the walking screen (checks 600, 601); the gate list's gap
 
 - **P156 built (QoL, Jeremy's decision 2026-11-27 20:04): SETTINGS' TEXT SKIP**, on by default (`scripts/game/text_skip.gd`,
