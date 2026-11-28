@@ -75,6 +75,7 @@ var _prev_op := ""         # the op run before (SPELL reads what its handler lef
 
 # Output since the last clear_output()
 var text := ""                   # accumulated message text
+var msg_log: MessageLog = null   # P58 (QoL): every script text kept for the message log (main sets it)
 var text_changed := false        # set by PRINT/PRINT_CLEAR (including clearing to "")
 ## Texts to record when shown ("A:B ADDR": the area's block_key and the PRINT's address; main sets
 ## them from QuestLog.shown_keys(): City Hall's offers that set no flag; Q11, chat 39), and those
@@ -989,6 +990,8 @@ func _box_page(prompt: String) -> void:
 
 
 func _box_line(line: String) -> void:
+	if msg_log != null:
+		msg_log.script_line(line)
 	var fresh := false
 	if _box_row > 5:
 		_box_page(PRESS_TO_CONTINUE)
@@ -1582,6 +1585,8 @@ func _exec(ins: Dictionary) -> void:
 			_write(a[2], read_var(int(a[0].value) + (_value(a[1]) & 0xFF)))
 		"PRINT":
 			_runes_to_box = false
+			if msg_log != null:
+				msg_log.script_text(_print_string(a[0]), text.strip_edges() == "")
 			text += _print_string(a[0])
 			print_chars += typed_chars(_print_string(a[0]))
 			typewriter = false
@@ -1600,6 +1605,8 @@ func _exec(ins: Dictionary) -> void:
 				state = State.WAIT
 				return
 			_runes_to_box = false
+			if msg_log != null:
+				msg_log.script_text(_print_string(a[0]), true)
 			text = _print_string(a[0])
 			white_from = -1
 			print_chars += typed_chars(_print_string(a[0]))
@@ -1610,6 +1617,8 @@ func _exec(ins: Dictionary) -> void:
 			if _runes_to_box and runes_shown:
 				rune_lines.append("")
 			else:
+				if msg_log != null:
+					msg_log.script_break()
 				text += "\n"
 				text_changed = true
 		"CLEAR_BOX":
@@ -1966,6 +1975,8 @@ func _show_encounter_menu() -> void:
 			line = t
 			break
 	if line != "":
+		if msg_log != null and line != text:
+			msg_log.script_line(line)
 		text = line
 		text_changed = true
 	var last := "ADVANCE" if advance_offered() else "PARLAY"
@@ -2094,6 +2105,8 @@ func _note_shown() -> void:
 
 
 func _say(line: String) -> void:
+	if msg_log != null:
+		msg_log.script_line(line)
 	text = line
 	text_changed = true
 

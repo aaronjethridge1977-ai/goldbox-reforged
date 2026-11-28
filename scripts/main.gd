@@ -131,6 +131,8 @@ var _automap: Automap               # QoL: mini-map (M) and full map (F) of visi
 
 var _quest_log: QuestLog
 var _quest_screen: QuestScreen       # combat lane: the quest log's screen (C11-4), made at the first Q
+var _msg_log := MessageLog.new()     # P58 (QoL): every script text and fight line, kept with the save
+var _msg_screen: MessageScreen       # its screen, made at the first H / Esc
 
 
 ## The quest tracker's view of the game now (QuestLog.evaluate with the offers shown), for its
@@ -290,6 +292,8 @@ func _ready() -> void:
 			_party.append(m)
 	_vm.party = _party
 	_vm.open_ahead = _open_ahead
+	_vm.msg_log = _msg_log
+	_msg_log.where = _log_where
 	_vm.tables = ClassTables.shared(_game_path)
 	_vm.overland = OverlandMap.shared(_game_path)
 	_vm.treasure_maker = TreasureMaker.shared(_game_path)
@@ -405,9 +409,11 @@ func _on_start_chosen(what: String, letter: String) -> void:
 			load_original_save(letter)
 		"new":
 			_automap.from_save({})
+			_msg_log.clear()
 			_new_game()
 		"create":
 			_automap.from_save({})
+			_msg_log.clear()
 			# As the original starts: an empty party, the party menu's CREATE / ADD, then
 			# BEGIN ADVENTURING starts the game with whoever was added.
 			_party.clear()
@@ -1468,6 +1474,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_automap.queue_redraw()
 			get_viewport().set_input_as_handled()
 			return
+		elif (key == KEY_H or key == KEY_ESCAPE) and _msg_log_keys(event as InputEventKey) and not _busy \
+				and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and _door_options == "":
+			# P58 (QoL, Jeremy's Q43, 2026-11-28): H or Esc opens the message log. Neither is a key on the original's
+			# walking screen (main chat 162, DOSBox at 2:20: Esc left the screen as it was).
+			if _msg_screen == null:
+				_msg_screen = MessageScreen.new()
+				add_child(_msg_screen)
+			_msg_screen.open(_msg_log)
+			get_viewport().set_input_as_handled()
+			return
 		elif key == KEY_Q and QuestScreen.on() and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
 			# The quest log (combat lane, C11-4): Q is no key on the original's adventure menu.
 			if _quest_screen == null:
@@ -1798,6 +1814,7 @@ func _quick_save() -> void:
 	cfg.set_value("script", "overland", [_vm.on_overland, _vm.overland_band])
 	cfg.set_value("qol", "visited", _automap.to_save())
 	cfg.set_value("qol", "offers", PackedStringArray(_vm.shown_texts.keys()))
+	cfg.set_value("qol", "messages", _msg_log.to_save())      # P58
 	cfg.set_value("qol", "rememorize", Rememorize.to_save(_party))   # combat lane (C11-2)
 	var before := ConfigFile.new()       # the quick save's name stays too (Q22 (c), the combat lane)
 	if before.load(_save_path()) == OK and String(before.get_value("qol", "label", "")) != "":
@@ -2027,7 +2044,7 @@ func _save_original(letter: String) -> bool:
 		2 + _vm.overland_band if _vm.on_overland else 1, _vm.read_byte(EclVM.WALL_AHEAD),
 		_vm.read_byte(EclVM.SQUARE_INFO))
 	var qol := {"visited": _automap.to_save(), "offers": PackedStringArray(_vm.shown_texts.keys()),
-		"rememorize": Rememorize.to_save(_party), "drained": _drained_to_save()}
+		"rememorize": Rememorize.to_save(_party), "drained": _drained_to_save(), "messages": _msg_log.to_save()}
 	if label != "":
 		qol["label"] = label
 	if ok and not CompanionSave.write(_game_path, letter, qol):
@@ -2115,6 +2132,7 @@ func load_original_save(letter: String) -> bool:
 	var extra := CompanionSave.read(_game_path, letter)
 	_automap.from_save(extra.get("visited", {}))
 	_shown_from_save(extra.get("offers", []))
+	_msg_log.from_save(extra.get("messages", []))
 	if not started:
 		_party.assign(loaded)
 		_vm.party = _party
@@ -2249,6 +2267,7 @@ func _quick_load() -> void:
 	_pos = Vector2i(cfg.get_value("place", "x", 8), cfg.get_value("place", "y", 8))
 	_automap.from_save(cfg.get_value("qol", "visited", {}))
 	_shown_from_save(cfg.get_value("qol", "offers", []))
+	_msg_log.from_save(cfg.get_value("qol", "messages", []))
 	_facing = int(cfg.get_value("place", "facing", 0)) as DungeonView.Dir
 	_vm_file = cfg.get_value("script", "file", 0)
 	_vm_block = cfg.get_value("script", "block", -1)
@@ -3749,6 +3768,7 @@ func _start_event_fight() -> void:
 	_combat.open_event(_game_path, map, _pos.x, _pos.y, int(_facing), fighters, maxi(_vm_file, 1),
 		_vm.monsters, _vm.encounter_max, _vm.encounter_advances,
 		_vm.read_byte(EclVM.MORALE_BASE), _vm.read_byte(EclVM.AMBUSH), opponents, _vm.monster_teams, _vm.monster_morale)
+	_log_fight_lines()
 	if not _battle_keys.is_empty():
 		# The fight takes them one at a time, and each computer-run turn's opening drops one (main chat 127's request
 		# 2: Combat's CombatScreen.queue_keys / Combat.key_queue).
@@ -3758,6 +3778,42 @@ func _start_event_fight() -> void:
 	# state +0x596 = 0), so it counts for this fight's first round only and a later fight without
 	# its own SURPRISE starts even (Combat Chat 16, Player 11's p11t1 draw 3613; combat lane).
 	_vm.write_byte(EclVM.AMBUSH, 0)
+
+
+## P58: the fight's lines (Combat.message, each blow and spell line as shown; GUARD's muted lines left out) go to the
+## message log.
+func _log_fight_lines() -> void:
+	var c = _combat.get("_combat")
+	if c == null or not (c as Object).has_signal("message"):
+		return
+	c.message.connect(func(t: String) -> void:
+		if not bool(_combat.get("_muted")):
+			_msg_log.fight_line(t))
+
+
+## P58: the area, day number and minute of the day for a new message log line.
+func _log_where() -> Array:
+	var area := ""
+	if not _maps.is_empty():
+		area = _area_name(_maps[_map_index]).to_upper()
+	var day := _vm.read_var(GameClock.BASE + 6) * 360 + _vm.read_byte(GameClock.BASE + 5) * 30 \
+		+ _vm.read_byte(GameClock.BASE + 4) + 1
+	return [area, day, GameClock.hour(_vm) * 60 + GameClock.minute(_vm)]
+
+
+## P58: H and Esc open the message log in play; not in a lab run or a replay (--keys=, --play=: the checks, the match
+## and RECORD MY GAME's replays keep their frames; GBR_LOG_KEYS=1 lets a lab run open it), nor with Ctrl / Alt / Shift.
+func _msg_log_keys(ev: InputEventKey) -> bool:
+	if ev == null or ev.ctrl_pressed or ev.alt_pressed or ev.shift_pressed or ev.echo:
+		return false
+	if OS.get_environment("GBR_LOG_KEYS") == "1":
+		return true
+	if OriginalBugs.lab_run():
+		return false
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--keys=") or a.begins_with("--play="):
+			return false
+	return true
 
 
 var _duelist: PartyMember = null
@@ -3812,6 +3868,8 @@ func _hirelings_take_shares(spoils: Spoils) -> PackedStringArray:
 
 
 func _on_event_fight_finished(result: int) -> void:
+	if result == 2:
+		_msg_log.fight_line("THE PARTY HAS FALLEN.")     # P58
 	GameClock.add_minutes(_vm, _combat.rounds())   # a minute a round; effects ran in the fight
 	if _duelist != null:
 		# The members set aside for a duel age their effects by the fight's rounds too (chat 66, check 95:
@@ -3967,6 +4025,8 @@ func _after_fight(defeated: Array, won_text: String, field_items: Array[GameItem
 		m.recalculate(_types)
 	_treasure.picture = _event_picture(255, 1)     # the chest (lab: PIC block 1)
 	_sync_shell()
+	_msg_log.fight_line(won_text)       # P58: the results page's lines
+	_msg_log.fight_line("EACH CHARACTER RECEIVES %d EXPERIENCE POINTS." % share)
 	_treasure.open(spoils, _party, won_text, share, hidden)
 
 
