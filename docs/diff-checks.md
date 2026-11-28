@@ -172,6 +172,79 @@ Rules built in main's files from GAME.OVR, each seen in DOSBox; the screens that
   value - 0x7FFF) acts only on 0x2C90, 0x8000/1, 0xBA03, 0xC01E and 0xC018, so these do nothing there, as in ours
   (chat 24's note confirmed).
 
+## Chat 160: P156's TEXT SKIP; P157, P151 fixed; P147, P154 match; the camp loops' extended keys (the knot at SPEED); the extended keys at script menus and the walking screen (checks 600, 601); the gate list's gap
+
+- **P156 built (QoL, Jeremy's decision 2026-11-27 20:04): SETTINGS' TEXT SKIP**, on by default (`scripts/game/text_skip.gd`,
+  main.gd `_text_skip`). A key or a left click during a script text's timed hold (the WAIT state: its typing time and
+  DELAY, no scripted walk) ends the hold at once and is used up, after a 0.3 s floor from the hold's start; a held key's
+  repeats and keys inside the floor stay type-ahead as before. PRESS RETURN pages, questions, menus and inputs wait as
+  before. **Off in every lab run** (OriginalBugs.lab_run(): --keys=, tpseed=, GBR_ORIGINAL_BUGS=1; and the bot's
+  --play=): the checks keep the original's meaning of a key typed during a hold. A RECORD MY GAME replay plays the
+  session's own switch (GBR_ORIGINAL_BUGS=0). Lab (GBR_ORIGINAL_BUGS=0, `timed=`): 6:25's approach to the Buccaneer
+  base and 6:1's camp from check 39's start: keys 450 ms apart skip four holds (448-454 ms into each), 170 ms apart one
+  (338 ms); off, none. Listed last in SETTINGS (page 2: T would have toggled it before TACTICS FOR QUICK on page 1).
+- **P157 fixed (display / text timing, main path; no reset): 6:28's walk back from the dinner.** 0xB453 walks the party
+  home a square at a time through 0x9B0E (a step in 0xC04B-0xC04D, CALL 0x2C90, DELAY, ten times). The original's 0x2C90
+  redraws the view and the place line only (Talonius' Pool v1.3 confirms: map view and misc info), so the dinner's
+  last line stays up. Ours walked each one-square move as a 0.22 s step with the text held back till it arrived
+  (`_held_message`, from the first timed playback): the line went off and came back at every step (lab, check 55's
+  start, RELAX, NOTHING, SAY LITTLE: the text blank at 7,6, back at 6,2, ...). Now a one-square scripted move is drawn
+  at once (main.gd `_adopt_position_from_vm`: a walk only for longer moves); the text stays (7,5, 5,2, 5,0).
+- **P151 fixed (display, main path; no reset): a wilderness encounter's figure.** DOSBox from check 20's start (WEST
+  passage, the pier, STAY, the walk to 16,26 S: YOU SPOT A GROUP OF LIZARD MEN, `data/c160/p151/o_liz.png`): the
+  original draws sprite 57's middle frame over the map and the rider, all 469 pixels at the screen's 56,32 (the 3D
+  view's own frame offset, the 88-pixel view's corner 16 pixels into the 120-pixel map). Every band's distance table
+  (7:26 0xB0A8) holds 0, so ours' ENCOUNTER_MENU arrived at once and showed its picture 0 (the same "scaly warrior"
+  for every wilderness encounter: Jeremy's merchants and stirges). Talonius' Pool v1.3 gives the rule: off the 3D map
+  the middle frame whatever the distance, and no close-up. Ours now: ecl_vm `_arrived` and main's timer keep the figure
+  on the overland, `_overland_view` draws it (`_draw_frame`). Same keys in ours reach the same encounter; the screens
+  differ in 6 pixels, the rider's animation frame under the figure (pre-existing, not chased).
+- **P147 (the original's script, no change): the pyramid's equipment.** 7:23 0xA6E3: each DESTROY THE EQUIPMENT breaks
+  pieces until a RANDOM 9 gives 0, ten pieces in all, so about a third of the time the first DESTROY reaches YOU HAVE
+  DESTROYED THE LAST PIECE OF EQUIPMENT. The place line without coordinates: the init writes 0x49FB = 1 (0x9BF7).
+- **P154 (matches): the large kobold cave's right-hand wall.** Jeremy's 17:40 recording starts at 8:13 14,9 N (quick
+  save) and goes Right, Up (15,9 E). DOSBox (`mksave.py J I 8 13 13 9 E 4A8E=1`, then I's jump; and 9,15 E) against
+  ours with the same save and keys: 13,9 / 14,9 / 15,9 E, 13-15,10 E, 9,15 and 9,14 E all match pixel for pixel. The
+  uneven right-hand pieces at 14,9 E are the original's (`Claude outputs/p154_original_14-9E_15-9E.png`).
+- **The camp loops' extended keys (DOSBox from check 20's start, ours the same keys, 34 screens): match** except one
+  display difference. Camp and MAGIC: Up, Down and digits do nothing, End / Home light the next / previous member;
+  the light carries through MAGIC, its EXIT and ALTER; ALTER's Down lights the first member (both); SPEED's and PICS'
+  End, Down and digits leave the light. **Found, fixed (display, main path; no reset): GAME SPEED's message kept the
+  view frame's knot** (the gold corner at column 16, row 16) in the original (from a fresh camp: ALTER, SPEED, FASTER,
+  EXIT; ORDER and PICS too); ours drew the plain rope from SPEED on (`camp_screen.gd` `_show_speed`, Combat's file).
+  DROP's NO drops the knot in both.
+- **Found, fixed (game state and input, main path; resets the streak by Q35): the extended keys at a script's horizontal
+  menu.** DOSBox at 2:20's COMBAT WAIT FLEE PARLAY (check 84's start): End / Home step the lit member (wrapping), and
+  **every other extended key the menu hands back lights the first member**: Down, Up, Left, Right, and the digits but 1 / 7
+  (the keypad's keys: 2, 3, 5, 8 filmed). Talonius' Pool v1.3 reads the same (its member step: Home the one above, End
+  the next, anything else the first). Chat 123 had seen "the arrows nothing" at 7:23's YES / NO, with the first member
+  lit. Ours left the light, so a script acting on the lit member could take another: 6:1's BUY PASS after End End Down
+  robs THRENDER in the original, the third member in ours. main.gd (`MENU_FIRST_MEMBER_KEYS`); all 22 lights of the
+  film now match. **Check 600** (check 471's start and keys with Down after End End; end `o600F`): DIFFERS on 94abb99
+  (THRENDER's coins 108 / 144), MATCHES on edc0f80.
+- **Found, fixed (game state and input, main path; resets the streak): the walking screen's other extended keys.** The
+  walking loop hands every extended key but the four arrows to the same member step (Talonius' Pool v1.3; DOSBox from
+  check 20's start, End End then each): **PgUp, PgDn, Ins, Del and the keypad's 3, 5, 9 light the first member; 0
+  does nothing** (chat 122's "3, 5, 9 and 0 nothing" was seen with the first member lit). At a script's menu 0 does
+  nothing too (6:1's BUY PASS: 0 kept the third member; 4, 6, 9, PgDn, Del lit the first). Ours did nothing on the
+  walking screen and took 0 at a script's menu: main.gd `WALK_FIRST_MEMBER_KEYS`, the menu's digits 2-9. All 24 + 17
+  lights now match, and the wilderness's 18 (7:26 20,29 E after the West boat: the same keys, the same rule). The camp
+  and MAGIC menus (every extended key but Home / End lights the first member) already matched (20 lights); at WHO,
+  PgDn, 5, 3 and Del do nothing in both. **Check 601** (check 471's start: the jump, End End PgDn on 6:1's walking screen, then BUY PASS:
+  THRENDER robbed; end `o601F`): DIFFERS on 94abb99, MATCHES on e95b5d0. F1 and F4-F10 are extended keys too (the
+  original's member step would take the first member); ours keeps them for its QoL and lab keys: not changed.
+- **The gate's list had stopped at 597:** `~/gbr/checks/diffcheck.sh` never got 598 and 599 (chat 159 sealed them and
+  counted 587; every run since printed 585/585). Now 598-601 are in the list (589), the script swapped in one step
+  after a full run of the new copy. **The lab's `dck` copy wrote into the shared game folder:** its `data/game` is a
+  link to `~/gbr/checks/data/game` and `cp -r` copied the link, so lab checks wrote their F / G slots there (only those:
+  the official gate deletes them from each copy, so its results stand) and parallel lab checks clobbered each other
+  (598, 600, 601 "no save" at 4 jobs). The lab copy now uses `cp -rL`.
+- **The fight's DONE menu (check 84's goblins): the same words and the same member after QUIT.** Fight screens can't be
+  compared from a `--keys` replay: `CombatScreen.paced()` is off there and ours centres each member (DARKSTAR's turn:
+  the view two columns over). At RHIANNON's DONE menu ours also drew two wall pieces in the view's right column the
+  original leaves out (same view origin): to Combat, to check paced (board).
+- **Sources' Curse (1), confirmed:** Talonius' Curse v1.3 and Curse's GAME.OVR 0x1E7EC-0x1E95A (curse.md Inbox).
+
 ## Chat 159: P142 and P145 (match); Enter at REST's menu and at ORDER (checks 598, 599); the menu calls' Enter and Space swept; AIM's cursor Space, MODIFY's Enter filmed
 
 - **P142 (matches):** 3:14's thieves (ECL3 block 14, 0xAC4C): NO goes to 0xB343 (SPRITE_OFF, PICTURE 255, EXIT). DOSBox
