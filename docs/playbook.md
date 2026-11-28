@@ -1052,3 +1052,4 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
+- *seen* (Combat Chat 71, DOSBox, 4:21's huge scorpion, lab fixture sk_scorp0): Sleep aimed at a monster next to the caster takes the caster's own square too: a lone ARN fell asleep, the scorpion was untouched, and it slew him helpless. Aim Sleep so the caster stands outside its area.
