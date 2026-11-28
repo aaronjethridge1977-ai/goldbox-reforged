@@ -220,6 +220,23 @@ member for any code but Home (0x47) / End (0x4F).
   chargen.pas, Combat Chat 57's rule); the item lists (MenuVertical: Home, End, PgUp, PgDn only); SAVE / LOAD WHICH GAME
   (no extended keys); GAME SPEED.
 
+## Combat Chat 71: Up and Down do nothing at the treasure's, the shop's and the temple's menus (checks 610-612)
+
+Main chat 161 filmed it and asked; the Lead answered "match the original" (2026-11-28 06:16). Up (0x48) and Down (0x50)
+reach these horizontal menus as the letters H and P, and HEAL and POOL test the extended flag, so they do nothing; only
+Home / End step the member. Ours stepped the member on Up / Down there (since 2026-11-12), so a TAKE, BUY or HEAL after
+Down acted for another member (game state, main path; resets the streak). Lists (the LOOT list, the BUY list, the
+temple's cures, the coin lists) keep P33's Up / Down. Each check's original end filmed in Combat's lab DOSBox
+(combat71/o610.sh, o611.sh, o612.sh), each with End then Down, Down:
+- **610** (8:27's treasure after check 100's kobolds; check 602's keys with Down, Down after End): the menu keeps BRAM
+  lit; Del, T, Enter: BRAM takes the sword. The end save's member files are byte-identical to check 602's.
+- **611** (3:0's arms and armour shop from check 293's start): End, Down, Down, P, B, Enter: BRAM buys the HAND AXE;
+  E, Del, E, N.
+- **612** (3:0's temple of Tyr by check 604's walk): End, Down, Down, P, H (BAKSHI, HOW CAN WE HELP YOU?), End, End,
+  Enter (CURE LIGHT WOUNDS: 100 gold), Y: BAKSHI 4 -> 7 HP; E, Del, E, N.
+On origin/main before the fix all three differ (610: BRAM's items; 611: BRAM's coins; 612: BAKSHI's HP); after it all
+three match (and 602-604 still do).
+
 ## Chat 160: P156's TEXT SKIP; P157, P151 fixed; P147, P154 match; the camp loops' extended keys (the knot at SPEED); the extended keys at script menus and the walking screen (checks 600, 601); the gate list's gap
 
 - **P156 built (QoL, Jeremy's decision 2026-11-27 20:04): SETTINGS' TEXT SKIP**, on by default (`scripts/game/text_skip.gd`,
