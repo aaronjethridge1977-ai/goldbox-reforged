@@ -2688,12 +2688,14 @@ func _overland_view() -> Image:
 	# P151 (Jeremy, 0.1.8; main chat 160, DOSBox at 7:26 16,26 S, YOU SPOT A GROUP OF LIZARD MEN): an encounter's
 	# figure is drawn over the map and the rider as in the 3D view (the frame for its distance at the frame's own
 	# place), the 88-pixel view's corner 16 pixels into the 120-pixel map: all 469 pixels of sprite 57's frame 1 at
-	# the screen's 56,32, at the bands' distance 0 (every band's table B0A8 holds 0), so the frame one farther than the
-	# 3D view's. Ours had shown picture 0 instead (the same scaly warrior for every wilderness encounter).
+	# the screen's 56,32 at the bands' distance 0. Off the 3D map the figure is always that middle frame (the 3D view's
+	# distance 1), whatever the distance, and never becomes a close-up (Talonius' Pool reconstruction, v1.3, read for
+	# the rule: its monster display draws distance 2 of its 1-based three off the 3D map). Ours had shown picture 0
+	# instead (the same scaly warrior for every wilderness encounter).
 	if _vm.sprite_id >= 0 and not _vm.sprite_hidden and CampScreen.show_monsters:
 		var frames := _sprite_frames(_vm.sprite_id)
 		if not frames.is_empty():
-			_draw_frame(img, frames[mini(_vm.sprite_distance + 1, frames.size() - 1)], Vector2i(16, 16))
+			_draw_frame(img, frames[mini(1, frames.size() - 1)], Vector2i(16, 16))
 	return img
 
 
