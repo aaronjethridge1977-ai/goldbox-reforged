@@ -147,8 +147,9 @@ var _hour_steps := 0
 var _ordering := -1                # ORDER: the member being moved, or -1
 ## The original prints some messages (a member's name and what happened, the game speed) with
 ## a routine that redraws the rope under the view without its knot at column 16; the knot
-## comes back when the whole screen is drawn again (lab: ORDER, DROP, SPEED, a cast's result;
-## not "THE PARTY MAKES CAMP..." or "RUDELY INTERRUPTED").
+## comes back when the whole screen is drawn again (lab: ORDER, DROP, a cast's result; not "THE PARTY MAKES CAMP...",
+## "RUDELY INTERRUPTED" or GAME SPEED = n: main chat 160, DOSBox from a fresh camp, ALTER, SPEED, FASTER, EXIT, the
+## knot stays throughout; ours had dropped it at SPEED and kept it off at ALTER and PICS).
 var _plain_rope := false
 ## ALTER's SPEED: 0 fastest .. 9 slowest; scales the pause after each message. 1 when the program
 ## starts (GAME.OVR 0xE999); a loaded game brings its own (main.gd SPEED_CELL).
@@ -1922,7 +1923,6 @@ func _speed_menu() -> Array:
 
 func _show_speed() -> void:
 	_mode = "speed"
-	_plain_rope = true
 	_say_lines([["", GameScreen.GREEN], ["GAME SPEED = %d (0=FASTEST 9=SLOWEST)" % speed, GameScreen.GREEN]])
 	if _pick >= _speed_menu().size():
 		_pick = 0
