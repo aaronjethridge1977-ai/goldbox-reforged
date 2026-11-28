@@ -1,0 +1,10 @@
+# Player 57: party A (docs/playbook.md section 1, "Example party for Pool"); new names (none of the old six).
+# The Lead's creation rule: reroll only until the class's prime need; every other score as rolled; good alignments;
+# the human fighter lawful good (Jeremy 2026-11-27 21:40: the knight's Long Sword +2 in 4:10).
+# NAME | race | sex | class | alignments (first offered) | need
+VOSS   | HUMAN | MALE   | FIGHTER            | LAWFUL GOOD | STR>=18/01
+GRUM   | DWARF | MALE   | FIGHTER/THIEF      | NEUTRAL GOOD, CHAOTIC GOOD, LAWFUL GOOD | -
+MAREN  | HUMAN | FEMALE | CLERIC             | LAWFUL GOOD | WIS>=16
+OSRIC  | HUMAN | MALE   | CLERIC             | NEUTRAL GOOD, LAWFUL GOOD | WIS>=16
+SYLVAR | ELF   | MALE   | FIGHTER/MAGIC-USER | CHAOTIC GOOD, NEUTRAL GOOD | -
+TAVIN  | HUMAN | FEMALE | MAGIC-USER         | NEUTRAL GOOD, CHAOTIC GOOD | INT>=16

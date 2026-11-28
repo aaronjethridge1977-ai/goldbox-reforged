@@ -1316,6 +1316,36 @@ Lab: `p23/` (seg17.plan, seg18.plan, `*.seg.out`, `*.cmpdraws.txt`, `band1.cpdif
 `trace_before_p23.py`, `archive.sh`), saves `p2start/p22c8_kobold_caves`, `p23a2_s17a`, `p23a3_s17door` (and
 `.lab/player/saves/p23*`); runs p23a1-a7, p23b1; archive `player23_lab.tar.gz`.
 
+## Player 57 (2026-11-28): party A created in the original by keys (`create.py`); the clean run from the start
+
+Jeremy's Q42 (2026-11-27 21:38): the Player starts over in the original with party A and beats Pool cleanly; the old
+chain's 70 recordings stay the Stage 1 match.
+
+**`create.py <run> <party file> [--seed=<hex>] [--begin]`** (new): a fresh DOSBox, the title, then per member the hall's
+CREATE NEW CHARACTER (the hall's menu is hot keys: each item's white first letter), the race, sex, class and alignment
+lit by name (End = next, as the original's lists), **KEEP THIS CHARACTER? NO until the line's need holds** (the sheet's
+scores; exceptional Strength reads `STR 18(87)` on that sheet), YES, the name, the portrait's KEEP, the icon page's
+EXIT, IS THIS ICON OK? YES; then ADD CHARACTER TO PARTY for each in order. Every key and every try's rolls go to
+`logs/<run>.log` with the seed. The party file: `plans/p57_party_a.txt` (one member a line: name, race, sex, class,
+alignments in preference, need). No memory written; the seed is set once at the title, as every run's. Ours' replay
+tools don't take the creation (main's checks 344-366 cover creation against the original).
+
+**Party A** (run p57c1, seed 57000001 at the title, 35 rolls in all; the Lead's rule: reroll only for the class's
+prime need, every other score as rolled; good alignments; the fighter lawful good for the knight's sword):
+
+| member | race, class, alignment | rolls | scores (sheet) | HP | gold |
+|---|---|---|---|---|---|
+| VOSS | human male fighter, LG | 21 (STR 18/xx) | STR 18/79 INT 18 WIS 14 DEX 17 CON 14 CHA 17 | 8 | 140 |
+| GRUM | dwarf male fighter/thief, NG | 1 | STR 18/69 INT 14 WIS 16 DEX 13 CON 14 CHA 16 | 6 | 105 |
+| MAREN | human female cleric, LG | 4 (WIS 16+) | STR 15 INT 14 WIS 16 DEX 13 CON 14 CHA 13 | 5 | 130 |
+| OSRIC | human male cleric, NG | 4 (WIS 16+) | STR 15 INT 16 WIS 17 DEX 17 CON 16 CHA 14 | 7 | 80 |
+| SYLVAR | elf male fighter/magic-user, CG | 1 | STR 18/15 INT 15 WIS 13 DEX 14 CON 13 CHA 17 | 6 | 75 |
+| TAVIN | human female magic-user, NG | 4 (INT 16+) | STR 17 INT 16 WIS 12 DEX 12 CON 17 CHA 14 | 4 | 70 |
+
+Then BEGIN ADVENTURING, Rolf's tour (Enter through its texts) to 3:0 0,4 W 00:00, ENCAMP, SAVE H: the start save
+**`p2start/p57_party_a`** (no items yet). Both magic-users know Sleep (book 11 18 19 21), one level-1 spell each; the
+clerics three level-1 spells each.
+
 ## Player 50 (2026-11-23): Guide 13's (4), main's breath spread in the original: worse (the guards 2 of 5, the game 0 of 5)
 
 **Main chat 104's spread** (DORN, ARN, CEDRIC, LIRA, ELWEN, BRAM, GENHEERIS; ALTER ORDER `keys order
