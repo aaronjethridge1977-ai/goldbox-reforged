@@ -115,6 +115,7 @@ var _kept_prompt := ""
 # HOLD PERSON f1087-f1105, her instant SLEEP f134-f183, CEDRIC's PRAYER f1246; ours drew the pose alone 0.2 s, then
 # SPELL: on row 24 for the spark only). The caster waiting for its SPELL: line (-1: none).
 var _ai_cast_at := -1
+var _ai_cast_dry := false     # that cast finds nothing to aim at (_on_spell_dropped)
 var _kept_items := []
 var _kept_lit := 0
 var _cast_announced := false
@@ -971,6 +972,7 @@ func _start_fight(seed_value: int = 0, copy_party: bool = true) -> void:
 	if table.is_loaded():
 		_combat.magic = CombatSpells.new(_combat, table)
 		_combat.magic.spell_cast.connect(_on_spell_cast)
+		_combat.magic.spell_dropped.connect(_on_spell_dropped)
 	_combat.flee_dir = Placement.FACING_TO_DIR[_facing]
 	_combat.morale_base = _morale_base
 	# The script's modifiers for this fight (ECL 0x6E70-0x6E72), used once.
@@ -1246,6 +1248,11 @@ func _show_messages() -> void:
 			_kept_prompt = ""
 			_kept_items = []
 			_refresh()
+			if _ai_cast_dry:
+				_ai_cast_dry = false
+				_ai_cast_at = -1
+				await SafeWait.secs(self, 0.46)     # row 23 then cleared at the drain's end (_aim_end), the box kept
+				continue
 			await SafeWait.secs(self, 0.04)
 			if _ai_cast_at >= 0 and _ai_cast_at < _combatants.size():
 				_posed = _ai_cast_at
@@ -2165,6 +2172,14 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 ## Magic Missile and Sleep); each figure the spell reaches shows sparkles (9 / 137 by turns)
 ## while its message is up, (game speed + 1) x 0.28 s (sparkle_time; P85). Fireball and Lightning Bolt show the
 ## burst instead (P86); the bolt's crackle walking its squares (COMSPR 6 / 134) is not drawn yet.
+## A computer caster's begun spell with nothing to aim at (CombatSpells.resolve_pending): its SPELL:<name> on row 23
+## with the box kept, then row 23 cleared; no pose, spark or sound (DOSBox, Combat Chat 71: o70a f472-f474).
+func _on_spell_dropped(i: int, _id: int) -> void:
+	if paced() and i >= 0 and i < _combatants.size():
+		_ai_cast_at = i
+		_ai_cast_dry = true
+
+
 func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():
 		return
