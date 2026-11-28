@@ -80,16 +80,20 @@ CEDRIC cleric, ELWEN C/F/MU, LIRA F/MU, DORN F/T)
 7. **Textile House:** five trips by band and boat; the graveyard commission brings the council's Two-Handed Sword +1
    (+3 vs undead) and 4 Restoration scrolls; in 4:2 use cures only and rest at the inn; the chained man: FREE x3, then
    LEAVE.
-8. **Nomads, Bane:** the feast, lodging, the kobold waves (STAY, DESTROY), the shaman's reward. Bane: goblin slaves
-   KILL; hay beds SEARCH; the trap door at 10,9 needs a find roll.
+8. **Nomads, Bane:** the feast, lodging, the kobold waves (STAY, DESTROY; they come at 18:00 that day: section 3), the
+   shaman's reward. Bane: goblin slaves KILL; Bane's Mace: Hold Person on him in round 1 (section 3); hay beds SEARCH; the trap door at 10,9 needs a find roll.
 9. **Kovel Mansion:** traps AVOID (or clear them if the loot is worth it); locks PICK once, then BREAK.
 10. **The kobold caves:** enter by the large wyvern cave and rest there (only while the wyvern lives: section 3); free Princess Fatima (she joins); tell the
     efreeti the truth (*book*). The throne room: section 3.
 11. **Sorcerer's Island and the pyramid:** round the poisoned river's west side to the rowboat (6,14); password NOKNOK;
-    the fountain: MOVE QUICKLY AWAY; the dial on BLUE; MOVE ON at the rocks; cures only in 7:22; the ruined castle is
-    anti-magic (heal by resting). Parley Nice with the caged lizard men (*book*).
+    the fountain: DESTROY THE EQUIPMENT, then MOVE QUICKLY AWAY at the first whine (MOVE QUICKLY AWAY alone does
+    nothing: section 3, *code* ECL7 block 23); the dial on BLUE; MOVE ON at the rocks; the human priest (7:22): PARLAY
+    NICE or MEEK, not COMBAT (section 3); cures only in 7:22; the ruined castle is anti-magic (heal by resting). Parley
+    Nice with the caged lizard men (*book*); free the pumping-room slaves before any tunnel in the ruined castle (section
+    4).
 12. **Buccaneers, Zhentil:** PUNCH MERCHANT, RELEASE ANIMALS, the pen gate (PICK, BASH), GET HIM; the captain:
-    SURRENDER; envoys YES; no camp in 6:28.
+    ATTACK, not SURRENDER (SURRENDER strips items and money: section 4, *code* ECL6:1); envoys YES; no camp in 6:28:
+    after the night attack stay inside and walk (section 3).
 13. **The graveyard:** not before the council's sword and the Restoration scrolls; nine trips; CURE DISEASE after the
     mummies; the tower door (15,6): LEAVE (section 3).
 14. **Stojanow Gate:** buy the merchant's wagon by day (section 3).
@@ -183,7 +187,21 @@ files); results *seen* unless marked.
   - Works: everything on Yarash in round 1 (a hit spoils a spell he has begun): CEDRIC's Hold Person (he is human),
     Magic Missiles before his Shield, magic arrows (his spell stops plain ones), the fighters' blows (Mirror Image
     doesn't stop them); Stinking Cloud on the slow lizard men; the party spread out against his Fireball. *Jeremy*
-  - Results: p24b5 destroyed, p24b6 won with nobody dead; both with ARN drained to fighter 3. *seen*
+  - Results: p24b5 destroyed, p24b6 won with nobody dead; both with ARN drained to fighter 3. *seen* **Won in 2 rounds,
+    0 HP lost**, everything on him in round 1: Hold Person on Yarash and two mutant lizard men, Stinking Cloud on
+    Yarash's square (nauseated), Fireball on the lizard men. *Jeremy* (his play 2026-11-27, 0.1.8)
+- **The fountain chamber (the pump): DESTROY THE EQUIPMENT once, then MOVE QUICKLY AWAY at the first whine.** MOVE
+  QUICKLY AWAY alone does nothing (the machinery stays). Each DESTROY smashes pieces until a 1-in-10 starts the
+  pressure ("YOU HEAR A WHINING... NOT ALL THE EQUIPMENT IS YET DESTROYED"); leaving then (pressure 1-2): "YOU RUN FOR
+  THE EXIT... AN ENORMOUS EXPLOSION" behind the door, the equipment destroyed; each further DESTROY adds pressure, and
+  past 3 it blows up on the party (damage; at 3 a run "DOESN'T MAKE IT"); all ten pieces smashed with no whine also
+  does it. Destroying it (or killing Yarash) sets 0x4AB3 = 254: the council's commission to stop the river's
+  poisoning. *code* (ECL7 block 23, 0xA58C-0xA8EB; Jeremy asked 2026-11-27 15:48)
+- **The human priest (7:22) is friendly: talk, don't fight.** PARLAY NICE or MEEK (HAUGHTY, SLY, ABUSIVE only get
+  "PEACE BROTHER..."); then 1 in 2 he tells his secret (else "PEACE BROTHER": PARLAY again): he has chiselled almost
+  through to the outside; YES and the party breaks through, he leaves through the hole, and the hole stays (0x4A4B bit
+  128): "THERE IS A HOLE IN THE WALL THAT LEADS TO THE OUTSIDE", a way out of the pyramid from then on. *Jeremy*
+  (2026-11-27 15:46) + *code* (ECL7 block 22, 0x9CAB-0x9EF6)
 - **The rooms' fights (7:22):** random, each kind met once: north half 20 stirges, 3 driders (magic-user 7), 3
   minotaurs, 3 "emaciated elves" (magic-user 5) or 3 kobolds; south half 3 human fighter 6s, 3 displacer beasts, 3
   dwarf fighter 7s, 3 lizard men or 3 driders. **A fight comes 1 step in 2 with SEARCH on, 1 in 20 with it off: walk
@@ -193,14 +211,22 @@ files); results *seen* unless marked.
   somewhere in the pyramid. No treasure, only experience. A rest in 7:22 can bring one: heal with cures. *code* (ECL7
   block 22, its tables at 0xA58D-0xA602)
   - Results: p25c5 destroyed at 12,15 (a fight, then rests interrupted), p25d2 destroyed at 11,13 (COMBAT on a waving
-    band of three fighters); ARN drained to fighter 3. *seen*
+    band of three fighters); ARN drained to fighter 3. *seen* The room fights (7th-level thieves, 6th-level fighters,
+    dwarf fighters, displacer beasts) each by Hold Person or Stinking Cloud in round 1, 12-25 HP. *Jeremy* (his play
+    2026-11-27, 0.1.8)
 
 **The wilderness bands (6:25, 7:26, 8:27)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:26)
+- **Wilderness coordinates here are the screen's, not the script's.** The wilderness is one 44x36 map; ECL6:25, ECL7:26
+  and ECL8:27 each cover a band of columns, and their tables count x from the band's left edge (0, 13, 26); the screen
+  shows x plus that edge (y the same). So 7:26's 12,11 is 25,11 on screen (the nomad camp: Jeremy found it there; at
+  12,11 nothing), and 8:27's 6,15 is 32,15 (the kobold caves), 11,8 is 37,8 (the ruined castle), 9,29 is 35,29 (the
+  east boat's dock). Inside a dungeon (8:13 and the like) the script's numbers are the screen's. *seen* (Jeremy,
+  2026-11-27 16:57) + *code* (overland_map.gd)
 - **How a band comes:** 1 step in 19 (rests too). Its size is the party's strength (PARTY_STRENGTH) over the kind's
   weight (kobolds 1; gnolls, stirges, bandits, soldiers, thieves 2; lizard men 3; boars, centaurs, quicklings, giant
   lizards, hippogriffs 4; displacers, tigers, phase spiders 6; driders, trolls, minotaurs 7; ankhegs, snakes, wyverns 8;
   mantises, thri-kreen 10), then a third (1 in 5), a half (3 in 5) or all of it (1 in 5), at most 56: a stronger party
-  meets bigger bands (p25a3's 51 kobolds at 7:26 5,21). *code* (ECL6 block 25, ECL7 26, ECL8 27) The strength reads
+  meets bigger bands (p25a3's 51 kobolds at 7:26 18,21, screen coordinates). *code* (ECL6 block 25, ECL7 26, ECL8 27) The strength reads
   each member's cached THAC0 and AC, which TRAIN doesn't refresh: right after training the bands come sized as before
   it, until a fight (or the member's VIEW page) refreshes them. *code* + *seen* (main chat 82, p36h1 in DOSBox:
   strength 49 at 7:26, 24 nomads; fresh it would be 51, 25)
@@ -225,11 +251,20 @@ files); results *seen* unless marked.
   soldiers, thieves, buccaneers): a few hundred experience and junk. **Fight the rich kinds** (driders, trolls,
   minotaurs, thri-kreen, and the beasts that can't be talked to) when the party is rested with its spells; flee them
   when it isn't and movement allows. The spokesman: the member with the best Charisma, lit before PARLAY.
-- Results (all with COMBAT, the route's old rule): p25a3 destroyed by 51 kobolds at 7:26 5,21, p25l2 destroyed at 7:26
-  12,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen* Under the rule: a cheap band met with a sure manner left
-  at once on PARLAY ABUSIVE (kobolds, 7:26 12,23); a band that SURPRISED the party took FLEE straight into a fight
-  (lizard men, 8:27 6,18). *seen* (Player 39, p39f9, p39f10) 7:26's driders that surprise a level-5/6 party destroy it
+- Results (all with COMBAT, the route's old rule; screen coordinates): p25a3 destroyed by 51 kobolds at 7:26 18,21,
+  p25l2 destroyed at 7:26 25,27; 6:25's bands killed BRAM twice (p25h2, p25j5). *seen* Under the rule: a cheap band
+  met with a sure manner left at once on PARLAY ABUSIVE (kobolds, 7:26 25,23); a band that SURPRISED the party took
+  FLEE straight into a fight (lizard men, 8:27 32,18). *seen* (Player 39, p39f9, p39f10) 7:26's driders that surprise a level-5/6 party destroy it
   in their first round (two of five band cycles, p42w3/p42w4: 300 HP to ~35; no FLEE when surprised). *seen* (Player 42)
+
+**The nomads (7:17)** (the camp at 25,11 on the wilderness screen)
+- **The kobold attack comes at 18:00 on the day you answer STAY AND FIGHT** ([4A7D] 3: rest in camp is cut short at
+  18:00 by "THE SOUND OF WAR CRIES DRAWS YOU OUT OF THE HUT"; after 18:00 a step in camp can start it). Before that: the
+  feast (JOIN), the lodging, the next day's games and feast, then the headman's question the morning after. *code*
+  (ECL7:17, read for Jeremy 2026-11-27 17:05)
+- **The three kobold waves (44, 50, 53 kobolds) cost 24 HP in all**: Fireball from both magic-users in round 1 of each
+  wave, then Sleep and Stinking Cloud on what was left; Hassad and a guard fought beside the party. No reload.
+  *Jeremy* (his play 2026-11-27, 0.1.8)
 
 **Valjevo Castle (5:3-5:5)** (Gold Box Guide 3 with Jeremy, 2026-11-20 17:37)
 - **The barracks giants (5:4 9,1):** 4 fire giants (59 HP, AC 3, THAC0 9, 3,644 experience each: 14,576), immune to
@@ -348,11 +383,22 @@ files); results *seen* unless marked.
     holds only while the party came in by the LARGE cave (0x4AC7 = 255) and the wyvern lives (0x4A8E = 0)**, the
     cluebook's "rest in the wyvern cave": once the wyvern is woken (the rubble slope) or killed, no camp before the
     throne is beaten, so spells for the throne are memorized before the caves. *code* (ECL8 block 13 0xB428, 0xB388;
-    ECL8 block 27 0x9DB5; Gold Box Guide 6) + *seen* (Player 39: "8:13 allows no camp")
-  - Failed: every try (Players 2, 7, 9, 23, 28, 30, 31; main's bot seven times). Sleep and blows at sleeping kobolds
+    ECL8 block 27 0x9DB5; Gold Box Guide 6) + *seen* (Player 39: "8:13 allows no camp") **The wyvern can't be
+    bypassed from the LARGE cave:** it enters at 10,15; the south part (y 9-15) opens north only through 14,8 and 15,8,
+    the wyvern's squares (event 17: it charges); 13,9 is the rubble slope (event 16: going up wakes it). Any wyvern
+    fight, won or fled, sets [4A8E] 1 and ends the camp. So rest and memorize for the throne room in the south part
+    first, then fight it; its nest (14,6) pays after. *code* (GEO8:13 + ECL8:13, read for Jeremy 2026-11-27 17:40)
+  - **Won first try, all three fights** (*Jeremy*, his play 2026-11-27, 0.1.8; party F6-7/C6/MU6ish, rested before the
+    wyvern). The horde (4 trolls, 35 kobolds, 11 leaders): R1 Stinking Cloud from both magic-users on the two troll
+    groups (5 trolls coughing), R2 Fireball on the kobolds, then Magic Missiles on the trolls; 4 rounds, 45 HP. The
+    envoys' fight (2 trolls, 2 envoys, boars, kobolds): R1 Hold Person from both clerics on the envoys and nearest
+    kobolds, Sleep, Fireball; Magic Missiles on the trolls; 5 rounds, 26 HP. A later 3 trolls, 3 boars, 16 kobolds: two
+    Fireballs, then Missiles: 0 HP. The wyvern: one Stinking Cloud, dead in 1 round, 0 HP. The Player's losses used
+    Sleep, which trolls ignore: Stinking Cloud on the trolls is the key.
+  - Failed: every try before Jeremy's (Players 2, 7, 9, 23, 28, 30, 31; main's bot seven times). Sleep and blows at sleeping kobolds
     cleared 15-35 kobolds, then the trolls finished the party; walking in cost HP and spells (123-193 of ~197 HP at the
     door); a camp at the door draws kobolds bombarding the party with rocks. The cluebook route (wyvern cave, Fatima,
-    the efreeti) is untried. Player 39 (p39a1-c2): Haste in round 1 took 5 figures within 2 of its point (1-2 casters
+    the efreeti) was untried. Player 39 (p39a1-c2): Haste in round 1 took 5 figures within 2 of its point (1-2 casters
     always among them) and still lost 5 of 5, the killed trolls rising at full HP while the fighters were spread over
     the kobolds. *seen* (stuck-fights.md section 3)
   - (Gold Box Guide 2, 2026-11-20) **The waves** (ECL8 block 13): 4 trolls, 35 kobolds, 11 leaders; a ballista volley,
@@ -365,7 +411,7 @@ files); results *seen* unless marked.
     *players* ([Demetrios1453](https://www.enworld.org/goto/post?id=9305676): won with two Fireballs and Fatima;
     [GameBanshee](https://gamebanshee.com/poolofradiance/walkthrough/koboldcave.php): a Fireball for each of the
     first two waves). Plan: docs/strategy/stuck-fights.md section 3.
-  - **The way in** (*seen*, Player 38, p38b1/c1/d1): 8:27 6,16's 30 kobolds come on the square before the cave menu, so
+  - **The way in** (*seen*, Player 38, p38b1/c1/d1): 8:27 32,16's (screen coordinates) 30 kobolds come on the square before the cave menu, so
     the SMALL cave (into 8:13 at 6,15; LARGE at 10,15) doesn't avoid them; on QUICK with MAGIC OFF they and the bands
     inside (7,12, 10,9, 5,6) cost the party about 30 HP and no spells: the door fit.
   - **Princess Fatima** is event 14 at 1,3, reached from the throne room's door (4,4) by the west passage (1,5, 1,4)
@@ -499,6 +545,8 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
 - **A camp HASTE at the throne room's door (8:13) carries into the fight:** LIRA's HASTE (magic-user 5: the first five in party order, 8 minutes, each AGES a year) cast in camp at the door, then Right, Up, Enter: the kobold king's fight on QUICK ran 16281 draws instead of 31163 from the same seed. Cast it at the door, after the last rest. *seen* (main chat 136, DOSBox, Player 39's p39a1_s39door, tpseed 39600001; ours identical draw by draw)
 - *Jeremy* (his play 2026-11-26, 0.1.8; `.lab/jeremy/2026-11-22_restarts/`): **Sokal Keep's army (event 9) won deathless, 13 rounds, 6 HP lost**: a line of four (25-28,12) with both magic-users right behind (26-27,11) and the wall at their backs, the army to the south; **four Sleeps in rounds 1-2 aimed deep into the crowd** (up to ten squares off: 13 orcs and 2 leaders, then 7 hobgoblins and 2 leaders asleep); the line held still five rounds while the army came, then advanced through the sleepers. No Hold Person was needed.
 - *Jeremy* (his play 2026-11-26, 0.1.8; `.lab/jeremy/2026-11-22_restarts/`): **Valhingen Graveyard (4:10) cleared**, magic-users with Fireball, fighters 49-53 HP. **The two spectres at the brass doors (9,1): won twice in 1-2 rounds, 0 HP lost** (one reload each): the three melee with magic weapons on one (15-19 a blow), Fireball on the other (18-25). **The three mummies: TURN first, both Fireballs on them while they flee: 0 HP, no disease** (23 tries, each reloaded at once on a failed TURN or a touch). **The vampire and 15 wolves: Magic Missile on the vampire first (down in round 1), Fireball on the wolves, then Stinking Cloud: 0 HP** (a charmed member: reload).
+- *Jeremy* (his play 2026-11-27, 0.1.8; `.lab/jeremy/2026-11-22_restarts/`): **The Temple of Bane (1:24): Bane's Mace with 5 orc leaders and 42-50 orcs.** With Mace left free he cast Hold Person every turn and four members were held and slain helpless (194 HP lost, reloaded); with **Hold Person on Mace in round 1** (and two leaders), two Fireballs on the orcs and Stinking Cloud in round 2: **won in 3 rounds, 3 HP lost**. Kovel Mansion's thief bands (3:14): Hold Person or one Fireball in round 1, 0-10 HP.
+- *Jeremy* + *code* (his play 2026-11-27 20:2x, 0.1.8; ECL6:28): **the Zhentil outpost (6:28) after the night attack: stay inside and walk.** Each step can bring a patrol ([4A17] grows per fight, so they come oftener and bigger); after about six, the dwarf's group (dwarven fighter, 31 men), then at once the commandant's (Al-Hyam Dazid, 30 men). Jeremy: the dwarf by Sleep x2 and Hold Person on him in round 1 (12 rounds, 14 HP); the commandant by Hold Person on him and Al-Hyam plus two Fireballs in round 1 (4 rounds, 26 HP). The commandant dead: the outpost surrenders ([4AB4] 1). The gate squares (7,0 / 8,0) don't leave; only stepping out does.
 - (4:2) The wight with 10 skeletons and 8 zombies: an easy win but slow; one TURN routs most skeletons and zombies and the rest is a mop-up once the wight is down (every blow on it after the TURN). Jeremy skipped it as not worth the time on a run to the end. *Jeremy* (2026-11-26 10:13)
 - Scorpions: disable before contact with Stinking Cloud. A large scorpion's 1-HP sting killed CHOP outright twice (IS POISONED, IS KILLED, from 45 HP); two Stinking Clouds won it for 2 HP. A Sleep also put one down in ours; whether Sleep works on scorpions in the original is being checked (Jeremy 2026-11-26 13:57): until then, don't count on it. *Jeremy* (his play 2026-11-26)
 
@@ -589,13 +637,26 @@ The other hard fights are still in "Not yet folded in" below, to be reviewed wit
   MATHEMATICS, HISTORY, RHETORIC); each entry with SEARCH on rolls a book (PHILOSOPHY: a d12, three of the twelve give
   an entry, then those are skipped); random monsters only in the garden (at most eight meetings), none while resting
   there. *code* + *seen* (main chat 107, 2:15 0x9D62-0xA0BC, 0x9BAF; DOSBox, check 418)
-- **The Buccaneers' ransom (6:1):** SURRENDER costs coins and items but keeps the rescue; ATTACK, if won, captures the
-  fort. *code* (Player 25, ECL 6:1)
+- **The Buccaneers' fort (6:1): at the captain's offer, ATTACK, not SURRENDER** (SURRENDER strips items and money and
+  walks the party out). The battle (started by attacking the captain's door guards, a barracks or a tower) is four
+  waves: 20 buccaneers + 1; 50 + 2; 53 + 3; then the captain with 15 guards and 40 buccaneers. Winning the last
+  captures the fort and frees the slaves ([4A8B] 255). **Fleeing any wave sets [4AA9] 128 ("bungling the Bivant
+  rescue") even with the boy already out.** *code* (Player 25, ECL 6:1; ECL6:1, read for Jeremy 2026-11-27 19:48)
 - **The graveyard's wights** take no harm from plain weapons (a plain mace left one untouched for five rounds): bring
   the council's Two-Handed Sword +1 (+3 vs undead) and every magic weapon (DORN's Mace +2 to the cleric). *seen*
   (Player 32, p32b8, p32d1)
 - The silver dragon: talk, never attack. Sorcerer's Island: NOKNOK at the level-3 door; break the pump once and leave;
   parley Nice with the caged lizard men (SAVIOR, the friend word for the Lizard Man Keep). *book*
+- **The ruined castle's old lizard man (SAVIOR, the Drythh duel) appears only in its three buildings (first building,
+  central keep, L-shaped), only after the pyramid's pumping-room slaves (7:23 5,4: PARLAY NICE) are freed ([4A52] bit
+  1), and only while [4A60] bits 2/4/8 are clear.** A hidden tunnel down (9D73: OR 254 into [4A60]) clears all three at
+  once: free the slaves and meet him before any tunnel. Jeremy's order (castle, tunnel, then the slaves) lost the
+  scene; the other way out is the kill count: leaving with [4A5D] at 40 or more sets [4AB5] 254 (City Hall's credit),
+  as the duel does. *code* (ECL8:16, ECL7:23; Jeremy's save 2026-11-27 19:01)
+- **The lizard man fights (8:16) cost the party 4 movement squares** (MOVE LEFT = the sheet's MOVEMENT - 4: a
+  plate-armoured 9 moves 5, as the kobold cave's nets): fight from where you stand with missiles and spells rather than
+  walking to the javelin throwers; light-armoured members keep more reach. *code* (ECL8:16 WRITE_MEM 252 to 0x6E72 at
+  0x9E27 / 0xA849 / 0xABCD; Combat Chat 69, P155, 2026-11-27)
 - New Phlan's city watch (12 7th-level clerics...) and City Hall's guards fight only a party that attacks the town:
   never attack it. *code* (the gear map's data)
 - A member who falls in a fight earns nothing from it, even if bandaged and cured back to hit points before it ends (and isn't counted in the split, so the others' shares grow); one unconscious with hit points from before the fight gets nothing either; curing a fallen member mid-fight saves the member, not the share (*code*: GAME.OVR 0x58D3 pays by record +0x10D; Player 51's p45i5, LIRA in the finale's guards fight, Combat Chat 53).
@@ -712,10 +773,10 @@ run time (not fixed).
 | 7:23 Yarash's Pyramid | the magical junk (8-9,0-2) | 1200 sp, 400 gp |
 | 8:13 Kobold Caves | 14,6 | 1000 sp, 500 ep, 1000 gp, 2 gems, 2 jewellery |
 | 8:13 | the kobolds' wealth (13,1) | 50000 cp, 6 gems, 2 jewellery |
-| 8:27 Eastern Wilderness | 0,2 (the wyvern's) | 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewellery |
-| 8:27 | 2,11 | 6000 cp, 4000 sp, 3000 ep |
+| 8:27 Eastern Wilderness | 26,2 (the wyvern's; screen coordinates) | 5000 cp, 6000 sp, 2000 ep, 1000 gp, 3 gems, 3 jewellery |
+| 8:27 | 26,11 | 6000 cp, 4000 sp, 3000 ep |
 
-Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (0,2 the wyvern's, one; 2,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
+Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 three), 6:25 (2,8 one), 7:23 (the magical junk, 7-9,0-2, three), 8:13 (14,6 two), 8:27 (screen 26,2 the wyvern's, one; 26,11 one). New Phlan's fights with the city watch (12 7th-level clerics with Banded Armor +2 and Mace +2 each, 8th-level fighters with Ring of Protection +3...) and City Hall's guards are there only for a party that attacks the town: not loot.
 
 ## 6. The Journal's false entries
 
@@ -748,14 +809,14 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 | 15 | `kovel` -> `band3` | 3:0, band 8:27 | Town trip, then the step east off 15,20. | ARN 3 |
 | 16 | `band3` -> `kobold_caves` | Kobold caves 8:13 | Five trips. The throne room (event 9, 4,3) is walked round; events 24, 10 and 20 are behind it. | |
 | 17 | `kobold_caves` -> `kobold_king` | 8:13 | **Deferred**: the throne room lost five of five (see below). | ELWEN MU 4 |
-| 18 | `kobold_king` -> `band1` | 3:0, band 6:25 | Town; 7:26 2,20, then step W onto 6:25. | |
-| 19 | `band1` -> `pyramid1` | band 7:26, pyramid 7:22/7:23 | Round the poisoned river's west side to the rowboat at 6,14; ENTER; the rocks flash into 7:23. | |
-| 20 | `pyramid1` -> `s20m` -> `pyramid2` | 7:23, 7:22 | Lizard men at 3,13 (fought); password NOKNOK; fountain MOVE QUICKLY AWAY; the mage at 4,1; dial on BLUE; RECOVER (river clean). | ARN 3, 32 HP |
-| 21 | `pyramid2` -> `pyramid3` | 7:22 | MOVE ON at the rocks without throwing; the priest: COMBAT. Use cures only in 7:22. | |
+| 18 | `kobold_king` -> `band1` | 3:0, band 6:25 | Town; 7:26 15,20 (screen coordinates; the script's 2,20), then step W onto 6:25. | |
+| 19 | `band1` -> `pyramid1` | band 7:26, pyramid 7:22/7:23 | Round the poisoned river's west side to the rowboat at 19,14 (screen coordinates; the script's 6,14); ENTER; the rocks flash into 7:23. | |
+| 20 | `pyramid1` -> `s20m` -> `pyramid2` | 7:23, 7:22 | Lizard men at 3,13 (fought); password NOKNOK; fountain MOVE QUICKLY AWAY (better: DESTROY THE EQUIPMENT first, section 3); the mage at 4,1; dial on BLUE; RECOVER (river clean). | ARN 3, 32 HP |
+| 21 | `pyramid2` -> `pyramid3` | 7:22 | MOVE ON at the rocks without throwing; the priest: PARLAY NICE or MEEK, then his secret (the hole to the outside), not COMBAT (ECL7:22, section 3). Use cures only in 7:22. | |
 | 22 | `pyramid3` -> `lizard` | 7:23, Ruined castle 8:16 | River reward; anti-magic shell in 8:16 (heal by rests); giant lizards, lizard men. | all trained; ARN 46 HP |
 | 23 | `lizard` -> `buccaneers0` | 8:27, 6:25, 6:1 | The clerk opens the Buccaneers' base (Bivant); displacer beasts FLEE. | |
 | 24 | `buccaneers0` -> `heir` | Buccaneers' base 6:1 | PUNCH MERCHANT, RELEASE ANIMALS, the pen gate (PICK, BASH), GET HIM. | |
-| 25 | `heir` -> `zhentil` | 6:1, 6:25, Zhentil keep 6:28 | The heir's escape (waves; the captain: SURRENDER); Cadorna's packet; envoys YES; the dinner. 6:28: no camp. | |
+| 25 | `heir` -> `zhentil` | 6:1, 6:25, Zhentil keep 6:28 | The heir's escape (waves; the captain: SURRENDER, better ATTACK: section 4); Cadorna's packet; envoys YES; the dinner. 6:28: no camp. | |
 | 26 | `zhentil` -> `graveyard` | Valhingen Graveyard 4:10 | Urslingen; nine trips; CURE DISEASE at Tyr after the mummies; the tower door (15,6): LEAVE. | ARN drained to 21 HP max |
 | 27 | `graveyard` -> `mopup1` | 2:20, 4:2, 7:26, 7:17 | Town (training), mop-up walk, two band fights. | ARN 3, ELWEN 5, LIRA 3/3, DORN 3/4 |
 | 28 | `mopup1` -> `stojanow` | Stojanow Gate 2:9 | `restuntil 8`, the trader (PARLAY, the wagon for 250), the toll, 16 bugbears at 7,10; then **the wall fight at 7,6** (see below), taken by `shortcutwin`. | ARN 3, BRAM 5, CEDRIC 6, ELWEN 5/4/4, LIRA 3/3, DORN 3/4 (at `s28b`) |
@@ -770,17 +831,3 @@ Random items (the game's dice, `TreasureMaker`): 2:20 (11-13,9-10 one; 0,14 thre
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-
-- *Jeremy* (his play 2026-11-27, 0.1.8; `.lab/jeremy/2026-11-22_restarts/`): **The Temple of Bane's Mace with 5 orc leaders and 42-50 orcs:** with Mace left free he cast Hold Person every turn and four members were held and slain helpless (194 HP lost, reloaded); with **Hold Person on Mace in round 1** (and two leaders), two Fireballs on the orcs and Stinking Cloud in round 2: **won in 3 rounds, 3 HP lost**. Kovel Mansion's thief bands: Hold Person or one Fireball in round 1, 0-10 HP.
-- *Jeremy* (2026-11-27 15:46) + *code* (ECL7 block 22, 0x9CAB-0x9EF6): **the human priest in the pyramid (7:22) is friendly: talk, don't fight.** PARLAY NICE or MEEK (HAUGHTY, SLY, ABUSIVE only get "PEACE BROTHER..."); then 1 in 2 he tells his secret (else "PEACE BROTHER": PARLAY again): he has chiselled almost through to the outside; YES and the party breaks through, he leaves through the hole, and the hole stays (0x4A4B bit 128): "THERE IS A HOLE IN THE WALL THAT LEADS TO THE OUTSIDE", a way out of the pyramid from then on. The route table's "the priest: COMBAT" (stretch 21) predates this: the Lead to reconcile.
-- *code* (ECL7 block 23, 0xA58C-0xA8EB; Jeremy asked 2026-11-27 15:48): **the fountain chamber: DESTROY THE EQUIPMENT once, then MOVE QUICKLY AWAY at the first whine.** Section 4's "the fountain: MOVE QUICKLY AWAY" alone does nothing (the machinery stays). Each DESTROY smashes pieces until a 1-in-10 starts the pressure ("YOU HEAR A WHINING... NOT ALL THE EQUIPMENT IS YET DESTROYED"); leaving then (pressure 1-2): "YOU RUN FOR THE EXIT... AN ENORMOUS EXPLOSION" behind the door, the equipment destroyed; each further DESTROY adds pressure, and past 3 it blows up on the party (damage; at 3 a run "DOESN'T MAKE IT"); all ten pieces smashed with no whine also does it. Destroying it (or killing Yarash) sets 0x4AB3 = 254: the council's commission to stop the river's poisoning.
-- *Jeremy* (his play 2026-11-27, 0.1.8): **Yarash won in 2 rounds with 0 HP lost**, everything on him in round 1: Hold Person on Yarash and two mutant lizard men, Stinking Cloud on Yarash's square (nauseated), Fireball on the lizard men; the pyramid's room fights (7th-level thieves, 6th-level fighters, dwarf fighters, displacer beasts) each by Hold Person or Stinking Cloud in round 1, 12-25 HP.
-- *seen* (Jeremy, 2026-11-27 16:57; *code* overland_map.gd): **wilderness coordinates: give the screen's numbers, not the script's.** The wilderness is one 44x36 map; ECL6:25, ECL7:26 and ECL8:27 each cover a band of columns, and their tables count x from the band's left edge (0, 13, 26). The screen shows x plus that edge. So 7:26's 12,11 is 25,11 on screen (the nomad camp: Jeremy found it there; at 12,11 nothing), and 8:27's 6,15 is 32,15 (the kobold caves), 11,8 is 37,8 (the ruined castle), 9,29 is 35,29 (the east boat's dock). y is the same. Inside a dungeon (8:13 and the like) the script's numbers are the screen's.
-- *code* (ECL7:17, read for Jeremy 2026-11-27 17:05): **the nomads' kobold attack comes at 18:00 on the day you answer STAY AND FIGHT** ([4A7D] 3: rest in camp is cut short at 18:00 by "THE SOUND OF WAR CRIES DRAWS YOU OUT OF THE HUT"; after 18:00 a step in camp can start it). Before that: the feast (JOIN), the lodging, the next day's games and feast, then the headman's question the morning after.
-- *Jeremy* (his play 2026-11-27, 0.1.8): **the nomads' three kobold waves (44, 50, 53 kobolds) cost 24 HP in all**: Fireball from both magic-users in round 1 of each wave, then Sleep and Stinking Cloud on what was left; Hassad and a guard fought beside the party. No reload.
-- *code* (GEO8:13 + ECL8:13, read for Jeremy 2026-11-27 17:40): **the wyvern can't be bypassed from the LARGE cave.** It enters at 10,15; the south part (y 9-15) opens north only through 14,8 and 15,8, the wyvern's squares (event 17: it charges); 13,9 is the rubble slope (event 16: going up wakes it). Any wyvern fight, won or fled, sets [4A8E] 1 and ends the camp. So: rest and memorize for the throne room in the south part first, then fight it; its nest (14,6) pays after. Inside the caves the screen's numbers are the data's.
-- *code* (ECL8:16, ECL7:23; Jeremy's save 2026-11-27 19:01): **the ruined castle's old lizard man (SAVIOR, the Drythh duel) appears only in its three buildings (first building, central keep, L-shaped), only after the pyramid's pumping-room slaves (7:23 5,4: PARLAY NICE) are freed ([4A52] bit 1), and only while [4A60] bits 2/4/8 are clear.** A hidden tunnel down (9D73: OR 254 into [4A60]) clears all three at once: free the slaves and meet him before any tunnel. Jeremy's order (castle, tunnel, then the slaves) lost the scene; the other way out is the kill count: leaving with [4A5D] at 40 or more sets [4AB5] 254 (City Hall's credit), as the duel does.
-- *Jeremy* (his play 2026-11-27, 0.1.8; party F6-7/C6/MU6ish, rested before the wyvern): **the kobold throne room won first try, all three fights.** The horde (4 trolls, 35 kobolds, 11 leaders): R1 Stinking Cloud from both magic-users on the two troll groups (5 trolls coughing), R2 Fireball on the kobolds, then Magic Missiles on the trolls; 4 rounds, 45 HP. The envoys' fight (2 trolls, 2 envoys, boars, kobolds): R1 Hold Person from both clerics on the envoys and nearest kobolds, Sleep, Fireball; Magic Missiles on the trolls; 5 rounds, 26 HP. A later 3 trolls, 3 boars, 16 kobolds: two Fireballs, then Missiles: 0 HP. The wyvern: one Stinking Cloud, dead in 1 round, 0 HP. The Player's losses used Sleep, which trolls ignore: Stinking Cloud on the trolls is the key.
-- *code* (ECL6:1, read for Jeremy 2026-11-27 19:48): **the Buccaneers' fort: the captain's offer, ATTACK, not SURRENDER** (route note 12 says SURRENDER: that strips items and money and walks the party out). The battle (started by attacking the captain's door guards, a barracks or a tower) is four waves: 20 buccaneers + 1; 50 + 2; 53 + 3; then the captain with 15 guards and 40 buccaneers. Winning the last captures the fort and frees the slaves ([4A8B] 255). **Fleeing any wave sets [4AA9] 128 ("bungling the Bivant rescue") even with the boy already out.**
-- *code* (ECL8:16 WRITE_MEM 252 to 0x6E72 at 0x9E27 / 0xA849 / 0xABCD; Combat Chat 69, P155, 2026-11-27): **Sorcerer's Island's lizard man fights cost the party 4 movement squares** (MOVE LEFT = the sheet's MOVEMENT - 4: a plate-armoured 9 moves 5, as the kobold cave's nets): fight from where you stand with missiles and spells rather than walking to the javelin throwers; light-armoured members keep more reach.
-- *Jeremy* + *code* (his play 2026-11-27 20:2x, 0.1.8; ECL6:28): **the Zhentil outpost after the night attack: stay inside and walk.** Each step can bring a patrol ([4A17] grows per fight, so they come oftener and bigger); after about six, the dwarf's group (dwarven fighter, 31 men), then at once the commandant's (Al-Hyam Dazid, 30 men). Jeremy: the dwarf by Sleep x2 and Hold Person on him in round 1 (12 rounds, 14 HP); the commandant by Hold Person on him and Al-Hyam plus two Fireballs in round 1 (4 rounds, 26 HP). The commandant dead: the outpost surrenders ([4AB4] 1). The gate squares (7,0 / 8,0) don't leave; only stepping out does.

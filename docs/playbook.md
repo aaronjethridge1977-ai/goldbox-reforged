@@ -700,6 +700,9 @@ experience each. *Jeremy* (2026-11-22 18:14, after trying it)
   - Disable first the enemy with the most attacks, not the biggest crowd: at Podol Plaza (1:18) Jeremy's two round-1
     Sleeps took 18 orcs but no leader, the four orc leaders (two attacks each) reached the magic-users and SHAZAM went
     down in round 3; in the 44-orc fight a Sleep on the leaders put two down. *Jeremy* (his play 2026-11-22)
+  - An enemy caster with Hold Person (or any disabler) is the first target, before any crowd: (Pool) Bane's Mace in his
+    temple cost 194 HP and four members held and slain while he was free, 3 HP with him held in round 1. *Jeremy* (his
+    play 2026-11-27)
 - **Every disabler in round 1 on the boss's group;** clerics with Hold Person are round-1 disablers (three a cast on
   the humanoids in contact). (Pool) Norris the Gray, 5 lizardmen and 9 kobold leaders for 2 HP: Hold Person on Norris
   and two lizardmen, Stinking Cloud on his square (slain helpless at once), Sleep on the leaders; 27 orcs for 0 HP with
@@ -1049,5 +1052,3 @@ Tool and method notes behind the guide's lines; players can skip this.
 
 Lanes append new lessons here, one line each, with the source tag (*seen* / *code* / *book* / *players* / *Jeremy*)
 and where it was learnt. The Lead folds them into the sections daily and clears this list.
-
-- An enemy caster with Hold Person (or any disabler) is the first target, before any crowd: Jeremy's fight with Bane's Mace cost 194 HP and four members held and slain with Mace free, 3 HP with Mace held in round 1. *Jeremy* (his play 2026-11-27)
