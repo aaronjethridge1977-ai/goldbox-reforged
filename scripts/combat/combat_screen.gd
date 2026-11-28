@@ -109,6 +109,12 @@ var _aim_rows_kept := false
 var _kept_row23 := ""             # row 23 as the aim left it (SPELL:<name> or ITEM:<name>), kept through the lines
 var _aim_end := false              # the cast's end frame: row 23 cleared, the AIM row kept (Combat Chat 67)
 var _kept_prompt := ""
+# A computer-run cast (no CASTS A SPELL before an aim; GAME.OVR's computer turn): the original shows no CASTS A SPELL
+# line but SPELL:<name> on row 23 with the caster's box still on, then the box off, the cast pose and the spark at once,
+# and row 23 stays through the spell's lines (DOSBox, Combat Chat 69-70: check 526's fight, o526a / o70a: ELWEN's
+# HOLD PERSON f1087-f1105, her instant SLEEP f134-f183, CEDRIC's PRAYER f1246; ours drew the pose alone 0.2 s, then
+# SPELL: on row 24 for the spark only). The caster waiting for its SPELL: line (-1: none).
+var _ai_cast_at := -1
 var _kept_items := []
 var _kept_lit := 0
 var _cast_announced := false
@@ -1224,6 +1230,41 @@ func _show_messages() -> void:
 				# Mirror Image's 0.06 s after its SPELL line), the sound cut on its own.
 				Speaker.play(snd, true, 0.31)
 			continue
+		if _ai_cast_at >= 0 and msg.ends_with(" CASTS A SPELL") and not _pending_msgs.is_empty() \
+				and _pending_msgs[0].begins_with("SPELL: "):
+			continue     # a computer cast: no CASTS A SPELL line (see _ai_cast_at)
+		if _ai_cast_at >= 0 and msg.begins_with("SPELL: "):
+			# A computer cast: SPELL:<name> on row 23 with the box kept, then the box off, the pose and the spark (o70a
+			# f134-f136: 0.04 s at speed 0), row 23 kept through the lines and cleared at their end (_aim_end).
+			_after_sparkles = false
+			_panel_msgs.clear()
+			_aim_rows_kept = true
+			_kept_row23 = "SPELL:" + msg.substr(7)
+			_kept_prompt = ""
+			_kept_items = []
+			_refresh()
+			await SafeWait.secs(self, 0.04)
+			if _ai_cast_at >= 0 and _ai_cast_at < _combatants.size():
+				_posed = _ai_cast_at
+			_ai_cast_at = -1
+			_box_off = true
+			var snd := _cast_sound
+			_cast_sound = 0
+			if snd > 0:
+				Speaker.play(snd, true, 0.31 if _spell_flight.is_empty() else 0.0)
+			_refresh()
+			if not _spell_flight.is_empty():
+				var sf := _spell_flight
+				_spell_flight = {}
+				if sf.has("from"):
+					_fly(sf.from, sf.to, [5, 133], 240.0)
+					await flight_done
+				if snd > 0:
+					Speaker.play(0xFF)
+				if sf.has("centre"):
+					_ensure_view(sf.centre, 0)
+					_refresh()
+			continue
 		if msg.begins_with("SPELL: "):
 			_after_sparkles = false
 			# A spell with no flight: its name on row 24 for a message's time, the panel kept.
@@ -1555,6 +1596,7 @@ func _advance() -> void:
 	_aiming = false
 	_aim_rows_kept = false
 	_announcing = false
+	_ai_cast_at = -1
 	_turn_weapon_of = i
 	_turn_weapon = _weapon_text(_combatants[i].who)
 	if paced():
@@ -1663,8 +1705,8 @@ func _ai_step() -> void:
 			if String(_messages[k]).contains(" ATTACKS "):
 				blow = true
 		var waiting: bool = actor.get("guarding", false) or (more and actor.get("fleeing", false))
-		if actor.cell != before or blow or not waiting:
-			_box_off = true
+		if (actor.cell != before or blow or not waiting) and _ai_cast_at < 0:
+			_box_off = true     # (a computer cast's box goes at its SPELL: line, _show_messages)
 		if actor.cell != before:
 			Speaker.play(Speaker.STEP)    # a square moved (GAME.OVR 0x13071)
 			_move_label = "MOVE/ATTACK, MOVE LEFT = %d" % (moves_before / 2)
@@ -2120,7 +2162,16 @@ func _after_blow(i: int, shown_before: int, weapon: GameItem) -> void:
 func _on_spell_cast(i: int, id: int, cell: Vector2i, targets: Array) -> void:
 	if not paced() or i < 0 or i >= _combatants.size():
 		return
-	_posed = i
+	var caster := (_combatants[i].who as PartyMember).name.to_upper()
+	var ai_cast := false
+	if not _cast_announced:
+		for k in _pending_msgs.size() - 1:
+			if _pending_msgs[k].to_upper() == caster + " CASTS A SPELL" and _pending_msgs[k + 1].begins_with("SPELL: "):
+				ai_cast = true
+	if ai_cast:
+		_ai_cast_at = i     # posed at its SPELL: line
+	else:
+		_posed = i
 	# The cast's sound (GAME.OVR 0x27E05, in a fight once the aim is taken): id 11 for
 	# Fireball, 8 for Lightning Bolt, 2 for the rest.
 	_cast_sound = 11 if id == CombatSpells.FIREBALL else (8 if id == CombatSpells.LIGHTNING else 2)
