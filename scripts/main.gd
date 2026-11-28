@@ -2685,7 +2685,31 @@ func _overland_view() -> Image:
 		for k in range(4, 20):      # no ICON.DAX: a plain mark
 			for p in [Vector2i(k, 4), Vector2i(k, 19), Vector2i(4, k), Vector2i(19, k)]:
 				img.set_pixelv(cell + p, GameScreen.EGA[15])
+	# P151 (Jeremy, 0.1.8; main chat 160, DOSBox at 7:26 16,26 S, YOU SPOT A GROUP OF LIZARD MEN): an encounter's
+	# figure is drawn over the map and the rider as in the 3D view (the frame for its distance at the frame's own
+	# place), the 88-pixel view's corner 16 pixels into the 120-pixel map: all 469 pixels of sprite 57's frame 1 at
+	# the screen's 56,32, at the bands' distance 0 (every band's table B0A8 holds 0), so the frame one farther than the
+	# 3D view's. Ours had shown picture 0 instead (the same scaly warrior for every wilderness encounter).
+	if _vm.sprite_id >= 0 and not _vm.sprite_hidden and CampScreen.show_monsters:
+		var frames := _sprite_frames(_vm.sprite_id)
+		if not frames.is_empty():
+			_draw_frame(img, frames[mini(_vm.sprite_distance + 1, frames.size() - 1)], Vector2i(16, 16))
 	return img
+
+
+## A sprite frame (DungeonView.draw_sprite's) on an image, the 3D view's corner at `at`: 0 is clear, 13 black.
+static func _draw_frame(img: Image, frame: Dictionary, at: Vector2i) -> void:
+	var w: int = frame["w"]
+	var h: int = frame["h"]
+	var corner := at + Vector2i(int(frame["x"]) * 8, int(frame["y"]) * 8)
+	var data: PackedByteArray = frame["px"]
+	for y in h:
+		for x in w:
+			var c := data[y * w + x]
+			var p := corner + Vector2i(x, y)
+			if c == 0 or p.x < 0 or p.y < 0 or p.x >= img.get_width() or p.y >= img.get_height():
+				continue
+			img.set_pixelv(p, GameScreen.EGA[0 if c == 13 else c])
 
 
 func _overland_place() -> String:
@@ -2809,7 +2833,10 @@ func _adopt_position_from_vm() -> void:
 	_jump_next = false
 	if walk:
 		var path := _find_path(_pos, target)
-		if path.size() > 1:
+		# P157 (Jeremy, 0.1.8, 6:28's walk back from the dinner, 0x9B0E: a step, CALL 0x2C90, DELAY, ten times): a one-square
+		# move is drawn at once, as the original's redraw does; the text above stays up. Ours walked it as a 0.22 s step with
+		# the text hidden till it arrived, so the dinner's last line went off and came back at every step.
+		if path.size() > 2:
 			_walk_path = path.slice(1)
 			_walk_final_dir = now.z if turned else _facing
 			_busy = true
@@ -2905,7 +2932,7 @@ func _on_timer() -> void:
 		return
 	# End of a script DELAY: an approaching figure that has arrived becomes its portrait.
 	_busy = false
-	if _vm.sprite_id >= 0 and _vm.sprite_distance == 0:
+	if _vm.sprite_id >= 0 and _vm.sprite_distance == 0 and not _vm.on_overland:
 		_event_image = _event_picture(_vm.sprite_head, _vm.sprite_picture)
 		_vm.sprite_id = -1
 	_vm.resume()
