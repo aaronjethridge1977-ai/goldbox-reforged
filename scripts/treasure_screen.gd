@@ -530,6 +530,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# PgUp at TAKE is ITEMS (scan code 0x49, the letter I; main chat 91, DOSBox after check 100's kobolds, check 307).
 	if _mode == "take" and key == KEY_PAGEUP:
 		key = KEY_I
+	# Del at VIEW TAKE POOL SHARE EXIT is SHARE (scan code 0x53, the letter S; main chat 161, DOSBox after check 100's
+	# kobolds, check 602; Talonius' Pool v1.3 led there). With nothing to share it does nothing.
+	if _mode == "menu" and key == KEY_DELETE:
+		key = KEY_S
 	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
 		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
 		_refresh()

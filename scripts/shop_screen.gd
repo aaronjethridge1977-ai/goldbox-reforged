@@ -43,6 +43,8 @@ const PAGE := 19
 const MENU := ["BUY", "VIEW", "POOL", "APPRAISE", "EXIT"]
 const POOL_MENU := ["BUY", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
 const ASK_MENU := ["YES", "NO"]
+## Extended keys the shop's menu reads as their scan code's letter (main chat 161): Del SHARE, F7 APPRAISE, F8 BUY.
+const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A, KEY_F8: KEY_B}
 const LIST_MENU := ["BUY", "NEXT", "PREV", "EXIT"]   # every item; row 24 shows _list_menu()
 
 var _items: Array[GameItem] = []
@@ -657,6 +659,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_party[_buyer].refresh_load_word()
 			get_viewport().set_input_as_handled()
 			return
+	# The shop's menu reads an extended key's scan code as a letter: Del (0x53) is SHARE, F7 (0x41) APPRAISE, F8 (0x42)
+	# BUY (main chat 161, DOSBox at 3:0's arms and armour shop, check 603; Talonius' Pool v1.3 led there).
+	if _mode == "menu" and key in SCAN_LETTERS:
+		key = SCAN_LETTERS[key]
 	var items: Array = _list_menu() if _mode == "list" else _menu_items()
 	var choice := ""
 	_pick = EclVM.menu_lit(items.size())
@@ -778,6 +784,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			match choice:
 				"GEMS": appraise_one(false)
 				"JEWELRY": appraise_one(true)
-				"EXIT": _exit()
+				"EXIT":
+					# EXIT works the load out again too, as every key that ends APPRAISE's menu (main chat 161:
+					# a stale cached load, then POOL and SHARE, DOSBox at 3:0's temple, check 604)
+					_party[_buyer].refresh_load_word()
+					_exit()
 		"value":
 			settle(choice == "SELL")      # with KEEP not offered, K sells too (main chat 74)

@@ -45,6 +45,9 @@ const MENU := ["HEAL", "VIEW", "POOL", "APPRAISE", "EXIT"]
 const POOL_MENU := ["HEAL", "VIEW", "TAKE", "POOL", "SHARE", "APPRAISE", "EXIT"]
 const LIST_MENU := ["HEAL", "EXIT"]
 const YES_NO := ["YES", "NO"]
+## Extended keys the temple's menu reads as their scan code's letter (main chat 161): Del SHARE, F7 APPRAISE (Up's
+## 0x48 and Down's 0x50, H and P, are kept from HEAL and POOL).
+const SCAN_LETTERS := {KEY_DELETE: KEY_S, KEY_F7: KEY_A}
 const BLIND := 0x21     # Cause Blindness's effect (GAME.OVR 0x47D9 tests it, 0x4834 removes it)
 
 var _party: Array[PartyMember] = []
@@ -532,6 +535,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_refresh()
 		return
 	var choice := ""
+	# Del is SHARE and F7 APPRAISE at the temple's menu (main chat 161, DOSBox at 3:0's temple of Tyr, check 604;
+	# Talonius' Pool v1.3 led there).
+	if _mode == "menu" and key in SCAN_LETTERS:
+		key = SCAN_LETTERS[key]
 	# The temple's menu (HEAL VIEW ... EXIT), CAST CURE ANYWAY, PAY FOR CURE and GO BACK AND RETRIEVE YOUR
 	# MONEY? take only their letters, Esc
 	# and the party keys: Enter and Left / Right do nothing there; the HEAL list keeps Enter for its lit word
@@ -607,6 +614,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				"GEMS": appraise_one(false)
 				"JEWELRY": appraise_one(true)
 				"EXIT":
+					# EXIT works the load out again too, as every key that ends APPRAISE's menu (main chat 161: a stale
+					# cached load, then POOL and SHARE: the original's pile empties, DOSBox at 3:0's temple, check 604)
+					_party[_who].refresh_load_word()
 					_mode = "menu"
 					_app_text = ""
 					_pick = _menu_items().find("APPRAISE")
