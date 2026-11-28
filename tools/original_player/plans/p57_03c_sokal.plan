@@ -1,0 +1,113 @@
+# Player 57, stretch 3c (from 3b's town3): the training, then 3b's Sokal Keep. 3b: from 2c's `slums2b` (2:20 1,5 E; CURATE hired, L4). Was 3a (poolrad.md's stretch table, row 3; route notes 3): from `slums` (2:20 14,10 E) to New Phlan
+# (the Bracers AC 6 to TAVIN; darts and arrows; the inn), the harbor master (3:0 11,1), the pier's end (14,1 E) to
+# Sokal Keep (4:21); there every event but 9 (the army, 7,4: at level 2-3, section 3), 11 and 12 (Ferran Martinez:
+# after the army), as the old route's segment 5. No camps in the keep but `heal` when someone is low; an
+# interrupted rest goes to New Phlan's inn by boat (section 3: "Rest at New Phlan's inn": 7,15 a step S).
+area 3:0
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer GIVE ME THE POTION|GIVE
+answer A PALE FORM RISES|PARLAY
+answer TAKE A BOAT BACK TO PHLAN|YES
+answer DO YOU SEEK HEALING|NO
+answer DO YOU TAKE IT|YES
+answer BREAK IN|NO
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+answer CHOOSE A FUNCTION|seq:trainC:@MAREN,t,y,@OSRIC,t,y,b
+answer CHOOSE A FUNCTION|seq:trainM:@TAVIN,t,y,b
+answer TRAIN ONLY MAGIC USERS|snap:greetM:y
+answer DO YOU WANT TO TRAIN|snap:greet:y
+tactics on
+advance VOSS,GRUM,MAREN,OSRIC,SYLVAR,CURATE
+area 3:0
+# Player 57, stretch 3c: from 3b's `town3` (VOSS F2 trained; 6987 gp on him from the gems): train at once (poolrad.md
+# section 2's levels) the clerics (C2: 1899, 2771 XP) and TAVIN (MU2: 2626 XP, a second Sleep); 200 platinum each
+# moved to the trainees and to GRUM and SYLVAR (next), the rest stays with VOSS
+coins VOSS PLATINUM 200|MAREN
+coins VOSS PLATINUM 200|OSRIC
+coins VOSS PLATINUM 200|TAVIN
+coins VOSS PLATINUM 200|GRUM
+coins VOSS PLATINUM 200|SYLVAR
+alias 3:11
+walk 6,0 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+step W
+walk 6,0 through 10,11,12,13,14,15,16,17,18
+step E
+walk 4,12 through 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25
+innheal
+checkpoint town3c
+# the harbor master (event 2), then the pier's end (event 1): the boat to Sokal Keep
+walk 11,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+walk 14,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+step E
+area 4:21
+checkpoint sokal0
+inntrip
+walk 7,15 avoid 9,11,12
+step S
+area 3:0
+walk 4,12 through 1,2,3,4,5,6,9,19,20,21,22,23,24,25
+innheal
+walk 11,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+walk 14,1 through 2,3,4,5,6,19,20,21,22,23,24,25
+step E
+area 4:21
+inntrip end
+walk 15,1 avoid 9,11,12
+heal
+checkpoint s13
+walk 13,0 avoid 9,11,12
+heal
+checkpoint s14
+walk 12,0 avoid 9,11,12
+heal
+checkpoint s17
+walk 12,2 avoid 9,11,12
+heal
+checkpoint s10
+walk 7,2 avoid 9,11,12
+heal
+checkpoint s3
+walk 4,5 avoid 9,11,12
+heal
+checkpoint s7
+walk 4,2 avoid 9,11,12
+heal
+checkpoint s16
+walk 4,4 avoid 9,11,12
+heal
+checkpoint s6
+walk 13,6 avoid 9,11,12
+heal
+checkpoint s15
+walk 15,6 avoid 9,11,12
+heal
+checkpoint s4
+walk 13,10 avoid 9,11,12
+heal
+checkpoint s2
+walk 7,13 avoid 9,11,12
+heal
+checkpoint s1
+walk 6,13 avoid 9,11,12
+heal
+checkpoint s8
+# event 8 (2,11): the huge scorpions (VOSS stung dead in p57h12, p57h13): left for Stinking Cloud or Slow Poison
+# (section 3: memorize Slow Poison first; cleric 3 for it)
+checkpoint s5
+# event 5 (2,8): reached only past event 8's squares: left with it
+checkpoint s5b

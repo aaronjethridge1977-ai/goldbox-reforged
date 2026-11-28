@@ -189,6 +189,8 @@ def _is_large(f):
 
 UNDEAD = ("SKELETON", "ZOMBIE", "GHOUL", "GHAST", "WIGHT", "WRAITH", "SPECTRE", "MUMMY", "VAMPIRE", "SHADOW",
           "GHOST", "LICH", "UNDEAD")
+# Player 57: the weak undead the rule leaves to blows (the names as the fight list prints them, "SKELET...")
+WEAK_UNDEAD = ("SKELET", "ZOMBIE")
 
 
 def _is_undead(f):
@@ -857,6 +859,11 @@ class Tactics:
                 undead = [f for f in self._sides(p)[2] if _is_undead(f)]
             except Exception:
                 undead = []
+            # Player 57 (the board's standing rule, Jeremy 2026-11-26 16:25: TURN against dangerous undead only;
+            # skeletons and zombies are fought, since turned ones run and must be run down): p57i5's TURN on Sokal
+            # Keep's skeletons and zombies left the party guarding for 30 rounds while they fled
+            if all(any(w in f["name"].upper() for w in WEAK_UNDEAD) for f in undead):
+                undead = []
             if undead:
                 self.turned.add(member)
                 self.log("TACTICS %s turns undead (%s)" % (member, ", ".join(f["name"] for f in undead[:6])))
@@ -1399,6 +1406,10 @@ class Tactics:
         for k, dx, dy in DIRS:
             q = (pos[0] + dx, pos[1] + dy)
             if q in taken or (pos, k) in mv["blocked"] or q in seen:
+                continue
+            # Player 57 (p57h3, 4:21 5,9: SYLVAR stepped from 14,0 to 13,-1 toward a zombie on the field's edge and the
+            # original asked FLEE: YES NO): no step off the field (the step-back's bounds)
+            if not (0 <= q[0] < 50 and 0 <= q[1] < 25):
                 continue
             d = dist(q)
             if best is None or d < best[0]:

@@ -44,13 +44,16 @@ step E
 area 3:0
 # the loadout (stretch 3's review, lab p57/reviews/sokal.md): the magic weapons readied, the Bracers AC 6 to TAVIN,
 # the Flail +1 to MAREN; the gems sold, darts bought and every coin to VOSS for his training (1000 gp; the only
-# member who can train on this purse: F2 for the keep's undead, where Sleep does nothing)
+# member who can train on this purse: F2 for the keep's undead, where Sleep does nothing); the inn first (p57g1:
+# the shop shut at night, BREAK IN? NO)
 trade VOSS BRACERS|TAVIN
 trade VOSS FLAIL|MAREN
 ready VOSS -LONG SWORD, +BROAD SWORD
 ready GRUM -LONG SWORD, +BROAD SWORD
 ready MAREN -MACE, +FLAIL
 ready TAVIN +BRACERS, -QUARTER STAFF
+walk 4,12 through 9,25
+innwait
 sell gems
 buy 5 4 Darts | 5 4 Darts | 5 4 Darts | 5 4 Darts | 5 4 Darts
 pooltake VOSS rest PLATINUM, VOSS rest GOLD, VOSS rest ELECTRUM, VOSS rest SILVER, VOSS rest COPPER
