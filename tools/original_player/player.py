@@ -299,6 +299,13 @@ def run(plan_path, save, seed, run_id, boot=True, after=None):
         if after not in names:
             raise SystemExit("no checkpoint %r in the plan" % after)
         while not (isinstance(plan.goals[p.goal], plans.Checkpoint) and plan.goals[p.goal].name == after):
+            # Player 57 (p57b2: resumed from e07 with `tactics on` before it, the party fought on QUICK): the plan's
+            # setting lines before the checkpoint (no keys: tactics, advance, focus, scrolls, uses, prep, keyturns,
+            # bands, lightloot, noshare, answerfrom) are applied again, in order
+            g = plan.goals[p.goal]
+            if type(g).__name__ in ("TacticsStep", "Advance", "Focus", "ScrollsStep", "UsesStep", "PrepStep",
+                                    "KeyturnsStep", "BandsStep", "LightLoot", "NoShare", "AnswerFrom"):
+                g.next(p)
             p.goal += 1
         # Player 17: the `sell` and `buy` visits before the checkpoint are done too (p17a3 sold again at the next shop)
         p.sell_visit, p.buy_visit = getattr(plan.goals[p.goal], "shops", (0, 0))
