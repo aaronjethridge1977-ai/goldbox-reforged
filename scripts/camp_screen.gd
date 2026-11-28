@@ -647,9 +647,14 @@ func _page_frame(ropes: Array) -> void:
 
 
 ## Rows of the list on a page. CAST's list fills rows 5-22 (Combat Chat 18, DOSBox: ELWEN's 21 rows, NEXT
-## shows the last 18).
+## shows the last 18), and so does SCRIBE's (P150, Combat Chat 69, DOSBox: Jeremy's KABOOM, 35 rows: 18 a page,
+## NEXT the last 18, PREV back to the top; ours paged 17, so NEXT, NEXT, PREV left the top's heading out of reach).
 func _page_rows() -> int:
-	return 11 if _list_kind == "memorize" else (18 if _list_kind == "cast" else 17)
+	if _list_kind == "memorize":
+		return 11
+	if _list_kind == "cast" or (_list_kind == "scribe" and not _mode in ["pending", "confirm"]):
+		return 18
+	return 17
 
 
 func _draw_list() -> void:
@@ -1248,8 +1253,8 @@ func _open_list(kind: String) -> void:
 
 
 func _open_pending() -> void:
+	_mode = "pending"     # first: the page's rows go by it (_page_rows)
 	_build_list(_who().scribe_pending() if _list_kind == "scribe" else _who().learning_spells(), "*")
-	_mode = "pending"
 	_refresh()
 
 
