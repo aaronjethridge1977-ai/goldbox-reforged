@@ -474,6 +474,8 @@ func _back_to_start() -> void:
 	_start_menu.open(_game_path, FileAccess.file_exists(_save_path()))
 var _who_open := false   # a WHO menu's highlight has been put on the selected member
 ## The walking screen's digits as the original takes them (chat 122: the keypad's keys).
+## A script's horizontal menu: the extended keys that light the first member (main chat 160; Home / End step it instead).
+const MENU_FIRST_MEMBER_KEYS := [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_PAGEUP, KEY_PAGEDOWN, KEY_INSERT, KEY_DELETE]
 const WALK_DIGITS := {KEY_8: KEY_UP, KEY_2: KEY_DOWN, KEY_4: KEY_LEFT, KEY_6: KEY_RIGHT, KEY_7: KEY_HOME, KEY_1: KEY_END,
 		KEY_KP_8: KEY_UP, KEY_KP_2: KEY_DOWN, KEY_KP_4: KEY_LEFT, KEY_KP_6: KEY_RIGHT, KEY_KP_7: KEY_HOME, KEY_KP_1: KEY_END}
 var _list_sel := 0   # a vertical menu's or WHO's highlight (the horizontal menus' is EclVM.menu_hl, chat 122)
@@ -1300,6 +1302,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_vm.selected = posmod(clampi(_vm.selected, 0, _party.size() - 1) \
 					+ (1 if key in [KEY_END, KEY_KP_1, KEY_1] else -1), _party.size())
 				_vm.list_lit = _vm.selected   # chat 128: the move redraws the list (DOSBox, 3:0's IGNORE GRAB)
+			elif not _vm.menu_vertical and _vm._menu_kind != "who" and not _party.is_empty() \
+					and (key in MENU_FIRST_MEMBER_KEYS or (key >= KEY_0 and key <= KEY_9) or (key >= KEY_KP_0 and key <= KEY_KP_9)):
+				# Main chat 160 (DOSBox, 2:20's COMBAT WAIT FLEE PARLAY from check 84's start: End End then Down, Right, Up,
+				# Left, 2, 3, 5 or 8): any other extended key the menu hands back (the arrows, and the digits as keypad keys)
+				# lights the first member; only Home / End step it (Talonius' Pool v1.3 reads so: its member step takes the
+				# first for anything but Home / End). Ours left the light where it was, so a script acting on the lit
+				# member (6:1's BUY PASS robs it) could take another member.
+				_vm.selected = 0
+				_vm.list_lit = 0
 			elif key >= KEY_0 and key <= KEY_9 and _vm._menu_kind != "who":
 				pass
 			elif _vm._menu_kind == "who":
