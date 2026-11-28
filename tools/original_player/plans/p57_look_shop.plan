@@ -1,0 +1,5 @@
+# Player 57: walk to the shop's door and step in (to read the prices)
+area 3:0
+rules ../../plans/playthrough.plan
+walk 13,9 through 9,19,20,21,22,23,24
+step N

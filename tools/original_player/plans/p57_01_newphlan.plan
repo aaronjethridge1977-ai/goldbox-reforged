@@ -1,0 +1,31 @@
+# Player 57, stretch 1 (poolrad.md's stretch table): New Phlan: shop, City Hall's clerk, inn, memorize.
+# From p2start/p57_party_a (3:0 0,4 W 00:00, after Rolf's tour). Party A: VOSS F, GRUM F/T, MAREN C, OSRIC C,
+# SYLVAR F/MU, TAVIN MU; 600 gold in all. Shop prices read in the original (p57s0): Long Sword 15, Mace 8, Short Bow 15,
+# 10 Arrows 1, 4 Darts 1, Scale 45, Chain 75, Banded 90, Shield 15.
+# The loadout: the line in the best armour the purse allows (VOSS, MAREN, OSRIC banded; GRUM chain, his thief skills
+# wait while he wears it; SYLVAR scale), two bows (VOSS, SYLVAR: READY in a fight is free), TAVIN 20 darts.
+area 3:0
+rules ../../plans/playthrough.plan
+buy 0 Long Sword | 0 Banded Mail | 0 Shield | 0 Short Bow | 0 10 Arrows | 0 10 Arrows | 1 Long Sword | 1 Chain Mail | 1 Shield | 2 Mace | 2 Banded Mail | 2 Shield | 3 Mace | 3 Banded Mail | 3 Shield | 4 Long Sword | 4 Scale Mail | 4 Shield | 4 Short Bow | 4 10 Arrows | 4 10 Arrows | 5 Quarter Staff | 5 4 Darts | 5 4 Darts | 5 4 Darts | 5 4 Darts | 5 4 Darts
+walk 13,9 through 9,19,20,21,22,23,24
+step N
+readyall
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|TAVIN
+alias 3:8
+# the clerk: City Hall twice (as segment 1: tour 4,4, tour 4,5, face N, step; out by 4,3 N)
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,4 through 26,27,28
+walk 4,5 through 26,27,28,29,30,31,32,33,34,35
+step N
+walk 4,3 through 26,27,28,29,30,31,32,33,34,35
+step N
+# the inn 4,12: memorize (clerics' cures and Bless; both magic-users Sleep), REST for the time offered
+memorize MAREN Cure Light Wounds, Cure Light Wounds, Bless | OSRIC Cure Light Wounds, Cure Light Wounds, Cure Light Wounds | SYLVAR Sleep | TAVIN Sleep
+walk 4,12 through 9
+checkpoint shopped

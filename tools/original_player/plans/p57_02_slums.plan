@@ -1,0 +1,86 @@
+# Player 57, stretch 2a (poolrad.md's stretch table, row 2): the Slums (2:20) at level 1, every event but 9 (3,3: 24
+# orcs), 12 (0,0) and 16 (the trolls and ogres, 0,14: last, after Sokal Keep), the southern streets (6,14) avoided
+# (route note 2); 14 (the 30 orcs behind the locked door at 0,7) after p57b2 and p57b6. From `shopped` (3:0 4,12). The old segments' event order (p14 slums_c, p15 slums2); the general rules
+# (`tactics on`: Sleep on low-level persons, Bless before contact, blows on the helpless first); heal after each event;
+# an inn trip on an interrupted rest; a checkpoint at every event's door (the reload rule: OP_RELOAD=1).
+area 3:0
+rules ../../plans/playthrough.plan
+default treasure take
+answer ROUSTED BY THE CITY WATCH|GO
+answer BASH PICK EXIT|PICK
+answer LOCKED. BASH EXIT|BASH
+answer FORTUNE|LEAVE
+answer 'WELL?'|TALK
+answer NOTHING TO SELL|SPEAK
+answer SLY|NICE
+answer PAY WELL|ACCEPT
+answer WHAT DO YOU SAY|type:OHLO
+answer ATTACK|LEAVE
+answer NOT RECEIVING VISITORS|LEAVE
+answer TO REST HERE|YES
+answer WHO WILL PAY|@platinum
+answer DO YOU DUEL|NO
+answer PARTNER FOR YOUR ADVENTURING|NO
+# TAVIN's darts (the staff takes both hands): the magic-user's missile (guide section 1)
+ready TAVIN -QUARTER STAFF, +4 DARTS
+tactics on
+advance VOSS,GRUM,MAREN,OSRIC,SYLVAR
+walk 0,4 through 25
+step W
+area 2:20
+inntrip
+walk 15,4 avoid 9,12,14,16
+step E
+area 3:0
+walk 4,12 through 9,25
+innheal
+walk 0,4 through 25
+step W
+area 2:20
+inntrip end
+checkpoint e02
+walk 9,0 avoid 9,12,14,16
+heal
+checkpoint e04
+walk 5,3 avoid 9,12,14,16
+heal
+checkpoint e05
+walk 5,2 avoid 9,12,14,16
+heal
+checkpoint e08
+walk 3,5 avoid 9,12,14,16
+heal
+checkpoint e07
+walk 1,7 avoid 9,12,14,16
+heal
+checkpoint e14
+# event 14 (the locked door 0,8 -> 0,7; 1,5): 30 orcs and 2 leaders, lost at level 1 (p57b2 on QUICK, p57b6 by
+# the rules): left for later with 9 and 12 (two Sleeps at level 1 can't thin 32)
+checkpoint e17
+walk 6,10 avoid 9,12,14,16
+heal
+checkpoint e18
+walk 6,11 avoid 9,12,14,16
+heal
+checkpoint e21
+walk 1,0 avoid 9,12,14,16
+heal
+checkpoint e11
+walk 3,1 avoid 9,12,14,16
+heal
+checkpoint e10
+walk 0,2 avoid 9,12,14,16
+heal
+checkpoint e06
+walk 7,0 avoid 9,12,14,16
+heal
+checkpoint e01
+walk 11,0 avoid 9,12,14,16
+heal
+checkpoint e03
+walk 11,9 avoid 9,12,14,16
+heal
+checkpoint e19
+# event 19 (15,12): its only route crosses the southern streets (6,11-6,14), where p57b8 was destroyed (as p14b3 at
+# level 1): left for later
+checkpoint slums
