@@ -2006,7 +2006,10 @@ func _close_in() -> bool:
 ## GOBLINS." with no ADVANCE, a wall ahead, the goblin's picture in the view). As an
 ## approaching figure's arrival at the end of a DELAY (main), and a SPRITE_ADVANCE to 0 (chat 40).
 func _arrived() -> void:
-	if sprite_id >= 0 and encounter_distance == 0:
+	# P151 (main chat 160, DOSBox at 7:26 16,26 S): on the wilderness map the figure stays a figure at the party's
+	# square (main's _overland_view); no picture comes up (the bands' ENCOUNTER_MENU has picture 0 and distance 0:
+	# ours showed PIC 0, the same scaly warrior for every wilderness encounter).
+	if sprite_id >= 0 and encounter_distance == 0 and not on_overland:
 		picture = sprite_picture
 		picture_head = sprite_head
 		sprite_id = -1
