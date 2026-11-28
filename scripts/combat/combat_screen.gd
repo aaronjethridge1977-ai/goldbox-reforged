@@ -1926,7 +1926,8 @@ func _bottom_menu() -> Array:
 		"manual":
 			return (["TARGET"] if _can_target() else []) + ["CENTER", "EXIT"]
 		"speed":
-			return ["SLOWER", "FASTER", "EXIT"]
+			# SLOWER only below 9, FASTER only above 0, as the camp's (main chat 162, DOSBox: GAMESPEED (0) : SLOWER EXIT).
+			return (["SLOWER"] if CampScreen.speed < 9 else []) + (["FASTER"] if CampScreen.speed > 0 else []) + ["EXIT"]
 		"done":
 			var items := []
 			if _combat.can_guard():
@@ -2401,13 +2402,27 @@ func _menu_choice(event: InputEvent, key: Key, items: Array) -> String:
 		# returns 0x0D / 0x20 and their callers (GAME.OVR 0xA772, 0xAA0E, 0x15427 ...) test only letters. AIM's cursor
 		# (MANUAL, 0x1596E) takes Enter as TARGET (0x15979), Space not (main chat 158, DOSBox at check 84's goblins,
 		# RHIANNON's hand turn: Enter and Space at each menu left the screen unchanged; ours took the lit word).
-		if _cmode == "manual" and key != KEY_SPACE and "TARGET" in items:
-			return "TARGET"
+		if _cmode == "manual" and key != KEY_SPACE:
+			return _cursor_enter(items)
 		return ""
+	if _cmode == "manual" and event is InputEventKey and not (event as InputEventKey).ctrl_pressed \
+			and not (event as InputEventKey).alt_pressed:
+		# The cursor's menu has the extended flag and its case tests scan codes as letters (cbtacts.pas
+		# ManualAimCursor): Shift+F1 (0x54, 'T') is Enter's TARGET, F9 (0x43, 'C') CENTER (main chat 162, DOSBox).
+		if key == KEY_F1 and (event as InputEventKey).shift_pressed:
+			return _cursor_enter(items)
+		if key == KEY_F9 and not (event as InputEventKey).shift_pressed:
+			return "CENTER"
 	for it in items:
 		if key == OS.find_keycode_from_string(String(it).substr(0, 1)):
 			return it
 	return ""
+
+
+## Enter at the aim cursor: TARGET where it is offered; elsewhere the cursor's loop ends all the same and the aim's
+## menu comes back, as EXIT (main chat 162, DOSBox at check 84's goblins: RANGE = 0, Enter: AIM:NEXT PREV MANUAL).
+func _cursor_enter(items: Array) -> String:
+	return "TARGET" if "TARGET" in items else "EXIT"
 
 
 # --- CAST ---------------------------------------------------------------------------------
@@ -3001,7 +3016,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_combat.typed.add(event as InputEventKey)
 		return
 	if event is InputEventKey:
-		var dk := KeyBurst.menu_key(event as InputEventKey, [KEY_M, KEY_Q])
+		# Alt-M and Alt-Q only at the main menu (combat.pas CombatMenu keeps Alt-Q / R / X / M among extended keys);
+		# DONE's, SPEED's and AIM's menus drop extended keys, the aim cursor and MOVE take only their own (main chat
+		# 162, DOSBox at check 84's goblins: Alt-Q at DONE and Alt-M at AIM: did nothing; ours took QUIT and MANUAL).
+		var keep: Array = [] if _cmode in ["done", "speed", "aim", "manual", "move"] else [KEY_M, KEY_Q]
+		var dk := KeyBurst.menu_key(event as InputEventKey, keep)
 		if dk == null:
 			get_viewport().set_input_as_handled()
 			return     # Ctrl / Alt and a letter: no menu letter (KeyBurst.menu_key; main chat 129, DOSBox)
@@ -3210,7 +3229,8 @@ func _fight_input(event: InputEvent, key: Key) -> void:
 	if _draining or _result != 0 or _combat.active < 0 or _combatants[_combat.active].get("quick", false):
 		return
 	if _cmode == "move":
-		if event.is_action("ui_cancel") or event.is_action("ui_accept"):
+		if event.is_action("ui_cancel") or (event.is_action("ui_accept") and key != KEY_SPACE):
+			# Space does nothing in MOVE (the loop 0xA236 ends on Esc and Enter only; main chat 162, DOSBox).
 			# Leaving MOVE (GAME.OVR 0xA2D2, Combat Chat 4; lab: Brother Sean stepped SE, then Esc
 			# put him back): Esc undoes the walk, the figure back on the square where MOVE began
 			# with its movement and facing as they were; Enter keeps it.

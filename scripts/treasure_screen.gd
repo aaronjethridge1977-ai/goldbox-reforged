@@ -532,9 +532,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		key = KEY_I
 	# VIEW TAKE POOL SHARE EXIT reads an extended key's scan code as a letter: Del (0x53) is SHARE, Shift+F1 (0x54) TAKE,
 	# Shift+F3 (0x56) VIEW (main chat 161, DOSBox after check 100's kobolds, check 602, and at 3:0's shop; Talonius' Pool
-	# v1.3 led there). With nothing to share Del does nothing. (F10, 0x44, would be DETECT: not filmed.)
+	# v1.3 led there). With nothing to share Del does nothing. F10 (0x44, D) is DETECT where it is offered (main chat 162,
+	# DOSBox at check 571's chest, BAKSHI lit: F10 cast it; check 617; with no Detect Magic memorized the original casts
+	# an unset spell number: ours does nothing).
 	if _mode == "menu":
-		key = {KEY_DELETE: KEY_S, KEY_MASK_SHIFT | KEY_F1: KEY_T, KEY_MASK_SHIFT | KEY_F3: KEY_V}.get(
+		key = {KEY_DELETE: KEY_S, KEY_MASK_SHIFT | KEY_F1: KEY_T, KEY_MASK_SHIFT | KEY_F3: KEY_V, KEY_F10: KEY_D}.get(
 				(event as InputEventKey).get_keycode_with_modifiers(), key)
 	if (key == KEY_COMMA or key == KEY_PERIOD) and not items.is_empty():
 		EclVM.menu_step(items.size(), -1 if key == KEY_COMMA else 1)     # 0x2CE93 / 0x2CEB7 (main chat 122)
