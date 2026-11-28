@@ -1199,6 +1199,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			key = KEY_ENTER
 		elif kev != null and (kev.ctrl_pressed or kev.alt_pressed) \
 				and not (key >= KEY_F1 and key <= KEY_F12) and key != KEY_ESCAPE:
+			if _ext_first_member_key(kev) and not _busy and not _party.is_empty() and _door_options == "":
+				if _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR]:
+					_vm.selected = 0       # main chat 161: Alt+letter / digit, Ctrl+Left etc. (DOSBox)
+					_vm.walk_selected = 0
+				elif _vm.state == EclVM.State.MENU and not _vm.menu_vertical and _vm._menu_kind not in ["who", "press"]:
+					_vm.selected = 0
+					_vm.list_lit = 0
+				_show()
 			# Chat 128 (DOSBox, 2:20 from check 46's start): Alt+A and Ctrl+A do nothing on the walking screen (DOS
 			# types Alt+letter as an extended key with the letter's scan code and Ctrl+letter as a control code, none
 			# of them a walking word); Shift+A is AREA as A is. Ours took Alt+A and Ctrl+A as A. The arrows and digits
@@ -1307,7 +1315,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					+ (1 if key in [KEY_END, KEY_KP_1, KEY_1] else -1), _party.size())
 				_vm.list_lit = _vm.selected   # chat 128: the move redraws the list (DOSBox, 3:0's IGNORE GRAB)
 			elif not _vm.menu_vertical and _vm._menu_kind != "who" and not _party.is_empty() \
-					and (key in MENU_FIRST_MEMBER_KEYS or (key >= KEY_2 and key <= KEY_9) or (key >= KEY_KP_2 and key <= KEY_KP_9)):
+					and (key in MENU_FIRST_MEMBER_KEYS or (key >= KEY_2 and key <= KEY_9) or (key >= KEY_KP_2 and key <= KEY_KP_9) \
+					or (key >= KEY_F1 and key <= KEY_F10 and _ext_first_member_key(event as InputEventKey))):
 				# Main chat 160 (DOSBox, 2:20's COMBAT WAIT FLEE PARLAY from check 84's start: End End then Down, Right, Up,
 				# Left, 2, 3, 5 or 8; 6:1's BUY PASS: 4, 6, 9, PgDn, Del; 0 leaves it): any other extended key the menu hands
 				# back (the arrows, the editing keys, and the digits 2-9 as keypad keys) lights the first member; only Home / End step it (Talonius' Pool v1.3 reads so: its member step takes the
@@ -1397,7 +1406,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show()
 			return
-		if key in WALK_FIRST_MEMBER_KEYS and event is InputEventKey and not _party.is_empty() \
+		if (key in WALK_FIRST_MEMBER_KEYS or (key >= KEY_F1 and key <= KEY_F10 and _ext_first_member_key(event as InputEventKey))) \
+				and event is InputEventKey and not _party.is_empty() \
 				and _vm.state in [EclVM.State.IDLE, EclVM.State.DONE, EclVM.State.ERROR] and _door_options == "":
 			# Main chat 160 (DOSBox; Talonius' Pool v1.3 reads the same: the walking loop hands every extended key but the
 			# arrows to its member step, which takes the first member for anything but Home / End). Chat 122 had seen
@@ -3022,6 +3032,27 @@ static func _input_char(ev: InputEventKey) -> int:
 ## The F-keys' BIOS scan codes with Shift, Ctrl and Alt (plain: DOS_SCANS); Ctrl with the grey keys.
 const F_KEYS := [KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10]
 const CTRL_SCANS := {KEY_LEFT: 0x73, KEY_RIGHT: 0x74, KEY_END: 0x75, KEY_PAGEDOWN: 0x76, KEY_HOME: 0x77, KEY_PAGEUP: 0x84}
+
+
+## Main chat 161 (DOSBox at 6:1, the walking screen and BUY PASS, End End then the key): the other extended keys the
+## original's BIOS types light the first member there, as PgUp / PgDn / Ins / Del (WALK_FIRST_MEMBER_KEYS,
+## MENU_FIRST_MEMBER_KEYS): F1-F10 alone or with Shift, Ctrl or Alt, Alt with a letter or a top-row digit, and Ctrl with
+## Left, Right, Home, End, PgUp or PgDn. Ctrl+Up, Alt+Up and Ctrl+A do nothing (no code in that BIOS, or a control
+## code). Kept from it: ours' F2 / F3 (QUICK SAVE / LOAD) and, in a lab run, the lab's F4 / F9.
+func _ext_first_member_key(ev: InputEventKey) -> bool:
+	if ev == null:
+		return false
+	var k := ev.keycode
+	var plain := not (ev.shift_pressed or ev.ctrl_pressed or ev.alt_pressed)
+	if k >= KEY_F1 and k <= KEY_F10:
+		if plain and (k in [KEY_F2, KEY_F3] or (lab_keys and k in [KEY_F4, KEY_F9])):
+			return false
+		return true
+	if ev.alt_pressed and not ev.ctrl_pressed:
+		return KeyBurst.ALT_SCANS.has(k) or (k >= KEY_0 and k <= KEY_9)
+	if ev.ctrl_pressed and not ev.alt_pressed:
+		return CTRL_SCANS.has(k)
+	return false
 
 
 static func _input_byte(ev: InputEventKey) -> int:
