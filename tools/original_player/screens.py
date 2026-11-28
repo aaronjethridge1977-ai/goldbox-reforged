@@ -90,7 +90,8 @@ def classify(st):
         # Player 3: the party menu (also a training hall's, PROGRAM 0): the party at rows 4-9 from column 1, the
         # chosen member white (End = next, Home = previous); the functions by their first letters.
         names, hl = [], None
-        for r in range(4, 10):
+        # Player 57 (p57i1: the hired CURATE on row 10, lit, and the seq found no highlight): rows 4-11, eight members
+        for r in range(4, 12):
             name = rows[r][1:16].strip("? ").strip()
             if not name:
                 continue
